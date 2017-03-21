@@ -21,8 +21,6 @@ import com.intellij.reference.SoftReference
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import com.intellij.util.text.CharSequenceReader
-import com.sun.org.apache.xerces.internal.impl.Constants
-import org.apache.xerces.util.SecurityManager
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -35,6 +33,7 @@ import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
 import java.io.*
 import java.nio.file.Path
+import javax.xml.XMLConstants
 
 private val cachedSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
 
@@ -45,9 +44,11 @@ private fun getSaxBuilder(): SAXBuilder {
     saxBuilder = object : SAXBuilder() {
       override fun configureParser(parser: XMLReader, contentHandler: SAXHandler?) {
         super.configureParser(parser, contentHandler)
-        val manager = SecurityManager()
-        manager.entityExpansionLimit = 10000
-        parser.setProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY, manager)
+        try {
+          parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+        }
+        catch (ignore: Exception) {
+        }
       }
     }
     saxBuilder.ignoringBoundaryWhitespace = true

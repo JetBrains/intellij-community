@@ -98,6 +98,7 @@ public class MessageBusTest extends TestCase {
       myBus.dispose();
     }
     finally {
+      myBus = null;
       super.tearDown();
     }
   }

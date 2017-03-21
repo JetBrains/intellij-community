@@ -38,7 +38,7 @@ class Groo {
   String title = "Testing...";
   char ch = 'q';
 
-  configure(<hint text="testNow"/>true, <hint text="times"/>555, <hint text="pii"/>3.141f, <hint text="title"/>"Huge Title", <hint text="terminate"/>'c', <hint text="file"/>null);
+  configure(<hint text="testNow:"/>true, <hint text="times:"/>555, <hint text="pii:"/>3.141f, <hint text="title:"/>"Huge Title", <hint text="terminate:"/>'c', <hint text="file:"/>null);
   configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
  }
 
@@ -68,10 +68,10 @@ class Fooo {
 
  public void test() {
    String message = "sdfsdfdsf";
-   assertEquals(<hint text="expected"/>"fooo", message);
+   assertEquals(<hint text="expected:"/>"fooo", message);
 
    String title = "TT";
-   show(title, <hint text="message"/>"Hi");
+   show(title, <hint text="message:"/>"Hi");
  }
 
  public void assertEquals(String expected, String actual) {}
@@ -103,8 +103,8 @@ class Stream<T> {
     check("""
 class Foo {
   void test() {
-    new IntStream().skip(<hint text="n"/>10);
-    new Stream<Integer>().skip(<hint text="n"/>10);
+    new IntStream().skip(<hint text="n:"/>10);
+    new Stream<Integer>().skip(<hint text="n:"/>10);
   }
 }
 
@@ -142,7 +142,7 @@ public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(<hint text="test"/>13, <hint text="...booleans"/>false);
+    testBooleanVarargs(<hint text="test:"/>13, <hint text="...booleans:"/>false);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -159,7 +159,7 @@ public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(<hint text="test"/>13);
+    testBooleanVarargs(<hint text="test:"/>13);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -177,7 +177,7 @@ public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(<hint text="test"/>13, <hint text="...booleans"/>false, true, false);
+    testBooleanVarargs(<hint text="test:"/>13, <hint text="...booleans:"/>false, true, false);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -224,7 +224,7 @@ public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
-    count(<hint text="test"/>100, <hint text="boo"/>false, <hint text="seq"/>"Hi!");
+    count(<hint text="test:"/>100, <hint text="boo:"/>false, <hint text="seq:"/>"Hi!");
   }
 
   public void count(Integer test, Boolean boo, CharSequence seq) {
@@ -241,8 +241,8 @@ public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
-    count(<hint text="test"/>-1, obj);
-    count(<hint text="test"/>+1, obj);
+    count(<hint text="test:"/>-1, obj);
+    count(<hint text="test:"/>+1, obj);
   }
 
   public void count(int test, Object obj) {
@@ -258,7 +258,7 @@ public class CharSymbol {
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
     System.out.println("AAA");
-    main(<hint text="isActive"/>true,<hint text="requestFocus"/>false, /*comment*/<hint text="xoo"/>2);
+    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, /*comment*/<hint text="xoo:"/>2);
   }
 }
 """)
@@ -287,7 +287,7 @@ public class Test {
     "sfsdf".startWith("s");
     "sss".charAt(3);
 
-    clearStatus(<hint text="updatedRecently"/>false);
+    clearStatus(<hint text="updatedRecently:"/>false);
   }
 
   void print(String s) {}
@@ -316,8 +316,8 @@ class QCmp<E> {
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.compare(<hint text="o1"/>0, /** ddd */<hint text="o2"/>3);
-    l.add(<hint text="query"/>1, <hint text="obj"/>"uuu");
+    c.compare(<hint text="o1:"/>0, /** ddd */<hint text="o2:"/>3);
+    l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
 """)
@@ -329,7 +329,7 @@ public class Test {
 
   public void main() {
     System.out.println("AAA");
-    Checker r = new Checker(<hint text="isActive"/>true, <hint text="requestFocus"/>false) {
+    Checker r = new Checker(<hint text="isActive:"/>true, <hint text="requestFocus:"/>false) {
         @Override
         void test() {
         }
@@ -355,7 +355,7 @@ public class Test {
 
   public static void main() {
     System.out.println();
-    Test t = new Test(<hint text="counter"/>10, <hint text="shouldTest"/>false);
+    Test t = new Test(<hint text="counter:"/>10, <hint text="shouldTest:"/>false);
   }
 
 }
@@ -371,7 +371,7 @@ public class VarArgTest {
     int test = 13;
     boolean isCheck = false;
     boolean isOk = true;
-    testBooleanVarargs(test, <hint text="...booleans"/>isCheck, true, isOk);
+    testBooleanVarargs(test, <hint text="...booleans:"/>isCheck, true, isOk);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -387,7 +387,7 @@ public class VarArgTest {
 public class VarArgTest {
 
   public void main() {
-    check(<hint text="x"/>10, <hint text="paramNameLength"/>1000);
+    check(<hint text="x:"/>10, <hint text="paramNameLength:"/>1000);
   }
 
   public void check(int x, int paramNameLength) {
@@ -403,7 +403,7 @@ public class VarArgTest {
 
   public void main() {
     String s = "su";
-    check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, s);
+    check(<hint text="beginIndex:"/>10, <hint text="endIndex:"/>1000, s);
   }
 
   public void check(int beginIndex, int endIndex, String params) {
@@ -430,7 +430,7 @@ class Test {
 public class VarArgTest {
 
   public void main() {
-    check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, <hint text="x"/>"su");
+    check(<hint text="beginIndex:"/>10, <hint text="endIndex:"/>1000, <hint text="x:"/>"su");
   }
 
   public void check(int beginIndex, int endIndex, String x) {
@@ -445,7 +445,7 @@ public class VarArgTest {
 public class VarArgTest {
 
   public void main() {
-    check(<hint text="test"/>this, <hint text="endIndex"/>1000);
+    check(<hint text="test:"/>this, <hint text="endIndex:"/>1000);
   }
 
   public void check(VarArgTest test, int endIndex) {
@@ -460,8 +460,8 @@ public class VarArgTest {
 public class Test {
 
   void main() {
-    createContent(<hint text="manager"/>null);
-    createNewContent(<hint text="test"/>this);
+    createContent(<hint text="manager:"/>null);
+    createNewContent(<hint text="test:"/>this);
   }
 
   Content createContent(DockManager manager) {}
@@ -485,7 +485,7 @@ class Test {
 
   public void test() {
     Builder builder = new Builder();
-    builder.await(<hint text="value"/>true);
+    builder.await(<hint text="value:"/>true);
     builder.bwait(false).timeWait(100);
   }
 
@@ -504,8 +504,8 @@ class Test {
 
   public void test() {
     Builder builder = new Builder();
-    builder.await(<hint text="value"/>true);
-    builder.bwait(<hint text="xvalue"/>false).timeWait(<hint text="millis"/>100);
+    builder.await(<hint text="value:"/>true);
+    builder.bwait(<hint text="xvalue:"/>false).timeWait(<hint text="millis:"/>100);
   }
 
 }
@@ -525,7 +525,7 @@ class Test {
     Builder builder = new Builder();
     builder
     .trew(false)
-    .qwit(<hint text="value"/>true, <hint text="sValue"/>"value");
+    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
   }
 }
 """)
@@ -541,8 +541,8 @@ class Test {
   public void test() {
     Builder builder = new Builder();
     builder
-    .trew(<hint text="value"/>false)
-    .qwit(<hint text="value"/>true, <hint text="sValue"/>"value");
+    .trew(<hint text="value:"/>false)
+    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
   }
 }
 """)
@@ -571,12 +571,12 @@ public class Test {
 class Test {
 
   void main() {
-    blah(<hint text="a"/>1, <hint text="b"/>2);
+    blah(<hint text="a:"/>1, <hint text="b:"/>2);
     int z = 2;
-    draw(<hint text="x"/>10, <hint text="y"/>20, z);
+    draw(<hint text="x:"/>10, <hint text="y:"/>20, z);
     int x = 10;
     int y = 12;
-    drawRect(x, y, <hint text="w"/>10, <hint text="h"/>12);
+    drawRect(x, y, <hint text="w:"/>10, <hint text="h:"/>12);
   }
 
   void blah(int a, int b) {}
@@ -594,7 +594,7 @@ class Test {
   void main() {
     set(10);
     setWindow(100);
-    setWindow(<hint text="height"/>100, <hint text="weight">);
+    setWindow(<hint text="height:"/>100, <hint text="weight:">);
   }
 
   void set(int newValue) {}
@@ -638,10 +638,10 @@ class Key {
       check("""
 class Test {
   void test() {
-    xxx(<hint text="followTheSum"/>100);
-    check(<hint text="isShow"/>1 + 1);
-    check(<hint text="isShow"/>1 + 1 + 1);
-    yyy(<hint text="followTheSum"/>200);
+    xxx(<hint text="followTheSum:"/>100);
+    check(<hint text="isShow:"/>1 + 1);
+    check(<hint text="isShow:"/>1 + 1 + 1);
+    yyy(<hint text="followTheSum:"/>200);
   }
   void check(int isShow) {}
   void xxx(int followTheSum) {}
@@ -655,7 +655,7 @@ class Test {
     check("""
 class Test {
   void test() {
-    check(<hint text="isShow"/>1000);
+    check(<hint text="isShow:"/>1000);
   }
   void check(int isShow) {}
 }
@@ -681,8 +681,8 @@ class Test {
     check("""
 class Test {
   void main() {
-    timeoutExecution(<hint text="timeout"/>1000, <hint text="message"/>"xxx");
-    createSpace(<hint text="space"/>true, <hint text="a"/>10);
+    timeoutExecution(<hint text="timeout:"/>1000, <hint text="message:"/>"xxx");
+    createSpace(<hint text="space:"/>true, <hint text="a:"/>10);
   }
   void timeoutExecution(int timeout, String message) {}
   void createSpace(boolean space, int a) {}
@@ -697,7 +697,7 @@ class Test {
   void main() {
     String c = "c";
     String d = "d";
-    test(<hint text="parent"/>c, <hint text="child"/>d);
+    test(<hint text="parent:"/>c, <hint text="child:"/>d);
   }
   void test(String parent, String child) {
   }
@@ -711,7 +711,7 @@ class Test {
 class Test {
   void main() {
     String c = "c";
-    test(<hint text="parent"/>c, <hint text="child"/>c, <hint text="grandParent"/>c);
+    test(<hint text="parent:"/>c, <hint text="child:"/>c, <hint text="grandParent:"/>c);
   }
   void test(String parent, String child, String grandParent) {
   }
@@ -727,7 +727,7 @@ class Test {
     String c = "c";
     String d = "d";
     int v = 10;
-    test(<hint text="parent"/>c, <hint text="child"/>d, <hint text="vx"/>v, <hint text="vy"/>v);
+    test(<hint text="parent:"/>c, <hint text="child:"/>d, <hint text="vx:"/>v, <hint text="vy:"/>v);
   }
   void test(String parent, String child, int vx, int vy) {
   }
@@ -739,7 +739,7 @@ class Test {
     check("""
 class Test {
   void main() {
-    test(<hint text="a"/>10, x);
+    test(<hint text="a:"/>10, x);
   }
   void test(int a, String bS) {}
   void test(int a, int bI) {}
@@ -751,7 +751,7 @@ class Test {
     check("""
 class Test {
   void main() {
-    new X(<hint text="a"/>10, x);
+    new X(<hint text="a:"/>10, x);
   }
 }
 

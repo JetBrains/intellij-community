@@ -17,10 +17,9 @@ package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
 
 import java.io.*;
-import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * @author peter
@@ -40,17 +39,12 @@ public class Timings {
   public static final long ETALON_CPU_TIMING = 200;
   public static final long ETALON_IO_TIMING = 100;
 
+  private static final long[] CPU_TIMING_DATA;
 
   static {
-    int N = 20;
-    for (int i=0; i<N; i++) {
-      measureCPU(); //warmup
-    }
-    long[] elapsed=new long[N];
-    for (int i=0; i< N; i++) {
-      elapsed[i] = measureCPU();
-    }
-    CPU_TIMING = ArrayUtil.averageAmongMedians(elapsed, 2);
+    CpuTimings timings = CpuTimings.calcStableCpuTiming();
+    CPU_TIMING_DATA = timings.rawData;
+    CPU_TIMING = timings.average;
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
@@ -99,17 +93,6 @@ public class Timings {
     MACHINE_TIMING = CPU_TIMING + IO_TIMING;
   }
 
-  private static long measureCPU() {
-    long start = System.currentTimeMillis();
-
-    BigInteger k = new BigInteger("1");
-    for (int i = 0; i < 1000000; i++) {
-      k = k.add(new BigInteger("1"));
-    }
-
-    return System.currentTimeMillis() - start;
-  }
-
   /**
    * @param value the value (e.g. number of iterations) which needs to be adjusted according to my machine speed
    * @param isParallelizable true if the test load is scalable with the CPU cores
@@ -124,6 +107,6 @@ public class Timings {
       " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
       ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
       ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon) " +
-      Runtime.getRuntime().availableProcessors() + " cores.";
+      Runtime.getRuntime().availableProcessors() + " cores.\nRaw timings data: " + Arrays.toString(CPU_TIMING_DATA);
   }
 }

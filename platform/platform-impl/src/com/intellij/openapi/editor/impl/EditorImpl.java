@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -71,6 +72,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -148,7 +150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
-  @NotNull private final JScrollPane myScrollPane = new MyScrollPane();
+  @NotNull private final JScrollPane myScrollPane;
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -310,7 +312,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
-  
+
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
 
   private boolean myUseEditorAntialiasing = true;
@@ -330,6 +332,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myProject = project;
     myDocument = (DocumentEx)document;
     myScheme = createBoundColorSchemeDelegate(null);
+    myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
     if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
@@ -371,13 +374,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter), 
+        attributesChanged(highlighter, areRenderersInvolved(highlighter),
                           EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter), 
+        attributesChanged(highlighter, areRenderersInvolved(highlighter),
                           EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
@@ -388,15 +391,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (renderersChanged) {
           updateGutterSize();
         }
-        
+
         boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
         if (myDocumentChangeInProgress) {
-          // postpone repaint request, as folding model can be in inconsistent state and so coordinate 
+          // postpone repaint request, as folding model can be in inconsistent state and so coordinate
           // conversions might give incorrect results
           myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
           return;
         }
-        
+
         int textLength = myDocument.getTextLength();
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
@@ -848,7 +851,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusListeners.clear();
     myMouseListeners.clear();
     myMouseMotionListeners.clear();
-    
+
     myEditorComponent.removeMouseListener(myMouseListener);
     myGutterComponent.removeMouseListener(myMouseListener);
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
@@ -3873,7 +3876,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void mouseDragged(@NotNull MouseEvent e) {
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
-      runMouseDraggedCommand(e);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseDragged(e);
@@ -3946,8 +3949,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyColorSchemeDelegate extends DelegateColorScheme {
-    private final FontPreferences myFontPreferences = new FontPreferences();
-    private final FontPreferences myConsoleFontPreferences = new FontPreferences();
+    private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
+    private final FontPreferencesImpl myConsoleFontPreferences = new FontPreferencesImpl();
     private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
     private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
     private final EditorColorsScheme myCustomGlobalScheme;
@@ -3985,7 +3988,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myFontsMap.put(EditorFontType.CONSOLE_BOLD_ITALIC, new Font(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize));
     }
 
-    private void updatePreferences(FontPreferences preferences, String fontName, int fontSize, FontPreferences delegatePreferences) {
+    private void updatePreferences(FontPreferencesImpl preferences, String fontName, int fontSize, FontPreferences delegatePreferences) {
       preferences.clear();
       preferences.register(fontName, fontSize);
       if (delegatePreferences != null) {
@@ -4183,7 +4186,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       UIUtil.drawImage(g, scaledImage, x, y, null);
       if (frameIndex == TOTAL_FRAMES) {
         nrp.set(false);
-        ApplicationManager.getApplication().invokeLater(() -> IdeGlassPaneUtil.find(component).removePainter(this));
+        IdeGlassPane glassPane = IdeGlassPaneUtil.find(component);
+        ApplicationManager.getApplication().invokeLater(() -> glassPane.removePainter(this));
         component.repaint(x, y, myWidth, myHeight);
       }
       component.repaint(x, y, myWidth, myHeight);
@@ -4196,7 +4200,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   }
 
-  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t) {
+  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t, int dropAction) {
     final EditorDropHandler dropHandler = editor.getDropHandler();
 
     if (Registry.is("debugger.click.disable.breakpoints")) {
@@ -4231,7 +4235,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-      dropHandler.handleDrop(t, editor.getProject(), null);
+      dropHandler.handleDrop(t, editor.getProject(), null, dropAction);
       return true;
     }
 
@@ -4288,8 +4292,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      return handleDrop(getEditor(comp), t);
+    public boolean importData(TransferSupport support) {
+      Component comp = support.getComponent();
+      if (!(comp instanceof JComponent)) return false;
+      return handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
     }
     
     @Override

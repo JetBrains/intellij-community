@@ -28,7 +28,7 @@ import java.util.Date;
  */
 public abstract class Task {
 
-  public static Task[] EMPTY_ARRAY = new Task[0];
+  public static final Task[] EMPTY_ARRAY = new Task[0];
 
   /**
    * Global unique task identifier, e.g. IDEA-00001. It's important that its format is consistent with

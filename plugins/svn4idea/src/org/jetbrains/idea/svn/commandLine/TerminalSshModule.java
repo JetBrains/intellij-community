@@ -90,13 +90,10 @@ public class TerminalSshModule extends BaseTerminalModule {
     final Project project = myRuntime.getVcs().getProject();
     final Ref<Integer> answer = new Ref<>();
 
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        final ServerSSHDialog dialog = new ServerSSHDialog(project, true, unknownHost, fingerprintAlgorithm, hostFingerprint);
-        dialog.show();
-        answer.set(dialog.getResult());
-      }
+    Runnable command = () -> {
+      final ServerSSHDialog dialog = new ServerSSHDialog(project, true, unknownHost, fingerprintAlgorithm, hostFingerprint);
+      dialog.show();
+      answer.set(dialog.getResult());
     };
 
     // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in

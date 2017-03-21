@@ -450,7 +450,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20757
   public void testMinElseNone() {
-    doTest("Union[None, Any]",
+    doTest("Optional[Any]",
            "def get_value(v):\n" +
            "    if v:\n" +
            "        return min(v)\n" +

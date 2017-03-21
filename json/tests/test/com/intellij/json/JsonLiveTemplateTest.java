@@ -50,7 +50,7 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     assertNotNull(context);
     ((TemplateImpl)template).getTemplateContext().setEnabled(context, true);
 
-    CodeInsightTestUtil.addTemplate(template, getTestRootDisposable());
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
     return template;
   }
 

@@ -69,6 +69,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
@@ -495,6 +496,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
           Ref<VirtualFile> lastUsageFileRef = new Ref<>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
+            if(isCancelled()) {
+              return false;
+            }
             final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
             usage.getPresentation().getIcon(); // cache icon
 
@@ -506,6 +510,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             }
 
             ApplicationManager.getApplication().invokeLater(() -> {
+              if (isCancelled()) return;
               model.addRow(new Object[]{usage});
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
@@ -514,7 +519,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
             return new Continuation(() -> {
-              if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
+              if (!isCancelled()) {
                 int occurrences = resultsCount.get();
                 int filesWithOccurrences = resultsFilesCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -531,6 +536,10 @@ public class FindDialog extends DialogWrapper implements FindUI {
             }, state);
           }
           return null;
+        }
+
+        boolean isCancelled() {
+          return progressIndicatorWhenSearchStarted != myResultsPreviewSearchProgress || myResultsPreviewSearchProgress.isCanceled();
         }
 
         @Override
@@ -644,7 +653,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             int index = myResultsPreviewTable.getSelectionModel().getLeadSelectionIndex();
             if (index != -1) {
               UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
-              myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+              myUsagePreviewPanel.updateLayout(usageInfo.isValid() ? Collections.singletonList(usageInfo) : null);
               VirtualFile file = usageInfo.getVirtualFile();
               myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? file.getPath() : "", false));
             }
@@ -1596,6 +1605,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
+          if (!((UsageInfo2UsageAdapter)value).isValid()) {
+            myUsageRenderer.append(" "+UsageViewBundle.message("node.invalid") + " ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          }
           TextChunk[] text = ((UsageInfo2UsageAdapter)value).getPresentation().getText();
 
           // skip line number / file info

@@ -258,6 +258,49 @@ public class ControlFlowUtil {
     return false;
   }
 
+  private static int findSingleReadOffset(@NotNull ControlFlow flow, int startOffset, int endOffset, @NotNull PsiVariable variable) {
+    List<Instruction> instructions = flow.getInstructions();
+    if (startOffset < 0 || endOffset < 0 || endOffset > instructions.size()) return -1;
+
+    int readOffset = -1;
+    for (int i = startOffset; i < endOffset; i++) {
+      Instruction instruction = instructions.get(i);
+      if (instruction instanceof ReadVariableInstruction) {
+        if (((ReadVariableInstruction)instruction).variable == variable) {
+          if (readOffset < 0) {
+            readOffset = i;
+          }
+          else {
+            return -1;
+          }
+        }
+      }
+      else if (instruction instanceof WriteVariableInstruction) {
+        if (((WriteVariableInstruction)instruction).variable == variable) {
+          return -1;
+        }
+      }
+    }
+    return readOffset;
+  }
+
+  /**
+   * If the variable occurs only once in the element and it's read access return that occurrence
+   */
+  public static PsiReferenceExpression findSingleReadOccurrence(@NotNull ControlFlow flow,
+                                                                @NotNull PsiElement element,
+                                                                @NotNull PsiVariable variable) {
+    int readOffset = findSingleReadOffset(flow, flow.getStartOffset(element), flow.getEndOffset(element), variable);
+    if (readOffset >= 0) {
+      PsiElement readElement = flow.getElement(readOffset);
+      readElement = PsiTreeUtil.findFirstParent(readElement, false, e -> e == element || e instanceof PsiReferenceExpression);
+      if (readElement instanceof PsiReferenceExpression) {
+        return (PsiReferenceExpression)readElement;
+      }
+    }
+    return null;
+  }
+
   public static boolean isVariableReadInFinally(@NotNull ControlFlow flow,
                                                 @Nullable PsiElement startElement,
                                                 @NotNull PsiElement enclosingCodeFragment,
@@ -300,6 +343,7 @@ public class ControlFlowUtil {
     return array;
   }
 
+  @NotNull
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     ArrayList<PsiVariable> array = new ArrayList<>();
@@ -965,6 +1009,7 @@ public class ControlFlowUtil {
     return visitor.getResult().booleanValue();
   }
 
+  @NotNull
   public static Object[] getAllWorldProblemsAtOnce(final ControlFlow flow) {
     InstructionClientVisitor[] visitors = {
       new ReturnPresentClientVisitor(flow),
@@ -2001,6 +2046,7 @@ public class ControlFlowUtil {
       }
     }
 
+    @NotNull
     int[] getNextOffsets(int offset) {
       return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtil.EMPTY_INT_ARRAY;
     }

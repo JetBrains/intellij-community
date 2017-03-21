@@ -306,7 +306,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
         }
       }
     }
-    else {
+    if (gd == null) {
       gd = env.getDefaultScreenDevice();
       screen = gd.getDefaultConfiguration().getBounds();
     }

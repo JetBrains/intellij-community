@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -84,7 +84,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   private boolean myUseSoftWraps;
   private int myTabWidth = -1;
-  private final FontPreferences myFontPreferences = new FontPreferences();
+  private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold

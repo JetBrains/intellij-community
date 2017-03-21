@@ -69,6 +69,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     myElement = element;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return myReferences;
   }

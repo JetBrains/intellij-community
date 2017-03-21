@@ -110,7 +110,10 @@ public class JavaFxModuleUtil {
     }
 
     private static ModificationTracker getModificationTracker(@NotNull Project project) {
-      return project.getUserData(KEY);
+      return () -> {
+        final ModificationTracker tracker = project.getUserData(KEY);
+        return tracker != null ? tracker.getModificationCount() + 1 : 0;
+      };
     }
 
     @Override

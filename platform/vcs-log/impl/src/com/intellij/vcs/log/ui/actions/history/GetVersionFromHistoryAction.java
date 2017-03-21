@@ -20,11 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.GetVersionAction;
+import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

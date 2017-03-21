@@ -55,6 +55,7 @@ public class VariableShadowingInspection extends XsltInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(final XmlTag tag) {

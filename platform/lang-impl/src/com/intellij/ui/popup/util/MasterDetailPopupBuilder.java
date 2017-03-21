@@ -199,7 +199,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     }
 
     if (myDetailView == null) {
-      myDetailView = new DetailViewImpl(myProject);
+      setDetailView(new DetailViewImpl(myProject));
     }
 
     myPathLabel = new JLabel(" ");

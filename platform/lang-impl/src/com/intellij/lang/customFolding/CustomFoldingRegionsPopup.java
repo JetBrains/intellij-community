@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,12 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @author Rustam Vishnyakov
@@ -39,11 +36,7 @@ public class CustomFoldingRegionsPopup {
   public static void show(@NotNull final Collection<FoldingDescriptor> descriptors,
                           @NotNull final Editor editor,
                           @NotNull final Project project) {
-    List<MyFoldingDescriptorWrapper> model =
-      orderByPosition(descriptors)
-        .stream()
-        .map(descriptor -> new MyFoldingDescriptorWrapper(descriptor))
-        .collect(Collectors.toList());
+    List<MyFoldingDescriptorWrapper> model = orderByPosition(descriptors);
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
       .setTitle(IdeBundle.message("goto.custom.region.command"))
@@ -64,9 +57,11 @@ public class CustomFoldingRegionsPopup {
 
   private static class MyFoldingDescriptorWrapper {
     private final @NotNull FoldingDescriptor myDescriptor;
+    private final int myIndent;
 
-    private MyFoldingDescriptorWrapper(@NotNull FoldingDescriptor descriptor) {
+    private MyFoldingDescriptorWrapper(@NotNull FoldingDescriptor descriptor, int indent) {
       myDescriptor = descriptor;
+      myIndent = indent;
     }
 
     @NotNull
@@ -77,11 +72,11 @@ public class CustomFoldingRegionsPopup {
     @Nullable
     @Override
     public String toString() {
-      return myDescriptor.getPlaceholderText();
+      return StringUtil.repeat("  ", myIndent) + myDescriptor.getPlaceholderText();
     }
   }
 
-  private static List<FoldingDescriptor> orderByPosition(Collection<FoldingDescriptor> descriptors) {
+  private static List<MyFoldingDescriptorWrapper> orderByPosition(Collection<FoldingDescriptor> descriptors) {
     List<FoldingDescriptor> sorted = new ArrayList<>(descriptors.size());
     sorted.addAll(descriptors);
     Collections.sort(sorted, (descriptor1, descriptor2) -> {
@@ -89,7 +84,14 @@ public class CustomFoldingRegionsPopup {
       int pos2 = descriptor2.getElement().getTextRange().getStartOffset();
       return pos1 - pos2;
     });
-    return sorted;
+    Stack<FoldingDescriptor> stack = new Stack<>();
+    List<MyFoldingDescriptorWrapper> result = new ArrayList<>();
+    for (FoldingDescriptor descriptor : sorted) {
+      while (!stack.isEmpty() && descriptor.getRange().getStartOffset() >= stack.peek().getRange().getEndOffset()) stack.pop();
+      result.add(new MyFoldingDescriptorWrapper(descriptor, stack.size()));
+      stack.push(descriptor);
+    }
+    return result;
   }
 
   private static void navigateTo(@NotNull Editor editor, @NotNull PsiElement element) {

@@ -1,4 +1,4 @@
-// "Replace IntStream.range().map() with collection.stream()" "true"
+// "Replace IntStream.range().map() with list.stream()" "true"
 
 import java.util.ArrayList;
 import java.util.List;

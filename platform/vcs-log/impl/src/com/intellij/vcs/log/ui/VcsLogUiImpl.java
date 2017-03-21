@@ -10,6 +10,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl;
@@ -150,7 +151,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   private class MyVcsLogUiPropertiesListener extends VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener {
     @Override
     public void onShowDetailsChanged() {
-      myMainFrame.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
+      myMainFrame.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
     }
 
     @Override
@@ -181,6 +182,16 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     @Override
     public void onShowTagNamesChanged() {
       myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+    }
+
+    @Override
+    public void onColumnWidthChanged(int column) {
+      myMainFrame.getGraphTable().forceReLayout(column);
+    }
+
+    @Override
+    public void onColumnOrderChanged() {
+      myMainFrame.getGraphTable().onColumnOrderSettingChanged();
     }
 
     @Override

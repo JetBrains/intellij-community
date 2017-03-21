@@ -48,6 +48,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -59,6 +60,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBProgressBar;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
@@ -140,14 +142,17 @@ public abstract class DiffRequestProcessor implements Disposable {
     JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
     JPanel topPanel = JBUI.Panels.simplePanel(myToolbar.getComponent()).addToRight(statusPanel);
 
+    Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
+    bottomContentSplitter.setFirstComponent(myContentPanel);
+
     myMainPanel.add(topPanel, BorderLayout.NORTH);
-    myMainPanel.add(myContentPanel, BorderLayout.CENTER);
+    myMainPanel.add(bottomContentSplitter, BorderLayout.CENTER);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 
     JComponent bottomPanel = myContext.getUserData(DiffUserDataKeysEx.BOTTOM_PANEL);
-    if (bottomPanel != null) myMainPanel.add(bottomPanel, BorderLayout.SOUTH);
+    if (bottomPanel != null) bottomContentSplitter.setSecondComponent(bottomPanel);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
     myState = EmptyState.INSTANCE;

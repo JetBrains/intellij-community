@@ -207,6 +207,39 @@ public class RegistryValue {
     myChangedSinceStart = true;
   }
 
+  public void setValue(boolean value, Disposable parentDisposable) {
+    final boolean prev = asBoolean();
+    setValue(value);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setValue(prev);
+      }
+    });
+  }
+
+  public void setValue(int value, Disposable parentDisposable) {
+    final int prev = asInteger();
+    setValue(value);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setValue(prev);
+      }
+    });
+  }
+
+  public void setValue(String value, Disposable parentDisposable) {
+    final String prev = asString();
+    setValue(value);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        setValue(prev);
+      }
+    });
+  }
+
   boolean isChangedSinceAppStart() {
     return myChangedSinceStart;
   }

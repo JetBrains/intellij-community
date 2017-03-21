@@ -1416,9 +1416,12 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  @SuppressWarnings({"unchecked", "LambdaUnfriendlyMethodOverload"})
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
+    if (iterables.length == 0) return emptyIterable();
+    if (iterables.length == 1) return (Iterable<T>)iterables[0];
     return new Iterable<T>() {
       @NotNull
       @Override
@@ -1428,8 +1431,7 @@ public class ContainerUtil extends ContainerUtilRt {
           Iterable<? extends T> iterable = iterables[i];
           iterators[i] = iterable.iterator();
         }
-        @SuppressWarnings("unchecked") Iterator<T> i = concatIterators(iterators);
-        return i;
+        return concatIterators(iterators);
       }
     };
   }

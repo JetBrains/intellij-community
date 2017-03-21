@@ -22,10 +22,8 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -34,6 +32,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,12 +43,25 @@ import java.util.List;
 
 public class RemoveChangeListAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
-    boolean visible = canRemoveChangeLists(e.getProject(), e.getData(VcsDataKeys.CHANGE_LISTS));
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    boolean visible = canRemoveChangeLists(e.getProject(), changeLists);
 
-    e.getPresentation().setEnabled(visible);
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(visible);
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-      e.getPresentation().setVisible(visible);
+      presentation.setVisible(visible);
     }
+    presentation.setDescription(ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ? presentation.getText() : getDescription(changeLists));
+  }
+
+  private static String getDescription(@Nullable ChangeList[] changeLists) {
+    return ActionsBundle.message("action.ChangesView.RemoveChangeList.description",
+                                 containsActiveChangelist(changeLists) ? "another changelist" : "active one");
+  }
+
+  private static boolean containsActiveChangelist(@Nullable ChangeList[] changeLists) {
+    if (changeLists == null) return false;
+    return ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
   }
 
   private static boolean canRemoveChangeLists(@Nullable Project project, @Nullable ChangeList[] lists) {

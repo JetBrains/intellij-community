@@ -70,7 +70,7 @@ class A {
         def message = "java scrtucture: $javaStructureCount, out of code block: $outOfCodeBlockCount"
         changeTraces << new Throwable(message)
       }
-      project.messageBus.connect testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
+      project.messageBus.connect myFixture.testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
     }
     fixture.type " "
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)

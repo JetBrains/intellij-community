@@ -52,7 +52,7 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testStubIndexMismatch() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
 
     VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy")
     final Project project = myFixture.getProject()

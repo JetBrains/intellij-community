@@ -99,13 +99,18 @@ public class PyDocReference extends PyReferenceImpl {
   @Nullable
   private PsiElement getScopeControlFlowAnchor(@NotNull PsiLanguageInjectionHost host) {
     if (isInsideFormattedStringNode(host)) {
-      final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, PyDocReference::isComprehensionResultOrComponent);
-      if (comprehensionPart != null) {
-        return comprehensionPart;
-      }
-      return PsiTreeUtil.getParentOfType(host, PyStatement.class);
+      return getControlFlowAnchorForFString((PyStringLiteralExpression)host);
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiElement getControlFlowAnchorForFString(@NotNull PyStringLiteralExpression host) {
+    final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, PyDocReference::isComprehensionResultOrComponent);
+    if (comprehensionPart != null) {
+      return comprehensionPart;
+    }
+    return PsiTreeUtil.getParentOfType(host, PyStatement.class);
   }
 
   private static boolean isComprehensionResultOrComponent(@NotNull PsiElement element) {

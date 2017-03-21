@@ -45,9 +45,12 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
     final FileType type = file.getFileType();
     if (type != StdFileTypes.PROPERTIES && type != StdFileTypes.XML) return false;
 
-    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
-    PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
-    return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) return Boolean.FALSE;
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
+      return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
+    });
   }
 
   @Override

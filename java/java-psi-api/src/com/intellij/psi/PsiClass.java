@@ -116,6 +116,7 @@ public interface PsiClass
    *
    * @return the list of interfaces.
    */
+  @NotNull
   PsiClass[] getInterfaces();
 
   /**
@@ -124,7 +125,8 @@ public interface PsiClass
    * @return the list of classes or interfaces. May return zero elements when jdk is
    *         not configured, so no java.lang.Object is found
    */
-  @NotNull PsiClass[] getSupers();
+  @NotNull
+  PsiClass[] getSupers();
 
   /**
    * Returns the list of class types for the classes and interfaces extended or

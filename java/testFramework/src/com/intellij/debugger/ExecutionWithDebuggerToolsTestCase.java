@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,11 +240,18 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     println("frameProxy(" + frameIndex + ") = " + method, ProcessOutputTypes.SYSTEM);
   }
 
+  private static String toDisplayableString(SourcePosition sourcePosition) {
+    int line = sourcePosition.getLine();
+    if (line >= 0) {
+      line++;
+    }
+    return sourcePosition.getFile().getVirtualFile().getName() + ":" + line;
+  }
+
   protected void printContext(final StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
-        SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
-        println(sourcePosition.getFile().getVirtualFile().getName() + ":" + sourcePosition.getLine(), ProcessOutputTypes.SYSTEM);
+        println(toDisplayableString(PositionUtil.getSourcePosition(context)), ProcessOutputTypes.SYSTEM);
       }
       else {
         println("Context thread is null", ProcessOutputTypes.SYSTEM);
@@ -265,10 +272,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           + text.subSequence(offset, Math.min(offset + 20, text.length())) + "]");
         }
 
-        println(sourcePosition.getFile().getVirtualFile().getName()
-                + ":" + sourcePosition.getLine()
-                + positionText,
-                ProcessOutputTypes.SYSTEM);
+        println(toDisplayableString(sourcePosition) + positionText, ProcessOutputTypes.SYSTEM);
       }
       else {
         println("Context thread is null", ProcessOutputTypes.SYSTEM);

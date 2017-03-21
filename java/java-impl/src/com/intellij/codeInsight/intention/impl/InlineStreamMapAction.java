@@ -45,7 +45,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   private static final Set<String> MAP_METHODS =
     StreamEx.of("map", "mapToInt", "mapToLong", "mapToDouble", "mapToObj", "boxed", "asLongStream", "asDoubleStream").toSet();
 
-  private static final Set<String> NEXT_METHODS = StreamEx
+  public static final Set<String> NEXT_METHODS = StreamEx
     .of("flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "forEach", "forEachOrdered", "anyMatch", "noneMatch", "allMatch")
     .append(MAP_METHODS).toSet();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,81 +24,35 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/29/2014
+ * @since 3/10/2017
  */
-public class ImportSpec {
-  @NotNull private final Project myProject;
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  private boolean forceWhenUptodate;
-  private boolean whenAutoImportEnabled;
-  @Nullable private ExternalProjectRefreshCallback myCallback;
-  //private boolean isPreviewMode;
-  //private boolean isReportRefreshError;
-
-  public ImportSpec(@NotNull Project project, @NotNull ProjectSystemId id) {
-    myProject = project;
-    myExternalSystemId = id;
-    myProgressExecutionMode = ProgressExecutionMode.MODAL_SYNC;
-  }
+public interface ImportSpec {
 
   @NotNull
-  public Project getProject() {
-    return myProject;
-  }
+  Project getProject();
 
   @NotNull
-  public ProjectSystemId getExternalSystemId() {
-    return myExternalSystemId;
-  }
+  ProjectSystemId getExternalSystemId();
 
   @NotNull
-  public ProgressExecutionMode getProgressExecutionMode() {
-    return myProgressExecutionMode;
-  }
+  ProgressExecutionMode getProgressExecutionMode();
 
-  public void setProgressExecutionMode(@NotNull ProgressExecutionMode progressExecutionMode) {
-    myProgressExecutionMode = progressExecutionMode;
-  }
+  boolean isForceWhenUptodate();
 
-  public boolean isForceWhenUptodate() {
-    return forceWhenUptodate;
-  }
-
-  public void setForceWhenUptodate(boolean forceWhenUptodate) {
-    this.forceWhenUptodate = forceWhenUptodate;
-  }
-
-  public boolean isWhenAutoImportEnabled() {
-    return whenAutoImportEnabled;
-  }
-
-  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) {
-    this.whenAutoImportEnabled = whenAutoImportEnabled;
-  }
-
-  public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {
-    myCallback = callback;
-  }
+  boolean whenAutoImportEnabled();
 
   @Nullable
-  public ExternalProjectRefreshCallback getCallback() {
-    return myCallback;
-  }
+  ExternalProjectRefreshCallback getCallback();
 
-  //public boolean isPreviewMode() {
-  //  return isPreviewMode;
-  //}
-  //
-  //public void setPreviewMode(boolean isPreviewMode) {
-  //  this.isPreviewMode = isPreviewMode;
-  //}
-  //
-  //public boolean isReportRefreshError() {
-  //  return isReportRefreshError;
-  //}
-  //
-  //public void setReportRefreshError(boolean isReportRefreshError) {
-  //  this.isReportRefreshError = isReportRefreshError;
-  //}
+  boolean isPreviewMode();
+
+  boolean shouldCreateDirectoriesForEmptyContentRoots();
+
+  boolean isReportRefreshError();
+
+  @Nullable
+  String getVmOptions();
+
+  @Nullable
+  String getArguments();
 }

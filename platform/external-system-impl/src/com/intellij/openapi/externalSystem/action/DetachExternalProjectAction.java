@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -50,6 +51,17 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
     getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if(this.getClass() != DetachExternalProjectAction.class) return;
+
+    ProjectSystemId systemId = getSystemId(e);
+    final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
+    Presentation presentation = e.getPresentation();
+    presentation.setText(ExternalSystemBundle.message("action.detach.external.project.text", systemIdName));
   }
 
   @Override

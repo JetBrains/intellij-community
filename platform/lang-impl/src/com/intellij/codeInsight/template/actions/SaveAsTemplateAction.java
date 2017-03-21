@@ -26,7 +26,6 @@ package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
-import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.completion.OffsetsInFile;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.*;
@@ -49,10 +48,7 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SaveAsTemplateAction extends AnAction {
 
@@ -61,8 +57,8 @@ public class SaveAsTemplateAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = Objects.requireNonNull(CommonDataKeys.EDITOR.getData(dataContext));
+    PsiFile file = Objects.requireNonNull(CommonDataKeys.PSI_FILE.getData(dataContext));
 
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();

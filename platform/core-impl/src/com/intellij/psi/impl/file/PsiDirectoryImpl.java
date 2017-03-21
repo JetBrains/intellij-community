@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
@@ -77,7 +78,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public boolean isValid() {
-    return myFile.isValid();
+    return myFile.isValid() && !getProject().isDisposed();
   }
 
   @Override
@@ -167,6 +168,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiDirectory findSubdirectory(@NotNull String name) {
+    ProgressManager.checkCanceled();
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findDirectory(childVFile);
@@ -174,6 +176,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiFile findFile(@NotNull String name) {
+    ProgressManager.checkCanceled();
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     if (!childVFile.isValid()) {

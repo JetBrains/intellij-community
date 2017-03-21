@@ -568,11 +568,21 @@ public class ScrollingUtil {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null);
+      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent));
     }
   }
 
+  public static boolean isEmpty(JComponent component) {
+    if (component instanceof JTable) return ((JTable)component).getRowCount() < 1;
+    if (component instanceof JList) return ((JList)component).getModel().getSize() <1;
+    return false;
+  }
+
   public static void installActions(final JTable table, final boolean cycleScrolling) {
+    installActions(table, cycleScrolling, null);
+  }
+
+  public static void installActions(final JTable table, final boolean cycleScrolling, JComponent focusParent) {
     ActionMap actionMap = table.getActionMap();
     actionMap.put(SCROLLUP_ACTION_ID, new MoveAction(SCROLLUP_ACTION_ID, table, cycleScrolling));
     actionMap.put(SCROLLDOWN_ACTION_ID, new MoveAction(SCROLLDOWN_ACTION_ID, table, cycleScrolling));
@@ -582,6 +592,7 @@ public class ScrollingUtil {
     actionMap.put(SELECT_FIRST_ROW_ACTION_ID, new MoveAction(SELECT_FIRST_ROW_ACTION_ID, table, cycleScrolling));
 
     maybeInstallDefaultShortcuts(table);
+    JComponent target = focusParent == null ? table : focusParent;
 
     new MyScrollingAction(table) {
       @Override
@@ -595,42 +606,44 @@ public class ScrollingUtil {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        moveHome(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), table);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        moveEnd(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
+    if (!(focusParent instanceof JTextComponent)) {
+      new MyScrollingAction(table) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          moveHome(table);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), target);
+      new MyScrollingAction(table) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          moveEnd(table);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), target);
+    }
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveDown(table, e.getModifiers(), cycleScrolling);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveUp(table, e.getModifiers(), cycleScrolling);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         movePageUp(table);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), target);
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         movePageDown(table);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
   }
 
   static class MoveAction extends AbstractAction {

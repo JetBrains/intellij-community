@@ -262,7 +262,7 @@ class Test implements A {
       String[] getAnnotations(Project project) {
         return ["a.A"]
       }
-    }, getTestRootDisposable())
+    }, myFixture.getTestRootDisposable())
     myFixture.configureByText "test.java", """\
       import java.util.*;
       import a.*;

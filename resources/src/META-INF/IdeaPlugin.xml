@@ -105,13 +105,6 @@
     <extensionPoint name="junitRecognizer"
                     interface="com.intellij.execution.JUnitRecognizer"/>
 
-    <extensionPoint name="i18nInspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-    <extensionPoint name="invalidPropertyKeyInspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-    <extensionPoint name="java15InspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-
     <extensionPoint name="deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint"/>
     <extensionPoint name="predefinedMigrationMapProvider"
@@ -334,6 +327,8 @@
     <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
 
     <extensionPoint name="java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
+
+    <extensionPoint name="java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -862,6 +857,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
                      displayName="Replace with Map.forEach"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java9CollectionFactory"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java19api.Java9CollectionFactoryInspection"
+                     displayName="Immutable collection creation can be replaced with collection factory call"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExcessiveLambdaUsage"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
@@ -907,6 +907,11 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
                      displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalAssignedToNull"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OptionalAssignedToNullInspection"
+                     displayName="Null value for Optional type"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
@@ -916,6 +921,14 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
                      bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
+    <localInspection language="JAVA" shortName="JavaLangInvokeHandleSignature" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.handle.signature.name"
+                     implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection"/>
+    <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     displayName="Move field assignment to initializer"
+                     implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -931,6 +944,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InlineStreamMapAction</className>
+      <category>Java/Streams</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExtractChainedMapAction</className>
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
@@ -1058,10 +1075,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.MoveFieldAssignmentToInitializerAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
@@ -1605,6 +1618,7 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
 
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
@@ -1890,7 +1904,15 @@
 
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
 
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CollectionChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CompletionStageChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.GuavaFluentIterableChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.OptionalChainCallExtractor"/>
+
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
+
+    <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter" />
   </extensions>
 
   <actions>
@@ -1912,5 +1934,9 @@
     <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
+
   </actions>
 </idea-plugin>

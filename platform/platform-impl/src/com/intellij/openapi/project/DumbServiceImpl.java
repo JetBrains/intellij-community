@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private static Throwable ourForcedTrace;
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
@@ -168,8 +167,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void queueTask(@NotNull final DumbModeTask task) {
+  public void queueTask(@NotNull DumbModeTask task) {
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
+    LOG.assertTrue(!myProject.isDefault(), "No indexing tasks should be created for default project: " + task);
     final Application application = ApplicationManager.getApplication();
 
     if ((application.isUnitTestMode() || application.isHeadlessEnvironment()) && !application.isOnAir()) {
@@ -195,7 +195,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @VisibleForTesting
   void queueAsynchronousTask(@NotNull DumbModeTask task) {
-    Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
+    Throwable trace = new Throwable(); // please report exceptions here to peter
     TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
     Runnable runnable = () -> queueTaskOnEdt(task, contextTransaction, trace);
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -251,20 +251,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  @NotNull
-  public static AccessToken forceDumbModeStartTrace(@NotNull Throwable trace) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Throwable prev = ourForcedTrace;
-    ourForcedTrace = trace;
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourForcedTrace = prev;
-      }
-    };
-  }
-
   private void queueUpdateFinished() {
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
@@ -307,7 +293,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           runnable.run();
         }
         catch (ProcessCanceledException e) {
-          LOG.error("Task canceled: " + runnable, new Attachment("pce.trace", ExceptionUtil.getThrowableText(e)));
+          LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
         }
         catch (Throwable e) {
           LOG.error("Error executing task " + runnable, e);

@@ -74,6 +74,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
@@ -240,11 +241,6 @@ public abstract class PluginManagerMain implements Disposable {
 
   public PluginTable getPluginTable() {
     return pluginTable;
-  }
-
-  @NotNull
-  public static List<PluginId> mapToPluginIds(List<IdeaPluginDescriptor> plugins) {
-    return ContainerUtil.map(plugins, descriptor -> descriptor.getPluginId());
   }
 
   private static String getTextPrefix() {
@@ -414,11 +410,15 @@ public abstract class PluginManagerMain implements Disposable {
                                         final List<PluginId> allPlugins,
                                         final Runnable onSuccess,
                                         @Nullable final Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins, allPlugins, onSuccess, new PluginEnabler.HEADLESS(), cleanup);
+    return downloadPlugins(plugins,
+                           allPlugins.stream().map(p -> new PluginNode(p, p.getIdString(), "-1")).collect(Collectors.toList()),
+                           onSuccess,
+                           new PluginEnabler.HEADLESS(),
+                           cleanup);
   }
 
   public static boolean downloadPlugins(final List<PluginNode> plugins,
-                                        final List<PluginId> allPlugins,
+                                        final List<IdeaPluginDescriptor> allPlugins,
                                         final Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable final Runnable cleanup) throws IOException {

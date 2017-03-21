@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -149,10 +150,7 @@ public class PlatformTestUtil {
         return presentation;
       }
     }
-    if (node == null) {
-      return "NULL";
-    }
-    return node.toString();
+    return String.valueOf(node);
   }
 
   public static String print(JTree tree, boolean withSelection) {
@@ -196,13 +194,7 @@ public class PlatformTestUtil {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
     final Object userObject = defaultMutableTreeNode.getUserObject();
-    String nodeText;
-    if (userObject != null) {
-      nodeText = toString(userObject, printInfo);
-    }
-    else {
-      nodeText = "null";
-    }
+    String nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
@@ -251,7 +243,7 @@ public class PlatformTestUtil {
   }
 
   @TestOnly
-  public static void waitForAlarm(final int delay) throws InterruptedException {
+  public static void waitForAlarm(final int delay) {
     Application app = ApplicationManager.getApplication();
     assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
     assert app.isDispatchThread();
@@ -299,7 +291,7 @@ public class PlatformTestUtil {
                                    "; app.disposed=" + app.isDisposed() +
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                   "\n delayQueue=" + ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue() +
+                                   "\n delayQueue=" + StringUtil.trimLog(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue(), 1000) +
                                    "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
           );
         }
@@ -311,10 +303,13 @@ public class PlatformTestUtil {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  /**
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
@@ -325,14 +320,21 @@ public class PlatformTestUtil {
     }
   }
 
+  /**
+   * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
   @TestOnly
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     //noinspection StatementWithEmptyBody
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
+  /**
+   * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
   @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
@@ -490,7 +492,7 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();
+   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
@@ -542,7 +544,7 @@ public class PlatformTestUtil {
     private final ThrowableRunnable test; // runnable to measure
     private final int expectedMs;           // millis the test is expected to run
     private ThrowableRunnable setup;      // to run before each test
-    private boolean usesAllCPUCores;      // true if the test runs faster on multi-core
+    private int usedEtalonCpuCores = 1;
     private int attempts = 4;             // number of retries if performance failed
     private final String message;         // to print on fail
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
@@ -559,7 +561,9 @@ public class PlatformTestUtil {
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesAllCPUCores() { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usesAllCPUCores = true; return this; }
+    public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+    public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores";usedEtalonCpuCores = maxCores; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
@@ -586,6 +590,9 @@ public class PlatformTestUtil {
           if (setup != null) setup.run();
           data = CpuUsageData.measureCpuUsage(test);
         }
+        catch (RuntimeException|Error throwable) {
+          throw throwable;
+        }
         catch (Throwable throwable) {
           throw new RuntimeException(throwable);
         }
@@ -593,9 +600,10 @@ public class PlatformTestUtil {
 
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
+          int coreCountUsedHere = usedEtalonCpuCores < 8 ? Math.min(JobSchedulerImpl.CORES_COUNT, usedEtalonCpuCores) : JobSchedulerImpl.CORES_COUNT;
+          expectedOnMyMachine *= usedEtalonCpuCores;
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING, useLegacyScaling);
-
-          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 : expectedOnMyMachine;
+          expectedOnMyMachine /= coreCountUsedHere;
         }
         if (adjustForIO) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING, useLegacyScaling);

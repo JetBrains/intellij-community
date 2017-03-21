@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,27 +69,28 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
     controlsPanel.add(new JLabel(getSchemeTypeName() + ":"));
-    controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+    controlsPanel.add(Box.createRigidArea(new JBDimension(10, 0)));
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
+    controlsPanel.add(Box.createRigidArea(new JBDimension(6, 0)));
     controlsPanel.add(myToolbar);
-    controlsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+    controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
     add(controlsPanel);
-    add(Box.createRigidArea(new Dimension(0, 12)));
+    add(Box.createRigidArea(new JBDimension(0, 12)));
     add(new JSeparator());
     add(Box.createVerticalGlue());
-    add(Box.createRigidArea(new Dimension(0, 10)));
+    add(Box.createRigidArea(new JBDimension(0, 10)));
   }
   
   private JComponent createToolbar() {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarActionGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
@@ -178,6 +181,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   protected abstract boolean highlightNonDefaultSchemes();
 
+  public abstract boolean useBoldForNonRemovableSchemes();
+
   public void showStatus(final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
@@ -209,7 +214,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     public void actionPerformed(AnActionEvent e) {
       final ListPopup actionGroupPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
-      actionGroupPopup.show(new RelativePoint(myParentComponent, new Point(2, myParentComponent.getHeight() - 1)));
+      actionGroupPopup.show(new RelativePoint(myParentComponent, new Point(JBUI.scale(2), myParentComponent.getHeight() - JBUI.scale(1))));
     }
   }
 }

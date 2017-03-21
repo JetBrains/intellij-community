@@ -40,7 +40,6 @@ public class I18NInspectionTest extends InspectionTestCase {
      }
    }
 
-  public void testFormTabbedPaneTitle() throws Exception { doTest(); }
   public void testVarargNonNlsParameter() throws Exception { doTest(); }
   public void testInitializerInAnonymousClass() throws Exception{ doTest(); }
   public void testNonNlsArray() throws Exception{ doTest(); }

@@ -135,6 +135,7 @@ public class Descriptor {
     return element;
   }
 
+  @NotNull
   public String[] getGroup() {
     return myGroup;
   }

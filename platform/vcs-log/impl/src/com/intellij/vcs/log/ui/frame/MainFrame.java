@@ -24,6 +24,7 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
@@ -103,7 +104,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
-    setupDetailsSplitter(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
+    setupDetailsSplitter(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
     myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
@@ -198,7 +199,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull
   private ActionToolbar createActionsToolbar(@NotNull DefaultActionGroup mainGroup) {
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar;
   }

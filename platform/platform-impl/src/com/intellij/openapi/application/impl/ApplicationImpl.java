@@ -80,6 +80,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
+import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
@@ -221,7 +222,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
-      AppExecutorUtil.getAppScheduledExecutorService(); // instantiate AppDelayQueue which marks "Periodic task thread" busy to prevent this EDT to die
+      // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
+      // that thread was chosen because we know for sure it's running
+      AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+      Thread thread = service.getPeriodicTasksThread();
+      AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
+      Disposer.register(this, () -> {
+        AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
+      });
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
@@ -871,12 +879,40 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     };
 
     if (hasUnsafeBgTasks || option.isToBeShown()) {
+      AtomicBoolean alreadyGone = new AtomicBoolean(false);
+      if (hasUnsafeBgTasks) {
+        Runnable dialogRemover = Messages.createMessageDialogRemover(null);
+        Runnable task = new Runnable() {
+          @Override
+          public void run() {
+            if (alreadyGone.get()) return;
+            if (!ProgressManager.getInstance().hasUnsafeProgressIndicator()) {
+              alreadyGone.set(true);
+              dialogRemover.run();
+            }
+            else {
+              JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+            }
+          }
+        };
+        JobScheduler.getScheduler().schedule(task, 1, TimeUnit.SECONDS);
+      }
       String name = ApplicationNamesInfo.getInstance().getFullProductName();
       String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
       int result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
         .yesText(ApplicationBundle.message("command.exit"))
         .noText(CommonBundle.message("button.cancel"))
         .doNotAsk(option).show();
+      if (alreadyGone.getAndSet(true)) {
+        if (!option.isToBeShown()) {
+          return true;
+        }
+        result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
+                                            ApplicationBundle.message("exit.confirm.prompt", name))
+          .yesText(ApplicationBundle.message("command.exit"))
+          .noText(CommonBundle.message("button.cancel"))
+          .doNotAsk(option).show();
+      }
       if (result != Messages.YES) {
         return false;
       }

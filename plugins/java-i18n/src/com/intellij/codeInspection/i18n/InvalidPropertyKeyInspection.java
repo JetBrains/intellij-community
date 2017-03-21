@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -24,8 +23,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nUtil;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -123,22 +120,6 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
-  }
-
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
-    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(
-      ToolExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL);
-    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
-    for (FileCheckingInspection obj : fileCheckingInspections) {
-      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
-      if (descriptors != null) {
-        return descriptors;
-      }
-    }
-
-    return null;
   }
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {

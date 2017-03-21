@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
@@ -35,17 +36,30 @@ public class RedundantSuppressTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myInspectionToolWrappers = new InspectionToolWrapper[]{
+      new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
+      @NotNull
       @Override
       protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
         return myInspectionToolWrappers;
       }
     });
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myWrapper = null;
+    myInspectionToolWrappers = null;
+    super.tearDown();
+  }
+
+  public void testModuleInfo() throws Exception {
+    doTest();
   }
 
   public void testDefaultFile() throws Exception {

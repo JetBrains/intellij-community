@@ -683,21 +683,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) {
         return true;
       }
-      final boolean destroyProcess;
-      //noinspection deprecation
-      if (processHandler.isSilentlyDestroyOnClose() || Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
-        destroyProcess = true;
+      GeneralSettings.ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(
+        myProject, descriptor.getDisplayName(), processHandler);
+      if (rc == null) { // cancel
+        return false;
       }
-      else {
-        //todo[nik] this is a temporary solution for the following problem: some configurations should not allow user to choose between 'terminating' and 'detaching'
-        boolean canDisconnect = !Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
-        GeneralSettings.ProcessCloseConfirmation rc =
-          TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), canDisconnect, processHandler.detachIsDefault());
-        if (rc == null) { // cancel
-          return false;
-        }
-        destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
-      }
+      boolean destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
       if (destroyProcess) {
         processHandler.destroyProcess();
       }

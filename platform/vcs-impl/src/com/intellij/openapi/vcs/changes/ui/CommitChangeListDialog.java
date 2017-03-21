@@ -810,6 +810,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myLastSelectedListName = list.getName();
 
+    String listComment = getCommentFromChangelist(list);
+
+    myCommitMessageArea.setText(listComment);
+  }
+
+  private String getCommentFromChangelist(LocalChangeList list) {
+    CommitMessageProvider[] providers = Extensions.getExtensions(CommitMessageProvider.EXTENSION_POINT_NAME);
+    for (CommitMessageProvider provider : providers) {
+      String message = provider.getCommitMessage(list, getProject());
+      if (message != null) return message;
+    }
+
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
       final String listTitle = list.getName();
@@ -817,12 +829,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         listComment = listTitle;
       }
       else {
-        // use last know comment; it is already stored in list
+        // use last known comment; it is already stored in list
         listComment = myLastKnownComment;
       }
     }
-
-    myCommitMessageArea.setText(listComment);
+    return listComment;
   }
 
 

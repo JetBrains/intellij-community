@@ -224,7 +224,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     }
   }
 
-  protected abstract void setText(@NotNull String text);
+  public abstract void setText(@NotNull String text);
   
   public void updateFonts(@NotNull Project project) {
     

@@ -111,6 +111,7 @@ public abstract class GuiTestBase {
           myProjectFrame.waitForBackgroundTasksToFinish();
         }
       });
+      myProjectFrame = null;
     }
     if (myRobot != null) {
       myRobot.cleanUpWithoutDisposingWindows();
@@ -123,6 +124,7 @@ public abstract class GuiTestBase {
           }
         }
       }
+      myRobot = null;
     }
   }
 

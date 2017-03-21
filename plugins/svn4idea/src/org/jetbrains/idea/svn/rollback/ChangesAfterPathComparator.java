@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
@@ -31,12 +30,8 @@ import java.util.Comparator;
  */
 public class ChangesAfterPathComparator implements Comparator<Change> {
   private final static ChangesAfterPathComparator ourInstance = new ChangesAfterPathComparator();
-  private final static Comparator<ContentRevision> ourComparator = new Comparator<ContentRevision>() {
-    @Override
-    public int compare(@NotNull ContentRevision o1, @NotNull ContentRevision o2) {
-      return FileUtil.compareFiles(o1.getFile().getIOFile(), o2.getFile().getIOFile());
-    }
-  };
+  private final static Comparator<ContentRevision> ourComparator =
+    (o1, o2) -> FileUtil.compareFiles(o1.getFile().getIOFile(), o2.getFile().getIOFile());
 
   public static ChangesAfterPathComparator getInstance() {
     return ourInstance;

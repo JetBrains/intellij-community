@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -400,29 +400,28 @@ public class PyPsiUtils {
    * @param element element comments should be adjacent to
    * @return described range or {@code null} if there are no such comments
    */
-  @Nullable
-  public static Couple<PsiComment> getPrecedingComments(@NotNull PsiElement element) {
-    PsiComment firstComment = null, lastComment = null;
-    overComments:
+  @NotNull
+  public static List<PsiComment> getPrecedingComments(@NotNull PsiElement element) {
+    return getPrecedingComments(element, true);
+  }
+
+  @NotNull
+  public static List<PsiComment> getPrecedingComments(@NotNull PsiElement element, boolean stopAtBlankLine) {
+    final ArrayList<PsiComment> result = new ArrayList<>();
     while (true) {
       int newLinesCount = 0;
       for (element = element.getPrevSibling(); element instanceof PsiWhiteSpace; element = element.getPrevSibling()) {
         newLinesCount += StringUtil.getLineBreakCount(element.getText());
-        if (newLinesCount > 1) {
-          break overComments;
-        }
       }
-      if (element instanceof PsiComment) {
-        if (lastComment == null) {
-          lastComment = (PsiComment)element;
-        }
-        firstComment = (PsiComment)element;
-      }
-      else {
+      if ((stopAtBlankLine && newLinesCount > 1) || !(element instanceof PsiComment)) {
         break;
       }
+      else {
+        result.add((PsiComment)element);
+      }
     }
-    return lastComment == null ? null : Couple.of(firstComment, lastComment);
+    Collections.reverse(result);
+    return result;
   }
 
   @NotNull
@@ -624,7 +623,7 @@ public class PyPsiUtils {
     Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
   }
 
-  @NotNull
+  @Nullable
   public static PsiFileSystemItem getFileSystemItem(@NotNull PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       return (PsiFileSystemItem)element;

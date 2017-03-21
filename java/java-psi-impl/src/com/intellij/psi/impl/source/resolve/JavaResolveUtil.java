@@ -163,7 +163,7 @@ public class JavaResolveUtil {
         PsiClass placeTopLevelClass = getTopLevelClass(place, null);
         PsiClass memberTopLevelClass = getTopLevelClass(memberClass, null);
         return manager.areElementsEquivalent(placeTopLevelClass, memberTopLevelClass) &&
-               !isInClassAnnotationParameterList(place, PsiTreeUtil.getContextOfType(place, PsiClass.class, false));
+               !isInClassAnnotationParameterList(place, placeTopLevelClass);
       }
       else {
         return fileResolveScope instanceof PsiClass &&

@@ -19,6 +19,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="antlayout" />
     <orderEntry type="module" module-name="jps-model-api" exported="" />
     <orderEntry type="module" module-name="jps-standalone-builder" exported="" />
     <orderEntry type="module" module-name="util" exported="" />
@@ -35,6 +36,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project"/>
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>
 </module>

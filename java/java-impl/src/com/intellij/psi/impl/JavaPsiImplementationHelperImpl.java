@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public PsiClass getOriginalClass(PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) return (PsiClass)cls;
-    
+
     if (DumbService.isDumb(myProject)) return psiClass;
 
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
@@ -111,7 +111,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
     for (OrderEntry orderEntry : index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile())) {
-      if (!(orderEntry instanceof LibraryOrSdkOrderEntry)) continue;
+      if (!(orderEntry instanceof LibraryOrSdkOrderEntry) || !orderEntry.isValid()) continue;
       for (VirtualFile root : orderEntry.getFiles(OrderRootType.SOURCES)) {
         VirtualFile source = root.findFileByRelativePath(relativePath);
         if (source != null && source.isValid()) {
@@ -252,7 +252,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       }
       return result;
     }
-    
+
     return aClass.getRBrace();
   }
 

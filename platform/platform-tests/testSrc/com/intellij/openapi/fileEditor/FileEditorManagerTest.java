@@ -65,7 +65,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testOpenRecentEditorTab() throws Exception {
-    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
 
     openFiles("  <component name=\"FileEditorManager\">\n" +
         "    <leaf>\n" +
@@ -87,7 +87,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testTrackSelectedEditor() throws Exception {
-    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
     FileEditor[] editors = myManager.openFile(file, true);
@@ -155,8 +155,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testOpenInDumbMode() throws Exception {
-    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
-    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new DumbAwareProvider(), getTestRootDisposable());
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), myFixture.getTestRootDisposable());
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new DumbAwareProvider(), myFixture.getTestRootDisposable());
     try {
       DumbServiceImpl.getInstance(getProject()).setDumb(true);
       VirtualFile file = getFile("/src/foo.bar");

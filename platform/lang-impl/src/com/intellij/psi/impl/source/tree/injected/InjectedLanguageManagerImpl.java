@@ -444,6 +444,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
   }
 
+  @FunctionalInterface
   interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }

@@ -16,6 +16,8 @@
 package com.jetbrains.env.ut;
 
 import com.jetbrains.env.ProcessWithConsoleRunner;
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
 import com.jetbrains.python.testing.universalTests.TestTargetType;
@@ -42,6 +44,13 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnivers
   @Override
   protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
     super.configurationCreatedAndWillLaunch(configuration);
+    if (PythonSdkFlavor.getFlavor(configuration.getSdk()) instanceof CPythonSdkFlavor) {
+      // -Werror checks we do not use deprecated API in runners, but only works for cpython (not iron nor jython)
+      // and we can't use it for pytest/nose, since it is not our responsibility to check them for deprecation api usage
+      // while unit is part of stdlib and does not use deprecated api, so only runners are checked
+      configuration.setInterpreterOptions("-Werror");
+    }
+
     if (myScriptName.startsWith(TEST_PATTERN_PREFIX)) {
       configuration.getTarget().setTargetType(TestTargetType.PATH);
       configuration.getTarget().setTarget(".");

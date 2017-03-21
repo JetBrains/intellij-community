@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     myManager = PsiManager.getInstance(myProject);
     myFileExtensions = ArrayUtil.append(fileExtensions, "class");
     final MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         clearCache();

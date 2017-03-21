@@ -65,7 +65,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     myTabbedPane.setSelectedComponent(component);
     String errorPrefix = myTabbedPane.getTitleAt(myTabbedPane.indexOfComponent(component)) + ": ";
 
-    setOKActionEnabled(! forbidSave);
+    setOKActionEnabled(!forbidSave);
     setInvalid(errorPrefix + text, myTabbedPane);
   }
 
@@ -83,7 +83,8 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
   private boolean applyToTab(final SvnConfigureProxiesComponent component) {
     try {
       component.apply();
-    } catch (ConfigurationException e) {
+    }
+    catch (ConfigurationException e) {
       myTabbedPane.setSelectedComponent(component.createComponent());
       setInvalid(e.getMessage(), myTabbedPane);
       return false;
@@ -97,10 +98,10 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
   }
 
   private boolean applyImpl() {
-    if (! applyToTab(myUserTab)) {
+    if (!applyToTab(myUserTab)) {
       return false;
     }
-    if (! applyToTab(mySystemTab)) {
+    if (!applyToTab(mySystemTab)) {
       return false;
     }
     return true;
@@ -108,7 +109,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
-      if(! applyImpl()) {
+      if (!applyImpl()) {
         return;
       }
       myValidator.stop();
@@ -119,29 +120,28 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
   public void execute(final String url) {
     Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.text"),
                              SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.title"));
-    if(! applyImpl()) {
+    if (!applyImpl()) {
       return;
     }
     final Ref<Exception> excRef = new Ref<>();
     final ProgressManager pm = ProgressManager.getInstance();
-    pm.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        final ProgressIndicator pi = pm.getProgressIndicator();
-        if (pi != null) {
-          pi.setText("Connecting to " + url);
-        }
-        try {
-          SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), SVNRevision.HEAD);
-        }
-        catch (SvnBindException e) {
-          excRef.set(e);
-        }
+    pm.runProcessWithProgressSynchronously(() -> {
+      final ProgressIndicator pi = pm.getProgressIndicator();
+      if (pi != null) {
+        pi.setText("Connecting to " + url);
+      }
+      try {
+        SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), SVNRevision.HEAD);
+      }
+      catch (SvnBindException e) {
+        excRef.set(e);
       }
     }, "Test connection", true, myProject);
-    if (! excRef.isNull()) {
+    if (!excRef.isNull()) {
       Messages.showErrorDialog(myProject, excRef.get().getMessage(),
                                SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.error.title"));
-    } else {
+    }
+    else {
       Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.text"),
                                SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.title"));
     }

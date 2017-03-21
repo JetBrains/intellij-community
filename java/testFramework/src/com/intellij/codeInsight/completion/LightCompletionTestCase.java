@@ -37,6 +37,7 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myItems = null;
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();
   }

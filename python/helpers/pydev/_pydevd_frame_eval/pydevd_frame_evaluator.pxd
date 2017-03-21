@@ -1,3 +1,5 @@
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
+
 cdef extern from *:
     ctypedef void PyObject
     ctypedef struct PyCodeObject:
@@ -42,6 +44,10 @@ cdef extern from "frameobject.h":
         char f_executing;           #/* whether the frame is still executing */
         PyObject *f_localsplus[1];
 
+cdef extern from "code.h":
+    ctypedef void freefunc(void *)
+    int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)
+    int _PyCode_SetExtra(PyObject *code, Py_ssize_t index, void *extra)
 
 cdef extern from "Python.h":
     void Py_INCREF(object o)
@@ -86,6 +92,7 @@ cdef extern from "pystate.h":
     PyThreadState *PyThreadState_Get()
 
 cdef extern from "ceval.h":
+    int _PyEval_RequestCodeExtraIndex(freefunc)
     PyFrameObject *PyEval_GetFrame()
     PyObject* PyEval_CallFunction(PyObject *callable, const char *format, ...)
 

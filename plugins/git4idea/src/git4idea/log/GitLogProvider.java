@@ -334,11 +334,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     VcsFileUtil
       .foreachChunk(hashes, 1, hashesChunk -> {
-        String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(myVcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-        List<String> parameters = new ArrayList<>();
-        parameters.add(noWalk);
-        parameters.addAll(hashesChunk);
-        GitHistoryUtils.loadDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(parameters));
+        GitHistoryUtils.loadDetails(myProject, root, commitConsumer, GitHistoryUtils.formHashParameters(myVcs, hashesChunk));
       });
   }
 

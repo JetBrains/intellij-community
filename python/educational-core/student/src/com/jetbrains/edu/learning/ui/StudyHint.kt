@@ -4,16 +4,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.edu.learning.StudyTaskManager
 import com.jetbrains.edu.learning.StudyUtils
-import com.jetbrains.edu.learning.core.EduNames
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder
+import java.util.*
 
-class StudyHint(private val myPlaceholder: AnswerPlaceholder?, 
-                project: Project) {
+open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
+                     project: Project) {
   
   companion object {
     private val OUR_WARNING_MESSAGE = "Put the caret in the answer placeholder to get hint"
@@ -21,9 +19,8 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
   }
   
   val studyToolWindow: StudyToolWindow
-  private var myShownHintNumber = 0
-  private var isEditingMode = false
-  private val newHintDefaultText = "Edit this hint"
+  protected var myShownHintNumber = 0
+  protected var isEditingMode = false
 
   init {
     val taskManager = StudyTaskManager.getInstance(project)
@@ -42,17 +39,11 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     
     val course = taskManager.course
     if (course != null) {
-      val courseMode = course.courseMode
       val group = DefaultActionGroup()
       val hints = myPlaceholder?.hints
       if (hints != null) {
-        if (courseMode == EduNames.STUDY) {
-          if (hints.size > 1) {
-            group.addAll(GoBackward(), GoForward())
-          }
-        }
-        else {
-          group.addAll(GoBackward(), GoForward(), Separator.getInstance(), EditHint())
+        if (hints.size > 1) {
+          group.addAll(getActions())
         }
         studyToolWindow.setActionToolbar(group)
         setHintText(hints)
@@ -60,7 +51,14 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     }
   }
 
-  private fun setHintText(hints: List<String>) {
+  protected open fun getActions(): List<AnAction> {
+    val result = ArrayList<AnAction>()
+    result.add(GoBackward())
+    result.add(GoForward())
+    return result
+  }
+
+  protected fun setHintText(hints: List<String>) {
     if (!hints.isEmpty()) {
       studyToolWindow.setText(hints[myShownHintNumber])
     }
@@ -70,7 +68,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     }
   }
 
-  private inner class GoForward : AnAction("Next Hint", "Next Hint", AllIcons.Actions.Forward) {
+  inner class GoForward : AnAction("Next Hint", "Next Hint", AllIcons.Actions.Forward) {
 
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -82,7 +80,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     }
   }
 
-  private inner class GoBackward : AnAction("Previous Hint", "Previous Hint", AllIcons.Actions.Back) {
+  inner class GoBackward : AnAction("Previous Hint", "Previous Hint", AllIcons.Actions.Back) {
 
     override fun actionPerformed(e: AnActionEvent) {
       studyToolWindow.setText(myPlaceholder!!.hints[--myShownHintNumber])
@@ -90,51 +88,6 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = !isEditingMode && myShownHintNumber - 1 >= 0
-    }
-  }
-
-  private inner class EditHint : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
-    
-    override fun actionPerformed(e: AnActionEvent?) {
-      val dlg = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText, myPlaceholder.hints)
-      dlg.title = "Edit Answer Placeholder"
-      if (dlg.showAndGet()) {
-        val answerPlaceholderText = dlg.taskText
-        myPlaceholder.taskText = answerPlaceholderText
-        myPlaceholder.length = if (myPlaceholder.activeSubtaskInfo.isNeedInsertText) 0 else StringUtil.notNullize(answerPlaceholderText).length
-        myPlaceholder.hints = dlg.hints
-      }
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myPlaceholder != null
-    }
-  }
-
-  private inner class AddHint : AnAction("Add Hint", "Add Hint", AllIcons.General.Add) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      myPlaceholder!!.addHint(newHintDefaultText)
-      myShownHintNumber++
-      studyToolWindow.setText(newHintDefaultText)
-    }
-
-    override fun update(e: AnActionEvent?) {
-      e?.presentation?.isEnabled = !isEditingMode && myPlaceholder != null
-    }
-  }
-
-  private inner class RemoveHint : AnAction("Remove Hint", "Remove Hint", AllIcons.General.Remove) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      myPlaceholder!!.removeHint(myShownHintNumber)
-      myShownHintNumber += if (myShownHintNumber < myPlaceholder.hints.size) 0 else -1
-      
-      setHintText(myPlaceholder.hints)
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myPlaceholder != null && myPlaceholder.hints.size > 0 && !isEditingMode
     }
   }
 }

@@ -21,8 +21,8 @@ import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValueLocalInspe
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedReturnValueLocalTest extends InspectionTestCase {
-  private final UnusedReturnValue myGlobal = new UnusedReturnValue();
-  private final UnusedReturnValueLocalInspection myTool = new UnusedReturnValueLocalInspection(myGlobal);
+  private UnusedReturnValue myGlobal = new UnusedReturnValue();
+  private UnusedReturnValueLocalInspection myTool = new UnusedReturnValueLocalInspection(myGlobal);
 
   @Override
   protected String getTestDataPath() {
@@ -33,6 +33,13 @@ public class UnusedReturnValueLocalTest extends InspectionTestCase {
     doTest("unusedReturnValue/" + getTestName(true), myTool);
   }
 
+
+  @Override
+  protected void tearDown() throws Exception {
+    myGlobal = null;
+    myTool = null;
+    super.tearDown();
+  }
 
   public void testNonLiteral() throws Exception {
     doTest();

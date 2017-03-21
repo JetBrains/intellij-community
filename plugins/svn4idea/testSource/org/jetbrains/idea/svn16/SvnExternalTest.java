@@ -34,6 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
@@ -81,7 +83,7 @@ public class SvnExternalTest extends Svn17TestCase {
     checkin();
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
+    final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     Assert.assertTrue(!rootFile.exists());

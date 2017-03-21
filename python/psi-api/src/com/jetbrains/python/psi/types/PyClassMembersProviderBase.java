@@ -35,7 +35,7 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
   }
 
   @Override
-  public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location, TypeEvalContext context) {
+  public PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, TypeEvalContext context) {
     final Collection<PyCustomMember> members = getMembers(clazz, location, context);
     return resolveMemberByName(members, clazz, name);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,9 @@ public interface Document extends UserDataHolder {
    */
   @Contract(pure=true)
   @NotNull
-  CharSequence getCharsSequence();
+  default CharSequence getCharsSequence() {
+    return getText();
+  }
 
   /**
    * @return a char sequence representing document content that's guaranteed to be immutable. No read- or write-action is necessary.
@@ -77,7 +79,9 @@ public interface Document extends UserDataHolder {
    */
   @NotNull
   @Contract(pure=true)
-  CharSequence getImmutableCharSequence();
+  default CharSequence getImmutableCharSequence() {
+    return getText();
+  }
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
@@ -302,7 +306,8 @@ public interface Document extends UserDataHolder {
    * @see #createGuardedBlock(int, int)
    * @see #stopGuardedBlockChecking()
    */
-  void startGuardedBlockChecking();
+  default void startGuardedBlockChecking() {
+  }
 
   /**
    * Disables checking for read-only markers when the document is modified. Checking is disabled by default.
@@ -310,7 +315,8 @@ public interface Document extends UserDataHolder {
    * @see #createGuardedBlock(int, int)
    * @see #startGuardedBlockChecking()
    */
-  void stopGuardedBlockChecking();
+  default void stopGuardedBlockChecking() {
+  }
 
   /**
    * Sets the maximum size of the cyclic buffer used for the document. If the document uses

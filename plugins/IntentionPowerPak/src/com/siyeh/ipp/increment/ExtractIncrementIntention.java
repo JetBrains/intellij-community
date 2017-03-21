@@ -16,9 +16,6 @@
 package com.siyeh.ipp.increment;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiPostfixExpression;
-import com.intellij.psi.PsiPrefixExpression;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.assignment.IncrementDecrementUsedAsExpressionInspection;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -29,16 +26,9 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
 
   @Override
   public String getTextForElement(PsiElement element) {
-    final PsiJavaToken sign;
-    if (element instanceof PsiPostfixExpression) {
-      sign = ((PsiPostfixExpression)element).getOperationSign();
-    }
-    else {
-      sign = ((PsiPrefixExpression)element).getOperationSign();
-    }
-    final String operator = sign.getText();
-    return IntentionPowerPackBundle.message(
-      "extract.increment.intention.name", operator);
+    final String operatorText = IncrementUtil.getOperatorText(element);
+    return operatorText != null ? IntentionPowerPackBundle.message(
+      "extract.increment.intention.name", operatorText) : null;
   }
 
   @Override

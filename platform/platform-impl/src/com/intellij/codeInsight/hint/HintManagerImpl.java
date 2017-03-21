@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -654,23 +654,19 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                         @PositionFlags short constraint,
                                         boolean showByBalloon) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
-    int line1 = pos1.line;
-    int col1 = pos1.column;
-    int line2 = pos2.line;
-    int col2 = pos2.column;
 
     Point location;
     JComponent externalComponent = getExternalComponent(editor);
     JComponent internalComponent = editor.getContentComponent();
     if (constraint == RIGHT_UNDER) {
-      Point p = editor.logicalPositionToXY(new LogicalPosition(line2, col2));
+      Point p = editor.logicalPositionToXY(pos2);
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
       location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
-      Point p = editor.logicalPositionToXY(new LogicalPosition(line1, col1));
+      Point p = editor.logicalPositionToXY(pos1);
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }

@@ -40,7 +40,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;

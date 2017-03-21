@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.File;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -80,7 +80,7 @@ public class SingleCommittedListProvider {
   private boolean setup() {
     boolean result = false;
 
-    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
+    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
     if (rootUrlInfo != null) {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
@@ -128,20 +128,17 @@ public class SingleCommittedListProvider {
     final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
     SvnTarget target = SvnTarget.fromURL(url);
 
-    myVcs.getFactory(target).createHistoryClient().doLog(target, SVNRevision.HEAD, revisionBefore, false, true, false, 0, null,
-        new LogEntryConsumer() {
-          @Override
-          public void consume(LogEntry logEntry) {
-            checkDisposed();
-            // date could be null for lists where there are paths that user has no rights to observe
-            if (logEntry.getDate() != null) {
-              pathTracker.accept(logEntry);
-              if (logEntry.getRevision() == revisionBefore.getNumber()) {
-                changeList[0] = createChangeList(logEntry);
-              }
-            }
+    myVcs.getFactory(target).createHistoryClient()
+      .doLog(target, SVNRevision.HEAD, revisionBefore, false, true, false, 0, null, logEntry -> {
+        checkDisposed();
+        // date could be null for lists where there are paths that user has no rights to observe
+        if (logEntry.getDate() != null) {
+          pathTracker.accept(logEntry);
+          if (logEntry.getRevision() == revisionBefore.getNumber()) {
+            changeList[0] = createChangeList(logEntry);
           }
         }
+      }
     );
 
     FilePath path = pathTracker.getFilePath(myVcs);
@@ -160,14 +157,11 @@ public class SingleCommittedListProvider {
   }
 
   private boolean searchForUrl(@NotNull SVNURL url) throws VcsException {
-    LogEntryConsumer handler = new LogEntryConsumer() {
-      @Override
-      public void consume(LogEntry logEntry) {
-        checkDisposed();
-        // date could be null for lists where there are paths that user has no rights to observe
-        if (logEntry.getDate() != null) {
-          changeList[0] = createChangeList(logEntry);
-        }
+    LogEntryConsumer handler = logEntry -> {
+      checkDisposed();
+      // date could be null for lists where there are paths that user has no rights to observe
+      if (logEntry.getDate() != null) {
+        changeList[0] = createChangeList(logEntry);
       }
     };
 

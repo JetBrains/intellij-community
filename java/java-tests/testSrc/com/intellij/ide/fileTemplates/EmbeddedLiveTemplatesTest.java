@@ -56,7 +56,7 @@ public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTe
   public void setUp() throws Exception {
     super.setUp();
     myFixture.configureByText(PlainTextFileType.INSTANCE, ""); // enable editor action context
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
   }
 
   private static class TestAction extends CreateFromTemplateActionBase {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +74,20 @@ public interface InlayParameterHintsProvider {
    */
   default boolean isBlackListSupported() {
     return true;
+  }
+
+  /**
+   * Text explaining black list patterns
+   */
+  default String getBlacklistExplanationHTML() {
+      return CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation");
+  }
+
+  /**
+   * Customise hints presentation
+   */
+  default String getInlayPresentation(@NotNull String inlayText) {
+    return inlayText + ":"; 
   }
 
 }

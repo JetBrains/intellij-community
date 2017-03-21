@@ -106,6 +106,11 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
+  public boolean useBoldForNonRemovableSchemes() {
+    return false;
+  }
+
+  @Override
   protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
     return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
       @Nullable

@@ -315,7 +315,7 @@ class Foo {
   }
 
   void "test no autopopup at the end of line comment"() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     myFixture.configureByText "a.java", """
 class Foo {
   // foo bar <caret>
@@ -648,7 +648,7 @@ public interface Test {
  }
 
   private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
-    registerCompletionContributor(contributor, testRootDisposable, order)
+    registerCompletionContributor(contributor, myFixture.testRootDisposable, order)
   }
   static def registerCompletionContributor(final Class contributor, Disposable parentDisposable, LoadingOrder order) {
     def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
@@ -1088,7 +1088,7 @@ class Foo {
   }
 
   void testCompletionWhenLiveTemplateAreNotSufficient() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
     myFixture.configureByText("a.java", """
 class Foo {
     {
@@ -1216,7 +1216,7 @@ public class UTest {
   }
 
   void testExactMatchesTemplateFirst() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     myFixture.configureByText("a.java", """
 public class Test {
     void itar() {}
@@ -1235,9 +1235,9 @@ public class Test {
     Template template = manager.createTemplate("itar", "myGroup", null)
     JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
     ((TemplateImpl)template).templateContext.setEnabled(contextType, true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
     
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     myFixture.configureByText("a.java", """
 public class Test {
     void foo() {
@@ -1421,7 +1421,7 @@ class Foo extends Abcdefg <caret>'''
   }
 
   void testSoutvTemplate() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
     myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
     type 'soutv\tgetcl.'
     myFixture.checkResult '''\
@@ -1534,7 +1534,7 @@ class Foo {
   }
 
   void testReplaceTypedPrefixPart() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable())
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
     myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
     for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
       type 'System.out.printl\n\n'
@@ -1668,7 +1668,7 @@ class Foo {
   }
 
   void "test no name autopopup in live template"() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
     myFixture.configureByText 'a.java', '''class F {
   String nameContainingIdentifier;
 <caret>
@@ -1751,7 +1751,7 @@ class Cls {
     final JavaCodeContextType contextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
     
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -1792,7 +1792,7 @@ class Foo {{
   }
 
   void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable())
     myFixture.configureByText "a.java", """
 class Foo {{
 ita<caret>
@@ -1800,7 +1800,7 @@ ita<caret>
     type 'r'
     assert lookup == null
     
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     type '\br'
     assert lookup
     assert myFixture.lookupElementStrings == ['itar']

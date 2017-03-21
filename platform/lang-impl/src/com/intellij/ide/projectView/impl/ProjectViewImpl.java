@@ -484,7 +484,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
-      if (virtualFile != null && ((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, new SelectInContext() {
+      ProjectViewSelectInTarget target = virtualFile == null ? null : getProjectViewSelectInTarget(newPane);
+      if (target != null && target.isSubIdSelectable(newSubId, new SelectInContext() {
         @Override
         @NotNull
         public Project getProject() {
@@ -583,6 +584,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
+    ProjectViewSelectInTarget target = getProjectViewSelectInTarget(newPane);
+    if (target != null) target.setSubId(subId);
     if (isAutoscrollFromSource(id)) {
       myAutoScrollFromSourceHandler.scrollFromSource();
     }
@@ -806,6 +809,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public String getCurrentViewId() {
     return myCurrentViewId;
+  }
+
+  private SelectInTarget getCurrentSelectInTarget() {
+    return getSelectInTarget(getCurrentViewId());
+  }
+
+  private SelectInTarget getSelectInTarget(String id) {
+    return mySelectInTargets.get(id);
+  }
+
+  private ProjectViewSelectInTarget getProjectViewSelectInTarget(AbstractProjectViewPane pane) {
+    SelectInTarget target = getSelectInTarget(pane.getId());
+    return target instanceof ProjectViewSelectInTarget
+           ? (ProjectViewSelectInTarget)target
+           : null;
   }
 
   @Override
@@ -1725,12 +1743,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           selectElementAtCaretNotLosingFocus(editor);
         }
         else {
-          final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
-          if (file != null) {
-            final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-            if (psiFile != null) {
-              final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
-              if (target != null) {
+          SelectInTarget target = getCurrentSelectInTarget();
+          if (target != null) {
+            final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
+            if (file != null && file.isValid()) {
+              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+              if (psiFile != null) {
                 final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
                   @Override
                   public Object getSelectorInFile() {
@@ -1787,11 +1805,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-        final MySelectInContext selectInContext = new MySelectInContext(file, editor);
+      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+        SelectInTarget target = getCurrentSelectInTarget();
+        if (target == null) return;
 
-        final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
-        if (target != null && target.canSelect(selectInContext)) {
+        PsiFile restoredPsi = pointer.getElement();
+        if (restoredPsi == null) return;
+
+        final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
+
+        if (target.canSelect(selectInContext)) {
           target.selectIn(selectInContext, false);
         }
       });

@@ -42,8 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * @author yole
@@ -62,8 +64,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @Override
   @NotNull
-  public List<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
-    List<VirtualFile> result = ContainerUtil.newArrayList();
+  public Collection<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
+    Set<VirtualFile> result = newHashSet();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
       final AbstractVcs vcsFor = vcsManager.getVcsFor(myBaseDir);
@@ -89,7 +91,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
         final String mappingVcs = mapping != null ? mapping.getVcs() : null;
-        if (vcsName.equals(mappingVcs) && !result.contains(file) && file.isDirectory()) {
+        if (vcsName.equals(mappingVcs) && file.isDirectory()) {
           result.add(file);
         }
       }
@@ -143,7 +145,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   @NotNull
   @Override
   public Collection<VirtualFile> getDirtyRoots() {
-    Collection<VirtualFile> dirtyRoots = ContainerUtil.newHashSet();
+    Collection<VirtualFile> dirtyRoots = newHashSet();
 
     if (ProjectKt.isDirectoryBased(myProject)) {
       VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();

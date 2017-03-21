@@ -183,6 +183,7 @@ public class LowLevelSearchUtil {
     return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
   }
 
+  @NotNull
   static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher, ProgressIndicator progress) {
     if (progress != null) progress.checkCanceled();
 
@@ -265,6 +266,7 @@ public class LowLevelSearchUtil {
     return true;
   }
 
+  @NotNull
   private static int[] getTextOccurrences(@NotNull CharSequence text,
                                           int startOffset,
                                           int endOffset,

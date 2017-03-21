@@ -179,12 +179,9 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
       myCommitMessage.setText(lastMessage);
       myCommitMessage.selectAll();
     }
-    messagesBox.addActionListener(new ActionListener() {
-
-      public void actionPerformed(ActionEvent e) {
-        myCommitMessage.setText(messagesBox.getSelectedItem().toString());
-        myCommitMessage.selectAll();
-      }
+    messagesBox.addActionListener(e -> {
+      myCommitMessage.setText(messagesBox.getSelectedItem().toString());
+      myCommitMessage.selectAll();
     });
     return panel;
   }

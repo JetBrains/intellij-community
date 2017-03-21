@@ -474,7 +474,7 @@ class Test {
       Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
         ['foo': NamedArgumentDescriptor.SIMPLE_NORMAL, 'bar': NamedArgumentDescriptor.SIMPLE_NORMAL]
       }
-    }, testRootDisposable
+    }, myFixture.testRootDisposable
 
     myFixture.with {
       configureByText '_.groovy', text

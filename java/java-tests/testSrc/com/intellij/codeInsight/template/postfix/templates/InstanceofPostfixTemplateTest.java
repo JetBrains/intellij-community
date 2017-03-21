@@ -33,7 +33,7 @@ public class InstanceofPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testSingleExpressionTemplate() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
 
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.type('\t');

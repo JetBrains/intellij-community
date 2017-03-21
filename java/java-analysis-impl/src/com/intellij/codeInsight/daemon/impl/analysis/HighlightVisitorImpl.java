@@ -879,7 +879,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     // in case of JSP synthetic method call, do not check
     if (myFile.isPhysical() && !myHolder.hasErrorResults()) {
       try {
-        myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper, myLanguageLevel,myJavaSdkVersion));
+        myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper, myLanguageLevel, myJavaSdkVersion, myFile));
       }
       catch (IndexNotReadyException ignored) { }
     }
@@ -984,7 +984,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitPackageStatement(statement);
     myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement, myFile));
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageStatement(statement, myFile));
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
     }
   }
 
@@ -1257,7 +1257,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, myResolveHelper, list, expression)) {
         try {
           myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(
-            expression, results, list, resolved, result, methodCallExpression, myResolveHelper));
+            expression, results, list, resolved, result, methodCallExpression, myResolveHelper, myLanguageLevel, myFile));
 
           if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
             PsiElement nameElement = expression.getReferenceNameElement();
@@ -1294,6 +1294,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (psiClass != null) {
         myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
+    }
+
+    if (!myHolder.hasErrorResults() && resolved != null && myJavaModule != null) {
+      myHolder.add(ModuleHighlightUtil.checkPackageAccessibility(expression, resolved, myJavaModule));
     }
   }
 
@@ -1369,7 +1373,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (errorMessage != null) {
         final HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create();
-        if (method instanceof PsiMethod && !((PsiMethod)method).isConstructor() && 
+        if (method instanceof PsiMethod && !((PsiMethod)method).isConstructor() &&
             !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
           final boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
           final LocalQuickFixAndIntentionActionOnPsiElement fixStaticModifier =
@@ -1596,7 +1600,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
     super.visitTypeCastExpression(typeCast);
     try {
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel, myFile));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
     }
     catch (IndexNotReadyException ignored) { }
@@ -1673,6 +1677,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateStatements(module));
+    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkClashingReads(module));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkUnusedServices(module));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }

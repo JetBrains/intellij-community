@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
+import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.fest.swing.driver.ComponentDriver;
 import org.fest.swing.edt.GuiQuery;
@@ -472,22 +474,30 @@ public class EditorFixture {
    *
    * @param offset the character offset.
    */
-  public EditorFixture moveTo(final int offset) {
+  public EditorFixture moveToAndClick(final int offset, MouseButton button) {
     assertThat(offset).isGreaterThanOrEqualTo(0);
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
-        // TODO: Do this via mouse clicks!
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          editor.getCaretModel().moveToOffset(offset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
+        assert editor != null;
+        VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
+        Point point= editor.visualPositionToXY(visualPosition);
+        Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
+        robot.click(editorComponent, point, button, 1);
       }
     });
 
     return this;
+  }
+
+  public EditorFixture moveTo(final int offset) {
+    return moveToAndClick(offset, MouseButton.LEFT_BUTTON);
+  }
+
+  public EditorFixture rightClick(final int offset) {
+    return moveToAndClick(offset, MouseButton.RIGHT_BUTTON);
   }
 
   /**

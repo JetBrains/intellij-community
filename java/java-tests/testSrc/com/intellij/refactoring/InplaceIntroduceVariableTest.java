@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.testFramework.MapDataContext;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +117,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() throws Exception {
-    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
         type("expr");
@@ -190,19 +190,31 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testWritable() throws Exception {
-    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
   }
   
   public void testNoWritable() throws Exception {
-    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.NO_WRITE);
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.NO_WRITE);
   }
   
   public void testAllInsertFinal() throws Exception {
-    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
   }
   
   public void testAllIncomplete() throws Exception {
-    doTestReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+  }
+
+  public void testStreamSimple() throws Exception {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
+  }
+
+  public void testStreamMultiple() throws Exception {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN_ALL);
+  }
+
+  public void testStreamMultiline() throws Exception {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
   }
 
   public void testBrokenFormattingWithInValidation() throws Exception {
@@ -273,11 +285,11 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private void doTestReplaceChoice(OccurrencesChooser.ReplaceChoice choice) {
+  private void doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice choice) {
     doTestReplaceChoice(choice, null);
   }
 
-  private void doTestReplaceChoice(OccurrencesChooser.ReplaceChoice choice, Pass<AbstractInplaceIntroducer> pass) {
+  private void doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice choice, Pass<AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -318,9 +330,9 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public static class MyIntroduceVariableHandler extends IntroduceVariableHandler implements MyIntroduceHandler {
-    private OccurrencesChooser.ReplaceChoice myChoice = null;
+    private JavaReplaceChoice myChoice = null;
 
-    public void setChoice(OccurrencesChooser.ReplaceChoice choice) {
+    public void setChoice(JavaReplaceChoice choice) {
       myChoice = choice;
     }
 
@@ -335,7 +347,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
 
     @Override
-    protected OccurrencesChooser.ReplaceChoice getOccurrencesChoice() {
+    protected JavaReplaceChoice getOccurrencesChoice() {
       return myChoice;
     }
 

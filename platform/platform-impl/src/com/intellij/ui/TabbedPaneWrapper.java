@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,10 +79,7 @@ public class TabbedPaneWrapper  {
 
     myTabbedPaneHolder = createTabbedPaneHolder();
     myTabbedPaneHolder.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-    // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
-    // in the interest of backward compatibility, we only do so when a
-    // screen reader is active.
-    myTabbedPaneHolder.setFocusCycleRoot(!ScreenReader.isActive());
+    myTabbedPaneHolder.setFocusTraversalPolicyProvider(true);
     myTabbedPaneHolder.setFocusTraversalPolicy(new _MyFocusTraversalPolicy());
 
     assertIsDispatchThread();
@@ -415,6 +411,11 @@ public class TabbedPaneWrapper  {
   }
 
   private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy{
+    @Override
+    public boolean isNoDefaultComponent() {
+      return false;
+    }
+
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       final JComponent component=getSelectedComponent();
       if(component!=null){

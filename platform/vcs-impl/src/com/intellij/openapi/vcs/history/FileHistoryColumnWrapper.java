@@ -46,8 +46,6 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
       if (o2 == null) return 1;
       VcsFileRevision revision1 = o1.getRevision();
       VcsFileRevision revision2 = o2.getRevision();
-      if (revision1 == null) return -1;
-      if (revision2 == null) return 1;
       return comparator.compare(revision1, revision2);
     };
   }

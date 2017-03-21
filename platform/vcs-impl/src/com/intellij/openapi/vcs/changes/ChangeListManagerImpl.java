@@ -27,6 +27,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
@@ -154,6 +156,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
+        @Override
+        public void projectClosing(Project project) {
+          //noinspection TestOnlyProblems
+          waitEverythingDoneInTestMode();
+        }
+      });
+    }
   }
 
   private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
@@ -1552,6 +1563,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     Future future = ourUpdateAlarm.get();
     if (future != null) {
       future.cancel(true);
+      ourUpdateAlarm.compareAndSet(future, null);
     }
   }
 
@@ -1572,7 +1584,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       catch (InterruptedException | ExecutionException e) {
         LOG.error(e);
       }
-      catch (TimeoutException ignore) {
+      catch (TimeoutException | CancellationException ignore) {
       }
     }
   }

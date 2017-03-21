@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,13 +67,18 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       .add("java.math.BigDecimal",".*")
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
+      .add("java.util.List", "of")
+      .add("java.util.Set", "of")
+      .add("java.util.Map", "of|ofEntries|entry")
+      .add("java.util.Collections", "unmodifiable.*|singleton.*|checked.*|min|max|stream")
       .add("java.util.UUID",".*")
-      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd")
+      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
       .add("java.util.stream.BaseStream",".*")
       .finishDefault();
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {

@@ -48,7 +48,6 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract String getName();
   @NotNull
   public abstract String getDescription();
-  public abstract Icon getBigIcon();
 
   public Icon getIcon() {
     return getNodeIcon(false);

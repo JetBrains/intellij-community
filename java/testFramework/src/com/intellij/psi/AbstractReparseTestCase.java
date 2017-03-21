@@ -19,6 +19,13 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
   protected PsiFile myDummyFile;
   private int myInsertOffset;
 
+  @Override
+  protected void tearDown() throws Exception {
+    myDummyFile = null;
+    myFileType = null;
+    super.tearDown();
+  }
+
   protected void setFileType(final FileType fileType) {
     myFileType = fileType;
   }

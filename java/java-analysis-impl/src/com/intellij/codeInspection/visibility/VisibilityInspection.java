@@ -61,7 +61,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
   public boolean SUGGEST_PRIVATE_FOR_INNERS;
-  private Map<String, Boolean> myExtensions = new TreeMap<>();
+  private final Map<String, Boolean> myExtensions = new TreeMap<>();
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
   private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
@@ -223,7 +223,8 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  private static CommonProblemDescriptor[] createDescriptions(RefElement refElement, String access, 
+  @NotNull
+  private static CommonProblemDescriptor[] createDescriptions(RefElement refElement, String access,
                                                               @NotNull InspectionManager manager,
                                                               @NotNull GlobalInspectionContext globalContext) {
     final PsiElement element = refElement.getElement();
@@ -250,7 +251,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                                      new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
     }
-    return null;
+    return CommonProblemDescriptor.EMPTY_ARRAY;
   }
 
   int getMinVisibilityLevel(PsiMember member) {

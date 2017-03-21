@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -46,6 +45,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   @NonNls protected static final String AFTER_PREFIX = "after";
 
   private static QuickFixTestCase myWrapper;
+
+  @Override
+  protected void tearDown() throws Exception {
+    myWrapper = null;
+    super.tearDown();
+  }
 
   protected boolean shouldBeAvailableAfterExecution() {
     return false;

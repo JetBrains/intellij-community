@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class UnusedDeclarationInspectionMerger extends InspectionElementsMergerBase {
   private static final String UNUSED_SYMBOL = "UNUSED_SYMBOL";
@@ -29,6 +30,7 @@ public class UnusedDeclarationInspectionMerger extends InspectionElementsMergerB
     return UnusedDeclarationInspectionBase.SHORT_NAME;
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {UNUSED_SYMBOL, UNUSED_DECLARATION};

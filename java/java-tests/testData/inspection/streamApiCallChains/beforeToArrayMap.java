@@ -1,4 +1,4 @@
-// "Replace 'collection.stream().toArray()' with 'collection.toArray()'" "false"
+// "Fix all 'Simplify stream API call chains' problems in file" "false"
 
 import java.util.*;
 

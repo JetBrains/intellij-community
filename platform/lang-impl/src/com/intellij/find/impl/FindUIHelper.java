@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class FindUIHelper implements Disposable {
+public class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private  FindModel myModel;
    FindModel myPreviousModel;
@@ -64,7 +64,10 @@ class FindUIHelper implements Disposable {
 
   protected FindUI getOrCreateUI() {
     if (Registry.is("ide.find.as.popup")) {
-      return myUI != null ? myUI : new FindPopupPanel(this);
+      if (myUI instanceof FindPopupPanel) {
+        return myUI;
+      }
+      return myUI = new FindPopupPanel(this);
     }
     else {
       
@@ -117,7 +120,7 @@ class FindUIHelper implements Disposable {
   }
 
   @NotNull
-   FindModel getModel() {
+  public FindModel getModel() {
     return myModel;
   }
 

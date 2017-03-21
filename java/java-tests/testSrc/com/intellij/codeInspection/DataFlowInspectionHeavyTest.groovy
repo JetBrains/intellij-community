@@ -45,7 +45,7 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
       '''
 
     myFixture.addFileToProject 'annos/annos.java', annotationsText("ElementType.TYPE_USE")
-    DataFlowInspection8Test.setCustomAnnotations(project, testRootDisposable, 'annos.NotNull', 'annos.Nullable')
+    DataFlowInspection8Test.setCustomAnnotations(project, myFixture.testRootDisposable, 'annos.NotNull', 'annos.Nullable')
 
     def testFile = myFixture.addFileToProject 'test.java', '''
       class Zoo {
@@ -75,5 +75,22 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
       @Target({$targets}) 
       public @interface Nullable {}
       """
+  }
+
+  void "test no always failing calls in tests"() {
+    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("test"), true)
+
+    myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("test/Foo.java", """
+class Foo {
+  void foo() {
+    assertTrue(false);
+  }
+  private void assertTrue(boolean b) {
+    if (!b) throw new RuntimeException();
+  }
+}
+""").virtualFile)
+    myFixture.enableInspections(new DataFlowInspection())
+    myFixture.checkHighlighting()
   }
 }

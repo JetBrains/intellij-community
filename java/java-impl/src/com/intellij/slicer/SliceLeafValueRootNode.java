@@ -23,7 +23,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
-import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,21 +53,30 @@ class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRende
   }
 
   @Override
+  public List<SliceNode> getCachedChildren() {
+    return myCachedChildren;
+  }
+
+  @Override
   protected void update(PresentationData presentation) {
   }
 
   @Override
   public String toString() {
-    Usage myLeafExpression = getValue();
+    return getNodeText();
+  }
+
+  public String getNodeText() {
+    SliceUsage value = getValue();
     String text;
-    if (myLeafExpression instanceof UsageInfo2UsageAdapter) {
-      PsiElement element = ((UsageInfo2UsageAdapter)myLeafExpression).getUsageInfo().getElement();
+    if (value != null) {
+      PsiElement element = value.getUsageInfo().getElement();
       text = element == null ? "" : element.getText();
     }
     else {
       text = "Other";
     }
-    return "Value: "+ text;
+    return "Value: " + text;
   }
 
   @Override
@@ -80,16 +88,16 @@ class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRende
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
-    Usage usage = getValue();
+    SliceUsage usage = getValue();
     renderer.append("Value: ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
-    if (usage instanceof UsageInfo2UsageAdapter) {
-      PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
+    if (usage != null) {
+      PsiElement element = usage.getElement();
       if (element == null) {
         renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
       }
       else {
-        appendElementText((UsageInfo2UsageAdapter)usage, element, renderer);
+        appendElementText(usage, element, renderer);
       }
     }
     else {

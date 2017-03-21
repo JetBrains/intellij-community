@@ -802,7 +802,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       // read action to prevent project (and storage) from being disposed
       ApplicationManager.getApplication().runReadAction(() -> {
         Project project = getProject();
-        if (project.isDisposed()) return;
+        if (project.isDisposed() || myRoot == null) return;
         TestStateStorage storage = TestStateStorage.getInstance(project);
         List<SMTestProxy> tests = myRoot.getAllTests();
         for (SMTestProxy proxy : tests) {

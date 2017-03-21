@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,15 @@ package com.intellij.codeInsight.template.emmet.tokens;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.command.undo.UndoConstants;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +35,15 @@ import java.util.Map;
 
 public class TemplateToken extends ZenCodingToken {
   public static final String ATTRS = "ATTRS";
-  public final static TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", Collections.<String, String>emptyMap());
+  public final static TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", Collections.emptyMap());
 
   @NotNull private final String myKey;
   private TemplateImpl myTemplate;
   @NotNull private final Map<String, String> myAttributes;
-  private XmlFile myFile;
+  private PsiFile myFile;
 
   public TemplateToken(@NotNull String key) {
-    this(key, Collections.<String, String>emptyMap());
+    this(key, Collections.emptyMap());
   }
 
   public TemplateToken(@NotNull String key, @NotNull Map<String, String> attribute2value) {
@@ -58,12 +56,31 @@ public class TemplateToken extends ZenCodingToken {
     return myAttributes;
   }
 
-  public XmlFile getFile() {
+  public PsiFile getFile() {
     return myFile;
   }
+  
+  public String getTemplateText() {
+    return myFile.getText();
+  }
 
-  public void setFile(XmlFile file) {
+  private void setFile(PsiFile file) {
     myFile = file;
+  }
+  
+  @Nullable
+  public XmlTag getXmlTag() {
+    return PsiTreeUtil.findChildOfType(myFile, XmlTag.class);
+  }
+  
+  public void setTemplateText(@NotNull String templateText, @NotNull CustomTemplateCallback callback) {
+    PsiFile file = PsiFileFactory.getInstance(callback.getProject())
+      .createFileFromText("dummy.html", callback.getFile().getLanguage(), templateText, true, true);
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile != null) {
+      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    }
+    setFile(file);
   }
 
   @NotNull
@@ -71,17 +88,10 @@ public class TemplateToken extends ZenCodingToken {
     return myKey;
   }
 
-  public boolean setTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback) {
+  public void setTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback) {
     myTemplate = template;
-    final XmlFile xmlFile = parseXmlFileInTemplate(template, callback, getAttributes());
-    setFile(xmlFile);
-    final XmlTag tag = xmlFile.getRootTag();
-    if (!getAttributes().isEmpty() && tag == null) {
-      return false;
-    }
-    return true;
+    setTemplateText(createTemplateText(template, callback, getAttributes()), callback);
   }
-
 
   private static boolean containsAttrsVar(@NotNull TemplateImpl template) {
     for (int i = 0; i < template.getVariableCount(); i++) {
@@ -94,27 +104,20 @@ public class TemplateToken extends ZenCodingToken {
   }
 
   @NotNull
-  private static XmlFile parseXmlFileInTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback,
-                                                @NotNull Map<String, String> attributes) {
+  private static String createTemplateText(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback,
+                                           @NotNull Map<String, String> attributes) {
     XmlTag dummyRootTag = null;
     String templateString = template.getString();
-    final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(callback.getProject());
     if (!containsAttrsVar(template)) {
-      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, templateString, false, true);
-      dummyRootTag = dummyFile.getRootTag();
-      if (dummyRootTag != null) {
+      PsiFile dummyFile = PsiFileFactory.getInstance(callback.getProject())
+        .createFileFromText("dummy.html", callback.getFile().getLanguage(), templateString, false, true);
+      dummyRootTag = PsiTreeUtil.findChildOfType(dummyFile, XmlTag.class);
+      if (dummyRootTag != null && !attributes.isEmpty()) {
         addMissingAttributes(dummyRootTag, attributes);
       }
     }
 
-    templateString = dummyRootTag != null ? dummyRootTag.getContainingFile().getText() : templateString;
-    XmlFile xmlFile =
-      (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), true);
-    VirtualFile vFile = xmlFile.getVirtualFile();
-    if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    }
-    return xmlFile;
+    return dummyRootTag != null ? dummyRootTag.getContainingFile().getText() : templateString;
   }
 
 

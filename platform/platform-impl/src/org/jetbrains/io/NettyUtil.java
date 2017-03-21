@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public final class NettyUtil {
                                                                        .allowCredentials()
                                                                        .allowNullOrigin()
                                                                        .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
-                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type")
+                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt")
                                                                        .build()));
   }
 

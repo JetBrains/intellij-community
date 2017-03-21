@@ -25,9 +25,6 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
-import com.intellij.util.text.StringFactory;
-import com.sun.org.apache.xerces.internal.impl.Constants;
-import org.apache.xerces.util.SecurityManager;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -41,6 +38,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
+import javax.xml.XMLConstants;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.net.URL;
@@ -250,9 +248,7 @@ public class JDOMUtil {
         protected void configureParser(XMLReader parser, SAXHandler contentHandler) throws JDOMException {
           super.configureParser(parser, contentHandler);
           try {
-            SecurityManager manager = new SecurityManager();
-            manager.setEntityExpansionLimit(10000);
-            parser.setProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY, manager);
+            parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
           }
           catch (Exception ignore) {
           }
@@ -271,7 +267,9 @@ public class JDOMUtil {
   }
 
   /**
-   * @deprecated Use load
+   * @deprecated Use {@link #load(CharSequence)}
+   *
+   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @NotNull
   @Deprecated
@@ -279,7 +277,6 @@ public class JDOMUtil {
     return loadDocument(new CharSequenceReader(seq));
   }
 
-  @NotNull
   public static Element load(@NotNull CharSequence seq) throws IOException, JDOMException {
     return load(new CharSequenceReader(seq));
   }
@@ -309,7 +306,6 @@ public class JDOMUtil {
     return loadDocument(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
   }
 
-  @Contract("null -> null; !null -> !null")
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }
@@ -385,14 +381,6 @@ public class JDOMUtil {
     finally {
       writer.close();
     }
-  }
-
-  @NotNull
-  public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
-    CharArrayWriter writer = new CharArrayWriter();
-    writeDocument(document, writer, lineSeparator);
-
-    return StringFactory.createShared(writer.toCharArray()).getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull

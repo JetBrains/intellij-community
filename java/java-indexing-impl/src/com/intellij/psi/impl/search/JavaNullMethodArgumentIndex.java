@@ -20,6 +20,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -64,9 +65,6 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   @Override
   public DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
     return inputData -> {
-      if (!JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
-        return Collections.emptyMap();
-      }
       if (myOfflineMode) {
         return Collections.emptyMap();
       }
@@ -182,7 +180,12 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE);
+    return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(file);
+      }
+    };
   }
 
   @Override

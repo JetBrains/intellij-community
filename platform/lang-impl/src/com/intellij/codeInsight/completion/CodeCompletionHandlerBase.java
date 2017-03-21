@@ -303,10 +303,8 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
-    final Semaphore freezeSemaphore = new Semaphore();
-    freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                                  parameters, this, freezeSemaphore,
+                                                                                  parameters, this,
                                                                                   initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
     Disposer.register(indicator, context.getOffsetMap());
@@ -320,20 +318,18 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    if (freezeSemaphore.waitFor(ourAutoInsertItemTimeout)) {
-      if (!indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
-        try {
-          indicator.getLookup().refreshUi(true, false);
-        }
-        catch (Exception e) {
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-          LOG.error(e);
-          return;
-        }
-
-        completionFinished(indicator, hasModifiers);
+    if (indicator.blockingWaitForFinish(ourAutoInsertItemTimeout)) {
+      try {
+        indicator.getLookup().refreshUi(true, false);
+      }
+      catch (Exception e) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        LOG.error(e);
         return;
       }
+
+      completionFinished(indicator, hasModifiers);
+      return;
     }
 
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
@@ -719,6 +715,7 @@ public class CodeCompletionHandlerBase {
       if (cached != null && isCopyUpToDate(cached.second, cached.first, file)) {
         final PsiFile copy = cached.first;
         final Document document = cached.second;
+        CompletionAssertions.assertCorrectOriginalFile("Cached", file, copy);
         Document originalDocument = file.getViewProvider().getDocument();
         assert originalDocument != null;
         assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
@@ -731,6 +728,7 @@ public class CodeCompletionHandlerBase {
     if (copy.isPhysical() || copy.getViewProvider().isEventSystemEnabled()) {
       LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" + file.getLanguage() + "; file=" + file + " of " + file.getClass());
     }
+    CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();

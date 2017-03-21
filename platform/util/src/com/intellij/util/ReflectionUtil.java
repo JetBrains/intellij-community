@@ -28,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -619,31 +622,6 @@ public class ReflectionUtil {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
-  public static List<Class<?>> getAllInterfaces(final Class<?> cls) {
-    if (cls == null) {
-      return null;
-    }
-
-    final HashSet<Class<?>> interfacesFound = new HashSet<Class<?>>();
-    getAllInterfaces(cls, interfacesFound);
-
-    return new ArrayList<Class<?>>(interfacesFound);
-  }
-
-  private static void getAllInterfaces(Class<?> clazz, final HashSet<Class<?>> interfacesFound) {
-    while (clazz != null) {
-      final Class<?>[] interfaces = clazz.getInterfaces();
-
-      for (final Class<?> i : interfaces) {
-        if (interfacesFound.add(i)) {
-          getAllInterfaces(i, interfacesFound);
-        }
-      }
-
-      clazz = clazz.getSuperclass();
-    }
-  }
-
   @NotNull
   public static JBTreeTraverser<Class> classTraverser(@Nullable Class root) {
     return new JBTreeTraverser<Class>(CLASS_STRUCTURE).unique().withRoot(root);
@@ -655,8 +633,4 @@ public class ReflectionUtil {
       return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
     }
   };
-
-  public static boolean isPotentiallyThisCapturing(Class<?> clazz) {
-    return clazz.getEnclosingClass() != null && !Modifier.isStatic(clazz.getModifiers());
-  }
 }

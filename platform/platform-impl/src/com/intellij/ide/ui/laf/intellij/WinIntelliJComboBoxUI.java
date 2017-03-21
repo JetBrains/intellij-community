@@ -15,8 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -99,22 +100,30 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
-  public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (comboBox == null || arrowButton == null) {
       return; //NPE on LaF change
     }
-    final GraphicsConfig config = new GraphicsConfig(g2);
-    hasFocus = false;
-    checkFocus();
-    if (hasFocus) {
-      g2.setColor(UIManager.getColor("ComboBox.activeBorderColor"));
-      ((Graphics2D)g2).setStroke(new BasicStroke(JBUI.scale(2f)));
-    } else {
-      g2.setColor(UIManager.getColor("ComboBox.borderColor"));
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      hasFocus = false;
+      checkFocus();
+      Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
+      if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+        g2.translate(x, y);
+        DarculaUIUtil.paintErrorBorder(g2, width, height, hasFocus);
+      } else if (hasFocus) {
+        g2.setColor(UIManager.getColor("ComboBox.activeBorderColor"));
+        g2.setStroke(new BasicStroke(JBUI.scale(2f)));
+      } else {
+        g2.setColor(UIManager.getColor("ComboBox.borderColor"));
+      }
+
+      g2.translate(x, y);
+      g2.drawRect(JBUI.scale(1), JBUI.scale(1), width-2*JBUI.scale(1), height-2*JBUI.scale(1));
+    } finally {
+      g2.dispose();
     }
-    g2.translate(x, y);
-    g2.drawRect(JBUI.scale(1), JBUI.scale(1), width-2*JBUI.scale(1), height-2*JBUI.scale(1));
-    g2.translate(-x, -y);
-    config.restore();
   }
 }

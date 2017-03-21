@@ -1733,7 +1733,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long max = Arrays.stream(interruptTimes).max().getAsLong();
     long min = Arrays.stream(interruptTimes).min().getAsLong();
     System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
-    assertTrue(mean < 10);
+    assertTrue(String.valueOf(mean), mean < 10);
   }
 
   @NotNull
@@ -2441,7 +2441,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       waitForDaemon();
-      checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+      checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
       new WriteCommandAction<Void>(myProject) {
         @Override
@@ -2450,7 +2450,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
       }.execute();
       waitForDaemon();
-      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
+      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
       waitForDaemon();

@@ -44,7 +44,8 @@ public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
-  
+  public static final int DEFAULT_MAX_INDEXER_THREADS = 4;
+
   public static void processFiles(final ProgressIndicator indicator,
                                   boolean processInReadAction,
                                   Collection<VirtualFile> files,
@@ -152,7 +153,7 @@ public class CacheUpdateRunner {
     int threadsCount = Registry.intValue("caches.indexerThreadsCount");
     if (threadsCount <= 0) {
       int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-      threadsCount = Math.max(1, Math.min(PROC_COUNT - coresToLeaveForOtherActivity, 4));
+      threadsCount = Math.max(1, Math.min(PROC_COUNT - coresToLeaveForOtherActivity, DEFAULT_MAX_INDEXER_THREADS));
     }
     return threadsCount;
   }

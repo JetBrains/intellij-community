@@ -21,10 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.timeTracking.model.WorkItem;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.*;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,18 +179,28 @@ public class LocalTaskImpl extends LocalTask {
     return myIssue;
   }
 
+  @Tag("url")
   @Override
   public String getIssueUrl() {
     return myIssueUrl;
+  }
+
+  public String setIssueUrl(String url) {
+    return myIssueUrl = url;
   }
 
   public void setIssue(boolean issue) {
     myIssue = issue;
   }
 
+  @Transient
   @Override
   public TaskRepository getRepository() {
     return myRepository;
+  }
+
+  public void setRepository(TaskRepository repository) {
+    myRepository = repository;
   }
 
   public void setCreated(Date created) {

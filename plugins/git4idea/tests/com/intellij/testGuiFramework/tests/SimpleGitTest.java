@@ -20,9 +20,9 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.testGuiFramework.fixtures.*;
+import com.intellij.testGuiFramework.framework.ParentPlugin;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
-import org.fest.swing.timing.Pause;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -35,65 +35,59 @@ import static com.intellij.testGuiFramework.matcher.TitleMatcher.withTitleMatche
 /**
  * @author Sergey Karashevich
  */
-@Ignore
+@ParentPlugin(pluginId = "Git4Idea")
 public class SimpleGitTest extends GitGuiTestCase {
 
   @Test
-  public void testSimpleGit(){
-    try {
-      IdeFrameFixture ideFrameFixture = importSimpleProject();
-      ideFrameFixture.waitForBackgroundTasksToFinish();
+  public void testSimpleGit() throws IOException {
+    IdeFrameFixture ideFrameFixture = importSimpleProject();
+    ideFrameFixture.waitForBackgroundTasksToFinish();
 
-      ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
-      final String projectName = ideFrameFixture.getProject().getName();
-      projectPane.selectByPath(projectName, "src");
+    ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
+    final String projectName = ideFrameFixture.getProject().getName();
+    projectPane.selectByPath(projectName, "src");
 
-      //invoke "New..." action
-      invokeAction(myRobot, "NewElement");
-      //select first element (Java class)
-      myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
+    //invoke "New..." action
+    invokeAction(myRobot, "NewElement");
+    //select first element (Java class)
+    myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
 
-      JDialogFixture.find(myRobot, IdeBundle.message("action.create.new.class"));
-      myRobot.enterText("MyClass");
-      myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
-      EditorFixture editorFixture = new EditorFixture(myRobot, ideFrameFixture);
-      FileFixture currentFileFixture = editorFixture.waitUntilFileIsLoaded();
+    JDialogFixture.find(myRobot, IdeBundle.message("action.create.new.class"));
+    myRobot.enterText("MyClass");
+    myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
+    EditorFixture editorFixture = new EditorFixture(myRobot, ideFrameFixture);
+    FileFixture currentFileFixture = editorFixture.waitUntilFileIsLoaded();
 
-      ideFrameFixture.invokeMenuPath("VCS", ActionsBundle.message("group.Vcs.Import.text"), "Create Git Repository...");
-      FileChooserDialogFixture fileChooserDialogFixture = FileChooserDialogFixture.findDialog(myRobot, withTitleMatcher(GitBundle.message("init.destination.directory.title")));
-      fileChooserDialogFixture.waitFilledTextField().clickOk();
+    ideFrameFixture.invokeMenuPath("VCS", ActionsBundle.message("group.Vcs.Import.text"), "Create Git Repository...");
+    FileChooserDialogFixture fileChooserDialogFixture = FileChooserDialogFixture.Companion
+      .findDialog(myRobot, withTitleMatcher(GitBundle.message("init.destination.directory.title")));
+    fileChooserDialogFixture.waitFilledTextField().clickOk();
 
-      pause("Wait when files will be added to Git Repository and marked as untracked",
-            () -> currentFileFixture.getVcsStatus().equals(FileStatus.UNKNOWN),
-            THIRTY_SEC_TIMEOUT);
+    pause("Wait when files will be added to Git Repository and marked as untracked",
+          () -> currentFileFixture.getVcsStatus().equals(FileStatus.UNKNOWN),
+          THIRTY_SEC_TIMEOUT);
 
-      invokeAction(myRobot, "ChangesView.AddUnversioned");
+    invokeAction(myRobot, "ChangesView.AddUnversioned");
 
-      pause("Wait when file will be marked as added",
-                        () -> currentFileFixture.getVcsStatus().equals(FileStatus.ADDED),
-                        THIRTY_SEC_TIMEOUT);
+    pause("Wait when file will be marked as added",
+          () -> currentFileFixture.getVcsStatus().equals(FileStatus.ADDED),
+          THIRTY_SEC_TIMEOUT);
 
-      invokeAction(myRobot, "CheckinProject");
+    invokeAction(myRobot, "CheckinProject");
 
-      JDialogFixture commitJDialogFixture = JDialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
-      myRobot.enterText("initial commit");
-      findAndClickButton(commitJDialogFixture, "Commit");
+    JDialogFixture commitJDialogFixture = JDialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
+    myRobot.enterText("initial commit");
+    findAndClickButton(commitJDialogFixture, "Commit");
 
-      MessagesFixture messagesFixture = MessagesFixture.findAny(myRobot, commitJDialogFixture.target());
-      messagesFixture.click("Commit");
+    MessagesFixture messagesFixture = MessagesFixture.findAny(myRobot, commitJDialogFixture.target());
+    messagesFixture.click("Commit");
 
-      if (MessagesFixture.exists(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now")) {
-        MessagesFixture.findByTitle(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now").click("Commit");
-      }
-      pause("Wait when file will be marked as not changed (committed)",
-            () -> currentFileFixture.getVcsStatus().equals(FileStatus.NOT_CHANGED),
-            THIRTY_SEC_TIMEOUT);
-
-      Pause.pause(10000);
+    if (MessagesFixture.exists(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now")) {
+      MessagesFixture.findByTitle(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now").click("Commit");
     }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
+    pause("Wait when file will be marked as not changed (committed)",
+          () -> currentFileFixture.getVcsStatus().equals(FileStatus.NOT_CHANGED),
+          LONG_TIMEOUT);
   }
 
   private void waitForIdle() {

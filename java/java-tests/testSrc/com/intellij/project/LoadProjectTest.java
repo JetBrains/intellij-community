@@ -15,13 +15,16 @@
  */
 package com.intellij.project;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -33,6 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 public class LoadProjectTest extends PlatformTestCase {
@@ -45,8 +49,20 @@ public class LoadProjectTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    Project project = getProject();
     myProject = null;
-    super.tearDown();
+
+    new RunAll(
+      () -> ((FileEditorManagerEx)FileEditorManager.getInstance(project)).closeAllFiles(),
+      () -> ProjectManagerEx.getInstanceEx().closeAndDispose(project),
+      () -> checkNoPsiFilesInProjectReachable(project),
+      () -> super.tearDown()).run();
+  }
+
+  private static void checkNoPsiFilesInProjectReachable(Project project) {
+    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
+                                    psiFile.getProject() == project);
   }
 
   public void testLoadProject() throws Exception {
@@ -61,7 +77,7 @@ public class LoadProjectTest extends PlatformTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     assertNotNull(editorA);
-    CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[0], false);
+    CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[] {Pass.EXTERNAL_TOOLS}, false);
 
     VirtualFile b = src.findFileByRelativePath("/x/BClass.java");
     assertNotNull(b);
@@ -72,17 +88,10 @@ public class LoadProjectTest extends PlatformTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     assertNotNull(editorB);
-    CodeInsightTestFixtureImpl.instantiateAndRun(fileB, editorB, new int[0], false);
+    CodeInsightTestFixtureImpl.instantiateAndRun(fileB, editorB, new int[]{Pass.EXTERNAL_TOOLS}, false);
 
     FileEditor[] allEditors = FileEditorManager.getInstance(getProject()).getAllEditors();
     assertEquals(2, allEditors.length);
 
-    FileEditorManager.getInstance(getProject()).closeFile(a);
-    FileEditorManager.getInstance(getProject()).closeFile(b);
-    ProjectManagerEx.getInstanceEx().closeAndDispose(getProject());
-
-    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
-                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
-                                    psiFile.getProject() == getProject());
   }
 }

@@ -53,6 +53,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +155,7 @@ public class GradleManager
       final DistributionType distributionType;
       if (projectLevelSettings == null) {
         distributionType =
-          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.LOCAL;
+          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
       }
       else {
         distributionType =
@@ -166,7 +167,6 @@ public class GradleManager
                                                                    distributionType,
                                                                    settings.getGradleVmOptions(),
                                                                    settings.isOfflineWork());
-
       for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
         result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
       }

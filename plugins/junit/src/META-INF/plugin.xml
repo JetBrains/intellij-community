@@ -34,8 +34,7 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.TestInClassConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>

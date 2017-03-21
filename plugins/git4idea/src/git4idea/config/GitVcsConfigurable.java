@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,9 +73,4 @@ public class GitVcsConfigurable implements Configurable {
   public void reset() {
     panel.load(mySettings, mySharedSettings);
   }
-
-  @Override
-  public void disposeUIResources() {
-  }
-
 }

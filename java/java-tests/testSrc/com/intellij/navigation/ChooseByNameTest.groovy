@@ -15,6 +15,7 @@
  */
 package com.intellij.navigation
 
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
@@ -25,10 +26,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
@@ -39,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import javax.swing.*
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author peter
  */
@@ -355,6 +353,17 @@ class Intf {
     assert file in elements
   }
 
+  void "test classes sorted by qualified name dispreferring excluded from import and completion"() {
+    def foo = myFixture.addClass('package foo; class List {}')
+    def bar = myFixture.addClass('package bar; class List {}')
+
+    def popup = createPopup(new GotoClassModel2(project), myFixture.addClass('class Context {}'))
+    assert calcPopupElements(popup, "List", false) == [bar, foo]
+
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
+    assert calcPopupElements(popup, "List", false) == [foo, bar]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }
@@ -383,7 +392,7 @@ class Intf {
 
     runInEdtAndWait {
       def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
-      Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
+      Disposer.register(myFixture.testRootDisposable, { popup.close(false) } as Disposable)
     }
     myPopup
   }

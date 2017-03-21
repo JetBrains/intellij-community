@@ -31,7 +31,7 @@ public class XPath2ExpressionTest extends TestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
   }
 
   public void testIntegerPlusInteger() throws Throwable {

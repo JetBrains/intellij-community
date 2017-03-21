@@ -88,7 +88,7 @@ class MenuFixture {
       }
       if (i < segmentCount - 1) {
         myRobot.click(found);
-        List<JPopupMenu> showingPopupMenus = findShowingPopupMenus(i + 1);
+        List<JPopupMenu> showingPopupMenus = findShowingPopupMenus(getCountOfShowing(previouslyFoundPopups) + 1);
         showingPopupMenus.removeAll(previouslyFoundPopups);
         assertThat(showingPopupMenus).hasSize(1);
         root = showingPopupMenus.get(0);
@@ -97,6 +97,10 @@ class MenuFixture {
       return found;
     }
     throw new AssertionError("Menu item with path " + Arrays.toString(path) + " should have been found already");
+  }
+
+  private int getCountOfShowing(List<JPopupMenu> previouslyFoundPopups) {
+    return (int)previouslyFoundPopups.stream().filter(popupMenu -> popupMenu.isShowing()).count();
   }
 
   @NotNull

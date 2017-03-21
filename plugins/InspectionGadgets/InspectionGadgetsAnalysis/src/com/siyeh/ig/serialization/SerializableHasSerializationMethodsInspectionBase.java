@@ -58,6 +58,7 @@ public class SerializableHasSerializationMethodsInspectionBase
     }
   }
 
+  @NotNull
   @Override
   protected JComponent[] createAdditionalOptions() {
     return new JComponent[] {new CheckBox(InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option"),

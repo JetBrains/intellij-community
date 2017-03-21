@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (element != null) {
-        final PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiDocCommentOwner.class);
+        final PsiJavaDocumentedElement commentOwner = PsiTreeUtil.getParentOfType(element, PsiJavaDocumentedElement.class);
         if (commentOwner != null) {
           final PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
           if (psiElement instanceof PsiAnnotation) {

@@ -542,6 +542,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testInlays();
 
+  void checkResultWithInlays(String text);
+
   void assertPreferredCompletionItems(int selected, @NotNull String... expected);
 
   /**

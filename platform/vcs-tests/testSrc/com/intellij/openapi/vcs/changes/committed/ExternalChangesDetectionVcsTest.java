@@ -91,12 +91,13 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       public void run() {
         try {
           myVcsManager.unregisterVcs(myVcs);
-
+          myVcs = null;
+          myVcsManager = null;
+          myChangeListManager = null;
+          myVcsDirtyScopeManager = null;
           tearDownProject();
-          if (myTempDirTestFixture != null) {
-            myTempDirTestFixture.tearDown();
-            myTempDirTestFixture = null;
-          }
+          myTempDirTestFixture.tearDown();
+          myTempDirTestFixture = null;
           FileUtil.delete(myClientRoot);
         }
         catch (Exception e) {

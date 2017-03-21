@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,8 +58,8 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   private JBLabel myVmOptionsLabel;
   private RawCommandLineEditor myVmOptionsEditor;
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
-  private JBLabel myScriptParametersLabel;
-  private RawCommandLineEditor myScriptParametersEditor;
+  private JBLabel myArgumentsLabel;
+  private RawCommandLineEditor myArgumentsEditor;
 
   @Nullable private ExternalSystemTaskExecutionSettings myOriginalSettings;
 
@@ -110,11 +109,11 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myVmOptionsEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.label.vmoptions"));
     canvas.add(myVmOptionsLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     canvas.add(myVmOptionsEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
-    myScriptParametersLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.script.parameters"));
-    myScriptParametersEditor = new RawCommandLineEditor();
-    myScriptParametersEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.label.script.parameters"));
-    canvas.add(myScriptParametersLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-    canvas.add(myScriptParametersEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
+    myArgumentsLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.arguments"));
+    myArgumentsEditor = new RawCommandLineEditor();
+    myArgumentsEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.label.arguments"));
+    canvas.add(myArgumentsLabel, ExternalSystemUiUtil.getLabelConstraints(0));
+    canvas.add(myArgumentsEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
   }
 
   @Override
@@ -122,7 +121,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myProjectPathField.setText("");
     myTasksTextField.setText("");
     myVmOptionsEditor.setText("");
-    myScriptParametersEditor.setText("");
+    myArgumentsEditor.setText("");
     showUi(true);
 
     if (myOriginalSettings == null) {
@@ -136,7 +135,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myProjectPathField.setText(path);
     myTasksTextField.setText(StringUtil.join(myOriginalSettings.getTaskNames(), " "));
     myVmOptionsEditor.setText(myOriginalSettings.getVmOptions());
-    myScriptParametersEditor.setText(myOriginalSettings.getScriptParameters());
+    myArgumentsEditor.setText(myOriginalSettings.getScriptParameters());
   }
 
   @Override
@@ -151,7 +150,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
                                normalizePath(StringUtil.join(myOriginalSettings.getTaskNames(), " ")))
            || !Comparing.equal(normalizePath(myVmOptionsEditor.getText()),
                                normalizePath(myOriginalSettings.getVmOptions()))
-           || !Comparing.equal(normalizePath(myScriptParametersEditor.getText()),
+           || !Comparing.equal(normalizePath(myArgumentsEditor.getText()),
                                normalizePath(myOriginalSettings.getScriptParameters()));
   }
 
@@ -161,7 +160,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     settings.setExternalProjectPath(projectPath);
     settings.setTaskNames(StringUtil.split(myTasksTextField.getText(), " "));
     settings.setVmOptions(myVmOptionsEditor.getText());
-    settings.setScriptParameters(myScriptParametersEditor.getText());
+    settings.setScriptParameters(myArgumentsEditor.getText());
   }
 
   @Override
@@ -170,8 +169,8 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     if (myOriginalSettings == null) {
       throw new ConfigurationException(String.format(
         "Can't store external task settings into run configuration. Reason: target run configuration is undefined. Tasks: '%s', " +
-        "external project: '%s', vm options: '%s', script parameters: '%s'",
-        myTasksTextField.getText(), projectPath, myVmOptionsEditor.getText(), myScriptParametersEditor.getText()
+        "external project: '%s', vm options: '%s', arguments: '%s'",
+        myTasksTextField.getText(), projectPath, myVmOptionsEditor.getText(), myArgumentsEditor.getText()
       ));
     }
     return true;

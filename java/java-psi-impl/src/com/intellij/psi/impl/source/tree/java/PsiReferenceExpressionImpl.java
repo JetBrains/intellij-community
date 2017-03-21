@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -52,10 +51,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
@@ -491,8 +487,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
       private boolean shouldProcessMethod(@NotNull PsiMethod method) {
         PsiReferenceExpressionImpl ref = PsiReferenceExpressionImpl.this;
-        return !method.isConstructor() &&
-               LambdaUtil.isValidQualifier4InterfaceStaticMethodCall(method, ref, myResolveContext, PsiUtil.getLanguageLevel(ref));
+        return !method.isConstructor() && hasValidQualifier(method, ref, myResolveContext);
       }
 
       @Override
@@ -505,6 +500,46 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
     };
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
+  }
+
+  /* see also HighlightMethodUtil.checkStaticInterfaceMethodCallQualifier() */
+  private static boolean hasValidQualifier(PsiMethod method, PsiReferenceExpression ref, PsiElement scope) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_1_8)) {
+        return false;
+      }
+
+      PsiExpression qualifierExpression = ref.getQualifierExpression();
+      if (qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, ref, true))) {
+        return true;
+      }
+
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve == containingClass) {
+          return true;
+        }
+
+        if (resolve instanceof PsiTypeParameter) {
+          Set<PsiClass> classes = new HashSet<>();
+          for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
+            final PsiClass aClass = type.resolve();
+            if (aClass != null) {
+              classes.add(aClass);
+            }
+          }
+
+          if (classes.size() == 1 && classes.contains(containingClass)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    return true;
   }
 
   public static boolean seemsScrambled(@Nullable PsiClass aClass) {

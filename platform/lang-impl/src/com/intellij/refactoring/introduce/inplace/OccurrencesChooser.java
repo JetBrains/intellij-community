@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,17 @@ import java.util.stream.Collectors;
 // This prevents languages with polyadic expressions or sequences
 // from reusing it, use simpleChooser instead.
 public abstract class OccurrencesChooser<T> {
-  public enum ReplaceChoice {
+  public static final String DEFAULT_CHOOSER_TITLE = "Multiple occurrences found";
+
+  public interface BaseReplaceChoice {
+    boolean isMultiple();
+
+    boolean isAll();
+
+    String formatDescription(int occurrencesCount);
+  }
+
+  public enum ReplaceChoice implements BaseReplaceChoice {
     NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
     private final String myDescription;
@@ -53,6 +63,21 @@ public abstract class OccurrencesChooser<T> {
 
     public String getDescription() {
       return myDescription;
+    }
+
+    @Override
+    public boolean isMultiple() {
+      return this == NO_WRITE || this == ALL;
+    }
+
+    @Override
+    public boolean isAll() {
+      return this == ALL;
+    }
+
+    @Override
+    public String formatDescription(int occurrencesCount) {
+      return MessageFormat.format(getDescription(), occurrencesCount);
     }
   }
 
@@ -87,11 +112,17 @@ public abstract class OccurrencesChooser<T> {
   }
 
   public void showChooser(final Pass<ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {
+    showChooser(callback, occurrencesMap, DEFAULT_CHOOSER_TITLE);
+  }
+
+  public <C extends BaseReplaceChoice> void showChooser(final Pass<C> callback,
+                          final Map<C, List<T>> occurrencesMap,
+                          String title) {
     if (occurrencesMap.size() == 1) {
       callback.pass(occurrencesMap.keySet().iterator().next());
       return;
     }
-    List<ReplaceChoice> model = occurrencesMap.keySet().stream().collect(Collectors.toList());
+    List<C> model = occurrencesMap.keySet().stream().collect(Collectors.toList());
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
@@ -103,13 +134,12 @@ public abstract class OccurrencesChooser<T> {
                                                       final boolean isSelected,
                                                       final boolean cellHasFocus) {
           final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          final ReplaceChoice choices = (ReplaceChoice)value;
+          @SuppressWarnings("unchecked") final C choices = (C)value;
           if (choices != null) {
             String text = choices.getDescription();
             if (choices == ReplaceChoice.ALL) {
-              text = MessageFormat.format(text, occurrencesMap.get(choices).size());
+              setText(choices.formatDescription(occurrencesMap.get(choices).size()));
             }
-            setText(text);
           }
           return rendererComponent;
         }
@@ -127,7 +157,7 @@ public abstract class OccurrencesChooser<T> {
           myRangeHighlighters.add(rangeHighlighter);
         }
       })
-      .setTitle("Multiple occurrences found")
+      .setTitle(title)
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)

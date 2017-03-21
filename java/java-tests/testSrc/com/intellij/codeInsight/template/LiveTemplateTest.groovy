@@ -54,7 +54,7 @@ class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() {
     super.setUp()
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
   }
 
   @Override
@@ -80,7 +80,7 @@ class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     template.addVariable("ARG", "", "", false)
     TemplateContextType contextType = contextType(JavaCodeContextType.class)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
     writeCommand { manager.startTemplate(editor, (char)'\t') }
     UIUtil.dispatchAllInvocationEvents()
@@ -853,7 +853,7 @@ class A {{
 
     myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
 
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
     myFixture.type '\t'
     myFixture.checkResult 'class A { void f() { Stri   "; } }'
   }
@@ -1099,7 +1099,7 @@ class Foo {
     template.addVariable("VAR1", "", "", true)
     template.addVariable("VAR2", new MacroCallNode(new FileNameMacro()), new ConstantNode("default"), true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
     startTemplate(template)
     myFixture.checkResult """\
@@ -1133,7 +1133,7 @@ class Foo {
     template.addVariable("VAR1", "", "", true)
     template.addVariable("VAR2", new MacroCallNode(new MyMirrorMacro("VAR1")), null, true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
     startTemplate(template)
     myFixture.checkResult """\

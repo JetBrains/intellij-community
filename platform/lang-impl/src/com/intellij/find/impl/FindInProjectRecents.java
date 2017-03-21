@@ -16,14 +16,8 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.FindInProjectSettings;
-import com.intellij.find.FindSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @State(
   name = "FindInProjectRecents",
@@ -32,22 +26,5 @@ import java.util.List;
 final class FindInProjectRecents extends FindInProjectSettingsBase implements FindInProjectSettings {
   public static FindInProjectSettings getInstance(Project project) {
     return ServiceManager.getService(project, FindInProjectSettings.class);
-  }
-
-  @NotNull
-  public List<String> getRecentDirectories() {
-    ArrayList<String> strings = new ArrayList<>(FindSettings.getInstance().getRecentDirectories());
-    strings.addAll(super.getRecentDirectories());
-    return strings;
-  }
-
-  @NotNull
-  public String[] getRecentFindStrings(){
-    return ArrayUtil.mergeArrays(FindSettings.getInstance().getRecentFindStrings(), super.getRecentFindStrings());
-  }
-
-  @NotNull
-  public String[] getRecentReplaceStrings(){
-    return ArrayUtil.mergeArrays(FindSettings.getInstance().getRecentReplaceStrings(), super.getRecentReplaceStrings());
   }
 }

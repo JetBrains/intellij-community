@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -176,7 +175,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
   }
 
   @Override
-  public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
+  public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
     if (id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT) {
       final ProjectSystemId systemId = id.getProjectSystemId();
       for (String filePath : ContainerUtil.newArrayList(myKnownAffectedFiles.get(workingDir))) {
@@ -404,7 +403,8 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
                           String projectPath) {
       super(systemId.getReadableName() + " Import",
             ExternalSystemBundle.message("import.needed", systemId.getReadableName()),
-            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a> " +
+            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a>" +
+            " &nbsp;&nbsp;" +
             "<a href='autoImport'>" + ExternalSystemBundle.message("import.enableAutoImport") + "</a>",
             NotificationType.INFORMATION, null);
 
@@ -420,6 +420,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
           projectPaths.stream()
             .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
             .distinct()
+            .filter(Objects::nonNull)
             .forEach(settings -> {
               if (isReimport) {
                 scheduleRefresh(project, settings.getExternalProjectPath(), systemId, true);

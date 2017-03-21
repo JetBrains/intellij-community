@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,5 +30,12 @@ import java.lang.annotation.Target;
 public @interface Property {
   boolean surroundWithTag() default true;
 
+  /**
+   * Serialize into parent element. Allowed only for bean properties (not primitive types).
+   */
+  boolean flat() default false;
+
   Class<? extends SerializationFilter> filter() default SerializationFilter.class;
+  
+  boolean alwaysWrite() default false;
 }

@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.CodeInsightProviders;
 import com.jetbrains.jsonSchema.JsonSchemaFileTypeManager;
@@ -144,7 +141,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Override
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<CodeInsightProviders> wrappers = getWrappers(file);
-    if (wrappers == null || wrappers.isEmpty()) return null;
+    if (wrappers.isEmpty()) return null;
     return ContainerUtil.map(wrappers, (NotNullFunction<CodeInsightProviders, Pair<Boolean, String>>)
       wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
   }
@@ -202,7 +199,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private CodeInsightProviders getWrapper(@Nullable VirtualFile file) {
     if (file == null) return null;
     final List<CodeInsightProviders> wrappers = getWrappers(file);
-    if (wrappers == null || wrappers.isEmpty()) {
+    if (wrappers.isEmpty()) {
       return null;
     }
     return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
@@ -217,22 +214,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     }
   }
 
-  @Nullable
+  @NotNull
   private List<CodeInsightProviders> getWrappers(@Nullable VirtualFile file) {
-    if (file == null) return null;
+    if (file == null) return Collections.emptyList();
     final FileType type = file.getFileType();
     final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
 
-    synchronized (myLock) {
-      if (mySchemaFiles.isEmpty()) {
-        mySchemaFiles.addAll(getProviders().stream()
-                               .filter(provider -> provider.getSchemaFile() != null)
-          .map(provider -> provider.getSchemaFile()).collect(Collectors.toSet()));
-      }
-    }
-
-    final List<CodeInsightProviders> wrappers = new ArrayList<>();
-    getWrapperSkeletonMethod(provider -> provider.isAvailable(myProject, file) && (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())),
+    final List<CodeInsightProviders> wrappers = new SmartList<>();
+    getWrapperSkeletonMethod(provider -> (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) &&
+                                         provider.isAvailable(myProject, file),
                              wrapper -> wrappers.add(wrapper), true);
 
     return wrappers;
@@ -252,21 +242,24 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private void getWrapperSkeletonMethod(@NotNull final Processor<JsonSchemaFileProvider> processor,
                                         @NotNull final Consumer<CodeInsightProviders> consumer,
                                         final boolean multiple) {
-    final List<JsonSchemaFileProvider> matchingProviders = new ArrayList<>();
+    final List<JsonSchemaFileProvider> filtered = getProviders().stream().filter(processor::process).collect(Collectors.toList());
+    if (filtered.isEmpty()) return;
+
+    final List<JsonSchemaFileProvider> matchingProviders = new SmartList<>();
     synchronized (myLock) {
-      for (JsonSchemaFileProvider provider : getProviders()) {
-        if (processor.process(provider)) {
-          final CodeInsightProviders wrapper = myWrappers.get(provider.getSchemaFile());
-          if (wrapper != null) {
-            consumer.consume(wrapper);
-            if (!multiple) return;
-          } else {
-            matchingProviders.add(provider);
-            if (!multiple) break;
-          }
+      for (JsonSchemaFileProvider provider : filtered) {
+        final CodeInsightProviders wrapper = myWrappers.get(provider.getSchemaFile());
+        if (wrapper != null) {
+          consumer.consume(wrapper);
+          if (!multiple) return;
+        }
+        else {
+          matchingProviders.add(provider);
+          if (!multiple) break;
         }
       }
     }
+    if (matchingProviders.isEmpty()) return;
 
     final Map<VirtualFile, Pair<CodeInsightProviders, JsonSchemaFileProvider>> created = new HashMap<>();
     for (JsonSchemaFileProvider provider : matchingProviders) {
@@ -275,8 +268,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       if (wrapper != null) created.put(provider.getSchemaFile(), Pair.create(wrapper, provider));
     }
 
+    final List<JsonSchemaFileProvider> providers = getProviders();
     synchronized (myLock) {
-      final List<JsonSchemaFileProvider> providers = getProviders();
       created.forEach((file, pair) -> {
         final CodeInsightProviders wrapper = pair.getFirst();
         final JsonSchemaFileProvider provider = pair.getSecond();
@@ -402,7 +395,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public Collection<Pair<VirtualFile, String>> getSchemaFilesByFile(@NotNull final VirtualFile file) {
     final CodeInsightProviders wrapper = getWrapper(file);
     if (wrapper != null) {
-      final List<Pair<VirtualFile, String>> result = new ArrayList<>();
+      final List<Pair<VirtualFile, String>> result = new SmartList<>();
       wrapper.iterateSchemaFiles((schemaFile, schemaId) -> result.add(Pair.create(schemaFile, schemaId)));
       return result;
     }

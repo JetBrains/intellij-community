@@ -20,16 +20,10 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Batkovich
- */
 public class AddJavadocIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
@@ -42,20 +36,21 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
     if (!(element instanceof PsiIdentifier)) {
       return false;
     }
-    final PsiElement docCommentOwner = element.getParent();
-    return docCommentOwner instanceof PsiDocCommentOwner &&
-           !(docCommentOwner instanceof PsiAnonymousClass) && ((PsiDocCommentOwner)docCommentOwner).getDocComment() == null;
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiDocCommentOwner && !(parent instanceof PsiTypeParameter);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
+    //noinspection DialogTitleCapitalization
     return "Add Javadoc";
   }
 
   @NotNull
   @Override
   public String getText() {
+    //noinspection DialogTitleCapitalization
     return getFamilyName();
   }
 }

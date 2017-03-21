@@ -322,14 +322,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   }
 
   private void updateClassesAndCounts() {
-    final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
-    if (debugSession != null) {
-      final DebugProcess debugProcess = DebuggerManager.getInstance(myProject)
-        .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-      if (debugProcess.isAttached()) {
-        mySingleAlarm.cancelAndRequest();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
+      if (debugSession != null) {
+        final DebugProcess debugProcess = DebuggerManager.getInstance(myProject)
+          .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
+        if (debugProcess != null && debugProcess.isAttached()) {
+          mySingleAlarm.cancelAndRequest();
+        }
       }
-    }
+    }, x -> myProject.isDisposed());
   }
 
   private static ActionPopupMenu createContextMenu() {

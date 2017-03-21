@@ -52,7 +52,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     final ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     myOldDoctype = manager.getDefaultHtmlDoctype(getProject());
     manager.setDefaultHtmlDoctype(XmlUtil.XHTML_URI, getProject());
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
   }
 
   @Override
@@ -75,7 +75,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.addTestResource(url, location, myFixture.getTestRootDisposable());
   }
 
   public void testCompleteWithAnyInSchema() throws Exception {
@@ -175,7 +175,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAttributesTemplateFinishWithSpace() throws Throwable {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
 
     configureByFile(getTestName(false) + ".xml");
     type('b');
@@ -192,7 +192,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNoAttributesTemplateFinishWithSpace() throws Throwable {
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
 
     configureByFile(getTestName(false) + ".xml");
     type('d');
@@ -492,7 +492,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCorrectSelectionInsertion() throws Exception {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
     addResource("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
                 getTestDataPath() + "/hibernate-mapping-3.0.dtd");
 

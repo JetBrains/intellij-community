@@ -37,7 +37,7 @@ import java.util.List;
 public class PythonCompletionTest extends PyTestCase {
 
   private void doTest() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
@@ -1103,6 +1103,15 @@ public class PythonCompletionTest extends PyTestCase {
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "baz");
+  }
+
+  // PY-22570
+  public void testNamesReexportedViaStarImport() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> variants = myFixture.getLookupElementStrings();
+    assertSameElements(variants, "mod1", "mod2", "foo", "_bar");
   }
 
   @Override

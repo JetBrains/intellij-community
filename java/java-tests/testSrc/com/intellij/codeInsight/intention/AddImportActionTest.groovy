@@ -547,7 +547,7 @@ public class Foo {
   }
 
   void "test remember chosen variants"() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable())
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
 

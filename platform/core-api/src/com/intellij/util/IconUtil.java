@@ -202,6 +202,7 @@ public class IconUtil {
     private static final FileIconProvider[] myProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
   }
 
+  @NotNull
   private static FileIconProvider[] getProviders() {
     return FileIconProviderHolder.myProviders;
   }
@@ -210,6 +211,7 @@ public class IconUtil {
     private static final FileIconPatcher[] ourPatchers = Extensions.getExtensions(FileIconPatcher.EP_NAME);
   }
 
+  @NotNull
   private static FileIconPatcher[] getPatchers() {
     return FileIconPatcherHolder.ourPatchers;
   }

@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -72,7 +73,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -629,7 +629,7 @@ public class Switcher extends AnAction implements DumbAware {
         }).createPopup();
 
       if (isPinnedMode()) {
-        new AnAction(null, null, null) {
+        new DumbAwareAction(null, null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
@@ -641,7 +641,7 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
-      new AnAction(null, null, null) {
+      new DumbAwareAction(null, null, null) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           //suppress all actions to activate a toolwindow : IDEA-71277

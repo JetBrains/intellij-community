@@ -91,6 +91,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   private List<CapturePoint> myCapturePoints = new ArrayList<>();
+  public boolean CAPTURE_VARIABLES;
   private final EventDispatcher<CapturePointsSettingsListener> myDispatcher = EventDispatcher.create(CapturePointsSettingsListener.class);
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<>();

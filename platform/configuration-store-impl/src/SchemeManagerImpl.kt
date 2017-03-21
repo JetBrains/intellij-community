@@ -16,7 +16,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
@@ -107,7 +107,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  private inner class SchemeFileTracker() : BulkFileListener.Adapter() {
+  private inner class SchemeFileTracker : BulkFileListener {
     private fun isMy(file: VirtualFile) = isMy(file.nameSequence)
     private fun isMy(name: CharSequence) = name.endsWith(schemeExtension, ignoreCase = true) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
@@ -131,7 +131,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
               processor.onSchemeDeleted(it)
             }
 
-            updateCurrentScheme(oldCurrentScheme, readSchemeFromFile(event.file)?.let {
+            updateCurrentScheme(oldCurrentScheme, readSchemeFromFile(event.file, schemes)?.let {
               processor.initScheme(it)
               processor.onSchemeAdded(it)
               it
@@ -177,8 +177,17 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     private fun schemeCreatedExternally(file: VirtualFile) {
-      val readScheme = readSchemeFromFile(file)
+      val newSchemes = SmartList<T>()
+      val readScheme = readSchemeFromFile(file, newSchemes)
       if (readScheme != null) {
+        val existingScheme = findSchemeByName(readScheme.name)
+        if (existingScheme != null && readOnlyExternalizableSchemes.get(existingScheme.name) !== existingScheme) {
+          LOG.warn("Ignore incorrect VFS create scheme event: schema ${readScheme.name} is already exists")
+          return
+        }
+
+        schemes.addAll(newSchemes)
+
         processor.initScheme(readScheme)
         processor.onSchemeAdded(readScheme)
       }
@@ -463,12 +472,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       this.filesToDelete.remove(fileName)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    if (duringLoad) {
-      schemes.add(scheme as T)
+    if (schemes === this.schemes) {
+      addNewScheme(scheme as T, true)
     }
     else {
-      addNewScheme(scheme as T, true)
+      schemes.add(scheme as T)
     }
     return scheme
   }
@@ -478,7 +486,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
-  private fun readSchemeFromFile(file: VirtualFile, schemes: MutableList<T> = this.schemes): MUTABLE_SCHEME? {
+  private fun readSchemeFromFile(file: VirtualFile, schemes: MutableList<T>): MUTABLE_SCHEME? {
     val fileName = file.name
     if (file.isDirectory || !canRead(fileName)) {
       return null
@@ -554,7 +562,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var deleteUsingIo = !useVfs
     if (!deleteUsingIo) {
       virtualDirectory?.let {
-        runWriteAction {
+        runUndoTransparentWriteAction {
           try {
             it.delete(this)
           }
@@ -632,7 +640,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           oldFile?.let {
             // VFS doesn't allow to rename to existing file, so, check it
             if (dir!!.findChild(fileName) == null) {
-              runWriteAction { it.rename(this, fileName) }
+              runUndoTransparentWriteAction { it.rename(this, fileName) }
               file = oldFile
             }
             else {
@@ -645,7 +653,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           file = dir.getOrCreateChild(fileName, this)
         }
 
-        runWriteAction {
+        runUndoTransparentWriteAction {
           file!!.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
@@ -736,7 +744,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       virtualDirectory?.let {
         val childrenToDelete = it.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
-          runWriteAction {
+          runUndoTransparentWriteAction {
             childrenToDelete.forEach { file ->
               errors.catch { file.delete(this) }
             }

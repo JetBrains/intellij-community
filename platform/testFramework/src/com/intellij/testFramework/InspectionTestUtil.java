@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.io.CharArrayReader;
@@ -50,7 +51,7 @@ public class InspectionTestUtil {
     Element[] expectedArray = expectedProblems.toArray(new Element[expectedProblems.size()]);
     boolean failed = false;
 
-expected:
+    expected:
     for (Element expectedProblem : expectedArray) {
       Element[] reportedArrayed = reportedProblems.toArray(new Element[reportedProblems.size()]);
       for (Element reportedProblem : reportedArrayed) {
@@ -62,13 +63,13 @@ expected:
       }
 
       Document missing = new Document(expectedProblem.clone());
-      System.out.println("The following haven't been reported as expected: " + new String(JDOMUtil.printDocument(missing, "\n")));
+      System.out.println("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing, "\n"));
       failed = true;
     }
 
     for (Element reportedProblem : reportedProblems) {
       Document extra = new Document(reportedProblem.clone());
-      System.out.println("The following has been unexpectedly reported: " + new String(JDOMUtil.printDocument(extra, "\n")));
+      System.out.println("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra, "\n"));
       failed = true;
     }
 
@@ -136,23 +137,32 @@ expected:
   public static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
                                         @NotNull InspectionToolWrapper toolWrapper,
                                         boolean checkRange,
-                                        String testDir) {
+                                        @NotNull String testDir) {
+    compareToolResults(context, checkRange, testDir, Collections.singletonList(toolWrapper));
+  }
+
+  static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
+                                 boolean checkRange,
+                                 @NotNull String testDir,
+                                 @NotNull Collection<? extends InspectionToolWrapper> toolWrappers) {
     final Element root = new Element("problems");
-    final Document doc = new Document(root);
-    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
 
-    presentation.updateContent();  //e.g. dead code need check for reachables
-    presentation.exportResults(root, x -> false, x -> false);
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+      presentation.updateContent();  //e.g. dead code need check for reachables
+      presentation.exportResults(root, x -> false, x -> false);
+    }
 
-    File file = new File(testDir + "/expected.xml");
     try {
-      compareWithExpected(JDOMUtil.loadDocument(file), doc, checkRange);
+      File file = new File(testDir + "/expected.xml");
+      compareWithExpected(JDOMUtil.loadDocument(file), new Document(root), checkRange);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
+  @TestOnly
   public static void runTool(@NotNull InspectionToolWrapper toolWrapper,
                              @NotNull final AnalysisScope scope,
                              @NotNull final GlobalInspectionContextForTests globalContext) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testGenericsArrayCreation() { doTest(false, false); }
   public void testPreciseRethrow() { doTest(false, false); }
   public void testPreciseRethrowNonAssignableToException() { doTest(false, false); }
+  public void testPreciseRethrowOfOneExceptionInTheBlock() { doTest(false, false); }
   public void testImprovedCatchAnalysis() { doTest(true, false); }
   public void testPolymorphicTypeCast() { doTest(true, false); }
   public void testTypeCastInInstanceof() { doTest(true, false); }
@@ -182,6 +183,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testRuntimeClassCast() { doTest(true, false);}
   public void testTryWithResourcesWithMultipleCloseInterfaces() { doTest(false, false);}
   public void testIDEA138978() { doTest(false, false); }
+  public void testIntersectionTypeCast() { doTest(false, false); }
 
   public void testArrayInitializerTypeCheckVariableType() { doTest(false, false);}
 

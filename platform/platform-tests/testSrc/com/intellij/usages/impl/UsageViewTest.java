@@ -66,7 +66,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
 
-    Disposer.register(getTestRootDisposable(), usageView);
+    Disposer.register(myFixture.getTestRootDisposable(), usageView);
 
     ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -81,7 +81,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     Usage usage = createUsage(psiFile, psiFile.getText().indexOf("xxx"));
 
     UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
-    Disposer.register(getTestRootDisposable(), usageView);
+    Disposer.register(myFixture.getTestRootDisposable(), usageView);
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
@@ -95,7 +95,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
 
     UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
-    Disposer.register(getTestRootDisposable(), usageView);
+    Disposer.register(myFixture.getTestRootDisposable(), usageView);
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
@@ -131,7 +131,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     UsageViewImpl usageView =
       (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{bar}, PsiElement.EMPTY_ARRAY, handler, handler.getFindUsagesOptions(), false);
 
-    Disposer.register(getTestRootDisposable(), usageView);
+    Disposer.register(myFixture.getTestRootDisposable(), usageView);
 
     assertTrue(usageView.canPerformReRun());
 

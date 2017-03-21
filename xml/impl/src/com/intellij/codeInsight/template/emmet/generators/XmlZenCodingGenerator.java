@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,17 @@ import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.lang.html.HtmlQuotesFormatPreprocessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
@@ -63,23 +64,43 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
 
   @NotNull
   private String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
-    XmlFile file = token.getFile();
-    XmlDocument document = file.getDocument();
-    if (document != null) {
-      XmlTag tag = document.getRootTag();
-      if (tag != null) {
-        return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
+    CodeStyleSettings.QuoteStyle quoteStyle = quoteStyle(context.getContainingFile());
+    XmlTag tag = token.getXmlTag();
+    if (tag != null) {
+      if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
+        new HtmlQuotesFormatPreprocessor.HtmlQuotesConverter(quoteStyle, tag, tag.getTextRange()).run();
       }
+      return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
+    }
+
+    PsiFile file = token.getFile();
+    if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
+      new HtmlQuotesFormatPreprocessor.HtmlQuotesConverter(quoteStyle, file, file.getTextRange()).run();
     }
     return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
   }
 
   private static String replaceQuotesIfNeeded(@NotNull String text, @NotNull PsiFile file) {
     PsiElement context = file.getContext();
-    if (context != null && context.getText().startsWith("\"")) {
-      text = text.replace('"', '\'');
+    if (context != null) {
+      String contextText = context.getText();
+      if (StringUtil.startsWithChar(contextText, '"')) {
+        return StringUtil.escapeChar(text, '"');
+      }
+      else if (StringUtil.startsWithChar(contextText, '\'')) {
+        return StringUtil.escapeChar(text, '\'');
+      }
     }
     return text;
+  }
+  
+  private static CodeStyleSettings.QuoteStyle quoteStyle(@NotNull PsiFile file) {
+    PsiElement context = file.getContext();
+    CodeStyleSettings.QuoteStyle style = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().HTML_QUOTE_STYLE;
+    if (context != null && !style.quote.isEmpty() && context.getText().startsWith(style.quote)) {
+      return style == CodeStyleSettings.QuoteStyle.Double ? CodeStyleSettings.QuoteStyle.Single : CodeStyleSettings.QuoteStyle.Double;   
+    }
+    return style;
   }
 
   public abstract String toString(@NotNull XmlTag tag,

@@ -411,7 +411,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
                 if (terminated) {
                   //noinspection ConstantConditions
-                  int exitCode = processHandler.getExitCode();
+                  int exitCode = processHandler.isStartNotified() ? processHandler.getExitCode() : -1;
                   listener.processTerminated(new ProcessEvent(processHandler, exitCode));
                 }
               }

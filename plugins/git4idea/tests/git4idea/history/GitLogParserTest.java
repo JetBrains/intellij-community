@@ -152,21 +152,38 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   public void test_char_0001_in_commit_message() throws VcsException {
-    doTestCustomCommitMessage("Commit \u0001subject", "Commit subject");
+    doTestCustomCommitMessage("Commit \u0001subject", "Commit \u0001subject");
+  }
+
+  public void test_double_char_0001_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Commit \u0001\u0001subject", "Commit subject");
   }
 
   public void test_char_0003_in_commit_message() throws VcsException {
     doTestCustomCommitMessage("Commit \u0003subject", "Commit \u0003subject");
   }
 
-  // this is not fixed, keeping the test for the record and possible future fixx
+  public void test_double_char_0003_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Commit \u0003\u0003subject", "Commit \u0003\u0003subject");
+  }
+
+  public void test_both_chars_0001_and_0003_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage", "Subject \u0001of the \u0003# weirdmessage");
+  }
+
+  // this is not fixed, keeping the test for the record and possible future fix
   @SuppressWarnings("unused")
-  public void _test_both_chars_0001_and_0003_in_commit_message() throws VcsException {
-    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage", "Subject of the \u0003# weird message");
+  public void _test_both_double_chars_0001_and_0003_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0003\u0003# weirdmessage",
+                              "Subject of the \u0003\u0003# weirdmessage");
   }
 
   public void test_char_0001_twice_in_commit_message() throws VcsException {
-    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message", "Subject of the # weird message");
+    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message", "Subject \u0001of the \u0001# weird message");
+  }
+
+  public void test_double_char_0001_twice_in_commit_message() throws VcsException {
+    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0001\u0001# weird message", "Subject of the # weird message");
   }
 
   public void test_old_refs_format() throws VcsException {
@@ -295,7 +312,7 @@ public class GitLogParserTest extends GitPlatformTest {
         return;
       default:
         throw new AssertionError();
-    } 
+    }
   }
 
   private String getBeforePath(Change actualChange) {
@@ -305,7 +322,7 @@ public class GitLogParserTest extends GitPlatformTest {
   private String getAfterPath(Change actualChange) {
     return FileUtil.getRelativePath(new File(myProjectPath), actualChange.getAfterRevision().getFile().getIOFile());
   }
-  
+
   private enum GitTestLogRecordInfo {
     HASH,
     COMMIT_TIME,
@@ -516,7 +533,7 @@ public class GitLogParserTest extends GitPlatformTest {
     }
 
   }
-  
+
   private static class GitTestChange {
     final Change.Type myType;
     final String myBeforePath;
@@ -543,7 +560,7 @@ public class GitLogParserTest extends GitPlatformTest {
     static GitTestChange moved(String before, String after) {
       return new GitTestChange(Change.Type.MOVED, before, after);
     }
-    
+
     String toOutputString() {
       switch (myType) {
         case MOVED: return outputString("R100", myBeforePath, myAfterPath);
@@ -568,5 +585,4 @@ public class GitLogParserTest extends GitPlatformTest {
       return sb.toString();
     }
   }
-  
 }

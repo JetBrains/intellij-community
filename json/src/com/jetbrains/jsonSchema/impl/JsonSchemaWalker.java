@@ -52,6 +52,14 @@ public class JsonSchemaWalker {
                  @NotNull JsonSchemaObject schema,
                  @NotNull VirtualFile schemaFile,
                  @NotNull List<Step> steps);
+    void oneOf(boolean isName,
+               @NotNull List<JsonSchemaObject> list,
+               @NotNull VirtualFile schemaFile,
+               @NotNull List<Step> steps);
+    void anyOf(boolean isName,
+               @NotNull List<JsonSchemaObject> list,
+               @NotNull VirtualFile schemaFile,
+               @NotNull List<Step> steps);
   }
 
   public static void findSchemasForAnnotation(@NotNull final PsiElement element,
@@ -111,7 +119,8 @@ public class JsonSchemaWalker {
   protected static class DefinitionsResolver {
     @NotNull private final List<Step> myPosition;
     final List<Pair<JsonSchemaObject, List<Step>>> myVariants;
-    private JsonSchemaObject mySchemaObject;
+    private List<JsonSchemaObject> mySchemaObjects = new ArrayList<>();
+    private boolean myOneOf;
 
     public DefinitionsResolver(@NotNull List<Step> position) {
       myPosition = position;
@@ -119,7 +128,7 @@ public class JsonSchemaWalker {
     }
 
     public void consumeResult(@NotNull JsonSchemaObject schema) {
-      mySchemaObject = schema;
+      mySchemaObjects.add(schema);
     }
 
     public void consumeSmallStep(@NotNull JsonSchemaObject schema, int idx) {
@@ -132,15 +141,23 @@ public class JsonSchemaWalker {
     }
 
     public boolean isFound() {
-      return mySchemaObject != null;
+      return !mySchemaObjects.isEmpty();
     }
 
-    public JsonSchemaObject getSchemaObject() {
-      return mySchemaObject;
+    public List<JsonSchemaObject> getSchemaObjects() {
+      return mySchemaObjects;
+    }
+
+    public boolean isOneOf() {
+      return myOneOf;
     }
 
     public List<Pair<JsonSchemaObject, List<Step>>> getVariants() {
       return myVariants;
+    }
+
+    public void setOneOf(boolean oneOf) {
+      myOneOf = oneOf;
     }
   }
 
@@ -170,16 +187,26 @@ public class JsonSchemaWalker {
       extractSchemaVariants(definitionsResolver, object, path, acceptAdditionalPropertiesSchemas);
 
       if (definitionsResolver.isFound()) {
-        final List<JsonSchemaObject> list = gatherSchemas(definitionsResolver.getSchemaObject());
-        for (JsonSchemaObject schemaObject : list) {
-          if (schemaObject.getDefinitionAddress() != null) {
-            final List<Step> steps = new ArrayList<>();
-            // add value step if needed
-            if (!isName) steps.add(new Step(StateType._value, null));
-            visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, schemaObject.getDefinitionAddress(), steps);
+        final List<JsonSchemaObject> matchedSchemas = definitionsResolver.getSchemaObjects();
+        matchedSchemas.forEach(matchedSchema -> {
+          final List<JsonSchemaObject> list = gatherSchemas(matchedSchema);
+          for (JsonSchemaObject schemaObject : list) {
+            if (schemaObject.getDefinitionAddress() != null && !schemaObject.getDefinitionAddress().startsWith("#/")) {
+              final List<Step> steps = new ArrayList<>();
+              // add value step if needed
+              if (!isName) steps.add(new Step(StateType._value, null));
+              visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, schemaObject.getDefinitionAddress(), steps);
+            }
+          }
+        });
+        if (matchedSchemas.size() == 1) consumer.consume(isName, matchedSchemas.get(0), schemaFile, path);
+        else {
+          if (definitionsResolver.isOneOf()) {
+            consumer.oneOf(isName, matchedSchemas, schemaFile, path);
+          } else {
+            consumer.anyOf(isName, matchedSchemas, schemaFile, path);
           }
         }
-        consumer.consume(isName, definitionsResolver.getSchemaObject(), schemaFile, path);
       } else {
         final List<Pair<JsonSchemaObject, List<Step>>> variants = definitionsResolver.getVariants();
         for (Pair<JsonSchemaObject, List<Step>> variant : variants) {
@@ -228,25 +255,31 @@ public class JsonSchemaWalker {
         continue;
       }
       if (step.getTransition() != null && !StateType._unknown.equals(step.getType())
-          && !step.getTransition().possibleFromState(step.getType())) continue;
+          && !step.getTransition().possibleFromState(step.getType())) {
+        continue;
+      }
 
       final Condition<JsonSchemaObject> byTypeFilter = object -> byStateType(step.getType(), object);
       // not??
 
+      boolean isOneOf = schema.getOneOf() != null;
       List<JsonSchemaObject> list = gatherSchemas(schema);
       list = ContainerUtil.filter(list, byTypeFilter);
 
       final Consumer<JsonSchemaObject> reporter = object -> {
-        if ((level + 1) >= position.size()) consumer.consumeResult(object);
+        if ((level + 1) >= position.size()) {
+          consumer.setOneOf(isOneOf);
+          consumer.consumeResult(object);
+        }
         else {
           consumer.consumeSmallStep(object, level);
           queue.add(Pair.create(object, level + 1));
         }
       };
 
-      TransitionResultConsumer transitionResultConsumer = new TransitionResultConsumer();
+      TransitionResultConsumer transitionResultConsumer;
       for (JsonSchemaObject object : list) {
-        if (schema.getAllOf() == null) transitionResultConsumer = new TransitionResultConsumer();
+        transitionResultConsumer = new TransitionResultConsumer();
         step.getTransition().step(object, transitionResultConsumer, acceptAdditionalPropertiesSchemas);
         if (transitionResultConsumer.isNothing()) continue;
         if (transitionResultConsumer.getSchema() != null) {
@@ -257,16 +290,50 @@ public class JsonSchemaWalker {
   }
 
   private static List<JsonSchemaObject> gatherSchemas(JsonSchemaObject schema) {
-    List<JsonSchemaObject> list = new ArrayList<>();
-    list.add(schema);
     if (schema.getAllOf() != null) {
-      list.addAll(schema.getAllOf());
+      return gatherSchemas(mergeAll(schema));
     } else {
-      if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
-      if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
-
+      if (schema.getAnyOf() != null) {
+        return mergeList(schema.getAnyOf(), schema, false);
+      }
+      if (schema.getOneOf() != null) {
+        return mergeList(schema.getOneOf(), schema, true);
+      }
     }
-    return list;
+    return Collections.singletonList(schema);
+  }
+
+  @NotNull
+  public static JsonSchemaObject mergeAll(@NotNull JsonSchemaObject schema) {
+    JsonSchemaObject currentBase = copySchema(schema);
+    currentBase.setAllOf(null);
+    for (JsonSchemaObject object : schema.getAllOf()) {
+      currentBase = merge(currentBase, object);
+    }
+    return currentBase;
+  }
+
+  @NotNull
+  private static JsonSchemaObject copySchema(@NotNull JsonSchemaObject schema) {
+    JsonSchemaObject currentBase = new JsonSchemaObject(schema.getPeerPointer());
+    currentBase.mergeValues(schema);
+    currentBase.setDefinitionsPointer(schema.getDefinitionsPointer());
+    return currentBase;
+  }
+
+  public static List<JsonSchemaObject> mergeList(@NotNull final Collection<JsonSchemaObject> coll,
+                                                 @NotNull JsonSchemaObject schema, boolean oneOf) {
+    final JsonSchemaObject copy = copySchema(schema);
+    if (oneOf) copy.setOneOf(null); else copy.setAnyOf(null);
+    return coll.stream().map(s -> merge(copy, s)).collect(Collectors.toList());
+  }
+
+  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other) {
+    final JsonSchemaObject object = new JsonSchemaObject(base.getPeerPointer());
+    object.mergeValues(other);
+    object.mergeValues(base);
+    object.setDefinitionsPointer(base.getDefinitionsPointer());
+    return object;
   }
 
   private static boolean byStateType(@NotNull final StateType type, @NotNull final JsonSchemaObject schema) {
@@ -285,17 +352,18 @@ public class JsonSchemaWalker {
     return true;
   }
 
-  public static JsonLikePsiWalker getWalker(@NotNull final PsiElement element) {
-    return getJsonLikeThing(element, walker -> walker);
+  public static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
+    return getJsonLikeThing(element, walker -> walker, schemaObject);
   }
 
   @Nullable
   private static <T> T getJsonLikeThing(@NotNull final PsiElement element,
-                                        @NotNull Convertor<JsonLikePsiWalker, T> convertor) {
+                                        @NotNull Convertor<JsonLikePsiWalker, T> convertor,
+                                        JsonSchemaObject schemaObject) {
     final List<JsonLikePsiWalker> list = new ArrayList<>();
     list.add(JSON_ORIGINAL_PSI_WALKER);
-    final JsonLikePsiWalker[] extensions = Extensions.getExtensions(JsonLikePsiWalker.EXTENSION_POINT_NAME);
-    list.addAll(Arrays.asList(extensions));
+    final JsonLikePsiWalkerFactory[] extensions = Extensions.getExtensions(JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME);
+    list.addAll(Arrays.stream(extensions).map(extension -> extension.create(schemaObject)).collect(Collectors.toList()));
     for (JsonLikePsiWalker walker : list) {
       if (walker.handles(element)) return convertor.convert(walker);
     }
@@ -434,6 +502,7 @@ public class JsonSchemaWalker {
     @Nullable private JsonSchemaObject mySchema;
     private boolean myAny;
     private boolean myNothing;
+    private boolean myOneOf;
 
     public TransitionResultConsumer() {
       myNothing = true;
@@ -465,6 +534,14 @@ public class JsonSchemaWalker {
     public void nothing() {
       myNothing = true;
       myAny = false;
+    }
+
+    public void oneOf() {
+      myOneOf = true;
+    }
+
+    public boolean isOneOf() {
+      return myOneOf;
     }
   }
 }

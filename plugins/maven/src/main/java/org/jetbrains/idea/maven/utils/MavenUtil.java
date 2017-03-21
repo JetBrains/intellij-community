@@ -711,14 +711,17 @@ public class MavenUtil {
     }
   }
 
-  public static String expandProperties(String text) {
+  public static String expandProperties(String text, Properties props) {
     if (StringUtil.isEmptyOrSpaces(text)) return text;
-    Properties props = MavenServerUtil.collectSystemProperties();
     for (Map.Entry<Object, Object> each : props.entrySet()) {
       Object val = each.getValue();
       text = text.replace("${" + each.getKey() + "}", val instanceof CharSequence ? (CharSequence)val : val.toString());
     }
     return text;
+  }
+
+  public static String expandProperties(String text) {
+    return expandProperties(text, MavenServerUtil.collectSystemProperties());
   }
 
   @Nullable

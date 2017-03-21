@@ -203,7 +203,7 @@ public class JUnitUtil {
     return isJUnit4TestClass(psiClass, true);
   }
 
-  private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
+  public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;

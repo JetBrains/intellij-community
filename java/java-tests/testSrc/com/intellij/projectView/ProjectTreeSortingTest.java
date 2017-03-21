@@ -65,6 +65,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myProjectView.setSortByType(myPane.getId(), myOriginalSortByType);
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(myOriginalFoldersAlwaysOnTop);
     myProjectView.removeProjectPane(myPane);
+    myProjectView = null;
+    myPane = null;
 
     super.tearDown();
   }

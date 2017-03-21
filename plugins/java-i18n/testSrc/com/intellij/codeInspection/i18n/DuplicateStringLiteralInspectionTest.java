@@ -12,12 +12,18 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import java.util.List;
 
 public class DuplicateStringLiteralInspectionTest extends JavaCodeInsightFixtureTestCase {
-  private final DuplicateStringLiteralInspection myInspection = new DuplicateStringLiteralInspection();
+  private DuplicateStringLiteralInspection myInspection = new DuplicateStringLiteralInspection();
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(myInspection);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myInspection = null;
+    super.tearDown();
   }
 
   public void testPropertyKey() throws Exception {

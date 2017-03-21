@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import hg4idea.test.HgPlatformTest;
@@ -94,7 +95,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     hg("commit -m " + COMMIT_MESSAGE);
     updateProject();
     //committing conflicting change
-    verifyMergeData(myChildRepo.findChild(childFile.getName()), "basic", "local", "server");
+    verifyMergeData(childFile, "basic", "local", "server");
   }
 
   public void testMergeWithUncommittedLocalChange() throws Exception {
@@ -112,7 +113,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     HgTestUtil.printToFile(childFile, "local");
     updateProject();
     //uncommitted conflicting change
-    verifyMergeData(myChildRepo.findChild(childFile.getName()), "basic", "local", "server");
+    verifyMergeData(childFile, "basic", "local", "server");
   }
 
   public void testFileAddedAndCommitted() throws Exception {
@@ -129,6 +130,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     //Add a file with the same name, but different content in child repository, commit.
     cd(myChildRepo);
     touch(bFile, "local");
+    myChildRepo.refresh(false, true);
     hg("add " + bFile);
     hg("commit -m " + COMMIT_MESSAGE);
 
@@ -193,6 +195,6 @@ public class HgMergeProviderTest extends HgPlatformTest {
   }
 
   private static void assertEquals(String s, byte[] bytes) {
-    Assert.assertEquals(s, new String(bytes));
+    Assert.assertEquals(s, new String(bytes, CharsetToolkit.UTF8_CHARSET));
   }
 }

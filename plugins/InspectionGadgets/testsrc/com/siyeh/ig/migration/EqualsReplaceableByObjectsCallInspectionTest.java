@@ -36,6 +36,12 @@ public class EqualsReplaceableByObjectsCallInspectionTest extends LightInspectio
     profile.setErrorLevel(HighlightDisplayKey.find("EqualsReplaceableByObjectsCall"), HighlightDisplayLevel.WARNING, getProject());
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myInspection = null;
+    super.tearDown();
+  }
+
   public void testEqualsReplaceableByObjectsCall() {
     doTest();
   }

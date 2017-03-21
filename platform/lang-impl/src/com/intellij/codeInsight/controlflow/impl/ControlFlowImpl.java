@@ -17,6 +17,7 @@ package com.intellij.codeInsight.controlflow.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
@@ -24,10 +25,11 @@ import com.intellij.codeInsight.controlflow.Instruction;
 public class ControlFlowImpl  implements ControlFlow {
   private final Instruction[] myInstructions;
 
-  public ControlFlowImpl(Instruction[] instructions) {
+  public ControlFlowImpl(@NotNull Instruction[] instructions) {
     myInstructions = instructions;
   }
 
+  @NotNull
   @Override
   public Instruction[] getInstructions() {
     return myInstructions;

@@ -56,6 +56,13 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
     assert myChangedFile != null : "Can't create PsiFile from " + changedFile.getPath();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myOriginalFile = null;
+    myChangedFile = null;
+    super.tearDown();
+  }
+
   public void testMethods() throws Exception {
     doTest(new PsiFilter<>(PsiMethod.class));
   }

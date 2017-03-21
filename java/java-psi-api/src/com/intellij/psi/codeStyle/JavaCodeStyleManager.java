@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 /**
  * @author max
@@ -202,6 +203,18 @@ public abstract class JavaCodeStyleManager {
                                                      boolean lookForward) {
     return suggestUniqueVariableName(baseNameInfo, place, false, lookForward);
   }
+
+  /**
+   * Suggests a unique name for the variable used at the specified location looking forward with possible filtering.
+   *
+   * @param baseName    the base name info for the variable.
+   * @param place       the location where the variable will be used.
+   * @param canBeReused a predicate which returns true for variables which names still could be reused (e.g. a variable will be deleted
+   *                    during the ongoing refactoring)
+   * @return the generated unique name
+   */
+  @NotNull
+  public abstract String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused);
 
   /**
    * Suggests a unique name for the variable used at the specified location.

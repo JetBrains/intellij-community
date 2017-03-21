@@ -1,0 +1,20 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
+    <configurationType implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationProducer"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Edu">
+    <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
+  </extensions>
+
+  <actions>
+    <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu">
+      <add-to-group group-id="CCFileGroup" anchor="last"/>
+      <add-to-group group-id="CCProjectViewGroup" anchor="last"/>
+    </action>
+    <action class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo" id="ChangeCourseInfo" overrides="true"/>
+  </actions>
+
+</idea-plugin>

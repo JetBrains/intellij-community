@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.actions.impl;
 
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -98,6 +99,8 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    UsageTrigger.trigger("diff.OpenInEditor.Mouse");
+
     MouseEvent inputEvent = (MouseEvent)e.getInputEvent();
     OpenInEditorAction openInEditorAction = e.getRequiredData(OpenInEditorAction.KEY);
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);

@@ -107,7 +107,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myQueue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };
-  private final Semaphore myFreezeSemaphore;
+  private final Semaphore myFreezeSemaphore = new Semaphore(1);
+  private final Semaphore myFinishSemaphore = new Semaphore(1);
   private final OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.newConcurrentSet();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
@@ -139,7 +140,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      @NotNull Caret caret,
                                      CompletionParameters parameters,
                                      CodeCompletionHandlerBase handler,
-                                     Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap,
                                      OffsetsInFile hostOffsets,
                                      boolean hasModifiers,
@@ -148,7 +148,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCaret = caret;
     myParameters = parameters;
     myHandler = handler;
-    myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
     myHostOffsets = hostOffsets;
     myLookup = lookup;
@@ -514,12 +513,27 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     StatisticsUpdate.cancelLastCompletionStatisticsUpdate();
   }
 
+  boolean blockingWaitForFinish(int timeoutMs) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+      if (!myFinishSemaphore.waitFor(100 * 1000)) {
+        throw new AssertionError("Too long completion");
+      }
+      return true;
+    }
+    if (myFreezeSemaphore.waitFor(timeoutMs)) {
+      // the completion is really finished, now we may auto-insert or show lookup
+      return !isRunning() && !isCanceled();
+    }
+    return false;
+  }
+
   @Override
   public void stop() {
     super.stop();
 
     myQueue.cancelAllUpdates();
     myFreezeSemaphore.up();
+    myFinishSemaphore.up();
 
     GuiUtils.invokeLaterIfNeeded(() -> {
       final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -773,7 +787,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
 
   void startCompletion(final CompletionInitializationContext initContext) {
-    boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
+    boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
     myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
     myStrategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
     final WeighingDelegate weigher = myStrategy.delegateWeighing(this);

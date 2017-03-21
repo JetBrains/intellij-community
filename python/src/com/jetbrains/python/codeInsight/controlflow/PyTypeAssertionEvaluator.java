@@ -146,6 +146,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                             @NotNull TypeEvalContext context) {
     final PyType transformedType = transformTypeFromAssertion(suggested);
     if (positive) {
+      if (!(initial instanceof PyUnionType) &&
+          !PyTypeChecker.isUnknown(initial) &&
+          PyTypeChecker.match(transformedType, initial, context)) {
+        return initial;
+      }
       return transformedType;
     }
     else if (initial instanceof PyUnionType) {
@@ -180,17 +185,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
       public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-        final PyType initial = context.getType(target);
-        final PyType suggested = suggestedType.apply(context);
-
-        if (!PyUnionType.class.isInstance(initial) &&
-            !PyTypeChecker.isUnknown(initial) &&
-            PyTypeChecker.match(suggested, initial, context)) {
-          return initial;
-        }
-        else {
-          return createAssertionType(initial, suggested, positive, context);
-        }
+        return createAssertionType(context.getType(target), suggestedType.apply(context), positive, context);
       }
     };
 

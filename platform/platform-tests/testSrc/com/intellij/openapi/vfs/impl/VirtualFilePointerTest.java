@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,12 +86,13 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners()); // check there is no leak
     }
     finally {
+      myVirtualFilePointerManager = null;
       super.tearDown();
     }
   }
 
   private static class LoggingListener implements VirtualFilePointerListener {
-    private final ArrayList<String> myLog = new ArrayList<>();
+    private final List<String> myLog = new ArrayList<>();
 
     @Override
     public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
@@ -117,7 +118,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       myLog.add(buildMessage("after", pointers));
     }
 
-    public ArrayList<String> getLog() {
+    public List<String> getLog() {
       return myLog;
     }
   }
@@ -125,7 +126,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
   public void testDelete() throws Exception {
     File tempDirectory = createTempDirectory();
     final File fileToDelete = new File(tempDirectory, "toDelete.txt");
-    fileToDelete.createNewFile();
+    assertTrue(fileToDelete.createNewFile());
     final LoggingListener fileToDeleteListener = new LoggingListener();
     final VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
     assertTrue(fileToDeletePointer.isValid());
@@ -140,7 +141,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final LoggingListener fileToCreateListener = new LoggingListener();
     final VirtualFilePointer fileToCreatePointer = createPointerByFile(fileToCreate, fileToCreateListener);
     assertFalse(fileToCreatePointer.isValid());
-    fileToCreate.createNewFile();
+    assertTrue(fileToCreate.createNewFile());
     ApplicationManager.getApplication().runWriteAction(() -> {
       VirtualFileManager.getInstance().syncRefresh();
       final VirtualFile virtualFile = getVirtualFile(tempDirectory);
@@ -221,9 +222,9 @@ public class VirtualFilePointerTest extends PlatformTestCase {
   public void testMovePointedFile() throws Exception {
     File tempDirectory = createTempDirectory();
     final File moveTarget = new File(tempDirectory, "moveTarget");
-    moveTarget.mkdir();
+    assertTrue(moveTarget.mkdir());
     final File fileToMove = new File(tempDirectory, "toMove.txt");
-    fileToMove.createNewFile();
+    assertTrue(fileToMove.createNewFile());
 
     final LoggingListener fileToMoveListener = new LoggingListener();
     final VirtualFilePointer fileToMovePointer = createPointerByFile(fileToMove, fileToMoveListener);
@@ -241,15 +242,15 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       }
     });
     assertTrue(fileToMovePointer.isValid());
-    assertEquals("[]", fileToMoveListener.getLog().toString());
+    assertEquals("[before:true, after:true]", fileToMoveListener.getLog().toString());
   }
 
   public void testMoveFileUnderExistingPointer() throws Exception {
     File tempDirectory = createTempDirectory();
     final File moveTarget = new File(tempDirectory, "moveTarget");
-    moveTarget.mkdir();
+    assertTrue(moveTarget.mkdir());
     final File fileToMove = new File(tempDirectory, "toMove.txt");
-    fileToMove.createNewFile();
+    assertTrue(fileToMove.createNewFile());
 
     final LoggingListener listener = new LoggingListener();
     final VirtualFilePointer fileToMoveTargetPointer = createPointerByFile(new File(moveTarget, fileToMove.getName()), listener);
@@ -270,12 +271,38 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertEquals("[before:false, after:true]", listener.getLog().toString());
   }
 
+  public void testMoveSrcDirUnderNewRootShouldGenerateRootsChanged() throws Exception {
+    File tempDirectory = createTempDirectory();
+    final File moveTarget = new File(tempDirectory, "moveTarget");
+    assertTrue(moveTarget.mkdir());
+    final File dirToMove = new File(tempDirectory, "dirToMove");
+    assertTrue(dirToMove.mkdir());
+
+    final LoggingListener listener = new LoggingListener();
+    final VirtualFilePointer dirToMovePointer = createPointerByFile(dirToMove, listener);
+    assertTrue(dirToMovePointer.isValid());
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile virtualFile = getVirtualFile(dirToMove);
+      assertTrue(virtualFile.isValid());
+      final VirtualFile target = getVirtualFile(moveTarget);
+      assertTrue(target.isValid());
+      try {
+        virtualFile.move(null, target);
+      }
+      catch (IOException e) {
+        fail();
+      }
+    });
+    assertTrue(dirToMovePointer.isValid());
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
+  }
+
   public void testMovePointedFileUnderAnotherPointer() throws Exception {
     File tempDirectory = createTempDirectory();
     final File moveTarget = new File(tempDirectory, "moveTarget");
-    moveTarget.mkdir();
+    assertTrue(moveTarget.mkdir());
     final File fileToMove = new File(tempDirectory, "toMove.txt");
-    fileToMove.createNewFile();
+    assertTrue(fileToMove.createNewFile());
 
     final LoggingListener listener = new LoggingListener();
     final LoggingListener targetListener = new LoggingListener();
@@ -298,7 +325,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     });
     assertTrue(fileToMovePointer.isValid());
     assertTrue(fileToMoveTargetPointer.isValid());
-    assertEquals("[]", listener.getLog().toString());
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
     assertEquals("[before:false, after:true]", targetListener.getLog().toString());
   }
 
@@ -360,7 +387,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final LoggingListener fileToCreateListener = new LoggingListener();
     final VirtualFilePointer fileToCreatePointer = createPointerByFile(fileToCreate, fileToCreateListener);
     assertFalse(fileToCreatePointer.isValid());
-    fileToCreate.createNewFile();
+    assertTrue(fileToCreate.createNewFile());
     final Runnable postRunnable = () -> {
       assertTrue(fileToCreatePointer.isValid());
       assertEquals("[before:false, after:true]", fileToCreateListener.getLog().toString());
@@ -388,16 +415,19 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final VirtualFilePointer pointer_f2 = createPointerByFile(file_f2, listener);
     assertFalse(pointer_f1.isValid());
     assertFalse(pointer_f2.isValid());
-    file_f1.createNewFile();
-    file_f2.createNewFile();
+    assertTrue(file_f1.createNewFile());
+    assertTrue(file_f2.createNewFile());
     ApplicationManager.getApplication().runWriteAction(() -> LocalFileSystem.getInstance().refresh(false));
     assertEquals("[before:false:false, after:true:true]", listener.getLog().toString());
   }
 
   public void testJars() throws Exception {
     final File tempDir = createTempDirectory();
+    VirtualFile vTemp = refreshAndFindFile(tempDir);
+    assertTrue(vTemp.isValid());
+
     final File jarParent = new File(tempDir, "jarParent");
-    jarParent.mkdir();
+    assertTrue(jarParent.mkdir());
     final File jar = new File(jarParent, "x.jar");
     final File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
     FileUtil.copy(originalJar, jar);
@@ -425,30 +455,33 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertTrue(jarParentPointer.isValid());
     assertTrue(jarPointer.isValid());
 
-    jar.delete();
-    jarParent.delete();
+    assertTrue(jar.delete());
+    assertTrue(jarParent.delete());
     refreshVFS();
 
     verifyPointersInCorrectState(pointersToWatch);
     assertFalse(jarParentPointer.isValid());
     assertFalse(jarPointer.isValid());
     UIUtil.dispatchAllInvocationEvents();
+    assertEmpty(vTemp.getChildren());
 
-    jarParent.mkdir();
+    assertTrue(jarParent.mkdir());
     FileUtil.copy(originalJar, jar);
-    assert jar.exists();
-    assert jarParent.exists();
-    assert jarParent.getParentFile().exists();
+    assertTrue(jar.setLastModified(System.currentTimeMillis()));
+    assertTrue(jar.exists());
+    assertTrue(jarParent.exists());
+    assertTrue(jarParent.getParentFile().exists());
+    File child = assertOneElement(jarParent.listFiles());
+    assertEquals(jar.getName(), child.getName());
 
     refreshVFS();
-
     verifyPointersInCorrectState(pointersToWatch);
     assertTrue(jarParentPointer.isValid());
     assertTrue(jarPointer.isValid());
     UIUtil.dispatchAllInvocationEvents();
 
-    jar.delete();
-    jarParent.delete();
+    assertTrue(jar.delete());
+    assertTrue(jarParent.delete());
     refreshVFS();
     UIUtil.dispatchAllInvocationEvents();
 
@@ -461,7 +494,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
   public void testJars2() throws Exception {
     final File tempDir = createTempDirectory();
     final File jarParent = new File(tempDir, "jarParent");
-    jarParent.mkdir();
+    assertTrue(jarParent.mkdir());
     final File jar = new File(jarParent, "x.jar");
     final File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
     FileUtil.copy(originalJar, jar);
@@ -486,7 +519,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     pointersToWatch[0] = jarPointer;
     assertTrue(jarPointer.isValid());
 
-    jar.delete();
+    assertTrue(jar.delete());
 
     refreshVFS();
 
@@ -494,7 +527,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertFalse(jarPointer.isValid());
     UIUtil.dispatchAllInvocationEvents();
 
-    jarParent.mkdir();
+    assertTrue(jarParent.exists());
     FileUtil.copy(originalJar, jar);
     assert jar.exists();
 
@@ -504,7 +537,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertTrue(jarPointer.isValid());
     UIUtil.dispatchAllInvocationEvents();
 
-    jar.delete();
+    assertTrue(jar.delete());
     refreshVFS();
     UIUtil.dispatchAllInvocationEvents();
 
@@ -584,13 +617,6 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
     Disposable disposable = Disposer.newDisposable();
     final VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile, disposable, new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-      }
     });
 
 
@@ -610,10 +636,10 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final File ioPtr = new File(ioPtrBase, "f1");
     final File ioSand = new File(ioTempDir, "sand");
     final File ioSandPtr = new File(ioSand, "f2");
-    ioSandPtr.getParentFile().mkdirs();
-    ioSandPtr.createNewFile();
-    ioPtr.getParentFile().mkdirs();
-    ioPtr.createNewFile();
+    assertTrue(ioSandPtr.getParentFile().mkdirs());
+    assertTrue(ioSandPtr.createNewFile());
+    assertTrue(ioPtr.getParentFile().mkdirs());
+    assertTrue(ioPtr.createNewFile());
 
     doVfsRefresh(ioTempDir);
     final VirtualFilePointer pointer = createPointerByFile(ioPtr, null);
@@ -788,7 +814,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertEquals(dir2, p2.getFile());
 
     delete(dir1);
-    assertEquals(null, p1.getFile());
+    assertNull(p1.getFile());
     assertEquals(dir2, p2.getFile());
 
     rename(dir2, "dir1");
@@ -885,15 +911,6 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertNotNull(fileToCreatePointer);
 
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-
-      }
     };
     long start = System.currentTimeMillis();
     int i;

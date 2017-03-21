@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -79,6 +80,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
 /**
@@ -864,22 +866,22 @@ public class ResolveUtil {
   }
 
   public static boolean isScriptField(GrVariable var) {
-    GrModifierList list = var.getModifierList();
-    if (list == null) return false;
+    PsiElement parent = var.getParent();
+    return parent instanceof GrVariableDeclaration && isScriptFieldDeclaration(((GrVariableDeclaration)parent));
+  }
 
-    PsiFile containingFile = var.getContainingFile();
+  public static boolean isScriptFieldDeclaration(@NotNull GrVariableDeclaration declaration) {
+    PsiFile containingFile = declaration.getContainingFile();
     if (!(containingFile instanceof GroovyFile) || !((GroovyFile)containingFile).isScript()) return false;
 
-    GrMember member = PsiTreeUtil.getParentOfType(var, GrTypeDefinition.class, GrMethod.class);
+    GrMember member = PsiTreeUtil.getParentOfType(declaration, GrTypeDefinition.class, GrMethod.class);
     if (member != null) return false;
 
-    for (GrAnnotation annotation : list.getAnnotations()) {
-      String qualifiedName = annotation.getQualifiedName();
-      if (qualifiedName == null) continue;
-      if (qualifiedName.equals(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD)) return true;
-    }
+    return hasAnnotation(declaration.getModifierList(), GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD);
+  }
 
-    return false;
+  public static boolean isFieldDeclaration(@NotNull GrVariableDeclaration declaration) {
+    return declaration.getParent() instanceof GrTypeDefinitionBody || isScriptFieldDeclaration(declaration);
   }
 
   @Nullable

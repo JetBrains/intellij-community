@@ -18,10 +18,12 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 public class IndexPatternUtil {
+  @NotNull
   public static IndexPatternProvider[] getIndexPatternProviders() {
     return Extensions.getExtensions(IndexPatternProvider.EP_NAME);
   }
@@ -30,6 +32,7 @@ public class IndexPatternUtil {
     return Arrays.stream(getIndexPatternProviders()).mapToInt(provider -> provider.getIndexPatterns().length).sum();
   }
 
+  @NotNull
   public static IndexPattern[] getIndexPatterns() {
     IndexPattern[] result = new IndexPattern[getIndexPatternCount()];
     int destIndex = 0;

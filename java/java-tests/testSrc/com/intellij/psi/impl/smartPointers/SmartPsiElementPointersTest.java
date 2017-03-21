@@ -22,6 +22,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -58,7 +59,10 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @PlatformTestCase.WrapInCommand
@@ -851,7 +855,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
     List<XmlTag> tags = ContainerUtil.newArrayList(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
     List<SmartPsiElementPointer> pointers = tags.stream().map(this::createPointer).collect(Collectors.toList());
-    Random random = new Random();
     ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
       for (int i = 0; i < tags.size(); i++) {
         XmlTag tag = tags.get(i);
@@ -859,7 +862,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
 
-        tag.setName("bar" + random.nextInt(20));
+        tag.setName("bar1" + (i % 10));
         assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
       }
@@ -951,6 +954,32 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     });
     assertEquals(file.getImportList(), pointer.getElement());
     assertSize(1, file.getImportList().getImportStatements());
+  }
+
+  public void testNoAstLoadingOnFileRename() throws Exception {
+    PsiFile psiFile = createFile("a.java", "class A {}");
+    SmartPointerEx<PsiClass> pointer = createPointer(((PsiJavaFile)psiFile).getClasses()[0]);
+    assertFalse(((PsiFileImpl)psiFile).isContentsLoaded());
+
+    VirtualFile file = psiFile.getVirtualFile();
+    WriteAction.run(() -> file.rename(this, "b.java"));
+
+    assertTrue(psiFile.isValid());
+    assertEquals(((PsiJavaFile)psiFile).getClasses()[0], pointer.getElement());
+    
+    assertFalse(((PsiFileImpl)psiFile).isContentsLoaded());
+  }
+
+  public void testDoubleRemoveIsAnError() throws Exception {
+    SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", "class A {}"));
+    getPointerManager().removePointer(pointer);
+    try {
+      getPointerManager().removePointer(pointer);
+      fail("Should have failed");
+    }
+    catch (AssertionError e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
+    }
   }
 
 }

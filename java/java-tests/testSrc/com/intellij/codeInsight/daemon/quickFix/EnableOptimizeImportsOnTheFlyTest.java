@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
@@ -34,18 +34,11 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterize
   @Override
   protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName)
     throws Exception {
-    boolean old = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
-
-    try {
-      CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = false;
-      IntentionAction action = findActionAndCheck(actionHint, testFullPath);
-      if (action != null) {
-        action.invoke(getProject(), getEditor(), getFile());
-        assertTrue(CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY);
-      }
-    }
-    finally {
-      CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = old;
+    CodeInsightWorkspaceSettings.getInstance(ourProject).setOptimizeImportsOnTheFly(false, getTestRootDisposable());
+    IntentionAction action = findActionAndCheck(actionHint, testFullPath);
+    if (action != null) {
+      action.invoke(getProject(), getEditor(), getFile());
+      assertTrue(CodeInsightWorkspaceSettings.getInstance(ourProject).optimizeImportsOnTheFly);
     }
   }
 

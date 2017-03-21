@@ -55,12 +55,21 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val originalText = document.text
-    val expectedInlays = extractInlays(document)
-    val actualInlays = getActualInlays()
+    val expectedInlays: List<InlayInfo> = extractInlays(document)
+    myFixture.doHighlighting();
+    verifyInlays(expectedInlays, originalText)
+  }
 
-    if (expectedInlays.size != actualInlays.size || actualInlays.zip(expectedInlays).any { it.second != it.first }) {
+  fun verifyInlays(expectedInlays : List<InlayInfo>, originalText: String) {
+    val file = myFixture.file
+    val document = myFixture.getDocument(file)
+    val actual: List<Pair<Int, String>> = getActualInlays()
+
+    val expected = expectedInlays.map { Pair(it.offset, it.text) }
+
+    if (expectedInlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val proposedText = StringBuilder(document.text)
-      actualInlays.asReversed().forEach { proposedText.insert(it.offset, "<hint text=\"${it.text}\" />") }
+      actual.asReversed().forEach { proposedText.insert(it.first, "<hint text=\"${it.second}\" />") }
 
       VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
         throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
@@ -68,16 +77,15 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     }
   }
 
-  private fun getActualInlays(): List<InlayInfo> {
-    myFixture.doHighlighting()
+  private fun getActualInlays(): List<Pair<Int, String>> {
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
 
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays
       .filter { hintManager.isParameterHint(it) }
-      .map { InlayInfo(hintManager.getHintText(it), it.offset) }
-      .sortedBy { it.offset }
+      .map { it.offset to hintManager.getHintText(it)}
+      .sortedBy { it.first }
   }
 
   fun extractInlays(document: Document): List<InlayInfo> {

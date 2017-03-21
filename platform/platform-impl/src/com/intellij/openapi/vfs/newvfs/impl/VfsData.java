@@ -273,6 +273,7 @@ public class VfsData {
     @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY;
     private Set<String> myAdoptedNames;
 
+    @NotNull
     VirtualFileSystemEntry[] getFileChildren(int fileId, VirtualDirectoryImpl parent) {
       assert fileId > 0;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[myChildrenIds.length];

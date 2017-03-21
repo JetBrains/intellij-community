@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/testSources">
       <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" packagePrefix="org.jetbrains.idea.devkit" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />

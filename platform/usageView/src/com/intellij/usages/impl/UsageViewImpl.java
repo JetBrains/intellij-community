@@ -192,9 +192,11 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
       UIUtil.invokeLaterIfNeeded(() -> {
         // lock here to avoid concurrent execution of this init and dispose in other thread
         synchronized (lock) {
-          if (isDisposed) return;    myTree = new Tree(myModel) {
-      {
-        ToolTipManager.sharedInstance().registerComponent(this);}
+          if (isDisposed) return;
+          myTree = new Tree(myModel) {
+            {
+              ToolTipManager.sharedInstance().registerComponent(this);
+            setHorizontalAutoScrollingEnabled(false);}
 
             @Override
             public boolean isRootVisible() {
@@ -245,7 +247,10 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
           toolWindowPanel.setContent(myCentralPanel);
 
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
-          collapseAll();
+          SwingUtilities.invokeLater(() -> {
+            if (isDisposed || myProject.isDisposed()) return;
+            collapseAll();
+          });
 
           myModelTracker.addListener(isPropertyChange-> {
             if (!isPropertyChange) {
@@ -534,6 +539,7 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     }
   }
 
+  @NotNull
   public static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<>(providers.length);
@@ -543,6 +549,7 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
 
+  @NotNull
   public static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<>(providers.length);
@@ -940,7 +947,7 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
   void expandRoot() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();
-    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
+    TreeUtil.expand(myTree, 1);
   }
 
   @NotNull
@@ -1656,8 +1663,6 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
 
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
-      Node node = getSelectedNode();
-
       if (key == CommonDataKeys.PROJECT) {
         sink.put(CommonDataKeys.PROJECT, myProject);
       }
@@ -1697,16 +1702,21 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
       else if (key == PlatformDataKeys.COPY_PROVIDER) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
-      else if (node != null) {
-        Object userObject = node.getUserObject();
-        if (userObject instanceof TypeSafeDataProvider) {
-          ((TypeSafeDataProvider)userObject).calcData(key, sink);
-        }
-        else if (userObject instanceof DataProvider) {
-          DataProvider dataProvider = (DataProvider)userObject;
-          Object data = dataProvider.getData(key.getName());
-          if (data != null) {
-            sink.put(key, data);
+      else {
+        // can arrive here outside EDT from usage view preview.
+        // ignore all these fancy actions in this case.
+        Node node = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNode() : null;
+        if (node != null) {
+          Object userObject = node.getUserObject();
+          if (userObject instanceof TypeSafeDataProvider) {
+            ((TypeSafeDataProvider)userObject).calcData(key, sink);
+          }
+          else if (userObject instanceof DataProvider) {
+            DataProvider dataProvider = (DataProvider)userObject;
+            Object data = dataProvider.getData(key.getName());
+            if (data != null) {
+              sink.put(key, data);
+            }
           }
         }
       }

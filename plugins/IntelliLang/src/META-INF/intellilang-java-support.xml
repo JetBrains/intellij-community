@@ -3,18 +3,18 @@
 <idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
+    <localInspection language="JAVA" shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.UnknownLanguageID"/>
-    <localInspection shortName="LanguageMismatch" displayName="Language Mismatch" groupName="Language Injection" enabledByDefault="true"
+    <localInspection language="JAVA" shortName="LanguageMismatch" displayName="Language Mismatch" groupName="Language Injection" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.LanguageMismatch"/>
-    <localInspection shortName="InjectionNotApplicable" displayName="Injection Annotation not applicable" groupName="Language Injection"
+    <localInspection language="JAVA" shortName="InjectionNotApplicable" displayName="Injection Annotation not applicable" groupName="Language Injection"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.InjectionNotApplicable"/>
 
-    <localInspection shortName="PatternValidation" displayName="Validate Annotated Patterns" groupName="Pattern Validation"
+    <localInspection language="JAVA" shortName="PatternValidation" displayName="Validate Annotated Patterns" groupName="Pattern Validation"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternValidator"/>
-    <localInspection shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern Validation"
+    <localInspection language="JAVA" shortName="PatternNotApplicable" displayName="Pattern Annotation not applicable" groupName="Pattern Validation"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.intellij.plugins.intelliLang.pattern.PatternAnnotationNotApplicable"/>
     <localInspection language="JAVA" shortName="PatternOverriddenByNonAnnotatedMethod" displayName="Non-annotated Method overrides @Pattern Method"

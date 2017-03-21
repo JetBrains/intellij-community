@@ -37,7 +37,6 @@ import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpProxyConfigurable;
 import com.intellij.util.ui.UIUtil;
@@ -51,10 +50,6 @@ import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 
 public class SvnConfigurable implements Configurable {
@@ -96,79 +91,52 @@ public class SvnConfigurable implements Configurable {
   public SvnConfigurable(Project project) {
     myProject = project;
 
-    myWithCommandLineClient.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        enableCommandLineClientOptions();
-      }
-    });
+    myWithCommandLineClient.addItemListener(e -> enableCommandLineClientOptions());
     enableCommandLineClientOptions();
-    myUseDefaultCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        boolean enabled = !myUseDefaultCheckBox.isSelected();
-        myConfigurationDirectoryText.setEnabled(enabled);
-        myConfigurationDirectoryText.setEditable(enabled);
-        myConfigurationDirectoryLabel.setEnabled(enabled);
-        SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-        String path = configuration.getConfigurationDirectory();
-        if (!enabled || path == null) {
-          myConfigurationDirectoryText.setText(IdeaSubversionConfigurationDirectory.getPath());
-        }
-        else {
-          myConfigurationDirectoryText.setText(path);
-        }
+    myUseDefaultCheckBox.addActionListener(e -> {
+      boolean enabled = !myUseDefaultCheckBox.isSelected();
+      myConfigurationDirectoryText.setEnabled(enabled);
+      myConfigurationDirectoryText.setEditable(enabled);
+      myConfigurationDirectoryLabel.setEnabled(enabled);
+      SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
+      String path = configuration.getConfigurationDirectory();
+      if (!enabled || path == null) {
+        myConfigurationDirectoryText.setText(IdeaSubversionConfigurationDirectory.getPath());
+      }
+      else {
+        myConfigurationDirectoryText.setText(path);
       }
     });
     myCommandLineClient.addBrowseFolderListener("Subversion", "Select path to Subversion executable (1.7+)", project,
                                                 FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
 
-    myClearAuthButton.addActionListener(new ActionListener(){
-      public void actionPerformed(final ActionEvent e) {
-        SvnAuthenticationNotifier.clearAuthenticationCache(myProject, myComponent, myConfigurationDirectoryText.getText());
-      }
-    });
+    myClearAuthButton.addActionListener(
+      e -> SvnAuthenticationNotifier.clearAuthenticationCache(myProject, myComponent, myConfigurationDirectoryText.getText()));
 
 
-
-    myConfigurationDirectoryText.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        @NonNls String path = myConfigurationDirectoryText.getText().trim();
-        selectConfigurationDirectory(path, new Consumer<String>() {
-          @Override
-          public void consume(String s) {
-            myConfigurationDirectoryText.setText(s);
-          }
-        }, myProject, myComponent);
-      }
+    myConfigurationDirectoryText.addActionListener(e -> {
+      @NonNls String path = myConfigurationDirectoryText.getText().trim();
+      selectConfigurationDirectory(path, s -> myConfigurationDirectoryText.setText(s), myProject, myComponent);
     });
 
     myConfigurationDirectoryLabel.setLabelFor(myConfigurationDirectoryText);
 
     myUseCommonProxy.setText(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
-    myNavigateToCommonProxyLink.setListener(new LinkListener<Object>() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myComponent));
+    myNavigateToCommonProxyLink.setListener((aSource, aLinkData) -> {
+      Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myComponent));
 
-        if (settings != null) {
-          settings.select(settings.find(HttpProxyConfigurable.class));
-        }
+      if (settings != null) {
+        settings.select(settings.find(HttpProxyConfigurable.class));
       }
     }, null);
-    myEditProxiesButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final SvnConfigureProxiesDialog dialog = new SvnConfigureProxiesDialog(myProject);
-        dialog.show();
-        myHttpTimeout.setValue(Long.valueOf(SvnConfiguration.getInstance(myProject).getHttpTimeout() / 1000));
-      }
+    myEditProxiesButton.addActionListener(e -> {
+      final SvnConfigureProxiesDialog dialog = new SvnConfigureProxiesDialog(myProject);
+      dialog.show();
+      myHttpTimeout.setValue(Long.valueOf(SvnConfiguration.getInstance(myProject).getHttpTimeout() / 1000));
     });
 
-    myMaximumNumberOfRevisionsCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
-      }
-    });
+    myMaximumNumberOfRevisionsCheckBox
+      .addActionListener(e -> myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected()));
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
 
     final ButtonGroup bg = new ButtonGroup();

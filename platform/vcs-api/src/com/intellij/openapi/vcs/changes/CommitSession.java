@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,6 +70,7 @@ public interface CommitSession {
    * @return the ID of the help topic to show for the dialog
    * @since 10.5
    */
+  @NonNls
   String getHelpId();
 
   @CalledInAwt

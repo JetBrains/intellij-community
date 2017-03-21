@@ -295,6 +295,11 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testSecondSwitchCaseWithEnumConstant() { doTest() }
 
+  void testInsideSwitchCaseWithEnumConstant() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'compareTo', 'equals'
+  }
+
   void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java")
     checkResultByFile("Annotation_after.java")
@@ -416,12 +421,12 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testExcludeStringBuffer() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, StringBuffer.name)
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, StringBuffer.name)
     doAntiTest()
   }
 
   void testExcludeInstanceInnerClasses() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
     configure()
@@ -430,7 +435,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testExcludedInstanceInnerClassCreation() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
     configure()
@@ -439,7 +444,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testExcludedInstanceInnerClassQualifiedReference() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
     configure()
@@ -448,14 +453,14 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testStaticMethodOfExcludedClass() {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public static void method() {} }'
     configure()
     assert myFixture.lookupElementStrings == ['method']
   }
 
   void testExcludeWildcards() {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo.Outer.*1*")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo.Outer.*1*")
     myFixture.addClass '''
 package foo; 
 public class Outer { 
@@ -1509,7 +1514,7 @@ class XInternalError {}
 
     def p = LookupElementPresentation.renderElement(item)
     assert p.itemText == 'public void run'
-    assert p.tailText == '(t, myInt) {...}'
+    assert p.tailText == '(String t, int myInt) {...}'
     assert p.typeText == 'Foo'
 
     lookup.currentItem = item
@@ -1547,7 +1552,7 @@ class XInternalError {}
 
     p = LookupElementPresentation.renderElement(setter)
     assert p.itemText == setter.lookupString
-    assert p.tailText == '(field) {...}'
+    assert p.tailText == '(int field) {...}'
     assert !p.typeText
 
     lookup.currentItem = getter
@@ -1679,7 +1684,7 @@ class Bar {
   void testIndentingForSwitchCase() { doTest() }
 
   void testIncrementalCopyReparse() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
     
     myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
     def items = myFixture.completeBasic()
@@ -1756,6 +1761,12 @@ class Bar {
     assert !myFixture.completeBasic()
     myFixture.type('\b')
     checkResultByFile(getTestName(false) + ".java")
+  }
+
+  void testChainInLambdaBinary() {
+    codeStyleSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    myFixture.addClass("package pkg; public class PathUtil { public static String toSystemDependentName() {} }")
+    doTest('\n')
   }
 
 }

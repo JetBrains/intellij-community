@@ -38,6 +38,7 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCa
   @Override
   public void tearDown() throws Exception {
     ((PsiManagerImpl)PsiManager.getInstance(getProject())).removeTreeChangePreprocessor(myTracker);
+    myTracker = null;
     super.tearDown();
   }
 

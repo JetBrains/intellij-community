@@ -253,7 +253,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         }
       }
       else {
-        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        myResult = Spacing.createSpacing(1, 1, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
@@ -855,7 +855,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
             }
           }
         }
-        myResult = Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createSpacing(1, 1, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
         myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -863,7 +863,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.RBRACE) {
       if (!keepInOneLine) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);

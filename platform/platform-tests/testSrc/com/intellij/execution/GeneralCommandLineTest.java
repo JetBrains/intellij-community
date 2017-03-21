@@ -93,7 +93,7 @@ public class GeneralCommandLineTest {
                  " \"\\\"quoted with spaces\\\"\"" +
                  " \"param 1\"" +
                  " param2" +
-                 " \"trailing slash\\\"",
+                 " \"trailing slash\"\\",
                  commandLine.getCommandLineString());
   }
 

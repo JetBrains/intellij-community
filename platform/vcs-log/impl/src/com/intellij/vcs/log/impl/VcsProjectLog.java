@@ -107,12 +107,11 @@ public class VcsProjectLog {
 
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
-    if (++myRecreatedLogCount > RECREATE_LOG_TRIES) {
-      myRecreatedLogCount = 0;
-
-      String message = String
-        .format("VCS Log was recreated %d times due to data corruption\nDelete %s directory and restart %s if this happens often.\n%s",
-                myRecreatedLogCount, LOG_CACHE, ApplicationNamesInfo.getInstance().getFullProductName(), t.getMessage());
+    if ((++myRecreatedLogCount) % RECREATE_LOG_TRIES == 0) {
+      String message = String.format("VCS Log was recreated %d times due to data corruption\n" +
+                                     "Delete %s directory and restart %s if this happens often.\n%s",
+                                     myRecreatedLogCount, LOG_CACHE, ApplicationNamesInfo.getInstance().getFullProductName(),
+                                     t.getMessage());
       LOG.error(message, t);
 
       VcsLogManager manager = getLogManager();

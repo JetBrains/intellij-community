@@ -45,7 +45,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -404,7 +403,6 @@ public class PsiVFSListener extends VirtualFileAdapter {
       }
     }
 
-    ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(vFile);
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
         @Override

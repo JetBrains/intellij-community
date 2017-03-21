@@ -63,22 +63,18 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author cdr
@@ -87,18 +83,20 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class HighlightUtil extends HighlightUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
 
-  @NotNull private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
-  @NotNull private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new THashMap<>(11);
-  @NotNull private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
-  @NotNull private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new THashMap<>(8);
-  @NotNull private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new THashMap<>(1);
-  @NotNull private static final Set<String> ourConstructorNotAllowedModifiers =
-    ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
-
-  @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
-  private HighlightUtil() { }
+  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
+  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new THashMap<>(11);
+  private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new THashMap<>(8);
+  private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new THashMap<>(1);
+  private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = new THashMap<>(1);
+  private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new THashMap<>(2);
+
+  private static final Set<String> ourConstructorNotAllowedModifiers =
+    ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
+
+  private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.FINAL));
@@ -118,7 +116,8 @@ public class HighlightUtil extends HighlightUtilBase {
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.emptySet());
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
 
-    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED, PsiModifier.DEFAULT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(
+      PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED, PsiModifier.DEFAULT));
     ourMethodIncompatibleModifiers.put(PsiModifier.NATIVE, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STRICTFP));
     ourMethodIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
     ourMethodIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
@@ -140,7 +139,14 @@ public class HighlightUtil extends HighlightUtilBase {
     ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, ContainerUtil.newTroveSet(PsiModifier.FINAL));
 
     ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+
+    ourModuleIncompatibleModifiers.put(PsiModifier.OPEN, Collections.emptySet());
+
+    ourRequiresIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+    ourRequiresIncompatibleModifiers.put(PsiModifier.TRANSITIVE, Collections.emptySet());
   }
+
+  private HighlightUtil() { }
 
   @Nullable
   private static String getIncompatibleModifier(String modifier,
@@ -301,72 +307,69 @@ public class HighlightUtil extends HighlightUtilBase {
    * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
    *  • ReferenceType must denote a class or interface type.
    *  • The erasures of all the listed types must be pairwise different.
-   *  • No two listed types may be subtypes of different parameterizations of the same generic interface.
+   *  • No two listed types may be subtypes of different parameterization of the same generic interface.
    */
   @Nullable
-  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression, @NotNull LanguageLevel languageLevel) {
-    final PsiTypeElement castTypeElement = expression.getCastType();
-    if (castTypeElement == null) return null;
-    PsiType castType = castTypeElement.getType();
-    if (isIntersection(castTypeElement, castType)) {
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
-        if (conjuncts != null) {
-          final Set<PsiType> erasures = new HashSet<>(conjuncts.length);
-          erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
-          final List<PsiTypeElement> conjList = new ArrayList<>(Arrays.asList(conjuncts));
-          for (int i = 1; i < conjuncts.length; i++) {
-            final PsiTypeElement conjunct = conjuncts[i];
-            final PsiType conjType = conjunct.getType();
-            if (conjType instanceof PsiClassType) {
-              final PsiClass aClass = ((PsiClassType)conjType).resolve();
-              if (aClass != null && !aClass.isInterface()) {
-                final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                  .range(conjunct)
-                  .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
-                QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
-                return errorResult;
-              }
-            }
-            else {
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression,
+                                                   @NotNull LanguageLevel languageLevel,
+                                                   @NotNull PsiFile file) {
+    PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement != null && isIntersection(castTypeElement, castTypeElement.getType())) {
+      HighlightInfo info = checkFeature(expression, Feature.INTERSECTION_CASTS, languageLevel, file);
+      if (info != null) return info;
+
+      final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+      if (conjuncts != null) {
+        final Set<PsiType> erasures = new HashSet<>(conjuncts.length);
+        erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
+        final List<PsiTypeElement> conjList = new ArrayList<>(Arrays.asList(conjuncts));
+        for (int i = 1; i < conjuncts.length; i++) {
+          final PsiTypeElement conjunct = conjuncts[i];
+          final PsiType conjType = conjunct.getType();
+          if (conjType instanceof PsiClassType) {
+            final PsiClass aClass = ((PsiClassType)conjType).resolve();
+            if (aClass != null && !aClass.isInterface()) {
+              final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(conjunct)
-                .descriptionAndTooltip("Unexpected type: class is expected").create();
-            }
-            if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
-              final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(conjunct)
-                .descriptionAndTooltip("Repeated interface").create();
-              QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
-              return highlightInfo;
+                .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
+              QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
+              return errorResult;
             }
           }
-
-          final List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
-          final Ref<String> differentArgumentsMessage = new Ref<>();
-          final PsiClass sameGenericParameterization =
-            InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
-              if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
-                return true;
-              }
-              differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
-              return false;
-            });
-          if (sameGenericParameterization != null) {
-            final String message = formatClass(sameGenericParameterization) + " cannot be inherited with different arguments: " +
-                                   differentArgumentsMessage.get();
+          else {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(expression)
-              .descriptionAndTooltip(message).create();
+              .range(conjunct)
+              .descriptionAndTooltip("Unexpected type: class is expected").create();
+          }
+          if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
+            final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(conjunct)
+              .descriptionAndTooltip("Repeated interface").create();
+            QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
+            return highlightInfo;
           }
         }
-      } else {
-        String description = extendUnsupportedLanguageLevelDescription("Intersection types in cast are not supported at this language level", expression, languageLevel, expression.getContainingFile(), LanguageLevel.JDK_1_8);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(expression)
-          .descriptionAndTooltip(description).create();
+
+        final List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
+        final Ref<String> differentArgumentsMessage = new Ref<>();
+        final PsiClass sameGenericParameterization =
+          InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
+            if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
+              return true;
+            }
+            differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
+            return false;
+          });
+        if (sameGenericParameterization != null) {
+          final String message = formatClass(sameGenericParameterization) + " cannot be inherited with different arguments: " +
+                                 differentArgumentsMessage.get();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(expression)
+            .descriptionAndTooltip(message).create();
+        }
       }
     }
+
     return null;
   }
 
@@ -710,7 +713,8 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       if (proc.size() > 0) {
         isIncorrect = true;
-      } else if (declarationScope instanceof PsiLambdaExpression) {
+      }
+      else if (declarationScope instanceof PsiLambdaExpression) {
         isIncorrect = checkSameNames(variable);
       }
     }
@@ -741,13 +745,13 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  private static boolean checkSameNames(PsiVariable variable) {
+  private static boolean checkSameNames(@NotNull PsiVariable variable) {
     PsiElement scope = variable.getParent();
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiVariable) {
         if (child.equals(variable)) continue;
-        if (variable.getName().equals(((PsiVariable)child).getName())) {
+        if (Objects.equals(variable.getName(), ((PsiVariable)child).getName())) {
           return true;
         }
       }
@@ -786,7 +790,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  static String formatField(@NotNull PsiField field) {
+  private static String formatField(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
@@ -892,39 +896,33 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  @Nullable
-  private static Map<String, Set<String>> getIncompatibleModifierMap(@NotNull PsiModifierList modifierList) {
-    PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtilCore.hasErrorElementChild(parent)) return null;
-    return parent instanceof PsiClass
-           ? ((PsiClass)parent).isInterface() ? ourInterfaceIncompatibleModifiers : ourClassIncompatibleModifiers
-           : parent instanceof PsiMethod
-             ? ourMethodIncompatibleModifiers
-             : parent instanceof PsiVariable
-               ? ourFieldIncompatibleModifiers
-               : parent instanceof PsiClassInitializer ? ourClassInitializerIncompatibleModifiers : null;
+  @Contract("null -> null")
+  private static Map<String, Set<String>> getIncompatibleModifierMap(@Nullable PsiElement modifierListOwner) {
+    if (modifierListOwner == null || PsiUtilCore.hasErrorElementChild(modifierListOwner)) return null;
+    if (modifierListOwner instanceof PsiClass) {
+      return ((PsiClass)modifierListOwner).isInterface() ? ourInterfaceIncompatibleModifiers : ourClassIncompatibleModifiers;
+    }
+    if (modifierListOwner instanceof PsiMethod) return ourMethodIncompatibleModifiers;
+    if (modifierListOwner instanceof PsiVariable) return ourFieldIncompatibleModifiers;
+    if (modifierListOwner instanceof PsiClassInitializer) return ourClassInitializerIncompatibleModifiers;
+    if (modifierListOwner instanceof PsiJavaModule) return ourModuleIncompatibleModifiers;
+    if (modifierListOwner instanceof PsiRequiresStatement) return ourRequiresIncompatibleModifiers;
+    return null;
   }
 
   @Nullable
   static String getIncompatibleModifier(String modifier, @NotNull PsiModifierList modifierList) {
-    PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtilCore.hasErrorElementChild(parent)) return null;
-    final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
-    if (incompatibleModifierMap == null) return null;
-    return getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
+    Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList.getParent());
+    return incompatibleModifierMap != null ? getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap) : null;
   }
-
 
   @Nullable
   static HighlightInfo checkNotAllowedModifier(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
     PsiElement modifierOwner = modifierList.getParent();
-    if (modifierOwner == null) return null;
-    if (PsiUtilCore.hasErrorElementChild(modifierOwner)) return null;
-
-    @PsiModifier.ModifierConstant String modifier = keyword.getText();
-    final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
+    Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierOwner);
     if (incompatibleModifierMap == null) return null;
 
+    @PsiModifier.ModifierConstant String modifier = keyword.getText();
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);
     PsiElement modifierOwnerParent = modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
     if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
@@ -1007,12 +1005,11 @@ public class HighlightUtil extends HighlightUtilBase {
     isAllowed &= incompatibles != null;
     if (!isAllowed) {
       String message = JavaErrorMessages.message("modifier.not.allowed", modifier);
-
-      HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
       return highlightInfo;
     }
+
     return null;
   }
 
@@ -1211,8 +1208,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (isInt) {
       int start = 0;
-      int end = text.length();
       if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX) || text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) start += 2;
+      int end = text.length();
       if (StringUtil.endsWithChar(text, 'l')) --end;
       parts = new String[]{text.substring(start, end)};
     }
@@ -1692,7 +1689,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @NotNull
   static String buildProblemWithAccessDescription(@NotNull final PsiElement reference, @NotNull final JavaResolveResult result) {
-    return buildProblemWithAccessDescription(reference, result, notNull(result.getElement()));
+    return buildProblemWithAccessDescription(reference, result, ObjectUtils.notNull(result.getElement()));
   }
 
   @NotNull
@@ -2733,8 +2730,8 @@ public class HighlightUtil extends HighlightUtilBase {
       JavaResolveResult[] results = ref.multiResolve(true);
       String description;
       if (results.length > 1) {
-        String t1 = format(notNull(results[0].getElement()));
-        String t2 = format(notNull(results[1].getElement()));
+        String t1 = format(ObjectUtils.notNull(results[0].getElement()));
+        String t2 = format(ObjectUtils.notNull(results[1].getElement()));
         description = JavaErrorMessages.message("ambiguous.reference", refName.getText(), t1, t2);
       }
       else {
@@ -2775,10 +2772,10 @@ public class HighlightUtil extends HighlightUtilBase {
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
       return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
-    else if (resolved instanceof PsiClass &&
-             ((PsiClass)resolved).getContainingClass() == null &&
-             PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null &&
-             PsiUtil.isFromDefaultPackage((PsiClass)resolved)) {
+    if (resolved instanceof PsiClass &&
+        ((PsiClass)resolved).getContainingClass() == null &&
+        PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null &&
+        PsiUtil.isFromDefaultPackage((PsiClass)resolved)) {
       String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
     }
@@ -3003,13 +3000,15 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
     RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
+    INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
+    STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules");
 
     private final LanguageLevel level;
     private final String key;
 
-    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
+    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
     }
@@ -3021,9 +3020,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                     @NotNull LanguageLevel level,
                                     @NotNull PsiFile file) {
     if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
-      String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
-
-      message = extendUnsupportedLanguageLevelDescription(message, element, level, file, feature.level);
+      String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createShowModulePropertiesFix(element));
@@ -3033,18 +3030,17 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  static String extendUnsupportedLanguageLevelDescription(@NotNull String message,
-                                                          @NotNull PsiElement element,
-                                                          @NotNull LanguageLevel fileLanguageLevel,
-                                                          @NotNull PsiFile file,
-                                                          @NotNull LanguageLevel featureLevel) {
+  private static String getUnsupportedFeatureMessage(PsiElement element, Feature feature, LanguageLevel level, PsiFile file) {
+    String name = JavaErrorMessages.message(feature.key);
+    String message = JavaErrorMessages.message("insufficient.language.level", name, level.getCompilerComplianceDefaultOption());
+
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (moduleLanguageLevel.isAtLeast(featureLevel)) {
+      if (moduleLanguageLevel.isAtLeast(feature.level)) {
         for (FilePropertyPusher pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
-            String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, element, fileLanguageLevel, file);
+            String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, element, level, file);
             if (newMessage != null) {
               return newMessage;
             }
@@ -3052,6 +3048,7 @@ public class HighlightUtil extends HighlightUtilBase {
         }
       }
     }
+
     return message;
   }
 }

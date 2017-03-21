@@ -90,7 +90,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
     productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
-    productLayout.additionalPlatformJars.put("forms_rt.jar", "forms-compiler")
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])

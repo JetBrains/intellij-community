@@ -122,6 +122,43 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       .run()
   }
 
+  fun testTrim() {
+    Test("A B_", "",
+         "    ", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "++++", "",
+         "    ", "")
+      .run()
+
+    Test("A B_", "",
+         "   +", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "+++ ", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "+  +", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "+ ++", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         " +++", "",
+         "----", "")
+      .run()
+  }
+
   fun testLines() {
     Test("X_", "X_Y_",
          "  ", "    ",
@@ -309,8 +346,8 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
 
     Test("X Y", "XY",
          " + ", "  ",
-         "   ", "  ")
-      .changedLinesNumber(0, 0)
+         "---", "--")
+      .changedLinesNumber(1, 1)
       .run()
   }
 
@@ -337,16 +374,16 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
          "          -     ", "          -     ")
       .changedLinesNumber(2, 1)
       .run()
+
+    Test("int X = 0;", "intX = 0;",
+         "   + + +  ", "    + +  ",
+         "-----     ", "----     ")
+      .changedLinesNumber(1, 1)
+      .run()
   }
 
   fun `test Java bad samples`() {
     //TODO
-
-    Test("int X = 0;", "intX = 0;",
-         "   + + +  ", "    + +  ",
-         "          ", "         ")
-      .changedLinesNumber(0, 0)
-      .run()
 
     Test("System.out.println (\"Hello  world\");", "System.out.println(\"Hello world\");",
          "              .   +               .   ", "                   .            .   ",

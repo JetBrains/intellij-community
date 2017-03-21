@@ -19,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -168,12 +167,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (staticFactoryCandidateInfo == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
-    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> {
-      PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
-      return staticFactoryCandidateInfo instanceof MethodCandidateInfo &&
-             ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessage() != null
-             ? null : substitutor;
-    });
+    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> staticFactoryCandidateInfo.getSubstitutor());
     if (inferredSubstitutor == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
@@ -182,9 +176,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
 
+    final String errorMessage = ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessage();
+
     //15.9.3 Choosing the Constructor and its Arguments
     //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (§15.12.2.6)
-    if (InferenceSession.wasUncheckedConversionPerformed(context)) {
+    if (errorMessage == null && InferenceSession.wasUncheckedConversionPerformed(context)) {
       return DiamondInferenceResult.RAW_RESULT;
     }
 
@@ -199,9 +195,14 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiTypeParameter[] classParameters = psiClass.getTypeParameters();
     final PsiJavaCodeReferenceElement classOrAnonymousClassReference = newExpression.getClassOrAnonymousClassReference();
     LOG.assertTrue(classOrAnonymousClassReference != null);
-    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>");
+    final DiamondInferenceResult result = new DiamondInferenceResult(classOrAnonymousClassReference.getReferenceName() + "<>") {
+      @Override
+      public String getErrorMessage() {
+        return errorMessage != null ? DiamondInferenceResult.NULL_RESULT.getErrorMessage() : super.getErrorMessage();
+      }
+    };
 
-    if (PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
+    if (errorMessage == null && PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
       //http://www.oracle.com/technetwork/java/javase/8-compatibility-guide-2156366.html#A999198 REF 7144506
       if (!PsiUtil.isLanguageLevel8OrHigher(newExpression) && PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
         for (PsiTypeParameter ignored : parameters) {
@@ -408,6 +409,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
   }
 
+  @NotNull
   private static PsiTypeParameter[] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
     Set<PsiTypeParameter> params = new LinkedHashSet<>();
     Collections.addAll(params, containingClass.getTypeParameters());

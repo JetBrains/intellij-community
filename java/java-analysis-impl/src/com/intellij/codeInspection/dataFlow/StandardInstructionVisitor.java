@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract.QualifierBasedContract;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -25,10 +28,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +47,19 @@ import static com.intellij.psi.JavaTokenType.*;
  * @author peter
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
-  private static final Set<String> OPTIONAL_METHOD_NAMES =
-    ContainerUtil.set("isPresent", "of", "ofNullable", "fromNullable", "empty", "absent",
-                      "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
+
+  private static final Set<String> OPTIONAL_METHOD_NAMES = ContainerUtil
+    .set("of", "ofNullable", "fromNullable", "empty", "absent", "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
+  private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
+              LongRangeSet.range(0, Long.SIZE))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
+              LongRangeSet.range(0, Integer.SIZE));
+
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
@@ -185,15 +198,16 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     finalStates.addAll(handleOptionalMethods(instruction, runner, memState));
+    finalStates.addAll(handleKnownMethods(instruction, runner, memState));
 
     if (finalStates.isEmpty()) {
-      DfaValue[] argValues = popCallArguments(instruction, runner, memState);
+      DfaValue[] argValues = popCallArguments(instruction, runner, memState, true);
       final DfaValue qualifier = popQualifier(instruction, runner, memState);
 
       LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(memState);
       if (argValues != null) {
         for (MethodContract contract : instruction.getContracts()) {
-          currentStates = addContractResults(argValues, contract, currentStates, instruction, runner.getFactory(), finalStates);
+          currentStates = addContractResults(qualifier, argValues, contract, currentStates, instruction, runner.getFactory(), finalStates);
           if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
@@ -222,6 +236,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
+  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
+    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(call);
+    if (handler == null) return Collections.emptyList();
+    DfaValue[] arguments = popCallArguments(instruction, runner, memState, false);
+    DfaValue qualifier = popQualifier(instruction, runner, memState);
+    List<DfaMemoryState> states =
+      arguments == null ? Collections.emptyList() :
+      handler.handle(qualifier, arguments, memState, runner.getFactory());
+    if (states.isEmpty()) {
+      memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+      return Collections.singletonList(memState);
+    }
+    return states;
+  }
+
+  @NotNull
   private List<DfaMemoryState> handleOptionalMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
     if (call == null) return Collections.emptyList();
@@ -230,37 +261,20 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiMethod method = call.resolveMethod();
     if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
     List<DfaMemoryState> closures = runner.getStackTopClosures();
-    DfaValue[] argValues = popCallArguments(instruction, runner, memState);
-    final DfaValue qualifier = popQualifier(instruction, runner, memState);
+    DfaValue[] argValues = popCallArguments(instruction, runner, memState, false);
+    DfaValue qualifier = popQualifier(instruction, runner, memState);
+    DfaValue result = null;
     switch (methodName) {
-      case "isPresent": {
-        ThreeState state = memState.checkOptional(qualifier);
-        DfaConstValue.Factory constFactory = runner.getFactory().getConstFactory();
-        if (state == ThreeState.UNSURE) {
-          DfaMemoryState falseState = memState.createCopy();
-          memState.push(constFactory.getTrue());
-          memState.applyIsPresentCheck(true, qualifier);
-          falseState.push(constFactory.getFalse());
-          falseState.applyIsPresentCheck(false, qualifier);
-          return Arrays.asList(memState, falseState);
-        }
-        else {
-          memState.push(state == ThreeState.YES ? constFactory.getTrue() : constFactory.getFalse());
-        }
-        break;
-      }
       case "of":
       case "ofNullable":
       case "fromNullable":
         if ("of".equals(methodName) || (argValues != null && argValues.length == 1 && memState.isNotNull(argValues[0]))) {
-          memState.push(runner.getFactory().getOptionalFactory().getOptional(true));
-        } else {
-          memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+          result = runner.getFactory().getOptionalFactory().getOptional(true);
         }
         break;
       case "empty":
       case "absent":
-        memState.push(runner.getFactory().getOptionalFactory().getOptional(false));
+        result = runner.getFactory().getOptionalFactory().getOptional(false);
         break;
       case "filter":
       case "flatMap":
@@ -272,23 +286,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         for (DfaMemoryState closure : closures) {
           closure.applyIsPresentCheck(!methodName.startsWith("or"), qualifier);
         }
-        memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
         break;
       default:
-        memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
-        break;
     }
+    memState.push(result == null ? getMethodResultValue(instruction, qualifier, runner.getFactory()) : result);
     return Collections.singletonList(memState);
   }
 
-  @Nullable 
-  private DfaValue[] popCallArguments(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  @Nullable
+  private DfaValue[] popCallArguments(MethodCallInstruction instruction,
+                                      DataFlowRunner runner,
+                                      DfaMemoryState memState,
+                                      boolean contractOnly) {
     final PsiExpression[] args = instruction.getArgs();
 
     PsiMethod method = instruction.getTargetMethod();
     boolean varargCall = instruction.isVarArgCall();
     DfaValue[] argValues;
-    if (method == null || instruction.getContracts().isEmpty()) {
+    if (method == null || (contractOnly && instruction.getContracts().isEmpty())) {
       argValues = null;
     } else {
       PsiParameterList paramList = method.getParameterList();
@@ -335,12 +350,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return qualifier;
   }
 
-  private LinkedHashSet<DfaMemoryState> addContractResults(DfaValue[] argValues,
-                                                  MethodContract contract,
-                                                  LinkedHashSet<DfaMemoryState> states,
-                                                  MethodCallInstruction instruction,
-                                                  DfaValueFactory factory,
-                                                  Set<DfaMemoryState> finalStates) {
+  private LinkedHashSet<DfaMemoryState> addContractResults(DfaValue qualifier,
+                                                           DfaValue[] argValues,
+                                                           MethodContract contract,
+                                                           LinkedHashSet<DfaMemoryState> states,
+                                                           MethodCallInstruction instruction,
+                                                           DfaValueFactory factory,
+                                                           Set<DfaMemoryState> finalStates) {
     DfaConstValue.Factory constFactory = factory.getConstFactory();
     LinkedHashSet<DfaMemoryState> falseStates = ContainerUtil.newLinkedHashSet();
     for (int i = 0; i < argValues.length; i++) {
@@ -382,6 +398,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           if (unknownVsNull && invertCondition) {
             falseCopy.markEphemeral();
           }
+          falseStates.add(falseCopy);
+        }
+      }
+      states = nextStates;
+    }
+
+    if (contract instanceof QualifierBasedContract) {
+      LinkedHashSet<DfaMemoryState> nextStates = ContainerUtil.newLinkedHashSet();
+      QualifierBasedContract qualifierBasedContract = (QualifierBasedContract)contract;
+      for (DfaMemoryState state : states) {
+        DfaMemoryState falseCopy = state.createCopy();
+        if (qualifierBasedContract.applyContract(true, qualifier, state)) {
+          nextStates.add(state);
+        }
+        if (qualifierBasedContract.applyContract(false, qualifier, falseCopy)) {
           falseStates.add(falseCopy);
         }
       }
@@ -451,6 +482,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       return factory.createTypeValue(type, nullability);
     }
+    DfaRangeValue rangeValue = factory.getRangeFactory().create(type);
+    if (rangeValue != null) {
+      PsiCall call = instruction.getCallExpression();
+      if (call instanceof PsiMethodCallExpression) {
+        LongRangeSet range = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
+        if (range == null) {
+          PsiMethod method = call.resolveMethod();
+          if (method != null && AnnotationUtil.isAnnotated(method, "javax.annotation.Nonnegative", false)) {
+            range = LongRangeSet.range(0, Long.MAX_VALUE);
+          }
+        }
+        if (range != null) {
+          return rangeValue.intersect(range);
+        }
+      }
+      return rangeValue;
+    }
     return DfaUnknownValue.getInstance();
   }
 
@@ -474,28 +522,35 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaLeft = memState.pop();
 
     final IElementType opSign = instruction.getOperationSign();
-    if (opSign != null) {
+    if (ComparisonUtils.isComparisonOperation(opSign) || opSign == INSTANCEOF_KEYWORD) {
       DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
+      if (states == null) {
+        states = handleRangeComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
+      }
       if (states == null) {
         states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft);
       }
       if (states != null) {
         return states;
       }
-
-      if (PLUS == opSign) {
-        memState.push(instruction.getNonNullStringValue(runner.getFactory()));
+    }
+    DfaValue result = null;
+    if (AND == opSign) {
+      LongRangeSet left = memState.getRange(dfaLeft);
+      LongRangeSet right = memState.getRange(dfaRight);
+      if(left != null && right != null) {
+        result = runner.getFactory().getRangeFactory().create(left.bitwiseAnd(right));
       }
-      else {
-        if (instruction instanceof InstanceofInstruction) {
-          handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
-        }
-        memState.push(DfaUnknownValue.getInstance());
-      }
+    }
+    else if (PLUS == opSign) {
+      result = instruction.getNonNullStringValue(runner.getFactory());
     }
     else {
-      memState.push(DfaUnknownValue.getInstance());
+      if (instruction instanceof InstanceofInstruction) {
+        handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
+      }
     }
+    memState.push(result == null ? DfaUnknownValue.getInstance() : result);
 
     instruction.setTrueReachable();  // Not a branching instruction actually.
     instruction.setFalseReachable();
@@ -558,6 +613,27 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Nullable
+  private static DfaInstructionState[] handleRangeComparison(BinopInstruction instruction,
+                                                             DataFlowRunner runner,
+                                                             DfaMemoryState state,
+                                                             DfaValue right,
+                                                             DfaValue left, IElementType sign) {
+    LongRangeSet leftRange = state.getRange(left);
+    if (leftRange == null) return null;
+    LongRangeSet rightRange = state.getRange(right);
+    if (rightRange == null) return null;
+    LongRangeSet constraint = rightRange.fromRelation(sign);
+    if (constraint != null && !constraint.intersects(leftRange)) {
+      return alwaysFalse(instruction, runner, state);
+    }
+    LongRangeSet revConstraint = rightRange.fromRelation(ComparisonUtils.getNegatedComparisonTokenType(sign));
+    if (revConstraint != null && !revConstraint.intersects(leftRange)) {
+      return alwaysTrue(instruction, runner, state);
+    }
+    return null;
+  }
+
+  @Nullable
   private static DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
                                                                 DataFlowRunner runner,
                                                                 DfaMemoryState memState,
@@ -608,26 +684,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                   DfaMemoryState memState,
                                                                   DfaVariableValue var,
                                                                   IElementType opSign, Number comparedWith) {
-    Object knownValue = getKnownNumberValue(memState, var);
+    Number knownValue = getKnownNumberValue(memState, var);
     if (knownValue != null) {
-      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, (Number)knownValue, comparedWith);
+      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, knownValue, comparedWith);
     }
-
-    PsiType varType = var.getVariableType();
-    if (!(varType instanceof PsiPrimitiveType)) return null;
-    
-    if (PsiType.FLOAT.equals(varType) || PsiType.DOUBLE.equals(varType)) return null;
-
-    double minValue = PsiType.BYTE.equals(varType) ? Byte.MIN_VALUE : PsiType.SHORT.equals(varType)
-                                                                 ? Short.MIN_VALUE : PsiType.INT.equals(varType)
-                                                                   ? Integer.MIN_VALUE : PsiType.CHAR.equals(varType) ? Character.MIN_VALUE :
-                                                                                         Long.MIN_VALUE;
-    double maxValue = PsiType.BYTE.equals(varType) ? Byte.MAX_VALUE : PsiType.SHORT.equals(varType)
-                                                                 ? Short.MAX_VALUE : PsiType.INT.equals(varType)
-                                                                   ? Integer.MAX_VALUE : PsiType.CHAR.equals(varType) ? Character.MAX_VALUE :
-                                                                                         Long.MAX_VALUE;
-
-    return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, minValue, maxValue);
+    return null;
   }
 
   @Nullable
@@ -642,7 +703,28 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                      IElementType opSign,
                                                                      Number leftValue,
                                                                      Number rightValue) {
-    return checkComparisonWithKnownRange(instruction, runner, memState, opSign, rightValue, leftValue, leftValue);
+    int cmp = compare(leftValue, rightValue);
+    Boolean result = null;
+    if (cmp < 0 || cmp > 0) {
+      if(opSign == EQEQ) result = false;
+      else if (opSign == NE) result = true;
+    }
+    if (opSign == LT) {
+      result = cmp < 0;
+    }
+    else if (opSign == GT) {
+      result = cmp > 0;
+    }
+    else if (opSign == LE) {
+      result = cmp <= 0;
+    }
+    else if (opSign == GE) {
+      result = cmp >= 0;
+    }
+    if (result == null) {
+      return null;
+    }
+    return result ? alwaysTrue(instruction, runner, memState) : alwaysFalse(instruction, runner, memState);
   }
 
   private static int compare(Number a, Number b) {
@@ -651,32 +733,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (aLong != bLong) return aLong > bLong ? 1 : -1;
 
     return Double.compare(a.doubleValue(), b.doubleValue());
-  }
-
-  @Nullable
-  private static DfaInstructionState[] checkComparisonWithKnownRange(BinopInstruction instruction,
-                                                                     DataFlowRunner runner,
-                                                                     DfaMemoryState memState,
-                                                                     IElementType opSign,
-                                                                     Number comparedWith,
-                                                                     Number rangeMin,
-                                                                     Number rangeMax) {
-    if (compare(comparedWith, rangeMin) < 0 || compare(comparedWith, rangeMax) > 0) {
-      if (opSign == EQEQ) return alwaysFalse(instruction, runner, memState);
-      if (opSign == NE) return alwaysTrue(instruction, runner, memState);
-    }
-
-    if (opSign == LT && compare(comparedWith, rangeMin) <= 0) return alwaysFalse(instruction, runner, memState);
-    if (opSign == LT && compare(comparedWith, rangeMax) > 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && compare(comparedWith, rangeMax) >= 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && compare(comparedWith, rangeMin) < 0) return alwaysFalse(instruction, runner, memState);
-
-    if (opSign == GT && compare(comparedWith, rangeMax) >= 0) return alwaysFalse(instruction, runner, memState);
-    if (opSign == GT && compare(comparedWith, rangeMin) < 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && compare(comparedWith, rangeMin) <= 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && compare(comparedWith, rangeMax) > 0) return alwaysFalse(instruction, runner, memState);
-
-    return null;
   }
 
   private static DfaInstructionState[] alwaysFalse(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

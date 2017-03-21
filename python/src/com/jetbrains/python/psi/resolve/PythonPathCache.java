@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<QualifiedName, List<SoftReference<PsiElement>>> myCache = ContainerUtil.newConcurrentMap();
+  private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = ContainerUtil.newConcurrentMap();
   private final Map<String, List<QualifiedName>> myQNameCache = ContainerUtil.newConcurrentMap();
 
   public void clearCache() {
@@ -46,21 +46,21 @@ public abstract class PythonPathCache {
    */
   @Nullable
   public List<PsiElement> get(@NotNull final QualifiedName qualifiedName) {
-    final List<SoftReference<PsiElement>> references = myCache.get(qualifiedName);
+    final SoftReference<List<PsiElement>> references = myCache.get(qualifiedName);
     if (references == null) {
       return null;
     }
-    final List<PsiElement> result = references.stream().map(r -> r.get()).filter(p -> p != null).collect(Collectors.toList());
-    final boolean staleElementRemoved = result.removeIf(e -> !e.isValid());
-    if (staleElementRemoved) {
-      Logger.getInstance(PythonPathCache.class).warn("Removing invalid element from cache");
+    final List<PsiElement> elements = references.get();
+    if(elements != null && ! elements.stream().allMatch(PsiElement::isValid)) {
+      // At least one element is invalid
+      return null;
     }
-    return result;
+    return elements;
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {
     if (results != null) {
-      myCache.put(qualifiedName, new ArrayList<>(results.stream().map(e -> new SoftReference<>(e)).collect(Collectors.toList())));
+      myCache.put(qualifiedName, new SoftReference<>(results));
     }
   }
 

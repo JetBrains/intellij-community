@@ -40,7 +40,7 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     int counter = 0
     PlatformTestUtil.registerExtension(AstTransformationSupport.EP_NAME, {
       counter++
-    } as AstTransformationSupport, testRootDisposable)
+    } as AstTransformationSupport, myFixture.testRootDisposable)
     def file = fixture.addFileToProject(
       '_.groovy', 'class Super { def foo() {} }'
     ) as GroovyFile
@@ -63,7 +63,7 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     int counter = 0
     PlatformTestUtil.registerExtension(AstTransformationSupport.EP_NAME, {
       counter++
-    } as AstTransformationSupport, testRootDisposable)
+    } as AstTransformationSupport, myFixture.testRootDisposable)
     def file = fixture.addFileToProject(
       '_.groovy', 'class Super { def foo() { 1 } }'
     ) as GroovyFile

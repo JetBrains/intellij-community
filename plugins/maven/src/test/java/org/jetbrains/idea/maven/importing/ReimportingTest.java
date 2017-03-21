@@ -26,10 +26,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.module.EffectiveLanguageLevelUtil.getEffectiveLanguageLevel;
 
 public class ReimportingTest extends MavenImportingTestCase {
   @Override
@@ -346,5 +349,57 @@ public class ReimportingTest extends MavenImportingTestCase {
     importProject();
     resolveDependenciesAndImport();
     assertEquals(0, counter.get());
+  }
+
+  public void testParentVersionProperty() throws Exception {
+    String parentPomTemplate =
+                    "<groupId>test</groupId>\n" +
+                    "<artifactId>project</artifactId>\n" +
+                    "<version>${my.parent.version}</version>\n" +
+                    "<modules>\n" +
+                    "  <module>m1</module>\n" +
+                    "</modules>\n" +
+                    "<properties>\n" +
+                    "  <my.parent.version>1</my.parent.version>\n" +
+                    "</properties>\n" +
+                    "<build>\n" +
+                    "  <plugins>\n" +
+                    "    <plugin>\n" +
+                    "      <artifactId>maven-compiler-plugin</artifactId>\n" +
+                    "      <version>3.1</version>\n" +
+                    "      <configuration>\n" +
+                    "        <source>%s</source>\n" +
+                    "        <target>%<s</target>\n" +
+                    "      </configuration>\n" +
+                    "    </plugin>\n" +
+                    "  </plugins>\n" +
+                    "</build>";
+    createProjectPom(String.format(parentPomTemplate, "1.8"));
+
+    createModulePom("m1",
+                    "<parent>\n" +
+                    "  <groupId>test</groupId>\n" +
+                    "  <artifactId>project</artifactId>\n" +
+                    "  <version>${my.parent.version}</version>\n" +
+                    "</parent>\n" +
+                    "<artifactId>m1</artifactId>\n" +
+                    "<version>${parent.version}</version>");
+
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+
+    configConfirmationForYesAnswer();
+    importProjectWithMaven3();
+    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("project")));
+    assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("m1")));
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("project")));
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
+
+    createProjectPom(String.format(parentPomTemplate, "1.7"));
+
+    importProjectWithMaven3();
+    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("project")));
+    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("m1")));
+    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("project")));
+    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
   }
 }

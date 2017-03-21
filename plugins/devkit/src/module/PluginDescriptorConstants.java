@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.util.descriptors.ConfigFileVersion;
 import com.intellij.util.descriptors.ConfigFileMetaData;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 public interface PluginDescriptorConstants {
@@ -28,4 +29,6 @@ public interface PluginDescriptorConstants {
   ConfigFileMetaData META_DATA =
     new ConfigFileMetaData(DevKitBundle.message("plugin.descriptor"), "plugin.xml", "META-INF", VERSIONS, null, false, true, true);
 
+  @NonNls
+  String PLUGIN_XML_PATH = META_DATA.getDirectoryPath() + "/" + META_DATA.getFileName();
 }

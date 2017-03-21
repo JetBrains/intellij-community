@@ -245,6 +245,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return getDescriptorFile().getName();
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     if (myPattern != null) {

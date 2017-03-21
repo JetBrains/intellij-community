@@ -340,6 +340,8 @@ public class GitHistoryUtils {
               resultAdapter.consume(record);
             }
           }
+          catch (ProcessCanceledException ignored) {
+          }
           catch (Throwable t) {
             LOG.error(t);
             exceptionConsumer.consume(new VcsException("Internal error " + t.getMessage(), t));
@@ -610,6 +612,7 @@ public class GitHistoryUtils {
                                               @NotNull VcsLogObjectsFactory factory,
                                               @NotNull VirtualFile root) {
     return ContainerUtil.mapNotNull(refs, refName -> {
+      if (refName.equals(GitUtil.GRAFTED) || refName.equals(GitUtil.REPLACED)) return null;
       VcsRefType type = GitRefManager.getRefType(refName);
       refName = GitBranchUtil.stripRefsPrefix(refName);
       return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
@@ -624,6 +627,17 @@ public class GitHistoryUtils {
       }
       return null;
     });
+  }
+
+  @NotNull
+  public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
+    List<String> parameters = ContainerUtil.newArrayList();
+
+    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    parameters.add(noWalk);
+    parameters.addAll(hashes);
+
+    return ArrayUtil.toStringArray(parameters);
   }
 
   private static class MyTokenAccumulator {
@@ -1065,8 +1079,8 @@ public class GitHistoryUtils {
         int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
         if (bodyEnd >= 0) {
           myIsInsideBody = false;
-          myOutput.append(line.substring(0, bodyEnd + 1));
-          processOutputLine(line.substring(bodyEnd + 1));
+          myOutput.append(line.substring(0, bodyEnd + GitLogParser.RECORD_END.length()));
+          processOutputLine(line.substring(bodyEnd + GitLogParser.RECORD_END.length()));
         }
         else {
           myOutput.append(line).append("\n");

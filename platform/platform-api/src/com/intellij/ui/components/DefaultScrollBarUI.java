@@ -16,7 +16,6 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -71,7 +70,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private int myOldValue;
 
   DefaultScrollBarUI() {
-    this(Registry.is("ide.scroll.thumb.small.if.opaque") ? 13 : 10, 14, 10);
+    this(ScrollSettings.isThumbSmallIfOpaque() ? 13 : 10, 14, 10);
   }
 
   DefaultScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
@@ -127,7 +126,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
-    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, ScrollSettings.isThumbSmallIfOpaque());
   }
 
   void onThumbMove() {

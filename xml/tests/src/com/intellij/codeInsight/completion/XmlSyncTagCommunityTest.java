@@ -180,7 +180,7 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
       public void documentChanged(DocumentEvent e) {
         eventSent.set(true);
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     myFixture.testAction(new MoveCaretLeftAction());
     assertFalse(eventSent.get());
   }

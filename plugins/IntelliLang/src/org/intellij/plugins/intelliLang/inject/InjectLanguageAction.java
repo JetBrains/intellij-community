@@ -69,6 +69,18 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
+  private static FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+    HintManager.getInstance().showQuestionHint(editor, text, range.getStartOffset(), range.getEndOffset(), new QuestionAction() {
+      @Override
+      public boolean execute() {
+        return handler.process(pointer.getElement());
+      }
+    });
+  };
+
   public static List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
     List<Injectable> list = new ArrayList<>();
@@ -120,7 +132,11 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     });
   }
 
-  public static void invokeImpl(Project project, Editor editor, final PsiFile file, Injectable injectable) {
+  public static void invokeImpl(@NotNull Project project, Editor editor, final PsiFile file, Injectable injectable) {
+    invokeImpl(project, editor, file, injectable, DEFAULT_FIX_PRESENTER);
+  }
+
+  public static void invokeImpl(@NotNull Project project, Editor editor, final PsiFile file, Injectable injectable, @NotNull FixPresenter fixPresenter) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return;
     if (defaultFunctionalityWorked(host, injectable.getId())) return;
@@ -137,19 +153,11 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
         final Processor<PsiLanguageInjectionHost> data = host.getUserData(FIX_KEY);
         String text = StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected.";
         if (data != null) {
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
-              SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
-            final TextRange range = host.getTextRange();
-            HintManager.getInstance().showQuestionHint(editor, text + "<br>Do you want to insert annotation? " + KeymapUtil
-              .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)),
-                                                       range.getStartOffset(), range.getEndOffset(), new QuestionAction() {
-              @Override
-              public boolean execute() {
-                return data.process(pointer.getElement());
-              }
-            });
-          }
+          final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
+            SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
+          String fixText = text + "<br>Do you want to insert annotation? " + KeymapUtil
+            .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+          fixPresenter.showFix(editor, host.getTextRange(), pointer, fixText, data);
         }
         else {
           HintManager.getInstance().showInformationHint(editor, text);
@@ -211,4 +219,11 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return false;
   }
 
+  public interface FixPresenter {
+    void showFix(@NotNull Editor editor,
+                 @NotNull TextRange range,
+                 @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer,
+                 @NotNull String text,
+                 @NotNull Processor<PsiLanguageInjectionHost> data);
+  }
 }

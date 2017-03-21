@@ -19,7 +19,7 @@ import com.intellij.configurationStore.StateStorageManager.ExternalizationSessio
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -211,7 +211,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val state = StoreUtil.getStateSpec(component.javaClass) ?: throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(state.storages).path)).toAbsolutePath().toString()
-    runWriteAction {
+    runUndoTransparentWriteAction {
       try {
         VfsRootAccess.allowRootAccess(absolutePath)
         CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))

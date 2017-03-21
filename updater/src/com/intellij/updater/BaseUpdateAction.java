@@ -20,6 +20,7 @@ import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -69,6 +70,11 @@ public abstract class BaseUpdateAction extends PatchAction {
     super.write(out);
     out.writeUTF(mySource);
     out.writeBoolean(myIsMove);
+  }
+
+  @Override
+  public boolean calculate(File olderDir, File newerDir) throws IOException {
+    return doCalculate(getSource(olderDir), getFile(newerDir));
   }
 
   protected File getSource(File toDir) {
@@ -170,5 +176,26 @@ public abstract class BaseUpdateAction extends PatchAction {
       text = text.substring(0, text.length() - 1) + ", " + (myIsMove ? '=' : '~') + mySource + ')';
     }
     return text;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!super.equals(o)) return false;
+
+    BaseUpdateAction that = (BaseUpdateAction)o;
+
+    if (myIsMove != that.myIsMove) return false;
+    if (!Objects.equals(mySource, that.mySource)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myIsMove ? 1 : 0);
+    result = 31 * result + Objects.hashCode(mySource);
+    return result;
   }
 }

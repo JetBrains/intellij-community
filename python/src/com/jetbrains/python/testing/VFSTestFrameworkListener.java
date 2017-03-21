@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class VFSTestFrameworkListener {
   public VFSTestFrameworkListener() {
     final Application application = ApplicationManager.getApplication();
     final MessageBus messageBus = application.getMessageBus();
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
@@ -160,7 +160,10 @@ public class VFSTestFrameworkListener {
     myService.SDK_TO_PYTEST.put(sdkHome, installed);
   }
 
-  public boolean isPyTestInstalled(@NotNull Sdk sdk) {
+  public boolean isPyTestInstalled(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    }
     final Boolean isInstalled = myService.SDK_TO_PYTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
@@ -173,7 +176,10 @@ public class VFSTestFrameworkListener {
     myService.SDK_TO_NOSETEST.put(sdkHome, installed);
   }
 
-  public boolean isNoseTestInstalled(@NotNull Sdk sdk) {
+  public boolean isNoseTestInstalled(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    }
     final Boolean isInstalled = myService.SDK_TO_NOSETEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       scheduleTestFrameworkCheck(sdk, PyNames.NOSE_TEST);

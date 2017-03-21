@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,7 @@ class CachedValueLeakChecker {
   static void checkProvider(@NotNull final CachedValueProvider provider,
                             @NotNull final Key key,
                             @NotNull final UserDataHolder userDataHolder) {
-    if (!DO_CHECKS) return;
+    if (!DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;
     if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
 
     findReferencedPsi(provider, userDataHolder, 5);

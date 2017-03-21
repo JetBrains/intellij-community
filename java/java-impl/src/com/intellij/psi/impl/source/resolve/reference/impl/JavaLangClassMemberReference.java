@@ -20,17 +20,16 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
@@ -39,11 +38,6 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Konstantin Bulenkov
  */
 public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
-  private static final String FIELD = "getField";
-  private static final String DECLARED_FIELD = "getDeclaredField";
-  private static final String METHOD = "getMethod";
-  private static final String DECLARED_METHOD = "getDeclaredMethod";
-
   private final PsiExpression myContext;
 
   public JavaLangClassMemberReference(@NotNull PsiLiteralExpression literal, @NotNull PsiExpression context) {
@@ -58,26 +52,26 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
   @Override
   public PsiElement resolve() {
-    Object value = myElement.getValue();
+    final Object value = myElement.getValue();
     if (value instanceof String) {
       final String name = (String)value;
-      final String type = getMemberType();
+      final String type = getMemberType(myElement);
 
       if (type != null) {
         final PsiClass psiClass = getPsiClass();
         if (psiClass != null) {
           switch (type) {
 
-            case FIELD: {
+            case GET_FIELD: {
               return psiClass.findFieldByName(name, true);
             }
 
-            case DECLARED_FIELD: {
-              PsiField field = psiClass.findFieldByName(name, false);
+            case GET_DECLARED_FIELD: {
+              final PsiField field = psiClass.findFieldByName(name, false);
               return isPotentiallyAccessible(field, psiClass) ? field : null;
             }
 
-            case METHOD: {
+            case GET_METHOD: {
               final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
               final PsiMethod publicMethod = ContainerUtil.find(methods, method -> isRegularMethod(method) && isPublic(method));
               if (publicMethod != null) {
@@ -86,7 +80,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               return ContainerUtil.find(methods, method -> isRegularMethod(method));
             }
 
-            case DECLARED_METHOD: {
+            case GET_DECLARED_METHOD: {
               final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
               return ContainerUtil.find(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
             }
@@ -102,52 +96,43 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return getReflectiveClass(myContext);
   }
 
-  @Nullable
-  private String getMemberType() {
-    final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
-    return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
-  }
-
   @NotNull
   @Override
   public Object[] getVariants() {
-    final String type = getMemberType();
+    final String type = getMemberType(myElement);
     if (type != null) {
       final PsiClass psiClass = getPsiClass();
       if (psiClass != null) {
         switch (type) {
 
-          case DECLARED_FIELD:
+          case GET_DECLARED_FIELD:
             return Arrays.stream(psiClass.getFields())
+              .filter(field -> field.getName() != null)
               .sorted(Comparator.comparing(PsiField::getName))
               .map(field -> lookupField(field))
               .toArray();
 
-          case FIELD:
+          case GET_FIELD: {
+            final Set<String> uniqueNames = new THashSet<>();
             return Arrays.stream(psiClass.getAllFields())
-              .filter(field -> isPotentiallyAccessible(field, psiClass))
+              .filter(field -> isPotentiallyAccessible(field, psiClass) && field.getName() != null && uniqueNames.add(field.getName()))
               .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
               .map(field -> withPriority(lookupField(field), isPublic(field)))
               .toArray();
+          }
 
-          case DECLARED_METHOD:
+          case GET_DECLARED_METHOD:
             return Arrays.stream(psiClass.getMethods())
               .filter(method -> isRegularMethod(method))
               .sorted(Comparator.comparing(PsiMethod::getName))
               .map(method -> lookupMethod(method))
               .toArray();
 
-          case METHOD: {
-            final List<PsiMethod> methods = ContainerUtil.filter(
-              psiClass.getAllMethods(), method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
-
-            final Set<PsiMethod> superMethods = new THashSet<>();
-            for (PsiMethod method : methods) {
-              ContainerUtil.addAll(superMethods, method.findSuperMethods());
-            }
-
-            return methods.stream()
-              .filter(method -> !superMethods.contains(method))
+          case GET_METHOD: {
+            return psiClass.getVisibleSignatures()
+              .stream()
+              .map(MethodSignatureBackedByPsiMethod::getMethod)
+              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
               .map(method -> withPriority(lookupMethod(method), -getMethodSortOrder(method)))
               .toArray();
@@ -158,13 +143,13 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return EMPTY_ARRAY;
   }
 
-  private static int getMethodSortOrder(PsiMethod method) {
-    return isJavaLangObject(method.getContainingClass()) ? 1 : isPublic(method) ? -1 : 0;
-  }
 
-  @NotNull
-  private static LookupElement lookupField(PsiField field) {
-    return JavaLookupElementBuilder.forField(field);
+  /**
+   * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
+   */
+  @Contract("null, _ -> false")
+  private static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
+    return member != null && (member.getContainingClass() == psiClass || isPublic(member));
   }
 
   @NotNull
@@ -176,15 +161,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   public void handleInsert(InsertionContext context, LookupElement item) {
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
-      final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-      final int start = newElement.getTextRange().getEndOffset();
-      final PsiElement params = newElement.getParent().getParent();
-      final int end = params.getTextRange().getEndOffset() - 1;
-      String types = getParameterTypesText((PsiMethod)object);
-      if (!types.isEmpty()) types = ", " + types;
-      context.getDocument().replaceString(start, end, types);
-      context.commitDocument();
-      shortenArgumentsClassReferences(context);
+      final String text = getParameterTypesText((PsiMethod)object);
+      if (text != null) {
+        replaceText(context, text.isEmpty() ? "" : ", " + text);
+      }
     }
   }
 }

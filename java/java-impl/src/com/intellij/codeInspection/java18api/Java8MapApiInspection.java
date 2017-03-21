@@ -560,7 +560,8 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
       holder.registerProblem(getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
     }
 
-    public boolean isMapValueType(PsiType type) {
+    public boolean isMapValueType(@Nullable PsiType type) {
+      if (type == null) return false;
       PsiType mapExpressionType = myMapExpression.getType();
       PsiType valueTypeParameter = PsiUtil.substituteTypeParameter(mapExpressionType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
       return valueTypeParameter != null && valueTypeParameter.isAssignableFrom(type);

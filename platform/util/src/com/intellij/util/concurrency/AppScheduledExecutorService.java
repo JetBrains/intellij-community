@@ -208,4 +208,8 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       error();
     }
   }
+  @NotNull
+  public Thread getPeriodicTasksThread() {
+    return delayQueue.getThread();
+  }
 }

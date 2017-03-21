@@ -329,9 +329,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final int version = extension.getVersion();
 
     final File versionFile = IndexInfrastructure.getVersionFile(name);
-    final boolean versionFileExisted = versionFile.exists();
     boolean versionChanged = false;
-    if (IndexingStamp.versionDiffers(versionFile, version)) {
+    
+    if (IndexingStamp.versionDiffers(name, version)) {
+      final boolean versionFileExisted = versionFile.exists();
+
       if (versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
@@ -341,15 +343,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       File rootDir = IndexInfrastructure.getIndexRootDir(name);
       if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
-      IndexingStamp.rewriteVersion(versionFile, version);
+      IndexingStamp.rewriteVersion(name, version);
     }
 
-    initIndexStorage(extension, version, versionFile, state);
+    initIndexStorage(extension, version, state);
 
     return versionChanged;
   }
 
-  private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension, int version, @NotNull File versionFile, IndexConfiguration state)
+  private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
+                                              int version,
+                                              IndexConfiguration state)
     throws IOException {
     VfsAwareMapIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
@@ -401,7 +405,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
           FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
         }
-        IndexingStamp.rewriteVersion(versionFile, version);
+        IndexingStamp.rewriteVersion(name, version);
       }
     }
   }
@@ -1137,7 +1141,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private void advanceIndexVersion(ID<?, ?> indexId) {
     try {
-      IndexingStamp.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myState.getIndexVersion(indexId));
+      IndexingStamp.rewriteVersion(indexId, myState.getIndexVersion(indexId));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -1632,24 +1636,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (updateWithBufferingEnabled(update)) {
       myReadLock.lock();
       try {
-        indexedStampUpdate(indexId, file, inputId, hasContent);
+        UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+        if (hasContent) {
+          index.setIndexedStateForFile(inputId, file);
+        }
+        else {
+          index.resetIndexedStateForFile(inputId);
+        }
       }
       finally {
         myReadLock.unlock();
       }
     }
-  }
-
-  private void indexedStampUpdate(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int fileId, boolean hasContent) {
-    UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    if (hasContent) {
-      index.setIndexedStateForFile(fileId, file);
-    }
-    else {
-      index.resetIndexedStateForFile(fileId);
-    }
-
-    if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
   }
 
   private boolean updateWithBufferingEnabled(@NotNull final Computable<Boolean> update) {
@@ -1680,7 +1678,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     waitUntilIndicesAreInitialized();
     cleanProcessedFlag(file);
 
-    IndexingStamp.flushCache(fileId);
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
     if (!contentChanged) {
@@ -1715,8 +1712,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index
       myChangedFilesCollector.scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
-
-    IndexingStamp.flushCache(fileId);
   }
 
   private void scheduleFileForIndexing(int fileId, final VirtualFile file, boolean contentChange) {
@@ -1797,7 +1792,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       super.buildIndicesForFileRecursively(file, contentChange);
 
-      IndexingStamp.flushCaches();
       if (!contentChange) {
         if (myUpdatingFiles.decrementAndGet() == 0) {
           ++myFilesModCount;
@@ -1934,6 +1928,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             });
           }
           finally {
+            IndexingStamp.flushCache(info.getFileId());
             myWriteLock.unlock();
           }
           return true;
@@ -1982,6 +1977,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private final List<VirtualFile> myFiles = new ArrayList<>();
     @Nullable
     private final ProgressIndicator myProgressIndicator;
+    private final boolean myDoTraceForFilesToBeIndexed = LOG.isDebugEnabled();
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
@@ -2037,6 +2033,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final ID<?, ?> indexId = affectedIndexCandidates.get(i);
             try {
               if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
+                if (myDoTraceForFilesToBeIndexed) {
+                  LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                }
                 synchronized (myFiles) {
                   myFiles.add(file);
                 }

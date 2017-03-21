@@ -14,6 +14,7 @@
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
+  <depends optional="true" config-file="course-creator-intellij.xml">com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
@@ -34,6 +35,7 @@
     <studyActionListener implementation="com.jetbrains.edu.coursecreator.CCStudyActionListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
     <studySubtaskChangeListener implementation="com.jetbrains.edu.coursecreator.CCSubtaskChangeListener"/>
+    <studyPluginConfigurator implementation="com.jetbrains.edu.coursecreator.CCPluginConfigurator" />
   </extensions>
 
   <project-components>
@@ -45,6 +47,12 @@
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.CCLanguageManager"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="Edu.CCTaskCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.creation.CCTaskCreator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="Edu.CCLessonCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.creation.CCLessonCreator"/>
     </extensionPoint>
   </extensionPoints>
 

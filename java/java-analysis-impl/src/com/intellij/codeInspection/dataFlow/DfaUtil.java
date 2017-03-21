@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Gregory.Shrago
  */
 public class DfaUtil {
-
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
@@ -53,7 +52,7 @@ public class DfaUtil {
     ValuableInstructionVisitor.PlaceResult placeResult = value.get(context);
     final Collection<FList<PsiExpression>> concatenations = placeResult == null ? null : placeResult.myValues.get(variable);
     if (concatenations != null) {
-      return ContainerUtil.map(concatenations, expressions -> concatenateExpressions(expressions));
+      return ContainerUtil.map(concatenations, DfaUtil::concatenateExpressions);
     }
     return Collections.emptyList();
   }
@@ -83,23 +82,23 @@ public class DfaUtil {
   }
 
   @NotNull
-  public static Collection<? extends PsiElement> getPossibleInitializationElements(final PsiElement qualifierExpression) {
+  public static Collection<PsiExpression> getPossibleInitializationElements(@NotNull PsiElement qualifierExpression) {
     if (qualifierExpression instanceof PsiMethodCallExpression) {
-      return Collections.singletonList(qualifierExpression);
+      return Collections.singletonList((PsiMethodCallExpression)qualifierExpression);
     }
     if (qualifierExpression instanceof PsiReferenceExpression) {
       final PsiElement targetElement = ((PsiReferenceExpression)qualifierExpression).resolve();
       if (!(targetElement instanceof PsiVariable)) {
         return Collections.emptyList();
       }
-      final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
+      Collection<PsiExpression> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
       if (variableValues == null || variableValues.isEmpty()) {
         return DfaPsiUtil.getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
       }
       return variableValues;
     }
     if (qualifierExpression instanceof PsiLiteralExpression) {
-      return Collections.singletonList(qualifierExpression);
+      return Collections.singletonList((PsiLiteralExpression)qualifierExpression);
     }
     return Collections.emptyList();
   }
@@ -180,10 +179,7 @@ public class DfaUtil {
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       PsiExpression place = instruction.getPlace();
       if (place != null) {
-        PlaceResult result = myResults.get(place);
-        if (result == null) {
-          myResults.put(place, result = new PlaceResult());
-        }
+        PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
         final Map<DfaVariableValue,DfaVariableState> map = ((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableStates();
         for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
           ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();

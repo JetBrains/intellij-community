@@ -509,6 +509,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     myResult = myAuxEvaluator != null? myAuxEvaluator.computeExpression(expression, this) : null;
   }
 
+  @Override
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    myResult = expression.getType();
+  }
+
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     while (qualifierExpression != null) {

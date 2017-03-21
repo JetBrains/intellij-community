@@ -22,6 +22,8 @@ public class RedundantStreamOptionalCall {
     Object xyz4 = Optional.of(123).map(Integer::longValue).orElse(null);
     Object xyz5 = IntStream.of(123).<warning descr="Redundant 'map' call">map(i -> Integer.valueOf(i))</warning>.count();
     Object xyz6 = Stream.of(123).<warning descr="Redundant 'map' call">map(i -> Integer.valueOf(i))</warning>.count();
+    Optional.of("xyz").<warning descr="Redundant 'flatMap' call">flatMap(Optional::ofNullable)</warning>.ifPresent(System.out::println);
+    Optional.of("xyz").<warning descr="Redundant 'flatMap' call">flatMap(Optional::of)</warning>.ifPresent(System.out::println);
 
     Optional.of(123).<warning descr="Redundant 'filter' call: predicate is always true">filter(x -> true)</warning>.ifPresent(System.out::println);
     double avg = IntStream.range(0, 100).distinct()
@@ -35,6 +37,7 @@ public class RedundantStreamOptionalCall {
       .filter(x -> x > 0).distinct().sequential().forEach(System.out::println);
     Stream.of(0, 100).map(x -> x*2).<warning descr="Redundant 'sequential' call: there's subsequent 'parallel' call which overrides this call">sequential()</warning>
       .filter(x -> x > 0).limit(10).parallel().forEach(System.out::println);
+    Stream.of("xyz").parallel().sorted().collect(Collectors.toList()).stream().sequential().forEach(System.out::println);
 
     IntStream.range(0, 100).unordered().filter(x -> x > 50).<warning descr="Redundant 'unordered' call: there already was an 'unordered' call in the chain">unordered()</warning>.forEach(System.out::println);
     IntStream.range(0, 100).unordered().filter(x -> x > 50).sorted().unordered().forEach(System.out::println);

@@ -773,6 +773,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       final NamedConfigurable namedConfigurable = node.getConfigurable();
       final Object editableObject = namedConfigurable.getEditableObject();
       parentNode = (MyNode)node.getParent();
+      if (parentNode == null) continue;
       idx = parentNode.getIndex(node);
       ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent(node);
       myHasDeletedItems |= wasObjectStored(editableObject);

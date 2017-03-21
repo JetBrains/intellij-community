@@ -25,6 +25,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -111,9 +112,11 @@ public final class NavigationUtil {
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
+    assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
       .setRenderer(renderer)
+      .setFont(EditorUtil.getEditorFont())
       .withHintUpdateSupply();
     if (selection != null) {
       builder.setSelectedValue(selection, true);

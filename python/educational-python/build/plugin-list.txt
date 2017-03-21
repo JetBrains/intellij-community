@@ -3,8 +3,7 @@ git4idea
 remote-servers-git
 github
 student
-student-python
+Edu-Python
 course-creator
-course-creator-python
 hg4idea
 ipnb

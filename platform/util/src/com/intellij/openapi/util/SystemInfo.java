@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,8 +90,10 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static final boolean isXWindow = isUnix && !isMac;
+  /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
+  public static final boolean isGNOME = isXWindow && ObjectUtils.notNull(System.getenv("GDMSESSION"), "").startsWith("gnome");
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
-  public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
+  public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 

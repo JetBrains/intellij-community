@@ -63,6 +63,12 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFile = null;
+    super.tearDown();
+  }
+
   public void testStress() throws Exception {
     DaemonProgressIndicator.setDebug(false);
     int numOfThreads = Runtime.getRuntime().availableProcessors();

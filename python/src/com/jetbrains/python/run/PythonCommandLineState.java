@@ -123,6 +123,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
   }
 
+  @Nullable
   public Sdk getSdk() {
     return myConfig.getSdk();
   }

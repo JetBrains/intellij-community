@@ -509,6 +509,7 @@ public class CreateFromUsageUtils {
     return result.toArray(new PsiReferenceExpression[result.size()]);
   }
 
+  @NotNull
   static PsiVariable[] guessMatchingVariables(final PsiExpression expression) {
     List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
     List<String> expectedMethodNames = new ArrayList<>();
@@ -574,7 +575,10 @@ public class CreateFromUsageUtils {
       PsiElement parent = expr.getParent();
 
       if (!(parent instanceof PsiReferenceExpression)) {
-        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, PsiUtil.skipParenthesizedExprUp(parent) instanceof PsiExpressionList);
+        boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
+                                                     ((PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(parent)).getRExpression() instanceof PsiFunctionalExpression;
+        boolean forCompletion = PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? parent.getParent() : parent) instanceof PsiExpressionList;
+        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, forCompletion);
         if (someExpectedTypes.length > 0) {
           Arrays.sort(someExpectedTypes, (o1, o2) -> compareExpectedTypes(o1, o2, expression));
           types.add(someExpectedTypes);
@@ -616,6 +620,7 @@ public class CreateFromUsageUtils {
     return compareMembers(c1, c2, expression);
   }
 
+  @NotNull
   private static ExpectedTypeInfo[] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
     final PsiType[] argumentTypes = methodCall.getArgumentList().getExpressionTypes();
     if (argumentTypes.length != 1) {

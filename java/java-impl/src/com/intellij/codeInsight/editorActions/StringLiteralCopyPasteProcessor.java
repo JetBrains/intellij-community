@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     // However, we don't want to un-escape literal content if it's copied completely.
     // Example:
     //     String s = <selection>"my string"</selection>;
-    
+
     StringBuilder buffer = new StringBuilder();
     int givenTextOffset = 0;
     boolean textWasChanged = false;
@@ -67,9 +67,15 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       // Calculate offsets offsets of the selection interval being processed now.
       final int fileStartOffset = startOffsets[i];
       final int fileEndOffset = endOffsets[i];
-      int givenTextStartOffset = Math.min(givenTextOffset, text.length());
-      final int givenTextEndOffset = Math.min(givenTextOffset + (fileEndOffset - fileStartOffset), text.length());
+      int givenTextStartOffset = givenTextOffset;
+      final int givenTextEndOffset = givenTextOffset + (fileEndOffset - fileStartOffset);
       givenTextOffset = givenTextEndOffset;
+      if (givenTextOffset > text.length()) {
+        // This can happen e.g. line terminators were normalized in copied text, and it became shorter
+        // than corresponding fragment in the original document.
+        // We don't implement escaping/unescaping logic for documents with non-normalized line terminators currently.
+        return null;
+      }
       for (
         PsiElement element = file.findElementAt(fileStartOffset);
         givenTextStartOffset < givenTextEndOffset;

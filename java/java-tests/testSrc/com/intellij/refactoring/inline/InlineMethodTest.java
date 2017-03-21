@@ -145,6 +145,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testEnumConstantConstructorWithArgs() throws Exception {
+    doTest();
+  }
+
   public void testConstantInChainingConstructor() throws Exception {   // IDEADEV-28136
     doTest();
   }
@@ -229,6 +233,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testInSuperCall() throws Exception {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");
+  }
+
+  public void testMethodReferenceInsideMethodCall() throws Exception {
+    doTest();
   }
 
   private void doTestConflict(final String conflict) throws Exception {
@@ -351,6 +359,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testRespectProjectScopeSrcConstructorCall() throws Exception {
     doTest();
+  }
+
+  public void testChainedConstructorWithMultipleStatements() throws Exception {
+    doTestInlineThisOnly();
   }
 
   @Override

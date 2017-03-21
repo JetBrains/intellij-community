@@ -70,7 +70,7 @@ public class Patch {
     File newerDir = new File(spec.getNewFolder());
     Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui);
     Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false, ui);
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), true);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), spec.getOptionalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -86,8 +86,8 @@ public class Patch {
 
     for (Map.Entry<String, DiffCalculator.Update> each : diff.filesToUpdate.entrySet()) {
       DiffCalculator.Update update = each.getValue();
-      if (!spec.isBinary() && Utils.isZipFile(each.getKey())) {
-        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum, update.move));
+      if (!spec.isBinary() && !update.move && Utils.isZipFile(each.getKey())) {
+        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum));
       }
       else {
         tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
@@ -318,10 +318,13 @@ public class Patch {
     boolean cancelled = false;
     try {
       forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
-        if ((action instanceof CreateAction) &&
-            !new File(toDir, action.getPath()).getParentFile().exists()) {
+        if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
-        } else {
+        }
+        else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
+          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
+        }
+        else {
           appliedActions.add(action);
           action.apply(patchFile, backupDir, toDir);
         }

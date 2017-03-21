@@ -245,7 +245,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType parmType = parm.getType();
       PsiType argType = arg.getType();
       if (argType == null) continue;
-      if (parmType instanceof PsiEllipsisType && parmType.getArrayDimensions() == argType.getArrayDimensions() + 1) {
+      if (parmType instanceof PsiEllipsisType ) {
         parmType = ((PsiEllipsisType)parmType).getComponentType();
       }
       parmType = substitutor.substitute(parmType);
@@ -486,7 +486,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (element != null) {
         final PsiElement resolved = element.resolve();
         if (resolved instanceof PsiClass &&
-            (!JavaDocInfoGenerator.isDocumentedAnnotationType(resolved) ||
+            (!JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)resolved) ||
              AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
         }

@@ -33,9 +33,12 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     return
   }
 
+  def majorBuildNumber = ideBuildNumber.split(/\./)[0]
+  def buildConfiguration = jreBuildTypeId.replaceAll(/#build#/, majorBuildNumber)
+
   String buildId, buildNumber
   try {
-    buildId = new URL("$jreTeamcityUrl/buildTypes/id:$jreBuildTypeId/builds/tags:$jreBuildTag/id").text
+    buildId = new URL("$jreTeamcityUrl/buildTypes/id:$buildConfiguration/builds/tags:$jreBuildTag/id").text
     buildNumber = new URL("$jreTeamcityUrl/builds/id:$buildId/number").text
   }
   catch (IOException e) {
@@ -48,7 +51,7 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     jvmarg(value: "-version")
   }
   try {
-    if (jvmVersionOutput =~ /\(build .*release-b${Pattern.quote(buildNumber)}\)/ &&
+    if (jvmVersionOutput =~ /\(build .*release-${Pattern.quote(buildNumber.replace(".", "-b"))}\)/ &&
         jvmVersionOutput =~ (jreArchitecture == "64" ? /OpenJDK 64-Bit Server VM/ : /OpenJDK Server VM/)) {
       echo "Latest version of custom JRE is installed, no update is required"
       return

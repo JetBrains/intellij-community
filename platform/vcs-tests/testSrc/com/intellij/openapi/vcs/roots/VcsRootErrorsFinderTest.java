@@ -31,7 +31,7 @@ import java.util.Collection;
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
+public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT;
 
@@ -191,11 +191,11 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
   void addVcsRoots(@NotNull Collection<String> relativeRoots) {
     for (String root : relativeRoots) {
       if (root.equals(PROJECT)) {
-        myVcsManager.setDirectoryMapping("", myVcsName);
+        vcsManager.setDirectoryMapping("", myVcsName);
       }
       else {
         String absoluteRoot = VcsTestUtil.toAbsolute(root, myProject);
-        myVcsManager.setDirectoryMapping(absoluteRoot, myVcsName);
+        vcsManager.setDirectoryMapping(absoluteRoot, myVcsName);
       }
     }
   }

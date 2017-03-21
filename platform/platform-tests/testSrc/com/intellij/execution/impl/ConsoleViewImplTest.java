@@ -228,7 +228,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
           console.print("yyy\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
         console.waitAllRequests();

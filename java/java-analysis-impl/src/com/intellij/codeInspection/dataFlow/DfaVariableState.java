@@ -24,44 +24,68 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class DfaVariableState {
   @NotNull final Set<DfaPsiType> myInstanceofValues;
   @NotNull final Set<DfaPsiType> myNotInstanceofValues;
   @NotNull final Nullness myNullability;
   @NotNull final ThreeState myOptionalPresence;
+  @Nullable final LongRangeSet myRange;
   private final int myHash;
 
   DfaVariableState(@NotNull DfaVariableValue dfaVar) {
-    this(Collections.emptySet(), Collections.emptySet(), dfaVar.getInherentNullability(), ThreeState.UNSURE);
+    this(Collections.emptySet(), Collections.emptySet(), dfaVar.getInherentNullability(), ThreeState.UNSURE, getInitialRange(dfaVar));
+  }
+
+  public boolean isSuperStateOf(DfaVariableState that) {
+    if(!myNotInstanceofValues.equals(that.myNotInstanceofValues)) return false;
+    if(!myInstanceofValues.equals(that.myNotInstanceofValues)) return false;
+    if(!myNullability.equals(that.myNullability)) return false;
+    if(!myOptionalPresence.equals(that.myOptionalPresence)) return false;
+    if(Objects.equals(myRange, that.myRange)) return true;
+    return myRange != null && that.myRange != null && myRange.contains(that.myRange);
+  }
+
+  private static LongRangeSet getInitialRange(DfaVariableValue var) {
+    DfaVariableValue qualifier = var.getQualifier();
+    if(qualifier != null) {
+      PsiModifierListOwner owner = var.getPsiVariable();
+      boolean stringLength = owner instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)owner);
+      boolean arrayLength =
+        owner instanceof PsiField && "length".equals(((PsiField)owner).getName()) && qualifier.getVariableType() instanceof PsiArrayType;
+      if(stringLength || arrayLength) {
+        return LongRangeSet.indexRange();
+      }
+    }
+    return LongRangeSet.fromType(var.getVariableType());
   }
 
   DfaVariableState(@NotNull Set<DfaPsiType> instanceofValues,
-                             @NotNull Set<DfaPsiType> notInstanceofValues,
-                             @NotNull Nullness nullability,
-                             @NotNull ThreeState optionalPresence) {
+                   @NotNull Set<DfaPsiType> notInstanceofValues,
+                   @NotNull Nullness nullability,
+                   @NotNull ThreeState optionalPresence,
+                   @Nullable LongRangeSet range) {
     myInstanceofValues = instanceofValues;
     myNotInstanceofValues = notInstanceofValues;
     myNullability = nullability;
     myOptionalPresence = optionalPresence;
-    myHash = ((myInstanceofValues.hashCode() * 31 + myNotInstanceofValues.hashCode()) * 31 + myNullability.hashCode()) * 31 +
-             myOptionalPresence.hashCode();
+    myRange = range;
+    myHash = Objects.hash(myInstanceofValues, myNotInstanceofValues, myNullability, myOptionalPresence, range);
   }
 
   public boolean isNullable() {
@@ -101,7 +125,7 @@ class DfaVariableState {
       HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
       newInstanceof.removeAll(moreGeneric);
       newInstanceof.add(dfaType.getDfaType());
-      result = createCopy(newInstanceof, myNotInstanceofValues, result.myNullability, myOptionalPresence);
+      result = createCopy(newInstanceof, myNotInstanceofValues, result.myNullability, myOptionalPresence, myRange);
       return result;
     }
 
@@ -129,7 +153,7 @@ class DfaVariableState {
     HashSet<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
     newNotInstanceof.removeAll(moreSpecific);
     newNotInstanceof.add(dfaType.getDfaType());
-    return createCopy(myInstanceofValues, newNotInstanceof, myNullability, myOptionalPresence);
+    return createCopy(myInstanceofValues, newNotInstanceof, myNullability, myOptionalPresence, myRange);
   }
 
   @NotNull
@@ -137,12 +161,12 @@ class DfaVariableState {
     if (myInstanceofValues.contains(type)) {
       HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
       newInstanceof.remove(type);
-      return createCopy(newInstanceof, myNotInstanceofValues, myNullability, myOptionalPresence);
+      return createCopy(newInstanceof, myNotInstanceofValues, myNullability, myOptionalPresence, myRange);
     }
     if (myNotInstanceofValues.contains(type)) {
       HashSet<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
       newNotInstanceof.remove(type);
-      return createCopy(myInstanceofValues, newNotInstanceof, myNullability, myOptionalPresence);
+      return createCopy(myInstanceofValues, newNotInstanceof, myNullability, myOptionalPresence, myRange);
     }
     return this;
   }
@@ -159,14 +183,17 @@ class DfaVariableState {
            myNullability == aState.myNullability &&
            myOptionalPresence == aState.myOptionalPresence &&
            myInstanceofValues.equals(aState.myInstanceofValues) &&
-           myNotInstanceofValues.equals(aState.myNotInstanceofValues);
+           myNotInstanceofValues.equals(aState.myNotInstanceofValues) &&
+           Objects.equals(myRange, aState.myRange);
   }
 
   @NotNull
   protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues,
                                         @NotNull Set<DfaPsiType> notInstanceofValues,
-                                        @NotNull Nullness nullability, ThreeState optionalPresent) {
-    return new DfaVariableState(instanceofValues, notInstanceofValues, nullability, optionalPresent);
+                                        @NotNull Nullness nullability,
+                                        ThreeState optionalPresent,
+                                        LongRangeSet range) {
+    return new DfaVariableState(instanceofValues, notInstanceofValues, nullability, optionalPresent, range);
   }
 
   public String toString() {
@@ -184,6 +211,9 @@ class DfaVariableState {
     if (myOptionalPresence != ThreeState.UNSURE) {
       buf.append(myOptionalPresence == ThreeState.YES ? " Optional with value" : " empty Optional");
     }
+    if (myRange != null) {
+      buf.append(" ").append(myRange);
+    }
     return buf.toString();
   }
 
@@ -198,7 +228,7 @@ class DfaVariableState {
 
   @NotNull
   DfaVariableState withNullability(@NotNull Nullness nullness) {
-    return myNullability == nullness ? this : createCopy(myInstanceofValues, myNotInstanceofValues, nullness, myOptionalPresence);
+    return myNullability == nullness ? this : createCopy(myInstanceofValues, myNotInstanceofValues, nullness, myOptionalPresence, myRange);
   }
 
   @NotNull
@@ -209,8 +239,14 @@ class DfaVariableState {
   DfaVariableState withOptionalPresense(final boolean presense) {
     ThreeState optionalPresent = ThreeState.fromBoolean(presense);
     return myOptionalPresence != optionalPresent
-           ? createCopy(myInstanceofValues, myNotInstanceofValues, myNullability, optionalPresent)
+           ? createCopy(myInstanceofValues, myNotInstanceofValues, myNullability, optionalPresent, myRange)
            : this;
+  }
+
+  DfaVariableState withRange(@Nullable LongRangeSet range) {
+    return Objects.equals(range, myRange)
+           ? this
+           : createCopy(myInstanceofValues, myNotInstanceofValues, myNullability, myOptionalPresence, range);
   }
 
   @NotNull
@@ -233,5 +269,10 @@ class DfaVariableState {
 
   public ThreeState getOptionalPresense() {
     return myOptionalPresence;
+  }
+
+  @Nullable
+  public LongRangeSet getRange() {
+    return myRange;
   }
 }

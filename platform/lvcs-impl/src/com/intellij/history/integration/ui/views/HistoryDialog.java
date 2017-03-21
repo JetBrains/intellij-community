@@ -536,7 +536,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private class CreatePatchAction extends MyAction {
     public CreatePatchAction() {
-      super(message("action.create.patch"), null, AllIcons.Actions.CreatePatch);
+      super(message("action.create.patch"), null, AllIcons.Vcs.Patch);
     }
 
     @Override

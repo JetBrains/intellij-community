@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,11 +124,11 @@ public class PyiTypeProvider extends PyTypeProviderBase {
         }
 
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
-        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
+        final PyCallExpressionHelper.ArgumentMappingResults mapping = mapArguments(callSite, overload, context);
         if (mapping == null) {
           continue;
         }
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
+        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping.getMappedParameters(), context);
 
         final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
         if (unifiedType != null) {
@@ -210,15 +210,17 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                  @NotNull PyFunction function,
-                                                                  @NotNull TypeEvalContext context) {
+  private static PyCallExpressionHelper.ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                            @NotNull PyFunction function,
+                                                                            @NotNull TypeEvalContext context) {
     final List<PyParameter> parameters = Arrays.asList(function.getParameterList().getParameters());
-    final Map<PyExpression, PyNamedParameter> map = PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
+    final PyCallExpressionHelper.ArgumentMappingResults mapping =
+      PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
+
     final PyCallExpression callExpr = as(callSite, PyCallExpression.class);
-    if (callExpr != null && callExpr.getArguments().length != map.size()) {
+    if (callExpr != null && callExpr.getArguments().length != mapping.getMappedParameters().size()) {
       return null;
     }
-    return map;
+    return mapping;
   }
 }

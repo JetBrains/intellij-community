@@ -77,7 +77,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
     if (dimensionKey != null) {
-      Dimension storedSize = WindowStateService.getInstance(myProject).getSize(dimensionKey);
+      Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, dimensionKey);
       if (storedSize != null) {
         //set forced size before component is shown
         setSize(storedSize);
@@ -109,7 +109,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         @Override
         public void onClosed(LightweightWindowEvent event) {
           if (myUserSizeChanged) {
-            WindowStateService.getInstance(myProject).putSize(dimensionKey, myPrevSize);
+            WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
           }
         }
       });
@@ -227,6 +227,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected void onSpeedSearchPatternChanged() {
+    getList().setSelectedIndex(0);
     super.onSpeedSearchPatternChanged();
     ScrollingUtil.ensureSelectionExists(getList());
   }

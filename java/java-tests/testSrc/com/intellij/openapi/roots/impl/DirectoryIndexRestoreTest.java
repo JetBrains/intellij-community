@@ -69,6 +69,12 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
     VirtualFileManager.getInstance().syncRefresh();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFileIndex = null;
+    super.tearDown();
+  }
+
   public void testDeepDeleteAndRecreate() throws IOException {
     AtomicInteger counter = new AtomicInteger(0);
     ContentIterator iterator = (file) -> {

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Plugin's ApplicationComponent or extension that implements this interface will be automatically queried for inspection tool classes.
@@ -27,5 +28,6 @@ public interface InspectionToolProvider {
    * Query method for inspection tools provided by a plugin.
    * @return classes that extend {@link InspectionProfileEntry}
    */
+  @NotNull
   Class[] getInspectionClasses();
 }

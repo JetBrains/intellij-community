@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,19 +68,20 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     return children;
   }
 
-  static LinkedHashSet<PsiElement> getOwnChildren(PsiClass aClass) {
+  static LinkedHashSet<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
     LinkedHashSet<PsiElement> members = new LinkedHashSet<>();
-    addPhysicalElements(aClass.getFields(), members);
-    addPhysicalElements(aClass.getMethods(), members);
-    addPhysicalElements(aClass.getInnerClasses(), members);
-    addPhysicalElements(aClass.getInitializers(), members);
+    addPhysicalElements(aClass.getFields(), members, aClass);
+    addPhysicalElements(aClass.getMethods(), members, aClass);
+    addPhysicalElements(aClass.getInnerClasses(), members, aClass);
+    addPhysicalElements(aClass.getInitializers(), members, aClass);
     return members;
   }
 
-  private static void addPhysicalElements(PsiElement[] elements, LinkedHashSet<PsiElement> to) {
-    for (PsiElement element : elements) {
+  private static void addPhysicalElements(@NotNull PsiMember[] elements, @NotNull Collection<PsiElement> to, @NotNull PsiClass aClass) {
+    for (PsiMember element : elements) {
       PsiElement mirror = PsiImplUtil.handleMirror(element);
-      if (!(mirror instanceof LightElement)) {
+      if (mirror instanceof LightElement) continue;
+      if (mirror instanceof PsiMember && aClass.equals(((PsiMember)mirror).getContainingClass())) {
         to.add(mirror);
       }
     }

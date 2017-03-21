@@ -5,7 +5,7 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class VisibilityInspectionTest extends InspectionTestCase {
-  private final VisibilityInspection myTool = new VisibilityInspection();
+  private VisibilityInspection myTool = new VisibilityInspection();
 
   @Override
   protected String getTestDataPath() {
@@ -14,6 +14,12 @@ public class VisibilityInspectionTest extends InspectionTestCase {
 
   private void doTest() throws Exception {
     doTest("visibility/" + getTestName(false), myTool);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTool = null;
+    super.tearDown();
   }
 
   public void testinnerConstructor() throws Exception {

@@ -304,6 +304,23 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     setGeneratedName();
   }
 
+  @Override
+  public boolean isConfiguredByElement(PsiElement element) {
+    final PsiClass testClass = JUnitUtil.getTestClass(element);
+    final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
+    final PsiPackage testPackage;
+    if (element instanceof PsiPackage) {
+      testPackage = (PsiPackage)element;
+    } else if (element instanceof PsiDirectory){
+      testPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    } else {
+      testPackage = null;
+    }
+    PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+
+    return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
+  }
+
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
     myData.setTestMethod(sourceLocation);
     myData.TEST_OBJECT = BY_SOURCE_POSITION;

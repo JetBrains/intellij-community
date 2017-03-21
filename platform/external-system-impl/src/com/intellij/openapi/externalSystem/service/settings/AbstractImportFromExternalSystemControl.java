@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.settings;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -265,7 +266,11 @@ public abstract class AbstractImportFromExternalSystemControl<
       }
     }
 
-    if(wizardContext.isCreatingNewProject() && !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) return false;
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        wizardContext.isCreatingNewProject() &&
+        !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) {
+      return false;
+    }
     return true;
   }
 }

@@ -18,14 +18,19 @@ package com.intellij.ide.actions;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.event.HyperlinkEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -33,7 +38,7 @@ import javax.swing.event.HyperlinkEvent;
 public class PowerSaveModeNotifier implements StartupActivity {
   private static final NotificationGroup POWER_SAVE_MODE = NotificationGroup.balloonGroup("Power Save Mode");
   private static final String IGNORE_POWER_SAVE_MODE = "ignore.power.save.mode";
-  
+
   @Override
   public void runActivity(@NotNull Project project) {
     if (PowerSaveMode.isEnabled()) {
@@ -41,27 +46,37 @@ public class PowerSaveModeNotifier implements StartupActivity {
     }
   }
 
-  static void notifyOnPowerSaveMode(Project project) {
+  static void notifyOnPowerSaveMode(@Nullable Project project) {
     if (PropertiesComponent.getInstance().getBoolean(IGNORE_POWER_SAVE_MODE)) {
       return;
     }
-    
-    String message = "Code insight and other background tasks are disabled." +
-                     "<br/><a href=\"ignore\">Do not show again</a>" +
-                     "<br/><a href=\"turnOff\">Disable Power Save Mode</a>";
-    POWER_SAVE_MODE.createNotification("Power save mode is on", message, NotificationType.WARNING, new NotificationListener() {
+
+    Notification notification = POWER_SAVE_MODE
+      .createNotification("Power save mode is on", "Code insight and background tasks are disabled.", NotificationType.WARNING, null);
+
+    notification.addAction(new NotificationAction("Do Not Show Again") {
       @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        final String description = event.getDescription();
-        if ("ignore".equals(description)) {
-          PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true);
-          notification.expire();
-        }
-        else if ("turnOff".equals(description)) {
-          PowerSaveMode.setEnabled(false);
-          notification.expire();
-        }
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true);
+        notification.expire();
       }
-    }).notify(project);
+    });
+    notification.addAction(new NotificationAction("Disable Power Save Mode") {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        PowerSaveMode.setEnabled(false);
+        notification.expire();
+      }
+    });
+
+    notification.notify(project);
+
+    Balloon balloon = notification.getBalloon();
+    if (balloon != null) {
+      MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+      MessageBusConnection connection = bus.connect();
+      connection.subscribe(PowerSaveMode.TOPIC, () -> notification.expire());
+      Disposer.register(balloon, connection);
+    }
   }
 }

@@ -72,9 +72,7 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
     super.tearDown()
   }
 
-  public void testEndOfLineComments() {
-    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
-  }
+  public void testEndOfLineComments() { doTest() }
 
   public void testEditingImports() {
     configure """\
@@ -412,8 +410,11 @@ class Test {
     assertEquals('test1', myFixture.editor.selectionModel.selectedText)
   }
 
-  public void testCustomFolding() {
-    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
+  public void testCustomFolding() { doTest() }
+  public void testEmptyMethod() { doTest() }
+
+  private doTest() {
+    myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java")
   }
 
   public void "test custom folding IDEA-122715 and IDEA-87312"() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +37,43 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.createConstrai
  * @author peter
  */
 public class HardcodedContracts {
+  static class OptionalPresenceContract extends MethodContract.QualifierBasedContract {
+    private final boolean myPresent;
+
+    public OptionalPresenceContract(boolean mustPresent, ValueConstraint[] valueConstraints, ValueConstraint returnValue) {
+      super(valueConstraints, returnValue);
+      myPresent = mustPresent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass() || !super.equals(o)) return false;
+      return myPresent == ((OptionalPresenceContract)o).myPresent;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * super.hashCode() + (myPresent ? 1 : 0);
+    }
+
+    @Override
+    boolean applyContract(boolean matches, DfaValue qualifier, DfaMemoryState memoryState) {
+      boolean present = !matches ^ myPresent;
+      ThreeState state = memoryState.checkOptional(qualifier);
+      if(state == ThreeState.fromBoolean(!present)) return false;
+      if(state == ThreeState.UNSURE) {
+        memoryState.applyIsPresentCheck(present, qualifier);
+      }
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "[" + (myPresent ? "present" : "absent") + "] " + super.toString();
+    }
+  }
+
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
     if (owner == null ||
@@ -84,6 +125,17 @@ public class HardcodedContracts {
              className.startsWith("com.google.common.truth.") ||
              className.startsWith("org.assertj.core.api.")) {
       return handleTestFrameworks(paramCount, className, methodName, call);
+    }
+    else if (TypeUtils.isOptional(owner)) {
+      MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
+        return Arrays.asList(new OptionalPresenceContract(false, constraints, THROW_EXCEPTION),
+                             new OptionalPresenceContract(true, constraints, NOT_NULL_VALUE));
+      }
+      else if ("isPresent".equals(methodName)) {
+        return Arrays.asList(new OptionalPresenceContract(false, constraints, FALSE_VALUE),
+                             new OptionalPresenceContract(true, constraints, TRUE_VALUE));
+      }
     }
 
     return Collections.emptyList();

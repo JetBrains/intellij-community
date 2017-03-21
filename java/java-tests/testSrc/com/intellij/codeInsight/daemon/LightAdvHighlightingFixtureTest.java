@@ -112,6 +112,25 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testAmbiguousMethodCallWhenStaticImported() throws Exception {
+    myFixture.addClass("package p;" +
+                       "class A<K> {\n" +
+                       "  static <T> A<T> of(T t) {\n" +
+                       "    return null;\n" +
+                       "  }\n" +
+                       "}\n" +
+                       "class B<K> {\n" +
+                       "  static <T> B<T> of(T t) {\n" +
+                       "    return null;\n" +
+                       "  }\n" +
+                       "  static <T> B<T> of(T... t) {\n" +
+                       "    return null;\n" +
+                       "  }\n" +
+                       "}\n");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";

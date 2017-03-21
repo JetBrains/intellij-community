@@ -30,6 +30,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnPropertyService {
 
   private SvnPropertyService() {
@@ -91,7 +93,7 @@ public class SvnPropertyService {
         if (stopIteration()) {
           break;
         }
-        final File dir = new File(entry.getKey().getPath());
+        final File dir = virtualToIoFile(entry.getKey());
         try {
           final PropertyValue value;
           if (myCanUseCachedProperty) {

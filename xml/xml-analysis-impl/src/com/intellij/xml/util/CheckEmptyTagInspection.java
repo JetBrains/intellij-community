@@ -20,7 +20,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
@@ -78,7 +78,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     if (tag instanceof HtmlTag) tagName = tagName.toLowerCase();
 
     Language language = tag.getLanguage();
-    return ourTagsWithEmptyEndsNotAllowed.contains(tagName) && language != XMLLanguage.INSTANCE ||
+    return ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
+           (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) ||
            language.isKindOf(HTMLLanguage.INSTANCE) && !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1;
   }
 

@@ -94,7 +94,7 @@ public class IpnbConnection {
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
-    if (!IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
+    if (!IpnbSettings.getInstance(project).isRemote()) {
       if (!"http".equals(myURI.getScheme())) {
         throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
       }
@@ -103,7 +103,7 @@ public class IpnbConnection {
       throw new UnsupportedOperationException("Only https urls are supported for remote notebooks");
     }
     
-    if (IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
+    if (IpnbSettings.getInstance(project).isRemote()) {
       String loginUrl = getLoginUrl();
       initXSRF(myURI.toString() + loginUrl);
       myIsHubServer = isHubServer(loginUrl);
@@ -315,10 +315,17 @@ public class IpnbConnection {
     if (myURI.getScheme().equals("https")) {
       configureHttpsConnection();
       final HttpsURLConnection connection = (HttpsURLConnection)new URL(loginUrl).openConnection();
-      connection.setInstanceFollowRedirects(false);
-      connection.connect();
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-        location = connection.getHeaderField(HttpHeaders.LOCATION);
+      try {
+        connection.setInstanceFollowRedirects(false);
+        connection.connect();
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+          location = connection.getHeaderField(HttpHeaders.LOCATION);
+        }
+      }
+      catch (IllegalArgumentException e) {
+        throw new IOException("Connection refused: " + e.getMessage());
+      }
+      finally {
         connection.disconnect();
       }
     }

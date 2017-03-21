@@ -53,6 +53,7 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
@@ -819,7 +820,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
     public MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
-      super(editors.toArray(new EditorEx[2]), disposable);
+      super(toObjectArray(editors, EditorEx.class), disposable);
     }
 
     public void install(@Nullable final List<LineFragment> fragments,

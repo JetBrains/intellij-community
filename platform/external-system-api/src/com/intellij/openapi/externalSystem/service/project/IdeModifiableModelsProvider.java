@@ -27,6 +27,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -71,4 +72,7 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider {
   void dispose();
 
   void setTestModuleProperties(Module testModule, String productionModuleName);
+
+  @Nullable
+  String getProductionModuleName(Module module);
 }

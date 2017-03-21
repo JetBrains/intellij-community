@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,13 +396,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Override
   protected PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType) {
-    PsiVariable variable = IntroduceVariableBase.introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
-    final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
-    myPointer = declarationStatement != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(declarationStatement) : null;
-    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
-    setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
-
-    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+    PsiVariable variable = introduceVariable();
 
     final PsiVariable restoredVar = getVariable();
     if (restoredVar != null) {
@@ -430,6 +424,18 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     }
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
     initOccurrencesMarkers();
+    return variable;
+  }
+
+  protected PsiVariable introduceVariable() {
+    PsiVariable variable = IntroduceVariableBase
+      .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
+    final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+    myPointer = declarationStatement != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(declarationStatement) : null;
+    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
+    setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
+
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
     return variable;
   }
 

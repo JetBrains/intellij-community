@@ -397,7 +397,7 @@ public final class ActionMenu extends JBMenu {
         ComponentEvent componentEvent = (ComponentEvent)event;
         Component component = componentEvent.getComponent();
         JPopupMenu popup = UIUtil.getParentOfType(JPopupMenu.class, component);
-        if (popup != null && popup.getInvoker() == myComponent) {
+        if (popup != null && popup.getInvoker() == myComponent && popup.isShowing()) {
           Rectangle bounds = popup.getBounds();
           if (bounds.isEmpty()) return;
           bounds.setLocation(popup.getLocationOnScreen());

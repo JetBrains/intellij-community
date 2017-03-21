@@ -13,7 +13,7 @@ import com.jetbrains.edu.coursecreator.actions.placeholder.CCDeleteAnswerPlaceho
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.ui.CCCreateAnswerPlaceholderDialog;
+import com.jetbrains.edu.coursecreator.actions.placeholder.CCCreateAnswerPlaceholderDialog;
 
 import java.util.Collections;
 import java.util.List;

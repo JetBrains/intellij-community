@@ -48,11 +48,9 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
     if (ourDiffUpdateEnabled) {
       if (myMap.isEmpty()) {
         EmptyInputDataDiffBuilder.processKeys(newData, addProcessor, myInputId);
-        incrementalAdditions.addAndGet(newData.size());
       }
       else if (newData.isEmpty()) {
         processAllKeysAsDeleted(removeProcessor);
-        incrementalRemovals.addAndGet(myMap.size());
       }
       else {
         int added = 0;
@@ -83,16 +81,15 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
 
         incrementalAdditions.addAndGet(added);
         incrementalRemovals.addAndGet(removed);
-      }
+        int totalRequests = requests.incrementAndGet();
+        totalRemovals.addAndGet(myMap.size());
+        totalAdditions.addAndGet(newData.size());
 
-      int totalRequests = requests.incrementAndGet();
-      totalRemovals.addAndGet(myMap.size());
-      totalAdditions.addAndGet(newData.size());
-
-      if ((totalRequests & 0xFFF) == 0 && DebugAssertions.DEBUG) {
-        Logger.getInstance(getClass()).info("Incremental index diff update:" + requests +
-                                            ", removals:" + totalRemovals + "->" + incrementalRemovals +
-                                            ", additions:" + totalAdditions + "->" + incrementalAdditions);
+        if ((totalRequests & 0xFFF) == 0 && DebugAssertions.DEBUG) {
+          Logger.getInstance(getClass()).info("Incremental index diff update:" + requests +
+                                              ", removals:" + totalRemovals + "->" + incrementalRemovals +
+                                              ", additions:" + totalAdditions + "->" + incrementalAdditions);
+        }
       }
     }
     else {

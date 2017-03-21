@@ -39,6 +39,12 @@ import junit.framework.AssertionFailedError;
 public class PsiBuilderTest extends LightIdeaTestCase {
   private PsiBuilderImpl myBuilder;
 
+  @Override
+  protected void tearDown() throws Exception {
+    myBuilder = null;
+    super.tearDown();
+  }
+
   public void testEmptyProgram() throws Exception {
     myBuilder = createBuilder("");
     final PsiBuilder.Marker fileMarker = myBuilder.mark();

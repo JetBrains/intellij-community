@@ -334,8 +334,9 @@ public class PsiTypesUtil {
     return parameterType;
   }
 
+  @NotNull
   public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
-                                                              final PsiTypeParameter[] typeParameters) {
+                                                              @NotNull PsiTypeParameter[] typeParameters) {
     if (typeParameters.length == 0) return typeParameters;
 
     final Set<PsiTypeParameter> usedParameters = new HashSet<>();

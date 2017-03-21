@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 
 /**
  * @author yole
@@ -130,11 +130,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       super.update(event);
       event.getPresentation().setIcon(myEditSourceIcon);
       event.getPresentation().setText("Edit Source");
-      if ((! ModalityState.NON_MODAL.equals(ModalityState.current())) ||
+      if ((!ModalityState.NON_MODAL.equals(ModalityState.current())) ||
           CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(event.getDataContext()))) {
         event.getPresentation().setEnabled(false);
-      } else {
-        event.getPresentation().setEnabled(true);
       }
     }
 

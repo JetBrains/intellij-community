@@ -101,7 +101,13 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
     }
-    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
+    if(isDefaultModuleCreation) {
+      if(myCreateEmptyContentRootDirectoriesBox != null) {
+        myCreateEmptyContentRootDirectoriesBox.getParent().remove(myCreateEmptyContentRootDirectoriesBox);
+        myCreateEmptyContentRootDirectoriesBox = null;
+      }
+    }
+    if (!isDefaultModuleCreation && !myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     }
     resetExtraSettings(isDefaultModuleCreation);

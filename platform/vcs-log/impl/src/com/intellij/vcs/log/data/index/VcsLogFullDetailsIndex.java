@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -48,6 +49,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
   @NotNull private final FatalErrorHandler myFatalErrorHandler;
+  private volatile boolean myDisposed = false;
 
   public VcsLogFullDetailsIndex(@NotNull String logId,
                                 @NotNull String name,
@@ -70,6 +72,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
   @NotNull
   public TIntHashSet getCommitsWithAnyKey(@NotNull Set<Integer> keys) throws StorageException {
+    checkDisposed();
     TIntHashSet result = new TIntHashSet();
 
     for (Integer key : keys) {
@@ -81,6 +84,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
   @NotNull
   public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
+    checkDisposed();
     return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex, keys, (k) -> {
       ProgressManager.checkCanceled();
       return true;
@@ -107,16 +111,23 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   public void update(int commitId, @NotNull VcsFullCommitDetails details) throws IOException {
+    checkDisposed();
     myMapReduceIndex.update(commitId, details).compute();
   }
 
   public void flush() throws StorageException {
+    checkDisposed();
     myMapReduceIndex.flush();
   }
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myMapReduceIndex.dispose();
+  }
+
+  private void checkDisposed() {
+    if (myDisposed) throw new ProcessCanceledException();
   }
 
   @NotNull

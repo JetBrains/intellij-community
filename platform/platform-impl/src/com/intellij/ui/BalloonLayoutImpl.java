@@ -188,8 +188,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     calculateSize();
     relayout();
-    ((BalloonImpl)balloon).traceDispose(false);
-    balloon.show(myLayeredPane);
+    if (!balloon.isDisposed()) {
+      balloon.show(myLayeredPane);
+    }
     fireRelayout();
   }
 

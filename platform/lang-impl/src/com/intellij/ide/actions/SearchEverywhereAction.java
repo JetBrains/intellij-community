@@ -154,7 +154,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   public static final int MAX_TOP_HIT = 15;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
-  private static final Border RENDERER_BORDER = JBUI.Borders.empty(0, 0, 2, 0);
+  private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
+  private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -1079,6 +1080,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (cmp == null) {
         if (value instanceof GotoActionModel.ActionWrapper) {
           cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
+          if (cmp instanceof JComponent) ((JComponent)cmp).setBorder(null);
         } else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
@@ -2512,6 +2514,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return JBUI.Panels.simplePanel(5, 10)
       .addToCenter(separatorComponent)
       .addToLeft(titleLabel)
+      .withBorder(RENDERER_TITLE_BORDER)
       .withBackground(UIUtil.getListBackground());
   }
 

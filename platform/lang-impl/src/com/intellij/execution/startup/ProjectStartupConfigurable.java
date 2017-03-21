@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -362,10 +362,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
     myModel.setData(projectStartupTaskManager.getSharedConfigurations(), projectStartupTaskManager.getLocalConfigurations());
     refreshDataUpdateSelection(null);
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 
   private void installRenderers() {

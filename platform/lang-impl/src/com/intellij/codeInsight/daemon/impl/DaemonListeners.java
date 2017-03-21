@@ -507,11 +507,13 @@ public class DaemonListeners implements Disposable {
     @Override
     public void profileChanged(InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");
+      updateStatusBarLater();
     }
 
     @Override
     public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile activated");
+      updateStatusBarLater();
     }
 
     @Override
@@ -534,8 +536,15 @@ public class DaemonListeners implements Disposable {
 
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
-  public void updateStatusBar() {
+  void updateStatusBar() {
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
+  }
+
+  private void updateStatusBarLater() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
+      updateStatusBar();
+    });
   }
 
   private class MyAnActionListener extends AnActionListener.Adapter {
@@ -626,7 +635,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  public static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
+  static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!project.isInitialized()) return;
     final Document document = editor.getDocument();

@@ -72,7 +72,7 @@ public class PyEmacsTabTest extends PyTestCase {
       "        print n<caret>ame"
     );
   }
-  
+
   public void testIndentToRight() {
     doTest(
       "def test(name):\n" +

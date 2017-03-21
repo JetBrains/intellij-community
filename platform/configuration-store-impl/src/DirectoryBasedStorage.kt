@@ -15,7 +15,7 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StateStorage
@@ -220,7 +220,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun deleteFiles(dir: VirtualFile) {
-      runWriteAction {
+      runUndoTransparentWriteAction {
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {

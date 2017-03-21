@@ -15,13 +15,13 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,12 +122,26 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean hasPropertiesBehind(@NotNull PsiElement element) {
+  public boolean onlyDoubleQuotesForStringLiterals() {
+    return true;
+  }
+
+  @Override
+  public boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element) {
+    PsiElement current = element instanceof JsonProperty ? element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
+    while (current != null && current.getNode().getElementType() != JsonElementTypes.COMMA) {
+      current = current.getNextSibling();
+    }
+    int commaOffset = current == null ? Integer.MAX_VALUE : current.getTextRange().getStartOffset();
     final int offset = element.getTextRange().getStartOffset();
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
-      return ContainerUtil.or(object.getPropertyList(), prop -> prop.getTextRange().getStartOffset() >= offset &&
-                                                                !PsiTreeUtil.isAncestor(prop, element, false));
+      for (JsonProperty property : object.getPropertyList()) {
+        final int pOffset = property.getTextRange().getStartOffset();
+        if (pOffset >= offset && !PsiTreeUtil.isAncestor(property, element, false)) {
+          return pOffset < commaOffset;
+        }
+      }
     }
     return false;
   }
@@ -137,7 +151,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
       return object.getPropertyList().stream()
-        .filter(p -> StringUtil.isQuotedString(p.getName()))
+        .filter(p -> p.getNameElement() instanceof JsonStringLiteral)
         .map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
     }
     return Collections.emptySet();

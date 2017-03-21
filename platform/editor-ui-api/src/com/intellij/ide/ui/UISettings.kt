@@ -53,11 +53,11 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
-  var fontSize by storedProperty(0)
+  var fontSize by storedProperty(12)
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
-  private var fontScale by storedProperty(0f)
+  var fontScale by storedProperty(0f)
 
   @get:OptionTag("RECENT_FILES_LIMIT") var recentFilesLimit by storedProperty(50)
   @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT") var consoleCommandHistoryLimit by storedProperty(300)
@@ -113,6 +113,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
+  var smoothScrolling by storedProperty(SystemInfo.isMac && (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9")))
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
@@ -189,17 +190,18 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     val fontData = systemFontFaceAndSize
     if (fontFace == null) fontFace = fontData.first
     if (fontSize <= 0) fontSize = fontData.second
-    if (fontScale <= 0) fontScale = JBUI.scale(1f)
+    if (fontScale <= 0) fontScale = normalizingScale
   }
 
   class FontFilter : SerializationFilter {
     override fun accepts(accessor: Accessor, bean: Any): Boolean {
       val settings = bean as UISettings
       val fontData = systemFontFaceAndSize
-      if ("FONT_FACE" == accessor.name) {
+      if ("fontFace" == accessor.name) {
         return fontData.first != settings.fontFace
       }
-      // store only in pair
+      // fontSize/fontScale should either be stored in pair or not stored at all
+      // otherwise the fontSize restore logic gets broken (see loadState)
       return !(fontData.second == settings.fontSize && 1f == settings.fontScale)
     }
   }
@@ -228,14 +230,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       alphaModeRatio = 0.5f
     }
 
-    if (fontScale <= 0) {
-      // Reset font to default on switch from IDEA-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-      if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) fontSize = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
-    }
-    else {
-      fontSize = JBUI.scale(fontSize / fontScale).toInt()
-    }
-    fontScale = JBUI.scale(1f)
+    fontSize = restoreFontSize(fontSize, fontScale)
+    fontScale = normalizingScale
     initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
@@ -302,7 +298,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     val shadowInstance: UISettings
       get() {
         val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instance) ?: UISettings().withDefFont()
+        return (if (app == null) null else instanceOrNull) ?: UISettings().withDefFont()
       }
 
     private val systemFontFaceAndSize: Pair<String, Int>
@@ -365,6 +361,22 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     @JvmStatic
     fun setupEditorAntialiasing(component: JComponent) {
       instance.editorAAType?.let { component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, it.textInfo) }
+    }
+
+    @JvmStatic
+    val normalizingScale: Float
+      get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
+
+    @JvmStatic
+    fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+      if (readScale == null || readScale <= 0) {
+        // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
+        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) return UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+      }
+      else {
+        return ((readSize.toFloat() / readScale) * normalizingScale).toInt()
+      }
+      return readSize
     }
   }
 

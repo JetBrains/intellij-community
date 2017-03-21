@@ -783,6 +783,115 @@ public class PyTypingTest extends PyTestCase {
            "expr = C(0).get()\n");
   }
 
+  // PY-20057
+  public void testClassObjectType() {
+    doTest("Type[MyClass]",
+           "from typing import Type\n" +
+           "\n" +
+           "class MyClass:\n" +
+           "    pass\n" +
+           "\n" +
+           "def f(x: Type[MyClass]): \n" +
+           "    expr = x");
+  }
+  
+  // PY-20057
+  public void testConstrainedClassObjectTypeOfParam() {
+    doTest("Type[TypeVar('T', int)]",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T', bound=int)\n" +
+           "\n" +
+           "def f(x: Type[T]):\n" +
+           "    expr = x");
+  }
+  
+  // PY-20057
+  public void testFunctionCreatesInstanceFromType() {
+    doTest("int",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "def f(x: Type[T]) -> T:\n" +
+           "    return x()\n" +
+           "\n" +
+           "expr = f(int)");
+  }
+
+  // PY-20057
+  public void testFunctionReturnsTypeOfInstance() {
+    doTest("Type[int]",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "def f(x: T) -> Type[T]:\n" +
+           "    return type(T)\n" +
+           "    \n" +
+           "expr = f(42)");
+  }
+
+  // PY-20057
+  public void testNonParametrizedTypingTypeMapsToBuiltinType() {
+    doTest("type",
+           "from typing import Type\n" +
+           "\n" +
+           "def f(x: Type):\n" +
+           "    expr = x");
+  }
+  
+  // PY-20057
+  public void testTypingTypeOfAnyMapsToBuiltinType() {
+    doTest("type",
+           "from typing import Type, Any\n" +
+           "\n" +
+           "def f(x: Type[Any]):\n" +
+           "    expr = x");
+  }
+
+  // PY-20057
+  public void testIllegalTypingTypeFormat() {
+    doTest("Tuple[Any, Any, Any]",
+           "from typing import Type, Tuple\n" +
+           "\n" +
+           "def f(x: Tuple[Type[42], Type[], Type[unresolved]]):\n" +
+           "    expr = x");
+  }
+  
+  // PY-20057
+  public void testUnionOfClassObjectTypes() {
+    doTest("Type[Union[int, str]]",
+           "from typing import Type, Union\n" +
+           "\n" +
+           "def f(x: Type[Union[int, str]]):\n" +
+           "    expr = x");
+  }
+
+  // PY-23053
+  public void testUnboundGenericMatchesClassObjectTypes() {
+    doTest("Type[str]",
+           "from typing import Generic, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Holder(Generic[T]):\n" +
+           "    def __init__(self, value: T):\n" +
+           "        self._value = value\n" +
+           "\n" +
+           "    def get(self) -> T:\n" +
+           "        return self._value\n" +
+           "\n" +
+           "expr = Holder(str).get()\n");
+  }
+
+  // PY-23053
+  public void testListContainingClasses() {
+    doTest("Type[str]", 
+           "xs = [str]\n" +
+           "expr = xs.pop()");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

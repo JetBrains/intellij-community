@@ -37,7 +37,7 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
     super.setUp()
     Registry.get("java.completion.argument.live.template").value = true
     Registry.get("java.completion.show.constructors").value = true
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
   }
 
   @Override
@@ -88,7 +88,7 @@ class SignatureCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testCollectStatisticsOnMethods() {
-    ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(testRootDisposable)
+    ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(myFixture.testRootDisposable)
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'test1', 'test2'
     myFixture.lookup.currentItem = myFixture.lookupElements[1]

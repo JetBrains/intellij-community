@@ -97,7 +97,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Assertion.compareUnordered(new Module[]{module1, module2}, configuration.getValidModules());
 
     PsiClass innerTest = findClass(module1, INNER_TEST_NAME);
-    configuration = createJUnitConfiguration(innerTest, TestClassConfigurationProducer.class, new MapDataContext());
+    configuration = createJUnitConfiguration(innerTest, TestInClassConfigurationProducer.class, new MapDataContext());
     checkClassName(RT_INNER_TEST_NAME, configuration);
     checkCanRun(configuration);
 
@@ -289,7 +289,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkContains(classPath, output);
 
     JUnitConfiguration junitConfiguration =
-      createJUnitConfiguration(findClass(module4, "TestApplication"), TestClassConfigurationProducer.class, new MapDataContext());
+      createJUnitConfiguration(findClass(module4, "TestApplication"), TestInClassConfigurationProducer.class, new MapDataContext());
     parameters = checkCanRun(junitConfiguration);
     classPath = parameters.getClassPath().getPathsString();
     checkContains(classPath, testOuput);

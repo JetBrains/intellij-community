@@ -18,7 +18,6 @@ package org.jetbrains.java.generate.psi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -643,6 +642,7 @@ public class PsiAdapter {
      * @param clazz the class
      * @return the names.
      */
+    @NotNull
     public static String[] getImplementsClassnames(PsiClass clazz) {
         PsiClass[] interfaces = clazz.getInterfaces();
 

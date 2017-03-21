@@ -19,6 +19,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -164,6 +165,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       return myMerger.getMergedToolName();
     }
 
+    @NotNull
     @Override
     public String[] getSourceToolNames() {
       return myMerger.getSourceToolNames();

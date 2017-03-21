@@ -72,7 +72,7 @@ public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresen
     @Override
     public Color getBackgroundColor(boolean selected, boolean hovered, boolean light) {
       final Color baseColor = super.getBackgroundColor(selected, hovered, light);
-      return myColor != null
+      return myColor != null && baseColor != null
              ? XmlTagTreeHighlightingUtil.makeTransparent(myColor, baseColor, 0.1)
              : baseColor;
     }

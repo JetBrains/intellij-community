@@ -9,10 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -147,7 +144,7 @@ public class EduStepicConnector {
     for (CourseInfo info : courseInfos) {
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
       if (canBeOpened(info)) {
-        for (Integer instructor : info.instructors) {
+        for (Integer instructor : info.getInstructors()) {
           final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor), 
                                                                   StepicWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
@@ -163,7 +160,7 @@ public class EduStepicConnector {
   }
 
   static boolean canBeOpened(CourseInfo courseInfo) {
-    if (courseInfo.isAdaptive) {
+    if (courseInfo.isAdaptive()) {
       return true;
     }
     String courseType = courseInfo.getType();
@@ -202,7 +199,7 @@ public class EduStepicConnector {
       final String language = courseType.substring(separator + 1);
       course.setLanguage(language);
       try {
-        for (Integer section : info.sections) {
+        for (Integer section : info.getSections()) {
           course.addLessons(getLessons(section));
         }
         return course;

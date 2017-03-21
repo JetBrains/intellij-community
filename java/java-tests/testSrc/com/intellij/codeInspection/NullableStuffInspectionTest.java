@@ -41,10 +41,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
       return PsiTestUtil.addJdkAnnotations(super.getSdk());
     }
   };
-  private final NullableStuffInspection myInspection = new NullableStuffInspection();
-  {
-    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
-  }
+  private NullableStuffInspection myInspection = new NullableStuffInspection();
 
   @NotNull
   @Override
@@ -60,6 +57,17 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   private void doTest() {
     myFixture.enableInspections(myInspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void setUp() throws Exception {
+    super.setUp();
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myInspection = null;
+    super.tearDown();
   }
 
   public void testProblems() throws Exception{ doTest(); }
@@ -145,7 +153,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
     final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNullables("custom.CheckForNull");
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         nnnManager.setNullables();

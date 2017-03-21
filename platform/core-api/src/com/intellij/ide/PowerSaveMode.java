@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.ui.ComponentSettings;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 
@@ -31,7 +30,6 @@ public class PowerSaveMode {
 
   public PowerSaveMode(MessageBus bus) {
     myBus = bus;
-    ComponentSettings.getInstance().setPowerSaveModeEnabled(myEnabled);
   }
 
   public static boolean isEnabled() {
@@ -44,7 +42,6 @@ public class PowerSaveMode {
       instance.myEnabled = value;
       instance.myBus.syncPublisher(TOPIC).powerSaveStateChanged();
       PropertiesComponent.getInstance().setValue(POWER_SAVE_MODE, value);
-      ComponentSettings.getInstance().setPowerSaveModeEnabled(value);
     }
   }
 

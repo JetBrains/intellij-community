@@ -16,8 +16,8 @@
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"
-                    serviceImplementation="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"/>
+    <projectService serviceInterface="com.intellij.vcs.log.history.FileHistoryUiProperties"
+                    serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
@@ -32,10 +32,10 @@
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
-                        serviceImplementation="com.intellij.vcs.log.ui.history.VcsLogFileHistoryProviderImpl"/>
+                        serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
-    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.ui.history.FileHistoryUiDataRule"/>
+    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
   </extensions>
 
   <actions>
@@ -83,12 +83,14 @@
             use-shortcut-of="Diff.ShowDiff" text="Show Diff" description="Show diff with previous version"
             icon="AllIcons.Actions.Diff"/>
     <action class="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction" id="Vcs.Log.ShowDiffWithLocal"
+            use-shortcut-of="Vcs.ShowDiffWithLocal"
             text="Show Diff with Local" description="Compare selected revision with the local version of the file"
             icon="AllIcons.Actions.DiffWithCurrent"/>
     <action class="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryAction" id="Vcs.Log.CreatePatchFromHistory"
             use-shortcut-of="ChangesView.CreatePatch" text="Create Patch..." description="Create patch for selected changes"
-            icon="AllIcons.Actions.CreatePatch"/>
+            icon="AllIcons.Vcs.Patch"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
+            use-shortcut-of="Vcs.GetVersion"
             text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
     <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
             use-shortcut-of="Annotate"
@@ -179,7 +181,7 @@
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
-    <group id="FileHistory.KeymapGroup" text="File History">
+    <group id="Log.FileHistory.KeymapGroup" popup="false">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.Log.ShowDiff"/>
       <reference id="Vcs.Log.ShowDiffWithLocal"/>
@@ -195,7 +197,7 @@
       <reference id="VcsHistoryActionsGroup"/>
       <reference ref="Vcs.Log.CloseLogTabAction"/>
 
-      <add-to-group group-id="Vcs.KeymapGroup"/>
+      <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>
   </actions>
 

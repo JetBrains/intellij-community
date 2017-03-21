@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,13 +24,27 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConsoleFontOptions extends FontOptions {
   public ConsoleFontOptions(ColorAndFontOptions options) {
-    super(options);
+    super(options, "Use editor font preferences");
   }
 
   @NotNull
   @Override
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getConsoleFontPreferences();
+  }
+
+  @Override
+  protected void setDelegatingPreferences(boolean isDelegating) {
+    FontPreferences currPrefs = getCurrentScheme().getConsoleFontPreferences();
+    if (currPrefs instanceof DelegatingFontPreferences == isDelegating) return;
+    if (isDelegating) {
+      getCurrentScheme().setUseEditorFontPreferencesInConsole();
+    }
+    else {
+      getCurrentScheme().setConsoleFontPreferences(getFontPreferences());
+    }
+    updateOptionsList();
+    updateDescription(true);
   }
 
   @Override

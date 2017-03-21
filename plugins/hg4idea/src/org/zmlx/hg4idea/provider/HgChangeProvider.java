@@ -32,8 +32,10 @@ import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.awt.*;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 public class HgChangeProvider implements ChangeProvider {
 
@@ -42,7 +44,8 @@ public class HgChangeProvider implements ChangeProvider {
 
   public static final FileStatus COPIED = FileStatusFactory.getInstance().createFileStatus("COPIED", "Copied", FileStatus.ADDED.getColor());
   public static final FileStatus RENAMED = FileStatusFactory.getInstance().createFileStatus("RENAMED", "Renamed",
-                                                                                            JBColor.CYAN.darker().darker());
+                                                                                            new JBColor(JBColor.CYAN.darker().darker(),
+                                                                                                        new Color(0x3a8484)));
 
   private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
     new EnumMap<>(HgFileStatusEnum.class);

@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  */
 public class BlockMarkerCommentsTest extends LightCodeInsightFixtureTestCase {
 
-  private final BlockMarkerCommentsInspection myInspection = new BlockMarkerCommentsInspection();
+  private BlockMarkerCommentsInspection myInspection;
 
   @Override
   protected String getTestDataPath() {
@@ -34,12 +34,14 @@ public class BlockMarkerCommentsTest extends LightCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    myInspection = new BlockMarkerCommentsInspection();
     myFixture.enableInspections(myInspection);
   }
 
   @Override
   public void tearDown() throws Exception {
     myFixture.disableInspections(myInspection);
+    myInspection = null;
     super.tearDown();
   }
 

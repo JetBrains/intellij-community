@@ -20,7 +20,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,21 +41,19 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
@@ -230,7 +227,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       .setHideOnAction(false)
       .setFillColor(UIUtil.getControlColor())
       .createBalloon();
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         balloon.hide();
@@ -341,19 +338,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
 
   private void commitToOriginal(final DocumentEvent e) {
-    VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(myNewFile.getContext());
     myCommittingToOriginal = true;
     try {
-      if (origVirtualFile == null || !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(origVirtualFile).hasReadonlyFiles()) {
-        PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
-          if (myAltFullRange != null) {
-            altCommitToOriginal(e);
-            return;
-          }
-          commitToOriginalInner();
-        });
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
-      }
+      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
+        if (myAltFullRange != null) {
+          altCommitToOriginal(e);
+          return;
+        }
+        commitToOriginalInner();
+      });
+      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {
       myCommittingToOriginal = false;

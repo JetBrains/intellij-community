@@ -34,10 +34,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
@@ -175,21 +172,18 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
-      String gradlePath = gradleModule.getGradleProject().getPath();
-      final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
-      final String[] moduleGroup;
-      if (isRootModule) {
-        moduleGroup = new String[]{mainModuleData.getInternalName()};
+      String[] moduleGroup = null;
+      if (!ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
+        String gradlePath = gradleModule.getGradleProject().getPath();
+        final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+        moduleGroup = isRootModule ? new String[]{mainModuleData.getInternalName()} : ArrayUtil.remove(gradlePath.split(":"), 0);
+        mainModuleData.setIdeModuleGroup(isRootModule ? null : moduleGroup);
       }
-      else {
-        moduleGroup = ArrayUtil.remove(gradlePath.split(":"), 0);
-      }
-      mainModuleData.setIdeModuleGroup(isRootModule ? null : moduleGroup);
 
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
         final String moduleId = getModuleId(resolverCtx, gradleModule, sourceSet);
         final String moduleExternalName = gradleModule.getName() + ":" + sourceSet.getName();
-        final String moduleInternalName = getInternalModuleName(gradleModule, sourceSet.getName());
+        final String moduleInternalName = getInternalModuleName(gradleModule, externalProject, sourceSet.getName());
 
         GradleSourceSetData sourceSetData = new GradleSourceSetData(
           moduleId, moduleExternalName, moduleInternalName, mainModuleFileDirectoryPath, mainModuleConfigPath);
@@ -218,7 +212,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         }
         else {
           if ("test".equals(sourceSet.getName())) {
-            sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, "main"));
+            sourceSetData.setProductionModuleId(getInternalModuleName(gradleModule, externalProject, "main"));
             final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
             if (testsArtifacts != null) {
               artifacts.addAll(testsArtifacts);
@@ -258,11 +252,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return mainModuleNode;
-  }
-
-  @NotNull
-  private static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull String sourceSetName) {
-    return PathUtilRt.suggestFileName(gradleModule.getName() + "_" + sourceSetName, true, false);
   }
 
   @Override
@@ -676,15 +665,15 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void enhanceTaskProcessing(@NotNull List<String> taskNames,
-                                    @Nullable String debuggerSetup,
+                                    @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
-    if (!StringUtil.isEmpty(debuggerSetup)) {
+    if (!StringUtil.isEmpty(jvmAgentSetup)) {
       final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
       final String[] lines = {
         "gradle.taskGraph.beforeTask { Task task ->",
         "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
-        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib') && !it?.startsWith('-Xrunjdwp')}",
-        "        jvmArgs << '" + debuggerSetup.trim() + '\'',
+        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
+        "        jvmArgs << '" + jvmAgentSetup.trim().replace("\\", "\\\\") + '\'',
         "        task.jvmArgs jvmArgs",
         "    }" +
         "}",

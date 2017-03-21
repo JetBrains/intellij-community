@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -44,7 +45,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
 
   @Override
   protected String getActionName(@NotNull VcsContext dataContext) {
-    return VcsBundle.message("action.name.commit.project");
+    return ActionsBundle.message("action.CheckinProject.text");
   }
 
   @Override

@@ -12,10 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,12 +180,12 @@ public class StepicWrappers {
     }
   }
 
-  static class CoursesContainer {
+  public static class CoursesContainer {
     public List<CourseInfo> courses;
     public Map meta;
   }
 
-  static class StepSourceWrapper {
+  public static class StepSourceWrapper {
     @Expose
     StepSource stepSource;
 
@@ -197,7 +194,7 @@ public class StepicWrappers {
     }
   }
 
-  static class CourseWrapper {
+  public static class CourseWrapper {
     CourseInfo course;
 
     public CourseWrapper(Course course) {
@@ -208,7 +205,7 @@ public class StepicWrappers {
     }
   }
 
-  static class LessonWrapper {
+  public static class LessonWrapper {
     Lesson lesson;
 
     public LessonWrapper(Lesson lesson) {
@@ -246,31 +243,68 @@ public class StepicWrappers {
     }
   }
 
-  static class Section {
+  public static class Section {
     List<Integer> units;
     int course;
     String title;
+
+    public int getId() {
+      return id;
+    }
+
+    public void setCourse(int course) {
+      this.course = course;
+    }
+
+    public void setTitle(String title) {
+      this.title = title;
+    }
+
+    public void setPosition(int position) {
+      this.position = position;
+    }
+
     int position;
     int id;
   }
 
-  static class SectionWrapper {
+  public static class SectionWrapper {
     Section section;
+
+    public void setSection(Section section) {
+      this.section = section;
+    }
   }
 
-  static class SectionContainer {
+  public static class SectionContainer {
     List<Section> sections;
     List<Lesson> lessons;
 
     List<Unit> units;
+
+    public List<Section> getSections() {
+      return sections;
+    }
   }
 
-  static class Unit {
+  public static class Unit {
     int id;
     int section;
     int lesson;
     int position;
     List<Integer> assignments;
+
+    public void setSection(int section) {
+      this.section = section;
+    }
+
+    public void setPosition(int position) {
+      this.position = position;
+    }
+
+    public void setLesson(int lesson) {
+      this.lesson = lesson;
+    }
   }
 
   static class UnitContainer {
@@ -278,8 +312,12 @@ public class StepicWrappers {
     List<Unit> units;
   }
 
-  static class UnitWrapper {
+  public static class UnitWrapper {
     Unit unit;
+
+    public void setUnit(Unit unit) {
+      this.unit = unit;
+    }
   }
 
   static class AttemptWrapper {

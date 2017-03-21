@@ -38,7 +38,7 @@ public class PsiAnchorTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInjectedAnchor() {
-    new MyTestInjector(getPsiManager()).injectAll(getTestRootDisposable());
+    new MyTestInjector(getPsiManager()).injectAll(myFixture.getTestRootDisposable());
     myFixture.configureByText("a.java", "class X { String java=\"class <caret>Foo {}\"}");
     PsiClass cls = (PsiClass)myFixture.getElementAtCaret();
     assertEquals("Foo", cls.getName());

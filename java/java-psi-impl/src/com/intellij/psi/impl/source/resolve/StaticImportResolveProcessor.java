@@ -99,6 +99,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
     return super.getHint(hintKey);
   }
 
+  @NotNull
   public JavaResolveResult[] getResults() {
     if (myResults.size() + myFieldResults.size() + myClassResult.size() > 1) {
       filterInvalid(myResults);

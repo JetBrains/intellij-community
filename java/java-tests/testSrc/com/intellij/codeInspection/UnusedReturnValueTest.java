@@ -15,7 +15,7 @@ import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class UnusedReturnValueTest extends InspectionTestCase {
-  private final UnusedReturnValue myTool = new UnusedReturnValue();
+  private UnusedReturnValue myTool = new UnusedReturnValue();
 
   @Override
   protected String getTestDataPath() {
@@ -26,6 +26,12 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     doTest("unusedReturnValue/" + getTestName(true), myTool);
   }
 
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTool = null;
+    super.tearDown();
+  }
 
   public void testNonLiteral() throws Exception {
     doTest();

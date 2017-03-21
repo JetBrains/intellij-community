@@ -40,9 +40,10 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * @author yole
@@ -63,7 +64,7 @@ public class SelectBranchPopup {
 
   public static void show(Project project, VirtualFile file, BranchSelectedCallback callback, final String title, final Component component) {
     final SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
-    final SVNURL svnurl = urlMapping.getUrlForFile(new File(file.getPath()));
+    final SVNURL svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
     if (svnurl == null) {
       return;
     }
@@ -169,25 +170,13 @@ public class SelectBranchPopup {
     @Override
     public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
       if (CONFIGURE_MESSAGE.equals(selectedValue)) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            BranchConfigurationDialog.configureBranches(myProject, myVcsRoot);
-          }
-        });
+        return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }
       else if (myTrunkString.equals(selectedValue)) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1);
-          }
-        });
+        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1));
       }
       else if (!myTopLevel || selectedValue.equals(myConfiguration.getTrunkUrl())) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1);
-          }
-        });
+        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1));
       }
       else {
         showBranchPopup(selectedValue);
@@ -240,7 +229,7 @@ public class SelectBranchPopup {
         //.setDimensionServiceKey("Svn.CompareWithBranchPopup")
         .setItemChoosenCallback((v) -> {
           if (REFRESH_MESSAGE.equals(v)) {
-            ApplicationManager.getApplication().invokeLater(() -> loadBranches(selectedValue, () -> showBranchPopup(selectedValue)));
+            SwingUtilities.invokeLater(() -> loadBranches(selectedValue, () -> showBranchPopup(selectedValue)));
             return;
           }
           SvnBranchItem item = (SvnBranchItem)v;

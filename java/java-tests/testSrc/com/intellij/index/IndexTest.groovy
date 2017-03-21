@@ -64,6 +64,7 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtil
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
@@ -86,7 +87,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testUpdate() throws StorageException, IOException {
-    StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor())
+    StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), false)
 
     try {
       // build index
@@ -133,7 +134,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testUpdateWithCustomEqualityPolicy() {
-    def index = createIndex(getTestName(false), new CaseInsensitiveEnumeratorStringDescriptor())
+    def index = createIndex(getTestName(false), new CaseInsensitiveEnumeratorStringDescriptor(), false)
     try {
       index.update("a.java", "x", null)
       assertDataEquals(index.getFilesByWord("x"), "a.java")
@@ -151,12 +152,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor) {
+  private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor, boolean readOnly) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
     PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile)
-    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024)
-    return new StringIndex(testName, indexStorage, index)
+    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024, readOnly)
+    return new StringIndex(testName, indexStorage, index, !readOnly)
   }
   
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
@@ -620,7 +621,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testIndexedFilesListener() throws Throwable {
     def listener = new RecordingVfsListener()
 
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
+    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
       VirtualFileManager.VFS_CHANGES,
       listener
     )
@@ -665,6 +666,20 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaFileElementType.isInSourceContent(myFixture.tempDirFixture.getFile('another/doo/A.java'))
   }
 
+  void "test read-only index access"() {
+    StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
+
+    try {
+      assertFalse(index.update("qwe/asd", "some_string", null))
+      def rebuildException = index.getRebuildException()
+      assertInstanceOf(rebuildException, StorageException.class)
+      def rebuildCause = rebuildException.getCause()
+      assertInstanceOf(rebuildCause, IncorrectOperationException.class)
+    } finally {
+      index.dispose()
+    }
+  }
+
   @CompileStatic
   void "test Vfs Events Processing Performance"() {
     def filename = 'A.java'
@@ -694,6 +709,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
       assert files?.length == 1
-    }).cpuBound().ioBound().assertTiming()
+    }).cpuBound().assertTiming()
   }
 }

@@ -113,7 +113,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @NonNls
       @Override
       public String getSchemeExtension() {
-        return ".icls";
+        return COLOR_SCHEME_FILE_EXTENSION;
       }
 
       @Override

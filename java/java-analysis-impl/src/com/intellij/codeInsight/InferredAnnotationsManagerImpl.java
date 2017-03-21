@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,15 +58,19 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return fromBytecode;
     }
 
-    if (listOwner instanceof PsiMethodImpl) {
-      if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN)) {
-        return getInferredContractAnnotation((PsiMethodImpl)listOwner);
+    if ((AnnotationUtil.NOT_NULL.equals(annotationFQN) || AnnotationUtil.NULLABLE.equals(annotationFQN))) {
+      PsiAnnotation anno = null;
+      if (listOwner instanceof PsiMethodImpl) {
+        anno = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
       }
+      if (listOwner instanceof PsiParameter) {
+        anno = getInferredNullityAnnotation((PsiParameter)listOwner);
+      }
+      return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
+    }
 
-      if ((AnnotationUtil.NOT_NULL.equals(annotationFQN) || AnnotationUtil.NULLABLE.equals(annotationFQN))) {
-        PsiAnnotation anno = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
-        return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
-      }
+    if (listOwner instanceof PsiMethodImpl && ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN)) {
+      return getInferredContractAnnotation((PsiMethodImpl)listOwner);
     }
 
     return null;
@@ -124,6 +128,28 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     }
     if (nullness == Nullness.NULLABLE) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNullableAnnotation();
+    }
+    return null;
+  }
+
+  private PsiAnnotation getInferredNullityAnnotation(PsiParameter parameter) {
+    PsiElement parent = parameter.getParent();
+    if (!(parent instanceof PsiParameterList)) return null;
+    PsiElement scope = parent.getParent();
+    if (scope instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)scope;
+      if (method.getName().equals("of")) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          String className = containingClass.getQualifiedName();
+          if (CommonClassNames.JAVA_UTIL_LIST.equals(className) ||
+              CommonClassNames.JAVA_UTIL_SET.equals(className) ||
+              CommonClassNames.JAVA_UTIL_MAP.equals(className) ||
+              "java.util.EnumSet".equals(className)) {
+            return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
+          }
+        }
+      }
     }
     return null;
   }

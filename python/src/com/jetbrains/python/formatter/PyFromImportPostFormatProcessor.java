@@ -16,10 +16,7 @@
 package com.jetbrains.python.formatter;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -27,6 +24,7 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +51,7 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
   private static class Visitor extends PyRecursiveElementVisitor {
     private final PostFormatProcessorHelper myHelper;
     private final List<PyFromImportStatement> myImportStatements = new ArrayList<>();
+    private PsiElement myRootElement;
 
     public Visitor(@NotNull CommonCodeStyleSettings settings) {
       myHelper = new PostFormatProcessorHelper(settings);
@@ -83,8 +82,10 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
 
     @NotNull
     public PsiElement processElement(@NotNull PsiElement element) {
+      // For some reason smart pointers don't work for non-physical (in particular, generated) elements
+      myRootElement = element;
       findAndReplaceFromImports(element);
-      return element;
+      return myRootElement;
     }
 
     @NotNull
@@ -95,11 +96,15 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     }
 
     private void findAndReplaceFromImports(@NotNull PsiElement element) {
-      if (element.getContainingFile() instanceof PyFile) {
+      // Copied/generated elements are stored in DummyHolder files, not PyFiles
+      if (element.getLanguage().isKindOf(PythonLanguage.INSTANCE)) {
         element.accept(this);
         Collections.reverse(myImportStatements);
         for (PyFromImportStatement statement : myImportStatements) {
-          replaceFromImport(statement);
+          final PyFromImportStatement newStatement = replaceFromImport(statement);
+          if (myRootElement == statement) {
+            myRootElement = newStatement;
+          }
         }
       }
     }
@@ -150,9 +155,12 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
         return newFromImport;
       }
       else {
+        final int oldLength = fromImport.getTextLength();
         // Add only trailing comma
-        final PsiElement comma = fromImport.addAfter(generator.createComma().getPsi(), allNames[allNames.length - 1]);
-        codeStyleManager.reformat(comma);
+        fromImport.addAfter(generator.createComma().getPsi(), allNames[allNames.length - 1]);
+        // Adjust spaces around the comma if necessary
+        codeStyleManager.reformat(fromImport, true);
+        myHelper.updateResultRange(oldLength, fromImport.getTextLength());
         return fromImport;
       }
     }

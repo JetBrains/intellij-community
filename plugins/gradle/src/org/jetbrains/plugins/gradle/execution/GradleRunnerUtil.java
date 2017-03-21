@@ -37,6 +37,7 @@ import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -134,7 +135,7 @@ public class GradleRunnerUtil {
       }
 
       @Override
-      public void onQueued(@NotNull ExternalSystemTaskId id, final String workingDir) {
+      public void onStart(@NotNull ExternalSystemTaskId id, final String workingDir) {
         UIUtil.invokeLaterIfNeeded(() -> gradleExecutionConsole.setWorkingDir(workingDir));
       }
 
@@ -236,9 +237,11 @@ public class GradleRunnerUtil {
   }
 
   @Nullable
-  private static Location getLocation(Project project, ExecutionInfo executionInfo) {
+  private static Location getLocation(@NotNull Project project, @NotNull ExecutionInfo executionInfo) {
     final OperationDescriptor descriptor = executionInfo.getDescriptor();
     if (descriptor instanceof TestOperationDescriptor) {
+      if (DumbService.isDumb(project)) return null;
+
       final String className = ((TestOperationDescriptor)descriptor).getClassName();
       if (className == null) return null;
 

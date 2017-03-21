@@ -55,24 +55,18 @@ public class SearchUtil {
   private SearchUtil() { }
 
   public static void processProjectConfigurables(Project project, Map<SearchableConfigurable, Set<OptionDescription>> options) {
-    processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, false), options);
+    processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
   private static void processConfigurables(Configurable[] configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
-        Set<OptionDescription> configurableOptions = new TreeSet<>();
-
-        if (configurable instanceof Configurable.Composite) {
-          final Configurable[] children = ((Configurable.Composite)configurable).getConfigurables();
-          processConfigurables(children, options);
-        }
-
         //ignore invisible root nodes
         if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
           continue;
         }
 
+        Set<OptionDescription> configurableOptions = new TreeSet<>();
         options.put((SearchableConfigurable)configurable, configurableOptions);
 
         if (configurable instanceof MasterDetails) {

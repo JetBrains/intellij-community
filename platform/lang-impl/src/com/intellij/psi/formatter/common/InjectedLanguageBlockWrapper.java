@@ -183,4 +183,8 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
   public String toString() {
     return myOriginal.toString();
   }
+
+  public Block getOriginal() {
+    return myOriginal;
+  }
 }

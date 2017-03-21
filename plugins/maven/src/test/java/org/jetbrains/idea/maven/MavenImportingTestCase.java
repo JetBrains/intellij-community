@@ -73,13 +73,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
-    myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    removeFromLocalRepository("test");
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
@@ -87,8 +80,17 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     finally {
+      myProjectsManager = null;
+      myProjectsTree = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    myProjectsManager = MavenProjectsManager.getInstance(myProject);
+    removeFromLocalRepository("test");
   }
 
   protected void assertModules(String... expectedNames) {

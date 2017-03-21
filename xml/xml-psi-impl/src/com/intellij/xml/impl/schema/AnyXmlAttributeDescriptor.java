@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myAttributeName;
@@ -61,6 +62,7 @@ public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public void init(PsiElement element){
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

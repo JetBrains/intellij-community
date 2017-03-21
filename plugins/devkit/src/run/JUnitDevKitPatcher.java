@@ -21,6 +21,8 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -56,10 +58,8 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
         PsiUtil.isIdeaProject(module.getProject()) &&
         !vm.hasProperty(SYSTEM_CL_PROPERTY) &&
         !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
       String qualifiedName = UrlClassLoader.class.getName();
-      PsiClass loader = ReadAction.compute(() -> facade.findClass(qualifiedName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)));
-      if (loader != null) {
+      if (findLoader(module, qualifiedName) != null) {
         vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
       }
     }
@@ -104,6 +104,19 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
+  }
+
+  private static PsiClass findLoader(Module module, String qualifiedName) {
+    Project project = module.getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    dumbService.setAlternativeResolveEnabled(true);
+    try {
+      return ReadAction.compute(() -> facade.findClass(qualifiedName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)));
+    }
+    finally {
+      dumbService.setAlternativeResolveEnabled(false);
+    }
   }
 
   @Nullable

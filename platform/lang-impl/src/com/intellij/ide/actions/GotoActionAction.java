@@ -126,7 +126,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                 if (mv.value instanceof GotoActionModel.ActionWrapper) {
                   AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
                   String actionId = ActionManager.getInstance().getId(action);
-                  return StringUtil.notNullize(actionId, "class: " + actionId.getClass().getName());
+                  return StringUtil.notNullize(actionId, "class: " + action.getClass().getName());
                 }
               }
 

@@ -20,7 +20,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationProducer;
+import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -55,6 +55,12 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myTempFiles = new TempFiles(myFilesToDelete);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myModulesToDispose.clear();
+    super.tearDown();
   }
 
   protected void addModule(String path) throws IOException {
@@ -111,12 +117,6 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     return LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myModulesToDispose.clear();
-    super.tearDown();
-  }
-
   protected void disposeModule(Module module) {
     assertTrue(myModulesToDispose.remove(module));
     ModuleManager.getInstance(myProject).disposeModule(module);
@@ -151,7 +151,7 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
   }
 
   protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
-                                                        @NotNull Class<? extends JUnitConfigurationProducer> producerClass,
+                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);

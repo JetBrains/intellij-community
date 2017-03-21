@@ -328,7 +328,11 @@ public class JavaKeywordCompletion {
 
   private static PsiSwitchStatement getSwitchFromLabelPosition(PsiElement position) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiStatement.class, false, PsiMember.class);
-    if (statement != null && !(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock) {
+    if (statement == null || statement.getTextRange().getStartOffset() != position.getTextRange().getStartOffset()) {
+      return null;
+    }
+
+    if (!(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock) {
       return ObjectUtils.tryCast(statement.getParent().getParent(), PsiSwitchStatement.class);
     }
     return null;

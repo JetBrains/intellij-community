@@ -20,10 +20,4 @@
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
     <importCandidateProvider implementation="com.jetbrains.python.psi.impl.PyJavaImportCandidateProvider"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
-    </component>
-  </application-components>
 </idea-plugin>

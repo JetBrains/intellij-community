@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
@@ -129,7 +130,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean HIGHLIGHT_IDENTIFIER_UNDER_CARET = true;
 
+  /**
+   * @deprecated use {@link CodeInsightWorkspaceSettings#optimizeImportsOnTheFly}
+   */
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
+
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;

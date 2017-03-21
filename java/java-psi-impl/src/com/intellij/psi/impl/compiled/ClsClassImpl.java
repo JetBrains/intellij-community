@@ -126,6 +126,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     return PsiClassImplUtil.getSuperClass(this);
   }
 
+  @NotNull
   @Override
   public PsiClass[] getInterfaces() {
     return PsiClassImplUtil.getInterfaces(this);

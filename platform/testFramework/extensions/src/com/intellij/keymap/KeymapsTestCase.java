@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control ADD",              "ExpandAll", "ExpandRegion"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
-    { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
+    { "control DOWN",             "EditorScrollDown", "EditorLookupDown", "MethodOverloadSwitchDown"},
     { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Execute.Multiline"},
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
@@ -106,7 +106,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control R",                "Replace", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
-    { "control UP",               "EditorScrollUp", "EditorLookupUp"},
+    { "control UP",               "EditorScrollUp", "EditorLookupUp", "MethodOverloadSwitchUp"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
@@ -124,7 +124,6 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter"},
     { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
-    { "shift alt T",              "tasks.switch", "tasks.switch.toolbar"},
     { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff"},
     { "shift control DOWN",       "ResizeToolWindowDown", "MoveStatementDown"},
     { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
@@ -143,6 +142,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
+    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
     });
     put("Mac OS X 10.5+", new String[][] {
@@ -163,6 +163,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
     { "meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
     { "meta O",                   "GotoClass", "GotoChangedFile"},
+    { "meta UP",                  "ShowNavBar", "MethodOverloadSwitchUp"},
+    { "meta DOWN",                "EditSource", "MethodOverloadSwitchDown"},
     { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindPrevious"},
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
@@ -212,8 +214,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control X",                "GotoFile", "SaveAll", "NextTab", "PreviousTab", "CloseContent", "CloseAllEditors", "NextSplitter",
                                   "GotoNextError", "NextProjectWindow", "EditorSwapSelectionBoundaries", "SplitVertically",
                                   "SplitHorizontally", "UnsplitAll", "Switcher", "$SelectAll"},
-    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp"},
-    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown"},
+    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp", "MethodOverloadSwitchUp"},
+    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown", "MethodOverloadSwitchDown"},
     { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "MethodDown", "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
@@ -222,6 +224,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt S",              "FindUsages", "context.save"},
     { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
     { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
+    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "shift control X",          "GotoPreviousError", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     });
     put("Visual Studio", new String[][] {
@@ -288,7 +291,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt L",              "IntroduceVariable", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
     { "shift alt P",              "hg4idea.QPushAction", "ImplementMethods"},
     { "shift alt S",              "ShowPopupMenu", "context.save"},
-    { "shift alt T",              "ShowPopupMenu", "tasks.switch", "tasks.switch.toolbar"},
+    { "shift alt T",              "ShowPopupMenu", "tasks.switch"},
     { "shift control DOWN",       "ResizeToolWindowDown", "MethodDown"},
     { "shift control E",          "EditSource", "RecentChangedFiles", "Graph.Faces.OpenSelectedPages"},
     { "shift control F6",         "PreviousTab", "ChangeTypeSignature"},
@@ -352,6 +355,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control F6",         "NextTab", "ChangeTypeSignature"},
     { "shift control G",          "GotoSymbol", "ClassTemplateNavigation", "GoToClass"},
     { "control SUBTRACT",         "CollapseAll", "CollapseRegion"},
+    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "shift control X",          "EditorToggleShowWhitespaces", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     });
     put("Eclipse (Mac OS X)", new String[][] {
@@ -378,6 +382,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
       { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
+      { "meta alt I",               "Inline", "DatabaseView.GenerateScriptIntoConsole"}
     });
   }};
   // @formatter:on

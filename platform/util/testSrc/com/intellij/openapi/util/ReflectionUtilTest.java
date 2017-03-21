@@ -60,30 +60,6 @@ public class ReflectionUtilTest extends TestCase {
     assertNull(Reset.STATIC_STRING);
   }
 
-  @SuppressWarnings("InnerClassMayBeStatic")
-  class Nested {}
-  static class Inner {
-    @SuppressWarnings("InnerClassMayBeStatic")
-    class Nested2 {}
-    static class Inner2 {}
-  }
-  public void testIsPotentiallyThisCapturing() throws Exception {
-    class Local {
-      @SuppressWarnings("InnerClassMayBeStatic")
-      class Nested3 {}
-    }
-    
-    assertTrue(ReflectionUtil.isPotentiallyThisCapturing(new Object(){}.getClass()));
-    assertTrue(ReflectionUtil.isPotentiallyThisCapturing(Local.class));
-    assertTrue(ReflectionUtil.isPotentiallyThisCapturing(Nested.class));
-    assertTrue(ReflectionUtil.isPotentiallyThisCapturing(Local.Nested3.class));
-    assertTrue(ReflectionUtil.isPotentiallyThisCapturing(Inner.Nested2.class));
-
-    assertFalse(ReflectionUtil.isPotentiallyThisCapturing(Object.class));
-    assertFalse(ReflectionUtil.isPotentiallyThisCapturing(Inner.class));
-    assertFalse(ReflectionUtil.isPotentiallyThisCapturing(Inner.Inner2.class));
-  }
-  
   @Override
   protected void setUp() throws Exception {
     super.setUp();

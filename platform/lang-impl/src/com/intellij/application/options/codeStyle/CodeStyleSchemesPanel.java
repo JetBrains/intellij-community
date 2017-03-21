@@ -132,4 +132,9 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   protected boolean highlightNonDefaultSchemes() {
     return true;
   }
+
+  @Override
+  public boolean useBoldForNonRemovableSchemes() {
+    return true;
+  }
 }

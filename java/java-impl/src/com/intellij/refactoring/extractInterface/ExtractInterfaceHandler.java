@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.refactoring.extractInterface;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -42,19 +44,22 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler {
+public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
 
-
   private Project myProject;
   private PsiClass myClass;
-
   private String myInterfaceName;
   private MemberInfo[] mySelectedMembers;
   private PsiDirectory myTargetDir;
   private DocCommentPolicy myJavaDocPolicy;
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !PsiUtil.isModuleFile(file);
+  }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
@@ -80,13 +85,13 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     myProject = project;
     myClass = (PsiClass)elements[0];
 
-
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(myProject, myClass);
     if (!dialog.showAndGet() || !dialog.isExtractSuperclass()) {
       return;
     }
+
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
@@ -103,7 +108,6 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
       }
     }), REFACTORING_NAME, null);
   }
-
 
   private void doRefactoring() throws IncorrectOperationException {
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());

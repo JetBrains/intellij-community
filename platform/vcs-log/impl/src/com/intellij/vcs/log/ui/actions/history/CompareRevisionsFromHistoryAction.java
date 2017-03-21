@@ -34,11 +34,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class CompareRevisionsFromHistoryAction extends AnAction implements DumbAware {
@@ -60,24 +62,34 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
     e.getPresentation().setVisible(true);
 
     List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
-    if (details.size() == 2) {
-      VcsFullCommitDetails detail0 = details.get(0);
-      VcsFullCommitDetails detail1 = details.get(1);
-      if (detail0 != null && !(detail0 instanceof LoadingDetails) &&
-          detail1 != null && !(detail1 instanceof LoadingDetails)) {
-        VcsFileRevision newestRevision = ui.createRevision(detail0);
-        VcsFileRevision olderRevision = ui.createRevision(detail1);
-        e.getPresentation().setEnabled(newestRevision != null && olderRevision != null && !filePath.isDirectory());
+
+    if (e.getInputEvent() instanceof KeyEvent) {
+      e.getPresentation().setEnabled(true);
+    }
+    else {
+      if (details.size() == 2) {
+        VcsFullCommitDetails detail0 = details.get(0);
+        VcsFullCommitDetails detail1 = details.get(1);
+        if (detail0 != null && !(detail0 instanceof LoadingDetails) &&
+            detail1 != null && !(detail1 instanceof LoadingDetails)) {
+          VcsFileRevision newestRevision = ui.createRevision(detail0);
+          VcsFileRevision olderRevision = ui.createRevision(detail1);
+          e.getPresentation().setEnabled(newestRevision != null && olderRevision != null && !filePath.isDirectory());
+        }
+        else {
+          e.getPresentation().setEnabled(!filePath.isDirectory());
+        }
       }
       else {
-        e.getPresentation().setEnabled(!filePath.isDirectory());
+        e.getPresentation().setEnabled(details.size() == 1);
       }
+    }
 
+    if (details.size() == 2) {
       e.getPresentation().setText(COMPARE_TEXT);
       e.getPresentation().setDescription(COMPARE_DESCRIPTION);
     }
     else {
-      e.getPresentation().setEnabled(details.size() == 1);
       e.getPresentation().setText(DIFF_TEXT);
       e.getPresentation().setDescription(DIFF_DESCRIPTION);
     }
@@ -85,14 +97,24 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
-
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
 
+    if (e.getInputEvent() instanceof MouseEvent && ui.getTable().isResizingColumns()) {
+      // disable action during columns resize
+      return;
+    }
+
+    VcsLogUtil.triggerUsage(e);
+
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
-    if (commits.size() != 1 && commits.size() != 2) return;
+    if (filePath.isDirectory()) {
+      if (commits.size() != 1) return;
+    }
+    else {
+      if (commits.size() != 1 && commits.size() != 2) return;
+    }
 
     List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
     ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {

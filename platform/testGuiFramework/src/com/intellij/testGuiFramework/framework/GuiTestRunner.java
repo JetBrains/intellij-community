@@ -15,6 +15,10 @@
  */
 package com.intellij.testGuiFramework.framework;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.extensions.PluginId;
 import org.fest.swing.image.ScreenshotTaker;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -33,11 +37,15 @@ import org.junit.runners.model.Statement;
 import org.junit.runners.model.TestClass;
 
 import java.awt.*;
+import java.io.File;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -101,7 +109,11 @@ public class GuiTestRunner extends BlockJUnit4ClassRunner {
   protected Statement methodBlock(FrameworkMethod method) {
     FrameworkMethod newMethod;
     try {
-      loadClassesWithIdeClassLoader();
+      if (Arrays.stream(getTestClass().getAnnotations()).anyMatch(annotation -> annotation instanceof ParentPlugin)) {
+        loadClassesWithNewPluginClassLoader();
+      } else {
+        loadClassesWithIdeClassLoader();
+      }
       Method methodFromClassLoader = myTestClass.getJavaClass().getMethod(method.getName());
       newMethod = new FrameworkMethod(methodFromClassLoader);
     }
@@ -147,6 +159,38 @@ public class GuiTestRunner extends BlockJUnit4ClassRunner {
     Class<?> testClass = getTestClass().getJavaClass();
     myTestClass = new TestClass(ideClassLoader.loadClass(testClass.getName()));
   }
+
+  private void loadClassesWithNewPluginClassLoader() throws Exception {
+
+    IdeTestApplication.getInstance(); //ensure that IDEA has been initialized.
+    ParentPlugin testParentPluginAnnotation = getTestClass().getAnnotation(ParentPlugin.class);
+    assertNotNull(testParentPluginAnnotation);
+
+    String dependentPluginId = testParentPluginAnnotation.pluginId();
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    String classPath = getTestClass().getJavaClass().getCanonicalName().replace(".", "/").concat(".class");
+    URL resource = classLoader.getResource(classPath);
+    assertNotNull(resource);
+    String pathToTestClass = resource.getPath();
+    String containingFolderPath = pathToTestClass.substring(0, pathToTestClass.length() - classPath.length());
+
+    URL urlToTestClass = (new File(containingFolderPath)).toURI().toURL();
+
+    IdeaPluginDescriptor parentPluginDescriptor = PluginManager.getPlugin(PluginId.getId(dependentPluginId));
+    assertNotNull(parentPluginDescriptor);
+    ClassLoader parentPluginClassLoader = parentPluginDescriptor.getPluginClassLoader();
+    ClassLoader[] classLoaders = {parentPluginClassLoader};
+
+    String testPluginId = dependentPluginId + ".guitest";
+    PluginClassLoader testPluginClassLoader =
+      new PluginClassLoader(Collections.singletonList(urlToTestClass), classLoaders, PluginId.getId(testPluginId), null, null);
+
+    Thread.currentThread().setContextClassLoader(testPluginClassLoader);
+
+    Class<?> testClass = getTestClass().getJavaClass();
+    myTestClass = new TestClass(testPluginClassLoader.loadClass(testClass.getName()));
+  }
+
 
   @Override
   protected Object createTest() throws Exception {

@@ -46,7 +46,7 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
     showHint(project);
   }
 
-  public static void showHint(Project project) {
+  public void showHint(Project project) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return;
@@ -64,9 +64,14 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
     }
     EduUsagesCollector.hintShown();
 
-    final StudyToolWindow hintComponent = new StudyHint(answerPlaceholder, project).getStudyToolWindow();
+    final StudyToolWindow hintComponent = getHint(project, answerPlaceholder).getStudyToolWindow();
     hintComponent.setPreferredSize(new Dimension(400, 150));
     showHintPopUp(project, studyState, editor, hintComponent);
+  }
+
+  @NotNull
+  protected StudyHint getHint(Project project, AnswerPlaceholder answerPlaceholder) {
+    return new StudyHint(answerPlaceholder, project);
   }
 
   private static void showHintPopUp(Project project, StudyState studyState, Editor editor, StudyToolWindow hintComponent) {

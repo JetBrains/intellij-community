@@ -299,12 +299,15 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean isDeprecated() {
-    final PsiFieldStub stub = getGreenStub();
+    return isFieldDeprecated(this, getGreenStub());
+  }
+
+  static boolean isFieldDeprecated(@NotNull PsiField field, @Nullable PsiFieldStub stub) {
     if (stub != null) {
-      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
+      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(field);
     }
 
-    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
+    return PsiImplUtil.isDeprecatedByDocTag(field) || PsiImplUtil.isDeprecatedByAnnotation(field);
   }
 
   @Override

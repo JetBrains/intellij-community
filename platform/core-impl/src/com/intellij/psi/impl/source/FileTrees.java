@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.Getter;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.PsiFileStubImpl;
@@ -27,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.util.Set;
 
 /**
  * @author peter
@@ -70,17 +68,16 @@ final class FileTrees {
     return new FileTrees(myStub, ast, true, useStrongRefs);
   }
 
-  FileTrees withExclusiveStub(@NotNull StubTree stub) {
-    assert derefTreeElement() == null && !useStrongRefs : this;
+  FileTrees withExclusiveStub(@NotNull StubTree stub, Set<PsiFileImpl> allRoots) {
+    if (derefTreeElement() != null || useStrongRefs) {
+      throw new RuntimeException(toString() + "; roots=" + allRoots);
+    }
     return new FileTrees(new SoftReference<>(stub), null, false, false);
   }
 
   FileTrees withGreenStub(@NotNull StubTree stub, @NotNull PsiFileImpl file) {
     if (derefTreeElement() == null || !astLoaded) {
-      Attachment[] attachments = ApplicationManager.getApplication().isInternal()
-                                 ? new Attachment[]{new Attachment(file.getName(), file.getText())}
-                                 : Attachment.EMPTY_ARRAY;
-      throw new RuntimeExceptionWithAttachments("No AST in file " + file + " of " + file.getClass() + "; " + this, attachments);
+      throw new RuntimeException("No AST in file " + file + " of " + file.getClass() + "; " + this);
     }
     return new FileTrees(new SoftReference<>(stub), myTreeElementPointer, true, useStrongRefs);
   }

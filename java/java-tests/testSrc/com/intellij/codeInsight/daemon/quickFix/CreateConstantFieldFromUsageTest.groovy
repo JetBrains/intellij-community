@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class CreateConstantFieldFromUsageTest extends LightCodeInsightFixtureTestCase {
 
   void "test add import when there is a single type variant"() {
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(project, myFixture.testRootDisposable)
     myFixture.addClass "package foo; public class Foo { public void someMethod() {} }"
     myFixture.configureByText "a.java", '''
 class Test {
@@ -42,7 +42,7 @@ class Test {
   }
 
   void "test inside annotation argument with braces"() {
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(project, myFixture.testRootDisposable)
     myFixture.configureByText "a.java", '''
 interface A {}
 @SuppressWarnings({A.CON<caret>ST})
@@ -59,7 +59,7 @@ class Test {}
   }
 
   void "test inside annotation argument no braces"() {
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(project, myFixture.testRootDisposable)
     myFixture.configureByText "a.java", '''
 interface A {}
 @SuppressWarnings(A.CON<caret>ST)
@@ -76,7 +76,7 @@ class Test {}
   }
 
   void "test insert presentable name when showing type lookup"() {
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(project, myFixture.testRootDisposable)
     myFixture.addClass "package foo; public class Foo { public void someMethod() {} }"
     myFixture.addClass "package bar; public class Bar { public void someMethod() {} }"
     myFixture.configureByText "a.java", '''

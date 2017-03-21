@@ -75,11 +75,11 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private ThreadTracker myThreadTracker;
   private final String myName;
 
-  public HeavyIdeaTestFixtureImpl(@NotNull String name) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name) {
     myName = name;
   }
 
-  protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
+  void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
     myModuleFixtureBuilders.add(builder);
   }
 
@@ -98,16 +98,15 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   @Override
   public void tearDown() throws Exception {
-    final Project project = getProject();
-
     RunAll runAll = new RunAll()
-      .append(() -> LightPlatformTestCase.doTearDown(project, myApplication, false))
+      .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
       .append(() -> {
         for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
           moduleFixtureBuilder.getFixture().tearDown();
         }
       })
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project)))
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
+      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
       .append(() -> myProject = null);
 
     for (File fileToDelete : myFilesToDelete) {
@@ -122,9 +121,8 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(super::tearDown)
       .append(() -> myEditorListenerTracker.checkListenersLeak())
       .append(() -> myThreadTracker.checkLeak())
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
-      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
+      .append(LightPlatformTestCase::checkEditorsReleased)
+      .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }
 
@@ -185,7 +183,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
           FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
           return manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         }
-        else if (LangDataKeys.IDE_VIEW.is(dataId)) {
+        if (LangDataKeys.IDE_VIEW.is(dataId)) {
           VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
           final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
           if (contentRoots.length > 0) {

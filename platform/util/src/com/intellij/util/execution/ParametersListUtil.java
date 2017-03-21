@@ -205,7 +205,10 @@ public class ParametersListUtil {
   private static void encodeParam(@NotNull StringBuilder builder) {
     StringUtil.escapeQuotes(builder);
     if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
+      // don't let a trailing backslash (if any) unintentionally escape the closing quote
+      int numTrailingBackslashes = builder.length() - StringUtil.trimTrailing(builder, '\\').length();
       StringUtil.quote(builder);
+      StringUtil.repeatSymbol(builder, '\\', numTrailingBackslashes);
     }
   }
 }

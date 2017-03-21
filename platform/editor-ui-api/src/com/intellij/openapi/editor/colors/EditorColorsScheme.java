@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
+public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo, EditorGeneratedTextAttributesCache {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
   void setName(String name);
@@ -99,6 +99,9 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   @NotNull
   FontPreferences getConsoleFontPreferences();
   void setConsoleFontPreferences(@NotNull FontPreferences preferences);
+  
+  default void setUseEditorFontPreferencesInConsole() {}
+  default boolean isUseEditorFontPreferencesInConsole() {return false;}
 
   String getConsoleFontName();
   void setConsoleFontName(String fontName);

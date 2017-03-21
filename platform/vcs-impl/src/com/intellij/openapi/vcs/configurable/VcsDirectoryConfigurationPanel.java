@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
-import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
+import static com.intellij.project.ProjectKt.guessProjectDir;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
@@ -76,7 +76,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<MapInfo, MapInfo> DIRECTORY;
-  private final JCheckBox myBaseRevisionTexts;
   private ListTableModel<MapInfo> myModel;
   private final Map<String, VcsDescriptor> myAllVcss;
   private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
@@ -306,7 +305,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
-    myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 
@@ -388,7 +386,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myRecentlyChangedConfigurable.reset();
     myLimitHistory.reset();
     myScopeFilterConfig.reset();
-    myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     myCommitMessageMarginConfigurable.reset();
     myShowUnversionedFiles.setSelected(myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
@@ -528,7 +525,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createProjectMappingDescription(), gb.nextLine().next());
     panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
-    panel.add(createStoreBaseRevisionOption(), gb.nextLine().next());
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
     panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
@@ -627,19 +623,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return label;
   }
 
-  private JComponent createStoreBaseRevisionOption() {
-    final JBLabel noteLabel =
-      new JBLabel("The base content of files larger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K will not be stored");
-    noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-    noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
-    noteLabel.setBorder(JBUI.Borders.empty(2, 25, 5, 0));
-
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myBaseRevisionTexts, BorderLayout.NORTH);
-    panel.add(noteLabel, BorderLayout.SOUTH);
-    return panel;
-  }
-
   private JComponent createShowChangedOption() {
     myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
     JComponent component = myRecentlyChangedConfigurable.createComponent();
@@ -682,7 +665,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myRecentlyChangedConfigurable.apply();
     myLimitHistory.apply();
     myScopeFilterConfig.apply();
-    myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
     myCommitMessageMarginConfigurable.apply();
     myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
@@ -695,7 +677,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     List<VcsDirectoryMapping> previousMappings = myVcsManager.getDirectoryMappings();
     myVcsConfiguration.addIgnoredUnregisteredRoots(previousMappings.stream()
         .filter(mapping -> !newMappings.contains(mapping))
-        .map(VcsDirectoryMapping::getDirectory)
+        .map(mapping -> mapping.isDefaultMapping() ? guessProjectDir(myProject).getPath() : mapping.getDirectory())
         .collect(Collectors.toList()));
     myVcsConfiguration.removeFromIgnoredUnregisteredRoots(map(newMappings, VcsDirectoryMapping::getDirectory));
   }
@@ -705,7 +687,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     if (myRecentlyChangedConfigurable.isModified()) return true;
     if (myLimitHistory.isModified()) return true;
     if (myScopeFilterConfig.isModified()) return true;
-    if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
     if (myVcsConfiguration.SHOW_DIRTY_RECURSIVELY != myShowChangedRecursively.isSelected()) {
       return true;
     }

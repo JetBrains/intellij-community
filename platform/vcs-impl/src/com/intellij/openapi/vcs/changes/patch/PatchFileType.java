@@ -60,7 +60,7 @@ public class PatchFileType implements FileType {
 
   @Nullable
   public Icon getIcon() {
-    return AllIcons.Nodes.Pointcut;
+    return AllIcons.Vcs.Patch;
   }
 
   public boolean isBinary() {

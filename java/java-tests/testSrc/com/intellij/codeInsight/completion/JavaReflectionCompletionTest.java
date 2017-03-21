@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,11 +35,11 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testDeclaredField() throws Exception {
-    doTest(2, "num", "num1", "num2");
+    doTest(2, "num", "num1", "num2", "num0");
   }
 
   public void testDeclaredMethod() throws Exception {
-    doTest(2, "method", "method1", "method2");
+    doTest(2, "method", "method1", "method2", "method0");
   }
 
   public void testDeclaredMethod2() throws Exception {
@@ -46,7 +47,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testMethod() throws Exception {
-    doTest(1, "method", "method2", "method3");
+    doTestFirst(1, "method", "method2", "method3");
   }
 
   public void testForNameDeclaredMethod() throws Exception {
@@ -54,7 +55,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testForNameMethod() throws Exception {
-    doTest(1, "method", "method2", "method3");
+    doTestFirst(1, "method", "method2", "method3");
   }
 
   public void testForNameField() throws Exception {
@@ -71,31 +72,39 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
 
   public void testGenerics() throws Exception {
     myFixture.addFileToProject("a.properties", "foo=bar"); // check that property variants don't override reflection ones
-    doTest(0, "foo");
+    doTestFirst(0, "foo");
   }
 
   public void testInheritedMethod() throws Exception {
-    doTest(1, "method", "method2", "method3");
+    doTestFirst(1, "method", "method2", "method3", "method5");
   }
 
   public void testInheritedDeclaredMethod() throws Exception {
-    doTest(1, "method", "method3");
+    doTest(1, "method", "method3", "method5");
   }
 
   public void testInheritedField() throws Exception {
-    doTest(1, "num", "num2", "num3");
+    doTest(1, "num", "num2", "num3", "num5");
   }
 
   public void testInheritedDeclaredField() throws Exception {
-    doTest(1, "num", "num3");
+    doTest(1, "num", "num3", "num5");
+  }
+
+  public void testShadowedField() {
+    doTest(0, "shadowed");
+  }
+
+  public void testShadowedSuperField() {
+    doTest(0, "shadowed");
   }
 
   public void testInitRaw() throws Exception {
-    doTest(1, "method", "method2");
+    doTestFirst(1, "method", "method2");
   }
 
   public void testInitWithType() throws Exception {
-    doTest(1, "method", "method2");
+    doTestFirst(1, "method", "method2");
   }
 
   public void testInitChain() throws Exception {
@@ -115,15 +124,15 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testJdk14() throws Exception {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> doTest(0, "method"));
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> doTestFirst(0, "method"));
   }
 
   public void testWildcard() throws Exception {
-    doTest(0, "method");
+    doTestFirst(0, "method");
   }
 
   public void testConstantMethod() throws Exception {
-    doTest(0, "method", "method2");
+    doTestFirst(0, "method", "method2");
   }
 
   public void testDistantDefinition() throws Exception {
@@ -166,13 +175,21 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testHasConstructor() {
-    doTest(2, "method", "method2", "method1");
+    doTestFirst(2, "method", "method2", "method1");
   }
 
 
   private void doTest(int index, String... expected) {
+    doTest(index, () -> assertStringItems(expected));
+  }
+
+  private void doTestFirst(int index, String... expected) {
+    doTest(index, () -> assertFirstStringItems(ArrayUtil.mergeArrays(expected, "equals")));
+  }
+
+  private void doTest(int index, Runnable assertion) {
     configureByFile(getTestName(false) + ".java");
-    assertFirstStringItems(expected);
+    assertion.run();
     if (index >= 0) selectItem(getLookup().getItems().get(index));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }

@@ -123,7 +123,7 @@ public class DomStubUsingTest extends DomStubTest {
 
   public void testFileLoading() {
     XmlFile file = prepareFile("foo.xml");
-    ((PsiManagerEx)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
+    ((PsiManagerEx)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myFixture.getTestRootDisposable());
     DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
     assertNotNull(element);
     GenericDomValue<String> id = element.getRootElement().getId();

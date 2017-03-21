@@ -10,8 +10,8 @@ public class Main {
       List<Integer> list = new ArrayList<>();
       for (int x : input) {
           if (x > 0) {
-              Integer i = x * 2;
-              list.add(i);
+              Integer integer = x * 2;
+              list.add(integer);
           }
       }
       return list;

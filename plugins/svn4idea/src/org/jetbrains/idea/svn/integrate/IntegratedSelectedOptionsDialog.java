@@ -40,10 +40,10 @@ import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JPanel contentPane;
@@ -77,11 +77,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     init();
 
     myWorkingCopiesList.setModel(new DefaultListModel());
-    myWorkingCopiesList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
-      }
-    });
+    myWorkingCopiesList
+      .addListSelectionListener(e -> setOKActionEnabled((!myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1)));
     setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
 
     final List<WorkingCopyInfo> workingCopyInfoList = new ArrayList<>();
@@ -116,7 +113,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       public void actionPerformed(final AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
-          final File file = new File(vFile.getPath());
+          final File file = virtualToIoFile(vFile);
           if (hasDuplicate(file)) {
             return; // silently do not add duplicate
           }
@@ -212,12 +209,9 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   private boolean underProject(final File file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-        return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
-      }
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
+      return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
     });
   }
 

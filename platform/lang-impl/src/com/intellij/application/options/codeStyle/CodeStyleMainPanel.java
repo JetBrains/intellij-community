@@ -122,13 +122,20 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     JLabel link = new SwingActionLink(mySetFromAction);
     link.setVerticalAlignment(SwingConstants.BOTTOM);
 
-    JPanel top = new JPanel(new BorderLayout());
+    JPanel top = new JPanel();
+    top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
+
     if (mySchemesPanelEnabled) {
-      top.add(BorderLayout.WEST, mySchemesPanel);
-      top.add(BorderLayout.EAST, link);
+      JPanel linkPanel = new JPanel();
+      linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
+      linkPanel.add(Box.createVerticalGlue());
+      linkPanel.add(link);
+      top.add(mySchemesPanel);
+      top.add(Box.createRigidArea(new Dimension(10,0)));
+      top.add(linkPanel);
     }
 
-    top.setBorder(JBUI.Borders.empty(10));
+    top.setBorder(JBUI.Borders.empty(10, 10, 0, 10));
     add(top, BorderLayout.NORTH);
     add(mySettingsPanel, BorderLayout.CENTER);
 

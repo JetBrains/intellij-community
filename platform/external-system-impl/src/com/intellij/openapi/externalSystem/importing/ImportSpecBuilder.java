@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.importing;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,13 +38,22 @@ public class ImportSpecBuilder {
   private boolean myForceWhenUptodate;
   private boolean myWhenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
-  //private boolean isPreviewMode;
-  //private boolean isReportRefreshError;
+  private boolean isPreviewMode;
+  private boolean isReportRefreshError = true;
+  @Nullable private String myVmOptions;
+  @Nullable private String myArguments;
+  private boolean myUseDefaultCallback;
+  private boolean myCreateDirectoriesForEmptyContentRoots;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
     myExternalSystemId = id;
     myProgressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC;
+  }
+
+  public ImportSpecBuilder(ImportSpec importSpec) {
+    this(importSpec.getProject(), importSpec.getExternalSystemId());
+    apply(importSpec);
   }
 
   public ImportSpecBuilder whenAutoImportEnabled() {
@@ -67,19 +80,77 @@ public class ImportSpecBuilder {
     return this;
   }
 
-  //public ImportSpecBuilder usePreviewMode() {
-  //  isPreviewMode = true;
-  //  return this;
-  //}
+  public ImportSpecBuilder usePreviewMode() {
+    isPreviewMode = true;
+    return this;
+  }
+
+  public ImportSpecBuilder createDirectoriesForEmptyContentRoots() {
+    myCreateDirectoriesForEmptyContentRoots = true;
+    return this;
+  }
+
+  public ImportSpecBuilder dontReportRefreshErrors() {
+    isReportRefreshError = false;
+    return this;
+  }
+
+  public ImportSpecBuilder withVmOptions(@Nullable String vmOptions) {
+    myVmOptions = vmOptions;
+    return this;
+  }
+
+  public ImportSpecBuilder withArguments(@Nullable String arguments) {
+    myArguments = arguments;
+    return this;
+  }
+
+  public ImportSpecBuilder useDefaultCallback() {
+    myUseDefaultCallback = true;
+    return this;
+  }
 
   public ImportSpec build() {
-    ImportSpec mySpec = new ImportSpec(myProject, myExternalSystemId);
+    ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
     mySpec.setWhenAutoImportEnabled(myWhenAutoImportEnabled);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
-    mySpec.setCallback(myCallback);
-    //mySpec.setPreviewMode(isPreviewMode);
-    //mySpec.setReportRefreshError(isReportRefreshError);
+    mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
+    if (myUseDefaultCallback) {
+      mySpec.setCallback(new ExternalProjectRefreshCallback() {
+        @Override
+        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+          if (externalProject == null) {
+            return;
+          }
+          final boolean synchronous = mySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
+          ServiceManager.getService(ProjectDataManager.class).importData(externalProject, mySpec.getProject(), synchronous);
+        }
+
+        @Override
+        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        }
+      });
+    }
+    else {
+      mySpec.setCallback(myCallback);
+    }
+    mySpec.setPreviewMode(isPreviewMode);
+    mySpec.setReportRefreshError(isReportRefreshError);
+    mySpec.setArguments(myArguments);
+    mySpec.setVmOptions(myVmOptions);
     return mySpec;
+  }
+
+  private void apply(ImportSpec spec) {
+    myWhenAutoImportEnabled = spec.whenAutoImportEnabled();
+    myProgressExecutionMode = spec.getProgressExecutionMode();
+    myForceWhenUptodate = spec.isForceWhenUptodate();
+    myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
+    myCallback = spec.getCallback();
+    isPreviewMode = spec.isPreviewMode();
+    isReportRefreshError = spec.isReportRefreshError();
+    myArguments = spec.getArguments();
+    myVmOptions = spec.getVmOptions();
   }
 }

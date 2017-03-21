@@ -19,6 +19,9 @@ import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -45,7 +48,6 @@ import org.fest.swing.core.matcher.JButtonMatcher;
 import org.fest.swing.core.matcher.JLabelMatcher;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
-import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
@@ -58,6 +60,7 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -296,6 +299,19 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    */
   public void invokeMenuPath(@NotNull String... path) {
     getMenuFixture().invokeMenuPath(path);
+  }
+
+  /**
+   * Invokes an action from main menu
+   *
+   * @param mainMenuAction is the typical AnAction with ActionPlaces.MAIN_MENU
+   */
+  public void invokeMainMenu(@NotNull String mainMenuActionId) {
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction mainMenuAction = actionManager.getAction(mainMenuActionId);
+    JMenuBar jMenuBar = this.target().getRootPane().getJMenuBar();
+    MouseEvent fakeMainMenuMouseEvent = new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y, 1,  false);
+    ApplicationManager.getApplication().invokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**

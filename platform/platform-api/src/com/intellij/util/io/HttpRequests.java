@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
@@ -448,11 +450,7 @@ public final class HttpRequests {
         request.myUrl = url = "https:" + url.substring(5);
       }
 
-      if (url.startsWith("https:") && ApplicationManager.getApplication() != null) {
-        CertificateManager.getInstance();
-      }
-
-      URLConnection connection;
+      final URLConnection connection;
       if (!builder.myUseProxy) {
         connection = new URL(url).openConnection(Proxy.NO_PROXY);
       }
@@ -463,6 +461,26 @@ public final class HttpRequests {
         connection = HttpConfigurable.getInstance().openConnection(url);
       }
 
+      if (connection instanceof HttpsURLConnection) {
+        if (ApplicationManager.getApplication() != null) {
+          try {
+            final SSLContext context = CertificateManager.getInstance().getSslContext();
+            final SSLSocketFactory factory = context.getSocketFactory();
+            if (factory != null) {
+              ((HttpsURLConnection)connection).setSSLSocketFactory(factory);
+            }
+            else {
+              LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
+            }
+          }
+          catch (Throwable e) {
+            LOG.info("Problems configuring SSL connection to " + url , e);
+          }
+        }
+        else {
+          LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
+        }
+      }
       connection.setConnectTimeout(builder.myConnectTimeout);
       connection.setReadTimeout(builder.myTimeout);
 

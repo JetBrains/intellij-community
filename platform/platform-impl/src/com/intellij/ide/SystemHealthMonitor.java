@@ -243,7 +243,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
           try {
             final long fileUsableSpace = future.get();
-            final long timeout = Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS);
+            final long timeout = Math.min(3600, Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS));
             ourFreeSpaceCalculation.set(null);
 
             if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {

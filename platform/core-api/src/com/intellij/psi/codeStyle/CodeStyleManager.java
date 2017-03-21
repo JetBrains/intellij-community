@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,6 +267,16 @@ public abstract class CodeStyleManager  {
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
+
+  /**
+   * Calculates minimum spacing, allowed by formatting model (in columns) for a block starting at given offset,
+   * relative to its previous sibling block.
+   * Returns <code>-1</code>, if required block cannot be found at provided offset,
+   * or spacing cannot be calculated due to some other reason.
+   */
+  public int getSpacing(@NotNull PsiFile file, int offset) {
+    return -1;
+  }
 
   /**
    * Retrieves the current formatting mode.

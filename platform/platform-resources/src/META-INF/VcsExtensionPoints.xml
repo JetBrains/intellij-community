@@ -33,6 +33,8 @@
       <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
     </extensionPoint>
 
+    <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider"/>
+
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
                     area="IDEA_PROJECT"/>

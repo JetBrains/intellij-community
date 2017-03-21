@@ -57,12 +57,12 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
   
   @Override
   protected void tearDown() throws Exception {
+    myModule = null;
     try {
       myFixture.tearDown();
     }
     finally {
       myFixture = null;
-      myModule = null;
 
       super.tearDown();
     }

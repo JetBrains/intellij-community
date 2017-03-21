@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -95,6 +96,16 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
 
     setBackground(list.getBackground());
     //setFocusable(true);
+  }
+
+  @Override
+  protected void processFocusEvent(FocusEvent e) {
+    super.processFocusEvent(e);
+    if (e.getID() == FocusEvent.FOCUS_GAINED) {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
+      });
+    }
   }
 
   public boolean resetFilter() {

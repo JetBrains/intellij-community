@@ -54,6 +54,12 @@ public class RootsChangedTest extends ModuleTestCase {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myModuleRootListener = null;
+    super.tearDown();
+  }
+
   public void testEventsAfterFileModifications() throws Exception {
     File root = new File(FileUtil.getTempDirectory());
 
@@ -96,7 +102,7 @@ public class RootsChangedTest extends ModuleTestCase {
     assertNotNull(vSubdir);
 
     move(vDir2, vSubdir);
-    assertEventsCount(0);
+    assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
                    "    }\n" +
                    "}");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
-    checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+    checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -89,12 +89,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
       }
     }.execute().throwException();
 
-    checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
+    checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
     WriteCommandAction.runWriteCommandAction(getProject(),
                                              () -> myEditor.getDocument().deleteString(0, 2));
 
-    checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+    checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
   }
   
   public void testInvalidRegionIsRemovedOnExpanding() throws Exception {
@@ -104,7 +104,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
                    "    }\n" +
                    "}");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
-    checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+    checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -113,7 +113,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
       }
     }.execute().throwException();
 
-    checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
+    checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
     executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
     checkFoldingState("[FoldRegion -(0:37), placeholder='/.../']");

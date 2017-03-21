@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,14 +124,14 @@ public class FormatterImpl extends FormatterEx
           SpacingImpl spacing = (SpacingImpl)parentBlock.getSpacing(prevBlock, targetBlock);
           if (spacing != null) {
             int minSpaces = spacing.getMinSpaces();
-            if (minSpaces > 0) {
+            if (minSpaces >= 0) {
               return minSpaces;
             }
           }
         }
       }
     }
-    return 0;
+    return -1;
   }
 
   @Nullable

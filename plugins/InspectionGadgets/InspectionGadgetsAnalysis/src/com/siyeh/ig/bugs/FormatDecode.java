@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,7 +29,7 @@ import java.util.regex.Pattern;
 
 class FormatDecode {
 
-  private static final Pattern fsPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d*)?([tT])?([a-zA-Z%])");
+  private static final Pattern fsPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d*)?([tT])?([a-zA-Z%])");
 
   private FormatDecode() {}
 
@@ -95,6 +96,7 @@ class FormatDecode {
     }
   }
 
+  @NotNull
   public static Validator[] decode(String formatString, int argumentCount) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 

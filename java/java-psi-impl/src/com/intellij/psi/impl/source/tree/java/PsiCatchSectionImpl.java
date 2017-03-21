@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -123,16 +124,16 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
         }
         return thrownType;
       });
+      if (uncaughtTypes.isEmpty()) return Collections.emptyList();  // unreachable catch section
       // ... and T is assignable to Ej ...
-      boolean passed = true;
+      List<PsiType> types = new ArrayList<>();
       for (PsiType type : uncaughtTypes) {
-        if (!declaredType.isAssignableFrom(type) && !(type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type))) {
-          passed = false;
-          break;
+        if (declaredType.isAssignableFrom(type) || type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
+          types.add(type);
         }
       }
       // ... the throw statement throws precisely the set of exception types T.
-      if (passed) return uncaughtTypes;
+      if (!types.isEmpty()) return types;
     }
 
     return Collections.singletonList(declaredType);

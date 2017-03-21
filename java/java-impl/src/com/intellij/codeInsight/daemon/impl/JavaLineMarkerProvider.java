@@ -315,6 +315,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return "Java line markers";
   }
 
+  @NotNull
   @Override
   public Option[] getOptions() {
     return new Option[] {myLambdaOption, myOverriddenOption, myImplementedOption, myOverridingOption, myImplementingOption};

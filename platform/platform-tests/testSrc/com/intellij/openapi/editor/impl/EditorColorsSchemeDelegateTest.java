@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.testFramework.TestFileType;
 
@@ -42,13 +43,16 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager().removeScheme(myTestScheme);
     }
     finally {
+      myTestScheme = null;
+      mySavedScheme = null;
       super.tearDown();
     }
   }
   
   public void testSecondaryFontIsAvailable() throws Exception {
     FontPreferences globalPrefs = myTestScheme.getFontPreferences();
-    globalPrefs.register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
+    assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
+    ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
     assertEquals(2, globalPrefs.getRealFontFamilies().size());
     
     init("blah", TestFileType.TEXT);

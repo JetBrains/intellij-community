@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,6 +132,7 @@ public class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
+    if (!withIdeSettings && project == null) project = ProjectManager.getInstance().getDefaultProject();
     return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
 
@@ -352,13 +354,13 @@ public class ConfigurableExtensionPointUtil {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
         for (ConfigurableEP<Configurable> extension : application.getExtensions(Configurable.APPLICATION_CONFIGURABLE)) {
-          addValid(list, ConfigurableWrapper.wrapConfigurable(extension), null);
+          addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), null);
         }
       }
     }
     if (project != null && !project.isDisposed()) {
       for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {
-        addValid(list, ConfigurableWrapper.wrapConfigurable(extension), project);
+        addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project);
       }
     }
     return list;

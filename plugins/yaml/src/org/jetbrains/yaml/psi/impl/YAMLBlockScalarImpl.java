@@ -3,6 +3,7 @@ package org.jetbrains.yaml.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.List;
 
 public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
   protected static final int DEFAULT_CONTENT_INDENT = 2;
-  
+
   public YAMLBlockScalarImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -32,13 +33,17 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
   @NotNull
   @Override
   public List<TextRange> getContentRanges() {
-    final int myStart = getTextOffset();
-    final ASTNode node = getNode();
+    final ASTNode firstContentChild = getFirstContentNode();
+    if (firstContentChild == null) {
+      return Collections.emptyList();
+    }
+
+    final int myStart = getTextRange().getStartOffset();
     final List<TextRange> result = new ArrayList<>();
 
     final int indent = locateIndent();
 
-    final ASTNode firstEol = node.findChildByType(YAMLTokenTypes.EOL);
+    final ASTNode firstEol = TreeUtil.findSibling(firstContentChild, YAMLTokenTypes.EOL);
     if (firstEol == null) {
       return Collections.emptyList();
     }
@@ -47,7 +52,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     for (ASTNode child = firstEol.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
       final TextRange childRange = child.getTextRange();
-      
+
       if (childType == YAMLTokenTypes.INDENT && isEol(child.getTreePrev())) {
         thisLineStart = child.getStartOffset() + Math.min(indent, child.getTextLength());
       }
@@ -89,7 +94,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     }
     return 0;
   }
-  
+
   private static boolean isEol(@Nullable ASTNode node) {
     return node != null && node.getElementType() == YAMLTokenTypes.EOL;
   }

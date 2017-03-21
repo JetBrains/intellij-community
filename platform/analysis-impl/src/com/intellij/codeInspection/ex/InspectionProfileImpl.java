@@ -21,7 +21,6 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -74,9 +73,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private volatile String myToolShortName;
   private String[] myScopesOrder;
   private String myDescription;
-  private volatile boolean myInitialized;
-
-  private final Object myLock = new Object();
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
@@ -147,9 +143,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return level;
   }
 
-  @Override
   public void readExternal(@NotNull Element element) {
-    super.readExternal(element);
+    mySerializer.readExternal(this, element);
 
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
@@ -190,7 +185,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @NotNull
   public Set<HighlightSeverity> getUsedSeverities() {
-    LOG.assertTrue(myInitialized);
+    LOG.assertTrue(wasInitialized());
     Set<HighlightSeverity> result = new THashSet<>();
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
@@ -212,7 +207,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return myDataHolder.read();
     }
 
-    Element element = super.writeScheme();
+    Element element = new Element(PROFILE);
+    writeExternal(element);
     if (isProjectLevel()) {
       element.setAttribute("version", "1.0");
     }
@@ -226,15 +222,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return element;
   }
 
-  @Override
   public void writeExternal(@NotNull Element element) {
     // must be first - compatibility
     element.setAttribute(VERSION_TAG, VALID_VERSION);
 
-    super.writeExternal(element);
+    mySerializer.writeExternal(this, element);
 
     synchronized (myLock) {
-      if (!myInitialized) {
+      if (!wasInitialized()) {
         for (Element el : myUninitializedSettings.values()) {
           element.addContent(el.clone());
         }
@@ -402,7 +397,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void scopesChanged() {
-    if (!myInitialized) {
+    if (!wasInitialized()) {
       return;
     }
 
@@ -470,29 +465,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public boolean wasInitialized() {
-    return myInitialized;
-  }
-
-  public void initInspectionTools(@Nullable Project project) {
-    //noinspection TestOnlyProblems
-    if (myInitialized || (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS)) {
-      return;
-    }
-
-    synchronized (myLock) {
-      if (!myInitialized) {
-        initialize(project);
-      }
-    }
-  }
-
   @NotNull
   protected List<InspectionToolWrapper> createTools(@Nullable Project project) {
     return myRegistrar.createTools();
   }
 
-  private void initialize(@Nullable Project project) {
+  @Override
+  protected void initialize(@Nullable Project project) {
     SchemeDataHolder<? super InspectionProfileImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
       myDataHolder = null;
@@ -538,7 +517,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
     copyToolsConfigurations(project);
 
-    myInitialized = true;
+    initialized = true;
     if (dataHolder != null) {
       // should be only after set myInitialized
       dataHolder.updateDigest(this);
@@ -615,6 +594,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
+      @NotNull
       @Override
       public String[] getSourceToolNames() {
         return merger.getSourceToolNames();
@@ -644,7 +624,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void cleanup(@NotNull Project project) {
-    if (!myInitialized) {
+    if (!wasInitialized()) {
       return;
     }
 
@@ -677,6 +657,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
+  @Deprecated
   public void disableTool(@NotNull String inspectionTool, @Nullable Project project) {
     setToolEnabled(inspectionTool, false, project);
   }
@@ -687,7 +668,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
+  public boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element) {
     if (key == null) {
       return false;
     }
@@ -696,12 +677,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  public boolean isToolEnabled(@Nullable HighlightDisplayKey key) {
-    return isToolEnabled(key, null);
-  }
-
-  @Override
-  public boolean isExecutable(Project project) {
+  public boolean isExecutable(@Nullable Project project) {
     initInspectionTools(project);
     for (Tools tools : myTools.values()) {
       if (tools.isEnabled()) return true;
@@ -773,8 +749,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @NotNull
-  public List<ScopeToolState> getAllTools(@Nullable Project project) {
-    initInspectionTools(project);
+  public List<ScopeToolState> getAllTools() {
+    initInspectionTools();
 
     List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {

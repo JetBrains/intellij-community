@@ -17,10 +17,12 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
@@ -186,6 +188,34 @@ public class PyTypeModelBuilder {
       visitor.param(this);
     }
   }
+  
+  static class ClassObjectType extends TypeModel {
+    private final TypeModel classType;
+
+    public ClassObjectType(TypeModel classType) {
+      this.classType = classType;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.classObject(this);
+    }
+  } 
+  
+  static class GenericType extends TypeModel {
+    private final String name;
+    private final List<TypeModel> bounds;
+
+    public GenericType(@Nullable String name, @NotNull List<TypeModel> bounds) {
+      this.name = name;
+      this.bounds = bounds;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.genericType(this);
+    }
+  }
 
   /**
    * Builds tree-like type model for PyType
@@ -238,18 +268,49 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyUnionType && allowUnions) {
       final PyUnionType unionType = (PyUnionType)type;
-      if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type)) {
+      final Collection<PyType> unionMembers = unionType.getMembers();
+      final Ref<PyType> optionalType = getOptionalType(unionType);
+      if (optionalType != null) {
+        result = new OptionalType(build(optionalType.get(), true));
+      }
+      else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false)) {
         result = new UnknownType(build(unionType.excludeNull(myContext), true));
       }
+      else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
+        final List<TypeModel> instanceTypes = ContainerUtil.map(unionMembers, t -> build(((PyClassType)t).toInstance(), allowUnions));
+        result = new ClassObjectType(new OneOf(instanceTypes));
+      }
       else {
-        result = Optional
-          .ofNullable(getOptionalType(unionType))
-          .<PyTypeModelBuilder.TypeModel>map(optionalType -> new OptionalType(build(optionalType, true)))
-          .orElseGet(() -> new OneOf(Collections2.transform(unionType.getMembers(), t -> build(t, false))));
+        result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
-      result = build((PyCallableType)type);
+      result = buildCallable((PyCallableType)type);
+    }
+    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+      // Special case: render Type[type] as just type
+      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
+        result = NamedType.nameOrAny(type);
+      }
+      else {
+        result = new ClassObjectType(build(instanceType, allowUnions));
+      }
+    }
+    else if (type instanceof PyGenericType) {
+      //assert !((PyGenericType)type).isDefinition()
+      final PyType bound = ((PyGenericType)type).getBound();
+      final List<TypeModel> boundNames;
+      if (bound instanceof PyUnionType) {
+        boundNames = ContainerUtil.map(((PyUnionType)bound).getMembers(), t -> build(t, allowUnions));
+      }
+      else if (bound != null) {
+        boundNames = Collections.singletonList(build(bound, allowUnions));
+      }
+      else {
+        boundNames = Collections.emptyList();
+      }
+      result = new GenericType(type.getName(), boundNames);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -259,7 +320,7 @@ public class PyTypeModelBuilder {
   }
 
   @Nullable
-  private static PyType getOptionalType(@NotNull PyUnionType type) {
+  private static Ref<PyType> getOptionalType(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
     if (members.size() == 2) {
       boolean foundNone = false;
@@ -273,13 +334,13 @@ public class PyTypeModelBuilder {
         }
       }
       if (foundNone) {
-        return optional;
+        return Ref.create(optional);
       }
     }
     return null;
   }
 
-  private TypeModel build(@NotNull PyCallableType type) {
+  private TypeModel buildCallable(@NotNull PyCallableType type) {
     List<TypeModel> parameterModels = null;
     final List<PyCallableParameter> parameters = type.getParameters(myContext);
     if (parameters != null) {
@@ -309,6 +370,10 @@ public class PyTypeModelBuilder {
     void optional(OptionalType type);
 
     void tuple(TupleType type);
+
+    void classObject(ClassObjectType type);
+
+    void genericType(GenericType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -502,6 +567,32 @@ public class PyTypeModelBuilder {
         add(", ...");
       }
       add("]");
+    }
+
+    @Override
+    public void classObject(ClassObjectType type) {
+      add("Type[");
+      type.classType.accept(this);
+      add("]");
+    }
+
+    @Override
+    public void genericType(GenericType type) {
+      add("TypeVar('");
+      add(type.name);
+      add("'");
+      if (!type.bounds.isEmpty()) {
+        add(", ");
+        boolean first = true;
+        for (TypeModel bound : type.bounds) {
+          if (!first) {
+            add(", ");
+          }
+          bound.accept(this);
+          first = false;
+        }
+      }
+      add(")");
     }
   }
 }

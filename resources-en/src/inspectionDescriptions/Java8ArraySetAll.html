@@ -1,7 +1,7 @@
 <html>
 <body>
-This inspection looks for loops which could be replaced with <code>Arrays.setAll()</code> call.
-<p>The loops like this are reported:</p>
+Reports loops which could be replaced with <code>Arrays.setAll()</code> call.
+<p>For example:</p>
 <pre>
   for (int i=0; i&lt;array.length; i++) {
      array[i] = calc(i);
@@ -9,6 +9,6 @@ This inspection looks for loops which could be replaced with <code>Arrays.setAll
 </pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
-<p><small>New in 2017.1</small>
+<p><small>New in 2017.1</small></p>
 </body>
 </html>

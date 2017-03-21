@@ -20,8 +20,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
@@ -121,7 +123,8 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditor.getSettings().setCaretRowShown(false);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
-    myComment.setText("Available placeholders: " + repository.getComment());
+
+    setupPlaceholdersComment();
     String advertiser = repository.getRepositoryType().getAdvertiser();
     if (advertiser != null) {
       Messages.installHyperlinkSupport(myAdvertiser);
@@ -153,6 +156,23 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
     setAnchor(myUseProxy);
     loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
+  }
+
+  private void setupPlaceholdersComment() {
+    StringBuilder comment = new StringBuilder(myRepository.getComment());
+
+    CommitPlaceholderProvider[] extensions = Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME);
+    for (CommitPlaceholderProvider extension : extensions) {
+      String[] placeholders = extension.getPlaceholders(myRepository);
+      for (String placeholder : placeholders) {
+        comment.append(", {").append(placeholder).append("}");
+        String description = extension.getPlaceholderDescription(placeholder);
+        if (description != null) {
+          comment.append(" (").append(description).append(")");
+        }
+      }
+    }
+    myComment.setText("Available placeholders: " + comment);
   }
 
 

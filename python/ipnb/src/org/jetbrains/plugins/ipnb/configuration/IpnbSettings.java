@@ -19,6 +19,15 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   private String myWorkingDirectory;
   private String myArguments = "";
   private String myUsername;
+  private boolean myIsRemote;
+
+  public boolean isRemote() {
+    return myIsRemote;
+  }
+
+  public void setRemote(boolean remote) {
+    myIsRemote = remote;
+  }
 
   public static IpnbSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, IpnbSettings.class);
@@ -76,11 +85,6 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
     final String url = getURL();
     final String accountName = createAccountName(username, url, projectPathHash);
     PasswordSafe.getInstance().setPassword(IpnbSettings.class, accountName, password);
-  }
-  
-  public boolean isRemote(String locationHash) {
-    final String password = getPassword(locationHash);
-    return !password.isEmpty();
   }
 
   private static String createAccountName(@NotNull String username, @NotNull String url, @NotNull String projectPath) {
