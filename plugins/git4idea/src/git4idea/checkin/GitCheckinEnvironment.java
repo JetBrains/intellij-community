@@ -67,7 +67,6 @@ import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitHooksInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -702,6 +701,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAuthor = null;
     myNextCommitIsPushed = null;
     myNextCommitAuthorDate = null;
+    myNextCommitSkipHook = false;
   }
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
@@ -711,7 +711,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable private Date myAuthorDate;
     @NotNull private AmendComponent myAmendComponent;
     @NotNull private final JCheckBox mySignOffCheckbox;
-    @NotNull private final JCheckBox mySkipHook;
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       myVcs = assertNotNull(GitVcs.getInstance(project));
@@ -726,15 +725,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
 
-      mySkipHook = new JBCheckBox(GitBundle.getString("commit.hook.skip"), mySettings.shouldSkipCommitHook());
-      mySkipHook.setMnemonic(KeyEvent.VK_H);
-      mySkipHook.setToolTipText(GitBundle.getString("commit.hook.skip.tooltip"));
-      mySkipHook.setVisible(getRepositoryManager(myProject)
-                              .getRepositories()
-                              .stream()
-                              .map(e -> e.getInfo().getHooksInfo())
-                              .anyMatch(GitHooksInfo::isPreCommitHookAvailable));
-
       GridBag gb = new GridBag().
         setDefaultAnchor(GridBagConstraints.WEST).
         setDefaultInsets(JBUI.insets(2));
@@ -743,7 +733,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
       myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
       myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
-      myPanel.add(mySkipHook, gb.nextLine().next().coverLine());
     }
 
     public boolean isAmend() {
@@ -832,12 +821,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myNextCommitAuthorDate = myAuthorDate;
       mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());
       myNextCommitSignOff = mySignOffCheckbox.isSelected();
-      mySettings.setSkipCommitHook(isSkipHookSelected());
-      myNextCommitSkipHook = isSkipHookSelected();
-    }
-
-    private boolean isSkipHookSelected() {
-      return mySkipHook.isVisible() && mySkipHook.isSelected();
     }
 
     @Override
@@ -868,5 +851,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
     myNextCommitIsPushed = nextCommitIsPushed;
+  }
+
+  public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
+    myNextCommitSkipHook = skipHooksForNextCommit;
   }
 }

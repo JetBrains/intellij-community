@@ -33,12 +33,11 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
 
   private final ComboBox myCombobox;
   private final JBCheckBox myCheckBox;
-  private final JBCheckBox mySkipHook;
+  private final JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode,
                              boolean followTagsSupported,
-                             boolean showSkipHookOption,
-                             boolean skipHook) {
+                             boolean showSkipHookOption) {
     String checkboxText = "Push Tags";
     if (followTagsSupported) {
       checkboxText += ": ";
@@ -75,12 +74,12 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
       myCombobox = null;
     }
 
-    mySkipHook = new JBCheckBox("Skip hook");
-    mySkipHook.setMnemonic(KeyEvent.VK_H);
-    mySkipHook.setSelected(skipHook);
-    mySkipHook.setVisible(showSkipHookOption);
+    myRunHooks = new JBCheckBox("Run Git hooks");
+    myRunHooks.setMnemonic(KeyEvent.VK_H);
+    myRunHooks.setSelected(true);
+    myRunHooks.setVisible(showSkipHookOption);
 
-    add(mySkipHook, BorderLayout.EAST);
+    add(myRunHooks, BorderLayout.EAST);
   }
 
   @Nullable
@@ -88,7 +87,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
   public VcsPushOptionValue getValue() {
     GitPushTagMode selectedTagMode = myCombobox == null ? GitPushTagMode.ALL : (GitPushTagMode)myCombobox.getSelectedItem();
     GitPushTagMode tagMode = myCheckBox.isSelected() ? selectedTagMode : null;
-    return new GitVcsPushOptionValue(tagMode, mySkipHook.isVisible() && mySkipHook.isSelected());
+    return new GitVcsPushOptionValue(tagMode, myRunHooks.isVisible() && !myRunHooks.isSelected());
   }
 
 }

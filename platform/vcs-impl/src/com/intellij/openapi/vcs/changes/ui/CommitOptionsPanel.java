@@ -138,16 +138,14 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
     for (CheckinHandler handler : myHandlers) {
       RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
       if (beforePanel != null) {
-        beforeBox.add(beforePanel.getComponent());
         beforeVisible = true;
-        myAdditionalComponents.add(beforePanel);
+        addCheckinHandlerComponent(beforePanel, beforeBox);
       }
 
       RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(this);
       if (afterPanel != null) {
-        afterBox.add(afterPanel.getComponent());
         afterVisible = true;
-        myAdditionalComponents.add(afterPanel);
+        addCheckinHandlerComponent(afterPanel, afterBox);
       }
     }
 
@@ -184,5 +182,13 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
     JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(additionalOptionsPanel, true);
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
     return false;
+  }
+
+  private void addCheckinHandlerComponent(@NotNull RefreshableOnComponent component, @NotNull Box container) {
+    container.add(component.getComponent());
+    myAdditionalComponents.add(component);
+    if (component instanceof CheckinChangeListSpecificComponent) {
+      myCheckinChangeListSpecificComponents.add((CheckinChangeListSpecificComponent)component);
+    }
   }
 }

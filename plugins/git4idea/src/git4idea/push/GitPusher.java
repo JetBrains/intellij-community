@@ -63,7 +63,6 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
-    mySettings.setSkipPushHook(skipHook);
     rememberTargets(pushSpecs);
   }
 
