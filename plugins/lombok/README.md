@@ -3,7 +3,7 @@ lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok
 
 [![Join the chat at https://gitter.im/mplushnikov/lombok-intellij-plugin](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mplushnikov/lombok-intellij-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317?pr=idea plugin) to support [Lombok](https://projectlombok.org) annotations. ##
+## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317) to support [Lombok](https://projectlombok.org) annotations. ##
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
@@ -61,9 +61,9 @@ Installation
 Restart IDE.
 
 ### Required IntelliJ Configuration
-In your project: Click Preferences -> "Build, Execution, Deployment" -> "Compiler, Annotation Processors". Click Enable Annotation Processing
+In your project: Click <kbd>Preferences</kbd> -> <kbd>Build, Execution, Deployment</kbd> -> <kbd>Compiler, Annotation Processors</kbd>. Click <kbd>Enable Annotation Processing</kbd>
 
-Afterwards you might need to do a complete rebuild of your project via Build -> "Rebuild Project".
+Afterwards you might need to do a complete rebuild of your project via <kbd>Build</kbd> -> <kbd>Rebuild Project</kbd>.
 
 ### Lombok project dependency
 Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.
@@ -73,9 +73,9 @@ If you are using Gradle/Maven/Ivy, see example below:
 ##### Gradle
 In your `build.gradle`:
 ```groovy
-//'compile' can be changed to 'compileOnly' for Gradle 2.12+
+// 'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.16.10"
+compile "org.projectlombok:lombok:1.16.14"
 ```
 
 ##### Maven
@@ -85,7 +85,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.16.10</version>
+		<version>1.16.14</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -94,7 +94,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.16.10" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.16.14" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
@@ -109,7 +109,7 @@ If you're using Eclipse compiler with lombok, try this setup:
 
 Developed By
 ------------
-[**@mplushnikov** Michail Plushnikov] (https://github.com/mplushnikov)
+[**@mplushnikov** Michail Plushnikov](https://github.com/mplushnikov)
 
 **Contributors**
 - [**@akozlova** Anna Kozlova](https://github.com/akozlova)
