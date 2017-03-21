@@ -26,10 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
@@ -38,6 +40,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.executeOnEdt;
 
@@ -48,6 +51,8 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
 @SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
+  private List<Sdk> removedSdks = new SmartList<>();
+
   /**
    * Needed only to reuse stuff in GradleImportingTestCase#setUp().
    */
@@ -55,6 +60,39 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() throws Throwable {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+          if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
+          ProjectJdkTable.getInstance().removeJdk(sdk);
+          removedSdks.add(sdk);
+        }
+      }
+    }.execute();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          for (Sdk sdk : removedSdks) {
+            SdkConfigurationUtil.addSdk(sdk);
+          }
+          removedSdks.clear();
+        }
+      }.execute();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Test
@@ -76,16 +114,6 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
                          "    <version value=\"1.0\" />\n" +
                          "  </settings>\n" +
                          "</component>");
-
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
-          ProjectJdkTable.getInstance().removeJdk(sdk);
-        }
-      }
-    }.execute();
 
     Project fooProject = executeOnEdt(() -> {
       Project project = ProjectUtil.openOrImport(foo.getPath(), null, true);
