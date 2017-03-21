@@ -251,6 +251,15 @@ public class CommandLineUtil {
 
   @NotNull
   @Contract(pure = true)
+  public static String escapeParameterOnWindows(@NotNull String s, boolean isWinShell) {
+    boolean hadLineBreaks = !s.equals(s = convertLineSeparators(s, ""));
+    if (s.isEmpty()) return QQ;
+    String ret = isWinShell ? escapeParameter(s, new QuoteFlag(hadLineBreaks), 1, true) : backslashEscapeQuotes(s);
+    return hadLineBreaks ? quote(ret, Q) : ret;
+  }
+
+  @NotNull
+  @Contract(pure = true)
   private static String escapeParameter(@NotNull String s,
                                         @NotNull QuoteFlag quoteFlag,
                                         int cmdInvocationDepth,
