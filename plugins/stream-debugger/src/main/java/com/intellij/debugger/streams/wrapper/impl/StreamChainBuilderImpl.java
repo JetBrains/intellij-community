@@ -18,8 +18,7 @@ import java.util.Set;
 /**
  * @author Vitaliy.Bibaev
  */
-@SuppressWarnings("Duplicates")
-public class StreamChainBuilderImpl implements com.intellij.debugger.streams.wrapper.StreamChainBuilder {
+public class StreamChainBuilderImpl implements StreamChainBuilder {
   // TODO: producer - any method, which returns Stream object. Pay attention - need to be sure, that this method is repeatable
   private static final Set<String> SUPPORTED_PRODUCERS = StreamEx.of("stream", "iterate", "generate", "range", "rangeClosed",
                                                                      "of", "concat", "empty").toSet();

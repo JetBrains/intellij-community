@@ -2,12 +2,13 @@ package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class TerminatorStreamCallImpl extends StreamCallImpl implements com.intellij.debugger.streams.wrapper.TerminatorStreamCall {
+public class TerminatorStreamCallImpl extends StreamCallImpl implements TerminatorStreamCall {
   private final GenericType myTypeBefore;
   private final boolean myIsVoid;
 
