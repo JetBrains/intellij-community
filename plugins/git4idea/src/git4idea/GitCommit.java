@@ -106,12 +106,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     public Collection<Change> compute() throws VcsException {
       if (myChanges == null) {
         myChanges = GitChangesParser.parse(myData.project, myData.root, myData.changesOutput, myData.hash.asString(),
-                                           new Date(myData.time), ContainerUtil.map(myData.parents, new Function<Hash, String>() {
-            @Override
-            public String fun(Hash hash) {
-              return hash.asString();
-            }
-          }));
+                                           new Date(myData.time), ContainerUtil.map(myData.parents, Hash::asString));
         myData = null; // don't hold the not-yet-parsed string
       }
       return myChanges;
