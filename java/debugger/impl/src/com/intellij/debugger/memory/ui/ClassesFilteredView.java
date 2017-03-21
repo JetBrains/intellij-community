@@ -444,7 +444,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
         final int waitTime = (int)Math.min(DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay, MAX_DELAY_MILLIS);
         mySingleAlarm.setDelay(waitTime);
-        LOG.info(String.format("Instances query time = %d ms. Count of classes = %d", delay, batch.size()));
+        LOG.debug(String.format("Instances query time = %d ms. Count of classes = %d", delay, batch.size()));
       }
 
       return result;
