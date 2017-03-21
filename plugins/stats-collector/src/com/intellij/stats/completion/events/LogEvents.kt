@@ -9,7 +9,7 @@ object JsonSerializer {
     fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
 }
 
-abstract class LogEvent(var userUid: String, sessionId: String, type: Action) {
+abstract class LogEvent(@Transient var userUid: String, sessionId: String, type: Action) {
     @Transient var recorderId = "completion-stats"
     @Transient var timestamp = System.currentTimeMillis()
     @Transient var sessionUid: String = sessionId
@@ -125,7 +125,8 @@ class ExplicitSelectEvent(userId: String,
                           sessionId: String,
                           completionListIds: List<Int>,
                           newCompletionListItems: List<LookupEntryInfo>,
-                          selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
+                          selectedPosition: Int,
+                          var selectedId: Int) : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
     
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
