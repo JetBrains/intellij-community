@@ -27,10 +27,11 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
 import junit.framework.ComparisonFailure
+import junit.framework.TestCase
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
-abstract class DiffTestCase : UsefulTestCase() {
+abstract class DiffTestCase : TestCase() {
   companion object {
     private val DEFAULT_CHAR_COUNT = 12
     private val DEFAULT_CHAR_TABLE: Map<Int, Char> = {
@@ -57,6 +58,8 @@ abstract class DiffTestCase : UsefulTestCase() {
     super.tearDown()
   }
 
+  fun getTestName() = UsefulTestCase.getTestName(name, true)
+
   //
   // Assertions
   //
@@ -75,6 +78,10 @@ abstract class DiffTestCase : UsefulTestCase() {
 
   fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
     if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
+  }
+
+  fun assertOrderedEquals(expected: Collection<*>, actual: Collection<*>, message: String = "") {
+    UsefulTestCase.assertOrderedEquals(message, actual, expected)
   }
 
   fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
