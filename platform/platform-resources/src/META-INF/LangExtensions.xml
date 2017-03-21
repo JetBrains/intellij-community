@@ -984,8 +984,6 @@
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
-    <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
-                    serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.actions.RunListPopupFactory"
                         serviceImplementation="com.intellij.execution.actions.RunListPopupFactoryImpl"/>
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
