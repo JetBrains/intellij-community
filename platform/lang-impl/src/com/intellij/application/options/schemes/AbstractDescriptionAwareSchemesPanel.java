@@ -17,19 +17,19 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 
 public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JPanel> {
   private static final String SHOW_DESCRIPTION_CARD = "show.description.card";
@@ -141,51 +141,54 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     showDescription();
   }
 
-  private static class DescriptionLabel extends MultiLineLabel {
+  private static class DescriptionLabel extends JBLabel {
     private String myAllText;
 
     public DescriptionLabel() {
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this);
       setForeground(JBColor.GRAY);
       setVerticalAlignment(CENTER);
       setHorizontalAlignment(LEFT);
+      addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          calculateText();
+        }
+      });
     }
 
     public void setAllText(String allText) {
       myAllText = allText;
+      calculateText();
       revalidate();
       repaint();
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-      int width = getSize().width;
-      FontMetrics fontMetrics = getFontMetrics(getFont());
-      int charWidth = fontMetrics.charWidth('a');
-      int firstLineSize = Math.max(0, width / charWidth);
-      if (myAllText.length() <= firstLineSize) {
-        setText(myAllText);
-        setToolTipText(null);
-      } else {
-        String firstLine = myAllText.substring(0, firstLineSize);
-        String remainPart = myAllText.substring(firstLineSize);
-        int lastWhitespace = firstLine.lastIndexOf(' ');
-        if (lastWhitespace > -1) {
-          remainPart = firstLine.substring(lastWhitespace) + remainPart;
-          firstLine = firstLine.substring(0, lastWhitespace);
-        }
-        String visibleText = firstLine + "\n";
-
-        int secondLineSize = Math.max(0, (width - 3 * fontMetrics.charWidth('.')) / charWidth);
-        if (remainPart.length() <= secondLineSize) {
-          setText(visibleText + remainPart.trim());
-          setToolTipText(null);
-        } else {
-          setText(visibleText + remainPart.trim().substring(0, secondLineSize) + "...");
-          setToolTipText("..." + remainPart.substring(secondLineSize));
+    private void calculateText() {
+      FontMetrics metrics = getFontMetrics(getFont());
+      int width = getSize().width - metrics.stringWidth("...");
+      if (width <= 0) {
+        setText("...");
+        setToolTipText(myAllText);
+      }
+      char[] text = myAllText.toCharArray();
+      int[] charsWidth = new int[text.length];
+      for (int i = 0; i < text.length; i++) {
+        int w = metrics.charWidth(text[i]);
+        for (int j = 0; j <= i; j++) {
+          charsWidth[i] += w;
         }
       }
-      super.paintComponent(g);
+      int idx = Arrays.binarySearch(charsWidth, 0, charsWidth.length, width);
+      if (idx < 0) {
+        idx = -idx - 1;
+      }
+
+      if (idx < myAllText.length()) {
+        setText(myAllText.substring(0, idx) + "...");
+        setToolTipText(myAllText.substring(idx));
+      } else {
+        setText(myAllText.substring(0, idx));
+      }
     }
   }
 }
