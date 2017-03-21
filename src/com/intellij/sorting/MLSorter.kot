@@ -94,8 +94,3 @@ private class ItemRankInfo(val positionBefore: Int, val mlRank: Double, val pref
 
 typealias LookupElementRelevance = List<Pair<String, Any>>
 typealias WeightedElement = Pair<LookupElement, Double>
-
-
-fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.enabled", true)
-
-fun setMlSortingEnabled(value: Boolean) = PropertiesComponent.getInstance().setValue("ml.sorting.enabled", value, true)

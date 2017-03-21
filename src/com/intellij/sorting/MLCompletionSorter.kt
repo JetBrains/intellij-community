@@ -15,6 +15,7 @@
  */
 package com.intellij.sorting
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
@@ -68,3 +69,8 @@ class MLRanker(val provider: FeatureTransformerProvider): Ranker {
     }
     
 }
+
+
+fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.enabled", true)
+
+fun setMlSortingEnabled(value: Boolean) = PropertiesComponent.getInstance().setValue("ml.sorting.enabled", value, true)
