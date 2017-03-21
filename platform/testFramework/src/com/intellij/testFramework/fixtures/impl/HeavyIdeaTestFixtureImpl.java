@@ -101,7 +101,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     final Project project = getProject();
 
     RunAll runAll = new RunAll()
-      .append(() -> LightPlatformTestCase.doTearDown(project, myApplication, false))
+      .append(() -> LightPlatformTestCase.doTearDown(project, myApplication))
       .append(() -> {
         for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
           moduleFixtureBuilder.getFixture().tearDown();
