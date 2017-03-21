@@ -1096,6 +1096,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       initFonts();
     }
 
+    @Nullable
+    @Override
+    public AbstractColorsScheme getOriginal() {
+      return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getOriginal() : null;
+    }
+
     @NotNull
     @Override
     public String getName() {
