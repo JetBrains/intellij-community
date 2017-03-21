@@ -88,7 +88,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     }.execute();
 
     Project fooProject = executeOnEdt(() -> {
-      Project project = ProjectUtil.openProject(foo.getPath(), null, true);
+      Project project = ProjectUtil.openOrImport(foo.getPath(), null, true);
       ProjectInspectionProfileManager projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project);
       projectInspectionProfileManager.forceLoadSchemes();
       return project;
@@ -96,7 +96,6 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     try {
       assertTrue(fooProject.isOpen());
       edt(() -> UIUtil.dispatchAllInvocationEvents());
-      fooProject.save();
       InspectionProfileImpl currentProfile = getCurrentProfile(fooProject);
       assertEquals("myInspections", currentProfile.getName());
       ScopeToolState toolState = currentProfile.getToolDefaultState("MultipleRepositoryUrls", fooProject);
