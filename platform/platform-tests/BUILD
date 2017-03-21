@@ -23,6 +23,5 @@ iml_module(
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
         "//tools/idea/.idea/libraries:purejavacomm",
-        "//tools/idea/.idea/libraries:Guava",
     ],
 )
