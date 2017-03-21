@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
@@ -175,19 +174,19 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String type = outVar.getType();
+      PsiType type = outVar.getType();
       String iterationParameter;
       PsiExpressionList argList = myCall.getArgumentList();
-      if (TypeConversionUtil.isPrimitive(type)) {
+      if (type instanceof PsiPrimitiveType) {
         // Not using argList.getExpressions() here as we want to preserve comments and formatting between the expressions
         PsiElement[] children = argList.getChildren();
         // first and last children are (parentheses), we need to remove them
         iterationParameter = StreamEx.of(children, 1, children.length - 1)
           .map(PsiElement::getText)
-          .joining("", "new " + type + "[] {", "}");
+          .joining("", "new " + type.getCanonicalText() + "[] {", "}");
       }
       else {
-        iterationParameter = "java.util.Arrays.<" + type + ">asList" + argList.getText();
+        iterationParameter = "java.util.Arrays.<" + type.getCanonicalText() + ">asList" + argList.getText();
       }
       return context.getLoopLabel() +
              "for(" + outVar.getDeclaration() + ": " + iterationParameter + ") {" + code + "}\n";
@@ -304,7 +303,7 @@ abstract class SourceOperation extends Operation {
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String bound = myBound.getText();
       if(!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
-        bound = context.declare("bound", outVar.getType(), bound);
+        bound = context.declare("bound", outVar.getType().getCanonicalText(), bound);
       }
       String loopVar = outVar.getName();
       String reassign = "";
@@ -313,7 +312,7 @@ abstract class SourceOperation extends Operation {
         reassign = outVar.getDeclaration(loopVar);
       }
       return context.getLoopLabel() +
-             "for(" + outVar.getType() + " " + loopVar + " = " + myOrigin.getText() + ";" +
+             "for(" + outVar.getType().getCanonicalText() + " " + loopVar + " = " + myOrigin.getText() + ";" +
              loopVar + (myInclusive ? "<=" : "<") + bound + ";" +
              loopVar + "++) {\n" +
              reassign +
