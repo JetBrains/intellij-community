@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -104,29 +105,40 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   private void notifyUser(String title, String message, NotificationType type) {
     NotificationListener notificationListener = null;
     if (SoftReference.dereference(mySessionRef) != null) {
-      notificationListener = (notification, event) -> {
-        if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-          return;
-        }
-        XDebugSession session = SoftReference.dereference(mySessionRef);
-        if (session == null) {
-          return;
-        }
-        notification.expire();
-        switch (event.getDescription()) {
-          case "stop":
-            session.stop();
-            break;
-          case "restart":
-            ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
-            if (environment != null) {
-              ExecutionUtil.restart(environment);
-            }
-            break;
-        }
-      };
+      notificationListener = new HotSwapNotificationListener(mySessionRef);
     }
     NOTIFICATION_GROUP.createNotification(title, message, type, notificationListener).setImportant(false).notify(getProject());
+  }
+
+  private static class HotSwapNotificationListener implements NotificationListener {
+    final WeakReference<XDebugSession> mySessionRef;
+
+    public HotSwapNotificationListener(WeakReference<XDebugSession> sessionRef) {
+      mySessionRef = sessionRef;
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+        return;
+      }
+      XDebugSession session = SoftReference.dereference(mySessionRef);
+      if (session == null) {
+        return;
+      }
+      notification.expire();
+      switch (event.getDescription()) {
+        case "stop":
+          session.stop();
+          break;
+        case "restart":
+          ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
+          if (environment != null) {
+            ExecutionUtil.restart(environment);
+          }
+          break;
+      }
+    }
   }
 
   public void setSessionForActions(@NotNull DebuggerSession session) {
