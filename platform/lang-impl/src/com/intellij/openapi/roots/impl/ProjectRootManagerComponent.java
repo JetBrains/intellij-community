@@ -32,7 +32,6 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -249,11 +248,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     Set<VirtualFile> roots = ContainerUtil.newHashSet();
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().withoutDepModules();
-      if (!includeSourceRoots) {
-        enumerator = enumerator.withoutModuleSourceEntries();
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+
+      ContainerUtil.addAll(roots, rootManager.getContentRoots());
+
+      if (includeSourceRoots) {
+        ContainerUtil.addAll(roots, rootManager.getSourceRoots());
       }
-      enumerator.forEach(entry -> {
+
+      rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach(entry -> {
         for (OrderRootType type : OrderRootType.getAllTypes()) {
           for (VirtualFile root : entry.getFiles(type)) {
             VirtualFileSystem fs = root.getFileSystem();
