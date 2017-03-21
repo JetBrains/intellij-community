@@ -397,12 +397,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
           private void changeMemoryViewMode(@Nullable ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
-              final ContentManagerEvent.ContentOperation operation = event.getOperation();
-              final boolean isAddOperation = operation.equals(ContentManagerEvent.ContentOperation.add);
-
-              if (isAddOperation || operation.equals(ContentManagerEvent.ContentOperation.remove)) {
-                classesFilteredView.setActive(isAddOperation, process.getManagerThread());
-              }
+              classesFilteredView.setActive(memoryViewContent.isSelected(), process.getManagerThread());
             }
           }
         }, classesFilteredView);
