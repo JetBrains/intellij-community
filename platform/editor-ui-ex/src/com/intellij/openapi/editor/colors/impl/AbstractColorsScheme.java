@@ -521,14 +521,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   }
 
   private int readFontSize(Element element, boolean isDefault, Float fontScale) {
-    Float size = (float)myValueReader.read(Integer.class, element);
-    if (size == null) {
+    if (isDefault) {
+      return (int)(UISettings.getNormalizingScale() * DEFAULT_FONT_SIZE.getSize());
+    }
+    Integer intSize = myValueReader.read(Integer.class, element);
+    if (intSize == null) {
       return -1;
     }
-    if (!isDefault) {
-      size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
-    }
-    return (int)JBUI.scale(size);
+    return UISettings.restoreFontSize(intSize, fontScale);
   }
 
   private void readFontSettings(@NotNull Element element,
@@ -569,7 +569,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
      * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
      * FONT_SCALE value should also be written by that reason.
      */
-    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
+    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getNormalizingScale())); // must precede font options
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
@@ -986,7 +986,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     assert newParent instanceof ReadOnlyColorsScheme : "New parent scheme must be read-only";
     myParentScheme = newParent;
   }
-  
+
   void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
