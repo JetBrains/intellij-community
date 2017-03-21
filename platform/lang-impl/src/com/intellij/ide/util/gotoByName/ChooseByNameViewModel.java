@@ -495,7 +495,6 @@ public abstract class ChooseByNameViewModel {
     }
 
     Matcher matcher = buildPatternMatcher(transformPattern(trimmedText));
-
     final String statContext = statisticsContext();
     Comparator<Object> itemComparator = Comparator.
       comparing(e -> trimmedText.equalsIgnoreCase(myModel.getElementName(e))).
@@ -504,9 +503,11 @@ public abstract class ChooseByNameViewModel {
       reversed();
 
     int bestPosition = 0;
+    while (bestPosition < modelElements.length - 1 && isSpecialElement(modelElements[bestPosition])) bestPosition++;
+
     for (int i = 1; i < modelElements.length; i++) {
       final Object modelElement = modelElements[i];
-      if (EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement)) continue;
+      if (isSpecialElement(modelElement)) continue;
 
       if (itemComparator.compare(modelElement, modelElements[bestPosition]) < 0) {
           bestPosition = i;
@@ -519,6 +520,11 @@ public abstract class ChooseByNameViewModel {
 
     return bestPosition;
   }
+
+  private static boolean isSpecialElement(Object modelElement) {
+    return EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement);
+  }
+
 
   private int getUseCount(String statContext, Object modelElement) {
     String text = myModel.getFullName(modelElement);

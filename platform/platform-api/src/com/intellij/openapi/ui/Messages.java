@@ -184,6 +184,24 @@ public class Messages {
            (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
 
+  @NotNull
+  public static Runnable createMessageDialogRemover(@Nullable Project project) {
+    Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
+    return () -> UIUtil.invokeLaterIfNeeded(() -> makeCurrentMessageDialogGoAway(
+      projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
+  }
+
+  private static void makeCurrentMessageDialogGoAway(@NotNull Window[] checkWindows) {
+    for (Window w : checkWindows) {
+      JDialog dialog = w instanceof JDialog ? (JDialog)w : null;
+      if (dialog == null || !dialog.isModal()) continue;
+      JButton cancelButton = UIUtil.uiTraverser(dialog.getRootPane()).filter(JButton.class)
+        .filter(b -> CommonBundle.getCancelButtonText().equals(b.getText()))
+        .first();
+      if (cancelButton != null) cancelButton.doClick();
+    }
+  }
+
 
   /**
    * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!

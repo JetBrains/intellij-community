@@ -135,11 +135,9 @@ public abstract class OccurrencesChooser<T> {
                                                       final boolean cellHasFocus) {
           final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           @SuppressWarnings("unchecked") final C choices = (C)value;
-          if (choices != null) {
-            String text = choices.getDescription();
-            if (choices == ReplaceChoice.ALL) {
-              setText(choices.formatDescription(occurrencesMap.get(choices).size()));
-            }
+
+          if (choices == ReplaceChoice.ALL) {
+            setText(choices.formatDescription(occurrencesMap.get(choices).size()));
           }
           return rendererComponent;
         }
