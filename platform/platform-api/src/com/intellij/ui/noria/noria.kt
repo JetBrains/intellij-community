@@ -33,6 +33,15 @@ class ElementType(val type: Any,
 
 data class Element(val key: Any?, val type: ElementType, val props: Any, val children: List<Element>, val index: Int)
 
+interface Toolkit<Node> {
+  fun isPrimitive(e: ElementType): Boolean
+  fun createNode(e: Element): Node
+  fun performUpdates(l: List<Update<Node>>, root: Node)
+  fun scheduleReconcile(function: () -> Unit) {
+    function()
+  }
+}
+
 private interface Component<Node> : Disposable {
   val node: Node
   val parentNode: Node

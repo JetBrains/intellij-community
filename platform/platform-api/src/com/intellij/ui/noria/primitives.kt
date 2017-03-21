@@ -20,15 +20,6 @@ import com.intellij.openapi.extensions.Extensions
 import java.awt.FlowLayout
 import java.awt.LayoutManager
 
-interface Toolkit<Node> {
-  fun isPrimitive(e: ElementType): Boolean
-  fun createNode(e: Element): Node
-  fun performUpdates(l: List<Update<Node>>, root: Node)
-  fun scheduleReconcile(function: () -> Unit) {
-    function()
-  }
-}
-
 interface BaseProps {
   var constraints: Any
 }
