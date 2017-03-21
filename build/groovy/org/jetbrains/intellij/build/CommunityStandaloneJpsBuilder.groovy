@@ -108,8 +108,6 @@ class CommunityStandaloneJpsBuilder {
           include(name: "ecj*.jar")
           include(name: "netty-all-*.jar")
           include(name: "snappy-in-java-*.jar")
-          include(name: "xercesImpl.jar")
-          include(name: "xml-apis.jar")
         }
         ant.fileset(dir: "$home/jps/lib") {
           include(name: "optimizedFileManager.jar")
