@@ -4296,22 +4296,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
         return true;
       }
+
+      //should be used a better representation class
+      if (Registry.is("debugger.click.disable.breakpoints") && ArrayUtil.contains(GutterDraggableObject.flavor, transferFlavors)) {
+        return true;
+      }
+
       if (editor.isViewer()) return false;
 
       int offset = editor.getCaretModel().getOffset();
       if (editor.getDocument().getRangeGuard(offset, offset) != null) return false;
 
-      for (DataFlavor transferFlavor : transferFlavors) {
-        if (transferFlavor.equals(DataFlavor.stringFlavor)) return true;
-        if (Registry.is("debugger.click.disable.breakpoints")) {
-          //should be used a better representation class
-          if (GutterDraggableObject.flavor.equals(transferFlavor)) {
-            return true;
-          }
-        }
-      }
-
-      return false;
+      return ArrayUtil.contains(DataFlavor.stringFlavor, transferFlavors);
     }
 
     @Override
