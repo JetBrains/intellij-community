@@ -1294,7 +1294,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addConditionalRuntimeThrow();
     List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.emptyList();
     addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
-    if (!contracts.isEmpty()) {
+    if (contracts.stream().anyMatch(c -> c.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION)) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getContractFail(), null));
