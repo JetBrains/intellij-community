@@ -17,6 +17,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteArrayCharSequence implements CharSequenceWithStringHash {
@@ -55,7 +56,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   @Override
   @NotNull
   public String toString() {
-    return StringFactory.createShared(CharArrayUtil.fromSequence(this, 0, length()));
+    return new String(myChars, CharsetToolkit.US_ASCII_CHARSET);
   }
 
   @NotNull
