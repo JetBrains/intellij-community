@@ -17,6 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -45,6 +46,8 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
   /**
    * Makes all the needed preparations for the further execution. Although this method is called in EDT,
    * these preparations can be performed in a background thread.
+   * Please note that {@link RunProfileState#execute(Executor, ProgramRunner)} should not be called during the preparations
+   * to not execute the run profile before "Before launch" tasks.
    *
    * You must call {@link ExecutionUtil#handleExecutionError} in case of error
    *
