@@ -49,7 +49,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
   /**
-   * It's sufficient to run the test against one gradle version
+   * Needed only to reuse stuff in GradleImportingTestCase#setUp().
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
@@ -61,8 +61,6 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
   public void testOpenAndImportProjectInHeadlessMode() throws Exception {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
-
-    createProjectSubFile("foo/.idea/misc.xml", "");
     createProjectSubFile("foo/.idea/inspectionProfiles/myInspections.xml",
                          "<component name=\"InspectionProjectProfileManager\">\n" +
                          "  <profile version=\"1.0\">\n" +
