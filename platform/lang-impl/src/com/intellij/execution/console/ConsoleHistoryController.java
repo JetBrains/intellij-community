@@ -177,11 +177,17 @@ public class ConsoleHistoryController {
     ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(ProjectEx.ProjectSaved.TOPIC, listener);
     myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
 
-    myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, this);
+    VirtualFile consoleFile = myConsole.getVirtualFile();
+    LOG.assertTrue(consoleFile.getUserData(CONTROLLER_KEY) == null,
+                   "History controller already installed for " + consoleFile.getName());
+    consoleFile.putUserData(CONTROLLER_KEY, this);
     Disposer.register(myConsole, new Disposable() {
       @Override
       public void dispose() {
-        myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, null);
+        VirtualFile consoleFile = myConsole.getVirtualFile();
+        if (consoleFile.getUserData(CONTROLLER_KEY) == ConsoleHistoryController.this) {
+          consoleFile.putUserData(CONTROLLER_KEY, null);
+        }
         saveHistory();
       }
     });
