@@ -244,7 +244,7 @@ public class GeneralCommandLineTest {
       if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
       GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
       String output = execAndGetOutput(commandLine);
-      assertEquals(commandLine.getPreparedCommandLine(Platform.current()), argument + "\n", output);
+      assertEquals(commandLine.getPreparedCommandLine(), argument + "\n", output);
     }
   }
 
@@ -278,7 +278,7 @@ public class GeneralCommandLineTest {
         for (String argument : ARGUMENTS) {
           GeneralCommandLine commandLine = createCommandLine(script.getAbsolutePath(), GeneralCommandLine.inescapableQuote(argument));
           String output = execAndGetOutput(commandLine);
-          assertEquals(commandLine.getPreparedCommandLine(Platform.current()), StringUtil.wrapWithDoubleQuote(argument), output.trim());
+          assertEquals(commandLine.getPreparedCommandLine(), StringUtil.wrapWithDoubleQuote(argument), output.trim());
         }
       }
       finally {
@@ -352,7 +352,7 @@ public class GeneralCommandLineTest {
     ProcessOutput output = ExecUtil.execAndGetOutput(commandLine);
     int ec = output.getExitCode();
     if (ec != 0) {
-      fail("Command:\n" + commandLine.getPreparedCommandLine(Platform.current()) +
+      fail("Command:\n" + commandLine.getPreparedCommandLine() +
            "\nStdOut:\n" + output.getStdout() +
            "\nStdErr:\n" + output.getStderr());
     }
