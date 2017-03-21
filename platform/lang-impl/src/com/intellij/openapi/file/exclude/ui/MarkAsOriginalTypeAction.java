@@ -29,6 +29,8 @@ import com.intellij.util.containers.JBIterable;
 
 import java.util.Set;
 
+import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager.isApplicableFor;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -40,7 +42,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
     if (project == null || typeManager == null) return;
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> !file.isDirectory() && typeManager.isMarkedAsPlainText(file));
+        .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
     typeManager.resetOriginalFileType(project, VfsUtilCore.toVirtualFileArray(selectedFiles.toList()));
   }
 
@@ -48,8 +50,9 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
+      typeManager == null ? JBIterable.empty() :
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> !file.isDirectory() && typeManager.isMarkedAsPlainText(file));
+        .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getName())).toSet();
