@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.credentialStore.CredentialRequestResult;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,18 +100,18 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     myPasswordKey = getUnifiedUrl(url);
-    String password = CredentialPromptDialog.askPassword(myProject, myTitle, "Password for " + getDisplayableUrl(url),
-                                                         CredentialAttributes(PASS_REQUESTER, myPasswordKey));
+    CredentialRequestResult result = CredentialPromptDialog.askCredentials(myProject,
+                                                                           myTitle, "Password for " + getDisplayableUrl(url),
+                                                                           CredentialAttributes(PASS_REQUESTER, myPasswordKey), false);
+    String password = result == null ? null : result.getCredentials().getPasswordAsString();
     LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
     if (password == null) {
       myWasCancelled = true;
       return "";
     }
-    // Password is stored in the safe in PasswordSafePromptDialog.askPassword,
-    // but it is not the right behavior (incorrect password is stored too because of that) and should be fixed separately.
-    // We store it here manually, to let it work after that behavior is fixed.
+    mySaveOnDisk = !result.isSaved() && !result.isMemoryOnly();
     myPassword = password;
-    myDataProvider = new GitDefaultHttpAuthDataProvider(); // workaround: askPassword remembers the password even it is not correct
+    myDataProvider = new GitDefaultHttpAuthDataProvider();
     return password;
   }
 
@@ -273,16 +274,11 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     return login + "@" + url;
   }
 
-  public class GitDefaultHttpAuthDataProvider implements GitHttpAuthDataProvider {
-
+  private class GitDefaultHttpAuthDataProvider implements GitHttpAuthDataProvider {
     @Nullable
     @Override
     public AuthData getAuthData(@NotNull String url) {
-      String userName = getUsername(url);
-      String key = makeKey(url, userName);
-      final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-      String password = passwordSafe.getPassword(PASS_REQUESTER, key);
-      return new AuthData(StringUtil.notNullize(userName), password);
+      return new AuthData(StringUtil.notNullize(getUsername(url)), myPassword);
     }
 
     @Nullable
@@ -292,6 +288,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void forgetPassword(@NotNull String url) {
+      myPassword = null;
+      // clear in any case from PasswordSafe otherwise we get loop askPassword -> from password safe -> forgetPassword -> askPassword -> from password safe
+      // @develar: exact trace not clear for me, but I am sure that for now it will be safe and correct to do so and keep this code
       String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
       LOG.debug("forgetPassword. key=" + key);
       PasswordSafe.getInstance().setPassword(PASS_REQUESTER, key, null);

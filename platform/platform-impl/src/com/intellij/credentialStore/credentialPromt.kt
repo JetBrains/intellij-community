@@ -42,13 +42,24 @@ fun askPassword(project: Project?,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
                 error: String? = null): String? {
+  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes, true, resetPassword, error)?.credentials?.getPasswordAsString()?.nullize() 
+}
+
+@JvmOverloads
+fun askCredentials(project: Project?,
+                   dialogTitle: String,
+                   passwordFieldLabel: String,
+                   attributes: CredentialAttributes,
+                   saveOnSuccess: Boolean = true,
+                   resetPassword: Boolean = false,
+                   error: String? = null): CredentialRequestResult? {
   val store = PasswordSafe.getInstance()
   if (resetPassword) {
     store.set(attributes, null)
   }
   else {
-    store.get(attributes)?.getPasswordAsString()?.nullize()?.let {
-      return it
+    store.get(attributes)?.let {
+      return CredentialRequestResult(it, false, true)
     }
   }
 
@@ -72,12 +83,18 @@ fun askPassword(project: Project?,
     }
 
     if (dialog(dialogTitle, project = project, panel = panel, focusedComponent = passwordField, errorText = error).showAndGet()) {
+      val isMemoryOnly = store.isMemoryOnly || !rememberCheckBox!!.isSelected
       val credentials = Credentials(attributes.userName, passwordField.password.nullize())
-      store.set(attributes, credentials, store.isMemoryOnly || !rememberCheckBox!!.isSelected)
-      credentials.getPasswordAsString()
+      if (saveOnSuccess) {
+        store.set(attributes, credentials, isMemoryOnly)
+        credentials.getPasswordAsString()
+      }
+      return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isMemoryOnly, false)
     }
     else {
       null
     }
   }
 }
+
+data class CredentialRequestResult(val credentials: Credentials, val isMemoryOnly: Boolean, val isSaved: Boolean)
