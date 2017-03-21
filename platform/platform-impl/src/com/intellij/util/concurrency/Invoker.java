@@ -17,15 +17,15 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Obsolescent;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Disposer.register;
-import static javax.swing.SwingUtilities.isEventDispatchThread;
+import static java.awt.EventQueue.isDispatchThread;
 
 /**
  * @author Sergey.Malenkov
@@ -118,10 +118,10 @@ public abstract class Invoker implements Disposable {
       LOG.debug("Invoker is disposed");
       return false;
     }
-    if (task instanceof Expirable) {
-      Expirable expirable = (Expirable)task;
-      if (expirable.isExpired()) {
-        LOG.debug("Task is expired");
+    if (task instanceof Obsolescent) {
+      Obsolescent obsolescent = (Obsolescent)task;
+      if (obsolescent.isObsolete()) {
+        LOG.debug("Task is obsolete");
         return false;
       }
     }
@@ -152,7 +152,7 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public boolean isValidThread() {
-      return isEventDispatchThread();
+      return isDispatchThread();
     }
 
     @Override
@@ -174,7 +174,7 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public boolean isValidThread() {
-      return !isEventDispatchThread();
+      return !isDispatchThread();
     }
 
     @Override
