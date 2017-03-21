@@ -249,6 +249,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public void addImportedScheme(@NotNull EditorColorsScheme imported) {
+    if (imported instanceof AbstractColorsScheme) ((AbstractColorsScheme)imported).setSaveNeeded(true);
     MyColorScheme newScheme = new MyColorScheme(imported);
     initScheme(newScheme);
 
