@@ -1,5 +1,6 @@
 package com.intellij.stats.completion
 
+
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -11,7 +12,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
 import com.jetbrains.completion.ranker.CompletionRanker
+import sun.plugin.dom.exception.InvalidStateException
 import java.util.*
+
 
 class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) : CompletionLoggerProvider() {
     override fun dispose() {
@@ -60,7 +63,8 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun logEvent(event: LogEvent) {
         val line = LogEventSerializer.toString(event)
-        logFileManager.println(line)
+        //logFileManager.println(line)
+        println(line)
     }
 
     private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
@@ -104,7 +108,8 @@ class CompletionFileLogger(private val installationUID: String,
                 language?.displayName,
                 isExperimentPerformed, experimentVersion,
                 lookupEntryInfos, selectedPosition = 0)
-
+        
+        event.isOneLineMode = lookup.editor.isOneLineMode
         logEvent(event)
     }
 
@@ -166,16 +171,22 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
-        val current = lookup.currentItem
-        val id = if (current != null) getElementId(current)!! else -1
+        val current = lookup.currentItem ?: throw InvalidStateException("lookup.currentItem is null")
+        val id = getElementId(current) ?: throw InvalidStateException("id is null")
+        
         val event = TypedSelectEvent(installationUID, completionUID, id)
         logEvent(event)
     }
 
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
-        val current = lookup.currentItem
-        val index = if (current != null) lookup.items.indexOf(current) else -1
-        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index)
+        val current = lookup.currentItem ?: throw InvalidStateException("lookup.currentItem is null")
+        val index = lookup.items.indexOf(current)
+        if (index < 0) {
+            throw InvalidStateException("index is $index")
+        }
+        val id = getElementId(current) ?: throw InvalidStateException("element id is null")
+        
+        val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id)
         logEvent(event)
     }
     
