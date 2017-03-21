@@ -319,46 +319,50 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);
       LOG.assertTrue(statement != null);
       CommentTracker ct = new CommentTracker();
-      PsiExpression temporaryStreamPlaceholder =
-        (PsiExpression)ct.replace(terminalCall, "((" + resultType.getCanonicalText() + ")$streamReplacement$)");
       try {
         StreamToLoopReplacementContext context =
-          new StreamToLoopReplacementContext(statement, operations, temporaryStreamPlaceholder, ct);
+          new StreamToLoopReplacementContext(statement, operations, terminalCall, ct);
         registerVariables(operations, context);
         String replacement = "";
         for (OperationRecord or : StreamEx.ofReversed(operations)) {
           replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, context);
         }
-        ct.insertCommentsBefore(statement);
+        PsiElement firstAdded = null;
         for (PsiStatement addedStatement : ((PsiBlockStatement)factory.createStatementFromText("{" + replacement + "}", statement))
           .getCodeBlock().getStatements()) {
-          addStatement(project, statement, addedStatement);
+          PsiElement res = addStatement(project, statement, addedStatement);
+          if (firstAdded == null) {
+            firstAdded = res;
+          }
         }
         PsiElement result = context.makeFinalReplacement();
         if(result != null) {
-          normalize(project, result);
+          result = normalize(project, result);
+          if (firstAdded == null) {
+            firstAdded = result;
+          }
+        }
+        if (firstAdded != null) {
+          ct.insertCommentsBefore(firstAdded);
         }
       }
       catch (Exception ex) {
         String text = terminalCall.getText();
-        if(temporaryStreamPlaceholder.isPhysical()) {
-          // Just in case if something went wrong: at least try to restore the original stream code
-          temporaryStreamPlaceholder.replace(factory.createExpressionFromText(text, temporaryStreamPlaceholder));
-        }
         LOG.error(LogMessageEx.createEvent("Error converting Stream to loop", ExceptionUtil.getThrowableText(ex),
                                            new Attachment("Stream_code.txt", text)));
       }
     }
 
-    private static void addStatement(@NotNull Project project, PsiStatement statement, PsiStatement context) {
+    private static PsiElement addStatement(@NotNull Project project, PsiStatement statement, PsiStatement context) {
       PsiElement element = statement.getParent().addBefore(context, statement);
-      normalize(project, element);
+      return normalize(project, element);
     }
 
-    private static void normalize(@NotNull Project project, PsiElement element) {
+    private static PsiElement normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
       RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
+      return element;
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {
@@ -399,19 +403,19 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     private final List<String> myBeforeSteps = new ArrayList<>();
     private final List<String> myAfterSteps = new ArrayList<>();
     private final CommentTracker myCommentTracker;
-    private PsiElement myPlaceholder;
+    private PsiElement myStreamExpression;
     private final PsiElementFactory myFactory;
     private String myLabel;
     private String myFinisher;
 
     StreamToLoopReplacementContext(PsiStatement statement,
                                    List<OperationRecord> records,
-                                   @NotNull PsiExpression placeholder,
+                                   @NotNull PsiExpression streamExpression,
                                    CommentTracker ct) {
       myStatement = statement;
       myFactory = JavaPsiFacade.getElementFactory(myStatement.getProject());
       myHasNestedLoops = records.stream().anyMatch(or -> or.myOperation instanceof FlatMapOperation);
-      myPlaceholder = placeholder;
+      myStreamExpression = streamExpression;
       mySuffix = myHasNestedLoops ? "Outer" : "";
       myCommentTracker = ct;
       myUsedNames = new HashSet<>();
@@ -422,7 +426,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     StreamToLoopReplacementContext(StreamToLoopReplacementContext parentContext, List<OperationRecord> records) {
       myUsedNames = parentContext.myUsedNames;
       myUsedLabels = parentContext.myUsedLabels;
-      myPlaceholder = null;
+      myStreamExpression = parentContext.myStreamExpression;
       myStatement = parentContext.myStatement;
       myFactory = parentContext.myFactory;
       myCommentTracker = parentContext.myCommentTracker;
@@ -480,7 +484,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     private boolean isUsed(String varName) {
       return myUsedNames.contains(varName) || JavaLexer.isKeyword(varName, LanguageLevel.HIGHEST) ||
-             !varName.equals(JavaCodeStyleManager.getInstance(myStatement.getProject()).suggestUniqueVariableName(varName, myStatement, true));
+             !varName.equals(JavaCodeStyleManager.getInstance(myStatement.getProject())
+                               .suggestUniqueVariableName(varName, myStatement, v -> PsiTreeUtil.isAncestor(myStreamExpression, v, true)));
     }
 
     public String declare(String desiredName, String type, String initializer) {
@@ -511,13 +516,13 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     public String declareResult(String desiredName, String type, String initializer, @NotNull ResultKind kind) {
-      if (kind != ResultKind.UNKNOWN && myPlaceholder.getParent() instanceof PsiVariable) {
-        PsiVariable var = (PsiVariable)myPlaceholder.getParent();
+      if (kind != ResultKind.UNKNOWN && myStreamExpression.getParent() instanceof PsiVariable) {
+        PsiVariable var = (PsiVariable)myStreamExpression.getParent();
         if(var.getType().equalsToText(type) && var.getParent() instanceof PsiDeclarationStatement
           && (kind == ResultKind.FINAL || canUseAsNonFinal(var))) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
           if(declaration.getDeclaredElements().length == 1) {
-            myPlaceholder = declaration;
+            myStreamExpression = declaration;
             PsiVariable copy = (PsiVariable)var.copy();
             if (kind == ResultKind.NON_FINAL) {
               PsiModifierList modifierList = copy.getModifierList();
@@ -553,18 +558,18 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     public PsiElement makeFinalReplacement() {
-      LOG.assertTrue(myPlaceholder != null);
-      if (myFinisher == null || myPlaceholder instanceof PsiStatement) {
-        myPlaceholder.delete();
+      LOG.assertTrue(myStreamExpression != null);
+      if (myFinisher == null || myStreamExpression instanceof PsiStatement) {
+        myCommentTracker.delete(myStreamExpression);
         return null;
       }
       else {
-        PsiExpression expression = myFactory.createExpressionFromText(myFinisher, myPlaceholder);
-        PsiElement parent = myPlaceholder.getParent();
+        PsiExpression expression = myFactory.createExpressionFromText(myFinisher, myStreamExpression);
+        PsiElement parent = myStreamExpression.getParent();
         if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(expression, (PsiExpression)parent, false)) {
-          expression = myFactory.createExpressionFromText("("+myFinisher+")", myPlaceholder);
+          expression = myFactory.createExpressionFromText("("+myFinisher+")", myStreamExpression);
         }
-        return myPlaceholder.replace(expression);
+        return myCommentTracker.replace(myStreamExpression, expression);
       }
     }
 
@@ -580,7 +585,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     public String assignAndBreak(ConditionalExpression conditionalExpression) {
-      PsiStatement statement = PsiTreeUtil.getParentOfType(myPlaceholder, PsiStatement.class);
+      PsiStatement statement = PsiTreeUtil.getParentOfType(myStreamExpression, PsiStatement.class);
       boolean inReturn = statement instanceof PsiReturnStatement;
       if(conditionalExpression instanceof ConditionalExpression.Optional) {
         conditionalExpression = tryUnwrapOptional((ConditionalExpression.Optional)conditionalExpression, inReturn);
@@ -591,38 +596,38 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if (inReturn) {
         setFinisher(conditionalExpression.getFalseBranch());
         Object mark = new Object();
-        PsiTreeUtil.mark(myPlaceholder, mark);
+        PsiTreeUtil.mark(myStreamExpression, mark);
         PsiElement returnCopy = statement.copy();
         PsiElement placeHolderCopy = PsiTreeUtil.releaseMark(returnCopy, mark);
         LOG.assertTrue(placeHolderCopy != null);
         PsiElement replacement = placeHolderCopy.replace(createExpression(conditionalExpression.getTrueBranch()));
         return (placeHolderCopy == returnCopy ? replacement : returnCopy).getText();
       }
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlaceholder.getParent());
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(myStreamExpression.getParent());
       if(parent instanceof PsiIfStatement && conditionalExpression instanceof ConditionalExpression.Boolean &&
          !((ConditionalExpression.Boolean)conditionalExpression).isInverted()) {
         PsiIfStatement ifStatement = (PsiIfStatement)parent;
         if(ifStatement.getElseBranch() == null) {
           PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
           if(thenStatement instanceof PsiReturnStatement || thenStatement instanceof PsiThrowStatement) {
-            myPlaceholder = parent;
+            myStreamExpression = parent;
             return thenStatement.getText();
           }
           if(thenStatement instanceof PsiExpressionStatement) {
-            myPlaceholder = parent;
+            myStreamExpression = parent;
             return thenStatement.getText() + "\n" + getBreakStatement();
           }
         }
       }
-      if(conditionalExpression instanceof ConditionalExpression.Optional && myPlaceholder instanceof PsiExpression) {
-        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myPlaceholder);
+      if(conditionalExpression instanceof ConditionalExpression.Optional && myStreamExpression instanceof PsiExpression) {
+        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myStreamExpression);
         if(call != null && call.getParent() instanceof PsiExpressionStatement) {
           PsiExpression[] args = call.getArgumentList().getExpressions();
           if(args.length == 1 && "ifPresent".equals(call.getMethodExpression().getReferenceName())) {
             FunctionHelper fn = FunctionHelper.create(args[0], 1);
             if(fn != null) {
               fn.transform(this, ((ConditionalExpression.Optional)conditionalExpression).unwrap("").getTrueBranch());
-              myPlaceholder = call.getParent();
+              myStreamExpression = call.getParent();
               return fn.getStatementText() + getBreakStatement();
             }
           }
@@ -635,19 +640,19 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private ConditionalExpression tryUnwrapBoolean(ConditionalExpression.Boolean condition, boolean unwrapLazilyEvaluated) {
-      if (myPlaceholder instanceof PsiExpression) {
-        PsiExpression negation = BoolUtils.findNegation((PsiExpression)myPlaceholder);
+      if (myStreamExpression instanceof PsiExpression) {
+        PsiExpression negation = BoolUtils.findNegation((PsiExpression)myStreamExpression);
         if (negation != null) {
-          myPlaceholder = negation;
+          myStreamExpression = negation;
           condition = condition.negate();
         }
 
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlaceholder.getParent());
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(myStreamExpression.getParent());
         ConditionalExpression candidate = null;
         if (parent instanceof PsiPolyadicExpression) {
           PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
           PsiExpression[] operands = expression.getOperands();
-          if (operands.length > 1 && PsiTreeUtil.isAncestor(operands[0], myPlaceholder, false)) {
+          if (operands.length > 1 && PsiTreeUtil.isAncestor(operands[0], myStreamExpression, false)) {
             IElementType type = expression.getOperationTokenType();
             if (type.equals(JavaTokenType.ANDAND)) {
               candidate = condition
@@ -659,7 +664,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           }
         } else if (parent instanceof PsiConditionalExpression) {
           PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
-          if (PsiTreeUtil.isAncestor(ternary.getCondition(), myPlaceholder, false)) {
+          if (PsiTreeUtil.isAncestor(ternary.getCondition(), myStreamExpression, false)) {
             PsiType type = ternary.getType();
             PsiExpression thenExpression = ternary.getThenExpression();
             PsiExpression elseExpression = ternary.getElseExpression();
@@ -670,7 +675,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         }
         if (candidate != null &&
             (unwrapLazilyEvaluated || ExpressionUtils.isSimpleExpression(createExpression(candidate.getFalseBranch())))) {
-          myPlaceholder = parent;
+          myStreamExpression = parent;
           return candidate;
         }
       }
@@ -679,13 +684,13 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     @NotNull
     private ConditionalExpression tryUnwrapOptional(ConditionalExpression.Optional condition, boolean unwrapLazilyEvaluated) {
-      if (myPlaceholder instanceof PsiExpression) {
-        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myPlaceholder);
+      if (myStreamExpression instanceof PsiExpression) {
+        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myStreamExpression);
         if (call != null && !(call.getParent() instanceof PsiExpressionStatement)) {
           String name = call.getMethodExpression().getReferenceName();
           PsiExpression[] args = call.getArgumentList().getExpressions();
           if (args.length == 0 && "isPresent".equals(name)) {
-            myPlaceholder = call;
+            myStreamExpression = call;
             return new ConditionalExpression.Boolean(condition.getCondition(), false);
           }
           if (args.length == 1) {
@@ -701,7 +706,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
               }
             }
             if (absentExpression != null) {
-              myPlaceholder = call;
+              myStreamExpression = call;
               return condition.unwrap(absentExpression);
             }
           }
