@@ -26,7 +26,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -60,7 +59,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   @Override
   public RenameDialog2 createRenameDialog2(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
     RenameDialog2 d = super.createRenameDialog2(project, element, nameSuggestionContext, editor);
-    d.setValidate(s -> new Pair<>(true, null));
+    d.setValidate(s -> new ValidationResult(true, null));
     return d;
   }
 

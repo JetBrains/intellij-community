@@ -18,11 +18,12 @@ package com.intellij.ui.noria
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import java.util.*
+import java.util.function.Supplier
 
-val NoRender = { throw UnsupportedOperationException() }
+private val NoRender = { throw UnsupportedOperationException() }
 
 class ElementType(val type: Any,
-                  val renderFn: () -> (Any, List<Element>) -> Element = NoRender) {
+                  internal val renderFn: () -> (Any, List<Element>) -> Element = NoRender) {
   override fun equals(other: Any?): Boolean {
     return other is ElementType && other.type == type
   }
@@ -32,14 +33,14 @@ class ElementType(val type: Any,
 
 data class Element(val key: Any?, val type: ElementType, val props: Any, val children: List<Element>, val index: Int)
 
-interface Component<Node> : Disposable {
+private interface Component<Node> : Disposable {
   val node: Node
   val parentNode: Node
   val element: Element
   fun reconcile(e: Element, tk: Toolkit<Node>, update: () -> Unit) : Pair<Component<Node>, List<Update<Node>>>
 }
 
-fun<T> longestCommonSubsequence(a: List<T>, b: List<T>) : List<T> {
+private fun<T> longestCommonSubsequence(a: List<T>, b: List<T>) : List<T> {
   val m = a.size
   val n = b.size
   val dp = Array(m + 1) { IntArray(n + 1) }
@@ -66,7 +67,7 @@ fun<T> longestCommonSubsequence(a: List<T>, b: List<T>) : List<T> {
   return backtrack(m , n )
 }
 
-fun<Node> buildComponent(parent: Node, e: Element, r: Toolkit<Node>, update: () -> Unit): Pair<Component<Node>, List<Update<Node>>> =
+private fun<Node> buildComponent(parent: Node, e: Element, r: Toolkit<Node>, update: () -> Unit): Pair<Component<Node>, List<Update<Node>>> =
   if (r.isPrimitive(e.type)) {
     val newNode = r.createNode(e)
     val childComponents = e.children.map { element -> buildComponent(newNode, element, r, update) }
@@ -88,7 +89,7 @@ fun<Node> buildComponent(parent: Node, e: Element, r: Toolkit<Node>, update: () 
                   reactiveContext = context) to updates
   }
 
-fun<Node> reconcileChildren(c: PrimitiveComponent<Node>,
+private fun<Node> reconcileChildren(c: PrimitiveComponent<Node>,
                             e: Element,
                             tk: Toolkit<Node>,
                             update: () -> Unit) : Pair<List<Component<Node>>, List<Update<Node>>> {
@@ -131,7 +132,7 @@ fun<Node> reconcileChildren(c: PrimitiveComponent<Node>,
   }
 }
 
-data class PrimitiveComponent<Node>(override val node: Node,
+private data class PrimitiveComponent<Node>(override val node: Node,
                                     override val element : Element,
                                     override val parentNode: Node,
                                     val children: List<Component<Node>>) : Component<Node> {
@@ -162,7 +163,7 @@ data class PrimitiveComponent<Node>(override val node: Node,
     }
 }
 
-data class UserComponent<Node>(override val node: Node,
+private data class UserComponent<Node>(override val node: Node,
                                override val element : Element,
                                override val parentNode: Node,
                                val render: (Any, List<Element>) -> Element,
@@ -209,6 +210,7 @@ data class UserComponent<Node>(override val node: Node,
     }
 }
 
+@Suppress("unused")
 interface Update<Node>
 
 data class UpdateProps<Node> (val oldProps: Any,
@@ -234,7 +236,7 @@ interface Focusable {
   var autoFocus: Boolean
 }
 
-fun <Node> firstDescendant(c: Component<Node>, pred: (Element) -> Boolean): Component<Node>? {
+private fun <Node> firstDescendant(c: Component<Node>, pred: (Element) -> Boolean): Component<Node>? {
   if (pred(c.element)) {
     return c
   }
@@ -270,7 +272,7 @@ fun<Node> mount(parentDisposable: Disposable,
   }
 }
 
-class ReactiveContext(val dependencies: MutableSet<ReactiveContext> = mutableSetOf(),
+internal class ReactiveContext(val dependencies: MutableSet<ReactiveContext> = mutableSetOf(),
                       val dependants: MutableSet<ReactiveContext> = mutableSetOf(),
                       var dirty: Boolean = false,
                       val onInvalidate: () -> Unit = {}) {
@@ -289,9 +291,9 @@ class ReactiveContext(val dependencies: MutableSet<ReactiveContext> = mutableSet
   }
 }
 
-val reactiveContext: ThreadLocal<ReactiveContext> = ThreadLocal.withInitial { ReactiveContext() }
+internal val reactiveContext: ThreadLocal<ReactiveContext> = ThreadLocal.withInitial { ReactiveContext() }
 
-fun<T> withReactiveContext(c: ReactiveContext, f: () -> T) : T {
+internal fun<T> withReactiveContext(c: ReactiveContext, f: () -> T) : T {
   val old = reactiveContext.get()
   reactiveContext.set(c)
   try {
@@ -305,10 +307,17 @@ fun<T> withReactiveContext(c: ReactiveContext, f: () -> T) : T {
 
 interface Cell<out T> {
   val value: T
-  val context: ReactiveContext
 }
 
-class DerivedCell<out T : Any?>(val f: () -> T) : Cell<T> {
+interface VarCell<T>: Cell<T> {
+  override var value: T
+}
+
+internal abstract class CellBase {
+  abstract val context: ReactiveContext
+}
+
+internal class DerivedCell<out T : Any?>(val f: () -> T) : CellBase(), Cell<T> {
   private var cache: T? = null
   override var context: ReactiveContext = ReactiveContext(dirty = true)
 
@@ -326,7 +335,7 @@ class DerivedCell<out T : Any?>(val f: () -> T) : Cell<T> {
     }
 }
 
-class VarCell<T>(initial: T) : Cell<T> {
+internal class VarCellImpl<T>(initial: T) : CellBase(), VarCell<T> {
   private var _value: T = initial
   override val context = ReactiveContext()
   override var value: T
@@ -346,7 +355,8 @@ class VarCell<T>(initial: T) : Cell<T> {
 }
 
 fun <T : Any?> cell(f: () -> T): Cell<T> = DerivedCell(f)
-fun <T : Any?> cell(t: T) = VarCell(t)
+fun <T : Any?> cell(f: Supplier<T>): Cell<T> = DerivedCell { f.get() }
+fun <T : Any?> cell(t: T): VarCell<T> = VarCellImpl(t)
 
 fun track(d: Disposable, f: () -> Unit): Unit {
   val derivedCell = DerivedCell(f)
@@ -380,7 +390,6 @@ class ElementBuilder<T: Any>(val parent: ElementBuilder<*>? = null) {
   }
 
   fun build(): Element {
-
     val result = Element(
         type = type!!,
         key = key,
@@ -406,7 +415,7 @@ fun<P: Any> component(type: String,
                       body: ElementBuilder<P>.(P, List<Element>) -> Unit): ElementBuilder<*>.(ElementBuilder<P>.() -> Unit) -> Unit =
     statefulComponent(type, {body})
 
-fun<T: Any> buildElement(bb: ElementBuilder<T>.() -> Unit): Element {
+inline fun<T: Any> buildElement(bb: ElementBuilder<T>.() -> Unit): Element {
   val eb = ElementBuilder<T>()
   eb.bb()
   return eb.children.last()

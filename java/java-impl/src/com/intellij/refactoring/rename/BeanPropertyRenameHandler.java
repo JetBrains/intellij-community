@@ -27,7 +27,6 @@ import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,10 +67,9 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
       RenameDialog2 d = RenameDialog2Kt.createRenameDialog2(element,
                                                             editor,
                                                             null);
-      d.setPerformRename((newName, isPreview, callback) -> {
-        doRename(property, newName, d.getSearchInComments().getValue(), isPreview);
-        callback.invoke();
-        return Unit.INSTANCE;
+      d.setPerformRename((request) -> {
+        doRename(property, request.getNewName(), d.getSearchInComments().getValue(), request.isPreview());
+        request.getCallback().run();
       });
       RenameDialog2Kt.show(d);
     }

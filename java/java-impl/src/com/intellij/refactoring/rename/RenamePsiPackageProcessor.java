@@ -34,11 +34,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClas
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import kotlin.Pair;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function3;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -63,25 +60,27 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     final String qualifiedName = ((PsiPackage)element).getQualifiedName();
     final String packageName = StringUtil.getPackageName(qualifiedName);
     d.setInitialSelection(s -> TextRange.create(packageName.isEmpty() ? 0 : packageName.length() + 1, qualifiedName.length()));
-    Function3<String, Boolean, Function0<Unit>, Unit> superPerformRename = d.getPerformRename();
-    Function1<String, Pair<Boolean, String>> superValidate = d.getValidate();
+    Consumer<PerformRenameRequest> superPerformRename = d.getPerformRename();
+    Function<String, ValidationResult> superValidate = d.getValidate();
     final String oldName = ((PsiPackage)element).getQualifiedName();
     d.setValidate(s -> {
       if (Objects.equals(s, oldName))
-        return new Pair<>(false, null);
-      return superValidate
-        .invoke(Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(s)) ? StringUtil.getShortName(s) : s);});
-    d.setPerformRename((newName, isPreview, cb) -> {
+        return new ValidationResult(false, null);
+      return superValidate.apply(Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(s)) ? StringUtil.getShortName(s) : s);});
+    d.setPerformRename((request) -> {
       final PsiPackage psiPackage = (PsiPackage)element;
-      if (Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
-        return superPerformRename.invoke(StringUtil.getShortName(newName), isPreview, cb);
+      if (Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(request.getNewName()))) {
+        superPerformRename.accept(new PerformRenameRequest(StringUtil.getShortName(request.getNewName()),
+                                                           request.isPreview(),
+                                                           request.getCallback()));
       }
       else {
-        RenameDialog2Kt.invokeRefactoring(createRenameMoveProcessor(newName,
+        RenameDialog2Kt.invokeRefactoring(createRenameMoveProcessor(request.getNewName(),
                                                                     psiPackage,
                                                                     d.getSearchInComments().getValue(),
-                                                                    d.getSearchTextOccurrences().getValue()), isPreview, cb);
-        return Unit.INSTANCE;
+                                                                    d.getSearchTextOccurrences().getValue()),
+                                          request.isPreview(),
+                                          request.getCallback());
       }
     });
     d.setSuggestedNames(Collections.singletonList(((PsiPackage)element).getQualifiedName()));

@@ -17,6 +17,7 @@ package com.intellij.ui.noria
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import java.util.function.Consumer
 
 data class DialogProps(val north: Element? = null,
                        val center: Element? = null,
@@ -37,7 +38,7 @@ data class NoriaAction(val enabled: Cell<Boolean>,
                        val role: ActionRole = ActionRole.None,
                        val focused: Boolean = false,
                        val mnemonic: Char? = null,
-                       val lambda: (h: NoriaDialogHandle) -> Unit,
+                       val lambda: Consumer<NoriaDialogHandle>,
                        val isExclusive: Boolean = false)
 
 interface NoriaDialogs {

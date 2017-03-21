@@ -42,7 +42,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.Function;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,15 +201,14 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           final T aPackage,
                           final PsiDirectory... dirsToRename) {
     RenameDialog2 d = RenameDialog2Kt.createRenameDialog2(contextDirectory, editor, nameSuggestionContext);
-    d.setPerformRename((newName, isPreview, cb) -> {
-      String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), newName);
+    d.setPerformRename((request) -> {
+      String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), request.getNewName());
       BaseRefactoringProcessor moveProcessor = createProcessor(newQName,
                                                                project,
                                                                dirsToRename,
                                                                d.getSearchInComments().getValue(),
                                                                d.getSearchTextOccurrences().getValue());
-      RenameDialog2Kt.invokeRefactoring(moveProcessor, isPreview, cb);
-      return Unit.INSTANCE;
+      RenameDialog2Kt.invokeRefactoring(moveProcessor, request.isPreview(), request.getCallback());
     });
     RenameDialog2Kt.show(d);
   }

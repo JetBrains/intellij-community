@@ -42,6 +42,8 @@ import com.intellij.xml.util.XmlStringUtil
 import com.intellij.xml.util.XmlTagUtilBase
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.util.function.Consumer
+import java.util.function.Function
 
 fun getFullName(psiElement: PsiElement): String {
   val name = DescriptiveNameUtil.getDescriptiveName(psiElement)
@@ -53,26 +55,26 @@ fun getLabelText(fullName: String): String {
   return RefactoringBundle.message("rename.0.and.its.usages.to", fullName)
 }
 
-fun invokeRefactoring(processor: BaseRefactoringProcessor, isPreview: Boolean, cb: () -> Unit) {
+fun invokeRefactoring(processor: BaseRefactoringProcessor, isPreview: Boolean, cb: Runnable) {
   processor.setPrepareSuccessfulSwingThreadCallback(cb)
   processor.setPreviewUsages(isPreview)
   processor.run()
 }
 
-fun validate(project: Project, psiElement: PsiElement, newName: String) =
+fun validate(project: Project, psiElement: PsiElement, newName: String): ValidationResult =
   if (!RenameUtil.isValidName(project, psiElement, newName)) {
-    false to "\'$newName\' is not a valid name"
+    ValidationResult(false, "\'$newName\' is not a valid name")
   }
   else {
     val inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(psiElement)
     if (inputValidator != null) {
       val errorText = inputValidator.`fun`(newName)
       if (errorText != null) {
-        false to errorText
+        ValidationResult(false, errorText)
       }
-      else true to null
+      else ValidationResult(true, null)
     }
-    else true to null
+    else ValidationResult(true, null)
   }
 
 fun createRenameDialog2(psiElement: PsiElement,
@@ -86,25 +88,24 @@ fun createRenameDialog2(psiElement: PsiElement,
   val searchInComments: VarCell<Boolean> = cell(processor.isToSearchInComments(psiElement))
   val searchTextOccurrences: VarCell<Boolean> = cell(processor.isToSearchForTextOccurrences(psiElement))
   val searchTextOccurrencesEnabled = TextOccurrencesUtil.isSearchTextOccurencesEnabled(psiElement)
-  val searchForReferences: VarCell<Boolean>? = run {
-    if (processor.isToSearchForReferencesEnabled(psiElement)) cell(
-      processor.isToSearchForReferences(psiElement))
+  val searchForReferences: VarCell<Boolean>? =
+    if (processor.isToSearchForReferencesEnabled(psiElement))
+      cell(processor.isToSearchForReferences(psiElement))
     else null
-  }
   val factories = Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)
     .filter { factory -> factory.isApplicable(psiElement) && factory.optionName != null }
   val factoriesFlags = factories.map { it to it.isEnabled }.toMap(hashMapOf())
-  val performRename: (String, Boolean, callback: () -> Unit) -> Unit = { newName, isPreview, callback ->
+  val performRename: Consumer<PerformRenameRequest> = Consumer {
     val renameProcessor = RenameProcessor(project,
                                           psiElement,
-                                          newName,
+                                          it.newName,
                                           searchInComments.value,
                                           searchTextOccurrences.value)
     factories.filter { it.isEnabled }.forEach { renameProcessor.addRenamerFactory(it) }
-    invokeRefactoring(renameProcessor, isPreview, callback)
+    invokeRefactoring(renameProcessor, it.isPreview, it.callback)
   }
 
-  val saveSettings: (String) -> Unit = { newName ->
+  val saveSettings:Consumer<String> = Consumer { newName ->
     processor.setToSearchInComments(psiElement, searchInComments.value)
     processor.setToSearchForTextOccurrences(psiElement, searchTextOccurrences.value)
     if (searchForReferences != null) {
@@ -125,14 +126,14 @@ fun createRenameDialog2(psiElement: PsiElement,
                        saveSettings = saveSettings,
                        suggestedNames = suggestedNames,
                        suggestedNameInfo = suggestedNameInfo,
-                       validate = { validate(project, psiElement, it) },
+                       validate = Function { validate(project, psiElement, it) },
                        searchInComments = searchInComments,
                        searchTextOccurrences = searchTextOccurrences,
                        searchTextOccurrencesEnabled = searchTextOccurrencesEnabled,
                        searchForReferences = searchForReferences,
                        factoriesFlags = factoriesFlags,
                        performRename = performRename,
-                       beforeCheckboxHook = {},
+                       beforeCheckboxHook = Consumer {},
                        initialSelection = initialSelection)
 }
 
@@ -148,12 +149,19 @@ fun showRenameDialogSimple(psiElement: PsiElement,
   val d = createRenameDialog2(psiElement,
                               editor,
                               nameSuggestionContext)
-  d.performRename = { newName, isPreview, callback ->
-    performRename(newName, isPreview, d)
-    callback.invoke()
+  d.performRename = Consumer { it ->
+    performRename(it.newName, it.isPreview, d)
+    it.callback.run()
   }
   d.show()
 }
+
+data class PerformRenameRequest(val newName: String,
+                                val isPreview: Boolean,
+                                val callback: Runnable)
+
+data class ValidationResult(val ok: Boolean,
+                            val error: String?)
 
 data class RenameDialog2(var project: Project,
                          var psiElement: PsiElement,
@@ -166,19 +174,19 @@ data class RenameDialog2(var project: Project,
                          var suggestedNames: List<String>,
                          var suggestedNameInfo: SuggestedNameInfo?,
                          var factoriesFlags: MutableMap<AutomaticRenamerFactory, Boolean>,
-                         var performRename: (String, Boolean, callback: () -> Unit) -> Unit,
-                         var saveSettings: (String) -> Unit,
-                         var validate: (String) -> Pair<Boolean, String?>,
-                         var beforeCheckboxHook: ElementBuilder<*>.() -> Unit,
-                         var initialSelection: (String) -> TextRange)
+                         var performRename: Consumer<PerformRenameRequest>,
+                         var saveSettings: Consumer<String>,
+                         var validate: Function<String, ValidationResult>,
+                         var beforeCheckboxHook: Consumer<ElementBuilder<*>>,
+                         var initialSelection: Function<String, TextRange>)
 fun RenameDialog2.show() {
   PsiUtilCore.ensureValid(psiElement)
   val nameLabel = XmlStringUtil.wrapInHtml(XmlTagUtilBase.escapeString(getLabelText(getFullName(psiElement)), false))
   val oldName = UsageViewUtil.getShortName(psiElement)
   val newName = cell(suggestedNames.filterNotNull().firstOrNull() ?: "")
-  val validation = cell { validate(newName.value) }
-  val isEnabled = cell { validation.value.first && newName.value != oldName }
-  val errorText = cell { validation.value.second }
+  val validation = cell { validate.apply(newName.value) }
+  val isEnabled = cell { validation.value.ok && newName.value != oldName }
+  val errorText = cell { validation.value.error }
 
   val renamePanel = component<Unit>("renamePanel") { u, ch ->
     panel {
@@ -198,7 +206,7 @@ fun RenameDialog2.show() {
       nameSuggester {
         key = "name suggester"
         props = NameSuggester(suggestedNames = suggestedNames,
-                              selection = initialSelection,
+                              selection = {initialSelection.apply(it)},
                               onChange = { newName.value = it },
                               project = project,
                               fileType = FileTypes.PLAIN_TEXT,
@@ -223,7 +231,7 @@ fun RenameDialog2.show() {
   val northPanel = component<Unit>("north") { u, ch ->
     renamePanel {
       props = Unit
-      beforeCheckboxHook()
+      beforeCheckboxHook.accept(this)
       if (searchForReferences != null) {
         checkbox {
           key = "searchForRefs"
@@ -302,20 +310,20 @@ fun RenameDialog2.show() {
       NoriaAction(name = RefactoringBundle.message("refactor.button"),
                   role = ActionRole.Default,
                   enabled = isEnabled,
-                  lambda = {
-                    saveSettings(newName.value)
-                    performRename(newName.value, false, { it.close(DialogWrapper.OK_EXIT_CODE) })
+                  lambda = Consumer {
+                    saveSettings.accept(newName.value)
+                    performRename.accept(PerformRenameRequest(newName.value, false, Runnable { it.close(DialogWrapper.OK_EXIT_CODE) }))
                   }),
       NoriaAction(name = RefactoringBundle.message("preview.button"),
                   enabled = isEnabled,
-                  lambda = {
-                    saveSettings(newName.value)
-                    performRename(newName.value, true, { it.close(DialogWrapper.OK_EXIT_CODE) })
+                  lambda = Consumer {
+                    saveSettings.accept(newName.value)
+                    performRename.accept(PerformRenameRequest(newName.value, true, Runnable { it.close(DialogWrapper.OK_EXIT_CODE) }))
                   }),
       NoriaAction(name = CommonBundle.getCancelButtonText(),
                   role = ActionRole.Cancel,
                   enabled = cell { true },
-                  lambda = { it.close(DialogWrapper.CANCEL_EXIT_CODE) }))))
+                  lambda = Consumer { it.close(DialogWrapper.CANCEL_EXIT_CODE) }))))
 }
 
 

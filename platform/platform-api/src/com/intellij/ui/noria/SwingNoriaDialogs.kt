@@ -84,14 +84,14 @@ class SwingNoriaDialogs : NoriaDialogs {
         if (a.isExclusive) {
           object : DialogWrapperAction(a.name) {
             override fun doAction(e: ActionEvent?) {
-              a.lambda(handle)
+              a.lambda.accept(handle)
             }
           }
         }
         else {
           object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
-              a.lambda(handle)
+              a.lambda.accept(handle)
             }
           }.apply { putValue(Action.NAME, a.name) }
         }.apply {

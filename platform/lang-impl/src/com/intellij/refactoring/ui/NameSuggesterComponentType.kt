@@ -20,11 +20,12 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.ui.noria.*
+import java.util.function.Function
 
 object NameSuggesterSelection {
-  val All: (String) -> TextRange = { TextRange.allOf(it)}
-  val None: (String) -> TextRange = { TextRange.EMPTY_RANGE}
-  val NameWithoutExtension: (String) -> TextRange = {
+  val All: Function<String, TextRange> = Function { TextRange.allOf(it)}
+  val None: Function<String, TextRange> = Function { TextRange.EMPTY_RANGE}
+  val NameWithoutExtension: Function<String, TextRange> = Function {
     val pos = it.lastIndexOf('.')
     if (pos > 0) {
       TextRange.create(0, pos)
