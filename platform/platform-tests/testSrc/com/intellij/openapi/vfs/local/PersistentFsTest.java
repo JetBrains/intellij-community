@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.indexing.IndexingStamp;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.apache.log4j.Logger;
@@ -213,6 +214,7 @@ public class PersistentFsTest extends PlatformTestCase {
 
     int finalGlobalModCount = globalModCount;
 
+    IndexingStamp.flushCaches();  // avoid unexpected vfs persistent attribute flushes during test that measures number of vfs changes
     try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("This test wants no indices flush")) {
       WriteAction.run(() -> {
         final long timestamp = vFile.getTimeStamp();
