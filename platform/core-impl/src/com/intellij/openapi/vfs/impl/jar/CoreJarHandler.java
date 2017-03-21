@@ -68,7 +68,7 @@ public class CoreJarHandler extends ZipHandler {
     CoreJarVirtualFile file = entries.get(info);
     if (file == null) {
       EntryInfo parent = info.parent;
-      file = new CoreJarVirtualFile(this, info.shortName.toString(),
+      file = new CoreJarVirtualFile(this, info.shortName,
                                     info.isDirectory ? -1 : info.length,
                                     info.timestamp,
                                     parent != null ? getOrCreateFile(parent, entries) : null);
