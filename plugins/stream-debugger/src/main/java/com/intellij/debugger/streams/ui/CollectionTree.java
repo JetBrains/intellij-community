@@ -136,6 +136,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   public void highlight(@NotNull List<TraceElement> elements) {
     clearSelection();
 
+    tryScrollTo(elements);
     myHighlighted = elements.stream().map(myValue2Path::get).collect(Collectors.toSet());
 
     revalidate();
@@ -147,6 +148,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     final TreePath[] paths = elements.stream().map(myValue2Path::get).toArray(TreePath[]::new);
     myHighlighted = new HashSet<>(Arrays.asList(paths));
     select(paths);
+    tryScrollTo(paths);
 
     revalidate();
     repaint();
@@ -165,6 +167,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     myIgnoreInternalSelectionEvents = true;
     getSelectionModel().setSelectionPaths(paths);
+    if (paths.length > 0) {
+      scrollPathToVisible(paths[0]);
+    }
     myIgnoreInternalSelectionEvents = false;
   }
 
@@ -172,6 +177,26 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     myIgnoreExternalSelectionEvents = true;
     myDispatcher.getMulticaster().selectionChanged(selectedItems);
     myIgnoreExternalSelectionEvents = false;
+  }
+
+  private void tryScrollTo(@NotNull List<TraceElement> elements) {
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    for (final TraceElement element : elements) {
+      final TreePath path = myValue2Path.get(element);
+      if (path != null) {
+        scrollPathToVisible(path);
+        return;
+      }
+    }
+  }
+
+  private void tryScrollTo(@NotNull TreePath[] paths) {
+    if (paths.length > 0) {
+      scrollPathToVisible(paths[0]);
+    }
   }
 
   private class MyRootValue extends XValue {
