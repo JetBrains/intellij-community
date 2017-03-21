@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ abstract class JavaScriptDebugAware {
 
   fun canGetEvaluationInfo(file: PsiFile) = file.fileType == fileType
 
-  abstract fun getEvaluationInfo(element: PsiElement, document: Document, expressionInfoFactory: ExpressionInfoFactory): Promise<ExpressionInfo?>
+  open fun getEvaluationInfo(element: PsiElement, document: Document, expressionInfoFactory: ExpressionInfoFactory): Promise<ExpressionInfo?>? = null
 
   open fun createMemberFilter(nameMapper: NameMapper?, element: PsiElement, end: Int): MemberFilter? = null
 
