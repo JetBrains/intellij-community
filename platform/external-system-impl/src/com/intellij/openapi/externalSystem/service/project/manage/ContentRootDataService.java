@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
@@ -112,7 +113,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         modulesToExpand.add(module);
       }
     }
-    if (!modulesToExpand.isEmpty()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesToExpand.isEmpty()) {
       for (Module module : modulesToExpand) {
         String productionModuleName = modelsProvider.getProductionModuleName(module);
         if (productionModuleName == null || !modulesToExpand.contains(modelsProvider.findIdeModule(productionModuleName))) {

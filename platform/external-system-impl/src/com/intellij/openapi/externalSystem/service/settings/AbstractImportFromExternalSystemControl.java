@@ -250,9 +250,10 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public boolean validate(WizardContext wizardContext, boolean defaultFormat) throws ConfigurationException {
-    if(!myProjectSettingsControl.validate(myProjectSettings)) return false;
-    if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
 
+    if (!myProjectSettingsControl.validate(myProjectSettings)) return false;
+    if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
     String linkedProjectPath = myLinkedProjectPathField.getPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
@@ -266,11 +267,6 @@ public abstract class AbstractImportFromExternalSystemControl<
       }
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        wizardContext.isCreatingNewProject() &&
-        !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) {
-      return false;
-    }
-    return true;
+    return !(wizardContext.isCreatingNewProject() && !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat));
   }
 }
