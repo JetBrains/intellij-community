@@ -443,8 +443,8 @@ public class CommandLineUtil {
     return str.regionMatches(true, str.length() - suffix.length(), suffix, 0, suffix.length());
   }
 
-  private static @NotNull
-  String quote(@NotNull String s, char ch) {
+  @NotNull
+  private static String quote(@NotNull String s, char ch) {
     return !isQuoted(s, ch) ? ch + s + ch : s;
   }
 
