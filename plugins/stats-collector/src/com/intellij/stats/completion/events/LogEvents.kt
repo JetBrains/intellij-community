@@ -182,6 +182,8 @@ class CompletionStartedEvent(
 {
     
     var completionListLength: Int = completionList.size
+    
+    var isOneLineMode: Boolean = false
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
