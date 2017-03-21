@@ -63,7 +63,13 @@ public class CommandLineUtil {
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
     if (platform != Platform.WINDOWS) {
-      commandLine.addAll(parameters);
+      for (String parameter : parameters) {
+        if (isQuoted(parameter, SPECIAL_QUOTE)) {
+          // TODO do we need that on non-Windows? M.b. just remove these quotes? -- Eldar
+          parameter = quote(unquoteString(parameter, SPECIAL_QUOTE), Q);
+        }
+        commandLine.add(parameter);
+      }
     }
     else {
       addToWindowsCommandLine(parameters, commandLine);
