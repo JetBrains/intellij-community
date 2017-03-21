@@ -17,7 +17,6 @@ package git4idea.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
@@ -43,10 +42,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -92,14 +89,12 @@ public class GitUnstashDialog extends DialogWrapper {
   private final HashSet<String> myBranches = new HashSet<>();
 
   private final Project myProject;
-  private GitVcs myVcs;
   private static final Logger LOG = Logger.getInstance(GitUnstashDialog.class);
 
   public GitUnstashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     setModal(false);
     myProject = project;
-    myVcs = GitVcs.getInstance(project);
     setTitle(GitBundle.getString("unstash.title"));
     setOKButtonText(GitBundle.getString("unstash.button.apply"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
@@ -172,8 +167,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
       private GitSimpleHandler dropHandler(String stash) {
         GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
-        h.addParameters("drop");
-        addStashParameter(h, stash);
+        h.addParameters("drop", stash);
         return h;
       }
     });
@@ -185,8 +179,7 @@ public class GitUnstashDialog extends DialogWrapper {
         try {
           GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REV_LIST);
           h.setSilent(true);
-          h.addParameters("--timestamp", "--max-count=1");
-          addStashParameter(h, selectedStash);
+          h.addParameters("--timestamp", "--max-count=1", selectedStash);
           h.endOptions();
           final String output = h.run();
           resolvedStash = GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
@@ -200,18 +193,6 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     init();
     updateDialogState();
-  }
-
-  /**
-   * Adds {@code stash@{x}} parameter to the handler, quotes it if needed.
-   */
-  private void addStashParameter(@NotNull GitHandler handler, @NotNull String stash) {
-    if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) {
-      handler.addParameters(GeneralCommandLine.inescapableQuote(stash));
-    }
-    else {
-      handler.addParameters(stash);
-    }
   }
 
   /**
@@ -312,7 +293,7 @@ public class GitUnstashDialog extends DialogWrapper {
       h.addParameters("branch", branch);
     }
     String selectedStash = getSelectedStash().getStash();
-    addStashParameter(h, selectedStash);
+    h.addParameters(selectedStash);
     return h;
   }
 
