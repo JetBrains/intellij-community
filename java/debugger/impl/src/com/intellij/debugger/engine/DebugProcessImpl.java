@@ -1997,7 +1997,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() throws Exception {
-              commitVM(vm1);
+              try {
+                commitVM(vm1);
+              } catch (VMDisconnectedException e) {
+                fail();
+              }
             }
           }));
         }
