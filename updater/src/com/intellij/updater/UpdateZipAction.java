@@ -135,9 +135,11 @@ public class UpdateZipAction extends BaseUpdateAction {
   @Override
   protected void doApply(final ZipFile patchFile, File backupDir, File toFile) throws IOException {
     File temp = Utils.getTempFile(toFile.getName());
+    //in case no backup is required
+    File source = backupDir == null ? toFile : getSource(backupDir);
 
     try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp), 0)) {
-      processZipFile(getSource(backupDir), (entry, in) -> {
+      processZipFile(source, (entry, in) -> {
         String path = entry.getName();
         if (myFilesToUpdate.contains(path)) {
           try (OutputStream entryOut = out.zipStream(path)) {

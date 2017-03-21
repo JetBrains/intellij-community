@@ -27,6 +27,11 @@ import java.util.zip.ZipOutputStream;
 
 public class PatchFileCreator {
   private static final String PATCH_INFO_FILE_NAME = ".patch-info";
+  /**
+   * This property allows applying patches without creating backups. In this case a callee is responsible for that.
+   * Example: JetBrains Toolbox App copies a tool it wants to update and then applies the patch.
+   */
+  private static final String NO_BACKUP_PROPERTY = "no.backup";
 
   public static Patch create(PatchSpec spec, File patchFile, UpdaterUI ui) throws IOException, OperationCancelledException {
     Patch patchInfo = new Patch(spec, ui);
@@ -72,7 +77,12 @@ public class PatchFileCreator {
   public static boolean apply(PreparationResult preparationResult,
                               Map<String, ValidationResult.Option> options,
                               UpdaterUI ui) throws IOException, OperationCancelledException {
-    return apply(preparationResult, options, Utils.createTempDir(), ui).applied;
+    File backupDir = shouldSkipBackups() ? null : Utils.createTempDir();
+    return apply(preparationResult, options, backupDir, ui).applied;
+  }
+
+  private static boolean shouldSkipBackups() {
+    return Boolean.parseBoolean(System.getProperty(NO_BACKUP_PROPERTY, "false"));
   }
 
   public static Patch.ApplicationResult apply(PreparationResult preparationResult,

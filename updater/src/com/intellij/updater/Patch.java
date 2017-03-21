@@ -311,7 +311,9 @@ public class Patch {
       if (each.shouldApply(toDir, options)) actionsToProcess.add(each);
     }
 
-    forEach(actionsToProcess, "Backing up files...", ui, true, action -> action.backup(toDir, backupDir));
+    if (backupDir != null) {
+      forEach(actionsToProcess, "Backing up files...", ui, true, action -> action.backup(toDir, backupDir));
+    }
 
     List<PatchAction> appliedActions = new ArrayList<>();
     boolean shouldRevert = false;
@@ -342,7 +344,9 @@ public class Patch {
     }
 
     if (shouldRevert) {
-      revert(appliedActions, backupDir, rootDir, ui);
+      if (backupDir != null) {
+        revert(appliedActions, backupDir, rootDir, ui);
+      }
       appliedActions.clear();
 
       if (cancelled) throw new OperationCancelledException();
