@@ -150,9 +150,20 @@ public enum GitVersionSpecialty {
   },
 
   KNOWS_SET_UPSTREAM_TO { // in Git 1.8.0 --set-upstream-to was introduced as a replacement of --set-upstream which became deprecated
+
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
+    }
+  },
+
+  /**
+   * Git pre-push hook is supported since version 1.8.2.
+   */
+  PRE_PUSH_HOOK {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
     }
   };
 

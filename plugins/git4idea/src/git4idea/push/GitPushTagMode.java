@@ -15,12 +15,11 @@
  */
 package git4idea.push;
 
-import com.intellij.dvcs.push.VcsPushOptionValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
  */
-public final class GitPushTagMode implements VcsPushOptionValue {
+public final class GitPushTagMode {
 
   public static final GitPushTagMode ALL = new GitPushTagMode("All", "--tags");
   public static final GitPushTagMode FOLLOW = new GitPushTagMode("Current Branch", "--follow-tags");

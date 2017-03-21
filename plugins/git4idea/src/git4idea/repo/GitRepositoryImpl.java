@@ -200,8 +200,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
+    GitHooksInfo hooksInfo = myReader.readHooksInfo();
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
+                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, hooksInfo);
   }
 
   private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {

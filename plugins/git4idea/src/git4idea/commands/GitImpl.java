@@ -404,7 +404,7 @@ public class GitImpl implements Git {
                                @NotNull String spec,
                                boolean updateTracking,
                                @NotNull GitLineHandlerListener... listeners) {
-    return doPush(repository, remote, singleton(url), spec, false, updateTracking, null, listeners);
+    return doPush(repository, remote, singleton(url), spec, false, updateTracking, false, null, listeners);
   }
 
   @Override
@@ -414,9 +414,10 @@ public class GitImpl implements Git {
                                @NotNull String spec,
                                boolean force,
                                boolean updateTracking,
+                               boolean skipHook,
                                @Nullable String tagMode,
                                GitLineHandlerListener... listeners) {
-    return doPush(repository, remote.getName(), remote.getPushUrls(), spec, force, updateTracking, tagMode, listeners);
+    return doPush(repository, remote.getName(), remote.getPushUrls(), spec, force, updateTracking, skipHook, tagMode, listeners);
   }
 
   @NotNull
@@ -426,6 +427,7 @@ public class GitImpl implements Git {
                                   @NotNull final String spec,
                                   final boolean force,
                                   final boolean updateTracking,
+                                  final boolean skipHook,
                                   @Nullable final String tagMode,
                                   @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(new Computable<GitLineHandler>() {
@@ -448,6 +450,9 @@ public class GitImpl implements Git {
         }
         if (tagMode != null) {
           h.addParameters(tagMode);
+        }
+        if (skipHook) {
+          h.addParameters("--no-verify");
         }
         return h;
       }

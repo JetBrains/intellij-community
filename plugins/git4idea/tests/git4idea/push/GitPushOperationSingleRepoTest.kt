@@ -27,14 +27,15 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
+import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import git4idea.test.makeCommit
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
+import junit.framework.TestCase
 import java.io.File
 import java.io.IOException
 import java.util.Collections.singletonMap
@@ -142,7 +143,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
     val pushSpec = makePushSpec(myRepository, "master", "origin/master")
 
-    val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
+    val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false, false) {
       override fun update(rootsToUpdate: Collection<GitRepository>,
                           updateMethod: UpdateMethod,
                           checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
@@ -174,7 +175,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
     val pushSpec = makePushSpec(myRepository, "master", "origin/master")
 
-    val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
+    val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false, false) {
       internal var updateHappened: Boolean = false
 
       override fun update(rootsToUpdate: Collection<GitRepository>,
@@ -254,7 +255,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     makeCommit("anyfile.txt")
 
     val map = singletonMap(myRepository, makePushSpec(myRepository, "master", "origin/master"))
-    val result = GitPushOperation(myProject, myPushSupport, map, null, true).execute()
+    val result = GitPushOperation(myProject, myPushSupport, map, null, true, false).execute()
     return Pair.create(pushedHash, result)
   }
 
@@ -331,11 +332,28 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     updateRepositories()
     val spec = makePushSpec(myRepository, "master", "origin/master")
     val pushResult = GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec),
-        GitPushTagMode.ALL, false).execute()
+        GitPushTagMode.ALL, false, false).execute()
     val result = pushResult.results[myRepository]!!
     val pushedTags = result.pushedTags
     assertEquals(1, pushedTags.size)
     assertEquals("refs/tags/v1", pushedTags[0])
+  }
+
+  fun test_skip_pre_push_hook() {
+    cd(myRepository)
+    val hash = makeCommit("file.txt")
+
+    val rejectHook = """
+      exit 1
+      """.trimIndent()
+    val gitDir = GitUtil.findGitDir(File(myRepository.root.path))
+    TestCase.assertNotNull(gitDir)
+    installHook(gitDir as File, "pre-push", rejectHook)
+
+    val result = push("master", "origin/master", false, true)
+
+    assertResult(SUCCESS, 1, "master", "origin/master", result)
+    assertPushed(hash, "master")
   }
 
   fun test_warn_if_rebasing_over_merge() {
@@ -443,10 +461,10 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     git("merge branch1")
   }
 
-  private fun push(from: String, to: String, force: Boolean = false): GitPushResult {
+  private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {
     updateRepositories()
     val spec = makePushSpec(myRepository, from, to)
-    return GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec), null, force).execute()
+    return GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec), null, force, skipHook).execute()
   }
 
   private fun pushCommitFromBro(): String {
