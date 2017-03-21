@@ -206,7 +206,8 @@ public class JUnitUtil {
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+    final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
+    if (topLevelClass != null && AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) return true;
 
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
