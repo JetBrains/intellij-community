@@ -54,7 +54,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private Set<TreePath> myHighlighted = Collections.emptySet();
   private final EventDispatcher<ValuesSelectionListener> myDispatcher = EventDispatcher.create(ValuesSelectionListener.class);
 
-  private boolean myIgnoreSelectionEvents = false;
+  private boolean myIgnoreInternalSelectionEvents = false;
+  private boolean myIgnoreExternalSelectionEvents = false;
 
   CollectionTree(@NotNull List<TraceElement> values, @NotNull EvaluationContextImpl evaluationContext) {
     super(evaluationContext.getProject(), new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
@@ -103,7 +104,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     });
 
     addTreeSelectionListener(e -> {
-      if (myIgnoreSelectionEvents) {
+      if (myIgnoreInternalSelectionEvents) {
         return;
       }
 
@@ -117,7 +118,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-      myDispatcher.getMulticaster().selectionChanged(selectedItems);
+      fireSelectionChanged(selectedItems);
     });
 
     setSelectionRow(0);
@@ -125,34 +126,52 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   @Override
+  public void clearSelection() {
+    myIgnoreInternalSelectionEvents = true;
+    super.clearSelection();
+    myIgnoreInternalSelectionEvents = false;
+  }
+
+  @Override
   public void highlight(@NotNull List<TraceElement> elements) {
-    myIgnoreSelectionEvents = true;
     clearSelection();
 
     myHighlighted = elements.stream().map(myValue2Path::get).collect(Collectors.toSet());
 
     revalidate();
     repaint();
-    myIgnoreSelectionEvents = false;
   }
 
   @Override
   public void select(@NotNull List<TraceElement> elements) {
-    myIgnoreSelectionEvents = true;
-
     final TreePath[] paths = elements.stream().map(myValue2Path::get).toArray(TreePath[]::new);
-    getSelectionModel().setSelectionPaths(paths);
     myHighlighted = new HashSet<>(Arrays.asList(paths));
+    select(paths);
 
     revalidate();
     repaint();
-    myIgnoreSelectionEvents = false;
   }
 
   @Override
   public void addSelectionListener(@NotNull ValuesSelectionListener listener) {
     // TODO: dispose?
     myDispatcher.addListener(listener);
+  }
+
+  private void select(@NotNull TreePath[] paths) {
+    if (myIgnoreExternalSelectionEvents) {
+      return;
+    }
+
+    myIgnoreInternalSelectionEvents = true;
+    getSelectionModel().setSelectionPaths(paths);
+    myIgnoreInternalSelectionEvents = false;
+  }
+
+  private void fireSelectionChanged(List<TraceElement> selectedItems) {
+    myIgnoreExternalSelectionEvents = true;
+    myDispatcher.getMulticaster().selectionChanged(selectedItems);
+    myIgnoreExternalSelectionEvents = false;
   }
 
   private class MyRootValue extends XValue {
