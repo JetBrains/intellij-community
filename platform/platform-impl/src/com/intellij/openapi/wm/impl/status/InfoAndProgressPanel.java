@@ -18,7 +18,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.EventLog;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -86,6 +85,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final AnimatedIcon myRefreshIcon;
 
   private String myCurrentRequestor;
+  private boolean myDisposed;
 
   private final Set<InlineProgressIndicator> myDirtyIndicators = ContainerUtil.newIdentityTroveSet();
   private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
@@ -139,11 +139,16 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     restoreEmptyStatus();
 
-    runOnPowerSaveChange(this, () -> updateProgressIcon());
+    runOnPowerSaveChange(this::updateProgressIcon);
   }
 
-  private static void runOnPowerSaveChange(Disposable parentDisposable, Runnable runnable) {
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+  private void runOnPowerSaveChange(@NotNull Runnable runnable) {
+    synchronized (myOriginals) {
+      if (!myDisposed) {
+        ApplicationManager.getApplication().getMessageBus().connect(this)
+          .subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+      }
+    }
   }
 
   private void handle(MouseEvent e) {
@@ -184,6 +189,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
       myInline2Original.clear();
       myOriginal2Inlines.clear();
+
+      myDisposed = true;
     }
   }
 
@@ -206,7 +213,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
   }
 
-  public void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
+  void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 
@@ -681,7 +688,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         }
       });
       Runnable updatePowerSaveStatus = () -> myProgress.setVisible(!PowerSaveMode.isEnabled());
-      runOnPowerSaveChange(this, updatePowerSaveStatus);
+      runOnPowerSaveChange(updatePowerSaveStatus);
       updatePowerSaveStatus.run();
     }
 
