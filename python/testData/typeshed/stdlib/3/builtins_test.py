@@ -14,9 +14,10 @@ def test_zip():
 def test_open_path_like():
     import sys
 
-    class A:
-        def __fspath__(self):
-            return sys.argv[0]
+    if sys.version_info >= (3, 6):
+        class A:
+            def __fspath__(self):
+                return sys.argv[0]
 
-    with open(A()) as f:
-        assert f.name == sys.argv[0]
+        with open(A()) as f:
+            assert f.name == sys.argv[0]
