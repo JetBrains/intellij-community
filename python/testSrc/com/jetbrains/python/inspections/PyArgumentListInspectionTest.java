@@ -263,6 +263,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-23069
+  public void testDunderNewCallInDictInheritor() {
+    doTest();
+  }
+
   // PY-22767
   public void testBuiltinZip() {
     doTest();
