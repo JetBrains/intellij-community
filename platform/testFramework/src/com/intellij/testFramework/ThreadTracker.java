@@ -180,7 +180,12 @@ public class ThreadTracker {
     return insideTPEGetTask;
   }
 
-  public static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup, int timeout, @NotNull TimeUnit unit) {
+  public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
+    awaitThreadTerminationWithParentParentGroup("JDI main", timeout, unit);
+  }
+  private static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup,
+                                                                  int timeout,
+                                                                  @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
       Thread jdiThread = ContainerUtil.find(getThreads(), thread -> {
