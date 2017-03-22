@@ -16,7 +16,6 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -252,10 +251,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     debugSession.addSessionListener(myDebugSessionListener, this);
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
-      myLastSuspendContext = getSuspendContext();
-      if (myLastSuspendContext != null) {
+      final SuspendContextImpl suspendContext = debugProcess.getDebuggerContext().getSuspendContext();
+      if (suspendContext != null) {
         ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
-        managerThread.schedule(new MyUpdateClassesCommand(myLastSuspendContext));
+        managerThread.schedule(new MyUpdateClassesCommand(suspendContext));
       }
     }, this);
 
@@ -329,10 +328,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::commitTracked);
   }
 
-  private SuspendContextImpl getSuspendContext() {
-    return DebuggerManagerEx.getInstanceEx(myProject).getContext().getSuspendContext();
-  }
-
   private void updateClassesAndCounts() {
     ApplicationManager.getApplication().invokeLater(() -> {
       final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
@@ -357,18 +352,19 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.clear();
   }
 
-  public void setActive(boolean active, @NotNull DebuggerManagerThreadImpl managerThread) {
+  public void setActive(boolean active, @NotNull DebugProcessImpl process) {
     if (myIsActive == active) {
       return;
     }
 
     myIsActive = active;
 
-    managerThread.schedule(new DebuggerCommandImpl() {
+    final SuspendContext suspendContext = process.getDebuggerContext().getSuspendContext();
+    process.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
         if (active) {
-          doActivate();
+          doActivate(suspendContext);
         }
         else {
           doPause();
@@ -377,12 +373,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     });
   }
 
-  private void doActivate() {
+  private void doActivate(@Nullable SuspendContext suspendContext) {
     myDebugSessionListener.setActive(true);
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
     final SuspendContextImpl lastContext = myLastSuspendContext;
 
-    if (lastContext == null || !lastContext.equals(getSuspendContext())) {
+    if (lastContext == null || !lastContext.equals(suspendContext)) {
       updateClassesAndCounts();
     }
   }
@@ -401,6 +397,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      myLastSuspendContext = suspendContext;
       handleTrackers();
 
       final List<ReferenceType> classes = suspendContext.getDebugProcess().getVirtualMachineProxy().allClasses();
@@ -409,9 +406,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         final VirtualMachine vm = classes.get(0).virtualMachine();
         if (vm.canGetInstanceInfo()) {
           final Map<ReferenceType, Long> counts = getInstancesCounts(classes, vm);
-          if (isContextValid()) {
-            ApplicationManager.getApplication().invokeLater(() -> myTable.updateContent(counts));
-          }
+          ApplicationManager.getApplication().invokeLater(() -> myTable.updateContent(counts));
         }
         else {
           ApplicationManager.getApplication().invokeLater(() -> myTable.updateClassesOnly(classes));
@@ -419,10 +414,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
 
       ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(false));
-    }
-
-    private boolean isContextValid() {
-      return ClassesFilteredView.this.getSuspendContext() == getSuspendContext();
     }
 
     private void handleTrackers() {
@@ -444,7 +435,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       final Map<ReferenceType, Long> result = new LinkedHashMap<>();
 
       for (int begin = 0, end = Math.min(batchSize, size);
-           begin != size && isContextValid();
+           begin != size;
            begin = end, end = Math.min(end + batchSize, size)) {
         final List<ReferenceType> batch = classes.subList(begin, end);
 

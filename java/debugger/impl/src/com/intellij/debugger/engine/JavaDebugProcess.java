@@ -380,7 +380,7 @@ public class JavaDebugProcess extends XDebugProcess {
           @Override
           public void selectionChanged(ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
-              classesFilteredView.setActive(memoryViewContent.isSelected(), process.getManagerThread());
+              classesFilteredView.setActive(memoryViewContent.isSelected(), process);
             }
           }
         }, memoryViewContent);
