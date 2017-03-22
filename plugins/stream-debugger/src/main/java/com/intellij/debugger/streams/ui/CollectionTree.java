@@ -136,22 +136,21 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   public void highlight(@NotNull List<TraceElement> elements) {
     clearSelection();
 
+    highlightValues(elements);
     tryScrollTo(elements);
-    myHighlighted = elements.stream().map(myValue2Path::get).collect(Collectors.toSet());
 
-    revalidate();
-    repaint();
+    updatePresentation();
   }
 
   @Override
   public void select(@NotNull List<TraceElement> elements) {
     final TreePath[] paths = elements.stream().map(myValue2Path::get).toArray(TreePath[]::new);
-    myHighlighted = new HashSet<>(Arrays.asList(paths));
+
     select(paths);
+    highlightValues(elements);
     tryScrollTo(paths);
 
-    revalidate();
-    repaint();
+    updatePresentation();
   }
 
   @Override
@@ -197,6 +196,15 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     if (paths.length > 0) {
       scrollPathToVisible(paths[0]);
     }
+  }
+
+  private void highlightValues(@NotNull List<TraceElement> elements) {
+    myHighlighted = elements.stream().map(myValue2Path::get).collect(Collectors.toSet());
+  }
+
+  private void updatePresentation() {
+    revalidate();
+    repaint();
   }
 
   private class MyRootValue extends XValue {
