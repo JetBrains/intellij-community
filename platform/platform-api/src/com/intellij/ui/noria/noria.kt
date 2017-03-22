@@ -20,6 +20,82 @@ import com.intellij.openapi.util.Disposer
 import java.util.*
 import java.util.function.Supplier
 
+/**
+ * Noria is a library for building declarative and reactive UI for abstract Toolkit.
+ *
+ * The idea behind it is to build UI using composition of pure functions of data (render-function).
+ * Data is a pair of (Props, Children).
+ * Props is an effectively immutable representation of component's properties and
+ * Children is a list of other Elements that could eventually be added as children somewhere downstream.
+ *
+ * There are two kinds of UI components:
+ *
+ * Primitive ones should be considered to be built-in.
+ * They correspond to actual Toolkit's components and have no render-function.
+ * They are provided by implementations of PrimitiveComponentType extension point.
+ *
+ * Here is how we declare a primitive component:
+ *
+ *
+ * val panel = primitiveComponent<PanelProps>("panel")
+ *
+ * User ones are user-defined components. *
+ * The framework will denote User component to another component by calling corresponding render-function or will supply actual Toolkit's Node.
+ * Render-function returns an Element. Element is a data-representation of any component (User or Primitive) which is not reified yet.
+ *
+ * User-defined components should be declared in the following fashion:
+ *
+ *
+ * val myComponent = component<ComponentProps>("some string representing it's type") { props: ComponentProps, children: List<Element> ->
+ *   panel {
+ *      props = PanelProps(...)
+ *      checkbox {
+ *        props = CheckboxProps(...)
+ *      }
+ *      for (c in children) {
+ *        child(c)
+ *      }
+ *   }
+ * }
+ *
+ * This code builds a component which denotes to panel with specified props and children of some checkbox and other children passed to it as parameter.
+ *
+ * For user's convenience render function is invoked on a receiver of type ElementBuilder.
+ * It's purpose is to collect all information about Element needed to build it. props setter sets props, child() methods adds a child.
+ *
+ * User-components are re-rendered once they receive different (Props, Children) or state they are looking at changes.
+ * There are special state container called Cell<T>.
+ * Reads from it are tracked by the framework and if mutation of it happens then component it reads from is a subject to update.
+ * Cell should store immutable value, because change-detection is performed by calling equals with old and new Cell values.
+ *
+ * There are two kinds of Cells:
+ *
+ * VarCell stores mutable value and should be treated as model. One can update it's value directly. (e.g. in button's callback function)
+ * Cell type has no setter and used to represent a derivation of other cells.
+ *
+ * This will construct mutable cell, which can be updated:
+ *
+ * val model = cell(5)
+ * model.value++
+ *
+ * And this will build a derived cell which is updated in reactive fashion once any of cells it depends on get changed:
+ *
+ * val derived = cell {a.value + b.value}
+ *
+ * Please note that derived cells are lazy. It's body is not evaluated unless nobody is reading from it.
+ * 'derived.value' written in render function or other 'cell {}' block will be tracked and re-evaluated when a or b will change it's value.
+ * Corresponding components will get updated.
+ *
+ * There are one more function exists to perform side-effects once cell change:
+ * track(Disposable) {
+ *   side-effects here
+ * }
+ *
+ * Side effects in track() should be idempotent since it's hard to predict how many times the block will get executed.
+ * It is guaranteed to be invoked when any of cells it reads from is changed. The block is executed immediately for the first time when track() is called.
+ * Disposable is passed to track lifetime of this subscription.
+ */
+
 private val NoRender = { throw UnsupportedOperationException() }
 
 class ElementType(val type: Any,
