@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,21 @@
  */
 package org.zmlx.hg4idea.action.mq;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.action.HgLogSingleCommitAction;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-public abstract class HgMqAppliedPatchAction extends HgMqLogAction {
+public abstract class HgMqLogAction extends HgLogSingleCommitAction {
+
+  @Override
+  protected boolean isVisible(@NotNull Project project, @NotNull HgRepository repository, @NotNull Hash hash) {
+    return repository.getRepositoryConfig().isMqUsed() && super.isVisible(project, repository, hash);
+  }
 
   @Override
   protected boolean isEnabled(@NotNull HgRepository repository, @NotNull Hash commit) {
-    return super.isEnabled(repository, commit) && isAppliedPatch(repository, commit);
-  }
-
-  public static boolean isAppliedPatch(@NotNull HgRepository repository, @NotNull final Hash hash) {
-    return ContainerUtil.exists(repository.getMQAppliedPatches(), info -> info.getHash().equals(hash));
+    return repository.getRepositoryConfig().isMqUsed() && super.isEnabled(repository, commit);
   }
 }
