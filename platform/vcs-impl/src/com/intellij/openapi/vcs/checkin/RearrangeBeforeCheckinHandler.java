@@ -86,9 +86,8 @@ public class RearrangeBeforeCheckinHandler extends CheckinHandler implements Che
     };
 
     if (VcsConfiguration.getInstance(myProject).REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      new RearrangeCodeProcessor(
-        myProject, CheckinHandlerUtil.getPsiFiles(myProject, myPanel.getVirtualFiles()), COMMAND_NAME, performCheckoutAction
-      ).run();
+      new RearrangeCodeProcessor(myProject, CheckinHandlerUtil.getPsiFiles(myProject, myPanel.getVirtualFiles()), COMMAND_NAME,
+                                 performCheckoutAction, true).run();
     }
     else {
       performCheckoutAction.run();
