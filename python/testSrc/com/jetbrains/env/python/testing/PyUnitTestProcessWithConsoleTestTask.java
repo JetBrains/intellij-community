@@ -104,7 +104,7 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
 
       final Location<?> methodLocation = method.getLocation(getProject(), GlobalSearchScope.moduleScope(myFixture.getModule()));
 
-      Assert.assertNotNull("Failed to resolve method location", methodLocation);
+      Assert.assertNotNull("Failed to resolve method location " + method, methodLocation);
       final PsiElement methodPsiElement = methodLocation.getPsiElement();
       Assert.assertNotNull("Failed to get PSI for method location", methodPsiElement);
       Assert.assertThat("Wrong test returned", methodPsiElement, Matchers.instanceOf(PyFunction.class));
@@ -131,8 +131,11 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
         Assert.assertThat("Function output is broken",
                           MockPrinter.fillPrinter(method).getStdOut().trim(), Matchers.containsString("I am function"));
       }
+      else if (functionName.endsWith("test_first") || functionName.endsWith("test_second")) {
+        // No output expected
+      }
       else {
-        throw new AssertionError("Unknown function" + functionName);
+        throw new AssertionError("Unknown function " + functionName);
       }
     }
   }
