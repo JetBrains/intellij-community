@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -24,9 +25,10 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
 
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightCodeInsightFixtureTestCase.JAVA_9
-  }
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_9
+
+  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"
+
 
   fun testVirtual() = doTestFirst(1, "m1", "pm1", "m2")
   fun testVirtualPrefixed() = doTest(1, "m1", "m2", "pm1")
@@ -42,17 +44,75 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
   fun testVarHandle() = doTest(0, "f1", "pf1", "f2")
   fun testStaticVarHandle() = doTest(0, "psf1", "sf1", "sf2")
 
-  override fun getBasePath(): String {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"
-  }
+
+  fun testVirtualType() = doTestTypes(0, "MethodType.methodType(String.class)")
+  fun testStaticType() = doTestTypes(0, "MethodType.methodType(Object.class, Object.class)")
+
+  fun testGetterType() = doTestTypes(0, "int.class")
+  fun testSetterType() = doTestTypes(0, "float.class")
+
+  fun testVarHandleType() = doTestTypes(0, "String.class")
+  fun testStaticVarHandleType() = doTestTypes(0, "Object.class")
+
+  fun testVirtualTypeGeneric() = doTestTypes(0, "MethodType.methodType(Object.class, Object.class, String.class)")
+  fun testStaticTypeGeneric() = doTestTypes(0, "MethodType.methodType(Object.class, List.class, Object[].class)")
+
+  fun testConstructorType1() = doTestTypes(0, "MethodType.methodType(void.class)")
+  fun testConstructorType2() = doTestTypes(0,
+                                           "MethodType.methodType(void.class)",
+                                           "MethodType.methodType(void.class, int.class)",
+                                           "MethodType.methodType(void.class, List.class)",
+                                           "MethodType.methodType(void.class, Object[].class)")
+  fun testConstructorType3() = doTestTypes(3,
+                                           "MethodType.methodType(void.class)",
+                                           "MethodType.methodType(void.class, int.class)",
+                                           "MethodType.methodType(void.class, List.class)",
+                                           "MethodType.methodType(void.class, Object[].class)")
 
 
   private fun doTest(index: Int, vararg expected: String) {
-    doTest(index, { assertStringItems(*expected) })
+    doTest(index, { assertLookupTexts(false, *expected) })
   }
 
   private fun doTestFirst(index: Int, vararg expected: String) {
-    doTest(index, { assertFirstStringItems(*expected, "clone") })
+    doTest(index, { assertLookupTexts(true, *expected, "clone") })
+  }
+
+  private fun doTestTypes(index: Int, vararg expected: String) {
+    myFixture.addClass("""
+import java.util.List;
+public class Types extends Parent {
+  String str;
+  static Object sObj;
+
+  String strMethod() {return "";}
+  static Object sObjMethod(Object o) {return this;}
+  <T> T genericMethod(T t, String s) {return t;}
+  static <T> T sGenericMethod(List<T> lst, T... ts) {return ts[0];}
+}""")
+    myFixture.addClass("""
+import java.util.List;
+public class Constructed<T> {
+  Constructed() {}
+  Constructed(int n) {}
+  Constructed(List<T> a) {}
+  Constructed(T... a) {}
+}""")
+
+    doTest(index, { assertLookupTexts(true, *expected) })
+  }
+
+  private fun assertLookupTexts(compareFirst: Boolean, vararg expected: String) {
+    val elements = myFixture.lookupElements
+    assertNotNull(elements)
+    val lookupTexts = elements!!.map {
+      val presentation = LookupElementPresentation()
+      it.renderElement(presentation)
+      presentation.itemText
+    }
+
+    val actual = if (compareFirst) lookupTexts.subList(0, Math.min(expected.size, lookupTexts.size)) else lookupTexts
+    assertOrderedEquals(actual, *expected)
   }
 
   private fun doTest(index: Int, assertion: () -> Unit) {
