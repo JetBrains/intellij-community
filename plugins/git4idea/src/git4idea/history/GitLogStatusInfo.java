@@ -27,7 +27,7 @@ public class GitLogStatusInfo {
   private final String myPath;
   private final String mySecondPath;
 
-  GitLogStatusInfo(@NotNull GitChangeType type, @NotNull String path, @Nullable String secondPath) {
+  public GitLogStatusInfo(@NotNull GitChangeType type, @NotNull String path, @Nullable String secondPath) {
     mySecondPath = secondPath;
     myPath = path;
     myType = type;

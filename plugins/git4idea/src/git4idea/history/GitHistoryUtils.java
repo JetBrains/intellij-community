@@ -41,6 +41,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -718,8 +719,8 @@ public class GitHistoryUtils {
     }
     final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
-      collectDetails(project, root, true, false, record -> {
-        GitCommit commit = createCommit(project, root, record, factory);
+      collectMetadata(project, root, record -> {
+        GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
           if (!refs.add(ref)) {
@@ -745,7 +746,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return collectDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
+    return collectFullDetails(project, root, parameters);
   }
 
   @NotNull
@@ -770,7 +771,7 @@ public class GitHistoryUtils {
     if (withChanges) {
       h.addParameters("-M", /*find and report renames*/
                       "--name-status",
-                      "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
+                      "-m" /*merge commits show diff with all parents (ie for merge with 3 parents we are going to have 3 separate entries, one for each parent)*/);
     }
     h.endOptions();
 
@@ -778,17 +779,15 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static <T> List<T> collectDetails(@NotNull Project project,
-                                           @NotNull VirtualFile root,
-                                           boolean withRefs,
-                                           boolean withChanges,
-                                           @NotNull NullableFunction<GitLogRecord, T> converter,
-                                           String... parameters) throws VcsException {
+  public static List<VcsCommitMetadata> collectMetadata(@NotNull Project project,
+                                                        @NotNull VirtualFile root,
+                                                        @NotNull NullableFunction<GitLogRecord, VcsCommitMetadata> converter,
+                                                        String... parameters) throws VcsException {
 
-    List<T> commits = ContainerUtil.newArrayList();
+    List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+      loadRecords(project, root, true, false, record -> commits.add(converter.fun(record)), parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -800,26 +799,47 @@ public class GitHistoryUtils {
     return commits;
   }
 
-  public static void loadDetails(@NotNull Project project,
-                                 @NotNull VirtualFile root,
-                                 @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                                 @NotNull String... parameters) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return;
-    }
+  @NotNull
+  public static List<GitCommit> collectFullDetails(@NotNull Project project,
+                                                   @NotNull VirtualFile root,
+                                                   String... parameters) throws VcsException {
 
-    loadDetails(project, root, false, true, record -> commitConsumer.consume(createCommit(project, root, record, factory)), parameters);
+    List<GitCommit> commits = ContainerUtil.newArrayList();
+    try {
+      loadDetails(project, root, commits::add, parameters);
+    }
+    catch (VcsException e) {
+      if (commits.isEmpty()) {
+        throw e;
+      }
+      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
+    }
+    return commits;
   }
 
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
+                                 @NotNull Consumer<? super GitCommit> commitConsumer,
+                                 @NotNull String... parameters) throws VcsException {
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    loadRecords(project, root, false, true, new RecordCollector() {
+      @Override
+      public void consume(@NotNull List<GitLogRecord> records) {
+        commitConsumer.consume(createCommit(project, root, records, factory));
+      }
+    }, parameters);
+  }
+
+  public static void loadRecords(@NotNull Project project,
+                                 @NotNull VirtualFile root,
                                  boolean withRefs,
                                  boolean withChanges,
                                  @NotNull Consumer<GitLogRecord> converter,
-                                 String... parameters)
-    throws VcsException {
-
+                                 String... parameters) throws VcsException {
     List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
                                     Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
@@ -831,8 +851,7 @@ public class GitHistoryUtils {
     MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
       try {
         GitLogRecord record = parser.parseOneRecord(output);
-        if (record != null) {
-          converter.consume(record);
+        if (record != null) { converter.consume(record);
         }
       }
       catch (ProcessCanceledException pce) {
@@ -852,18 +871,19 @@ public class GitHistoryUtils {
     if (!parseError.isNull()) {
       throw new VcsException(parseError.get());
     }
-
     sw.report();
   }
 
   @NotNull
-  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record,
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
                                         @NotNull VcsLogObjectsFactory factory) {
+    GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
     List<Hash> parents = getParentHashes(factory, record);
+
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         record.getStatusInfos());
+                         ContainerUtil.map(records, GitLogRecord::getStatusInfos));
   }
 
   @NotNull
@@ -920,6 +940,27 @@ public class GitHistoryUtils {
     else {
       return GitRevisionNumber.resolve(project, root, output);
     }
+  }
+
+  private static abstract class RecordCollector implements Consumer<GitLogRecord> {
+    private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
+
+    @Override
+    public void consume(@NotNull GitLogRecord record) {
+      String[] parents = record.getParentsHashes();
+      if (parents.length <= 1) {
+        consume(Collections.singletonList(record));
+      }
+      else {
+        myHashToRecord.putValue(record.getHash(), record);
+        LOG.assertTrue(myHashToRecord.keySet().size() == 1, "myHashToRecord map has records for several commits: " + myHashToRecord);
+        if (parents.length == myHashToRecord.get(record.getHash()).size()) {
+          consume(ContainerUtil.newArrayList(notNull(myHashToRecord.remove(record.getHash()))));
+        }
+      }
+    }
+
+    public abstract void consume(@NotNull List<GitLogRecord> records);
   }
 
   private static class MyGitLineHandlerListener implements GitLineHandlerListener {
