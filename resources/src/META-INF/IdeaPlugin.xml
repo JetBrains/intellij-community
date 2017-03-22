@@ -1176,6 +1176,10 @@
       <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
       <category>Java/Try Statements</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExtractSetFromComparisonChainAction</className>
+      <category>Java/Declaration</category>
+    </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
 
