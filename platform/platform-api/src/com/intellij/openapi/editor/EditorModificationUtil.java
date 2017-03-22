@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
@@ -37,6 +38,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class EditorModificationUtil {
+  public static final Key<String> READ_ONLY_VIEW_MESSAGE_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
+
   private EditorModificationUtil() { }
 
   public static void deleteSelectedText(Editor editor) {
@@ -422,7 +425,8 @@ public class EditorModificationUtil {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 
-    HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.viewer.hint"));
+    String data = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
+    HintManager.getInstance().showInformationHint(editor, data == null ? EditorBundle.message("editing.viewer.hint") : data);
     return false;
   }
 }
