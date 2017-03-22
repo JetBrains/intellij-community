@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent;
 public class GitPushOptionsPanel extends VcsPushOptionsPanel {
 
   @NotNull private final JBCheckBox myPushTags;
-  @Nullable private final ComboBox myPushTagsMode;
+  @Nullable private final ComboBox<GitPushTagMode> myPushTagsMode;
   @NotNull private final JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported, boolean showSkipHookOption) {
@@ -48,7 +48,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     add(myPushTags, BorderLayout.WEST);
 
     if (followTagsSupported) {
-      myPushTagsMode = new ComboBox(GitPushTagMode.getValues());
+      myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());
       myPushTagsMode.setRenderer(new ListCellRendererWrapper<GitPushTagMode>() {
         @Override
         public void customize(JList list, GitPushTagMode value, int index, boolean selected, boolean hasFocus) {

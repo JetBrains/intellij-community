@@ -34,7 +34,7 @@ import java.awt.event.ActionListener;
 @Deprecated
 public class GitPushTagPanel extends VcsPushOptionsPanel {
 
-  private final ComboBox myCombobox;
+  private final ComboBox<GitPushTagMode> myCombobox;
   private final JBCheckBox myCheckBox;
 
   public GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
@@ -50,7 +50,7 @@ public class GitPushTagPanel extends VcsPushOptionsPanel {
     add(myCheckBox, BorderLayout.WEST);
 
     if (followTagsSupported) {
-      myCombobox = new ComboBox(GitPushTagMode.getValues());
+      myCombobox = new ComboBox<>(GitPushTagMode.getValues());
       myCombobox.setRenderer(new ListCellRendererWrapper<GitPushTagMode>() {
         @Override
         public void customize(JList list, GitPushTagMode value, int index, boolean selected, boolean hasFocus) {

@@ -39,8 +39,8 @@ public final class GitPushTagMode {
   }
 
   @NotNull
-  public static Object[] getValues() {
-    return new Object[] { ALL, FOLLOW };
+  public static GitPushTagMode[] getValues() {
+    return new GitPushTagMode[] { ALL, FOLLOW };
   }
 
   @NotNull
