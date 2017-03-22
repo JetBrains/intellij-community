@@ -796,7 +796,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         long start = System.currentTimeMillis();
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         long timeSpent = System.currentTimeMillis() - start;
-        LOG.info(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
+        LOG.debug(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
                                timeSpent, tasks.length, repository.getUrl(), request));
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<>(tasks.length);
