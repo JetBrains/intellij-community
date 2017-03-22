@@ -59,7 +59,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
 
   private val manager: RunManagerImpl
   private var configuration: RunConfiguration? = null
-  private var isTemplate: Boolean = false
+  private var isTemplate = false
 
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
@@ -80,7 +80,8 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     this.manager = manager
   }
 
-  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean) {
+  @JvmOverloads
+  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean = false) {
     this.manager = manager
     this.configuration = configuration
     this.isTemplate = isTemplate
@@ -151,11 +152,11 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
   }
 
   fun readExternal(element: Element) {
-    isTemplate = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE))
-    isTemporary = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPORARY_ATTRIBUTE)) || TEMP_CONFIGURATION == element.name
-    isEditBeforeRun = java.lang.Boolean.parseBoolean(element.getAttributeValue(EDIT_BEFORE_RUN))
+    isTemplate = element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE).toBoolean()
+    isTemporary = element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name
+    isEditBeforeRun = (element.getAttributeValue(EDIT_BEFORE_RUN)).toBoolean()
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
-    isActivateToolWindowBeforeRun = value == null || java.lang.Boolean.parseBoolean(value)
+    isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = getFactory(element) ?: return
 
@@ -170,7 +171,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
       }
       else {
         wasSingletonSpecifiedExplicitly = true
-        singleton = java.lang.Boolean.parseBoolean(singletonStr)
+        singleton = singletonStr.toBoolean()
       }
     }
 
@@ -364,8 +365,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
       val templateState = Element("state")
       serializeConfigurationInto(templateConfiguration, templateState)
 
-      val state = Element("state")
-      serializeConfigurationInto(configuration, state)
+      val state = writeScheme()
       if (JDOMUtil.areElementsEqual(state, templateState)) {
         return SchemeState.NON_PERSISTENT
       }

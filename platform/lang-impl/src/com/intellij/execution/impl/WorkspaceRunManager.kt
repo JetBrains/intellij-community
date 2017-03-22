@@ -33,7 +33,7 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
   private val schemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-    object : LazySchemeProcessor<RunConfigurationScheme, RunConfigurationScheme>() {
+                                                                               object : LazySchemeProcessor<RunConfigurationScheme, RunConfigurationScheme>() {
       override fun createScheme(dataHolder: SchemeDataHolder<RunConfigurationScheme>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunConfigurationScheme {
         val settings = RunnerAndConfigurationSettingsImpl(this@WorkspaceRunManager)
         val element = dataHolder.read()
@@ -61,7 +61,7 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
         }
         return name ?: throw IllegalStateException("name is missed in the scheme data")
       }
-    }, streamProvider = schemeManagerProvider, autoSave = false)
+   }, streamProvider = schemeManagerProvider, autoSave = false)
 
   override fun loadState(parentNode: Element) {
     clear(false)
@@ -88,8 +88,6 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
     val element = Element("state")
 
     schemeManager.save()
-
-    // template rc in the end
     schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
       val w1 = if (n1.startsWith("<template> of ")) 1 else 0
       val w2 = if (n2.startsWith("<template> of ")) 1 else 0
@@ -101,16 +99,20 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
       }
     })
 
+    selectedConfiguration?.let {
+      element.setAttribute(SELECTED_ATTR, it.uniqueID)
+    }
+
     super.getState(element)
 
     return element
   }
 
-  override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
-    if (settings.isTemporary) {
+  override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings, shared: Boolean) {
+    if (!shared) {
       schemeManager.addScheme(settings as RunConfigurationScheme)
     }
-    super.runConfigurationAdded(settings)
+    super.runConfigurationAdded(settings, shared)
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettings {

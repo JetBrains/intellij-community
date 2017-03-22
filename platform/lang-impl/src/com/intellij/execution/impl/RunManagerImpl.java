@@ -368,11 +368,11 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       myDispatcher.getMulticaster().runConfigurationChanged(settings, existingId);
     }
     else {
-      runConfigurationAdded(settings);
+      runConfigurationAdded(settings, shared);
     }
   }
 
-  protected void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+  protected void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings, boolean shared) {
     myDispatcher.getMulticaster().runConfigurationAdded(settings);
   }
 
@@ -671,7 +671,8 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       }
     }
 
-    Element methodsElement = null;
+    // we have to always write empty method element otherwise no way to indicate that
+    Element methodsElement = settings.isTemplate() ? new Element(METHOD) : null;
     for (int i = 0, size = tasks.size(); i < size; i++) {
       BeforeRunTask task = tasks.get(i);
       int j = 0;
@@ -753,7 +754,7 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       RunnerAndConfigurationSettings config = loadConfiguration(element, false);
       if (myLoadedSelectedConfigurationUniqueName == null
           && config != null
-          && Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) {
+          && Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
         myLoadedSelectedConfigurationUniqueName = config.getUniqueID();
       }
     }
