@@ -43,11 +43,17 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-          return new PyTestTestProcessRunner("tests", 0);
+          return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -58,11 +64,17 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-          return new PyTestTestProcessRunner("tests", 0);
+          return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -225,7 +237,18 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner("folder_no_init_py/test_test.py", 2);
+        if (getLevelForSdk().isPy3K()) {
+          return new PyTestTestProcessRunner("folder_no_init_py/test_test.py", 2);
+        }
+         else {
+          return new PyTestTestProcessRunner(toFullPath("folder_no_init_py/test_test.py"), 2) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
+        }
       }
 
       @Override

@@ -228,7 +228,10 @@ private fun isNamespacePackage(element: PsiElement): Boolean {
   return false
 }
 
-private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedNameResolveContext): List<PsiElement> {
+private fun resolveWithRelativeLevel(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  if (context.relativeDirectory != null) {
+    return resolveModuleAt(name, context.relativeDirectory, context)
+  }
   val footholdFile = context.footholdFile
   if (context.relativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
     return resolveModuleAt(name, context.containingDirectory, context) + relativeResultsForStubsFromRoots(name, context)

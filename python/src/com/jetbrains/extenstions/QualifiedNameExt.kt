@@ -16,17 +16,21 @@
 package com.jetbrains.extenstions
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.PythonSdkType
 
 /**
  * Resolves qname of any symbol to appropriate PSI element.
  */
-fun QualifiedName.toElement(module: Module, context: TypeEvalContext): PsiElement? {
+fun QualifiedName.toElement(module: Module, context: TypeEvalContext, folderToStart: VirtualFile? = null): PsiElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -34,9 +38,23 @@ fun QualifiedName.toElement(module: Module, context: TypeEvalContext): PsiElemen
 
   // Drill as deep, as we can
   var lastElement: String? = null
-  while (currentName.componentCount > 0 && element == null) {
 
-    element = resolveQualifiedName(currentName, fromModule(module).copyWithMembers()).firstOrNull()
+  var resolveContext = fromModule(module)
+  if (folderToStart != null) {
+    val psiDirectory = PsiManager.getInstance(module.project).findDirectory(folderToStart)
+    if (psiDirectory != null) {
+      resolveContext = resolveContext.copyWithRelative(psiDirectory)
+    }
+  }
+
+  // check for module and set if py3k
+  if (PythonSdkType.getLanguageLevelForSdk(module.getSdk()).isPy3K) {
+    resolveContext = resolveContext.copyWithPlainDirectories()
+  }
+
+
+  while (currentName.componentCount > 0 && element == null) {
+    element = resolveQualifiedName(currentName, resolveContext.copyWithMembers()).firstOrNull()
     if (element != null) {
       break
     }
