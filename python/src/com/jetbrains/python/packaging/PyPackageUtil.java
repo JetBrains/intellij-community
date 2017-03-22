@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -279,15 +280,29 @@ public class PyPackageUtil {
     }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
   }
 
+  /**
+   * Refresh the list of installed packages inside the specified SDK if it hasn't been updated yet
+   * displaying modal progress bar in the process, return cached packages otherwise.
+   * <p>
+   * Note that it's unsafe to call this method from a write action AND for for a remote SDK, since such modal 
+   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited 
+   * (see the implementation of ApplicationImpl#runProcessWithProgressSynchronously() for details).
+   */
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
     final Ref<List<PyPackage>> packagesRef = Ref.create();
+    final boolean invokedUnderWriteAction = ApplicationManager.getApplication().isWriteAccessAllowed();
     @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
       try {
-        packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
+        final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+        if (PySdkUtil.isRemote(sdk) && invokedUnderWriteAction && manager.getPackages() == null) {
+          LOG.warn("Requesting the installed packages of a remote interpreter using PyPackageUtil#refreshAndGetPackagesModally() " +
+                   "inside a write action is going to cause network operations on EDT");
+        }
+        packagesRef.set(manager.refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
         if (LOG.isDebugEnabled()) {
