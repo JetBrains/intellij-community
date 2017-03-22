@@ -263,6 +263,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-22767
+  public void testBuiltinZip() {
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 

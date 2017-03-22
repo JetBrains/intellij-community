@@ -22,6 +22,7 @@ _T1 = TypeVar('_T1')
 _T2 = TypeVar('_T2')
 _T3 = TypeVar('_T3')
 _T4 = TypeVar('_T4')
+_T5 = TypeVar('_T5')
 _TT = TypeVar('_TT', bound='type')
 
 class staticmethod: pass   # Special, only valid as a decorator.
@@ -800,7 +801,15 @@ def zip(iter1: Iterable[_T1], iter2: Iterable[_T2],
 @overload
 def zip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
         iter4: Iterable[_T4]) -> List[Tuple[_T1, _T2,
-                                           _T3, _T4]]: ...  # TODO more than four iterables
+                                           _T3, _T4]]: ...
+@overload
+def zip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+        iter4: Iterable[_T4], iter5: Iterable[_T5]) -> List[Tuple[_T1, _T2,
+                                                                  _T3, _T4, _T5]]: ...
+@overload
+def zip(iter1: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any],
+        iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any],
+        *iterables: Iterable[Any]) -> List[Tuple[Any, ...]]: ...
 def __import__(name: unicode,
                globals: Dict[str, Any] = ...,
                locals: Dict[str, Any] = ...,
