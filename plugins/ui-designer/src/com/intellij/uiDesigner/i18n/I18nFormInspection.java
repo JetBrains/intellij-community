@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
 import com.intellij.uiDesigner.inspections.StringDescriptorInspection;
@@ -37,8 +36,6 @@ import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +45,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class I18nFormInspection extends StringDescriptorInspection {
   public I18nFormInspection() {
-    super("HardCodedStringLiteral");
+    super("I18nForm");
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "HardCodedStringLiteral";
   }
 
   @Override
@@ -69,32 +72,17 @@ public class I18nFormInspection extends StringDescriptorInspection {
       EditorQuickFixProvider provider;
 
       if (prop.getName().equals(BorderProperty.NAME)) {
-        provider = new EditorQuickFixProvider() {
-          @Override
-          public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-            return new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
-                                                 (RadContainer)component);
-          }
-        };
+        provider = (editor, component12) -> new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
+                                                                      (RadContainer)component12);
       }
       else if (prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
-        provider = new EditorQuickFixProvider() {
-          @Override
-          public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-            return new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
-                                               component, prop.getName());
-          }
-        };
+        provider = (editor, component1) -> new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
+                                                                       component1, prop.getName());
       }
       else {
-        provider = new EditorQuickFixProvider() {
-          @Override
-          public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-            return new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
-                                                   component,
-                                                   (IntrospectedProperty)prop);
-          }
-        };
+        provider = (editor, component13) -> new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
+                                                                            component13,
+                                                                        (IntrospectedProperty)prop);
       }
 
       collector.addError(getID(), component, prop,
