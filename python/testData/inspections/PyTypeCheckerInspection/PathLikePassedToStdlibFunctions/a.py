@@ -30,9 +30,9 @@ b = B()
 
 open(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
 
-os.fspath(b)  # TODO fail
-os.fsencode(b)  # TODO fail
-os.fsdecode(b)  # TODO fail
+os.fspath(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
+os.fsencode(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
+os.fsdecode(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
 
 Path(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
 PurePath(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)

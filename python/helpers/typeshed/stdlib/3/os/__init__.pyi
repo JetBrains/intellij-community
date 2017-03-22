@@ -108,8 +108,7 @@ TMP_MAX = 0  # Undocumented, but used by tempfile
 
 # ----- os classes (structures) -----
 if sys.version_info >= (3, 6):
-    class PathLike:
-        def __fspath__(self) -> AnyStr: ...
+    from builtins import _PathLike as PathLike  # See comment in builtins
 
 
 if sys.version_info >= (3, 5):
@@ -182,8 +181,24 @@ class statvfs_result:  # Unix only
     f_namemax = 0
 
 # ----- os function stubs -----
-def fsencode(filename: str) -> bytes: ...
-def fsdecode(filename: bytes) -> str: ...
+if sys.version_info >= (3, 6):
+    def fsencode(filename: Union[str, bytes, PathLike]) -> bytes: ...
+else:
+    def fsencode(filename: Union[str, bytes]) -> bytes: ...
+
+if sys.version_info >= (3, 6):
+    def fsdecode(filename: Union[str, bytes, PathLike]) -> str: ...
+else:
+    def fsdecode(filename: Union[str, bytes]) -> str: ...
+
+if sys.version_info >= (3, 6):
+    @overload
+    def fspath(path: str) -> str: ...
+    @overload
+    def fspath(path: bytes) -> bytes: ...
+    @overload
+    def fspath(path: PathLike) -> Any: ...
+
 def get_exec_path(env: Optional[Mapping[str, str]] = ...) -> List[str]: ...
 # NOTE: get_exec_path(): returns List[bytes] when env not None
 def ctermid() -> str: ...  # Unix only
