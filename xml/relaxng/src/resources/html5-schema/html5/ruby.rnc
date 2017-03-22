@@ -78,4 +78,4 @@ namespace local = ""
 		&	common.attrs.aria?
 		)
 	rp.inner =
-		( common.inner.phrasing )
+		( text )

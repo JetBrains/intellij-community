@@ -1,8 +1,8 @@
 default namespace = "http://www.w3.org/1999/xhtml"
 include "common.rnc" {
-		XMLonly = empty
-		HTMLonly = notAllowed
-		v5only = empty
+        XMLonly = empty
+        HTMLonly = notAllowed
+        v5only = empty
 }
 start = html.elem
 include "phrase.rnc"
@@ -24,11 +24,11 @@ include "data.rnc"
 include "legacy.rnc"
 include "aria.rnc"
 include "meta.rnc" {
-		html.inner =
-			(	head.elem
-			,	(	body.elem
-				|	frameset.elem
-				)
-			)
+        html.inner =
+            (    head.elem
+            ,    (    body.elem
+                 |    frameset.elem
+                 )
+            )
 }
 include "microdata.rnc"

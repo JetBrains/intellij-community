@@ -13,7 +13,6 @@ SVG.foreignObject.content |=
 	|	common.inner.flow
 	)
 
-SVG.Core.attrib &= common.attrs.aria?
 SVG.Core.attrib &= aria.global?
 
 annotation-xml.model.svg |= svg
@@ -32,3 +31,21 @@ SVG.metadata.content |= common.inner.flow
 # cannot; see http://www.w3.org/Bugs/Public/show_bug.cgi?id=9859#c8 for a
 # rationale
 mtext.content |= common.elem.phrasing
+
+SVG.vector-effect.attrib =
+	attribute vector-effect {
+		string "none" | string "non-scaling-stroke"
+	}
+
+attlist.circle &= SVG.vector-effect.attrib?
+attlist.ellipse &= SVG.vector-effect.attrib?
+attlist.foreignObject &= SVG.vector-effect.attrib?
+attlist.image &= SVG.vector-effect.attrib?
+attlist.line &= SVG.vector-effect.attrib?
+attlist.path &= SVG.vector-effect.attrib?
+attlist.polygon &= SVG.vector-effect.attrib?
+attlist.polyline &= SVG.vector-effect.attrib?
+attlist.rect &= SVG.vector-effect.attrib?
+attlist.text &= SVG.vector-effect.attrib?
+attlist.tspan &= SVG.vector-effect.attrib?
+attlist.use &= SVG.vector-effect.attrib?

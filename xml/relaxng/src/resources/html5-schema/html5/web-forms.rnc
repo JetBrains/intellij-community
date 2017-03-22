@@ -86,9 +86,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.readonly? 
 		&	shared-form.attrs.size?
 		&	input.password.attrs.value? 
-		&	(	common.attrs.aria.implicit.textbox
-			|	common.attrs.aria.role.textbox
-			)?
 		)
 		input.password.attrs.type = 
 			attribute type {
@@ -113,7 +110,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.checkbox.attrs.value? 
 		&	(	common.attrs.aria.implicit.checkbox
 			|	common.attrs.aria.role.checkbox
+			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.option
 			|	common.attrs.aria.role.switch
 			)?
 		)
@@ -243,7 +242,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.file.attrs.type
 		&	input.file.attrs.accept?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	aria.prop.required?
+			)
 		)
 		input.file.attrs.type = 
 			attribute type {
@@ -415,6 +416,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		# FIXME onfocus, onblur, onchange
 		&	(	common.attrs.aria.implicit.listbox
 			|	common.attrs.aria.role.listbox # aria-multiselectable depends on "multiple" value; check in assertions
+			|	common.attrs.aria.role.menu
 			)?
 		)
 		select.attrs.size =
@@ -459,6 +461,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.menuitemcheckbox
 			|	common.attrs.aria.role.menuitemradio
 			|	common.attrs.aria.role.radio
+			|	common.attrs.aria.role.tab
 			)?
 		)
 		button.submit.attrs.type =
@@ -513,6 +516,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.menuitemradio
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.switch
+			|	common.attrs.aria.role.tab
 			)?
 		)
 		button.button.attrs.type =

@@ -302,6 +302,16 @@ datatypes w = "http://whattf.org/datatype-draft"
                                                                # if the definition is 
                                                                # reused in another language
 
+## Key-pair generator/input control: <keygen>
+
+	keygen.elem =
+		element keygen { keygen.inner & keygen.attrs* }
+	keygen.attrs = attribute * { text }
+	keygen.inner =
+		( empty )
+
+	common.elem.phrasing |= keygen.elem
+
 ## Obsolete attributes
 
 ## abbr attribute
