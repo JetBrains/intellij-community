@@ -163,7 +163,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return
 
         try:
-            properties["locationHint"] = "python://{0}".format(properties["name"])
+            # Report directory so Java site knows which folder to resolve names against
+            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), properties["name"])
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -324,27 +325,12 @@ class _SymbolName2KSplitter(_SymbolNameSplitter):
     def check_is_importable(self, parts, current_step, separator):
         import imp
         module_to_import = parts[current_step]
-        try:
-            (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
-            self._symbol_processed = True
-            if desc[2] == imp.PKG_DIRECTORY:
-                # Package
-                self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
-        except ImportError as error:
-            if not self._symbol_processed:
-                # First ImportError means there could be folder with out for __init__.py
-                # See class doc for more info
-                subdir = os.path.sep.join(parts[:current_step + 1])
-                dirs = [path for path in map( lambda p: os.path.join(p, subdir), sys.path) if os.path.isdir(path)]
-                if not dirs:
-                    raise error
-                elif len(dirs) == 1:
-                    # can be folder with out of __init__.py
-                    self._path = dirs[0]
-                    return
-                else:
-                    raise Exception("Several folders on sys.path with same name, rename folder: {0}", ",".join(dirs))
-            raise error
+        (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
+        self._symbol_processed = True
+        if desc[2] == imp.PKG_DIRECTORY:
+            # Package
+            self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+
 
 
 class _SymbolName3KSplitter(_SymbolNameSplitter):
@@ -414,6 +400,9 @@ def jb_start_tests():
         _jb_utils.OptionDescription('--target', 'Python target to run', "append"))
     del sys.argv[1:]  # Remove all args
     NewTeamcityServiceMessages().message('enteredTheMatrix')
+
+    # Working dir should be on path, that is how runners work when launched from command line
+    sys.path.append(os.getcwd())
     return namespace.path, namespace.target, additional_args
 
 
@@ -429,4 +418,4 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1}".format(framework_name, " ".join(args)))
+    print("Launching {0} with arguments {1} in {2}".format(framework_name, " ".join(args), os.getcwd()))

@@ -8,3 +8,17 @@ def test_funeggs():
 class EggsTest(TestCase):
     def test_metheggs(self):
         print("I am method")
+
+
+
+class Parent:
+
+    def test_first(self):
+        assert True
+
+    def test_second(self):
+        assert False
+
+
+class Child(TestCase, Parent):
+    pass
