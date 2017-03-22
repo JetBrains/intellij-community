@@ -138,17 +138,22 @@ public class ClasspathBootstrap {
       else {
         // last resort
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+        Class compilerClass;
         if (systemCompiler != null) {
-          final String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(systemCompiler.getClass()).getPath());
-          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+          compilerClass = systemCompiler.getClass();
+        }
+        else {
+          compilerClass = Class.forName("com.sun.tools.javac.api.JavacTool", false, ClasspathBootstrap.class.getClassLoader());
+        }
+        String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(compilerClass).getPath());
+        String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+        if (relPath != null) {
+          if (relPath.contains("..")) {
+            relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+          }
           if (relPath != null) {
-            if (relPath.contains("..")) {
-              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-            }
-            if (relPath != null) {
-              final File targetFile = new File(sdkHome, relPath);
-              cp.add(targetFile);  // tools.jar
-            }
+            final File targetFile = new File(sdkHome, relPath);
+            cp.add(targetFile);  // tools.jar
           }
         }
       }
