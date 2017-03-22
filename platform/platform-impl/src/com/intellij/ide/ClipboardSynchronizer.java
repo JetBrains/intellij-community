@@ -146,6 +146,18 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
     return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
   }
 
+  public Object getData(DataFlavor dataFlavor) {
+    return ClipboardUtil.handleClipboardSafely(() -> {
+      try {
+        return myClipboardHandler.getData(dataFlavor);
+      }
+      catch (IOException | UnsupportedFlavorException e) {
+        LOG.debug(e);
+        return null;
+      }
+    }, () -> null);
+  }
+
   public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
     myClipboardHandler.setContent(content, owner);
   }
@@ -192,6 +204,11 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
       return clipboard == null ? null: clipboard.getContents(this);
     }
 
+    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+      Clipboard clipboard = getClipboard();
+      return clipboard == null ? null : clipboard.getData(dataFlavor);
+    }
+
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
       Clipboard clipboard = getClipboard();
       if (clipboard !=null) {
@@ -214,6 +231,7 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
 
     @Override
     public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+      if (myFullTransferable == null) return super.areDataFlavorsAvailable(flavors);
       Transferable contents = getContents();
       return contents != null && ClipboardSynchronizer.areDataFlavorsAvailable(contents, flavors);
     }
@@ -235,6 +253,13 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
 
       myFullTransferable = null;
       return transferable;
+    }
+
+    @Override
+    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+      if (myFullTransferable == null) return super.getData(dataFlavor);
+      Transferable contents = getContents();
+      return contents == null ? null : contents.getTransferData(dataFlavor);
     }
 
     @Override
@@ -390,6 +415,31 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
     }
 
     @Override
+    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+      Transferable currentContent = myCurrentContent;
+      if (currentContent != null) {
+        return currentContent.getTransferData(dataFlavor);
+      }
+
+      try {
+        final Collection<DataFlavor> contents = checkContentsQuick();
+        if (contents != null && contents.isEmpty()) {
+          return null;
+        }
+
+        return super.getData(dataFlavor);
+      }
+      catch (NullPointerException e) {
+        LOG.warn("Java bug #6322854", e);
+        return null;
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn("Java bug #7173464", e);
+        return null;
+      }
+    }
+
+    @Override
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
       myCurrentContent = content;
       super.setContent(content, owner);
@@ -455,6 +505,11 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
     @Override
     public Transferable getContents() throws IllegalStateException {
       return myContent;
+    }
+
+    @Override
+    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+      return myContent.getTransferData(dataFlavor);
     }
 
     @Override
