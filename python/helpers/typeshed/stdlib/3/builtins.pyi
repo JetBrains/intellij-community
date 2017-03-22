@@ -5,7 +5,7 @@ from typing import (
     Sequence, MutableSequence, Mapping, MutableMapping, Tuple, List, Any, Dict, Callable, Generic,
     Set, AbstractSet, FrozenSet, MutableSet, Sized, Reversible, SupportsInt, SupportsFloat,
     SupportsBytes, SupportsAbs, SupportsRound, IO, Union, ItemsView, KeysView, ValuesView,
-    ByteString, Optional
+    ByteString, Optional, AnyStr,
 )
 from abc import abstractmethod, ABCMeta
 from types import TracebackType
@@ -796,8 +796,13 @@ def next(i: Iterator[_T], default: _VT) -> Union[_T, _VT]: ...
 def oct(i: int) -> str: ...  # TODO __index__
 
 if sys.version_info >= (3, 6):
-    from pathlib import Path
-    def open(file: Union[str, bytes, int, Path], mode: str = 'r', buffering: int = -1, encoding: str = None,
+    # This class is to be exported as PathLike from os,
+    # but we define it here as _PathLike to avoid import cycle issues.
+    # See https://github.com/python/typeshed/pull/991#issuecomment-288160993
+    class _PathLike(Generic[AnyStr]):
+        def __fspath__(self) -> AnyStr: ...
+
+    def open(file: Union[str, bytes, int, _PathLike], mode: str = 'r', buffering: int = -1, encoding: str = None,
              errors: str = None, newline: str = None, closefd: bool = ...) -> IO[Any]: ...
 else:
     def open(file: Union[str, bytes, int], mode: str = 'r', buffering: int = -1, encoding: str = None,
