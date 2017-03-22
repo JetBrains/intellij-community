@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -187,8 +188,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static List<FunExprOccurrence> filterInapplicable(List<PsiClass> samClasses,
                                                             VirtualFile vFile,
                                                             Collection<FunExprOccurrence> occurrences, Project project) {
-    return ReadAction.compute(() -> project.isDisposed() ? Collections.emptyList()
-                                                         : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
+    return DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> project.isDisposed() ? Collections.emptyList()
+                                 : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
   }
 
   private static boolean processFile(@NotNull Processor<PsiFunctionalExpression> consumer,
