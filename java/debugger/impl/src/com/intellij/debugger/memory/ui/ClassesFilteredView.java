@@ -389,6 +389,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private void doPause() {
     myDebugSessionListener.setActive(false);
+    mySingleAlarm.cancelAllRequests();
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(true));
   }
 
@@ -565,12 +566,14 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
           myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
           myTable.hideContent();
         });
+
         mySingleAlarm.cancelAllRequests();
       }
     }
 
     @Override
     public void sessionStopped() {
+      mySingleAlarm.cancelAllRequests();
       ApplicationManager.getApplication().invokeLater(() -> {
         myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_STOPPED);
         myTable.clean();
