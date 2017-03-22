@@ -21,20 +21,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class SingleAlarmWithMutableDelay extends Alarm {
   private final Runnable myTask;
-  private volatile int myDelay;
+  private volatile int myDelayMillis;
+
   public SingleAlarmWithMutableDelay(@NotNull Runnable task, @NotNull Disposable parentDisposable) {
     super(ThreadToUse.POOLED_THREAD, parentDisposable);
     myTask = task;
   }
 
-  public void setDelay(int value) {
-    myDelay = value;
+  public void setDelay(int millis) {
+    myDelayMillis = millis;
   }
 
   public void cancelAndRequest() {
-    if(!isDisposed()) {
+    if (!isDisposed()) {
       cancelAllRequests();
-      addRequest(myTask, myDelay);
+      addRequest(myTask, myDelayMillis);
     }
   }
 }
