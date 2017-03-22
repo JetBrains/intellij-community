@@ -139,7 +139,7 @@ public class VcsIntegrationEnablerTest extends VcsRootBaseTest {
 
     @Override
     protected boolean initOrNotifyError(@NotNull final VirtualFile projectDir) {
-      File file = new File(projectDir.getPath(), ".mock");
+      File file = new File(projectDir.getPath(), DOT_MOCK);
       VcsNotifier.getInstance(myProject).notifySuccess("Created mock repository in " + projectDir.getPresentableUrl());
       return file.mkdir();
     }
