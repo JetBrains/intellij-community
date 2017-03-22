@@ -554,11 +554,11 @@ public class TypeMigrationLabeler {
     convertExpression(expr, migrationType, originalType, isCovariant);
   }
 
-  private static boolean isGenericsArrayType(final PsiType elemenType) {
-    if (elemenType instanceof PsiClassType && ((PsiClassType)elemenType).hasParameters()) {
+  private static boolean isGenericsArrayType(final PsiType elementType) {
+    if (elementType instanceof PsiClassType && ((PsiClassType)elementType).hasParameters()) {
       return true;
-    } else if (elemenType instanceof PsiArrayType) {
-      final PsiType componentType = ((PsiArrayType)elemenType).getComponentType();
+    } else if (elementType instanceof PsiArrayType) {
+      final PsiType componentType = ((PsiArrayType)elementType).getComponentType();
       return isGenericsArrayType(componentType);
     }
     return false;
