@@ -259,6 +259,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
     }, this);
 
+    mySingleAlarm.setDelay((int)TimeUnit.MILLISECONDS.toMillis(500));
+
     myTable.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
