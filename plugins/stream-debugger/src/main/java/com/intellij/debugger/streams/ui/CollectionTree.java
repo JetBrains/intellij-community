@@ -75,7 +75,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        super.customizeCellRenderer(tree, value, true, expanded, leaf, row, true);
+        super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
         if (value instanceof XValueNodeImpl) {
           final XValueNodeImpl node = (XValueNodeImpl)value;
           final TreePath path = node.getPath();
