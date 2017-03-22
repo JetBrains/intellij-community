@@ -201,9 +201,9 @@ public class MethodsChainLookupRangingHelper {
         }
         else {
           lookupElement = createLookupElement(method, parametersMap);
-          //if (!context.getContainingClassQNames().contains(classQName)) {
-          //  introduceNewVariable = true;
-          //}
+          if (!context.hasQualifier(qualifierClass)) {
+            introduceNewVariable = true;
+          }
         }
       }
     }

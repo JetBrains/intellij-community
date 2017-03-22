@@ -196,7 +196,7 @@ public class ChainsSearcher {
       for (int i = 0; i < myResult.size(); i++) {
         MethodsChain chain = myResult.get(i);
         //
-        MethodsChain.CompareResult r = MethodsChain.compare(chain, newChain, myContext);
+        MethodsChain.CompareResult r = MethodsChain.compare(chain, newChain);
         switch (r) {
           case LEFT_CONTAINS_RIGHT:
             indexesToRemove.add(i);

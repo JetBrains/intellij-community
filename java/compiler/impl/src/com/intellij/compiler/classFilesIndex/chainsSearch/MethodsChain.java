@@ -16,10 +16,10 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ public class MethodsChain {
                              int weight,
                              @NotNull ChainCompletionContext context) {
     PsiClass qualifier = context.resolveQualifierClass(signature);
-    if (!signature.isStatic() && context.getTarget().isAssignableFrom(qualifier)) {
+    if (qualifier == null || (!signature.isStatic() && isInheritorOrSelf(context.getTarget().getPsiType(), qualifier))) {
       return null;
     }
     PsiMethod[] methods = context.resolve(signature);
@@ -116,7 +116,7 @@ public class MethodsChain {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public static CompareResult compare(MethodsChain left, MethodsChain right, PsiManager psiManager) {
+  public static CompareResult compare(@NotNull MethodsChain left, @NotNull MethodsChain right) {
     if (left.size() == 0) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
@@ -127,12 +127,9 @@ public class MethodsChain {
     Iterator<PsiMethod[]> rightIterator = right.myRevertedPath.iterator();
 
     while (leftIterator.hasNext() && rightIterator.hasNext()) {
-      PsiMethod thisNext = leftIterator.next()[0];
-      PsiMethod thatNext = rightIterator.next()[0];
-      if (thisNext == null || thatNext == null) {
-        throw new NullPointerException();
-      }
-      if (((thisNext.isConstructor() != thatNext.isConstructor())) || !thisNext.getName().equals(thatNext.getName())) {
+      PsiMethod[] thisNext = leftIterator.next();
+      PsiMethod[] thatNext = rightIterator.next();
+      if (!lookSimilar(thisNext, thatNext)) {
         return CompareResult.NOT_EQUAL;
       }
     }
@@ -143,10 +140,7 @@ public class MethodsChain {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
 
-
-    return hasBaseMethod(left.getPath().get(0), right.getPath().get(0), psiManager)
-           ? CompareResult.EQUAL
-           : CompareResult.NOT_EQUAL;
+    return CompareResult.EQUAL;
   }
 
   public enum CompareResult {
@@ -156,20 +150,24 @@ public class MethodsChain {
     NOT_EQUAL
   }
 
-  private static boolean hasBaseMethod(PsiMethod[] left, PsiMethod[] right, PsiManager psiManager) {
-    for (PsiMethod rightMethod : right) {
-      PsiMethod[] rightSupers = rightMethod.findDeepestSuperMethods();
-      if (rightSupers.length != 0) {
-        for (PsiMethod leftMethod : left) {
-          PsiMethod[] leftSupers = leftMethod.findDeepestSuperMethods();
-          if (leftSupers.length != 0) {
-            if (psiManager.areElementsEquivalent(leftSupers[0], rightSupers[0])) {
-              return true;
-            }
-          }
-        }
-      }
+  private static boolean lookSimilar(PsiMethod[] methods1, PsiMethod[] methods2) {
+    PsiMethod repr1 = methods1[0];
+    PsiMethod repr2 = methods2[0];
+    if (repr1.hasModifierProperty(PsiModifier.STATIC) || repr2.hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (!repr1.getName().equals(repr2.getName()) ||
+        repr1.getParameterList().getParametersCount() != repr2.getParameterList().getParametersCount()) {
+      return false;
     }
-    return false;
+    Set<PsiMethod> methodSet1 = ContainerUtil.newHashSet(methods1);
+    Set<PsiMethod> methodSet2 = ContainerUtil.newHashSet(methods2);
+    if (ContainerUtil.intersects(methodSet1, methodSet2)) return true;
+
+    Set<PsiMethod> deepestSupers1 = methodSet1.stream().flatMap(m -> Arrays.stream(m.findDeepestSuperMethods())).collect(Collectors.toSet());
+    return methodSet2.stream().flatMap(m -> Arrays.stream(m.findDeepestSuperMethods())).anyMatch(deepestSupers1::contains);
+  }
+
+  private static boolean isInheritorOrSelf(@NotNull PsiType type, @NotNull PsiClass superCandidate) {
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass != null && InheritanceUtil.isInheritorOrSelf(aClass, superCandidate, true);
   }
 }

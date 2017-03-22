@@ -150,7 +150,7 @@ public class ChainCompletionContext {
     });
   }
 
-  @NotNull
+  @Nullable
   public PsiClass resolveQualifierClass(MethodIncompleteSignature sign) {
     return myQualifierClassResolver.get(sign);
   }

@@ -103,7 +103,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                  methodsUsageIndexReader)) {
             boolean insert = true;
             for (MethodsChain baseChain : searchResult) {
-              MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext.getPsiManager());
+              MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain);
               if (r != MethodsChain.CompareResult.NOT_EQUAL) {
                 insert = false;
                 break;
