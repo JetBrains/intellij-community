@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -111,7 +112,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return disjuncts(element).count() > 1;
+    return PsiUtil.isLanguageLevel5OrHigher(element) && disjuncts(element).count() > 1;
   }
 
   @NotNull
@@ -124,7 +125,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Extract Set from comparison chain";
+    return CodeInsightBundle.message("intention.extract.set.from.comparison.chain.family");
   }
 
   @NotNull

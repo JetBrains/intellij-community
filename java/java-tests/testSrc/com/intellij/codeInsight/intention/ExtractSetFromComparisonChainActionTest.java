@@ -16,10 +16,16 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.pom.java.LanguageLevel;
 
 public class ExtractSetFromComparisonChainActionTest extends LightIntentionActionTestCase {
 
   public void test() throws Exception { doAllTests(); }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return getTestName(false).contains("Java9") ? LanguageLevel.JDK_1_9 : LanguageLevel.JDK_1_8;
+  }
 
   @Override
   protected String getBasePath() {
