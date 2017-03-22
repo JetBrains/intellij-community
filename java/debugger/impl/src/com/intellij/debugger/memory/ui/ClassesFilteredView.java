@@ -107,8 +107,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   public ClassesFilteredView(@NotNull XDebugSession debugSession,
                              @NotNull DebugProcessImpl debugProcess,
                              @NotNull InstancesTracker tracker) {
-    super();
-
     myProject = debugSession.getProject();
 
     final DebuggerManagerThreadImpl managerThread = debugProcess.getManagerThread();
