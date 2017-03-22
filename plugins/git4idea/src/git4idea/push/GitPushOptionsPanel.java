@@ -20,6 +20,7 @@ import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +70,16 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myRunHooks.setSelected(true);
     myRunHooks.setVisible(showSkipHookOption);
 
-    setLayout(new BorderLayout());
-    add(myPushTags, BorderLayout.WEST);
-    add(myPushTagsMode, BorderLayout.CENTER);
-    add(myRunHooks, BorderLayout.EAST);
+    myRunHooks.setBorder(JBUI.Borders.empty());
+    myPushTagsMode.setBorder(JBUI.Borders.empty());
+    myPushTags.setBorder(JBUI.Borders.empty());
+
+    setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    add(myPushTags);
+    add(Box.createHorizontalStrut(JBUI.scale(3)));
+    add(myPushTagsMode);
+    add(Box.createHorizontalStrut(JBUI.scale(37)));
+    add(myRunHooks);
   }
 
   @Nullable
