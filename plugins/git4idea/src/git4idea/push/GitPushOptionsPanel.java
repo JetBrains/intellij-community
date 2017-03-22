@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent;
 public class GitPushOptionsPanel extends VcsPushOptionsPanel {
 
   @NotNull private final JBCheckBox myPushTags;
-  @Nullable private final ComboBox<GitPushTagMode> myPushTagsMode;
+  @NotNull private final ComboBox<GitPushTagMode> myPushTagsMode;
   @NotNull private final JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported, boolean showSkipHookOption) {
@@ -44,46 +44,41 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myPushTags.setMnemonic('T');
     myPushTags.setSelected(defaultMode != null);
 
-    setLayout(new BorderLayout());
-    add(myPushTags, BorderLayout.WEST);
-
-    if (followTagsSupported) {
-      myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());
-      myPushTagsMode.setRenderer(new ListCellRendererWrapper<GitPushTagMode>() {
-        @Override
-        public void customize(JList list, GitPushTagMode value, int index, boolean selected, boolean hasFocus) {
-          setText(value.getTitle());
-        }
-      });
-      myPushTagsMode.setEnabled(myPushTags.isSelected());
-      if (defaultMode != null) {
-        myPushTagsMode.setSelectedItem(defaultMode);
+    myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());
+    myPushTagsMode.setRenderer(new ListCellRendererWrapper<GitPushTagMode>() {
+      @Override
+      public void customize(JList list, GitPushTagMode value, int index, boolean selected, boolean hasFocus) {
+        setText(value.getTitle());
       }
+    });
+    myPushTagsMode.setEnabled(myPushTags.isSelected());
+    if (defaultMode != null) {
+      myPushTagsMode.setSelectedItem(defaultMode);
+    }
 
-      myPushTags.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          myPushTagsMode.setEnabled(myPushTags.isSelected());
-        }
-      });
-      add(myPushTagsMode, BorderLayout.CENTER);
-    }
-    else {
-      myPushTagsMode = null;
-    }
+    myPushTags.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        myPushTagsMode.setEnabled(myPushTags.isSelected());
+      }
+    });
+    myPushTagsMode.setVisible(followTagsSupported);
 
     myRunHooks = new JBCheckBox("Run Git hooks");
     myRunHooks.setMnemonic(KeyEvent.VK_H);
     myRunHooks.setSelected(true);
     myRunHooks.setVisible(showSkipHookOption);
 
+    setLayout(new BorderLayout());
+    add(myPushTags, BorderLayout.WEST);
+    add(myPushTagsMode, BorderLayout.CENTER);
     add(myRunHooks, BorderLayout.EAST);
   }
 
   @Nullable
   @Override
   public VcsPushOptionValue getValue() {
-    GitPushTagMode selectedTagMode = myPushTagsMode == null ? GitPushTagMode.ALL : (GitPushTagMode)myPushTagsMode.getSelectedItem();
+    GitPushTagMode selectedTagMode = !myPushTagsMode.isVisible() ? GitPushTagMode.ALL : (GitPushTagMode)myPushTagsMode.getSelectedItem();
     GitPushTagMode tagMode = myPushTags.isSelected() ? selectedTagMode : null;
     return new GitVcsPushOptionValue(tagMode, myRunHooks.isVisible() && !myRunHooks.isSelected());
   }
