@@ -101,10 +101,7 @@ public class RenameHandlerRegistry {
 
   private static void checkHandler(RenameHandler renameHandler, DataContext dataContext, Map<String, RenameHandler> availableHandlers) {
     if (renameHandler.isRenaming(dataContext)) {
-      String title = getHandlerTitle(renameHandler);
-      if (!availableHandlers.containsKey(title)) {
-        availableHandlers.put(title, renameHandler);
-      }
+      availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
     }
   }
 
