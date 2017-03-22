@@ -24,111 +24,106 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+private class NoriaDialogWrapper(val dialogProps: DialogProps) : DialogWrapper(dialogProps.project, dialogProps.canBeParent) {
+  fun closeImpl(exitCode: Int) = close(exitCode)
+
+  val handle = object : NoriaDialogHandle {
+    override fun close(exitCode: Int) {
+      closeImpl(exitCode)
+    }
+
+    override fun shake() {
+
+    }
+  }
+
+  val roots = arrayListOf<NoriaHandle<JComponent>>()
+
+  fun jPanel(center: Element?): JPanel? {
+    if (center == null) return null
+    val root = JPanel()
+    val handle = mount(disposable, center, root, SwingNoriaDialogs.toolkit)
+    roots.add(handle)
+    return root
+  }
+
+  val northPanel = jPanel(dialogProps.north)
+  val centerPanel = jPanel(dialogProps.center)
+
+  override fun getPreferredFocusedComponent(): JComponent? =
+    roots.map { it.getPreferredFocusedNode() }.filterNotNull().firstOrNull()
+
+  override fun createCenterPanel(): JComponent? {
+    return centerPanel
+  }
+
+  override fun createNorthPanel(): JComponent? {
+    return northPanel
+  }
+
+  override fun getHelpId(): String? {
+    return dialogProps.helpId
+  }
+
+  fun makeAction(a: NoriaAction): Action =
+    if (a.isExclusive) {
+      object : DialogWrapperAction(a.name) {
+        override fun doAction(e: ActionEvent?) {
+          a.lambda.accept(handle)
+        }
+      }
+    }
+    else {
+      object : AbstractAction() {
+        override fun actionPerformed(e: ActionEvent?) {
+          a.lambda.accept(handle)
+        }
+      }.apply { putValue(Action.NAME, a.name) }
+    }.apply {
+      putValue(DEFAULT_ACTION, if (a.role == ActionRole.Default) true else null)
+      putValue(FOCUSED_ACTION, a.focused)
+      putValue(Action.MNEMONIC_KEY, a.mnemonic?.toInt())
+      track(myDisposable) {
+        isEnabled = a.enabled.value
+      }
+    }
+
+  override fun createActions(): Array<out Action> {
+    var actions = dialogProps.actions.map { makeAction(it) }
+    if (dialogProps.helpId != null) {
+      actions += helpAction
+    }
+    if (SystemInfo.isMac) {
+      actions = actions.reversed()
+    }
+    return actions.toTypedArray()
+  }
+
+  override fun createLeftSideActions(): Array<out Action> {
+    return dialogProps.leftSideActions.map { makeAction(it) }.toTypedArray()
+  }
+
+  public override fun init() {
+    super.init()
+  }
+
+  public override fun setErrorText(text: String?) {
+    super.setErrorText(text)
+  }
+}
+
 class SwingNoriaDialogs : NoriaDialogs {
   companion object {
     val toolkit = SwingToolkit()
   }
 
   override fun show(dialogProps: DialogProps): NoriaDialogHandle {
-    val roots = arrayListOf<NoriaHandle<JComponent>>()
-    val disposable = Disposer.newDisposable()
-
-    fun jPanel(center: Element?): JPanel? {
-      if (center == null) return null
-      val root = JPanel()
-      val handle = mount(disposable, center, root, toolkit)
-      roots.add(handle)
-      return root
+    val dw = NoriaDialogWrapper(dialogProps)
+    dw.init()
+    track(dw.disposable) {
+      dw.setErrorText(dialogProps.errorText.value)
     }
-
-    val northPanel = jPanel(dialogProps.north)
-    val centerPanel = jPanel(dialogProps.center)
-
-    val dw = object : DialogWrapper(dialogProps.project, dialogProps.canBeParent) {
-      fun closeImpl(exitCode: Int) = close(exitCode)
-
-      val handle = object : NoriaDialogHandle {
-        override fun close(exitCode: Int) {
-          closeImpl(exitCode)
-        }
-
-        override fun shake() {
-
-        }
-      }
-      init {
-        init()
-        Disposer.register(myDisposable, disposable)
-        track(disposable) {
-          setErrorText(dialogProps.errorText.value)
-        }
-      }
-
-      override fun getPreferredFocusedComponent(): JComponent? =
-        roots.map { it.getPreferredFocusedNode() }.filterNotNull().firstOrNull()
-
-
-      override fun createCenterPanel(): JComponent? {
-        return centerPanel
-      }
-
-      override fun createNorthPanel(): JComponent? {
-        return northPanel
-      }
-
-      override fun getHelpId(): String? {
-        return dialogProps.helpId
-      }
-
-      fun makeAction(a: NoriaAction): Action =
-        if (a.isExclusive) {
-          object : DialogWrapperAction(a.name) {
-            override fun doAction(e: ActionEvent?) {
-              a.lambda.accept(handle)
-            }
-          }
-        }
-        else {
-          object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-              a.lambda.accept(handle)
-            }
-          }.apply { putValue(Action.NAME, a.name) }
-        }.apply {
-          putValue(DEFAULT_ACTION, if (a.role == ActionRole.Default) true else null)
-          putValue(FOCUSED_ACTION, a.focused)
-          putValue(Action.MNEMONIC_KEY, a.mnemonic?.toInt())
-          track(myDisposable) {
-            isEnabled = a.enabled.value
-          }
-        }
-
-      override fun createActions(): Array<out Action> {
-        var actions = dialogProps.actions.map { makeAction(it) }
-        if (dialogProps.helpId != null) {
-          actions += helpAction
-        }
-        if (SystemInfo.isMac) {
-          actions = actions.reversed()
-        }
-        return actions.toTypedArray()
-      }
-
-      override fun createLeftSideActions(): Array<out Action> {
-        return dialogProps.leftSideActions.map { makeAction(it) }.toTypedArray()
-      }
-    }
-
     dw.show()
-
-    return object : NoriaDialogHandle {
-      override fun close(exitCode: Int) {
-        dw.close(exitCode)
-      }
-
-      override fun shake() {
-
-      }
-    }
+    return dw.handle
   }
 }
