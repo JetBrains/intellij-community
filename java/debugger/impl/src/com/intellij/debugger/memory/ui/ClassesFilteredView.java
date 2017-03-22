@@ -102,7 +102,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   /**
    * Indicates that view is visible
    */
-  private boolean myIsActive;
+  private volatile boolean myIsActive;
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession,
                              @NotNull DebugProcessImpl debugProcess,
