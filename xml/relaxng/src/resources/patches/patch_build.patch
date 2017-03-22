@@ -1,13 +1,13 @@
 diff --git a/build/build.py b/build/build.py
-index 2bd74f0..0184b45 100755
+index 4cabe1e1..a78e2434 100755
 --- a/build/build.py
 +++ b/build/build.py
-@@ -1354,7 +1354,7 @@ else:
-     elif arg == 'checkout':
-       pass
-     elif arg == 'build':
--      buildAll()
-+      buildSchemaDrivers()
-     elif arg == 'bundle':
-       release = Release()
-       release.createBundle()
+@@ -1576,7 +1576,7 @@ else:
+         elif arg == 'checkout':
+             pass
+         elif arg == 'build':
+-            buildAll()
++            buildSchemaDrivers()
+         elif arg == 'bundle':
+             release = Release()
+             release.createBundle()
