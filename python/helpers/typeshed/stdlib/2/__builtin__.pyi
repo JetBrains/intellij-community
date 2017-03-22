@@ -8,7 +8,7 @@ from typing import (
     Sequence, Mapping, Tuple, List, Any, Dict, Callable, Generic, Set,
     AbstractSet, FrozenSet, Sized, Reversible, SupportsInt, SupportsFloat, SupportsAbs,
     SupportsRound, IO, BinaryIO, Union, AnyStr, MutableSequence, MutableMapping,
-    MutableSet, ItemsView, KeysView, ValuesView, Optional, Container,
+    MutableSet, ItemsView, KeysView, ValuesView, Optional, Container, Type
 )
 from abc import abstractmethod, ABCMeta
 from mypy_extensions import NoReturn
@@ -553,6 +553,8 @@ class dict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self, map: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
     @overload
     def __init__(self, iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
+
+    def __new__(cls: Type[_T1], *args: Any, **kwargs: Any) -> _T1: ...
 
     def has_key(self, k: _KT) -> bool: ...
     def clear(self) -> None: ...
