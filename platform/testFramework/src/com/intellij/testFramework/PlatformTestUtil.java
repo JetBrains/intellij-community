@@ -270,8 +270,8 @@ public class PlatformTestUtil {
     UIUtil.dispatchAllInvocationEvents();
 
     long start = System.currentTimeMillis();
-    boolean sleptAlready = false;
     try {
+      boolean sleptAlready = false;
       while (!alarmInvoked2.get()) {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         ApplicationManager.getApplication().invokeLater(() -> laterInvoked.set(true));
@@ -616,6 +616,9 @@ public class PlatformTestUtil {
         if (duration > expectedOnMyMachine) {
           int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
           logMessage += ": " + "\u001B[31;1m " + percentage + "% longer" + "\u001B[0m";
+        }
+        else {
+          logMessage += " NOT!";
         }
         logMessage +=
           "\n  Expected: " + formatTime(expectedOnMyMachine) +
