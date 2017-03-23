@@ -38,8 +38,14 @@ public class ClipboardUtil {
       else {
         LOG.warn(e);
       }
-      return onFail.get();
     }
+    catch (NullPointerException e) {
+      LOG.warn("Java bug #6322854", e);
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn("Java bug #7173464", e);
+    }
+    return onFail.get();
   }
 
   private static final String USE_LEGACY_MERGE_SORT_PROPERTY_NAME = "java.util.Arrays.useLegacyMergeSort";
