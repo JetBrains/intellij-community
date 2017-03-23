@@ -38,7 +38,9 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -132,6 +134,12 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     myIgnoreInternalSelectionEvents = false;
   }
 
+  @Nullable
+  public Rectangle getRectByValue(@NotNull TraceElement element) {
+    final TreePath path = myValue2Path.get(element);
+    return path == null ? null : getPathBounds(path);
+  }
+
   @Override
   public void highlight(@NotNull List<TraceElement> elements) {
     clearSelection();
@@ -205,6 +213,10 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private void updatePresentation() {
     revalidate();
     repaint();
+  }
+
+  public boolean isSelected(@NotNull TraceElement traceElement) {
+    return isPathSelected(myValue2Path.get(traceElement));
   }
 
   private class MyRootValue extends XValue {

@@ -94,7 +94,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       previous.register(before);
       current.register(after);
 
-      final JPanel panel = new JPanel(new GridLayout(1, 2));
+      final JPanel panel = new JPanel(new GridLayout(1, 3));
+      //panel.add(new MappingPane(beforeSharedValues));
       panel.add(before);
       panel.add(after);
       tab.setContent(panel, BorderLayout.CENTER);
