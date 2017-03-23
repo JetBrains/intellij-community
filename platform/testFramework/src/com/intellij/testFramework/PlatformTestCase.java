@@ -44,6 +44,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -78,6 +79,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -273,12 +275,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       ourReportedLeakedProjects = true;
 
-      StringBuilder leakers = new StringBuilder();
-      leakers.append("Too many projects leaked: \n");
+      TIntHashSet hashCodes = new TIntHashSet();
       for (Project project : e.getLeakedProjects()) {
-        String presentableString = getCreationPlace(project);
-        leakers.append(presentableString);
-        leakers.append("\n");
+        hashCodes.add(System.identityHashCode(project));
       }
 
       String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof.zip";
@@ -290,6 +289,21 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       catch (Exception ex) {
         ex.printStackTrace();
       }
+
+      StringBuilder leakers = new StringBuilder();
+      leakers.append("Too many projects leaked: \n");
+      LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked,backLink)->{
+        int hashCode = System.identityHashCode(leaked);
+        leakers.append("Leaked project found:" + leaked + "; hash: " +
+                           hashCode + "; place: " + getCreationPlace(leaked)+"\n");
+        leakers.append(backLink+"\n");
+        leakers.append(";-----\n");
+
+        hashCodes.remove(hashCode);
+
+        return !hashCodes.isEmpty();
+      });
+
       fail(leakers+"\nPlease see '"+dumpPath+"' for a memory dump");
       return null;
     }
@@ -375,11 +389,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void cleanupApplicationCaches(Project project) {
+    UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
+    if (globalInstance != null) {
+      globalInstance.dropHistoryInTests();
+    }
     if (project != null && !project.isDisposed()) {
-      UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
-      if (globalInstance != null) {
-        globalInstance.dropHistoryInTests();
-      }
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
       ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
 
@@ -725,11 +739,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File createTempDirectory() throws IOException {
-    return createTempDir(getTestName(true));
+    return createTempDir("");
   }
 
   protected File createTempDirectory(final boolean refresh) throws IOException {
-    return createTempDir(getTestName(true), refresh);
+    return createTempDir("", refresh);
   }
 
   @NotNull
