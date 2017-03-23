@@ -453,8 +453,6 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      // Insert new elements above this line
-      Flow.class                    // duplicate of annotations, to keep comma after previous argument
     };
 
     final Set<String> classPath = new HashSet<String>();
