@@ -18,7 +18,7 @@ class MappingPane(private val left: MappedValuePositionProvider, private val rig
     val values: List<ValueWithPosition> = left.getValues()
     for (value in values) {
       val position: Int = value.getPosition()
-      val nextValues = left.getMapToNextByValue(value)
+      val nextValues = left.getNextValues(value)
       for (nextValue in nextValues) {
         g.drawLine(x1, position, x2, nextValue.getPosition())
       }
