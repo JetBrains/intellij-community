@@ -158,5 +158,8 @@ public class StringIndex {
       this.content = content;
     }
   }
-  
+
+  public MapReduceIndex<String, String, PathContentPair> getIndex() {
+    return myIndex;
+  }
 }

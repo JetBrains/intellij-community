@@ -295,4 +295,9 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       l.unlock();
     }
   }
+
+  @TestOnly
+  public PersistentMap<Key, UpdatableValueContainer<Value>> getIndexMap() {
+    return myMap;
+  }
 }
