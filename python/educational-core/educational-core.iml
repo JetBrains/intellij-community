@@ -13,24 +13,25 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-impl" />
-        <orderEntry type="library" name="gson" level="project" />
-        <orderEntry type="library" name="http-client" level="project" />
-        <orderEntry type="module-library">
-          <library>
-            <CLASSES>
-              <root url="jar://$MODULE_DIR$/lib/twitter4j-core-4.0.4.jar!/" />
-            </CLASSES>
-            <JAVADOC />
-            <SOURCES />
-          </library>
-        </orderEntry>
-        <orderEntry type="module" module-name="platform-api" />
-        <orderEntry type="module" module-name="xml" />
-        <orderEntry type="library" name="markdownj" level="project" />
-        <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-        <orderEntry type="module" module-name="testFramework" scope="TEST" />
-        <orderEntry type="module" module-name="testExtensions" scope="TEST" />
-        <orderEntry type="module" module-name="idea-ui" />
-        <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/twitter4j-core-4.0.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="library" name="markdownj" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

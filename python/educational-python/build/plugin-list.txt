@@ -4,6 +4,5 @@ remote-servers-git
 github
 educational-core
 Edu-Python
-course-creator
 hg4idea
 ipnb
