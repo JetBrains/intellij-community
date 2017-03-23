@@ -33,7 +33,7 @@ public class CommandLineUtil {
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|]");
-  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*]");
+  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?]");
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final char Q = '\"';
