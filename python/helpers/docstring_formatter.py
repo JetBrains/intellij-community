@@ -84,7 +84,6 @@ def format_rest(docstring):
 
         def visit_field_body(self, node):
             self.body.append(self.starttag(node, 'td', '', CLASS='field-body'))
-            field_name = node.parent[0][0].astext()
             if hasattr(node.parent, "type"):
                 self.body.append("(")
                 self.body.append(self.starttag(node, 'a', '',
@@ -92,15 +91,6 @@ def format_rest(docstring):
                 self.body.append(node.parent.type)
                 self.body.append("</a>")
                 self.body.append(") ")
-            elif field_name.startswith("type "):
-                index = field_name.index("type ")
-                type_string = field_name[index + len("type ")]
-                self.body.append(self.starttag(node, 'a', '',
-                                               href='psi_element://#typename#' + type_string))
-            elif field_name.startswith("rtype"):
-                type_string = node.astext()
-                self.body.append(self.starttag(node, 'a', '',
-                                               href='psi_element://#typename#' + type_string))
 
             self.set_class_on_child(node, 'first', 0)
             field = node.parent
@@ -111,12 +101,6 @@ def format_rest(docstring):
                 # the last field of the field list, do not add vertical
                 # space after last element.
                 self.set_class_on_child(node, 'last', -1)
-
-        def depart_field_body(self, node):
-            field_name = node.parent[0][0].astext()
-            if field_name.startswith(("type ", "rtype")):
-                self.body.append("</a>")
-            HTMLTranslator.depart_field_body(self, node)
 
         def visit_reference(self, node):
             atts = {}
@@ -197,10 +181,9 @@ def format_rest(docstring):
                 child = n.children[0]
                 rawsource = child.rawsource
                 if rawsource.startswith("param "):
-                    index = rawsource.index("param ")
                     if not child.children:
                         continue
-                    param_name = rawsource[index + len("param "):]
+                    param_name = rawsource[len("param "):]
                     param_type = None
                     parts = param_name.rsplit(None, 1)
                     if len(parts) == 2:
@@ -214,21 +197,29 @@ def format_rest(docstring):
                 if rawsource == "return":
                     fields["return"] = n
 
-            for n in node.children:
+            for n in list(node.children):
                 if len(n.children) < 2:
                     continue
-                field_name, field_body = n.children[0], n.children[1]
-                rawsource = field_name.rawsource
+                field_name_node, field_body_node = n.children[0], n.children[1]
+                param_type = self._strip_markup(field_body_node.astext())[1]
+                rawsource = field_name_node.rawsource
                 if rawsource.startswith("type "):
-                    index = rawsource.index("type ")
-                    name = re.sub(r'\\\*', '*', rawsource[index + len("type "):])
-                    if name in fields:
-                        fields[name].type = self._strip_markup(field_body.astext())[1]
+                    param_name = re.sub(r'\\\*', '*', rawsource[len("type "):])
+                    if param_name in fields:
                         node.children.remove(n)
-                if rawsource == "rtype":
+                    else:
+                        fields[param_name] = n
+                        field_name_node.children[0] = Text(param_name)
+                        field_body_node.children[:] = []
+                    fields[param_name].type = param_type
+                elif rawsource == "rtype":
                     if "return" in fields:
-                        fields["return"].type = self._strip_markup(field_body.astext())[1]
                         node.children.remove(n)
+                    else:
+                        fields["return"] = n
+                        field_name_node.children[0] = Text("return")
+                        field_body_node.children[:] = []
+                    fields["return"].type = param_type
 
             HTMLTranslator.visit_field_list(self, node)
 
