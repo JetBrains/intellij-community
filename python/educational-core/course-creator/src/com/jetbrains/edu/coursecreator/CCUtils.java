@@ -269,6 +269,9 @@ public class CCUtils {
     presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
   }
 
+  /**
+   * @param fromIndex -1 if task converted to TaskWithSubtasks, -2 if task converted from TaskWithSubtasks
+   */
   public static void renameFiles(VirtualFile taskDir, Project project, int fromIndex) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       Map<VirtualFile, String> newNames = new HashMap<>();
@@ -283,7 +286,7 @@ public class CCUtils {
             index = "0";
           }
           else { // remove subtask
-            index = subtaskIndex == 1 ? "" : Integer.toString(subtaskIndex - 1);
+            index = fromIndex == -2 ? "" : Integer.toString(subtaskIndex - 1);
           }
           String fileName = virtualFile.getName();
           String nameWithoutExtension = FileUtil.getNameWithoutExtension(fileName);
