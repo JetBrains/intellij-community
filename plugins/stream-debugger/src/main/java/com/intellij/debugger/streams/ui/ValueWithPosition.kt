@@ -6,6 +6,10 @@ import com.intellij.debugger.streams.trace.TraceElement
  * @author Vitaliy.Bibaev
  */
 interface ValueWithPosition {
-  fun getTraceElement(): TraceElement
-  fun getPosition(): Int
+  val traceElement: TraceElement
+  val nextValues: List<ValueWithPosition>
+
+  val position: Int
+  val isVisible: Boolean
+  val isSelected: Boolean
 }

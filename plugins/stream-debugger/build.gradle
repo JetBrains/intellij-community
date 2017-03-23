@@ -19,7 +19,7 @@ repositories {
 }
 
 sourceSets {
-    main.kotlin.srcDirs += 'src/main/kotlin'
+    main.kotlin.srcDirs += 'src/main/java'
 }
 
 apply plugin: 'idea'
