@@ -71,7 +71,6 @@ target('run_tests': 'Run java tests') {
     [
       "idea.test.group",
       "idea.test.patterns",
-      "idea.fast.only",
       "idea.coverage.enabled.build",
       "teamcity.tests.recentlyFailedTests.file"
     ].each { pass(jvmArgs, it) }

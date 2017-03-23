@@ -32,13 +32,6 @@ else {
   ]
 }
 
-if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
-  String vendor = System.getProperty("java.vm.vendor")
-  if (vendor != null && vendor.toLowerCase().contains("apple")) {
-    args << "-d32"
-  }
-};
-
 args << "-Djna.nosys=true"
 
 setProperty("jvm_args", args)

@@ -233,6 +233,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
         taskFile.setTask(task);
       }
       list.set(i, task);
+      renameFiles(task.getTaskDir(myProject), myProject, -2);
     }
 
     private void updateInfoIndexes() {

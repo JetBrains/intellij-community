@@ -130,7 +130,7 @@ class CompilationContextImpl implements CompilationContext {
       projectBuilder.targetFolder = classesOutput
     }
     else {
-      def outputDir = JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl)
+      def outputDir = getProjectOutputDirectory()
       if (!outputDir.exists()) {
         messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
       }
@@ -139,6 +139,10 @@ class CompilationContextImpl implements CompilationContext {
     suppressWarnings(project)
     projectBuilder.exportModuleOutputProperties()
     cleanOutput(outputDirectoriesToKeep)
+  }
+
+  File getProjectOutputDirectory() {
+    JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl)
   }
 
   void cleanOutput(List<String> outputDirectoriesToKeep) {

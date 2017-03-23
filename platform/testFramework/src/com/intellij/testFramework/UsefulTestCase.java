@@ -130,6 +130,9 @@ public abstract class UsefulTestCase extends TestCase {
     }
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
+    if (isPerformanceTest()) {
+      Timings.getStatistics();
+    }
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
   }

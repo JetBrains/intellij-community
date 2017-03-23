@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -92,6 +93,8 @@ public class LightStubBuilder implements StubBuilder {
 
     nextElement:
     while (element != null) {
+      ProgressManager.checkCanceled();
+
       final StubElement stub = createStub(tree, element, parentStub);
       boolean hasStub = stub != parentStub || parent == null;
       if (hasStub && !immediateParentStubbed) {
