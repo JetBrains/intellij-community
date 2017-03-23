@@ -15,16 +15,25 @@
  */
 package com.intellij.keymap;
 
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
+  @Override
+  protected void collectKnownDuplicates(Map<String, Map<String, List<String>>> result) {
+    appendKnownDuplicates(result, DEFAULT_DUPLICATES);
+  }
+
+  @Override
+  protected void collectUnknownActions(Set<String> result) {
+    result.addAll(UNCNOWN_ACTION_IDS);
+  }
+
   // @formatter:off
   @NonNls @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = new THashMap<String, String[][]>(){{
@@ -343,11 +352,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   }};
   // @formatter:on
 
-  protected void collectKnownDuplicates(Map<String, Map<String, List<String>>> result) {
-    appendKnownDuplicates(result, DEFAULT_DUPLICATES);
-  }
-
-  @NonNls private static final Set<String> unknownActionIds = new THashSet<>(Arrays.asList(
+  @NonNls private static final Set<String> UNCNOWN_ACTION_IDS = ContainerUtil.set(
     "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow",
     "ActivateFindToolWindow",
     "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
@@ -355,9 +360,5 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
     ""
-  ));
-
-  protected void collectUnknownActions(Set<String> result) {
-    result.addAll(unknownActionIds);
-  }
+  );
 }

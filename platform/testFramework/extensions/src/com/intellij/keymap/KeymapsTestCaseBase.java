@@ -46,6 +46,9 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 public abstract class KeymapsTestCaseBase extends PlatformTestCase {
   private static final boolean OUTPUT_TEST_DATA = false;
 
+  private static final Set<String> LINUX_KEYMAPS = ContainerUtil.newHashSet("Default for XWin", "Default for GNOME", "Default for KDE");
+
+
   protected abstract void collectKnownDuplicates(Map<String, Map<String, List<String>>> result);
 
   protected abstract void collectUnknownActions(Set<String> result);
@@ -361,7 +364,6 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
     }
   }
 
-  private static final Set<String> LINUX_KEYMAPS = ContainerUtil.newHashSet("Default for XWin", "Default for GNOME", "Default for KDE");
 
   public void testLinuxShortcuts() {
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
