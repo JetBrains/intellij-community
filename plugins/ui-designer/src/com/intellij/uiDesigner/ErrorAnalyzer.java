@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -217,22 +218,22 @@ public final class ErrorAnalyzer {
           }
           FormEditingUtil.iterate(
             rootContainer,
-            (FormEditingUtil.ComponentVisitor<RadComponent>)(RadComponent component)->{
-                if (progress != null && progress.isCanceled()) return false;
+            (FormEditingUtil.ComponentVisitor<RadComponent>)(RadComponent component) -> {
+              if (progress != null && progress.isCanceled()) return false;
 
-                for (FormInspectionTool tool : formInspectionTools) {
-                  if (isSuppressed(rootContainer, tool, component.getId())) continue;
-                  ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
-                  if (errorInfos != null) {
-                    ArrayList<ErrorInfo> errorList = getErrorInfos(component);
-                    if (errorList == null) {
-                      errorList = new ArrayList<>();
-                      component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
-                    }
-                    Collections.addAll(errorList, errorInfos);
+              for (FormInspectionTool tool : formInspectionTools) {
+                if (isSuppressed(rootContainer, tool, component.getId())) continue;
+                ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
+                if (errorInfos != null) {
+                  ArrayList<ErrorInfo> errorList = getErrorInfos(component);
+                  if (errorList == null) {
+                    errorList = new ArrayList<>();
+                    component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
                   }
+                  Collections.addAll(errorList, errorInfos);
                 }
-                return true;
+              }
+              return true;
             }
           );
           for (FormInspectionTool tool : formInspectionTools) {
@@ -240,6 +241,9 @@ public final class ErrorAnalyzer {
           }
         }
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
@@ -318,7 +322,7 @@ public final class ErrorAnalyzer {
         return true;
       }
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException ignored) {
     }
 
     if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
