@@ -84,7 +84,7 @@ def format_rest(docstring):
 
         def visit_field_body(self, node):
             self.body.append(self.starttag(node, 'td', '', CLASS='field-body'))
-            parent_text = node.parent[0][0].astext()
+            field_name = node.parent[0][0].astext()
             if hasattr(node.parent, "type"):
                 self.body.append("(")
                 self.body.append(self.starttag(node, 'a', '',
@@ -92,13 +92,13 @@ def format_rest(docstring):
                 self.body.append(node.parent.type)
                 self.body.append("</a>")
                 self.body.append(") ")
-            elif parent_text.startswith("type "):
-                index = parent_text.index("type ")
-                type_string = parent_text[index + len("type ")]
+            elif field_name.startswith("type "):
+                index = field_name.index("type ")
+                type_string = field_name[index + len("type ")]
                 self.body.append(self.starttag(node, 'a', '',
                                                href='psi_element://#typename#' + type_string))
-            elif parent_text.startswith("rtype"):
-                type_string = node.children[0][0].astext()
+            elif field_name.startswith("rtype"):
+                type_string = node.astext()
                 self.body.append(self.starttag(node, 'a', '',
                                                href='psi_element://#typename#' + type_string))
 
@@ -113,7 +113,8 @@ def format_rest(docstring):
                 self.set_class_on_child(node, 'last', -1)
 
         def depart_field_body(self, node):
-            if node.parent[0][0].astext().startswith("type "):
+            field_name = node.parent[0][0].astext()
+            if field_name.startswith(("type ", "rtype")):
                 self.body.append("</a>")
             HTMLTranslator.depart_field_body(self, node)
 
