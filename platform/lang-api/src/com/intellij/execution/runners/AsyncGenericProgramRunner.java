@@ -16,23 +16,24 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
+import static com.intellij.execution.runners.GenericProgramRunnerKt.startRunProfile;
+
 /**
- * Allows to postpone actual {@link RunProfileState} execution until all the needed preparations are done.
+ * @deprecated Use AsyncProgramRunner
  */
+@Deprecated
 public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Override
-  protected void execute(@NotNull ExecutionEnvironment environment,
+  protected final void execute(@NotNull ExecutionEnvironment environment,
                                @Nullable Callback callback,
                                @NotNull RunProfileState state) throws ExecutionException {
     prepare(environment, state)
@@ -57,24 +58,4 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
    */
   @NotNull
   protected abstract Promise<RunProfileStarter> prepare(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException;
-
-  private static void startRunProfile(@NotNull ExecutionEnvironment environment,
-                                      @NotNull RunProfileState state,
-                                      @Nullable final Callback callback,
-                                      @Nullable final RunProfileStarter starter) {
-    ExecutionManager.getInstance(environment.getProject()).startRunProfile(new RunProfileStarter() {
-      @Override
-      public Promise<RunContentDescriptor> executeAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
-        if (starter == null) {
-          return Promise.resolve(postProcess(environment, null, callback));
-        }
-        return starter.executeAsync(state, environment).then(descriptor -> postProcess(environment, descriptor, callback));
-      }
-
-      @Override
-      public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        return postProcess(environment, starter == null ? null : starter.execute(state, environment), callback);
-      }
-    }, state, environment);
-  }
 }

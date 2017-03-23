@@ -23,13 +23,12 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
 
 abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
   @Throws(ExecutionException::class)
   override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    ExecutionManager.getInstance(environment.project).startRunProfile(runProfileStarter { state, environment ->
-      BaseProgramRunner.postProcess(environment, doExecute(state, environment), callback)
-    }, state, environment)
+    startRunProfile(environment, state, callback, runProfileStarter { resolvedPromise(doExecute(state, environment)) })
   }
 
   @Throws(ExecutionException::class)
@@ -37,7 +36,6 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
     @Suppress("DEPRECATION")
     return doExecute(environment.project, state, environment.contentToReuse, environment)
   }
-
 
   @Deprecated("")
   @Throws(ExecutionException::class)
@@ -49,24 +47,22 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
   }
 }
 
-inline fun runProfileStarter(crossinline starter: (state: RunProfileState, environment: ExecutionEnvironment) -> RunContentDescriptor?) = object : RunProfileStarter() {
-  override fun execute(state: RunProfileState, env: ExecutionEnvironment) = starter(state, env)
+abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
+  override final fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+    startRunProfile(environment, state, callback, runProfileStarter { execute(environment, state) })
+  }
+
+  @Throws(ExecutionException::class)
+  protected abstract fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?>
 }
 
-fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: RunProfileStarter?) {
-  ExecutionManager.getInstance(environment.project).startRunProfile(object : RunProfileStarter() {
-    override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment): Promise<RunContentDescriptor> {
-      if (starter == null) {
-        return Promise.resolve<RunContentDescriptor>(BaseProgramRunner.postProcess(environment, null, callback))
-      }
-      return starter.executeAsync(state, environment).then<RunContentDescriptor> { descriptor ->
-        BaseProgramRunner.postProcess(environment, descriptor, callback)
-      }
-    }
+internal inline fun runProfileStarter(crossinline starter: () -> Promise<RunContentDescriptor?>) = object : RunProfileStarter() {
+  override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment) = starter()
+}
 
-    @Throws(ExecutionException::class)
-    override fun execute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-      return BaseProgramRunner.postProcess(environment, starter?.execute(state, environment), callback)
-    }
+internal fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: RunProfileStarter?) {
+  ExecutionManager.getInstance(environment.project).startRunProfile(runProfileStarter {
+    (starter?.executeAsync(state, environment) ?: resolvedPromise())
+      .then { BaseProgramRunner.postProcess(environment, it, callback) }
   }, state, environment)
 }
