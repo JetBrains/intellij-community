@@ -194,8 +194,8 @@ def format_rest(docstring):
                     fields[param_name] = field_node
                     if param_type:
                         field_node.type = param_type
-                if field_name_raw == "return":
-                    fields["return"] = field_node
+                if field_name_raw in ("return", "returns"):
+                    fields[field_name_raw] = field_node
 
             for field_node in list(node.children):
                 if len(field_node.children) < 2:
@@ -213,13 +213,20 @@ def format_rest(docstring):
                         field_body_node.children[:] = []
                     fields[param_name].type = param_type
                 elif field_name_raw == "rtype":
-                    if "return" in fields:
+                    existing_return_tag = None
+                    if "returns" in fields:
+                        existing_return_tag = "returns"
+                    elif "return" in fields:
+                        existing_return_tag = "return"
+
+                    if existing_return_tag:
                         node.children.remove(field_node)
                     else:
-                        fields["return"] = field_node
-                        field_name_node.children[0] = Text("return")
+                        existing_return_tag = "return"
+                        fields[existing_return_tag] = field_node
+                        field_name_node.children[0] = Text(existing_return_tag)
                         field_body_node.children[:] = []
-                    fields["return"].type = param_type
+                    fields[existing_return_tag].type = param_type
 
             HTMLTranslator.visit_field_list(self, node)
 
