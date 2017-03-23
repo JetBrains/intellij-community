@@ -39,7 +39,6 @@ import java.beans.PropertyChangeListener;
  */
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   private static final Border ourDefaultEditorBorder = JBUI.Borders.empty(1, 0);
-  private static final int VALUE_OFFSET = JBUI.scale(5);
 
   private Icon DEFAULT_ICON;
 
@@ -123,15 +122,14 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Color fg = comboBox.getForeground();
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
-      public void paint(Graphics g2) {
+      public void paint(Graphics g) {
         Icon icon = MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
-        icon.paintIcon(this, g2, 0, 0);
+        icon.paintIcon(this, g, 0, 0);
       }
 
       @Override
       public Dimension getPreferredSize() {
-        Insets i = comboBox.getInsets();
-        return JBUI.size(DEFAULT_ICON.getIconWidth() + i.right, DEFAULT_ICON.getIconHeight() + i.top + i.bottom);
+        return JBUI.size(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -245,9 +243,8 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
-    Insets insets = getInsets();
-    rect.x += VALUE_OFFSET;
-    rect.width += (comboBox.getComponentOrientation().isLeftToRight() ? insets.right : insets.left) - VALUE_OFFSET;
+    rect.x += JBUI.scale(5);
+    rect.width -= JBUI.scale(5);
     return rect;
   }
 
@@ -288,25 +285,21 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
         bounds.height = bounds.height > size.height ? size.height : bounds.height;
         cb.setBounds(bounds);
 
-        int buttonWidth = DEFAULT_ICON.getIconWidth();
-        int buttonHeight = DEFAULT_ICON.getIconHeight();
-
+        Insets cbInsets = cb.getInsets();
         if (arrowButton != null) {
           Insets arrowInsets = arrowButton.getInsets();
           Dimension prefSize = arrowButton.getPreferredSize();
-          buttonWidth = prefSize.width + arrowInsets.left + arrowInsets.right;
-          buttonHeight = prefSize.height + arrowInsets.top + arrowInsets.bottom;
-        }
+          int buttonWidth = prefSize.width + arrowInsets.left + arrowInsets.right;
+          int buttonHeight = prefSize.height + arrowInsets.top + arrowInsets.bottom;
 
-        if (arrowButton != null) {
-          Insets i = comboBox.getInsets();
-          arrowButton.setBounds(cb.getWidth() - buttonWidth, i.top, buttonWidth - i.right, buttonHeight - (i.top + i.bottom));
+          arrowButton.setBounds(bounds.width - buttonWidth - cbInsets.right, cbInsets.top, buttonWidth, buttonHeight);
         }
 
         if (editor != null ) {
           bounds = rectangleForCurrentValue();
-          bounds.y += JBUI.scale(1);
-          bounds.height -= JBUI.scale(2);
+          Insets editorInsets = ourDefaultEditorBorder.getBorderInsets(editor);
+          bounds.y += editorInsets.top;
+          bounds.height -= editorInsets.top + editorInsets.bottom;
           editor.setBounds(bounds);
         }
       }
@@ -372,9 +365,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     Rectangle bounds = rectangleForCurrentValue();
-
-    g.setColor(UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground"));
-    g.fillRect(bounds.x - VALUE_OFFSET, bounds.y, bounds.width + VALUE_OFFSET, bounds.height);
 
     if ( !comboBox.isEditable() ) {
       paintCurrentValue(g, bounds, comboBox.isPopupVisible());

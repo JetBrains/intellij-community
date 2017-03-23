@@ -50,24 +50,55 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     int x = c.getWidth() - DEFAULT_ICON.getIconWidth() - i.right;
     Icon icon = MacIntelliJIconCache.getIcon("spinnerRight", false, false, c.isEnabled());
     icon.paintIcon(c, g, x, i.top);
+
+    if (c instanceof JSpinner) {
+      JComponent editor = ((JSpinner)c).getEditor();
+      Rectangle editorBounds = editor.getBounds();
+      g.setColor(UIManager.getColor("FormattedTextField.background"));
+      g.fillRect(i.left + JBUI.scale(1), i.top + JBUI.scale(1), x - JBUI.scale(1) - i.left, editorBounds.height + JBUI.scale(2));
+    }
   }
 
   @Override protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) {}
+
+  @Override public Dimension getPreferredSize(JComponent c) {
+    return getSizeWithIcon(super.getPreferredSize(c));
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    return getSizeWithIcon(super.getMinimumSize(c));
+  }
+
+  private Dimension getSizeWithIcon(Dimension d) {
+    if (d == null) return null;
+
+    Insets i = spinner.getInsets();
+    int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
+    int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
+    return new Dimension(Math.max(d.width + 7, iconWidth), Math.max(d.height, iconHeight));
+  }
 
   @Override
   protected LayoutManager createLayout() {
     return new LayoutManagerDelegate(super.createLayout()) {
       @Override
       public Dimension preferredLayoutSize(Container parent) {
+        Dimension d = super.preferredLayoutSize(parent);
+        if (d == null) return null;
+
         Insets i = parent.getInsets();
-        return new Dimension(DEFAULT_ICON.getIconWidth() + JBUI.scale(20) + i.left + i.right,
+        return new Dimension(Math.max(DEFAULT_ICON.getIconWidth() + JBUI.scale(25) + i.left + i.right, d.width),
                              DEFAULT_ICON.getIconHeight() + i.top + i.bottom);
       }
 
       @Override
       public Dimension minimumLayoutSize(Container parent) {
+        Dimension d = super.minimumLayoutSize(parent);
+        if (d == null) return null;
+
         Insets i = parent.getInsets();
-        return new Dimension(DEFAULT_ICON.getIconWidth() + JBUI.scale(10) + i.left + i.right,
+        return new Dimension(Math.max(DEFAULT_ICON.getIconWidth() + JBUI.scale(10) + i.left + i.right, d.width),
                              DEFAULT_ICON.getIconHeight() + i.top + i.bottom);
       }
     };
@@ -78,10 +109,10 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     int w = spinner.getWidth();
     int h = spinner.getHeight();
     Insets i = spinner.getInsets();
-    editor.setBounds(JBUI.scale(1) + i.left,
-                     JBUI.scale(1) + i.top,
-                     w - (i.left + i.right + DEFAULT_ICON.getIconWidth() + JBUI.scale(1)),
-                     h - (i.top + i.bottom + + JBUI.scale(2)));
+    editor.setBounds(JBUI.scale(2) + i.left,
+                     JBUI.scale(2) + i.top,
+                     w - (i.left + i.right + DEFAULT_ICON.getIconWidth() + JBUI.scale(6)),
+                     h - (i.top + i.bottom + JBUI.scale(4)));
   }
 
   @Nullable Rectangle getArrowButtonBounds() {

@@ -20,6 +20,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -49,44 +50,39 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      g2.setColor(Gray.xBC);
-
-      g2.setStroke(new BasicStroke(1));
-      Shape rect = new Rectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                          c.getWidth() - JBUI.scale(7),
-                                          c.getHeight() - JBUI.scale(7));
-      g2.draw(rect);
+      g2.translate(x, y);
+      RectanglePainter.paint(g2, JBUI.scale(3), JBUI.scale(3),
+                             c.getWidth() - JBUI.scale(6),
+                             c.getHeight() - JBUI.scale(6), 0, null, Gray.xBC);
 
       if (c.getParent() instanceof JComboBox) return;
 
-      Area area = new Area(new Rectangle2D.Double(x, y, width, height));
-      area.subtract(new Area(new Rectangle2D.Double(x + JBUI.scale(4), y + JBUI.scale(4),
-                                                    width - JBUI.scale(8), height - JBUI.scale(8))));
-
-      g2.setClip(area);
-      paint(c, g2, x, y, width, height);
+      paint(c, g2, width, height);
     } finally {
       g2.dispose();
     }
   }
 
-  public void paint(Component c, Graphics2D g2, int x, int y, int width, int height) {
-    Area area = new Area(new Rectangle2D.Double(x, y, width, height));
-    area.subtract(new Area(new Rectangle2D.Double(x + JBUI.scale(4), y + JBUI.scale(4),
-                                                  width - JBUI.scale(8), height - JBUI.scale(8))));
-    g2.setClip(area);
+  public void paint(Component c, Graphics2D g2, int width, int height) {
+    clipForBorder(c, g2, width, height);
 
     Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
     if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-      g2.translate(x, y);
       DarculaUIUtil.paintErrorBorder(g2, width, height, isFocused(c));
     } else if (isFocused(c)) {
-      g2.translate(x, y);
       DarculaUIUtil.paintFocusBorder(g2, width, height);
     }
   }
 
   boolean isFocused(Component c) {
     return c.hasFocus();
+  }
+
+  void clipForBorder(Component c, Graphics2D g2, int width, int height) {
+    Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
+    area.subtract(new Area(new Rectangle2D.Double(JBUI.scale(4), JBUI.scale(4),
+                                                  width - JBUI.scale(8),
+                                                  height - JBUI.scale(8))));
+    g2.setClip(area);
   }
 }

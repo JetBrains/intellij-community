@@ -23,7 +23,7 @@ import java.awt.geom.Area;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
-  boolean isFocused(Component c) {
+  @Override boolean isFocused(Component c) {
     if (c.hasFocus()) return true;
 
     if (c instanceof JSpinner) {
@@ -37,7 +37,7 @@ public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
     return false;
   }
 
-  Area getButtonBounds(Component c) {
+  @Override Area getButtonBounds(Component c) {
     Rectangle bounds = null;
     if (c instanceof JSpinner && ((JSpinner)c).getUI() instanceof MacIntelliJSpinnerUI) {
       MacIntelliJSpinnerUI ui = (MacIntelliJSpinnerUI)((JSpinner)c).getUI();
@@ -46,4 +46,7 @@ public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
     return bounds != null ? new Area(bounds) : new Area();
   }
 
+  @Override boolean isRound(Component c) {
+    return true;
+  }
 }
