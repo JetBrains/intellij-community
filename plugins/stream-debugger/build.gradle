@@ -1,25 +1,25 @@
 buildscript {
-    repositories {
-        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
-        mavenCentral()
-    }
+  repositories {
+    maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    mavenCentral()
+  }
 
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.1"
-    }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.1"
+  }
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.2.5"
-    id "org.jetbrains.kotlin.jvm" version "1.1.1"
+  id "org.jetbrains.intellij" version "0.2.5"
+  id "org.jetbrains.kotlin.jvm" version "1.1.1"
 }
 
 repositories {
-    jcenter()
+  jcenter()
 }
 
 sourceSets {
-    main.kotlin.srcDirs += 'src/main/java'
+  main.kotlin.srcDirs += 'src/main/java'
 }
 
 apply plugin: 'idea'
@@ -31,16 +31,16 @@ group 'com.intellij.debugger.stream'
 version '0.0.5'
 
 intellij {
-    type = 'IC'
-    version = 'LATEST-EAP-SNAPSHOT'
+  type = 'IC'
+  version = 'LATEST-EAP-SNAPSHOT'
 
-    pluginName = 'stream-debugger'
-    updateSinceUntilBuild = false
+  pluginName = 'stream-debugger'
+  updateSinceUntilBuild = false
 
-    sandboxDirectory = project.rootDir.canonicalPath + "/.sandbox"
+  sandboxDirectory = project.rootDir.canonicalPath + "/.sandbox"
 }
 
 dependencies {
-    compile files("${System.properties['java.home']}/../lib/tools.jar")
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.1"
+  compile files("${System.properties['java.home']}/../lib/tools.jar")
+  compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.1"
 }
