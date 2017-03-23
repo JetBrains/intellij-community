@@ -684,10 +684,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test read-only index has read-only storages"() {
     def index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true).getIndex()
-    MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
-    def map = storage.getIndexMap()
-    assertTrue(map.getReadOnly())
-    assertTrue(map.getValueStorage().isReadOnly())
+
+    try {
+      MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
+      def map = storage.getIndexMap()
+      assertTrue(map.getReadOnly())
+      assertTrue(map.getValueStorage().isReadOnly())
+    } finally {
+      index.dispose()
+    }
   }
 
   @CompileStatic
