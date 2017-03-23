@@ -30,7 +30,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
@@ -175,16 +174,21 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public void initialize() {
-    final StopWatch initSw = StopWatch.start("initialize");
+    StopWatch initSw = StopWatch.start("initialize");
     myDataLoaderQueue.clear();
 
-    runInBackground(indicator -> {
-      resetState();
-      readCurrentUser();
-      DataPack dataPack = myRefresher.readFirstBlock();
-      fireDataPackChangeEvent(dataPack);
-      initSw.report();
-    });
+    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        resetState();
+        readCurrentUser();
+        DataPack dataPack = myRefresher.readFirstBlock();
+        fireDataPackChangeEvent(dataPack);
+        initSw.report();
+      }
+    };
+    myDataLoaderQueue.run(backgroundable, null, myRefresher.getProgress().createProgressIndicator());
   }
 
   private void readCurrentUser() {
@@ -239,22 +243,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public ContainingBranchesGetter getContainingBranchesGetter() {
     return myContainingBranchesGetter;
-  }
-
-  private void runInBackground(@NotNull ThrowableConsumer<ProgressIndicator, VcsException> task) {
-    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        try {
-          task.consume(indicator);
-        }
-        catch (VcsException e) {
-          throw new RuntimeException(e); // TODO
-        }
-      }
-    };
-    myDataLoaderQueue.run(backgroundable, null, myRefresher.getProgress().createProgressIndicator());
   }
 
   /**
