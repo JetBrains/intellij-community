@@ -2,6 +2,20 @@ import abc
 import posixpath as path
 
 
+def _fscodec():
+    pass
+
+
+fsencode, fsdecode = _fscodec()
+
+
+def _fspath(path):
+    pass
+
+
+fspath = _fspath
+
+
 class PathLike(abc.ABC):
 
     """Abstract base class for implementing the file system path protocol."""
