@@ -20,10 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -58,7 +55,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
 
@@ -89,7 +85,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
                     @NotNull FatalErrorHandler fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
-    myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
@@ -174,9 +169,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public void initialize() {
-    StopWatch initSw = StopWatch.start("initialize");
-    myDataLoaderQueue.clear();
-
+    StopWatch stopWatch = StopWatch.start("initialize");
     Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -185,10 +178,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         readCurrentUser();
         DataPack dataPack = myRefresher.readFirstBlock();
         fireDataPackChangeEvent(dataPack);
-        initSw.report();
+        stopWatch.report();
       }
     };
-    myDataLoaderQueue.run(backgroundable, null, myRefresher.getProgress().createProgressIndicator());
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, myRefresher.getProgress().createProgressIndicator());
   }
 
   private void readCurrentUser() {
@@ -274,7 +267,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public void dispose() {
-    myDataLoaderQueue.clear();
     resetState();
   }
 
