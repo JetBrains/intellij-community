@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.util.concurrency.Command;
 import com.intellij.util.concurrency.Invoker;
@@ -48,6 +49,7 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   private final Command.Processor processor;
   private final MapBasedTree<Object, Object> tree = new MapBasedTree<>(true, object -> object);
   private final TreeModel model;
+  private final boolean showLoadingNode;
   private final TreeModelListener listener = new TreeModelAdapter() {
     protected void process(TreeModelEvent event, EventType type) {
       TreePath path = event.getTreePath();
@@ -85,6 +87,10 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   };
 
   public AsyncTreeModel(@NotNull TreeModel model) {
+    this(model, false);
+  }
+
+  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode) {
     if (model instanceof Disposable) {
       Disposer.register(this, (Disposable)model);
     }
@@ -97,6 +103,7 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
     this.processor = new Command.Processor(foreground, background);
     this.model = model;
     this.model.addTreeModelListener(listener);
+    this.showLoadingNode = showLoadingNode;
   }
 
   @Override
@@ -141,10 +148,6 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
     return entry == null ? -1 : entry.getIndexOf(child);
   }
 
-  protected Object createLoadingNode() {
-    return null;
-  }
-
   private boolean isValidThread() {
     if (processor.foreground.isValidThread()) return true;
     LOG.warn("AsyncTreeModel is used from unexpected thread");
@@ -159,7 +162,7 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
 
   private void loadChildren(Entry<Object> entry, boolean insertLoadingNode) {
     String name = insertLoadingNode ? "Load children" : "Reload children";
-    if (insertLoadingNode) entry.setLoadingChildren(createLoadingNode());
+    if (insertLoadingNode && showLoadingNode) entry.setLoadingChildren(new LoadingNode());
     processor.process(new CmdGetChildren(name, entry, true));
   }
 
