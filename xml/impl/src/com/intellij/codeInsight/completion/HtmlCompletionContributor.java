@@ -58,7 +58,7 @@ public class HtmlCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static boolean hasHtmlAttributesCompletion(PsiElement position) {
+  public static boolean hasHtmlAttributesCompletion(PsiElement position) {
     if (PsiTreeUtil.getParentOfType(position, HtmlTag.class, false) != null) {
       return true;
     }
