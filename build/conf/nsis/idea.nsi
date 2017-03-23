@@ -382,7 +382,7 @@ Function downloadJre
     inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
     Pop $0
     ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR" "$TEMP\jre.tar.gz"
+      untgz::extract "-d" "$INSTDIR\jre32" "$TEMP\jre.tar.gz"
       StrCmp $R0 "success" removeTempJre
       DetailPrint "Failed to extract jre.tar.gz"
       MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
@@ -905,8 +905,8 @@ skip_ipr:
 
   ; Regenerating the Shared Archives for java x64 and x86 bit.
   ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
-  IfFileExists $INSTDIR\jre\bin\javaw.exe 0 java64
-  ExecWait "$INSTDIR\jre\bin\javaw.exe -Xshare:dump"
+  IfFileExists $INSTDIR\jre32\bin\javaw.exe 0 java64
+  ExecWait "$INSTDIR\jre32\bin\javaw.exe -Xshare:dump"
 java64:
   IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
   ExecWait "$INSTDIR\jre64\bin\javaw.exe -Xshare:dump"
@@ -1180,7 +1180,7 @@ skip_delete_settings:
 
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
-  Delete "$INSTDIR\jre\jre\bin\client\classes.jsa"
+  Delete "$INSTDIR\jre32\bin\client\classes.jsa"
 
   Push "Complete"
   Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"

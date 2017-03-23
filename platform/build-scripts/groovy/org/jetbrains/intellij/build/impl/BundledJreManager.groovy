@@ -80,7 +80,9 @@ class BundledJreManager {
   @CompileDynamic
   private String extractJre(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
-    String targetDir = "$baseDirectoryForJre/jre.$osDirName$arch.fileSuffix$vendorSuffix"
+    String targetDir = arch == JvmArchitecture.x64 ?
+                       "$baseDirectoryForJre/jre.$osDirName$arch.fileSuffix$vendorSuffix" :
+                       "$baseDirectoryForJre/jre.${osDirName}32$vendorSuffix"
     if (new File(targetDir).exists()) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
@@ -91,9 +93,9 @@ class BundledJreManager {
       return null
     }
     buildContext.messages.block("Extract $archive.name JRE") {
-      String destination = "$targetDir/jre"
+      String destination = "$targetDir/jre32"
       if (osDirName == "win" && arch == JvmArchitecture.x64) {
-        destination += "64"
+        destination = "$targetDir/jre64"
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
