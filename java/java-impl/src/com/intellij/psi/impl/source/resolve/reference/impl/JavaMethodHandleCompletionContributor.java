@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -105,7 +106,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
             case FIND_SPECIAL:
               final String name = arguments.length > 1 ? computeConstantExpression(arguments[1], String.class) : null;
               if (!StringUtil.isEmpty(name)) {
-                addMethodSignatures(psiClass, name, result);
+                addMethodSignatures(psiClass, name, FIND_STATIC.equals(methodName), result);
               }
               break;
           }
@@ -119,7 +120,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     if (className != null) {
       final PsiMethod[] constructors = psiClass.getConstructors();
       if (constructors.length != 0) {
-        lookupMethodTypes(constructors, result);
+        lookupMethodTypes(Arrays.stream(constructors), result);
       }
       else {
         result.addElement(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE));
@@ -127,15 +128,20 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  private static void addMethodSignatures(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull CompletionResultSet result) {
+  private static void addMethodSignatures(@NotNull PsiClass psiClass,
+                                          @NotNull String methodName,
+                                          boolean isStaticExpected,
+                                          @NotNull CompletionResultSet result) {
     final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
     if (methods.length != 0) {
-      lookupMethodTypes(methods, result);
+      final Stream<PsiMethod> methodStream = Arrays.stream(methods)
+        .filter(method -> method.hasModifierProperty(PsiModifier.STATIC) == isStaticExpected);
+      lookupMethodTypes(methodStream, result);
     }
   }
 
-  private static void lookupMethodTypes(@NotNull PsiMethod[] methods, @NotNull CompletionResultSet result) {
-    Arrays.stream(methods)
+  private static void lookupMethodTypes(@NotNull Stream<PsiMethod> methods, @NotNull CompletionResultSet result) {
+    methods
       .map(JavaReflectionReferenceUtil::getMethodSignature)
       .filter(Objects::nonNull)
       .sorted(ReflectiveSignature::compareTo)

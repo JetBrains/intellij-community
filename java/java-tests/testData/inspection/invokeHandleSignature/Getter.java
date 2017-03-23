@@ -27,6 +27,9 @@ class Main {
     l.findStaticGetter(Test.class, "ourInt", <warning descr="The type of field 'ourInt' is 'int'">void.class</warning>);
     l.findStaticGetter(Test.class, "ourInts", <warning descr="The type of field 'ourInts' is 'int[]'">int.class</warning>);
     l.findStaticGetter(Test.class, "ourString", <warning descr="The type of field 'ourString' is 'java.lang.String'">List.class</warning>);
+
+    l.<warning descr="Field 'ourString' is static">findGetter</warning>(Test.class, "ourString", String.class);
+    l.<warning descr="Field 'myString' is not static">findStaticGetter</warning>(Test.class, "myString", String.class);
   }
 }
 

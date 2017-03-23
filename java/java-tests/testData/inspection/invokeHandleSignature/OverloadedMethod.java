@@ -23,7 +23,7 @@ class Main {
     l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'Object[] method(Object[])'">MethodType.methodType(Object[].class, Object[].class)</warning>);
     l.findVirtual(Test.class, "method", <warning descr="Cannot resolve method 'Object[][] method(Object[][])'">MethodType.methodType(Object[][].class, Object[][].class)</warning>);
 
-    l.<warning descr="Method 'method' is static">findStatic</warning>(Test.class, "method", MethodType.methodType(void.class));
+    l.<warning descr="Method 'method' is not static">findStatic</warning>(Test.class, "method", MethodType.methodType(void.class));
     l.findVirtual(Test.class, <warning descr="Cannot resolve method 'doesntExist'">"doesntExist"</warning>, MethodType.methodType(void.class));
   }
 }

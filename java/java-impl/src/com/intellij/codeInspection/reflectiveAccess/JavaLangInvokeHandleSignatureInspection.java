@@ -161,7 +161,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
                                  @NotNull String fieldName,
                                  @NotNull PsiExpression fieldNameExpression,
                                  @NotNull PsiExpression fieldTypeExpression,
-                                 boolean isStatic,
+                                 boolean isStaticExpected,
                                  @NotNull PsiReferenceExpression factoryMethodExpression,
                                  @NotNull ProblemsHolder holder) {
     final PsiField field = ownerClass.findFieldByName(fieldName, true);
@@ -170,13 +170,13 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
       return;
     }
 
-    if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
+    if (field.hasModifierProperty(PsiModifier.STATIC) != isStaticExpected) {
       final String factoryMethodName = factoryMethodExpression.getReferenceName();
       final PsiElement factoryMethodNameElement = factoryMethodExpression.getReferenceNameElement();
       if (factoryMethodName != null && factoryMethodNameElement != null) {
-        final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStatic);
+        final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStaticExpected);
         final String message = InspectionsBundle.message(
-          isStatic ? "inspection.handle.signature.field.static" : "inspection.handle.signature.field.not.static", fieldName);
+          isStaticExpected ? "inspection.handle.signature.field.not.static" : "inspection.handle.signature.field.static", fieldName);
         holder.registerProblem(factoryMethodNameElement, message, fix);
         return;
       }
@@ -196,7 +196,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
                                   @NotNull String methodName,
                                   @NotNull PsiExpression methodNameExpression,
                                   @NotNull PsiExpression methodTypeExpression,
-                                  boolean isStatic,
+                                  boolean isStaticExpected,
                                   @NotNull PsiReferenceExpression factoryMethodExpression,
                                   @NotNull ProblemsHolder holder) {
 
@@ -207,14 +207,14 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
 
     final List<PsiMethod> filteredMethods =
-      ContainerUtil.filter(methods, method -> method.hasModifierProperty(PsiModifier.STATIC) == isStatic);
+      ContainerUtil.filter(methods, method -> method.hasModifierProperty(PsiModifier.STATIC) == isStaticExpected);
     if (filteredMethods.isEmpty()) {
       final String factoryMethodName = factoryMethodExpression.getReferenceName();
       final PsiElement factoryMethodNameElement = factoryMethodExpression.getReferenceNameElement();
       if (factoryMethodName != null && factoryMethodNameElement != null) {
-        final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStatic);
+        final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStaticExpected);
         final String message = InspectionsBundle.message(
-          isStatic ? "inspection.handle.signature.method.static" : "inspection.handle.signature.method.not.static", methodName);
+          isStaticExpected ? "inspection.handle.signature.method.not.static" : "inspection.handle.signature.method.static", methodName);
         holder.registerProblem(factoryMethodNameElement, message, fix);
         return;
       }
@@ -392,8 +392,8 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
 
     @Nullable
-    public static LocalQuickFix createFix(@NotNull String methodName, boolean isStatic) {
-      final String replacementName = isStatic ? STATIC_TO_NON_STATIC.get(methodName) : NON_STATIC_TO_STATIC.get(methodName);
+    public static LocalQuickFix createFix(@NotNull String methodName, boolean wasStatic) {
+      final String replacementName = wasStatic ? STATIC_TO_NON_STATIC.get(methodName) : NON_STATIC_TO_STATIC.get(methodName);
       return replacementName != null ? new SwitchStaticnessQuickFix(replacementName) : null;
     }
   }

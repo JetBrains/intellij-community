@@ -27,6 +27,9 @@ class Main {
     l.findStaticVarHandle(Test.class, "ourInt", <warning descr="The type of field 'ourInt' is 'int'">void.class</warning>);
     l.findStaticVarHandle(Test.class, "ourInts", <warning descr="The type of field 'ourInts' is 'int[]'">int.class</warning>);
     l.findStaticVarHandle(Test.class, "ourString", <warning descr="The type of field 'ourString' is 'java.lang.String'">List.class</warning>);
+
+    l.<warning descr="Field 'myString' is not static">findStaticVarHandle</warning>(Test.class, "myString", String.class);
+    l.<warning descr="Field 'ourString' is static">findVarHandle</warning>(Test.class, "ourString", String.class);
   }
 }
 
