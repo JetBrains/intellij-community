@@ -30,12 +30,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.GeneratorPeer;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,27 +48,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
-public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware, Disposable {
+public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
   protected DirectoryProjectGenerator myProjectGenerator;
-  protected NullableConsumer<ProjectSettingsStepBase> myCallback;
+  protected AbstractNewProjectStep.AbstractCallback myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
+  private Map<DirectoryProjectGenerator, GeneratorPeer<T>> myProjectGeneratorToSettingsMap = ContainerUtil.newHashMap();
 
-  public ProjectSettingsStepBase(DirectoryProjectGenerator projectGenerator,
-                                 NullableConsumer<ProjectSettingsStepBase> callback) {
+  public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
+                                 AbstractNewProjectStep.AbstractCallback callback) {
     super();
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
-    if (projectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)projectGenerator).reset();
-    }
     myCallback = callback;
+    myProjectGeneratorToSettingsMap.put(projectGenerator, projectGenerator.createPeer());
     myProjectDirectory = findSequentNonExistingUntitled();
   }
 
@@ -129,10 +129,14 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          myCallback.consume(ProjectSettingsStepBase.this);
+          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
         }
       }
     };
+  }
+
+  protected GeneratorPeer<T> getPeer() {
+    return myProjectGeneratorToSettingsMap.get(myProjectGenerator);
   }
 
   protected final JPanel createContentPanelWithAdvancedSettingsPanel() {
@@ -203,7 +207,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
         return false;
       }
       if (myProjectGenerator instanceof WebProjectTemplate) {
-        final WebProjectGenerator.GeneratorPeer peer = ((WebProjectTemplate)myProjectGenerator).getPeer();
+        final GeneratorPeer peer = ((WebProjectTemplate)myProjectGenerator).getPeer();
         final ValidationInfo validationInfo = peer.validate();
         if (validationInfo != null) {
           setErrorText(validationInfo.message);

@@ -17,6 +17,7 @@ package com.jetbrains.python.newProject.steps;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +36,6 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -80,7 +80,7 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
   private boolean myRemotePathRequired;
 
   public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator projectGenerator,
-                                     @NotNull final NullableConsumer<ProjectSettingsStepBase> callback) {
+                                     @NotNull final AbstractNewProjectStep.AbstractCallback callback) {
     super(projectGenerator, callback);
   }
 

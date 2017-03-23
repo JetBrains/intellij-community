@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.GeneratorPeer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +92,7 @@ public class WebModuleBuilder extends ModuleBuilder {
   }
 
   private static <T> void doGenerate(@NotNull WebProjectTemplate<T> template, @NotNull Module module) {
-    WebProjectGenerator.GeneratorPeer<T> peer = template.getPeer();
+    GeneratorPeer<T> peer = template.getPeer();
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     VirtualFile[] contentRoots = moduleRootManager.getContentRoots();
     VirtualFile dir = module.getProject().getBaseDir();
@@ -108,7 +108,7 @@ public class WebModuleBuilder extends ModuleBuilder {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }
-    final WebProjectGenerator.GeneratorPeer peer = myTemplate.getPeer();
+    final GeneratorPeer peer = myTemplate.getPeer();
     peer.buildUI(settingsStep);
     return new ModuleWizardStep() {
       @Override

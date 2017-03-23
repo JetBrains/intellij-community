@@ -21,7 +21,6 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    protected NullableConsumer<ProjectSettingsStepBase> createCallback() {
+    protected AbstractCallback createCallback() {
       return new PythonGenerateProjectCallback();
     }
 
@@ -57,7 +56,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     @NotNull
     @Override
     protected ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator projectGenerator,
-                                                                        @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+                                                                        @NotNull AbstractCallback callback) {
       return new ProjectSpecificSettingsStep(projectGenerator, callback);
     }
 
@@ -83,7 +82,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull AbstractCallback callback) {
       if (generator instanceof PythonProjectGenerator) {
         ProjectSpecificAction group =
           new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, new PythonGenerateProjectCallback()));
@@ -97,7 +96,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    public AnAction[] getExtraActions(@NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getExtraActions(@NotNull AbstractCallback callback) {
       if (!pluginSpecificGenerators.isEmpty()) {
         PluginSpecificProjectsStep step = new PluginSpecificProjectsStep(callback, pluginSpecificGenerators);
         return step.getChildren(null);

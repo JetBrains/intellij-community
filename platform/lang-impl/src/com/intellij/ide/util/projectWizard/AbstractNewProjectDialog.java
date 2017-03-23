@@ -68,6 +68,10 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     DefaultActionGroup root = createRootStep();
     Disposer.register(getDisposable(), () -> root.removeAll());
 
+    if (root instanceof AbstractNewProjectStep) {
+      Disposer.register(getDisposable(), ((AbstractNewProjectStep)root));
+    }
+
     Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
     JPanel component = pair.first;
     new AnAction() {

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,7 +84,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
 
   @NotNull
   @Override
-  public GithubProjectGeneratorPeer createPeer() {
+  public GithubProjectGeneratorPeer createPeer(Computable<ProjectSettingsStepBase> computable) {
     return new GithubProjectGeneratorPeer(this);
   }
 

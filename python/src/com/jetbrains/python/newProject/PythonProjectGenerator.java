@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.GeneratorPeer;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.remote.*;
@@ -211,6 +212,14 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     if (synchronizer != null) {
       synchronizer.syncProject(module, PySyncDirection.LOCAL_TO_REMOTE, null);
     }
+  }
+
+  @NotNull
+  @Override
+  public GeneratorPeer<T> createPeer() {
+    //todo think how to pass ProjectSpecificSettingsStep into peer creation
+    return null;
+    //return new PyGeneratorPeer<T>(getProjectSettings(), getSettingsPanel()){};
   }
 
   public Object getProjectSettings() {

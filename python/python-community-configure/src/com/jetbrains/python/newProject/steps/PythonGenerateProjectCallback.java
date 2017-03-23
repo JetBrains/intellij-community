@@ -16,8 +16,8 @@
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep.AbstractCallback;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
-import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,8 +33,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.GeneratorPeer;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
@@ -47,11 +47,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
+public class PythonGenerateProjectCallback extends AbstractCallback {
   private static final Logger LOG = Logger.getInstance(PythonGenerateProjectCallback.class);
 
   @Override
-  public void consume(@Nullable ProjectSettingsStepBase step) {
+  public void consume(@Nullable final ProjectSettingsStepBase step, @NotNull final GeneratorPeer generatorPeer) {
     if (!(step instanceof ProjectSpecificSettingsStep)) return;
 
     final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
@@ -72,9 +72,9 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
         }
       }
     }
-    final Project newProject = generateProject(settingsStep);
+    final Project newProject = generateProject(settingsStep, generatorPeer);
     if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
-      final PyNewProjectSettings settings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
+      final PyNewProjectSettings settings = (PyNewProjectSettings)generatorPeer.getSettings();
       ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, settings);
       sdk = settings.getSdk();
     }
@@ -113,22 +113,17 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   }
 
   @Nullable
-  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings) {
+  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings,
+                                         GeneratorPeer generatorPeer) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final String location = FileUtil.expandUserHome(settings.getProjectLocation());
     return AbstractNewProjectStep.doGenerateProject(ProjectManager.getInstance().getDefaultProject(), location, generator,
-                                                    file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
+                                                    computeProjectSettings(generatorPeer, (ProjectSpecificSettingsStep)settings));
   }
 
-  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator, final ProjectSpecificSettingsStep settings) {
-    Object projectSettings = null;
-    if (generator instanceof PythonProjectGenerator) {
-      final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
-      projectSettings = projectGenerator.getProjectSettings();
-    }
-    else if (generator instanceof WebProjectTemplate) {
-      projectSettings = ((WebProjectTemplate<?>)generator).getPeer().getSettings();
-    }
+  public static Object computeProjectSettings(@NotNull GeneratorPeer generatorPeer,
+                                              final ProjectSpecificSettingsStep settings) {
+    Object projectSettings = generatorPeer.getSettings();
     if (projectSettings instanceof PyNewProjectSettings) {
       final PyNewProjectSettings newProjectSettings = (PyNewProjectSettings)projectSettings;
       newProjectSettings.setSdk(settings.getSdk());

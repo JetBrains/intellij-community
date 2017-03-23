@@ -45,6 +45,16 @@ public interface DirectoryProjectGenerator<T> {
     return null;
   }
 
+  @NotNull
+  default GeneratorPeer<T> createPeer() {
+    return createPeer(null, null);
+  }
+
+  @NotNull
+  default GeneratorPeer<T> createPeer(T settings, JComponent panel) {
+    return new GeneratorPeerImpl<>(settings, panel);
+  }
+
   /**
    * @return 16x16 icon or null, if no icon is available
    */

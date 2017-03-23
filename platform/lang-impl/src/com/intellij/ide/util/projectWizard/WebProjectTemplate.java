@@ -21,6 +21,7 @@ import com.intellij.openapi.module.WebModuleBuilder;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.platform.GeneratorPeer;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;

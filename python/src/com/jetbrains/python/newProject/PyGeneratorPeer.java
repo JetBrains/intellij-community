@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.platform;
+package com.jetbrains.python.newProject;
 
-import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
-import com.intellij.util.PairConsumer;
+import com.intellij.platform.GeneratorPeerImpl;
 
-public interface CustomStepProjectGenerator {
-  AbstractActionWithPanel createStep(DirectoryProjectGenerator projectGenerator,
-                                     PairConsumer<? extends AbstractActionWithPanel, GeneratorPeer> callback);
+import javax.swing.*;
+
+public class PyGeneratorPeer<T extends PyNewProjectSettings> extends GeneratorPeerImpl<T> {
+  public PyGeneratorPeer(T settings, JComponent component) {
+    super(settings, component);
+  }
+
+
 }
