@@ -355,12 +355,6 @@ mGSTRING_LITERAL = \"\"
     yybeginstate(IN_GSTRING_DOT_IDENT);
     return storeToken(mDOT);
   }
-
-  "}" {
-    yyendstate(IN_GSTRING_DOT, IN_GSTRING_DOLLAR);
-    return storeToken(mRCURLY);
-  }
-
   [^] {
     yypushback(1);
     yyendstate(IN_GSTRING_DOT);
