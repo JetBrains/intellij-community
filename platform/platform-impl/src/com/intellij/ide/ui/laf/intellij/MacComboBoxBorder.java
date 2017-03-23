@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
@@ -37,6 +38,7 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
     try {
       g2.translate(x, y);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
       area.subtract(getButtonBounds(c));
@@ -46,11 +48,16 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
       if (c instanceof JComboBox) {
         JComboBox comboBox = (JComboBox)c;
-        Color color = UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
-        RectanglePainter.paint(g2, JBUI.scale(3), JBUI.scale(3),
-                               c.getWidth() - JBUI.scale(6),
-                               c.getHeight() - JBUI.scale(6),
-                               arc, color, null);
+        g2.setColor(UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground"));
+        Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        path.moveTo(JBUI.scale(8), JBUI.scale(3));
+        path.lineTo(JBUI.scale(8), c.getHeight() - JBUI.scale(3));
+        path.lineTo(JBUI.scale(3) + arc, c.getHeight() - JBUI.scale(3));
+        path.quadTo(JBUI.scale(3), c.getHeight() - JBUI.scale(3), JBUI.scale(3), c.getHeight() - JBUI.scale(3) - arc);
+        path.lineTo(JBUI.scale(3), JBUI.scale(3) + arc);
+        path.quadTo(JBUI.scale(3), JBUI.scale(3), JBUI.scale(3) + arc, JBUI.scale(3));
+        path.lineTo(JBUI.scale(8), JBUI.scale(3));
+        g2.fill(path);
       }
 
       RectanglePainter.paint(g2, JBUI.scale(3), JBUI.scale(3),
