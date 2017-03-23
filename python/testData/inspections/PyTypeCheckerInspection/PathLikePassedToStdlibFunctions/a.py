@@ -28,7 +28,7 @@ class B:
 
 b = B()
 
-open(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
+open(<warning descr="Unexpected type(s):(B)Possible types:(Union[str, bytes, int])(Union[str, bytes, int, PathLike])">b</warning>)
 
 os.fspath(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
 os.fsencode(<warning descr="Expected type 'Union[str, bytes, int, PathLike]', got 'B' instead">b</warning>)
