@@ -35,6 +35,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection");
 
   private final static LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
+  public static final String SHORT_NAME = "RedundantTypeArguments";
 
   @Override
   @NotNull
@@ -51,7 +52,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   @Override
   @NotNull
   public String getShortName() {
-    return "RedundantTypeArguments";
+    return SHORT_NAME;
   }
 
 
