@@ -1080,7 +1080,11 @@ public abstract class DialogWrapper {
    */
   @NotNull
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+    Action helpAction = getHelpAction();
+
+    return helpAction == myHelpAction && getHelpId() == null
+           ? new Action[]{getOKAction(), getCancelAction()}
+           : new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
   @NotNull
