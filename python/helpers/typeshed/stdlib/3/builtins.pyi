@@ -5,7 +5,7 @@ from typing import (
     Sequence, MutableSequence, Mapping, MutableMapping, Tuple, List, Any, Dict, Callable, Generic,
     Set, AbstractSet, FrozenSet, MutableSet, Sized, Reversible, SupportsInt, SupportsFloat,
     SupportsBytes, SupportsAbs, SupportsRound, IO, Union, ItemsView, KeysView, ValuesView,
-    ByteString, Optional
+    ByteString, Optional, AnyStr, Type,
 )
 from abc import abstractmethod, ABCMeta
 from types import TracebackType
@@ -24,6 +24,7 @@ _T1 = TypeVar('_T1')
 _T2 = TypeVar('_T2')
 _T3 = TypeVar('_T3')
 _T4 = TypeVar('_T4')
+_T5 = TypeVar('_T5')
 _TT = TypeVar('_TT', bound='type')
 
 class staticmethod: pass   # Special, only valid as a decorator.
@@ -604,6 +605,9 @@ class dict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self, map: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
     @overload
     def __init__(self, iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
+
+    def __new__(cls: Type[_T1], *args: Any, **kwargs: Any) -> _T1: ...
+
     def clear(self) -> None: ...
     def copy(self) -> Dict[_KT, _VT]: ...
     def pop(self, k: _KT, default: _VT = None) -> _VT: ...
@@ -795,8 +799,13 @@ def next(i: Iterator[_T], default: _VT) -> Union[_T, _VT]: ...
 def oct(i: int) -> str: ...  # TODO __index__
 
 if sys.version_info >= (3, 6):
-    from pathlib import Path
-    def open(file: Union[str, bytes, int, Path], mode: str = 'r', buffering: int = -1, encoding: str = None,
+    # This class is to be exported as PathLike from os,
+    # but we define it here as _PathLike to avoid import cycle issues.
+    # See https://github.com/python/typeshed/pull/991#issuecomment-288160993
+    class _PathLike(Generic[AnyStr]):
+        def __fspath__(self) -> AnyStr: ...
+
+    def open(file: Union[str, bytes, int, _PathLike], mode: str = 'r', buffering: int = -1, encoding: str = None,
              errors: str = None, newline: str = None, closefd: bool = ...) -> IO[Any]: ...
 else:
     def open(file: Union[str, bytes, int], mode: str = 'r', buffering: int = -1, encoding: str = None,
@@ -842,7 +851,15 @@ def zip(iter1: Iterable[_T1], iter2: Iterable[_T2],
 @overload
 def zip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
         iter4: Iterable[_T4]) -> Iterator[Tuple[_T1, _T2,
-                                               _T3, _T4]]: ...  # TODO more than four iterables
+                                               _T3, _T4]]: ...
+@overload
+def zip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+        iter4: Iterable[_T4], iter5: Iterable[_T5]) -> Iterator[Tuple[_T1, _T2,
+                                                                      _T3, _T4, _T5]]: ...
+@overload
+def zip(iter1: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any],
+        iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any],
+        *iterables: Iterable[Any]) -> Iterator[Tuple[Any, ...]]: ...
 def __import__(name: str, globals: Dict[str, Any] = ..., locals: Dict[str, Any] = ...,
                fromlist: List[str] = ..., level: int = -1) -> Any: ...
 

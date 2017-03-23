@@ -9,7 +9,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -20,10 +19,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudySubtaskUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
@@ -62,7 +67,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
     final Task task = taskFile.getTask();
-    if (task.hasSubtasks()) {
+    if (task instanceof TaskWithSubtasks) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         StudySubtaskUtils.refreshPlaceholder(editor, placeholder);
       }
@@ -72,10 +77,10 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
         Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
         return;
       }
-      if (task.isChoiceTask()) {
+      if (task instanceof ChoiceTask) {
         final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
         if (window != null) {
-          window.setBottomComponent(new StudyChoiceVariantsPanel(task));
+          window.setBottomComponent(new StudyChoiceVariantsPanel((ChoiceTask)task));
         }
       }
     }
@@ -99,8 +104,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     }
     final Task task = taskFile.getTask();
     task.setStatus(StudyStatus.Unchecked);
-    if (task.isChoiceTask()) {
-      task.setSelectedVariants(new ArrayList<>());
+    if (task instanceof ChoiceTask) {
+      ((ChoiceTask)task).setSelectedVariants(new ArrayList<>());
     }
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
@@ -152,9 +157,6 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getProject();
     if (project != null) {
-      for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
-        listener.beforeCheck(event);
-      }
       refresh(project);
     }
   }

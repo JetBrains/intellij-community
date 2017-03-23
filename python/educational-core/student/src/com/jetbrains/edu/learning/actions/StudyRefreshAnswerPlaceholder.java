@@ -7,15 +7,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudySubtaskUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,16 +36,13 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     if (project == null) {
       return;
     }
-    for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
-      listener.beforeCheck(e);
-    }
     final AnswerPlaceholder answerPlaceholder = getAnswerPlaceholder(e);
     if (answerPlaceholder == null) {
       return;
     }
     StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     final StudyState studyState = new StudyState(studyEditor);
-    if (answerPlaceholder.getTaskFile().getTask().hasSubtasks()) {
+    if (answerPlaceholder.getTaskFile().getTask() instanceof TaskWithSubtasks) {
       StudySubtaskUtils.refreshPlaceholder(studyState.getEditor(), answerPlaceholder);
       return;
     }

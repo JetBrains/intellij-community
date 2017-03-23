@@ -992,7 +992,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                             header.getDraggedColumn());
       // start dragging only if mouse moved horizontally
       // or if dragging was already started earlier (it looks weird to stop mid-dragging)
-      if ((deltaX >= 3 * deltaY && sameColumn) || header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
+      if ((deltaX >= 3 * deltaY && sameColumn) || header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR) ||
+          header.getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)) {
         mouseInputListener.mouseDragged(convertMouseEvent(e));
         // if I change cursor on mouse pressed, it will change on double-click as well
         // and I do not want that

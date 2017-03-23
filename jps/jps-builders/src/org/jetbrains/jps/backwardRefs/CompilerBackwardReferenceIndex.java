@@ -32,10 +32,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.io.DataOutputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CompilerBackwardReferenceIndex {
   private final static Logger LOG = Logger.getInstance(CompilerBackwardReferenceIndex.class);
@@ -48,6 +46,7 @@ public class CompilerBackwardReferenceIndex {
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myIndicesDir;
+  private final boolean myReadOnly;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
@@ -67,6 +66,7 @@ public class CompilerBackwardReferenceIndex {
 
   public CompilerBackwardReferenceIndex(File buildDir, boolean readOnly) {
     myIndicesDir = getIndexDir(buildDir);
+    myReadOnly = readOnly;
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
       throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
     }
@@ -74,6 +74,8 @@ public class CompilerBackwardReferenceIndex {
       if (versionDiffers(buildDir)) {
         saveVersion(buildDir);
       }
+      if (myReadOnly) logModification("open");
+
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(@Nullable String value) throws IOException {
@@ -123,6 +125,7 @@ public class CompilerBackwardReferenceIndex {
     for (InvertedIndex<?, ?, CompiledFileData> index : myIndices.values()) {
       close(index, exceptionProc);
     }
+    if (myReadOnly) logModification("close");
     final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
       removeIndexFiles(myIndicesDir);
@@ -197,6 +200,20 @@ public class CompilerBackwardReferenceIndex {
 
   void setRebuildRequestCause(Exception e) {
     myRebuildRequestCause = e;
+  }
+
+  private void logModification(String state) {
+    try {
+      File[] files = myIndicesDir.listFiles();
+      if (files != null) {
+        LOG.info("indices state on " +
+                 state +
+                 ": " +
+                 Arrays.stream(files).map(f -> f.getName() + ":" + f.lastModified()).collect(Collectors.joining(", ")));
+      }
+    }
+    catch (Exception ignored) {
+    }
   }
 
   private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {

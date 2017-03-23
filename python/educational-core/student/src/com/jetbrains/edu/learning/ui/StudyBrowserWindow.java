@@ -11,8 +11,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.jetbrains.edu.learning.StudyPluginConfigurator;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -136,12 +137,16 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   public void loadContent(@NotNull final String content) {
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
+    Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    if (course == null) {
+      return;
+    }
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator == null) {
       Platform.runLater(() -> myEngine.loadContent(content));
     }
     else {
-      String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
+      String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator.getLanguageScriptUrl(), configurator.getDefaultHighlightingMode());
       Platform.runLater(() -> {
         updateLookWithProgressBarIfNeeded();
         myEngine.loadContent(withCodeHighlighting);
@@ -150,7 +155,9 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   @Nullable
-  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyPluginConfigurator configurator) {
+  private String createHtmlWithCodeHighlighting(@NotNull final String content,
+                                                @NotNull String languageScriptUrl,
+                                                @NotNull String defaultHighlightingMode) {
     String template = null;
     InputStream stream = getClass().getResourceAsStream("/code-mirror/template.html");
     try {
@@ -175,11 +182,11 @@ public class StudyBrowserWindow extends JFrame {
 
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
-    
+
     template = template.replace("${font_size}", String.valueOf(fontSize- 2));
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
-    template = template.replace("${language_script}", configurator.getLanguageScriptUrl());
-    template = template.replace("${default_mode}", configurator.getDefaultHighlightingMode());
+    template = template.replace("${language_script}", languageScriptUrl);
+    template = template.replace("${default_mode}", defaultHighlightingMode);
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());

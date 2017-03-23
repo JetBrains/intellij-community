@@ -1,4 +1,5 @@
 datatypes w = "http://whattf.org/datatype-draft"
+namespace c = "http://n.validator.nu/custom-elements/"
 
 # #####################################################################
 ##  RELAX NG Schema for HTML 5: Web Components
@@ -33,7 +34,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		|	fieldset.inner
 		|	select.inner
 		|	details.inner
-		|	menu.popup.inner
+		|	menu.context.inner
 		)
 	common.elem.metadata |= template.elem
 	common.elem.phrasing |= template.elem
@@ -41,3 +42,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 # also allow <script> wherever <template> is allowed
 	common.elem.script-supporting |= script.elem
+
+## Custom elements: <foo-bar>
+
+	common.elem.flow |= element c:* { common.inner.transparent.flow & attr.any* }
+	common.elem.phrasing |= element c:* { common.inner.phrasing & attr.any* }
+	attr.any = attribute * { text }
+	common.attrs.other &= attribute is { common.data.custom.element.name }?

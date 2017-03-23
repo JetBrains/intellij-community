@@ -144,12 +144,8 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
     File projectDir = createChild(baseDir, maxDepth - 1);
     cd(projectDir.getPath());
     for (String path : mockRoots) {
-      File file = new File(projectDir, path);
-      file.mkdirs();
-      File mockDir = new File(file, DOT_MOCK);
+      File mockDir = new File(new File(projectDir, path), DOT_MOCK);
       mockDir.mkdirs();
-      myFilesToDelete.add(mockDir);
-      mockDir.deleteOnExit();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockDir);
     }
   }

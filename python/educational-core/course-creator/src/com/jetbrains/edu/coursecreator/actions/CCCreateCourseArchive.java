@@ -21,15 +21,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
+import com.jetbrains.edu.learning.StudySerializationUtils;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,17 +90,17 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
 
-    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return;
     }
-    FileFilter filter = pathname -> !manager.doNotPackFile(pathname);
+    FileFilter filter = pathname -> !configurator.excludeFromArchive(pathname);
 
     for (VirtualFile child : baseDir.getChildren()) {
       String name = child.getName();
       File fromFile = new File(child.getPath());
       if (CCUtils.GENERATED_FILES_FOLDER.equals(name) || Project.DIRECTORY_STORE_FOLDER.equals(name)
-          || name.contains("iml") || manager.doNotPackFile(fromFile)) {
+          || name.contains("iml") || configurator.excludeFromArchive(fromFile)) {
         continue;
       }
       copyChild(archiveFolder, filter, child, fromFile);
@@ -133,7 +135,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
             if (srcDir != null) {
               studentFileDir = srcDir;
             }
-            if (task.hasSubtasks()) {
+            if (task instanceof TaskWithSubtasks) {
               transformSubtaskTestsToTextFiles(studentFileDir);
             }
             for (String taskFile : task.getTaskFiles().keySet()) {
@@ -196,7 +198,10 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       }
       zos.close();
       if (showMessage) {
-        Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(),
+                                         "Course Archive Was Created Successfully"));
+
       }
     }
     catch (IOException e1) {
@@ -206,7 +211,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void generateJson(VirtualFile parentDir, Course course) {
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskSerializer()).create();
     final String json = gson.toJson(course);
     final File courseJson = new File(parentDir.getPath(), EduNames.COURSE_META_FILE);
     OutputStreamWriter outputStreamWriter = null;

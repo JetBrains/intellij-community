@@ -16,21 +16,22 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser.Field;
 import com.jetbrains.python.inspections.PyNewStyleStringFormatParser.ParseResult;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 
 /**
  * @author yole
  */
-public class PyStringFormatParserTest extends UsefulTestCase {
+public class PyStringFormatParserTest extends TestCase {
   public void testSimple() {
     List<FormatStringChunk> chunks = parsePercentFormat("abc");
     assertEquals(1, chunks.size());

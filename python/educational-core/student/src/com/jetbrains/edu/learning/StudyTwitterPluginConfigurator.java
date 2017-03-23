@@ -3,11 +3,17 @@ package com.jetbrains.edu.learning;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.twitter.StudyTwitterUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Provides twitting to plugin<br>
+ * Example can be found in
+ * <a href="https://github.com/JetBrains/educational-plugins/blob/master/Edu-Utils/Edu-Kotlin/src/com/jetbrains/edu/kotlin/EduKotlinTwitterConfigurator.java">Edu Kotlin</a> plugin
+ * @see com.jetbrains.edu.learning.twitter.StudyTwitterAction
+ * */
 public interface StudyTwitterPluginConfigurator {
   ExtensionPointName<StudyTwitterPluginConfigurator> EP_NAME = ExtensionPointName.create("Edu.studyTwitterPluginConfigurator");
 

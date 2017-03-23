@@ -10,7 +10,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +43,6 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
     Object value = childNode.getValue();
     if (value instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)value;
-      if (EduNames.SANDBOX_DIR.equals(directory.getName())) {
-        return new SandboxDirectoryNode(myProject, directory, myViewSettings);
-      }
       Lesson lesson = myCourse.getLesson(directory.getName());
       return lesson != null ? createChildDirectoryNode(lesson, directory) : null;
     }

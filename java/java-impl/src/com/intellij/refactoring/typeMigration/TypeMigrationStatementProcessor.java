@@ -520,7 +520,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
           myLabeler.migrateExpressionType(value,
                                           adjustMigrationTypeIfGenericArrayCreation(declarationType, value),
                                           myStatement,
-                                          TypeConversionUtil.isAssignable(declarationType, valueType), true);
+                                          left.isVarArgs() ? isVarargAssignable(left, right) : TypeConversionUtil.isAssignable(declarationType, valueType), true);
         }
         break;
 
@@ -663,6 +663,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     public Pair<PsiType, PsiType> getTypePair() {
       return Pair.create(myOriginType, myType);
     }
+
+    public boolean isVarArgs() {
+      return myType instanceof PsiEllipsisType && myOriginType instanceof PsiEllipsisType;
+    }
   }
 
   private static class TypeInfection {
@@ -730,5 +734,19 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       }
     }
     return result;
+  }
+
+  private static boolean isVarargAssignable(TypeView left, TypeView right) {
+    Pair<PsiType, PsiType> leftPair = left.getTypePair();
+    Pair<PsiType, PsiType> rightPair = right.getTypePair();
+
+    PsiType leftOrigin = leftPair.getFirst();
+    PsiType rightOrigin = rightPair.getFirst();
+
+    boolean isDirectlyAssignable = TypeConversionUtil.isAssignable(leftOrigin, rightOrigin);
+
+    return TypeConversionUtil.isAssignable(isDirectlyAssignable ?
+                                           leftPair.getSecond() :
+                                           ((PsiEllipsisType)leftPair.getSecond()).getComponentType(), rightPair.getSecond());
   }
 }

@@ -53,7 +53,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			} & v5only
 		script.attrs.type =
 			attribute type {
-				common.data.mimetype # XXX without charset parameter!
+				w:string "module" | common.data.mimetype # XXX without charset parameter!
 			}
 		script.attrs.charset =
 			attribute charset {

@@ -32,10 +32,12 @@ public class FormHighlightingPass implements HighlightingPass {
     myEditor = editor;
   }
 
+  @Override
   public void collectInformation(@NotNull ProgressIndicator progress) {
     ErrorAnalyzer.analyzeErrors(myEditor, myEditor.getRootContainer(), progress);
   }
 
+  @Override
   public void applyInformationToEditor() {
     DesignerToolWindowManager.getInstance(myEditor).refreshErrors();
     myEditor.refreshIntentionHint();

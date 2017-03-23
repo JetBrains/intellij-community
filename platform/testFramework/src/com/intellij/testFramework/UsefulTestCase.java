@@ -130,6 +130,9 @@ public abstract class UsefulTestCase extends TestCase {
     }
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
+    if (isPerformanceTest()) {
+      Timings.getStatistics();
+    }
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
   }
@@ -877,8 +880,8 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionClass   Expected exception type
    * @param runnable         Block annotated with some exception type
    */
-  protected <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                                                    @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
+                                                           @NotNull ThrowableRunnable<T> runnable) throws T {
     assertThrows(exceptionClass, null, runnable);
   }
 
@@ -891,8 +894,9 @@ public abstract class UsefulTestCase extends TestCase {
    * @param runnable         Block annotated with some exception type
    */
   @SuppressWarnings({"unchecked", "SameParameterValue"})
-  protected <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass, @Nullable String expectedErrorMsg,
-                                                    @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
+                                                        @Nullable String expectedErrorMsg,
+                                                        @NotNull ThrowableRunnable<T> runnable) throws T {
     assertExceptionOccurred(true, new AbstractExceptionCase() {
       @Override
       public Class<Throwable> getExpectedExceptionClass() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ import java.util.Map;
 public class ApproveRemovedMappingsActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     final Map<FileNameMatcher,Pair<FileType,Boolean>> map = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappings();
     if (!map.isEmpty()) {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {

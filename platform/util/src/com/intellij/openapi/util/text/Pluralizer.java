@@ -71,16 +71,17 @@ class Pluralizer {
     char[] chars = result.toCharArray();
     boolean prevUp = false;
     int len = Math.min(chars.length, word.length());
-    for (int i = 0; i < len; i++) {
+    int i = 0;
+    for (; i < len; i++) {
       char wc = word.charAt(i);
       if (chars[i] == wc && i != len - 1) continue;
+      prevUp = Character.isUpperCase(wc);
       char uc = Character.toUpperCase(chars[i]);
       char lc = Character.toLowerCase(chars[i]);
-      if (wc == lc || (prevUp = wc == uc)) {
-        chars[i] = wc;
-      }
+      if (wc != lc && wc != uc) break;
+      chars[i] = wc;
     }
-    for (int i = len; i < chars.length; i++) {
+    for (; i < chars.length; i++) {
       chars[i] = prevUp ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
     }
     return new String(chars);

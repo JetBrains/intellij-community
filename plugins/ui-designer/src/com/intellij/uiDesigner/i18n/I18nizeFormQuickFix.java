@@ -17,9 +17,9 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,10 +44,11 @@ import java.util.Collection;
 public abstract class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.i18n.I18nizeFormQuickFix");
 
-  public I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
+  I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
     super(editor, name, component);
   }
 
+  @Override
   public void run() {
     final StringDescriptor descriptor = getStringDescriptorValue();
     final Project project = myEditor.getProject();
@@ -59,6 +60,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     }
     String initialValue = StringUtil.escapeStringCharacters(descriptor.getValue());
     final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false) {
+      @Override
       protected String getDimensionServiceKey() {
         return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog_Form";
       }
@@ -81,7 +83,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
 
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        JavaI18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
+        I18nUtil.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -98,7 +100,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       String packageName = fileIndex.getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
       if (packageName != null) {
         String bundleName;
-        if (packageName.length() > 0) {
+        if (!packageName.isEmpty()) {
           bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
         }
         else {

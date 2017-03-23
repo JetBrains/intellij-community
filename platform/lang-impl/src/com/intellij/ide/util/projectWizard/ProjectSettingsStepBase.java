@@ -21,6 +21,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -310,8 +312,10 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   @Override
   public void dispose() {
-    if (myProjectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)myProjectGenerator).reset();
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProjectGenerator instanceof WebProjectTemplate) {
+        ((WebProjectTemplate)myProjectGenerator).reset();
+      }
+    }, ModalityState.NON_MODAL);
   }
 }

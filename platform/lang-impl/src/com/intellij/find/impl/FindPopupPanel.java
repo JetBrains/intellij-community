@@ -313,28 +313,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         scheduleResultsUpdate();
       }
     });
-    DefaultActionGroup switchContextGroup = new DefaultActionGroup();
-    switchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.ANY));
-    switchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_COMMENTS));
-    switchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_STRING_LITERALS));
-    switchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS));
-    switchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_STRING_LITERALS));
-    switchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS));
-    switchContextGroup.setPopup(true);
-    Presentation filterPresentation = new Presentation();
-    filterPresentation.setIcon(AllIcons.General.Filter);
-    AnAction myShowFilterPopupAction = new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
-
-        ListPopup listPopup =
-          JBPopupFactory.getInstance().createActionGroupPopup(null, switchContextGroup, e.getDataContext(), false, null, 10);
-        listPopup.showUnderneathOf(myFilterContextButton);
-      }
-    };
+    AnAction myShowFilterPopupAction = new MyShowFilterPopupAction();
     myFilterContextButton =
-      new ActionButton(myShowFilterPopupAction, filterPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      new ActionButton(myShowFilterPopupAction, myShowFilterPopupAction.getTemplatePresentation(), ActionPlaces.UNKNOWN,
+                       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         public int getPopState() {
           int state = super.getPopState();
@@ -344,6 +326,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
                  : ActionButtonComponent.PUSHED;
         }
       };
+    myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
     myFilterContextButton.setFocusable(true);
 
     DefaultActionGroup tabResultsContextGroup = new DefaultActionGroup();
@@ -1083,6 +1066,35 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         updateScopeDetailsPanel();
         scheduleResultsUpdate();
       }
+    }
+  }
+
+  private class MyShowFilterPopupAction extends AnAction {
+
+    private final DefaultActionGroup mySwitchContextGroup;
+
+    public MyShowFilterPopupAction() {
+      super(FindBundle.message("find.popup.show.filter.popup"), null, AllIcons.General.Filter);
+      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac
+                                                                                 ? InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK
+                                                                                 : InputEvent.ALT_DOWN_MASK)));
+      mySwitchContextGroup = new DefaultActionGroup();
+      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.ANY));
+      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_COMMENTS));
+      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_STRING_LITERALS));
+      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS));
+      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_STRING_LITERALS));
+      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS));
+      mySwitchContextGroup.setPopup(true);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
+
+      ListPopup listPopup =
+        JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
+      listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
 }

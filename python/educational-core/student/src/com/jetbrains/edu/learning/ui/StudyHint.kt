@@ -4,6 +4,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.jetbrains.edu.learning.StudyTaskManager
 import com.jetbrains.edu.learning.StudyUtils
@@ -11,50 +13,51 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder
 import java.util.*
 
 open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
-                     project: Project) {
-  
+                     private val myProject: Project) {
+
   companion object {
     private val OUR_WARNING_MESSAGE = "Put the caret in the answer placeholder to get hint"
     private val HINTS_NOT_AVAILABLE = "There is no hint for this answer placeholder"
   }
-  
+
   val studyToolWindow: StudyToolWindow
   protected var myShownHintNumber = 0
   protected var isEditingMode = false
 
   init {
-    val taskManager = StudyTaskManager.getInstance(project)
+    val taskManager = StudyTaskManager.getInstance(myProject)
     if (StudyUtils.hasJavaFx() && taskManager.shouldUseJavaFx()) {
       studyToolWindow = StudyJavaFxToolWindow()
     }
     else {
       studyToolWindow = StudySwingToolWindow()
     }
-    studyToolWindow.init(project, false)
-    
+    studyToolWindow.init(myProject, false)
+
     if (myPlaceholder == null) {
       studyToolWindow.setText(OUR_WARNING_MESSAGE)
       studyToolWindow.setActionToolbar(DefaultActionGroup())
     }
-    
+
     val course = taskManager.course
     if (course != null) {
       val group = DefaultActionGroup()
       val hints = myPlaceholder?.hints
       if (hints != null) {
-        if (hints.size > 1) {
-          group.addAll(getActions())
-        }
+        group.addAll(getActions())
         studyToolWindow.setActionToolbar(group)
         setHintText(hints)
       }
     }
   }
 
-  protected open fun getActions(): List<AnAction> {
+  protected fun getActions(): List<AnAction> {
     val result = ArrayList<AnAction>()
     result.add(GoBackward())
     result.add(GoForward())
+    for (hintActionsProvider in Extensions.getExtensions(StudyHintActionsProvider.EP_NAME)) {
+      result.addAll(hintActionsProvider.getAdditionalHintActions(myPlaceholder))
+    }
     return result
   }
 
@@ -76,8 +79,16 @@ open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = !isEditingMode && myPlaceholder != null && myShownHintNumber + 1 < myPlaceholder.hints.size
+      val presentation = e.presentation
+      updateVisibility(myPlaceholder, presentation)
+      presentation.isEnabled = !isEditingMode && myPlaceholder != null && myShownHintNumber + 1 < myPlaceholder.hints.size
     }
+  }
+
+  private fun updateVisibility(myPlaceholder: AnswerPlaceholder?,
+                            presentation: Presentation) {
+    val hasMultipleHints = myPlaceholder != null && myPlaceholder.hints.size > 1
+    presentation.isVisible = !StudyUtils.isStudentProject(myProject) || hasMultipleHints
   }
 
   inner class GoBackward : AnAction("Previous Hint", "Previous Hint", AllIcons.Actions.Back) {
@@ -87,7 +98,9 @@ open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = !isEditingMode && myShownHintNumber - 1 >= 0
+      val presentation = e.presentation
+      updateVisibility(myPlaceholder, presentation)
+      presentation.isEnabled = !isEditingMode && myShownHintNumber - 1 >= 0
     }
   }
 }

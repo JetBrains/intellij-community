@@ -10,10 +10,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.PyCCLanguageManager;
+import com.jetbrains.edu.learning.PyEduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +62,8 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
       return null;
     }
     String generatedName = task.getLesson().getName() + "/" + task.getName();
-    if (task.hasSubtasks()) {
-      int index = task.getActiveSubtaskIndex() + 1;
+    if (task instanceof TaskWithSubtasks) {
+      int index = ((TaskWithSubtasks)task).getActiveSubtaskIndex() + 1;
       generatedName += " " + index;
     }
     return generatedName;
@@ -87,7 +88,8 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
     if (task == null) {
       return null;
     }
-    String testsFileName = PyCCLanguageManager.getSubtaskTestsFileName(task.getActiveSubtaskIndex());
+    String testsFileName = PyEduPluginConfigurator.getSubtaskTestsFileName(task instanceof TaskWithSubtasks ?
+                                                                       ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
     String taskDirPath = FileUtil.toSystemDependentName(taskDir.getPath());
     String testsPath = taskDir.findChild(EduNames.SRC) != null ?
                        FileUtil.join(taskDirPath, EduNames.SRC, testsFileName) :
@@ -99,9 +101,6 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
   @Override
   public boolean isConfigurationFromContext(PyCCRunTestConfiguration configuration, ConfigurationContext context) {
     String path = getTestPath(context);
-    if (path == null) {
-      return false;
-    }
-    return path.equals(configuration.getPathToTest());
+    return path != null && path.equals(configuration.getPathToTest());
   }
 }

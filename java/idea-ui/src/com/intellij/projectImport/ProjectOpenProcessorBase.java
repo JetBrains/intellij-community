@@ -37,7 +37,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @author anna
@@ -82,12 +80,9 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     return false;
   }
 
-  private static Collection<VirtualFile> getFileChildren(VirtualFile file) {
-    if (file instanceof NewVirtualFile) {
-      return ((NewVirtualFile)file).getCachedChildren();
-    }
-
-    return Arrays.asList(file.getChildren());
+  @NotNull
+  private static VirtualFile[] getFileChildren(VirtualFile file) {
+    return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
   }
 
   protected static boolean canOpenFile(VirtualFile file, String[] supported) {

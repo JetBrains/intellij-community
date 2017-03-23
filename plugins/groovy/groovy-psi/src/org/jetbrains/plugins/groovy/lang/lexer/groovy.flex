@@ -128,12 +128,10 @@ mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
     | [^\\\'\r\n]
     | "$")*
 mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
-mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
-    | \"
-    | "$"
-    | [^\']
+mTRIPLE_QUOTED_STRING = \'\'\' ({mSTRING_ESC}
+    | [^\\']
     | {mSTRING_NL}
-    | \'(\')?[^\'] )* (\'\'\' | \\)?
+    | \'(\')?[^'] )* (\'{1,3} | \\)?
 
 mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING} | {mSINGLE_QUOTED_STRING}
 
@@ -355,12 +353,6 @@ mGSTRING_LITERAL = \"\"
     yybeginstate(IN_GSTRING_DOT_IDENT);
     return storeToken(mDOT);
   }
-
-  "}" {
-    yyendstate(IN_GSTRING_DOT, IN_GSTRING_DOLLAR);
-    return storeToken(mRCURLY);
-  }
-
   [^] {
     yypushback(1);
     yyendstate(IN_GSTRING_DOT);

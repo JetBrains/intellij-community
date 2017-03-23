@@ -9,7 +9,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,7 +109,6 @@ public class StudyGenerator {
         lesson.setIndex(i);
         createLesson(lesson, baseDir, resourceRoot, project);
       }
-      baseDir.createChildDirectory(project, EduNames.SANDBOX_DIR);
       File[] files = resourceRoot.listFiles(
         (dir, name) -> !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS));
       if (files != null) {

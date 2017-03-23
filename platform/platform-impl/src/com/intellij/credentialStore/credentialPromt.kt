@@ -42,7 +42,7 @@ fun askPassword(project: Project?,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
                 error: String? = null): String? {
-  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes, true, resetPassword, error)?.credentials?.getPasswordAsString()?.nullize() 
+  return askCredentials(project, dialogTitle, passwordFieldLabel, attributes, resetPassword = resetPassword, error = error)?.credentials?.getPasswordAsString()?.nullize() 
 }
 
 @JvmOverloads
@@ -51,13 +51,14 @@ fun askCredentials(project: Project?,
                    passwordFieldLabel: String,
                    attributes: CredentialAttributes,
                    saveOnSuccess: Boolean = true,
+                   checkExistingBeforeDialog: Boolean = true,
                    resetPassword: Boolean = false,
                    error: String? = null): CredentialRequestResult? {
   val store = PasswordSafe.getInstance()
   if (resetPassword) {
     store.set(attributes, null)
   }
-  else {
+  else if (checkExistingBeforeDialog) {
     store.get(attributes)?.let {
       return CredentialRequestResult(it, false, true)
     }

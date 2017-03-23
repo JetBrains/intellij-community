@@ -27977,8 +27977,6 @@
     <option name="relayout" hit="Do relayout when new elements were added" />
     <option name="were" hit="Do relayout when new elements were added" />
     <option name="when" hit="Do relayout when new elements were added" />
-    <option name="colors" hit="Enable colors" />
-    <option name="enable" hit="Enable colors" />
     <option name="after" hit="Fit content after layout" />
     <option name="content" hit="Fit content after layout" />
     <option name="fit" hit="Fit content after layout" />

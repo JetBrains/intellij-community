@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,9 +16,11 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StudySerializationUtils {
+  private static final Logger LOG = Logger.getInstance(StudySerializationUtils.class);
 
   public static final String PLACEHOLDERS = "placeholders";
   public static final String LINE = "line";
@@ -92,6 +96,14 @@ public class StudySerializationUtils {
     public static final String SELECTED = "selected";
     public static final String TASK_TEXT = "taskText";
     public static final String PLACEHOLDER_TEXT = "placeholderText";
+    private static String LAST_SUBTASK_INDEX = "lastSubtaskIndex";
+    private static String THEORY_TAG = "theoryTask";
+    private static String ADAPTIVE_TASK_PARAMETERS = "adaptiveTaskParameters";
+    private static String ADAPTIVE = "adaptive";
+    private static String TASK_WITH_SUBTASKS = "TaskWithSubtasks";
+    private static String THEORY_TASK = "TheoryTask";
+    private static String CHOICE_TASK = "ChoiceTask";
+    private static String CODE_TASK = "CodeTask";
 
     private Xml() {
     }
@@ -240,6 +252,43 @@ public class StudySerializationUtils {
         }
       }
 
+      return state;
+    }
+
+    public static Element convertToFifthVersion(Element state) throws StudyUnrecognizedFormatException {
+      Element taskManagerElement = state.getChild(MAIN_ELEMENT);
+      Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
+      final Element adaptive = getChildWithName(courseElement, ADAPTIVE);
+      for (Element lesson : getChildList(courseElement, LESSONS)) {
+        for (Element task : getChildList(lesson, TASK_LIST)) {
+          final Element lastSubtaskIndex = getChildWithName(task, LAST_SUBTASK_INDEX);
+          final Element theoryTask = getChildWithName(task, THEORY_TAG);
+          final Element adaptiveParams = getChildWithName(task, ADAPTIVE_TASK_PARAMETERS);
+          final boolean hasAdaptiveParams = !adaptiveParams.getChildren().isEmpty();
+          if (Integer.valueOf(lastSubtaskIndex.getAttributeValue(VALUE)) != 0) {
+            task.setName(TASK_WITH_SUBTASKS);
+          }
+          else if (Boolean.valueOf(theoryTask.getAttributeValue(VALUE))) {
+            task.setName(THEORY_TASK);
+          }
+          else if (hasAdaptiveParams) {
+            task.setName(CHOICE_TASK);
+            final Element adaptiveParameters = adaptiveParams.getChildren().get(0);
+            for (Element element : adaptiveParameters.getChildren()) {
+              final Attribute name = element.getAttribute(NAME);
+              if (name != null && !THEORY_TAG.equals(name.getValue())) {
+                final Content elementCopy = element.clone();
+                task.addContent(elementCopy);
+              }
+            }
+          }
+          else if (Boolean.valueOf(adaptive.getAttributeValue(VALUE))) {
+            task.setName(CODE_TASK);
+          }
+          task.removeContent(adaptiveParams);
+          task.removeContent(theoryTask);
+        }
+      }
       return state;
     }
 
@@ -396,6 +445,7 @@ public class StudySerializationUtils {
     public static final String SUBTASK_INFOS = "subtask_infos";
     public static final String FORMAT_VERSION = "format_version";
     public static final String INDEX = "index";
+    public static final String TASK_TYPE = "task_type";
 
     private Json() {
     }
@@ -440,7 +490,7 @@ public class StudySerializationUtils {
             }
           }
         }
-        return new GsonBuilder().create().fromJson(json, Course.class);
+        return new GsonBuilder().registerTypeAdapter(Task.class, new TaskDeserializer()).create().fromJson(json, Course.class);
       }
 
       private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
@@ -583,6 +633,43 @@ public class StudySerializationUtils {
       subtaskInfo.add(INDEX, new JsonPrimitive(0));
       subtaskInfo.add(HINTS, hintsArray);
       subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
+    }
+
+    public static class TaskSerializer implements JsonSerializer<Task> {
+
+      @Override
+      public JsonElement serialize(Task src, Type typeOfSrc, JsonSerializationContext context) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+        JsonElement tree = gson.toJsonTree(src);
+        final JsonObject task = tree.getAsJsonObject();
+        task.add(TASK_TYPE, new JsonPrimitive(src.getTaskType()));
+        return task;
+      }
+    }
+
+    public static class TaskDeserializer implements JsonDeserializer<Task> {
+
+      @Override
+      public Task deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+        final JsonObject object = json.getAsJsonObject();
+        if (object.has(TASK_TYPE)) {
+          final String taskType = object.get(TASK_TYPE).getAsString();
+          switch (taskType) {
+            case "choice": return gson.fromJson(json, ChoiceTask.class);
+            case "theory": return gson.fromJson(json, TheoryTask.class);
+            case "code": return gson.fromJson(json, CodeTask.class);
+            case "pycharm": return gson.fromJson(json, Task.class);
+            case "subtasks": return gson.fromJson(json, TaskWithSubtasks.class);
+            default: {
+              LOG.warn("Unsupported task type " + taskType);
+              return null;
+            }
+          }
+        }
+        LOG.warn("No task type found in json " + json.getAsString());
+        return null;
+      }
     }
 
     public static class StepicAnswerPlaceholderAdapter implements JsonSerializer<AnswerPlaceholder> {

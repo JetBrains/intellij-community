@@ -9,8 +9,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import javax.swing.*;
 
-import static com.jetbrains.edu.learning.PyStudyLanguageManager.PYTHON_2;
-import static com.jetbrains.edu.learning.PyStudyLanguageManager.PYTHON_3;
+import static com.jetbrains.edu.learning.PyEduPluginConfigurator.PYTHON_2;
+import static com.jetbrains.edu.learning.PyEduPluginConfigurator.PYTHON_3;
 
 public class PyCCChangeCourseInfo extends CCChangeCourseInfo {
   public static final String ALL_VERSIONS = "All versions";

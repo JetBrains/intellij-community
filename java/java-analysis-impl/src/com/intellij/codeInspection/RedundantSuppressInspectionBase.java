@@ -269,8 +269,8 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
               myQuickFixes.put(key, fix);
             }
             PsiElement identifier;
-            if ((suppressedScope instanceof PsiNameIdentifierOwner)) {
-              identifier = ((PsiNameIdentifierOwner)documentedElement).getNameIdentifier();
+            if (suppressedScope instanceof PsiNameIdentifierOwner && suppressedScope instanceof PsiJavaDocumentedElement) {
+              identifier = ((PsiNameIdentifierOwner)suppressedScope).getNameIdentifier();
             }
             else {
               identifier = suppressedScope;

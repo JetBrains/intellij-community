@@ -34,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -586,8 +587,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
-                names = ArrayUtil.append(names, StringUtil
-                  .sanitizeJavaIdentifier(changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName))));
+                String name = qualifierExpression.getText() + StringUtil.capitalize(propertyName);
+                String[] propertySuggestions = getSuggestionsByName(name, variableKind, false, correctKeywords);
+                names = StreamEx.of(names).append(propertySuggestions).distinct().toArray(String[]::new);
               }
               return new NamesByExprInfo(propertyName, names);
             }

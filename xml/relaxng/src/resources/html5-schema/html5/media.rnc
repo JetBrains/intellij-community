@@ -12,7 +12,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	media.attrs.preload?
 		&	media.attrs.controls?
 		&	media.attrs.loop?
-		&	media.attrs.mediagroup?
 		&	media.attrs.muted?
 		&	embedded.content.attrs.crossorigin?
 		)
@@ -31,10 +30,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		media.attrs.loop =
 			attribute loop {
 				w:string "loop" | w:string ""
-			}
-		media.attrs.mediagroup =
-			attribute mediagroup {
-				string
 			}
 		media.attrs.muted =
 			attribute muted {
@@ -88,6 +83,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	video.attrs.poster?
 		&	video.attrs.height?
 		&	video.attrs.width?
+		&	video.attrs.playsinline?
 		&	common.attrs.aria.landmark.application?
 		)
 		video.attrs.poster =
@@ -101,6 +97,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		video.attrs.width =
 			attribute width {
 				common.data.integer.non-negative
+			}
+		video.attrs.playsinline =
+			attribute playsinline {
+				w:string "playsinline" | w:string ""
 			}
 	video.inner.flow =
 		(	media.source
@@ -187,7 +187,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element figure { figure.inner & figure.attrs }
 	figure.attrs =
 		(	common.attrs
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.figure
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.group
+			)?
 		)
 	figure.inner =
 		(	( figcaption.elem?, common.inner.flow )

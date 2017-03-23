@@ -2010,6 +2010,7 @@ public abstract class DialogWrapper {
               .setPointerSize(new JBDimension(17, 6))
               .setCornerToPointerDistance(JBUI.scale(30))
               .setHideOnKeyOutside(false)
+              .setHideOnClickOutside(false)
               .setHideOnAction(false)
               .setBorderColor(BALLOON_BORDER)
               .setFillColor(BALLOON_BACKGROUND)

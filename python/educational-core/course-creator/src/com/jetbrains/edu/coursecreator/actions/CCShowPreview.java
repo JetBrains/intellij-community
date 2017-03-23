@@ -15,7 +15,6 @@
  */
 package com.jetbrains.edu.coursecreator.actions;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -45,6 +44,8 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -119,12 +120,13 @@ public class CCShowPreview extends DumbAwareAction {
     if (generatedFilesFolder == null) {
       return;
     }
-
+    final Task task = taskFile.getTask();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         Pair<VirtualFile, TaskFile> pair =
-          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null, taskFile.getTask().getActiveSubtaskIndex());
+          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null,
+                                     task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
         if (pair != null) {
           showPreviewDialog(project, pair.getFirst(), pair.getSecond());
         }
@@ -142,11 +144,7 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
     final EditorEx createdEditor = (EditorEx)factory.createEditor(document, project, userFile, true);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        factory.releaseEditor(createdEditor);
-      }
-    });
+    Disposer.register(project, () -> factory.releaseEditor(createdEditor));
     for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       if (answerPlaceholder.getActiveSubtaskInfo().isNeedInsertText()) {
         answerPlaceholder.setLength(answerPlaceholder.getTaskText().length());

@@ -10,6 +10,8 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +25,10 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
     Editor editor = state.getEditor();
     final int offset = editor.getCaretModel().getOffset();
     TaskFile taskFile = state.getTaskFile();
-    int subtaskIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
+    final Task task = state.getTaskFile().getTask();
+    if (!(task instanceof TaskWithSubtasks)) return;
+
+    int subtaskIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
     AnswerPlaceholder existingPlaceholder = StudyUtils.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
     if (existingPlaceholder == null) {
       return;
@@ -64,12 +69,11 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
       return;
     }
     TaskFile taskFile = state.getTaskFile();
-    if (!taskFile.getTask().hasSubtasks()) {
-      return;
-    }
-    int offset = state.getEditor().getCaretModel().getOffset();
-    if (isAvailable(taskFile, offset)) {
-      presentation.setEnabledAndVisible(true);
+    if (taskFile.getTask() instanceof TaskWithSubtasks) {
+      int offset = state.getEditor().getCaretModel().getOffset();
+      if (isAvailable(taskFile, offset)) {
+        presentation.setEnabledAndVisible(true);
+      }
     }
   }
 

@@ -2,7 +2,6 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -12,7 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,6 @@ import java.util.Map;
 
 public class PyStudyTestRunner extends StudyTestRunner {
   private static final String PYTHONPATH = "PYTHONPATH";
-  private static final Logger LOG = Logger.getInstance(PyStudyTestRunner.class.getName());
 
   PyStudyTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     super(task, taskDir);
@@ -30,17 +29,12 @@ public class PyStudyTestRunner extends StudyTestRunner {
   public Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
     final Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
     Course course = myTask.getLesson().getCourse();
-    StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
-    if (manager == null) {
-      LOG.info("Language manager is null for " + course.getLanguageById().getDisplayName());
-      return null;
-    }
-
-    String testsFileName = manager.getTestFileName();
-    if (myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != 0) {
+    PyEduPluginConfigurator configurator = new PyEduPluginConfigurator();
+    String testsFileName = configurator.getTestFileName();
+    if (myTask instanceof TaskWithSubtasks && ((TaskWithSubtasks)myTask).getActiveSubtaskIndex() != 0) {
       testsFileName = FileUtil.getNameWithoutExtension(testsFileName);
-      int index = myTask.getActiveSubtaskIndex();
-      testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(manager.getTestFileName());
+      int index = ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
+      testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(configurator.getTestFileName());
     }
     final File testRunner = new File(myTaskDir.getPath(), testsFileName);
     final GeneralCommandLine commandLine = new GeneralCommandLine();

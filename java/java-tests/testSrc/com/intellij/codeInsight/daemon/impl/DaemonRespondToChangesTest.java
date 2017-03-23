@@ -1688,6 +1688,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long e = System.currentTimeMillis();
     //System.out.println("Hi elapsed: "+(e-s));
 
+    //List<String> dumps = new ArrayList<>();
+
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
     System.out.println("N = " + N);
@@ -1702,12 +1704,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           // wait to engage all highlighting threads
           return;
         }
+        // uncomment to debug what's causing pauses
+        /*
+        AtomicBoolean finished = new AtomicBoolean();
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+          if (!finished.get()) {
+            dumps.add(ThreadDumper.dumpThreadsToString());
+          }
+        }, 10, TimeUnit.MILLISECONDS);
+        */
         type(' ');
         long end = System.currentTimeMillis();
+        //finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
         assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
-        System.out.println(interruptTime);
         throw new ProcessCanceledException();
       };
       try {
@@ -1726,6 +1737,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       backspace();
       //highlightErrors();
     }
+
+    System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
+
+    /*
+    for (String dump : dumps) {
+      System.out.println("\n\n-----------------------------\n\n" + dump);
+    }
+    */
 
     long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
     long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;

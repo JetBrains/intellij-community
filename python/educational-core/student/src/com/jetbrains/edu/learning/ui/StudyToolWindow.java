@@ -39,6 +39,8 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +49,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
-import java.util.Map;
 
 public abstract class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
@@ -90,17 +91,12 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
-    addAdditionalPanels(project);
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
 
     setContent(mySplitPane);
 
     if (isToolwindow) {
-      StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-      if (configurator != null) {
-        final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
-        project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
-      }
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new StudyFileEditorManagerListener(this, project));
 
       if (StudyTaskManager.getInstance(project).isTurnEditingMode() ||
           StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
@@ -128,17 +124,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(group);
     setToolbar(toolbarPanel);
   }
-
-  private void addAdditionalPanels(Project project) {
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-    if (configurator != null) {
-      Map<String, JPanel> panels = configurator.getAdditionalPanels(project);
-      for (Map.Entry<String, JPanel> entry : panels.entrySet()) {
-        myContentPanel.add(entry.getKey(), entry.getValue());
-      }
-    }
-  }
-
 
   public void dispose() {
   }
@@ -186,21 +171,17 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       LOG.warn("Course is null");
       return group;
     }
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator != null) {
-      group.addAll(configurator.getActionGroup(project));
-      addAdditionalActions(group);
-      return group;
+      group.addAll(configurator.getTaskDescriptionActionGroup());
     }
-    else {
-      LOG.warn("No configurator is provided for plugin");
-      return StudyBasePluginConfigurator.getDefaultActionGroup();
-    }
+    addAdditionalActions(group);
+    return group;
   }
 
   private static void addAdditionalActions(DefaultActionGroup group) {
-    StudyActionsProvider[] providers = Extensions.getExtensions(StudyActionsProvider.EP_NAME);
-    for (StudyActionsProvider provider : providers) {
+    StudyTaskDescriptionAdditionalActionsProvider[] providers = Extensions.getExtensions(StudyTaskDescriptionAdditionalActionsProvider.EP_NAME);
+    for (StudyTaskDescriptionAdditionalActionsProvider provider : providers) {
       group.addAll(provider.getActions());
     }
   }
@@ -325,12 +306,13 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
       final Lesson lesson = lessons.get(0);
       final Task task = lesson.getTaskList().get(0);
-      if (!task.hasSubtasks()) {
-        return null;
+      if (task instanceof TaskWithSubtasks) {
+        final int lastSubtaskIndex = ((TaskWithSubtasks)task).getLastSubtaskIndex();
+        final int activeSubtaskIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
+        int taskNum = lastSubtaskIndex + 1;
+        boolean isLastSubtaskSolved = activeSubtaskIndex == lastSubtaskIndex && task.getStatus() == StudyStatus.Solved;
+        return Pair.create(isLastSubtaskSolved ? taskNum : activeSubtaskIndex, taskNum);
       }
-      int taskNum = task.getLastSubtaskIndex() + 1;
-      boolean isLastSubtaskSolved = task.getActiveSubtaskIndex() == task.getLastSubtaskIndex() && task.getStatus() == StudyStatus.Solved;
-      return Pair.create(isLastSubtaskSolved ? taskNum : task.getActiveSubtaskIndex(), taskNum);
     }
     return null;
   }

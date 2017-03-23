@@ -1,5 +1,8 @@
 try:
     from _pydevd_bundle.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo, global_cache_skips, global_cache_frame_skips
+    import _pydevd_bundle.pydevd_cython
+    # this version number can be unavailable in old versions of compiled extensions
+    version = getattr(_pydevd_bundle.pydevd_cython, 'version', 0)
 except ImportError:
     try:
         import struct
@@ -27,5 +30,6 @@ except ImportError:
         mod = getattr(mod, mod_name)
         trace_dispatch, PyDBAdditionalThreadInfo, global_cache_skips, global_cache_frame_skips = \
             mod.trace_dispatch, mod.PyDBAdditionalThreadInfo, mod.global_cache_skips, mod.global_cache_frame_skips
+        version = getattr(mod, 'version', 0)
     except ImportError:
         raise

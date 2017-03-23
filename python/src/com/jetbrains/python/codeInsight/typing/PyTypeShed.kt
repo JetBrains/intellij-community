@@ -86,13 +86,13 @@ object PyTypeShed {
    * Returns the list of roots in typeshed for the specified Python language [level].
    */
   fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val minor = when (level.major) {
-      2 -> ONLY_SUPPORTED_PY2_MINOR
-      3 -> Math.min(Math.max(level.minor, SUPPORTED_PY3_MINORS.start), SUPPORTED_PY3_MINORS.endInclusive)
+    val minors = when (level.major) {
+      2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
+      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= level.minor }
       else -> return emptyList()
     }
-    return listOf("stdlib/${level.major}.${minor}",
-                  "stdlib/${level.major}",
+    return minors.map { "stdlib/${level.major}.$it" } +
+           listOf("stdlib/${level.major}",
                   "stdlib/2and3",
                   "third_party/${level.major}",
                   "third_party/2and3")

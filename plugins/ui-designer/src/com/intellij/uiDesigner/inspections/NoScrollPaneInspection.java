@@ -46,17 +46,12 @@ public class NoScrollPaneInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     if (FormInspectionUtil.isComponentClass(module, component, Scrollable.class) &&
         !FormInspectionUtil.isComponentClass(module, component, JTextField.class) &&
         !FormInspectionUtil.isComponentClass(module, component.getParentContainer(), JScrollPane.class)) {
       collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.scroll.pane"),
-                         new EditorQuickFixProvider() {
-                           @Override
-                           public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                             return new MyQuickFix(editor, component);
-                           }
-                         });
+                         (EditorQuickFixProvider)MyQuickFix::new);
 
     }
   }

@@ -16,13 +16,16 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ui.Gray;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,19 +37,35 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {
-      Area area = new Area(new Rectangle2D.Double(x, y, width, height));
+      g2.translate(x, y);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+      Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
       area.subtract(getButtonBounds(c));
       g2.setClip(area);
 
-      g2.setColor(Gray.xBC);
-      g2.setStroke(new BasicStroke(1));
+      int arc = isRound(c) ? JBUI.scale(8) : 0;
 
-      Shape rect = new Rectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                          c.getWidth() - JBUI.scale(7),
-                                          c.getHeight() - JBUI.scale(7));
-      g2.draw(rect);
+      if (c instanceof JComboBox) {
+        JComboBox comboBox = (JComboBox)c;
+        g2.setColor(UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground"));
+        Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        path.moveTo(JBUI.scale(8), JBUI.scale(3));
+        path.lineTo(JBUI.scale(8), c.getHeight() - JBUI.scale(3));
+        path.lineTo(JBUI.scale(3) + arc, c.getHeight() - JBUI.scale(3));
+        path.quadTo(JBUI.scale(3), c.getHeight() - JBUI.scale(3), JBUI.scale(3), c.getHeight() - JBUI.scale(3) - arc);
+        path.lineTo(JBUI.scale(3), JBUI.scale(3) + arc);
+        path.quadTo(JBUI.scale(3), JBUI.scale(3), JBUI.scale(3) + arc, JBUI.scale(3));
+        path.lineTo(JBUI.scale(8), JBUI.scale(3));
+        g2.fill(path);
+      }
 
-      paint(c, g2, x, y, width, height);
+      RectanglePainter.paint(g2, JBUI.scale(3), JBUI.scale(3),
+                             c.getWidth() - JBUI.scale(6),
+                             c.getHeight() - JBUI.scale(6),
+                             arc, null, Gray.xBC);
+
+      paint(c, g2, width, height);
     } finally {
       g2.dispose();
     }
@@ -79,5 +98,25 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
       bounds = ui.getArrowButtonBounds();
     }
     return bounds != null ? new Area(bounds) : new Area();
+  }
+
+  boolean isRound(Component c) {
+    return c instanceof JComboBox && !((JComboBox)c).isEditable();
+  }
+
+  @Override void clipForBorder(Component c, Graphics2D g2, int width, int height) {
+    Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
+    Shape innerShape = isRound(c) ?
+           new RoundRectangle2D.Double(JBUI.scale(4), JBUI.scale(4),
+                                       width - JBUI.scale(8),
+                                       height - JBUI.scale(8),
+                                       JBUI.scale(10), JBUI.scale(10)) :
+           new Rectangle2D.Double(JBUI.scale(4), JBUI.scale(4),
+                                  width - JBUI.scale(8),
+                                  height - JBUI.scale(8));
+
+    area.subtract(new Area(innerShape));
+    area.add(getButtonBounds(c));
+    g2.setClip(area);
   }
 }

@@ -10,7 +10,8 @@ import com.jetbrains.edu.coursecreator.CCSubtaskEditorNotificationProvider;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 public class CCSwitchSubtask extends DumbAwareAction {
@@ -20,15 +21,14 @@ public class CCSwitchSubtask extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Task task = getTask(e);
-    if (task == null) {
-      return;
-    }
     Project project = e.getProject();
     if (project == null) {
       return;
     }
-    CCSubtaskEditorNotificationProvider.createPopup(task, project).showCenteredInCurrentWindow(project);
+    TaskWithSubtasks task = getTask(e);
+    if (task != null) {
+      CCSubtaskEditorNotificationProvider.createPopup(task, project).showCenteredInCurrentWindow(project);
+    }
   }
 
   @Override
@@ -36,13 +36,12 @@ public class CCSwitchSubtask extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
     Task task = getTask(e);
-    if (task == null || !task.hasSubtasks()) {
-      return;
+    if (task != null) {
+      presentation.setEnabledAndVisible(true);
     }
-    presentation.setEnabledAndVisible(true);
   }
 
-  private static Task getTask(@NotNull AnActionEvent e) {
+  private static TaskWithSubtasks getTask(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || !CCUtils.isCourseCreator(project)) {
       return null;
@@ -57,6 +56,7 @@ public class CCSwitchSubtask extends DumbAwareAction {
         virtualFile = parent;
       }
     }
-    return StudyUtils.getTask(project, virtualFile);
+    final Task task = StudyUtils.getTask(project, virtualFile);
+    return task instanceof TaskWithSubtasks ? (TaskWithSubtasks)task : null;
   }
 }

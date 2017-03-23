@@ -83,7 +83,9 @@ public class IdeEventQueueTest extends PlatformTestCase {
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-    assertEquals(ev2, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
+    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and dispatched all events via IdeEventQueue.pumpEventsForHierarchy by itself
+    assertTrue(isDispatched.contains(ev2));
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());

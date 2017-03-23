@@ -14,7 +14,8 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
   @Override
   protected void updateImpl(PresentationData data) {
     StudyStatus status = myTask.getStatus();
-    String subtaskInfo = myTask.hasSubtasks() ? getSubtaskInfo() : null;
+    String subtaskInfo = myTask instanceof TaskWithSubtasks ? getSubtaskInfo((TaskWithSubtasks)myTask) : null;
     if (status == StudyStatus.Unchecked) {
       updatePresentation(data, myTask.getName(), JBColor.BLACK, InteractiveLearningIcons.Task, subtaskInfo);
       return;
@@ -56,9 +57,9 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
     updatePresentation(data, myTask.getName(), color, icon, subtaskInfo);
   }
 
-  private String getSubtaskInfo() {
-    int index = myTask.getActiveSubtaskIndex() + 1;
-    int subtasksNum = myTask.getLastSubtaskIndex() + 1;
+  private String getSubtaskInfo(TaskWithSubtasks task) {
+    int index = task.getActiveSubtaskIndex() + 1;
+    int subtasksNum = task.getLastSubtaskIndex() + 1;
     return EduNames.SUBTASK + " " + index + "/" + subtasksNum;
   }
 

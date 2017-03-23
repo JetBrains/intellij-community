@@ -38,6 +38,7 @@ import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
@@ -161,9 +162,9 @@ public class StudyProjectComponent implements ProjectComponent {
     flushCourse(course);
     course.initCourse(false);
 
-    StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
-    if (manager == null) {
-      LOG.info("Study Language Manager is null for " + course.getLanguageById().getDisplayName());
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
+      LOG.info("EduPluginConfigurator not found for language " + course.getLanguageById().getDisplayName());
       return;
     }
 

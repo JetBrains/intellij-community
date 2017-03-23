@@ -7,6 +7,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -230,7 +232,8 @@ public class AnswerPlaceholder {
     if (myTaskFile == null || myTaskFile.getTask() == null) {
       return 0;
     }
-    return myTaskFile.getTask().getActiveSubtaskIndex();
+    final Task task = myTaskFile.getTask();
+    return task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0;
   }
 
   public int getVisibleLength(int subtaskIndex) {

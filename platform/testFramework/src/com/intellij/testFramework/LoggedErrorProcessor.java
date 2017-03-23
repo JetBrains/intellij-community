@@ -51,9 +51,9 @@ public class LoggedErrorProcessor {
       System.err.println("ERROR: " + message);
       if (t != null) t.printStackTrace(System.err);
       if (details != null && details.length > 0) {
-        System.out.println("details: ");
+        System.err.println("details: ");
         for (String detail : details) {
-          System.out.println(detail);
+          System.err.println(detail);
         }
       }
     }

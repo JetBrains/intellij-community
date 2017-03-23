@@ -98,11 +98,13 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
-      buildContext.ant.fixcrlf(file: "$communityHome/build/conf/install_nsis3.sh", eol: "unix")
+      String installScriptPath = "$box/install_nsis3.sh"
+      buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
+      buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
       ant.exec(executable: "chmod") {
-        arg(line: " u+x \"${communityHome}/build/conf/install_nsis3.sh\"")
+        arg(line: " u+x \"$installScriptPath\"")
       }
-      ant.exec(command: "\"$communityHome/build/conf/install_nsis3.sh\"" +
+      ant.exec(command: "\"$installScriptPath\"" +
                         " \"${buildContext.paths.communityHome}\"")
 
       ant.exec(command: "\"${buildContext.paths.communityHome}/nsis/nsis-3.01/bin/makensis\"" +

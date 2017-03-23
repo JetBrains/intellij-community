@@ -14,8 +14,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -28,14 +26,18 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
+
+import static com.jetbrains.edu.coursecreator.CCUtils.renameFiles;
 
 public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("edu.coursecreator.subtask");
@@ -65,20 +67,22 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
       return null;
     }
     Task task = StudyUtils.getTaskForFile(myProject, file);
-    if (task == null || !task.hasSubtasks()) {
-      return null;
+    if (task instanceof TaskWithSubtasks) {
+      final TaskWithSubtasks withSubtasks = (TaskWithSubtasks)task;
+      EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
+      String header = (isTestFile ? "test" : "task") + " file";
+      int activeSubtaskIndex = withSubtasks.getActiveSubtaskIndex() + 1;
+      int subtaskSize = withSubtasks.getLastSubtaskIndex() + 1;
+      panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
+      panel
+        .createActionLabel(SWITCH_SUBTASK, () -> createPopup(withSubtasks, myProject).show(RelativePoint.getSouthEastOf(panel)));
+      return panel;
     }
-    EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
-    String header = (isTestFile ? "test" : "task") + " file";
-    int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
-    int subtaskSize = task.getLastSubtaskIndex() + 1;
-    panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
-    panel.createActionLabel(SWITCH_SUBTASK, () -> createPopup(task, myProject).show(RelativePoint.getSouthEastOf(panel)));
-    return panel;
+    return null;
   }
 
   @NotNull
-  public static ListPopup createPopup(@NotNull Task task, @NotNull Project project) {
+  public static ListPopup createPopup(@NotNull TaskWithSubtasks task, @NotNull Project project) {
     ArrayList<Integer> values = new ArrayList<>();
     for (int i = 0; i <= task.getLastSubtaskIndex(); i++) {
       values.add(i);
@@ -88,12 +92,12 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
   }
 
   public static class SwitchSubtaskPopupStep extends BaseListPopupStep<Integer> {
-    private final Task myTask;
+    private final TaskWithSubtasks myTask;
     private final Project myProject;
 
     public SwitchSubtaskPopupStep(@Nullable String title,
                                   List<Integer> values,
-                                  @NotNull Task task,
+                                  @NotNull TaskWithSubtasks task,
                                   @NotNull Project project) {
       super(title, values);
       myTask = task;
@@ -152,11 +156,11 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
 
     public static final String SELECT = "Select";
     public static final String DELETE = "Delete";
-    private final Task myTask;
+    private final TaskWithSubtasks myTask;
     private final int mySubtaskIndex;
     private final Project myProject;
 
-    public ActionsPopupStep(@NotNull Task task, int subtaskIndex, @NotNull Project project) {
+    public ActionsPopupStep(@NotNull TaskWithSubtasks task, int subtaskIndex, @NotNull Project project) {
       super(null, Arrays.asList(SELECT, DELETE));
       myTask = task;
       mySubtaskIndex = subtaskIndex;
@@ -170,45 +174,66 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
           StudySubtaskUtils.switchStep(myProject, myTask, mySubtaskIndex);
         }
         else {
-          for (TaskFile taskFile : myTask.getTaskFiles().values()) {
-            List<AnswerPlaceholder> emptyPlaceholders = new ArrayList<>();
-            for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-              Map<Integer, AnswerPlaceholderSubtaskInfo> infos = placeholder.getSubtaskInfos();
-              if (infos.containsKey(mySubtaskIndex)) {
-                infos.remove(mySubtaskIndex);
-                if (infos.isEmpty()) {
-                  emptyPlaceholders.add(placeholder);
-                }
-              }
-            }
-            taskFile.getAnswerPlaceholders().removeAll(emptyPlaceholders);
-          }
-          VirtualFile taskDir = myTask.getTaskDir(myProject);
-          if (taskDir == null) {
-            return FINAL_CHOICE;
-          }
-          deleteSubtaskFiles(taskDir);
-          if (mySubtaskIndex != myTask.getLastSubtaskIndex()) {
-            renameFiles(taskDir);
-            updateInfoIndexes();
-          }
-          myTask.setLastSubtaskIndex(myTask.getLastSubtaskIndex() - 1);
-          int activeSubtaskIndex = myTask.getActiveSubtaskIndex();
-          if (mySubtaskIndex != 0 && activeSubtaskIndex == mySubtaskIndex) {
-            StudySubtaskUtils.switchStep(myProject, myTask, mySubtaskIndex - 1);
-          }
-          if (activeSubtaskIndex > mySubtaskIndex) {
-            myTask.setActiveSubtaskIndex(activeSubtaskIndex - 1);
-          }
-          StudySubtaskUtils.updateUI(myProject, myTask, taskDir, true);
-          for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-            EditorNotifications.getInstance(myProject).updateNotifications(file);
-          }
-
-          return FINAL_CHOICE;
+          return deleteSubtask();
         }
       }
       return super.onChosen(selectedValue, finalChoice);
+    }
+
+    @Nullable
+    private PopupStep deleteSubtask() {
+      final int lastSubtaskIndex = myTask.getLastSubtaskIndex();
+      for (TaskFile taskFile : myTask.getTaskFiles().values()) {
+        List<AnswerPlaceholder> emptyPlaceholders = new ArrayList<>();
+        for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+          Map<Integer, AnswerPlaceholderSubtaskInfo> infos = placeholder.getSubtaskInfos();
+          if (infos.containsKey(mySubtaskIndex)) {
+            infos.remove(mySubtaskIndex);
+            if (infos.isEmpty()) {
+              emptyPlaceholders.add(placeholder);
+            }
+          }
+        }
+        taskFile.getAnswerPlaceholders().removeAll(emptyPlaceholders);
+      }
+      VirtualFile taskDir = myTask.getTaskDir(myProject);
+      if (taskDir == null) {
+        return FINAL_CHOICE;
+      }
+      deleteSubtaskFiles(taskDir);
+      if (mySubtaskIndex != lastSubtaskIndex) {
+        renameFiles(taskDir, myProject, mySubtaskIndex);
+        updateInfoIndexes();
+      }
+      myTask.setLastSubtaskIndex(lastSubtaskIndex - 1);
+      int activeSubtaskIndex = myTask.getActiveSubtaskIndex();
+      if (mySubtaskIndex != 0 && activeSubtaskIndex == mySubtaskIndex) {
+        StudySubtaskUtils.switchStep(myProject, myTask, mySubtaskIndex - 1);
+      }
+      if (activeSubtaskIndex > mySubtaskIndex) {
+        myTask.setActiveSubtaskIndex(activeSubtaskIndex - 1);
+      }
+      StudySubtaskUtils.updateUI(myProject, myTask, taskDir, true);
+      for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+        EditorNotifications.getInstance(myProject).updateNotifications(file);
+      }
+      if (lastSubtaskIndex == 1) {
+        convertToTask();
+      }
+      return FINAL_CHOICE;
+    }
+
+    private void convertToTask() {
+      final Lesson lesson = myTask.getLesson();
+      final List<Task> list = lesson.getTaskList();
+      final int i = list.indexOf(myTask);
+      final Task task = new Task();
+      task.copyTaskParameters(myTask);
+      for (TaskFile taskFile : task.getTaskFiles().values()) {
+        taskFile.setTask(task);
+      }
+      list.set(i, task);
+      renameFiles(task.getTaskDir(myProject), myProject, -2);
     }
 
     private void updateInfoIndexes() {
@@ -225,39 +250,6 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
           }
         }
       }
-    }
-
-    private void renameFiles(VirtualFile taskDir) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Map<VirtualFile, String> newNames = new HashMap<>();
-        for (VirtualFile virtualFile : taskDir.getChildren()) {
-          int subtaskIndex = CCUtils.getSubtaskIndex(myProject, virtualFile);
-          if (subtaskIndex == -1) {
-            continue;
-          }
-          if (subtaskIndex > mySubtaskIndex) {
-            String index = subtaskIndex == 1 ? "" : Integer.toString(subtaskIndex - 1);
-            String fileName = virtualFile.getName();
-            String nameWithoutExtension = FileUtil.getNameWithoutExtension(fileName);
-            String extension = FileUtilRt.getExtension(fileName);
-            int subtaskMarkerIndex = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
-            String newName = subtaskMarkerIndex == -1
-                             ? nameWithoutExtension
-                             : nameWithoutExtension.substring(0, subtaskMarkerIndex);
-            newName += index.isEmpty() ? "" : EduNames.SUBTASK_MARKER;
-            newName += index + "." + extension;
-            newNames.put(virtualFile, newName);
-          }
-        }
-        for (Map.Entry<VirtualFile, String> entry : newNames.entrySet()) {
-          try {
-            entry.getKey().rename(myProject, entry.getValue());
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
-      });
     }
 
     private void deleteSubtaskFiles(VirtualFile taskDir) {

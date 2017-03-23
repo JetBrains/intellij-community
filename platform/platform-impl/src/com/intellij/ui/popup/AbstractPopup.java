@@ -948,6 +948,11 @@ public class AbstractPopup implements JBPopup {
     setMinimumSize(myMinSize);
 
     final Runnable afterShow = () -> {
+      if (isDisposed()) {
+        LOG.debug("popup is disposed after showing");
+        removeActivity();
+        return;
+      }
       if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
         myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
         if (myPreferredFocusedComponent instanceof JTextComponent) {

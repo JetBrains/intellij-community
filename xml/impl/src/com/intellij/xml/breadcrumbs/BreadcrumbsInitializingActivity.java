@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -45,7 +46,7 @@ import javax.swing.*;
 public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    if (project.isDefault()) {
+    if (project.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 

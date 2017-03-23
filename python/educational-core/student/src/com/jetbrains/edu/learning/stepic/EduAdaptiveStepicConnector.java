@@ -7,7 +7,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -26,6 +25,10 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.CodeTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -50,7 +53,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
@@ -159,10 +165,9 @@ public class EduAdaptiveStepicConnector {
 
   @NotNull
   private static Task getTheoryTaskFromStep(@NotNull String lessonName, @NotNull StepicWrappers.Step block, int stepId) {
-    final Task task = new Task(lessonName);
+    final Task task = new TheoryTask(lessonName);
     task.setStepId(stepId);
     task.setText(block.text);
-    task.setTheoryTask(true);
 
     createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
     return task;
@@ -172,7 +177,7 @@ public class EduAdaptiveStepicConnector {
   private static Task getChoiceTaskFromStep(@NotNull String lessonName,
                                             @NotNull StepicWrappers.Step block,
                                             int stepId) {
-    final Task task = Task.createChoiceTask(lessonName);
+    final ChoiceTask task = new ChoiceTask(lessonName);
     task.setStepId(stepId);
     task.setText(block.text);
 
@@ -300,24 +305,14 @@ public class EduAdaptiveStepicConnector {
 
         if (task != null) {
           final Lesson adaptive = course.getLessons().get(0);
+          task.initTask(adaptive, false);
           final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
           final String lessonName = EduNames.LESSON + String.valueOf(adaptive.getIndex());
           if (reaction == TOO_HARD_RECOMMENDATION_REACTION || reaction == TOO_BORING_RECOMMENDATION_REACTION) {
-            unsolvedTask.copyParametersOf(task);
-
-            final Map<String, TaskFile> taskFiles = task.getTaskFiles();
-            if (taskFiles.size() == 1) {
-              final TaskFile taskFile = editor.getTaskFile();
-              taskFile.text = ((TaskFile)taskFiles.values().toArray()[0]).text;
-
-              ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-                final Document document = editor.getEditor().getDocument();
-                document.setText(taskFile.text);
-              }));
-            }
-            else {
-              LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
-            }
+            task.setLesson(unsolvedTask.getLesson());
+            task.setIndex(unsolvedTask.getIndex());
+            adaptive.getTaskList().set(adaptive.getTaskList().size() - 1, task);
+            ApplicationManager.getApplication().invokeLater(()->StudyNavigator.navigateToTask(project, task));
 
             final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
             final String taskName = EduNames.TASK + String.valueOf(adaptive.getTaskList().size());
@@ -416,8 +411,7 @@ public class EduAdaptiveStepicConnector {
                                           @NotNull StepicWrappers.Step step,
                                           @NotNull String name,
                                           int lessonID) {
-    final Task task = new Task();
-    task.setName(name);
+    final Task task = new CodeTask(name);
     task.setStepId(lessonID);
     task.setText(step.text);
     task.setStatus(StudyStatus.Unchecked);
@@ -486,7 +480,7 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  public static Pair<Boolean, String> checkChoiceTask(@NotNull Project project, @NotNull Task task) {
+  public static Pair<Boolean, String> checkChoiceTask(@NotNull Project project, @NotNull ChoiceTask task) {
     if (task.getSelectedVariants().isEmpty()) return Pair.create(false, "No variants selected");
     final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(task.getStepId());
 
@@ -503,8 +497,8 @@ public class EduAdaptiveStepicConnector {
         try {
           createNewAttempt(task.getStepId());
           final Task updatedTask = getTask(project, task.getName(), task.getStepId());
-          if (updatedTask != null) {
-            final List<String> variants = updatedTask.getChoiceVariants();
+          if (updatedTask instanceof ChoiceTask) {
+            final List<String> variants = ((ChoiceTask)updatedTask).getChoiceVariants();
             task.setChoiceVariants(variants);
             task.setSelectedVariants(new ArrayList<>());
           }
@@ -519,7 +513,7 @@ public class EduAdaptiveStepicConnector {
     return new Pair<>(false, "");
   }
 
-  private static boolean[] createChoiceTaskAnswerArray(@NotNull Task task) {
+  private static boolean[] createChoiceTaskAnswerArray(@NotNull ChoiceTask task) {
     final List<Integer> selectedVariants = task.getSelectedVariants();
     final boolean[] answer = new boolean[task.getChoiceVariants().size()];
     for (Integer index : selectedVariants) {

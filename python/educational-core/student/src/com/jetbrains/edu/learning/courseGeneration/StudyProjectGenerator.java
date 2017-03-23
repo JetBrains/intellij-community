@@ -29,7 +29,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
@@ -154,7 +154,8 @@ public class StudyProjectGenerator {
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
       Gson gson =
-        new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
+        new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile))
+          .registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskDeserializer()).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.initCourse(isAdaptive);
       return course;
@@ -328,6 +329,7 @@ public class StudyProjectGenerator {
 
   public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().
+      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskSerializer()).
       excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);

@@ -156,13 +156,15 @@ final class ObjectNode<T> {
 
   private static void handleExceptions(List<Throwable> exceptions) {
     if (!exceptions.isEmpty()) {
+      for (Throwable exception : exceptions) {
+        if (!(exception instanceof ProcessCanceledException)) {
+          LOG.error(exception);
+        }
+      }
+
       ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
       if (pce != null) {
         throw pce;
-      }
-
-      for (Throwable exception : exceptions) {
-        LOG.error(exception);
       }
     }
   }

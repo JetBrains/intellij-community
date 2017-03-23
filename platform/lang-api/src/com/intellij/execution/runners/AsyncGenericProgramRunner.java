@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.jetbrains.concurrency.Promise;
  */
 public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Override
-  protected final void execute(@NotNull ExecutionEnvironment environment,
+  protected void execute(@NotNull ExecutionEnvironment environment,
                                @Nullable Callback callback,
                                @NotNull RunProfileState state) throws ExecutionException {
     prepare(environment, state)

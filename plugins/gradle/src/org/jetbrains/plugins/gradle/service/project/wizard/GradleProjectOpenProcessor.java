@@ -63,11 +63,6 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
         }
       }
     }
-    else {
-      for (String supported : getSupportedExtensions()) {
-        if (file.findChild(supported) != null) return true;
-      }
-    }
     return super.canOpenProject(file);
   }
 

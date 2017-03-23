@@ -122,6 +122,32 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testgstring$str8() throws Throwable { doTest() }
 
+  void testgstring$str9() throws Throwable { doTest() }
+
+  void teststring$singleQuoted() { doTest() }
+
+  void teststring$tripleSingleQuoted$ok() { doTest() }
+
+  void teststring$tripleSingleQuoted$err0() { doTest() }
+
+  void teststring$tripleSingleQuoted$err1() { doTest() }
+
+  void teststring$tripleSingleQuoted$err2() { doTest() }
+
+  void teststring$tripleSingleQuoted$err3() { doTest() }
+
+  void teststring$tripleSingleQuoted$err4() { doTest() }
+
+  void teststring$tripleSingleQuoted$err5() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished0() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished1() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished2() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished3() { doTest() }
+
   void testgstring$str_error1() throws Throwable { doTest() }
 
   void testgstring$str_error2() throws Throwable { doTest() }

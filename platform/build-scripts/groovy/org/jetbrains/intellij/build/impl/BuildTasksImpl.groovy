@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -182,7 +183,7 @@ idea.fatal.error.notification=disabled
   }
 
   File patchApplicationInfo() {
-    def sourceFile = buildContext.findApplicationInfoInSources()
+    def sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
@@ -244,8 +245,14 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
-      buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
+    compileModulesForDistribution(distributionJARsBuilder)
+  }
+
+  private compileModulesForDistribution(DistributionJARsBuilder distributionJARsBuilder) {
+    def moduleNames = buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+                      buildContext.productProperties.additionalModulesToCompile +
+                      (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: [])
+    compileModules(moduleNames, buildContext.productProperties.modulesToCompileTests)
   }
 
   @Override
@@ -254,8 +261,7 @@ idea.fatal.error.notification=disabled
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
-                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
+    compileModulesForDistribution(distributionJARsBuilder)
     buildContext.messages.block("Build platform and plugin JARs") {
       if (buildContext.shouldBuildDistributions()) {
         distributionJARsBuilder.buildJARs()
@@ -410,56 +416,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules = []) {
-    if (buildContext.options.useCompiledClassesFromProjectOutput) {
-      buildContext.messages.info("Compilation skipped, the compiled classes from the project output will be used")
-      return
-    }
-    if (buildContext.options.pathToCompiledClassesArchive != null) {
-      buildContext.messages.info("Compilation skipped, the compiled classes from '${buildContext.options.pathToCompiledClassesArchive}' will be used")
-      return
-    }
-
-    ensureKotlinCompilerAddedToClassPath()
-
-    buildContext.projectBuilder.cleanOutput()
-    try {
-      if (moduleNames == null) {
-        buildContext.projectBuilder.buildProduction()
-      }
-      else {
-        List<String> modulesToBuild = ((moduleNames as Set<String>) +
-                                       buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
-        List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
-        if (!invalidModules.empty) {
-          buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
-        }
-        buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
-      }
-      for (String moduleName : includingTestsInModules) {
-        buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
-      }
-    }
-    catch (Throwable e) {
-      buildContext.messages.error("Compilation failed with exception: $e", e)
-    }
-  }
-
-  private void ensureKotlinCompilerAddedToClassPath() {
-    try {
-      Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
-      return
-    }
-    catch (ClassNotFoundException ignored) {}
-
-    def kotlinPluginLibPath = "$buildContext.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
-    if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
-        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", buildContext.ant)
-      }
-    }
-    else {
-      buildContext.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run download_kotlin.gant script to download them")
-    }
+    CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
   private <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks) {

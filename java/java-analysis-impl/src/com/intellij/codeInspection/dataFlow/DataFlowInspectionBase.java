@@ -53,6 +53,8 @@ import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -63,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+@SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
 public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
@@ -777,18 +780,49 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                   null;
     if (!PsiTreeUtil.isAncestor(topExpression, element, false)) return false;
 
-    if (isCompileTimeFlagReference(topExpression)) return true;
-
-    Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(topExpression, PsiReferenceExpression.class);
-    return ContainerUtil.or(refs, DataFlowInspectionBase::isCompileTimeFlagReference);
+    return StreamEx.<PsiElement>ofTree(topExpression, e -> StreamEx.of(e.getChildren()))
+      .anyMatch(DataFlowInspectionBase::isCompileTimeFlagCheck);
   }
 
-  private static boolean isCompileTimeFlagReference(PsiElement element) {
+  private static boolean isCompileTimeFlagCheck(PsiElement element) {
+    if(element instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binOp = (PsiBinaryExpression)element;
+      if(ComparisonUtils.isComparisonOperation(binOp.getOperationTokenType())) {
+        PsiExpression comparedWith = null;
+        if(ExpressionUtils.isLiteral(binOp.getROperand())) {
+          comparedWith = binOp.getLOperand();
+        } else if(ExpressionUtils.isLiteral(binOp.getLOperand())) {
+          comparedWith = binOp.getROperand();
+        }
+        comparedWith = PsiUtil.skipParenthesizedExprDown(comparedWith);
+        if (isConstantOfType(comparedWith, PsiType.INT, PsiType.LONG)) {
+          // like "if(DEBUG_LEVEL > 2)"
+          return true;
+        }
+        if(comparedWith instanceof PsiBinaryExpression) {
+          PsiBinaryExpression subOp = (PsiBinaryExpression)comparedWith;
+          if(subOp.getOperationTokenType().equals(JavaTokenType.AND)) {
+            PsiExpression left = PsiUtil.skipParenthesizedExprDown(subOp.getLOperand());
+            PsiExpression right = PsiUtil.skipParenthesizedExprDown(subOp.getROperand());
+            if(isConstantOfType(left, PsiType.INT, PsiType.LONG) ||
+               isConstantOfType(right, PsiType.INT, PsiType.LONG)) {
+              // like "if((FLAGS & SOME_FLAG) != 0)"
+              return true;
+            }
+          }
+        }
+      }
+    }
+    // like "if(DEBUG)"
+    return isConstantOfType(element, PsiType.BOOLEAN);
+  }
+
+  private static boolean isConstantOfType(PsiElement element, PsiPrimitiveType... types) {
     PsiElement resolved = element instanceof PsiReferenceExpression ? ((PsiReferenceExpression)element).resolve() : null;
     if (!(resolved instanceof PsiField)) return false;
     PsiField field = (PsiField)resolved;
     return field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC) &&
-           PsiType.BOOLEAN.equals(field.getType());
+           ArrayUtil.contains(field.getType(), types);
   }
 
   private static boolean isNullLiteralExpression(PsiElement expr) {

@@ -447,16 +447,16 @@ public class GridCellImpl implements GridCell {
     myContext.saveUiState();
 
     for (final Content each : contents) {
-      myMinimizedContents.add(each);
-      remove(each);
-      boolean isShowing = myTabs.getComponent().getRootPane() != null;
-      updateSelection(isShowing);
       myContainer.minimize(each, new CellTransform.Restore() {
         @Override
         public ActionCallback restoreInGrid() {
           return restore(each);
         }
       });
+      myMinimizedContents.add(each);
+      remove(each);
+      boolean isShowing = myTabs.getComponent().getRootPane() != null;
+      updateSelection(isShowing);
     }
   }
 

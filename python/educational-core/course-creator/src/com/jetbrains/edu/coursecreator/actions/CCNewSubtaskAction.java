@@ -16,16 +16,23 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+import static com.jetbrains.edu.coursecreator.CCUtils.renameFiles;
 
 
 public class CCNewSubtaskAction extends DumbAwareAction {
@@ -46,13 +53,29 @@ public class CCNewSubtaskAction extends DumbAwareAction {
       return;
     }
     Task task = StudyUtils.getTaskForFile(project, virtualFile);
-    if (task == null) {
-      return;
+    if (task == null) return;
+    if (!(task instanceof TaskWithSubtasks)) {
+      task = convertToTaskWithSubtasks(task, project);
     }
-    addSubtask(task, project);
+    addSubtask((TaskWithSubtasks)task, project);
   }
 
-  public static void addSubtask(@NotNull Task task, @NotNull Project project) {
+  @NotNull
+  private static Task convertToTaskWithSubtasks(Task task, Project project) {
+    final Lesson lesson = task.getLesson();
+    final List<Task> list = lesson.getTaskList();
+    final int i = list.indexOf(task);
+    task = new TaskWithSubtasks(task);
+    for (TaskFile taskFile : task.getTaskFiles().values()) {
+      taskFile.setTask(task);
+    }
+    list.set(i, task);
+    final VirtualFile taskDir = task.getTaskDir(project);
+    renameFiles(taskDir, project, -1);
+    return task;
+  }
+
+  public static void addSubtask(@NotNull TaskWithSubtasks task, @NotNull Project project) {
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;
@@ -64,16 +87,16 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     task.setLastSubtaskIndex(num);
   }
 
-  private static void createTestsForNewSubtask(Project project, Task task) {
+  private static void createTestsForNewSubtask(Project project, TaskWithSubtasks task) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return;
     }
-    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return;
     }
-    manager.createTestsForNewSubtask(project, task);
+    configurator.createTestsForNewSubtask(project, task);
   }
 
   private static void createTaskDescriptionFile(Project project, VirtualFile taskDir, int index) {

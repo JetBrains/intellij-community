@@ -55,6 +55,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCanBeNullDoesntImplyIsNull() throws Throwable { doTest(); }
   public void testAnnReport() throws Throwable { doTest(); }
 
+  public void testSuppressStaticFlags() throws Throwable { doTest(); }
+
   public void testBigMethodNotComplex() throws Throwable { doTest(); }
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }

@@ -42,18 +42,18 @@ import javax.swing.Action
 @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
-  protected lateinit var myRepository: GitRepository
-  protected lateinit var myParentRepo: File
-  protected lateinit var myBroRepo: File
+  private lateinit var repository: GitRepository
+  private lateinit var parentRepo: File
+  private lateinit var broRepo: File
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     val trinity = setupRepositories(myProjectPath, "parent", "bro")
-    myParentRepo = trinity.parent
-    myBroRepo = trinity.bro
-    myRepository = trinity.projectRepo
+    parentRepo = trinity.parent
+    broRepo = trinity.bro
+    repository = trinity.projectRepo
 
     Executor.cd(myProjectPath)
     refresh()
@@ -116,7 +116,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   fun test_rejected_push_to_other_branch_doesnt_propose_to_update() {
     pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     git("checkout -b feature")
 
     var dialogShown = false
@@ -133,15 +133,15 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   fun test_push_is_rejected_too_many_times() {
     pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     val hash = makeCommit("afile.txt")
 
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
 
     updateRepositories()
-    val pushSpec = makePushSpec(myRepository, "master", "origin/master")
+    val pushSpec = makePushSpec(repository, "master", "origin/master")
 
-    val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
+    val result = object : GitPushOperation(myProject, pushSupport, singletonMap(repository, pushSpec), null, false) {
       override fun update(rootsToUpdate: Collection<GitRepository>,
                           updateMethod: UpdateMethod,
                           checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
@@ -158,22 +158,22 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     }.execute()
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.SUCCESS, listOf("bro.txt"), result)
 
-    Executor.cd(myParentRepo.path)
+    Executor.cd(parentRepo.path)
     val history = git("log --all --pretty=%H ")
     assertFalse("The commit shouldn't be pushed", history.contains(hash))
   }
 
   fun test_use_selected_update_method_for_all_consecutive_updates() {
     pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     makeCommit("afile.txt")
 
     agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
 
     updateRepositories()
-    val pushSpec = makePushSpec(myRepository, "master", "origin/master")
+    val pushSpec = makePushSpec(repository, "master", "origin/master")
 
-    val result = object : GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, pushSpec), null, false) {
+    val result = object : GitPushOperation(myProject, pushSupport, singletonMap(repository, pushSpec), null, false) {
       internal var updateHappened: Boolean = false
 
       override fun update(rootsToUpdate: Collection<GitRepository>,
@@ -194,8 +194,8 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
       }
     }.execute()
 
-    assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.results[myRepository]!!)
-    cd(myRepository)
+    assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.results[repository]!!)
+    cd(repository)
     val commitMessages = StringUtil.splitByLines(log("--pretty=%s"))
     val mergeCommitsInTheLog = ContainerUtil.exists(commitMessages, object : Condition<String> {
       override fun value(s: String): Boolean {
@@ -207,14 +207,14 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   fun test_force_push() {
     val lostHash = pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     val hash = makeCommit("anyfile.txt")
 
     val result = push("master", "origin/master", true)
 
     assertResult(FORCED, -1, "master", "origin/master", result)
 
-    Executor.cd(myParentRepo.path)
+    Executor.cd(parentRepo.path)
     val history = git("log --all --pretty=%H ")
     assertFalse(history.contains(lostHash))
     assertEquals(hash, StringUtil.splitByLines(history)[0])
@@ -230,7 +230,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val remoteTipAndPushResult = forcePushWithReject()
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
     assertFalse("Rejected push dialog should not be shown", dialogShown)
-    Executor.cd(myParentRepo.path)
+    Executor.cd(parentRepo.path)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
 
@@ -241,32 +241,32 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val remoteTipAndPushResult = forcePushWithReject()
 
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
-    Executor.cd(myParentRepo.path)
+    Executor.cd(parentRepo.path)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
 
   private fun forcePushWithReject(): Pair<String, GitPushResult> {
     val pushedHash = pushCommitFromBro()
-    Executor.cd(myParentRepo)
+    Executor.cd(parentRepo)
     git("config receive.denyNonFastForwards true")
-    cd(myRepository)
+    cd(repository)
     makeCommit("anyfile.txt")
 
-    val map = singletonMap(myRepository, makePushSpec(myRepository, "master", "origin/master"))
-    val result = GitPushOperation(myProject, myPushSupport, map, null, true).execute()
+    val map = singletonMap(repository, makePushSpec(repository, "master", "origin/master"))
+    val result = GitPushOperation(myProject, pushSupport, map, null, true).execute()
     return Pair.create(pushedHash, result)
   }
 
   fun test_merge_after_rejected_push() {
     val broHash = pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     val hash = makeCommit("file.txt")
 
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
 
     val result = push("master", "origin/master")
 
-    cd(myRepository)
+    cd(repository)
     val log = git("log -3 --pretty=%H#%s")
     val commits = StringUtil.splitByLines(log)
     val lastCommitMsg = commits[0].split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
@@ -279,7 +279,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   // IDEA-144179
   fun `test don't update if rejected by some custom reason`() {
-    cd(myRepository)
+    cd(repository)
     val hash = makeCommit("file.txt")
 
     val rejectHook = """
@@ -290,7 +290,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
       EOF
       exit 1
       """.trimIndent()
-    installHook(myParentRepo, "pre-receive", rejectHook)
+    installHook(parentRepo, "pre-receive", rejectHook)
 
     myDialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
       throw AssertionError("Update shouldn't be proposed")
@@ -307,12 +307,12 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun test_update_with_conflicts_cancels_push() {
-    Executor.cd(myBroRepo.path)
+    Executor.cd(broRepo.path)
     Executor.append("bro.txt", "bro content")
     makeCommit("msg")
     git("push origin master:master")
 
-    cd(myRepository)
+    cd(repository)
     Executor.append("bro.txt", "main content")
     makeCommit("msg")
 
@@ -324,14 +324,14 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun test_push_tags() {
-    cd(myRepository)
+    cd(repository)
     git("tag v1")
 
     updateRepositories()
-    val spec = makePushSpec(myRepository, "master", "origin/master")
-    val pushResult = GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec),
-        GitPushTagMode.ALL, false).execute()
-    val result = pushResult.results[myRepository]!!
+    val spec = makePushSpec(repository, "master", "origin/master")
+    val pushResult = GitPushOperation(myProject, pushSupport, singletonMap(repository, spec),
+                                      GitPushTagMode.ALL, false).execute()
+    val result = pushResult.results[repository]!!
     val pushedTags = result.pushedTags
     assertEquals(1, pushedTags.size)
     assertEquals("refs/tags/v1", pushedTags[0])
@@ -428,13 +428,13 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   private fun generateUpdateNeeded() {
     pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     makeCommit("file.txt")
   }
 
   private fun generateUnpushedMergedCommitProblem() {
     pushCommitFromBro()
-    cd(myRepository)
+    cd(repository)
     git("checkout -b branch1")
     makeCommit("branch1.txt")
     git("checkout master")
@@ -444,12 +444,12 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   private fun push(from: String, to: String, force: Boolean = false): GitPushResult {
     updateRepositories()
-    val spec = makePushSpec(myRepository, from, to)
-    return GitPushOperation(myProject, myPushSupport, singletonMap(myRepository, spec), null, force).execute()
+    val spec = makePushSpec(repository, from, to)
+    return GitPushOperation(myProject, pushSupport, singletonMap(repository, spec), null, force).execute()
   }
 
   private fun pushCommitFromBro(): String {
-    Executor.cd(myBroRepo.path)
+    Executor.cd(broRepo.path)
     val hash = makeCommit("bro.txt")
     git("push")
     return hash
@@ -463,7 +463,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
                            updateResult: GitUpdateResult?,
                            updatedFiles: List<String>?,
                            actualResult: GitPushResult) {
-    assertResult(type, pushedCommits, from, to, updateResult, actualResult.results[myRepository]!!)
+    assertResult(type, pushedCommits, from, to, updateResult, actualResult.results[repository]!!)
     UsefulTestCase.assertSameElements("Updated files set is incorrect",
         getUpdatedFiles(actualResult.updatedFiles), ContainerUtil.notNullize(updatedFiles))
   }
@@ -491,13 +491,13 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun assertPushed(expectedHash: String, branch: String) {
-    Executor.cd(myParentRepo.path)
+    Executor.cd(parentRepo.path)
     val actualHash = git("log -1 --pretty=%H " + branch)
     assertEquals(expectedHash, actualHash)
   }
 
   private fun assertBranchExists(branch: String) {
-    Executor.cd(myParentRepo.path)
+    Executor.cd(parentRepo.path)
     val out = git("branch")
     assertTrue(out.contains(branch))
   }

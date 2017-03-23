@@ -2,12 +2,6 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.util.EditorHelper;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,29 +14,27 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.jetbrains.edu.coursecreator.settings.CCSettings;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
@@ -71,12 +63,6 @@ public class CCUtils {
     catch (NumberFormatException e) {
       return -1;
     }
-  }
-
-  @Nullable
-  public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
-    Language language = Language.findLanguageByID(course.getLanguageID());
-    return language == null ? null : CCLanguageManager.INSTANCE.forLanguage(language);
   }
 
   /**
@@ -213,11 +199,11 @@ public class CCUtils {
     if (course == null) {
       return false;
     }
-    CCLanguageManager manager = getStudyLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return false;
     }
-    return manager.isTestFile(file);
+    return configurator.isTestFile(file);
   }
 
   public static void createResourceFile(VirtualFile createdFile, Course course, VirtualFile taskVF) {
@@ -271,7 +257,8 @@ public class CCUtils {
         continue;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null, task.getActiveSubtaskIndex());
+        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null,
+                                   task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
       });
     }
   }
@@ -282,39 +269,45 @@ public class CCUtils {
     presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
   }
 
-  private static void createFromTemplate(@NotNull final PsiDirectory taskDirectory,
-                                         @Nullable final FileTemplate template,
-                                         @Nullable IdeView view, boolean open) {
-    if (template == null) {
-      return;
-    }
-    try {
-      final PsiElement file = FileTemplateUtil.createFromTemplate(template, template.getName(), null, taskDirectory);
-      if (view != null && open) {
-        EditorHelper.openInEditor(file, false);
-        view.selectElement(file);
+  /**
+   * @param fromIndex -1 if task converted to TaskWithSubtasks, -2 if task converted from TaskWithSubtasks
+   */
+  public static void renameFiles(VirtualFile taskDir, Project project, int fromIndex) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Map<VirtualFile, String> newNames = new HashMap<>();
+      for (VirtualFile virtualFile : taskDir.getChildren()) {
+        int subtaskIndex = getSubtaskIndex(project, virtualFile);
+        if (subtaskIndex == -1) {
+          continue;
+        }
+        if (subtaskIndex > fromIndex) {
+          String index;
+          if (fromIndex == -1) { // add new subtask
+            index = "0";
+          }
+          else { // remove subtask
+            index = fromIndex == -2 ? "" : Integer.toString(subtaskIndex - 1);
+          }
+          String fileName = virtualFile.getName();
+          String nameWithoutExtension = FileUtil.getNameWithoutExtension(fileName);
+          String extension = FileUtilRt.getExtension(fileName);
+          int subtaskMarkerIndex = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
+          String newName = subtaskMarkerIndex == -1
+                           ? nameWithoutExtension
+                           : nameWithoutExtension.substring(0, subtaskMarkerIndex);
+          newName += index.isEmpty() ? "" : EduNames.SUBTASK_MARKER;
+          newName += index + "." + extension;
+          newNames.put(virtualFile, newName);
+        }
       }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
-
-  public static void createTaskContent(@NotNull Project project,
-                                       @Nullable IdeView view,
-                                       @NotNull Course course,
-                                       PsiDirectory taskDirectory) {
-    CCLanguageManager manager = getStudyLanguageManager(course);
-    if (manager == null) {
-      return;
-    }
-    createFromTemplate(taskDirectory, manager.getTestsTemplate(project), view, false);
-    createFromTemplate(taskDirectory, FileTemplateManager.getInstance(project)
-      .getInternalTemplate(StudyUtils.getTaskDescriptionFileName(CCSettings.getInstance().useHtmlAsDefaultTaskFormat())), view, false);
-    String defaultExtension = manager.getDefaultTaskFileExtension();
-    if (defaultExtension != null) {
-      FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
-      createFromTemplate(taskDirectory, taskFileTemplate, view, true);
-    }
+      for (Map.Entry<VirtualFile, String> entry : newNames.entrySet()) {
+        try {
+          entry.getKey().rename(project, entry.getValue());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    });
   }
 }

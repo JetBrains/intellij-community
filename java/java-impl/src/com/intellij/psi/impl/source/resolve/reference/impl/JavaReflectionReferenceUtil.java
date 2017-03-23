@@ -49,6 +49,7 @@ import java.util.stream.Stream;
  * @author Pavel.Dolgov
  */
 public class JavaReflectionReferenceUtil {
+  // MethodHandle (Java 7) and VarHandle (Java 9) infrastructure
   public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
   public static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";
 
@@ -67,6 +68,15 @@ public class JavaReflectionReferenceUtil {
   public static final String FIND_VAR_HANDLE = "findVarHandle";
   public static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
 
+  public static final String FIND_CONSTRUCTOR = "findConstructor";
+
+  public static final String[] HANDLE_FACTORY_METHOD_NAMES = {
+    FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
+    FIND_GETTER, FIND_SETTER,
+    FIND_STATIC_GETTER, FIND_STATIC_SETTER,
+    FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE};
+
+  // Classic reflection infrastructure
   public static final String GET_FIELD = "getField";
   public static final String GET_DECLARED_FIELD = "getDeclaredField";
   public static final String GET_METHOD = "getMethod";
@@ -76,12 +86,6 @@ public class JavaReflectionReferenceUtil {
   public static final String FOR_NAME = "forName";
   public static final String LOAD_CLASS = "loadClass";
   public static final String GET_CLASS = "getClass";
-
-  public static final String[] HANDLE_FACTORY_METHOD_NAMES = {
-    FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
-    FIND_GETTER, FIND_SETTER,
-    FIND_STATIC_GETTER, FIND_STATIC_SETTER,
-    FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE};
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
@@ -230,10 +234,10 @@ public class JavaReflectionReferenceUtil {
   }
 
   static void shortenArgumentsClassReferences(@NotNull InsertionContext context) {
-    final PsiElement firstParam = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-    final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(firstParam, PsiMethodCallExpression.class);
-    if (methodCall != null) {
-      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(methodCall.getArgumentList());
+    final PsiElement parameter = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
+    final PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(parameter, PsiExpressionList.class);
+    if (parameterList != null && parameterList.getParent() instanceof PsiMethodCallExpression) {
+      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(parameterList);
     }
   }
 
@@ -264,9 +268,9 @@ public class JavaReflectionReferenceUtil {
 
   static void replaceText(@NotNull InsertionContext context, @NotNull String text) {
     final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-    final int start = newElement.getTextRange().getEndOffset();
     final PsiElement params = newElement.getParent().getParent();
     final int end = params.getTextRange().getEndOffset() - 1;
+    final int start = Math.min(newElement.getTextRange().getEndOffset(), end);
 
     context.getDocument().replaceString(start, end, text);
     context.commitDocument();
@@ -429,22 +433,16 @@ public class JavaReflectionReferenceUtil {
 
     @NotNull
     public String getShortReturnType() {
-      return getShortTypeText(myReturnType);
+      return PsiNameHelper.getShortClassName(myReturnType);
     }
 
     @NotNull
     public String getShortArgumentTypes() {
       final StringJoiner joiner = new StringJoiner(", ", "(", ")");
       for (String argumentType : myArgumentTypes) {
-        joiner.add(getShortTypeText(argumentType));
+        joiner.add(PsiNameHelper.getShortClassName(argumentType));
       }
       return joiner.toString();
-    }
-
-    @NotNull
-    private static String getShortTypeText(String text) {
-      final int pos = text.lastIndexOf('.');
-      return pos < 0 ? text : text.substring(pos + 1);
     }
 
     @Nullable

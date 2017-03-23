@@ -31,11 +31,11 @@
     <editorTabTitleProvider implementation="com.jetbrains.edu.coursecreator.CCTestsTabTitleProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
-    <studyActionListener implementation="com.jetbrains.edu.coursecreator.CCStudyActionListener"/>
+    <taskDescriptionAdditionalActionsProvider implementation="com.jetbrains.edu.coursecreator.CCTaskDescriptionActionsProvider"/>
+    <hintActionsProvider implementation="com.jetbrains.edu.coursecreator.actions.CCHintActionsProvider"/>
+    <checkListener implementation="com.jetbrains.edu.coursecreator.CCCheckListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
     <studySubtaskChangeListener implementation="com.jetbrains.edu.coursecreator.CCSubtaskChangeListener"/>
-    <studyPluginConfigurator implementation="com.jetbrains.edu.coursecreator.CCPluginConfigurator" />
   </extensions>
 
   <project-components>
@@ -43,18 +43,6 @@
       <implementation-class>com.jetbrains.edu.coursecreator.CCProjectComponent</implementation-class>
     </component>
   </project-components>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.CCLanguageManager"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="Edu.CCTaskCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.creation.CCTaskCreator"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="Edu.CCLessonCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.creation.CCLessonCreator"/>
-    </extensionPoint>
-  </extensionPoints>
 
   <actions>
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">

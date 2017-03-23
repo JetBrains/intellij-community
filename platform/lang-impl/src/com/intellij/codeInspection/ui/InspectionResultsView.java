@@ -981,7 +981,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final CommonProblemDescriptor problem = refElementNode.getDescriptor();
       if (problem instanceof ProblemDescriptor) {
         PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();
-        if (elementFromDescriptor == null && CommonDataKeys.NAVIGATABLE.is(dataId)) {
+        if (elementFromDescriptor == null && CommonDataKeys.NAVIGATABLE.is(dataId) && refElementNode.getChildCount() != 0) {
           final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
           if (node.isValid()) {
             return InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
@@ -1136,7 +1136,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     for (Tools currentTools : tools) {
       for (ScopeToolState state : contentProvider.getTools(currentTools)) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        if (contentProvider.checkReportedProblems(context, toolWrapper)) {
+        if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
           return true;
         }
       }

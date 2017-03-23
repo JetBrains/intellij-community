@@ -147,52 +147,72 @@ public class DebugUtil {
                                   final boolean showChildrenRanges,
                                   final boolean usePsi,
                                   @Nullable PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
-    if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
+    new TreeToBuffer(buffer, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi).processNode(root, indent, extra);
+  }
 
-    StringUtil.repeatSymbol(buffer, ' ', indent);
-    try {
-      PsiElement psiElement = null;
-      if (root instanceof CompositeElement) {
-        if (usePsi) {
-          psiElement = root.getPsi();
-          if (psiElement != null) {
-            buffer.append(psiElement.toString());
+
+  private static class TreeToBuffer {
+    final Appendable buffer;
+    final boolean skipWhiteSpaces;
+    final boolean showRanges;
+    final boolean showChildrenRanges;
+    final boolean usePsi;
+
+    TreeToBuffer(Appendable buffer, boolean skipWhiteSpaces, boolean showRanges, boolean showChildrenRanges, boolean usePsi) {
+      this.buffer = buffer;
+      this.skipWhiteSpaces = skipWhiteSpaces;
+      this.showRanges = showRanges;
+      this.showChildrenRanges = showChildrenRanges;
+      this.usePsi = usePsi;
+    }
+
+    void processNode(@NotNull ASTNode root, int indent, @Nullable PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+      if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
+
+      StringUtil.repeatSymbol(buffer, ' ', indent);
+      try {
+        PsiElement psiElement = null;
+        if (root instanceof CompositeElement) {
+          if (usePsi) {
+            psiElement = root.getPsi();
+            if (psiElement != null) {
+              buffer.append(psiElement.toString());
+            }
+            else {
+              buffer.append(root.getElementType().toString());
+            }
           }
           else {
-            buffer.append(root.getElementType().toString());
+            buffer.append(root.toString());
           }
         }
         else {
-          buffer.append(root.toString());
+          final String text = fixWhiteSpaces(root.getText());
+          buffer.append(root.toString()).append("('").append(text).append("')");
         }
-      }
-      else {
-        final String text = fixWhiteSpaces(root.getText());
-        buffer.append(root.toString()).append("('").append(text).append("')");
-      }
-      if (showRanges) buffer.append(root.getTextRange().toString());
-      buffer.append("\n");
-      if (root instanceof CompositeElement) {
-        ASTNode child = root.getFirstChildNode();
+        if (showRanges) buffer.append(root.getTextRange().toString());
+        buffer.append("\n");
+        if (root instanceof CompositeElement) {
+          ASTNode child = root.getFirstChildNode();
 
-        if (child == null) {
-          StringUtil.repeatSymbol(buffer, ' ', indent + 2);
-          buffer.append("<empty list>\n");
-        }
-        else {
-          while (child != null) {
-            treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, extra);
-            child = child.getTreeNext();
+          if (child == null) {
+            StringUtil.repeatSymbol(buffer, ' ', indent + 2);
+            buffer.append("<empty list>\n");
+          }
+          else {
+            while (child != null) {
+              processNode(child, indent + 2, extra);
+              child = child.getTreeNext();
+            }
           }
         }
+        if (psiElement != null && extra != null ) {
+          extra.consume(psiElement, element -> processNode(element.getNode(), indent + 2,  null));
+        }
       }
-      if (psiElement != null && extra != null ) {
-        extra.consume(psiElement,
-                      element -> treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null));
+      catch (IOException e) {
+        LOG.error(e);
       }
-    }
-    catch (IOException e) {
-      LOG.error(e);
     }
   }
 

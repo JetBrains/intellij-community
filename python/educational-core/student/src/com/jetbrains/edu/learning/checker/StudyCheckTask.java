@@ -16,11 +16,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.*;
-import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
@@ -145,11 +148,11 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
-    if (myTask.isChoiceTask()) {
-      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
+    if (myTask instanceof ChoiceTask) {
+      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, (ChoiceTask)myTask);
       processStepicCheckOutput(indicator, result);
     }
-    else if (myTask.isTheoryTask()) {
+    else if (myTask instanceof TheoryTask) {
       final int lessonId = myTask.getLesson().getId();
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
@@ -162,7 +165,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         }
       }
       else {
-        ApplicationManager.getApplication().invokeLater(() -> 
+        ApplicationManager.getApplication().invokeLater(() ->
                                                           StudyUtils.showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
       }
     }
@@ -229,7 +232,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
           () -> {
-            if (myTask.isChoiceTask()) {
+            if (myTask instanceof ChoiceTask) {
               StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
             }
             else {
@@ -239,18 +242,26 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           });
       }
       else {
-        boolean hasMoreSubtasks = myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != myTask.getLastSubtaskIndex();
-        int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
-        ApplicationManager.getApplication().invokeLater(() -> {
-          int subtaskSize = myTask.getLastSubtaskIndex() + 1;
-          String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
-          StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
-          if (hasMoreSubtasks) {
-            int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
-            StudySubtaskUtils.switchStep(myProject, myTask, nextSubtaskIndex);
-            rememberAnswers(nextSubtaskIndex);
-          }
-        });
+        if (myTask instanceof TaskWithSubtasks) {
+          boolean hasMoreSubtasks = ((TaskWithSubtasks)myTask).activeSubtaskNotLast();
+          final int activeSubtaskIndex = ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
+          int visibleSubtaskIndex = activeSubtaskIndex + 1;
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            int subtaskSize = ((TaskWithSubtasks)myTask).getLastSubtaskIndex() + 1;
+            String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
+            StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
+            if (hasMoreSubtasks) {
+              int nextSubtaskIndex = activeSubtaskIndex + 1;
+              StudySubtaskUtils.switchStep(myProject, (TaskWithSubtasks)myTask, nextSubtaskIndex);
+              rememberAnswers(nextSubtaskIndex);
+            }
+          });
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(
+            () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+        }
       }
     }
   }
@@ -285,17 +296,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void runAfterTaskCheckedActions() {
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
-    if (configurator != null) {
-      StudyAfterCheckAction[] checkActions = configurator.getAfterCheckActions();
-      if (checkActions != null) {
-        for (StudyAfterCheckAction action : checkActions) {
-          action.run(myProject, myTask, myStatusBeforeCheck);
-        }
-      }
-    }
-    else {
-      LOG.warn("No configurator is provided for the plugin");
+    for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
+      listener.afterCheck(myProject, myTask);
     }
   }
 }

@@ -168,7 +168,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if(qualifier != null) {
         PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
-        if (!isValidElementType(elementType, call)) return null;
+        if (!isValidElementType(elementType, call, false)) return null;
         Operation op = Operation.createIntermediate(name, args, outVar, elementType, supportUnknownSources);
         if (op != null) return op;
         op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoidContext(call.getParent()));
@@ -179,8 +179,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     return SourceOperation.createSource(call, supportUnknownSources);
   }
 
-  private static boolean isValidElementType(PsiType elementType, PsiElement context) {
-    if(elementType == null || ((elementType instanceof PsiClassType) && ((PsiClassType)elementType).isRaw())) {
+  private static boolean isValidElementType(PsiType elementType, PsiElement context, boolean allowRaw) {
+    if(elementType == null || (!allowRaw && (elementType instanceof PsiClassType) && ((PsiClassType)elementType).isRaw())) {
       // Raw type in any stream step is not supported
       return false;
     }
@@ -213,7 +213,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
       if (fn == null) return null;
       PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
-      if(!isValidElementType(elementType, terminalCall)) return null;
+      if(!isValidElementType(elementType, terminalCall, true)) return null;
       elementType = GenericsUtil.getVariableTypeByExpressionType(elementType);
       TerminalOperation terminal = new TerminalOperation.ForEachTerminalOperation(fn);
       SourceOperation source = new SourceOperation.ForEachSource(qualifier);

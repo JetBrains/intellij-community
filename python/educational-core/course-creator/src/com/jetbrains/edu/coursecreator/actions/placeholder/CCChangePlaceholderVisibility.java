@@ -12,7 +12,8 @@ import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,16 +95,15 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
       return;
     }
     Task task = state.getTaskFile().getTask();
-    if (!task.hasSubtasks()) {
-      return;
-    }
-    Integer minSubtaskIndex = Collections.min(placeholder.getSubtaskInfos().keySet());
-    if (canChangeState(placeholder, task, minSubtaskIndex)) {
-      presentation.setEnabledAndVisible(true);
+    if ((task instanceof TaskWithSubtasks)) {
+      Integer minSubtaskIndex = Collections.min(placeholder.getSubtaskInfos().keySet());
+      if (canChangeState(placeholder, (TaskWithSubtasks)task, minSubtaskIndex)) {
+        presentation.setEnabledAndVisible(true);
+      }
     }
   }
 
-  private boolean canChangeState(@NotNull AnswerPlaceholder placeholder, @NotNull Task task, int minSubtaskIndex) {
+  private boolean canChangeState(@NotNull AnswerPlaceholder placeholder, @NotNull TaskWithSubtasks task, int minSubtaskIndex) {
     return placeholder.isActive() && minSubtaskIndex != 0 && minSubtaskIndex == task.getActiveSubtaskIndex() && isAvailable(placeholder);
   }
 

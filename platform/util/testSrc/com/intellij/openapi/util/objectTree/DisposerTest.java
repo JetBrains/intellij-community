@@ -354,7 +354,7 @@ public class DisposerTest extends TestCase {
       Disposer.dispose(parent);
       fail("Should throw");
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       assertEquals("Expected", e.getMessage());
     }
     

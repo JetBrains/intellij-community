@@ -28,6 +28,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -68,6 +69,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
       reader = new InputStreamReader(new FileInputStream(courseMetaFile));
       Gson gson = new GsonBuilder()
         .registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseMetaFile))
+        .registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskDeserializer())
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create();
       Course course = gson.fromJson(reader, Course.class);

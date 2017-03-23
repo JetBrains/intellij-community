@@ -10,13 +10,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.learning.StudyLanguageManager;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.projectView.TaskDirectoryNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,25 +52,25 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
       if (course == null) {
         return null;
       }
-      StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
-      if (manager == null) {
+      EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+      if (configurator == null) {
         return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
       }
       if (!CCUtils.isTestsFile(myProject, virtualFile)) {
         return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
       }
-      if (!myTask.hasSubtasks()) {
-        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings, getTestNodeName(manager, psiElement));
+      if (!(myTask instanceof TaskWithSubtasks)) {
+        return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings, getTestNodeName(configurator, psiElement));
       }
-      String testFileName = getTestNodeName(manager, psiElement);
+      String testFileName = getTestNodeName(configurator, psiElement);
       return isActiveSubtaskTest(virtualFile) ? new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings, testFileName) : null;
     }
     return null;
   }
 
   @NotNull
-  private static String getTestNodeName(StudyLanguageManager manager, PsiElement psiElement) {
-    String defaultTestName = manager.getTestFileName();
+  private static String getTestNodeName(EduPluginConfigurator configurator, PsiElement psiElement) {
+    String defaultTestName = configurator.getTestFileName();
     if (psiElement instanceof PsiFile) {
       return defaultTestName;
     }
@@ -81,21 +82,17 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
   }
 
   private boolean isActiveSubtaskTest(VirtualFile virtualFile) {
-    if (!myTask.hasSubtasks()) {
+    if (!(myTask instanceof TaskWithSubtasks)) {
       return true;
     }
 
-    boolean isSubtaskTestFile = virtualFile.getName().contains(EduNames.SUBTASK_MARKER);
-    if (myTask.getActiveSubtaskIndex() == 0) {
-      return !isSubtaskTestFile;
-    }
-    if (!isSubtaskTestFile) {
+    if (!virtualFile.getName().contains(EduNames.SUBTASK_MARKER)) {
       return false;
     }
     String nameWithoutExtension = virtualFile.getNameWithoutExtension();
     int stepMarkerStart = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
     int stepIndex = Integer.valueOf(nameWithoutExtension.substring(EduNames.SUBTASK_MARKER.length() + stepMarkerStart));
-    return stepIndex == myTask.getActiveSubtaskIndex();
+    return stepIndex == ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
   }
 
   @Override

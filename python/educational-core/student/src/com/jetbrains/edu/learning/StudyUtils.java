@@ -3,6 +3,11 @@ package com.jetbrains.edu.learning;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -60,6 +65,10 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
@@ -200,7 +209,7 @@ public class StudyUtils {
   @Nullable
   public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
     if (project.isDisposed()) return null;
-    
+
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow != null) {
       Content[] contents = toolWindow.getContentManager().getContents();
@@ -297,25 +306,16 @@ public class StudyUtils {
   }
 
 
-  /**
-   * returns language manager which contains all the information about language specific file names
-   */
-  @Nullable
-  public static StudyLanguageManager getLanguageManager(@NotNull final Course course) {
-    Language language = course.getLanguageById();
-    return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
-  }
-
   public static boolean isTestsFile(@NotNull Project project, @NotNull final String name) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return false;
     }
-    StudyLanguageManager manager = getLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return false;
     }
-    String testFileName = manager.getTestFileName();
+    String testFileName = configurator.getTestFileName();
     return name.equals(testFileName) ||
            name.startsWith(FileUtil.getNameWithoutExtension(testFileName)) && name.contains(EduNames.SUBTASK_MARKER);
   }
@@ -503,19 +503,19 @@ public class StudyUtils {
   @NotNull
   private static String constructTaskTextFilename(@NotNull Task task, @NotNull String defaultName) {
     String fileNameWithoutExtension = FileUtil.getNameWithoutExtension(defaultName);
-    int activeStepIndex = task.getActiveSubtaskIndex();
-    if (activeStepIndex != 0) {
+    if (task instanceof TaskWithSubtasks) {
+      int activeStepIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
       fileNameWithoutExtension += EduNames.SUBTASK_MARKER + activeStepIndex;
     }
     return addExtension(fileNameWithoutExtension, defaultName);
   }
 
   private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
-    if (task.isTheoryTask()) {
+    if (task instanceof TheoryTask) {
       return text + "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
              "Please, read it and press \"Check\" to go further.";
     }
-    else if (!task.isChoiceTask()) {
+    else if (!(task instanceof ChoiceTask)) {
       return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
     }
     return text;
@@ -536,9 +536,9 @@ public class StudyUtils {
     if (taskDirectory == null) return null;
     final String taskFileNameMd = constructTaskTextFilename(task, EduNames.TASK_MD);
     final String taskFileNameHtml = constructTaskTextFilename(task, EduNames.TASK_HTML);
-    
+
     VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(taskFileNameMd), taskDirectory.findChild(taskFileNameHtml));
-    
+
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
       if (srcDir != null) {
@@ -547,17 +547,6 @@ public class StudyUtils {
     }
     if (taskTextFile != null) {
       return String.valueOf(LoadTextUtil.loadText(taskTextFile));
-    }
-    return null;
-  }
-
-  @Nullable
-  public static StudyPluginConfigurator getConfigurator(@NotNull final Project project) {
-    StudyPluginConfigurator[] extensions = StudyPluginConfigurator.EP_NAME.getExtensions();
-    for (StudyPluginConfigurator extension: extensions) {
-      if (extension.accept(project)) {
-        return extension;
-      }
     }
     return null;
   }
@@ -603,7 +592,7 @@ public class StudyUtils {
     }
     return taskFile;
   }
-  
+
   @Nullable
   public static Task getCurrentTask(@NotNull final Project project) {
     final TaskFile taskFile = getSelectedTaskFile(project);
@@ -722,10 +711,10 @@ public class StudyUtils {
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
     MarkdownUtil.replaceCodeBlock(lines);
-    
+
     return new MarkdownProcessor().markdown(StringUtil.join(lines, "\n"));
   }
-  
+
   public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
     if (EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName)) {
       return true;
@@ -736,21 +725,21 @@ public class StudyUtils {
     }
     return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.SUBTASK_MARKER);
   }
-  
+
   @Nullable
   public static VirtualFile findTaskDescriptionVirtualFile(@NotNull Project project, @NotNull VirtualFile taskDir) {
     Task task = getTask(project, taskDir.getName().contains(EduNames.TASK) ? taskDir: taskDir.getParent());
     if (task == null) {
       return null;
     }
-    
+
     return ObjectUtils.chooseNotNull(taskDir.findChild(constructTaskTextFilename(task, EduNames.TASK_HTML)),
                                      taskDir.findChild(constructTaskTextFilename(task, EduNames.TASK_MD)));
   }
-  
+
   @NotNull
   public static String getTaskDescriptionFileName(final boolean useHtml) {
-    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
+    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;
   }
 
   @Nullable
@@ -838,7 +827,7 @@ public class StudyUtils {
     final int endOffset = startOffset + length + delta;
     return Pair.create(startOffset, endOffset);
   }
-  
+
   public static boolean isCourseValid(@Nullable Course course) {
     if (course == null) return false;
     if (course.isAdaptive()) {
@@ -848,5 +837,27 @@ public class StudyUtils {
       }
     }
     return true;
+  }
+
+  public static void createFromTemplate(@NotNull Project project,
+                                        @NotNull PsiDirectory taskDirectory,
+                                        @NotNull String name,
+                                        @Nullable IdeView view,
+                                        boolean open) {
+    FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(name);
+    if (template == null) {
+      LOG.info("Template " + name + " wasn't found");
+      return;
+    }
+    try {
+      final PsiElement file = FileTemplateUtil.createFromTemplate(template, name, null, taskDirectory);
+      if (view != null && open) {
+        EditorHelper.openInEditor(file, false);
+        view.selectElement(file);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 }

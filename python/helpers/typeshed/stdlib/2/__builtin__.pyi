@@ -8,7 +8,7 @@ from typing import (
     Sequence, Mapping, Tuple, List, Any, Dict, Callable, Generic, Set,
     AbstractSet, FrozenSet, Sized, Reversible, SupportsInt, SupportsFloat, SupportsAbs,
     SupportsRound, IO, BinaryIO, Union, AnyStr, MutableSequence, MutableMapping,
-    MutableSet, ItemsView, KeysView, ValuesView, Optional, Container,
+    MutableSet, ItemsView, KeysView, ValuesView, Optional, Container, Type
 )
 from abc import abstractmethod, ABCMeta
 from mypy_extensions import NoReturn
@@ -22,6 +22,7 @@ _T1 = TypeVar('_T1')
 _T2 = TypeVar('_T2')
 _T3 = TypeVar('_T3')
 _T4 = TypeVar('_T4')
+_T5 = TypeVar('_T5')
 _TT = TypeVar('_TT', bound='type')
 
 class staticmethod: pass   # Special, only valid as a decorator.
@@ -553,6 +554,8 @@ class dict(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     @overload
     def __init__(self, iterable: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
 
+    def __new__(cls: Type[_T1], *args: Any, **kwargs: Any) -> _T1: ...
+
     def has_key(self, k: _KT) -> bool: ...
     def clear(self) -> None: ...
     def copy(self) -> Dict[_KT, _VT]: ...
@@ -800,7 +803,15 @@ def zip(iter1: Iterable[_T1], iter2: Iterable[_T2],
 @overload
 def zip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
         iter4: Iterable[_T4]) -> List[Tuple[_T1, _T2,
-                                           _T3, _T4]]: ...  # TODO more than four iterables
+                                           _T3, _T4]]: ...
+@overload
+def zip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+        iter4: Iterable[_T4], iter5: Iterable[_T5]) -> List[Tuple[_T1, _T2,
+                                                                  _T3, _T4, _T5]]: ...
+@overload
+def zip(iter1: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any],
+        iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any],
+        *iterables: Iterable[Any]) -> List[Tuple[Any, ...]]: ...
 def __import__(name: unicode,
                globals: Dict[str, Any] = ...,
                locals: Dict[str, Any] = ...,
