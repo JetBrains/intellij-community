@@ -49,9 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -170,12 +168,15 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
         return null;
       }
       String className = virtualFile.getNameWithoutExtension();
+      Set<VirtualFile> visitedRoots = ContainerUtil.newHashSet();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
         for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
-          VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-          PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
-          if (javaFile != null) {
-            return javaFile.getLanguageLevel();
+          if (visitedRoots.add(rootFile)) {
+            VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+            PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
+            if (javaFile != null) {
+              return javaFile.getLanguageLevel();
+            }
           }
         }
       }
