@@ -18,7 +18,8 @@ import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public void createTestsForNewSubtask(@NotNull Project project, @NotNull Task task) {
+  public void createTestsForNewSubtask(@NotNull Project project, @NotNull TaskWithSubtasks task) {
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;
