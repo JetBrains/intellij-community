@@ -308,8 +308,24 @@ public class GitRepositoryFiles {
     return path.equals(myExcludePath);
   }
 
-  public void refresh(boolean async) {
-    VfsUtil.markDirtyAndRefresh(async, true, false, myMainDir, myWorktreeDir);
+  /**
+   * Refresh all .git repository files asynchronously and recursively.
+   *
+   * @see #refreshNonTrackedData() if you need the "main" data (branches, HEAD, etc.) to be updated synchronously.
+   */
+  public void refresh() {
+    VfsUtil.markDirtyAndRefresh(true, true, false, myMainDir, myWorktreeDir);
+  }
+
+  /**
+   * Refresh that part of .git repository files, which is not covered by {@link GitRepository#update()}, e.g. the {@code refs/tags/} dir.
+   *
+   * The call to this method should be probably be done together with a call to update(): thus all information will be updated,
+   * but some of it will be updated synchronously, the rest - asynchronously.
+   */
+  public void refreshNonTrackedData() {
+    VirtualFile tagsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myRefsTagsPath);
+    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir);
   }
 
   @NotNull

@@ -214,7 +214,7 @@ public class GitTagDialog extends DialogWrapper {
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
       if (repository != null) {
-        repository.getRepositoryFiles().refresh(true);
+        repository.getRepositoryFiles().refresh();
       }
       else {
         LOG.error("No repository registered for root: " + getGitRoot());
