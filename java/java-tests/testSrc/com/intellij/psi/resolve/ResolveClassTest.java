@@ -208,8 +208,9 @@ public class ResolveClassTest extends ResolveTestCase {
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
-
   public void testStaticImportInTheSameClassPerformance() throws Exception {
+    warmUpResolve();
+
     PsiReference ref = configure();
     ensureIndexUpToDate();
     long start = System.currentTimeMillis();
@@ -222,7 +223,16 @@ public class ResolveClassTest extends ResolveTestCase {
     getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(myProject));
   }
 
+  private void warmUpResolve() {
+    PsiJavaCodeReferenceElement ref = JavaPsiFacade.getElementFactory(myProject).createReferenceFromText("java.util.List<String>", null);
+    JavaResolveResult result = ref.advancedResolve(false);
+    assertNotNull(result.getElement());
+    assertSize(1, result.getSubstitutor().getSubstitutionMap().keySet());
+  }
+
   public void testStaticImportNetworkPerformance() throws Exception {
+    warmUpResolve();
+
     PsiReference ref = configure();
     int count = 15;
 
