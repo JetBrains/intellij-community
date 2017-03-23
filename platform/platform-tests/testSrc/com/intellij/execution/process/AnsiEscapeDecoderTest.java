@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -12,7 +13,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
@@ -140,7 +140,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
   public static Process createTestProcess() {
     // have to be synchronised because used from pooled thread
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream(10000);
-    AtomicBoolean finished = new AtomicBoolean();
+    Semaphore finished = new Semaphore(1);
     return new Process() {
       @Override
       public OutputStream getOutputStream() {
@@ -159,7 +159,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
       @Override
       public int waitFor() {
-        while (!finished.get()) {}
+        finished.waitFor();
         return 0;
       }
 
@@ -170,7 +170,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
       @Override
       public void destroy() {
-        finished.set(true);
+        finished.up();
       }
     };
   }
