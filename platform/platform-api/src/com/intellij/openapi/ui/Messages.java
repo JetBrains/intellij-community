@@ -1603,10 +1603,7 @@ public class Messages {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
     if (BasicHTML.isHTMLString(message)) {
-      HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit();
-      Font font = UIUtil.getLabelFont(fixedFontSize);
-      editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(font, UIUtil.getLabelForeground()));
-      messageComponent.setEditorKit(editorKit);
+      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
     }
     messageComponent.setText(message);
     messageComponent.setEditable(false);

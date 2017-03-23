@@ -168,7 +168,9 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myLiveTemplateBox = new JCheckBox(IdeBundle.message("checkbox.enable.live.templates"));
     myTemplateEditor = createEditor();
 
-    myDescriptionComponent = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
+    myDescriptionComponent = new JEditorPane();
+    myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myDescriptionComponent.setText(EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
     myDescriptionComponent.addHyperlinkListener(new BrowserHyperlinkListener());
 
