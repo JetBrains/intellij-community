@@ -35,4 +35,5 @@ include "meta.rnc" {
                  )
             )
 }
+include "microdata.rnc"
 include "rdfa.rnc"
