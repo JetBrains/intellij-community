@@ -61,7 +61,7 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNos
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)
 
   //https://github.com/nose-devs/nose/issues/1042
-  override fun treatFoldersAsPackages(anchor: PsiElement) = true
+  override fun packageOnlyIfInitPy(anchor: PsiElement) = true
 }
 
 object PyUniversalNoseTestFactory : PyUniversalTestFactory<PyUniversalNoseTestConfiguration>() {

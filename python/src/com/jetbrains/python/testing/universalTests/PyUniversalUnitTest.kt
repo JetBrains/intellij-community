@@ -24,6 +24,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiElement
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
 
@@ -74,6 +75,9 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
   }
 
   override fun isFrameworkInstalled() = true //Unittest is always available
+
+  // See loader.py:     is_not_importable = not os.path.isfile(os.path.join(start_dir, '__init__.py'))
+  override fun packageOnlyIfInitPy(anchor: PsiElement) = true
 }
 
 object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {
