@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class CommandLineUtil {
-  private static final char SPECIAL_QUOTE = '\uEFEF';
+  private static final char INESCAPABLE_QUOTE = '\uEFEF';  // a random char, which is unlikely to encounter in an argument
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|]");
@@ -41,7 +41,7 @@ public class CommandLineUtil {
 
   @NotNull
   public static String specialQuote(@NotNull String parameter) {
-    return quote(parameter, SPECIAL_QUOTE);
+    return quote(parameter, INESCAPABLE_QUOTE);
   }
 
   @NotNull
@@ -64,9 +64,9 @@ public class CommandLineUtil {
 
     if (platform != Platform.WINDOWS) {
       for (String parameter : parameters) {
-        if (isQuoted(parameter, SPECIAL_QUOTE)) {
+        if (isQuoted(parameter, INESCAPABLE_QUOTE)) {
           // TODO do we need that on non-Windows? M.b. just remove these quotes? -- Eldar
-          parameter = quote(unquoteString(parameter, SPECIAL_QUOTE), Q);
+          parameter = quote(unquoteString(parameter, INESCAPABLE_QUOTE), Q);
         }
         commandLine.add(parameter);
       }
@@ -207,7 +207,7 @@ public class CommandLineUtil {
     for (int i = 0; i < parameters.size(); i++) {
       String parameter = parameters.get(i);
 
-      parameter = unquoteString(parameter, SPECIAL_QUOTE);
+      parameter = unquoteString(parameter, INESCAPABLE_QUOTE);
       boolean inescapableQuoting = !parameter.equals(parameters.get(i));
 
       if (parameter.isEmpty()) {
