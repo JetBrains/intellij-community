@@ -482,6 +482,10 @@ public class CommandLineUtil {
     return new File(unquoteString(execName)).getName();
   }
 
+  public static boolean hasWinShellSpecialChars(String parameter) {
+    return WIN_CARET_SPECIAL.matcher(parameter).find();
+  }
+
   /**
    * Counts quote parity needed to ^-escape special chars on Windows properly.
    */
