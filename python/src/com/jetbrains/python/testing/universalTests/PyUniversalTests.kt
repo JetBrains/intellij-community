@@ -529,7 +529,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   /**
    * When checking if configuration is ok we need to know if folders could be packages: i.e. if foo.bar requires init.py in foo to work
    */
-  open fun treatFoldersAsPackages(anchor: PsiElement) = (!LanguageLevel.forElement(anchor).isPy3K)
+  open fun packageOnlyIfInitPy(anchor: PsiElement) = (!LanguageLevel.forElement(anchor).isPy3K)
 }
 
 private fun isTestFile(file: PyFile): Boolean {
@@ -595,7 +595,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
   private fun getTargetForConfig(configuration: PyUniversalTestConfiguration,
                                  baseElement: PsiElement, fixConfiguration: Boolean = false): ConfigurationTarget? {
 
-    val setRelative = (fixConfiguration && configuration.treatFoldersAsPackages(baseElement))
+    val setRelative = (fixConfiguration && configuration.packageOnlyIfInitPy(baseElement))
 
     var element = baseElement
     // Go up until we reach top of the file
