@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,16 +206,14 @@ public class TreeState implements JDOMExternalizable {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)pathComponent;
         final TreeNode parent = node.getParent();
 
+        final int childIndex = parent != null ? parent.getIndex(node) : 0;
         final Object userObject = node.getUserObject();
         if (userObject instanceof NodeDescriptor) {
           final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
           //nodeDescriptor.update();
-          final int childIndex = parent != null ? parent.getIndex(node) : 0;
           result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), childIndex, nodeDescriptor));
         }
-        else {
-          result.add(new PathElement("", "", 0, userObject));
-        }
+        result.add(new PathElement("", "", childIndex, userObject));
       }
       else {
         return null;
