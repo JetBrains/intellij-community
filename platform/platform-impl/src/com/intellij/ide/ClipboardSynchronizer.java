@@ -146,7 +146,8 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
     return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, () -> null);
   }
 
-  public Object getData(DataFlavor dataFlavor) {
+  @Nullable
+  public Object getData(@NotNull DataFlavor dataFlavor) {
     return ClipboardUtil.handleClipboardSafely(() -> {
       try {
         return myClipboardHandler.getData(dataFlavor);
@@ -204,7 +205,8 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
       return clipboard == null ? null: clipboard.getContents(this);
     }
 
-    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    @Nullable
+    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       Clipboard clipboard = getClipboard();
       return clipboard == null ? null : clipboard.getData(dataFlavor);
     }
@@ -256,7 +258,8 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
     }
 
     @Override
-    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    @Nullable
+    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       if (myFullTransferable == null) return super.getData(dataFlavor);
       Transferable contents = getContents();
       return contents == null ? null : contents.getTransferData(dataFlavor);
@@ -371,22 +374,12 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
         return ClipboardSynchronizer.areDataFlavorsAvailable(currentContent, flavors);
       }
 
-      try {
-        Collection<DataFlavor> contents = checkContentsQuick();
-        if (contents != null) {
-          return ClipboardSynchronizer.areDataFlavorsAvailable(contents, flavors);
-        }
+      Collection<DataFlavor> contents = checkContentsQuick();
+      if (contents != null) {
+        return ClipboardSynchronizer.areDataFlavorsAvailable(contents, flavors);
+      }
 
-        return super.areDataFlavorsAvailable(flavors);
-      }
-      catch (NullPointerException e) {
-        LOG.warn("Java bug #6322854", e);
-        return false;
-      }
-      catch (IllegalArgumentException e) {
-        LOG.warn("Java bug #7173464", e);
-        return false;
-      }
+      return super.areDataFlavorsAvailable(flavors);
     }
 
     @Override
@@ -396,47 +389,28 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
         return currentContent;
       }
 
-      try {
-        final Collection<DataFlavor> contents = checkContentsQuick();
-        if (contents != null && contents.isEmpty()) {
-          return null;
-        }
+      Collection<DataFlavor> contents = checkContentsQuick();
+      if (contents != null && contents.isEmpty()) {
+        return null;
+      }
 
-        return super.getContents();
-      }
-      catch (NullPointerException e) {
-        LOG.warn("Java bug #6322854", e);
-        return null;
-      }
-      catch (IllegalArgumentException e) {
-        LOG.warn("Java bug #7173464", e);
-        return null;
-      }
+      return super.getContents();
     }
 
     @Override
-    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    @Nullable
+    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       Transferable currentContent = myCurrentContent;
       if (currentContent != null) {
         return currentContent.getTransferData(dataFlavor);
       }
 
-      try {
-        final Collection<DataFlavor> contents = checkContentsQuick();
-        if (contents != null && contents.isEmpty()) {
-          return null;
-        }
+      Collection<DataFlavor> contents = checkContentsQuick();
+      if (contents != null && !contents.contains(dataFlavor)) {
+        return null;
+      }
 
-        return super.getData(dataFlavor);
-      }
-      catch (NullPointerException e) {
-        LOG.warn("Java bug #6322854", e);
-        return null;
-      }
-      catch (IllegalArgumentException e) {
-        LOG.warn("Java bug #7173464", e);
-        return null;
-      }
+      return super.getData(dataFlavor);
     }
 
     @Override
@@ -508,7 +482,8 @@ public class ClipboardSynchronizer implements ApplicationComponentAdapter, Dispo
     }
 
     @Override
-    public Object getData(DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    @Nullable
+    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       return myContent.getTransferData(dataFlavor);
     }
 
