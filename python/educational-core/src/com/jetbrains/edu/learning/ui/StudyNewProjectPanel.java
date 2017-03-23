@@ -31,7 +31,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.*;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +144,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private void setupBrowseButton() {
     if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
       myBrowseButton.putClientProperty("JButton.buttonType", null);
-    myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
+    myBrowseButton.setIcon(EducationalCoreIcons.InterpreterGear);
     final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {

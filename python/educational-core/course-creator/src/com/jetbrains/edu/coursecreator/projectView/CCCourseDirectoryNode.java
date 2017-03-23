@@ -14,7 +14,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.projectView.CourseDirectoryNode;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +54,6 @@ public class CCCourseDirectoryNode extends CourseDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
-    updatePresentation(data, myCourse.getName(), JBColor.black, InteractiveLearningIcons.Course, "Course Creation");
+    updatePresentation(data, myCourse.getName(), JBColor.black, EducationalCoreIcons.Course, "Course Creation");
   }
 }

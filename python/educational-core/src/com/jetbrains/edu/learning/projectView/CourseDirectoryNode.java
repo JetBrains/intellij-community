@@ -11,7 +11,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
-    setPresentation(data, myCourse.getName(), InteractiveLearningIcons.Course);
+    setPresentation(data, myCourse.getName(), EducationalCoreIcons.Course);
   }
 
   @Nullable

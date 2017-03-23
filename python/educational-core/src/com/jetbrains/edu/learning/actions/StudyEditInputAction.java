@@ -24,12 +24,12 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyTestContentPanel;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +48,7 @@ public class StudyEditInputAction extends DumbAwareAction {
   private Map<TabInfo, UserTest> myEditableTabs = new HashMap<>();
 
   public StudyEditInputAction() {
-    super("Watch Test Input", "Watch test input", InteractiveLearningIcons.WatchInput);
+    super("Watch Test Input", "Watch test input", EducationalCoreIcons.WatchInput);
   }
 
   public void showInput(final Project project) {

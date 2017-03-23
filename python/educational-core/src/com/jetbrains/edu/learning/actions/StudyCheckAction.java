@@ -18,7 +18,7 @@ import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +31,7 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
 
   public StudyCheckAction() {
     super(getTextWithShortcuts(TEXT),
-          "Check current task", InteractiveLearningIcons.CheckTask);
+          "Check current task", EducationalCoreIcons.CheckTask);
   }
 
   @NotNull

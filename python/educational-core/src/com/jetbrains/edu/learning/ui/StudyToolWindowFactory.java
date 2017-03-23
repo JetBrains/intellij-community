@@ -10,7 +10,7 @@ import com.intellij.ui.content.ContentManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
@@ -19,7 +19,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
   @Override
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
-    toolWindow.setIcon(InteractiveLearningIcons.TaskDescription);
+    toolWindow.setIcon(EducationalCoreIcons.TaskDescription);
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final Course course = taskManager.getCourse();
     if (course != null) {

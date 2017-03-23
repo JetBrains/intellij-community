@@ -12,10 +12,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="student" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module" module-name="educational-core" />
   </component>
 </module>

@@ -12,7 +12,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.TASK_TITLED;
 
   public CCCreateTask() {
-    super(EduNames.TASK_TITLED, TITLE, InteractiveLearningIcons.Task);
+    super(EduNames.TASK_TITLED, TITLE, EducationalCoreIcons.Task);
   }
 
 

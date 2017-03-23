@@ -8,9 +8,9 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
  */
-public class InteractiveLearningIcons {
+public class EducationalCoreIcons {
   private static Icon load(String path) {
-    return IconLoader.getIcon(path, InteractiveLearningIcons.class);
+    return IconLoader.getIcon(path, EducationalCoreIcons.class);
   }
 
   public static final Icon CheckTask = load("/icons/com/jetbrains/edu/learning/CheckTask.png"); // 16x16

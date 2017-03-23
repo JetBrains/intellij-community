@@ -25,7 +25,10 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
@@ -33,7 +36,7 @@ import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +51,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public StudyRefreshTaskFileAction() {
     super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")",
           "Refresh current task",
-          InteractiveLearningIcons.ResetTaskFile);
+          EducationalCoreIcons.ResetTaskFile);
   }
 
   public static void refresh(@NotNull final Project project) {

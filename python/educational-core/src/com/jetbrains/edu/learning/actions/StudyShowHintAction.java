@@ -22,7 +22,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyHint;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
 
   public StudyShowHintAction() {
     super("Show hint (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Show hint",
-          InteractiveLearningIcons.ShowHint);
+          EducationalCoreIcons.ShowHint);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -17,7 +17,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
-import icons.InteractiveLearningIcons;
+import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,12 +48,12 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
     StudyStatus status = myTask.getStatus();
     String subtaskInfo = myTask instanceof TaskWithSubtasks ? getSubtaskInfo((TaskWithSubtasks)myTask) : null;
     if (status == StudyStatus.Unchecked) {
-      updatePresentation(data, myTask.getName(), JBColor.BLACK, InteractiveLearningIcons.Task, subtaskInfo);
+      updatePresentation(data, myTask.getName(), JBColor.BLACK, EducationalCoreIcons.Task, subtaskInfo);
       return;
     }
     boolean isSolved = status == StudyStatus.Solved;
     JBColor color = isSolved ? LIGHT_GREEN : JBColor.RED;
-    Icon icon = isSolved ? InteractiveLearningIcons.TaskCompl : InteractiveLearningIcons.TaskProbl;
+    Icon icon = isSolved ? EducationalCoreIcons.TaskCompl : EducationalCoreIcons.TaskProbl;
     updatePresentation(data, myTask.getName(), color, icon, subtaskInfo);
   }
 
