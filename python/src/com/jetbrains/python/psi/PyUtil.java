@@ -852,7 +852,15 @@ public class PyUtil {
       // concurrent hash map is a null-hostile collection
       return CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return cache.computeIfAbsent(Optional.ofNullable(param), p -> Optional.ofNullable(f.fun(param))).orElse(null);
+    // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key 
+    // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
+    final Optional<P> wrappedParam = Optional.ofNullable(param);
+    Optional<T> value = cache.get(wrappedParam);
+    if (value == null) {
+      value = Optional.ofNullable(f.fun(param));
+      cache.put(wrappedParam, value);
+    }
+    return value.orElse(null);
   }
 
   /**
