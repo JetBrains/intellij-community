@@ -93,9 +93,9 @@ class BundledJreManager {
       return null
     }
     buildContext.messages.block("Extract $archive.name JRE") {
-      String destination = "$targetDir/jre32"
-      if (osDirName == "win" && arch == JvmArchitecture.x64) {
-        destination = "$targetDir/jre64"
+      String destination = "$targetDir/jre64"
+      if (osDirName == "win" && arch == JvmArchitecture.x32) {
+        destination = "$targetDir/jre32"
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
