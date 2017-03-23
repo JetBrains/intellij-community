@@ -300,6 +300,49 @@ public class KeymapUtil {
     return new MouseShortcut(button, modifiers, clickCount);
   }
 
+  /**
+   * @return string representation of passed mouse shortcut. This method should
+   *         be used only for serializing of the <code>MouseShortcut</code>
+   */
+  public static String getMouseShortcutString(MouseShortcut shortcut) {
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    // modifiers
+    int modifiers = shortcut.getModifiers();
+    if ((InputEvent.SHIFT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(SHIFT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.CTRL_DOWN_MASK & modifiers) > 0) {
+      buffer.append(CONTROL);
+      buffer.append(' ');
+    }
+    if ((InputEvent.META_DOWN_MASK & modifiers) > 0) {
+      buffer.append(META);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_GRAPH_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT_GRAPH);
+      buffer.append(' ');
+    }
+
+    // button
+    buffer.append("button").append(shortcut.getButton()).append(' ');
+
+    if (shortcut.getClickCount() > 1) {
+      buffer.append(DOUBLE_CLICK);
+    }
+    return buffer.toString().trim(); // trim trailing space (if any)
+  }
+
   public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
       if ((modifiers & InputEvent.META_MASK) != 0) {
