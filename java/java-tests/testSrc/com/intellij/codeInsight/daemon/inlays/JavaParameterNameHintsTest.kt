@@ -15,10 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.editor.Inlay
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.assertj.core.api.Assertions.assertThat
 
 class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
@@ -760,6 +764,53 @@ class X {
   X(int a, String bS) {}
 }
 """)
+  }
+
+  fun `test preserved inlays`() {
+    myFixture.configureByText(JavaFileType.INSTANCE, 
+"""
+class Test {
+  void main() {
+    test(<caret>);
+  }
+
+  void test(int fooo) {}
+}
+""")
+    
+    myFixture.type("100")
+    myFixture.doHighlighting()
+    assertSingleInlayWithText("fooo:")
+    
+    myFixture.type("\b\b\b")
+    myFixture.doHighlighting()
+    assertSingleInlayWithText("fooo:")
+    
+    myFixture.type("yyy")
+    myFixture.doHighlighting()
+    assertSingleInlayWithText("fooo:")
+    
+    myFixture.checkResult(
+"""
+class Test {
+  void main() {
+    test(yyy);
+  }
+
+  void test(int fooo) {}
+}
+""")
+  }
+
+  fun assertSingleInlayWithText(expectedText: String) {
+    val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+    assertThat(inlays).hasSize(1)
+    val realText = getHintText(inlays[0])
+    assertThat(realText).isEqualTo(expectedText)
+  }
+
+  fun getHintText(inlay: Inlay): String {
+    return ParameterHintsPresentationManager.getInstance().getHintText(inlay)
   }
 
 }
