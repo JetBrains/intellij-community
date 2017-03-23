@@ -28,9 +28,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.tree.IElementType;
@@ -147,34 +145,43 @@ public class DebugUtil {
                                   final boolean showChildrenRanges,
                                   final boolean usePsi,
                                   @Nullable PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
-    new TreeToBuffer(buffer, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi).processNode(root, indent, extra);
+    ((TreeElement) root).acceptTree(
+      new TreeToBuffer(buffer, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, extra));
   }
 
-
-  private static class TreeToBuffer {
+  private static class TreeToBuffer extends RecursiveTreeElementWalkingVisitor {
     final Appendable buffer;
     final boolean skipWhiteSpaces;
     final boolean showRanges;
     final boolean showChildrenRanges;
     final boolean usePsi;
+    final PairConsumer<PsiElement, Consumer<PsiElement>> extra;
+    int indent;
 
-    TreeToBuffer(Appendable buffer, boolean skipWhiteSpaces, boolean showRanges, boolean showChildrenRanges, boolean usePsi) {
+    TreeToBuffer(Appendable buffer, int indent, boolean skipWhiteSpaces,
+                 boolean showRanges, boolean showChildrenRanges, boolean usePsi,
+                 PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
       this.buffer = buffer;
       this.skipWhiteSpaces = skipWhiteSpaces;
       this.showRanges = showRanges;
       this.showChildrenRanges = showChildrenRanges;
       this.usePsi = usePsi;
+      this.extra = extra;
+      this.indent = indent;
     }
 
-    void processNode(@NotNull ASTNode root, int indent, @Nullable PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
-      if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
+    @Override
+    protected void visitNode(TreeElement root) {
+      if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) {
+        indent += 2;
+        return;
+      }
 
       StringUtil.repeatSymbol(buffer, ' ', indent);
       try {
-        PsiElement psiElement = null;
         if (root instanceof CompositeElement) {
           if (usePsi) {
-            psiElement = root.getPsi();
+            PsiElement psiElement = root.getPsi();
             if (psiElement != null) {
               buffer.append(psiElement.toString());
             }
@@ -192,27 +199,27 @@ public class DebugUtil {
         }
         if (showRanges) buffer.append(root.getTextRange().toString());
         buffer.append("\n");
-        if (root instanceof CompositeElement) {
-          ASTNode child = root.getFirstChildNode();
-
-          if (child == null) {
-            StringUtil.repeatSymbol(buffer, ' ', indent + 2);
-            buffer.append("<empty list>\n");
-          }
-          else {
-            while (child != null) {
-              processNode(child, indent + 2, extra);
-              child = child.getTreeNext();
-            }
-          }
-        }
-        if (psiElement != null && extra != null ) {
-          extra.consume(psiElement, element -> processNode(element.getNode(), indent + 2,  null));
+        indent += 2;
+        if (root instanceof CompositeElement && root.getFirstChildNode() == null) {
+          StringUtil.repeatSymbol(buffer, ' ', indent);
+          buffer.append("<empty list>\n");
         }
       }
       catch (IOException e) {
         LOG.error(e);
       }
+
+      super.visitNode(root);
+    }
+
+    @Override
+    protected void elementFinished(@NotNull ASTNode e) {
+      PsiElement psiElement = extra != null && usePsi && e instanceof CompositeElement ? e.getPsi() : null;
+      if (psiElement != null) {
+        extra.consume(psiElement, element ->
+          treeToBuffer(buffer, element.getNode(), indent, skipWhiteSpaces, showRanges, showChildrenRanges, true, null));
+      }
+      indent -= 2;
     }
   }
 
