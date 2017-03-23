@@ -128,12 +128,10 @@ mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
     | [^\\\'\r\n]
     | "$")*
 mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
-mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
-    | \"
-    | "$"
-    | [^\']
+mTRIPLE_QUOTED_STRING = \'\'\' ({mSTRING_ESC}
+    | [^\\']
     | {mSTRING_NL}
-    | \'(\')?[^\'] )* (\'\'\' | \\)?
+    | \'(\')?[^'] )* (\'{1,3} | \\)?
 
 mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING} | {mSINGLE_QUOTED_STRING}
 
