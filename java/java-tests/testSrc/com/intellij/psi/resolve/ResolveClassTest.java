@@ -213,10 +213,8 @@ public class ResolveClassTest extends ResolveTestCase {
 
     PsiReference ref = configure();
     ensureIndexUpToDate();
-    long start = System.currentTimeMillis();
-    assertNull(ref.resolve());
-    long elapsed = System.currentTimeMillis() - start;
-    PlatformTestUtil.assertTiming("exponent?", 500, elapsed);
+    PlatformTestUtil.startPerformanceTest("exponent?", 500, () -> assertNull(ref.resolve()))
+      .cpuBound().attempts(1).assertTiming();
   }
 
   private void ensureIndexUpToDate() {
@@ -247,9 +245,8 @@ public class ResolveClassTest extends ResolveTestCase {
 
     ensureIndexUpToDate();
     System.gc();
-    long start = System.currentTimeMillis();
-    assertNull(ref.resolve());
-    PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);
+    PlatformTestUtil.startPerformanceTest("exponent?", 20000, () -> assertNull(ref.resolve()))
+      .cpuBound().attempts(1).assertTiming();
   }
 
   public void testQualifiedAnonymousClass() throws Exception {
