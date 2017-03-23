@@ -82,6 +82,13 @@ public class EduAdaptiveStepicConnector {
         LOG.warn("Http client is null");
         return null;
       }
+
+      StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      if (user == null) {
+        LOG.warn("User is null");
+        return null;
+      }
+
       final URI uri = new URIBuilder(EduStepicNames.STEPIC_API_URL + EduStepicNames.RECOMMENDATIONS_URL)
         .addParameter(EduNames.COURSE, String.valueOf(course.getId()))
         .build();
@@ -108,7 +115,7 @@ public class EduAdaptiveStepicConnector {
             course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
             for (int stepId : realLesson.steps) {
-              final Task taskFromStep = getTask(project, realLesson.getName(), stepId);
+              final Task taskFromStep = getTask(project, realLesson.getName(), stepId, user.getId());
               if (taskFromStep != null) return taskFromStep;
             }
           }
@@ -144,14 +151,14 @@ public class EduAdaptiveStepicConnector {
   }
 
   @Nullable
-  private static Task getTask(@NotNull Project project, @NotNull String name, int stepId) throws IOException {
+  private static Task getTask(@NotNull Project project, @NotNull String name, int stepId, int userId) throws IOException {
     final StepicWrappers.StepSource step = getStep(stepId);
     final String stepType = step.block.name;
     if (stepType.equals(CODE_TASK_TYPE)) {
       return getCodeTaskFromStep(project, step.block, name, stepId);
     }
     else if (stepType.equals(CHOICE_TYPE_TEXT)) {
-      return getChoiceTaskFromStep(name, step.block, stepId);
+      return getChoiceTaskFromStep(name, step.block, stepId, userId);
     }
     else if (stepType.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
       return EduStepicConnector.createTask(stepId);
@@ -176,12 +183,12 @@ public class EduAdaptiveStepicConnector {
   @NotNull
   private static Task getChoiceTaskFromStep(@NotNull String lessonName,
                                             @NotNull StepicWrappers.Step block,
-                                            int stepId) {
+                                            int stepId, int userId) {
     final ChoiceTask task = new ChoiceTask(lessonName);
     task.setStepId(stepId);
     task.setText(block.text);
 
-    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(stepId);
+    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(stepId, userId);
     if (attempt != null) {
       final StepicWrappers.AdaptiveAttemptWrapper.Dataset dataset = attempt.dataset;
       if (dataset != null) {
@@ -205,17 +212,15 @@ public class EduAdaptiveStepicConnector {
   }
 
   @Nullable
-  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt getAttemptForStep(int id) {
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-    if (user == null) return null;
+  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt getAttemptForStep(int stepId, int userId) {
     try {
-      final List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> attempts = getAttempts(user, id);
+      final List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> attempts = getAttempts(stepId, userId);
       if (attempts != null && attempts.size() > 0) {
         final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = attempts.get(0);
-        return attempt.isActive() ? attempt : createNewAttempt(id);
+        return attempt.isActive() ? attempt : createNewAttempt(stepId);
       }
       else {
-        return createNewAttempt(id);
+        return createNewAttempt(stepId);
       }
     }
     catch (URISyntaxException | IOException e) {
@@ -230,15 +235,16 @@ public class EduAdaptiveStepicConnector {
     return attempt.attempts.get(0);
   }
 
-  private static List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> getAttempts(@NotNull StepicUser user, int id)
+  @Nullable
+  private static List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> getAttempts(int stepId, int userId)
     throws URISyntaxException, IOException {
     final URI attemptUrl = new URIBuilder(EduStepicNames.ATTEMPTS)
-      .addParameter("step", String.valueOf(id))
-      .addParameter("user", String.valueOf(user.getId()))
+      .addParameter("step", String.valueOf(stepId))
+      .addParameter("user", String.valueOf(userId))
       .build();
     final StepicWrappers.AdaptiveAttemptContainer attempt =
-      EduStepicAuthorizedClient.getFromStepic(attemptUrl.toString(), StepicWrappers.AdaptiveAttemptContainer.class, user);
-    return attempt.attempts;
+      EduStepicAuthorizedClient.getFromStepic(attemptUrl.toString(), StepicWrappers.AdaptiveAttemptContainer.class);
+    return attempt == null ? null : attempt.attempts;
   }
 
   private static void setTimeout(HttpGet request) {
@@ -299,6 +305,8 @@ public class EduAdaptiveStepicConnector {
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       if (user == null) {
         LOG.warn("Can't get next recommendation: user is null");
+        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
+                                                                                                 "Can't get next recommendation: you're not authorized"));
         return;
       }
       final boolean recommendationReaction = postRecommendationReaction(String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
@@ -484,9 +492,9 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  public static Pair<Boolean, String> checkChoiceTask(@NotNull Project project, @NotNull ChoiceTask task) {
-    if (task.getSelectedVariants().isEmpty()) return Pair.create(false, "No variants selected");
-    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(task.getStepId());
+  public static Pair<Boolean, String> checkChoiceTask(@NotNull Project project, @NotNull ChoiceTask task, @NotNull StepicUser user) {
+    if (task.getSelectedVariants().isEmpty()) return Pair.create(null, "No variants selected");
+    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(task.getStepId(), user.getId());
 
     if (attempt != null) {
       final int attemptId = attempt.id;
@@ -496,11 +504,12 @@ public class EduAdaptiveStepicConnector {
       if (!isActiveAttempt) return Pair.create(false, "Your solution is out of date. Please try again");
       final StepicWrappers.SubmissionToPostWrapper wrapper = new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId),
                                                                                                         createChoiceTaskAnswerArray(task));
-      final Pair<Boolean, String> pair = doAdaptiveCheck(wrapper, attemptId);
-      if (!pair.getFirst()) {
+      final Pair<Boolean, String> pair = doAdaptiveCheck(wrapper, attemptId, user.getId());
+      Boolean result = pair.getFirst();
+      if (result != null && !result) {
         try {
           createNewAttempt(task.getStepId());
-          final Task updatedTask = getTask(project, task.getName(), task.getStepId());
+          final Task updatedTask = getTask(project, task.getName(), task.getStepId(), user.getId());
           if (updatedTask instanceof ChoiceTask) {
             final List<String> variants = ((ChoiceTask)updatedTask).getChoiceVariants();
             task.setChoiceVariants(variants);
@@ -514,7 +523,7 @@ public class EduAdaptiveStepicConnector {
       return pair;
     }
 
-    return new Pair<>(false, "");
+    return new Pair<>(null, "Failed to launch checking");
   }
 
   private static boolean[] createChoiceTaskAnswerArray(@NotNull ChoiceTask task) {
@@ -527,7 +536,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @Nullable
-  public static Pair<Boolean, String> checkCodeTask(@NotNull Project project, @NotNull Task task) {
+  public static Pair<Boolean, String> checkCodeTask(@NotNull Project project, @NotNull Task task, @NotNull StepicUser user) {
     int attemptId = -1;
     try {
       attemptId = getAttemptId(task);
@@ -542,23 +551,22 @@ public class EduAdaptiveStepicConnector {
         final String answer = PYCHARM_COMMENT + editor.getDocument().getText();
         final StepicWrappers.SubmissionToPostWrapper submissionToPost =
           new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, answer);
-        return doAdaptiveCheck(submissionToPost, attemptId);
+        return doAdaptiveCheck(submissionToPost, attemptId, user.getId());
       }
     }
     else {
       LOG.warn("Got an incorrect attempt id: " + attemptId);
     }
-    return Pair.create(false, "");
+    return Pair.create(null, "Failed to launch checking");
   }
 
   private static Pair<Boolean, String> doAdaptiveCheck(@NotNull StepicWrappers.SubmissionToPostWrapper submission,
-                                                       int attemptId) {
+                                                       int attemptId, int userId) {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
     if (client != null) {
-      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, submission);
-      if (wrapper != null && user != null) {
-        wrapper = getCheckResults(client, wrapper, attemptId, user.getId());
+      if (wrapper != null) {
+        wrapper = getCheckResults(client, wrapper, attemptId, userId);
         if (wrapper.submissions.length > 0) {
           final String status = wrapper.submissions[0].status;
           final String hint = wrapper.submissions[0].hint;
@@ -570,11 +578,12 @@ public class EduAdaptiveStepicConnector {
         }
       }
       else {
-        LOG.warn("Can't do adaptive check: " + (wrapper == null ? "wrapper is null" : "user is null"));
+        LOG.warn("Can't do adaptive check: " + "wrapper is null");
+        return Pair.create(null, "Can't get check results for Stepik");
       }
     }
 
-    return Pair.create(false, "");
+    return Pair.create(null, "Failed to launch checking");
   }
 
   @Nullable

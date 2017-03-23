@@ -149,24 +149,24 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
+    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    if (user == null) {
+      LOG.warn("User is null");
+      ApplicationManager.getApplication().invokeLater(() ->
+                                                        StudyUtils.showErrorPopupOnToolbar(myProject,
+                                                                                           "Failed to launch checking: you're not authorized"));
+      return;
+    }
+
     if (myTask instanceof ChoiceTask) {
-      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, (ChoiceTask)myTask);
+      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, (ChoiceTask)myTask, user);
       processStepicCheckOutput(indicator, result);
     }
     else if (myTask instanceof TheoryTask) {
       final int lessonId = myTask.getLesson().getId();
-      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-
-      final boolean reactionPosted;
-      if (user == null) {
-        LOG.warn("User is null");
-        reactionPosted = false;
-      }
-      else {
-        reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
-                                                                               String.valueOf(user.getId()),
-                                                                               EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
-      }
+      final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
+                                                                                           String.valueOf(user.getId()),
+                                                                                           EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
 
       if (reactionPosted) {
         if (myStatusBeforeCheck != StudyStatus.Solved) {
@@ -176,7 +176,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       }
       else {
         ApplicationManager.getApplication().invokeLater(() ->
-                                                          StudyUtils.showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
+                                                          StudyUtils
+                                                            .showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
       }
     }
     else {
@@ -188,7 +189,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           onTaskFailed(testOutput.getMessage());
         }
         else {
-          final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkCodeTask(myProject, myTask);
+          final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkCodeTask(myProject, myTask, user);
           processStepicCheckOutput(indicator, pair);
         }
       }
@@ -196,7 +197,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void processStepicCheckOutput(@NotNull ProgressIndicator indicator, @Nullable Pair<Boolean, String> pair) {
-    if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
+    if (pair != null && pair.getFirst() != null) {
       if (pair.getFirst()) {
         onTaskSolved("Congratulations! Remote tests passed.");
         if (myStatusBeforeCheck != StudyStatus.Solved) {
@@ -210,10 +211,13 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
-                                                                                                MessageType.WARNING
-                                                                                                  .getPopupBackground(),
-                                                                                                myProject));
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String message = pair == null ? FAILED_CHECK_LAUNCH : pair.getSecond();
+        StudyCheckUtils.showTestResultPopUp(message,
+                                            MessageType.WARNING
+                                              .getPopupBackground(),
+                                            myProject);
+      });
     }
   }
 
