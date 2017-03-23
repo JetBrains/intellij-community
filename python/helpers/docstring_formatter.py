@@ -175,48 +175,48 @@ def format_rest(docstring):
 
         def visit_field_list(self, node):
             fields = {}
-            for n in node.children:
-                if not n.children:
+            for field_node in node.children:
+                if not field_node.children:
                     continue
-                child = n.children[0]
-                rawsource = child.rawsource
-                if rawsource.startswith("param "):
-                    if not child.children:
+                field_name_node = field_node.children[0]
+                field_name_raw = field_name_node.rawsource
+                if field_name_raw.startswith("param "):
+                    if not field_name_node.children:
                         continue
-                    param_name = rawsource[len("param "):]
+                    param_name = field_name_raw[len("param "):]
                     param_type = None
                     parts = param_name.rsplit(None, 1)
                     if len(parts) == 2:
                         param_type, param_name = parts
                     # Strip leading escaped asterisks for vararg parameters in Google code style docstrings
                     param_name = re.sub(r'\\\*', '*', param_name)
-                    child.children[0] = Text(param_name)
-                    fields[param_name] = n
+                    field_name_node.children[0] = Text(param_name)
+                    fields[param_name] = field_node
                     if param_type:
-                        n.type = param_type
-                if rawsource == "return":
-                    fields["return"] = n
+                        field_node.type = param_type
+                if field_name_raw == "return":
+                    fields["return"] = field_node
 
-            for n in list(node.children):
-                if len(n.children) < 2:
+            for field_node in list(node.children):
+                if len(field_node.children) < 2:
                     continue
-                field_name_node, field_body_node = n.children[0], n.children[1]
+                field_name_node, field_body_node = field_node.children[:2]
                 param_type = self._strip_markup(field_body_node.astext())[1]
-                rawsource = field_name_node.rawsource
-                if rawsource.startswith("type "):
-                    param_name = re.sub(r'\\\*', '*', rawsource[len("type "):])
+                field_name_raw = field_name_node.rawsource
+                if field_name_raw.startswith("type "):
+                    param_name = re.sub(r'\\\*', '*', field_name_raw[len("type "):])
                     if param_name in fields:
-                        node.children.remove(n)
+                        node.children.remove(field_node)
                     else:
-                        fields[param_name] = n
+                        fields[param_name] = field_node
                         field_name_node.children[0] = Text(param_name)
                         field_body_node.children[:] = []
                     fields[param_name].type = param_type
-                elif rawsource == "rtype":
+                elif field_name_raw == "rtype":
                     if "return" in fields:
-                        node.children.remove(n)
+                        node.children.remove(field_node)
                     else:
-                        fields["return"] = n
+                        fields["return"] = field_node
                         field_name_node.children[0] = Text("return")
                         field_body_node.children[:] = []
                     fields["return"].type = param_type
