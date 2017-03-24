@@ -143,6 +143,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myDebugProcess = null;
       myPauseScriptListener = null;
       myRatherLaterRequests.clear();
+      myScriptRunnables.clear();
       super.tearDown();
     }
     finally {
