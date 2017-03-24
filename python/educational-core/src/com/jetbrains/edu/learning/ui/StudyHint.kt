@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
+import com.jetbrains.edu.coursecreator.actions.CCEditHintAction
 import com.jetbrains.edu.learning.StudyTaskManager
 import com.jetbrains.edu.learning.StudyUtils
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder
@@ -44,21 +44,11 @@ open class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
       val group = DefaultActionGroup()
       val hints = myPlaceholder?.hints
       if (hints != null) {
-        group.addAll(getActions())
+        group.addAll(Arrays.asList(GoBackward(), GoForward(), CCEditHintAction(myPlaceholder)))
         studyToolWindow.setActionToolbar(group)
         setHintText(hints)
       }
     }
-  }
-
-  protected fun getActions(): List<AnAction> {
-    val result = ArrayList<AnAction>()
-    result.add(GoBackward())
-    result.add(GoForward())
-    for (hintActionsProvider in Extensions.getExtensions(StudyHintActionsProvider.EP_NAME)) {
-      result.addAll(hintActionsProvider.getAdditionalHintActions(myPlaceholder))
-    }
-    return result
   }
 
   protected fun setHintText(hints: List<String>) {
