@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
 
 public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef/";
 
   @Override
   protected void setUp() throws Exception {
@@ -77,37 +76,14 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testVarargsMethodRef() { doTest(); }
   public void testExprReceiver() { doTest(); }
   public void testVoidReturnTypeAmbiguity() { doTest(true); }
-
-  public void testTypeParameterWithExtendsList() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA112323() throws Exception {
-    doTest();
-  }
-
-  public void testExactReferencesToArrayCreation() {
-    doTest();
-  }
-
-  public void testUnknownQualifierClass() throws Exception {
-    doTest();
-  }
-
-  public void testQualifiersInStaticContext() throws Exception {
-    doTest();
-  }
-  public void testInvalidFunctionalTypeInReturnStmt() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127765() throws Exception {
-    doTest();
-  }
-
-  public void testIntersectionTypesInReceiverPosition() throws Exception {
-    doTest();
-  }
+  public void testTypeParameterWithExtendsList() { doTest(); }
+  public void testIDEA112323() { doTest(); }
+  public void testExactReferencesToArrayCreation() { doTest(); }
+  public void testUnknownQualifierClass() { doTest(); }
+  public void testQualifiersInStaticContext() { doTest(); }
+  public void testInvalidFunctionalTypeInReturnStmt() { doTest(); }
+  public void testIDEA127765() { doTest(); }
+  public void testIntersectionTypesInReceiverPosition() { doTest(); }
 
   private void doTest() {
     doTest(false);
@@ -115,6 +91,6 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + getTestName(false) + ".java", warnings, false);
   }
 }

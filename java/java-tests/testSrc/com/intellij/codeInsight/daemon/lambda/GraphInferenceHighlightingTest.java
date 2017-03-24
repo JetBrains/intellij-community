@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,432 +22,129 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/graphInference";
-
-  public void testNestedCalls() throws Exception {
-    doTest();
-  }
-
-  public void testNestedCallsSameMethod() throws Exception {
-    doTest();
-  }
-
-  public void testChainedInference() throws Exception {
-    doTest();
-  }
-
-  public void testChainedInference1() throws Exception {
-    doTest();
-  }
-
-  public void testReturnStmt() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromSiblings() throws Exception {
-    doTest();
-  }
-
-  public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
-    doTest();
-  }
-
-  public void testCyclicParamsDependency() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceForFirstArg() throws Exception {
-    doTest();
-  }
-
-  public void testConditionalExpressionsInference() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromTypeParamsBounds() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromNotEqualTypeParamsBounds() throws Exception {
-    doTest();
-  }
-
-  public void testSOEDuringInferenceFromParamBounds() throws Exception {
-    doTest();
-  }
-
-  public void testDiamondsUsedToDetectArgumentType() throws Exception {
-    doTest();
-  }
-
-  public void testInferFromTypeArgs() throws Exception {
-    doTest();
-  }
-
-  public void testDefaultConstructorAsArgument() throws Exception {
-    doTest();
-  }
-
-  public void testAfterAbstractPipeline() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedReturnTypes() throws Exception {
-    doTest();
-  }
-
-  public void testClsCapturedReturnTypes() throws Exception {
-    doTest();
-  }
-
-  public void testOverloadChooserOfReturnType() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA98866() throws Exception {
-    doTest();
-  }
-
-  public void testIncompleteSubstitution() throws Exception {
-    doTest();
-  }
-
-  public void testJDK8028774() throws Exception {
-    doTest();
-  }
-
-  public void testErasedByReturnConstraint() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA104429() throws Exception {
-    doTest();
-  }
-
-  public void testTargetTypeByOverloadedMethod() throws Exception {
-    doTest();
-  }
-
-  public void testTargetTypeByOverloadedMethod2() throws Exception {
-    doTest();
-  }
-
-  public void testGrandParentTypeParams() throws Exception {
-    doTest();
-  }
-
-  public void testDeepCallsChain() throws Exception {
-    doTest();
-  }
-
-  public void testArrayPassedToVarargsMethod() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA121055() throws Exception {
-    doTest();
-  }
-
-  public void testTargetTypeByAnonymousClass() throws Exception {
-    doTest();
-  }
-
-  public void testStaticInheritorsAmbiguity() throws Exception {
-    doTest();
-  }
-
-  public void testNestedCalls1() throws Exception {
-    doTest();
-  }
-
-  public void testMostSpecificVarargsCase() throws Exception {
-    doTest();
-  }
-
-  public void testLiftedCaptureToOuterCall() throws Exception {
-    doTest();
-  }
-
-  public void testSiteSubstitutionForReturnConstraint() throws Exception {
-    doTest();
-  }
-
-  public void testSiteSubstitutionInExpressionConstraints() throws Exception {
-    doTest();
-  }
-
-  public void testIncorporationWithEqualsBoundsSubstitution() throws Exception {
-    doTest();
-  }
-
-  public void testOuterCallConflictResolution() throws Exception {
-    doTest();
-  }
-
-  public void testVarargsOnNonPertinentPlace() throws Exception {
-    doTest();
-  }
-
-  public void testRawTypeFromParent() throws Exception {
-    doTest();
-  }
-
-  public void testRawTypeFromParentArrayType() throws Exception {
-    doTest();
-  }
-
-  public void testInferFromConditionalExpressionCondition() throws Exception {
-    doTest();
-  }
-
-  public void testPrimitiveWrapperConditionInReturnConstraint() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA128174() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA128101() throws Exception {
-    doTest();
-  }
-
-  public void testOuterCallOverloads() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127928() throws Exception {
-    doTest();
-  }
-  public void testIDEA128766() throws Exception {
-    doTest();
-  }
-
-  public void testSameMethodNestedChainedCallsNearFunctionInterfaces() throws Exception {
-    doTest();
-  }
-
-  public void testInfiniteTypes() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA126163() throws Exception {
-    doTest();
-  }
-
-  public void testIncompatibleBoundsFromAssignment() throws Exception {
-    doTest();
-  }
-
-  public void testFreshVariablesCreatedDuringResolveDependingOnAlreadyResolvedVariables() throws Exception {
-    doTest();
-  }
-
-  public void testCallToGenericMethodsOfNonGenericClassInsideRawInheritor() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA130549() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA130547() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedConversionWithRecursiveTypeParams() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA132725() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA134277() throws Exception {
-    doTest();
-  }
-
-  public void testSameMethodCalledWithDifferentArgsResultingInDependenciesBetweenSameTypeParams() throws Exception {
-    doTest();
-  }
-
-  public void testNestedMethodCallsWithVarargs() throws Exception {
-    doTest();
-  }
-
-  public void testDisjunctionTypeEquality() throws Exception {
-    doTest();
-  }
-
-  public void testNestedConditionalExpressions() throws Exception {
-    doTest();
-  }
-
-  public void testOuterMethodCallOnRawType() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA143390() throws Exception {
-    doTest();
-  }
-
-  public void testIntersectionWithArray() throws Exception {
-    doTest();
-  }
-
-  public void testIncorporationWithCaptureCalcGlbToGetOneTypeParameterBound() throws Exception {
-    doTest();
-  }
-
-  public void testEnumConstantInference() throws Exception {
-    doTest();
-  }
-
-  public void testReturnConstraintsWithCaptureIncorporationOfFreshVariables() throws Exception {
-    doTest();
-  }
-
-  public void testArrayTypeAssignability() throws Exception {
-    doTest();
-  }
-
-  public void testAcceptFirstPairOfCommonSupertypesDuringUpUpIncorporation() throws Exception {
-    doTest();
-  }
-
-  public void testDiamondWithExactMethodReferenceInside() throws Exception {
-    doTest();
-  }
-
-  public void testRecursiveCallsWithNestedInference() throws Exception {
-    doTest();
-  }
-
-  public void testIncorporationWithRawSubstitutors() throws Exception {
-    doTest();
-  }
-
-  public void testIncorporationOfBoundsAsTypeArguments() throws Exception {
-    doTest();
-  }
-
-  public void testEliminateIntersectionTypeWildcardElimination() throws Exception {
-    doTest();
-  }
-
-  public void testDoNotIgnoreConflictingUpperBounds() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedWildcardWithArrayTypeBound() throws Exception {
-    doTest();
-  }
-
-  public void testPolyConditionalExpressionWithTargetPrimitive() throws Exception {
-    doTest();
-  }
-
-  public void testCaptureConstraint() throws Exception {
-    doTest();
-  }
-
-  public void testPullUncheckedWarningNotionThroughNestedCalls() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA149774() throws Exception {
-    doTest();
-  }
-
-  public void testDisjunctionTypes() throws Exception {
-    doTest();
-  }
-
-  public void testPushErasedStateToArguments() throws Exception {
-    doTest();
-  }
-
-  public void testStopAtStandaloneConditional() throws Exception {
-    doTest();
-  }
-
-  public void testTransitiveInferenceVariableDependencies() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceVariablesErasure() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedWarningConvertingToInferenceVariable() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedWarningDuringStrictSubtyping() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA150688() throws Exception {
-    doTest();
-  }
-
-  public void testGlbValidityWithCapturedWildcards() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedVariablesAcceptance() throws Exception {
-    doTest();
-  }
-
-  public void testPullingErrorMessagesFromSubExpressionsToTheTopLevel() throws Exception {
-    doTest();
-  }
-
-  public void testHighlightArgumentWithProblem() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA153632() throws Exception {
-    doTest();
-  }
-
-  public void testPartialRawSubstitutionToAvoidInferringObjectsWhenRawExpected() throws Exception {
-    final UncheckedWarningLocalInspection localInspection = new UncheckedWarningLocalInspection();
-    enableInspectionTool(localInspection);
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/graphInference/";
+
+  public void testNestedCalls() { doTest(); }
+  public void testNestedCallsSameMethod() { doTest(); }
+  public void testChainedInference() { doTest(); }
+  public void testChainedInference1() { doTest(); }
+  public void testReturnStmt() { doTest(); }
+  public void testInferenceFromSiblings() { doTest(); }
+  public void testChainedInferenceTypeParamsOrderIndependent() { doTest(); }
+  public void testCyclicParamsDependency() { doTest(); }
+  public void testInferenceForFirstArg() { doTest(); }
+  public void testConditionalExpressionsInference() { doTest(); }
+  public void testInferenceFromTypeParamsBounds() { doTest(); }
+  public void testInferenceFromNotEqualTypeParamsBounds() { doTest(); }
+  public void testSOEDuringInferenceFromParamBounds() { doTest(); }
+  public void testDiamondsUsedToDetectArgumentType() { doTest(); }
+  public void testInferFromTypeArgs() { doTest(); }
+  public void testDefaultConstructorAsArgument() { doTest(); }
+  public void testAfterAbstractPipeline() { doTest(); }
+  public void testCapturedReturnTypes() { doTest(); }
+  public void testClsCapturedReturnTypes() { doTest(); }
+  public void testOverloadChooserOfReturnType() { doTest(); }
+  public void testIDEA98866() { doTest(); }
+  public void testIncompleteSubstitution() { doTest(); }
+  public void testJDK8028774() { doTest(); }
+  public void testErasedByReturnConstraint() { doTest(); }
+  public void testIDEA104429() { doTest(); }
+  public void testTargetTypeByOverloadedMethod() { doTest(); }
+  public void testTargetTypeByOverloadedMethod2() { doTest(); }
+  public void testGrandParentTypeParams() { doTest(); }
+  public void testDeepCallsChain() { doTest(); }
+  public void testArrayPassedToVarargsMethod() { doTest(); }
+  public void testIDEA121055() { doTest(); }
+  public void testTargetTypeByAnonymousClass() { doTest(); }
+  public void testStaticInheritorsAmbiguity() { doTest(); }
+  public void testNestedCalls1() { doTest(); }
+  public void testMostSpecificVarargsCase() { doTest(); }
+  public void testLiftedCaptureToOuterCall() { doTest(); }
+  public void testSiteSubstitutionForReturnConstraint() { doTest(); }
+  public void testSiteSubstitutionInExpressionConstraints() { doTest(); }
+  public void testIncorporationWithEqualsBoundsSubstitution() { doTest(); }
+  public void testOuterCallConflictResolution() { doTest(); }
+  public void testVarargsOnNonPertinentPlace() { doTest(); }
+  public void testRawTypeFromParent() { doTest(); }
+  public void testRawTypeFromParentArrayType() { doTest(); }
+  public void testInferFromConditionalExpressionCondition() { doTest(); }
+  public void testPrimitiveWrapperConditionInReturnConstraint() { doTest(); }
+  public void testIDEA128174() { doTest(); }
+  public void testIDEA128101() { doTest(); }
+  public void testOuterCallOverloads() { doTest(); }
+  public void testIDEA127928() { doTest(); }
+  public void testIDEA128766() { doTest(); }
+  public void testSameMethodNestedChainedCallsNearFunctionInterfaces() { doTest(); }
+  public void testInfiniteTypes() { doTest(); }
+  public void testIDEA126163() { doTest(); }
+  public void testIncompatibleBoundsFromAssignment() { doTest(); }
+  public void testFreshVariablesCreatedDuringResolveDependingOnAlreadyResolvedVariables() { doTest(); }
+  public void testCallToGenericMethodsOfNonGenericClassInsideRawInheritor() { doTest(); }
+  public void testIDEA130549() { doTest(); }
+  public void testIDEA130547() { doTest(); }
+  public void testUncheckedConversionWithRecursiveTypeParams() { doTest(); }
+  public void testIDEA132725() { doTest(); }
+  public void testIDEA134277() { doTest(); }
+  public void testSameMethodCalledWithDifferentArgsResultingInDependenciesBetweenSameTypeParams() { doTest(); }
+  public void testNestedMethodCallsWithVarargs() { doTest(); }
+  public void testDisjunctionTypeEquality() { doTest(); }
+  public void testNestedConditionalExpressions() { doTest(); }
+  public void testOuterMethodCallOnRawType() { doTest(); }
+  public void testIDEA143390() { doTest(); }
+  public void testIntersectionWithArray() { doTest(); }
+  public void testIncorporationWithCaptureCalcGlbToGetOneTypeParameterBound() { doTest(); }
+  public void testEnumConstantInference() { doTest(); }
+  public void testReturnConstraintsWithCaptureIncorporationOfFreshVariables() { doTest(); }
+  public void testArrayTypeAssignability() { doTest(); }
+  public void testAcceptFirstPairOfCommonSupertypesDuringUpUpIncorporation() { doTest(); }
+  public void testDiamondWithExactMethodReferenceInside() { doTest(); }
+  public void testRecursiveCallsWithNestedInference() { doTest(); }
+  public void testIncorporationWithRawSubstitutors() { doTest(); }
+  public void testIncorporationOfBoundsAsTypeArguments() { doTest(); }
+  public void testEliminateIntersectionTypeWildcardElimination() { doTest(); }
+  public void testDoNotIgnoreConflictingUpperBounds() { doTest(); }
+  public void testCapturedWildcardWithArrayTypeBound() { doTest(); }
+  public void testPolyConditionalExpressionWithTargetPrimitive() { doTest(); }
+  public void testCaptureConstraint() { doTest(); }
+  public void testPullUncheckedWarningNotionThroughNestedCalls() { doTest(); }
+  public void testIDEA149774() { doTest(); }
+  public void testDisjunctionTypes() { doTest(); }
+  public void testPushErasedStateToArguments() { doTest(); }
+  public void testStopAtStandaloneConditional() { doTest(); }
+  public void testTransitiveInferenceVariableDependencies() { doTest(); }
+  public void testInferenceVariablesErasure() { doTest(); }
+  public void testUncheckedWarningConvertingToInferenceVariable() { doTest(); }
+  public void testUncheckedWarningDuringStrictSubtyping() { doTest(); }
+  public void testIDEA150688() { doTest(); }
+  public void testGlbValidityWithCapturedWildcards() { doTest(); }
+  public void testCapturedVariablesAcceptance() { doTest(); }
+  public void testPullingErrorMessagesFromSubExpressionsToTheTopLevel() { doTest(); }
+  public void testHighlightArgumentWithProblem() { doTest(); }
+  public void testIDEA153632() { doTest(); }
+
+  public void testPartialRawSubstitutionToAvoidInferringObjectsWhenRawExpected() {
+    enableInspectionTool(new UncheckedWarningLocalInspection());
     doTest(true);
   }
 
-  public void testIDEA154278() throws Exception {
-    doTest();
-  }
-
-  public void testPrimitiveTypeInReturnConstraintWithUncheckedConversion() throws Exception {
-    doTest();
-  }
-
-  public void testPolyMethodCallOnLeftSideOfAssignment() throws Exception {
-    doTest();
-  }
-
-  public void testTreatConditionalExpressionAsPolyIfNewExpressionWithDiamondsIsUsed() throws Exception {
-    doTest();
-  }
+  public void testIDEA154278() { doTest(); }
+  public void testPrimitiveTypeInReturnConstraintWithUncheckedConversion() { doTest(); }
+  public void testPolyMethodCallOnLeftSideOfAssignment() { doTest(); }
+  public void testTreatConditionalExpressionAsPolyIfNewExpressionWithDiamondsIsUsed() { doTest(); }
 
   public void testVariableNamesOfNestedCalls() throws Exception {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
+    String filePath = BASE_PATH + getTestName(false) + ".java";
     configureByFile(filePath);
     Collection<HighlightInfo> infos = doHighlighting();
 
     List<String> tooltips = new ArrayList<>();
-
     for (HighlightInfo info : infos) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {
         tooltips.add(info.getToolTip());
@@ -467,48 +164,22 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() throws Exception {
-    doTest();
-  }
+  public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() { doTest(); }
+  public void testCapturedConversionDuringDirectSuperCheck() { doTest(); }
+  //public void _testResolutionOrderForVariableCycles() { doTest(); }
+  public void testPostponeUnresolvedVariables() { doTest(); }
+  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly() { doTest(); }
+  public void testTwoDifferentParameterizationCheckWithInterfaceTypeArguments() { doTest(); }
+  public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() { doTest(); }
+  //public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() { doTest(); }
+  public void testRecursiveTypeWithCapture() { doTest(); }
 
-  public void testCapturedConversionDuringDirectSuperCheck() throws Exception {
-    doTest();
-  }
-
-  public void _testResolutionOrderForVariableCycles() throws Exception {
-    doTest();
-  }
-
-  public void testPostponeUnresolvedVariables() throws Exception {
-    doTest();
-  }
-
-  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly() throws Exception {
-    doTest();
-  }
-
-  public void testTwoDifferentParameterizationCheckWithInterfaceTypeArguments() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() throws Exception {
-    doTest();
-  }
-
-  public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() throws Exception {
-    doTest();
-  }
-
-  public void testRecursiveTypeWithCapture() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean checkWarnings) throws Exception {
+  private void doTest(final boolean checkWarnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(BASE_PATH + getTestName(false) + ".java", checkWarnings, false);
   }
 }
