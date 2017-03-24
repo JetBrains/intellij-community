@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -328,8 +329,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   protected ListCellRenderer<T> createListCellRenderer() {
     return new ColoredListCellRenderer<T>() {
 
-      private final FileColorManager myFileColorManager = FileColorManager.getInstance(getProject());
-
       public Component getListCellRendererComponent(JList list,
                                                     Object value,
                                                     int index,
@@ -360,9 +359,10 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         }
 
         Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
-        if (!isSelected && myFileColorManager.isEnabled()) {
-          final Color fileBgColor = myFileColorManager.getRendererBackground(getContainingFile(t));
-          bg = fileBgColor == null ? bg : fileBgColor;
+        if (!isSelected) {
+          VirtualFile file = getContainingFile(t);
+          Color bgColor = file == null ? null : EditorTabbedContainer.calcTabColor(myProject, file);
+          bg = bgColor == null ? bg : bgColor;
         }
         setBackground(bg);
 
