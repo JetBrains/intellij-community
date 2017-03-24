@@ -7,21 +7,22 @@ import java.awt.Graphics
 /**
  * @author Vitaliy.Bibaev
  */
-class PositionsAwaredCollectionView(header: String,
-                                    evaluationContext: EvaluationContextImpl,
-                                    private val values: List<ValueWithPosition>) : CollectionView(header, evaluationContext,
-                                                                                                  values.map { it.traceElement }) {
+class PositionsAwareCollectionView(header: String,
+                                   evaluationContext: EvaluationContextImpl,
+                                   private val values: List<ValueWithPosition>) : CollectionView(header, evaluationContext,
+                                                                                                 values.map { it.traceElement }) {
   override fun paintComponent(g: Graphics?) {
     super.paintComponent(g)
 
     val visibleRect = instancesTree.visibleRect
     for (value in values) {
       val rect = instancesTree.getRectByValue(value.traceElement)
-      if (rect == null || !visibleRect.intersects(rect)) {
+      if (rect == null || !visibleRect.contains(rect)) {
         value.position = -1
+        value.isSelected = false
       }
       else {
-        value.position = rect.x + rect.height / 2
+        value.position = rect.y + rect.height / 2 - visibleRect.y
         value.isSelected = instancesTree.isSelected(value.traceElement)
       }
     }
