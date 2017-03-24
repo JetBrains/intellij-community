@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -88,7 +90,7 @@ class AnchorElementInfo extends SelfElementInfo {
         return packed1 == packed2;
       }
       if (packed1 != -1 || packed2 != -1) {
-        return areRestoredElementsEqual(other);
+        return ReadAction.compute(() -> Comparing.equal(restoreElement(), other.restoreElement()));
       }
     }
     return super.pointsToTheSameElementAs(other);

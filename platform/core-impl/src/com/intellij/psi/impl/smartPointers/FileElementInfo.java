@@ -66,14 +66,7 @@ class FileElementInfo extends SmartPointerElementInfo {
 
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-    if (other instanceof FileElementInfo) {
-      return Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
-    }
-    if (other instanceof SelfElementInfo || other instanceof ClsElementInfo) {
-      // optimisation: SelfElementInfo need psi (parsing) for element restoration and apriori could not reference psi file
-      return false;
-    }
-    return Comparing.equal(restoreElement(), other.restoreElement());
+    return other instanceof FileElementInfo && Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
   }
 
   @Override

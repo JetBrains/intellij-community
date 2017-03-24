@@ -192,13 +192,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                && range1.getEndOffset() == range2.getEndOffset();
       });
     }
-    return areRestoredElementsEqual(other);
-  }
-
-  boolean areRestoredElementsEqual(@NotNull final SmartPointerElementInfo other) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> Comparing.equal(getVirtualFile(), other.getVirtualFile())
-                                 && Comparing.equal(restoreElement(), other.restoreElement()));
+    return false;
   }
 
   @Override
