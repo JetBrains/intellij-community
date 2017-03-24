@@ -178,6 +178,15 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     PsiCallExpression methodCall = findCallAtOffset(context, context.getOffset(refStart));
+    // make sure this is the method call we've just added, not the enclosing one
+    if (methodCall != null) {
+      PsiElement completedElement = methodCall instanceof PsiMethodCallExpression ?
+                                    ((PsiMethodCallExpression)methodCall).getMethodExpression().getReferenceNameElement() : null;
+      TextRange completedElementRange = completedElement == null ? null : completedElement.getTextRange();
+      if (completedElementRange == null || completedElementRange.getStartOffset() != context.getStartOffset()) {
+        methodCall = null;
+      }
+    }
     if (methodCall != null) {
       CompletionMemory.registerChosenMethod(method, methodCall);
       handleNegation(context, document, method, methodCall);
