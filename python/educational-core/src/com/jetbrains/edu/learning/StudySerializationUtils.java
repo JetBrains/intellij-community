@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -441,11 +442,15 @@ public class StudySerializationUtils {
     public static final String TASK_LIST = "task_list";
     public static final String TASK_FILES = "task_files";
     public static final String FILES = "files";
+    public static final String TESTS = "test";
+    public static final String TEXTS = "text";
     public static final String HINTS = "hints";
     public static final String SUBTASK_INFOS = "subtask_infos";
     public static final String FORMAT_VERSION = "format_version";
     public static final String INDEX = "index";
     public static final String TASK_TYPE = "task_type";
+    public static final String NAME = "name";
+    public static final String LAST_SUBTASK = "last_subtask_index";
 
     private Json() {
     }
@@ -518,9 +523,11 @@ public class StudySerializationUtils {
         switch (version) {
           case 1:
             stepOptionsJson = convertToSecondVersion(stepOptionsJson);
-            // uncomment for future versions
-            //case 2:
-            //  stepOptionsJson = convertToThirdVersion(stepOptionsJson);
+          case 2:
+            stepOptionsJson = convertToThirdVersion(stepOptionsJson);
+          // uncomment for future versions
+          //case 3:
+          //  stepOptionsJson = convertToFourthVersion(stepOptionsJson);
         }
         convertSubtaskInfosToMap(stepOptionsJson);
         StepicWrappers.StepOptions stepOptions =
@@ -528,6 +535,37 @@ public class StudySerializationUtils {
             .fromJson(stepOptionsJson, StepicWrappers.StepOptions.class);
         stepOptions.formatVersion = EduStepicConnector.CURRENT_VERSION;
         return stepOptions;
+      }
+
+      private JsonObject convertToThirdVersion(JsonObject stepOptionsJson) {
+        if (!stepOptionsJson.has(LAST_SUBTASK)) return stepOptionsJson;
+        final int lastSubtaskIndex = stepOptionsJson.get(LAST_SUBTASK).getAsInt();
+        if (lastSubtaskIndex == 0) return stepOptionsJson;
+        final JsonArray tests = stepOptionsJson.getAsJsonArray(TESTS);
+        if (tests.size() > 0) {
+          final JsonObject fileWrapper = tests.get(0).getAsJsonObject();
+          if (fileWrapper.has(NAME)) {
+            replaceWithSubtask(fileWrapper);
+          }
+        }
+        final JsonArray descriptions = stepOptionsJson.getAsJsonArray(TEXTS);
+        if (descriptions.size() > 0) {
+          final JsonObject fileWrapper = descriptions.get(0).getAsJsonObject();
+          if (fileWrapper.has(NAME)) {
+            replaceWithSubtask(fileWrapper);
+          }
+        }
+        return stepOptionsJson;
+      }
+
+      private void replaceWithSubtask(JsonObject fileWrapper) {
+        final String file = fileWrapper.get(NAME).getAsString();
+        final String extension = FileUtilRt.getExtension(file);
+        final String name = FileUtil.getNameWithoutExtension(file);
+        if (!name.contains(EduNames.SUBTASK_MARKER)) {
+          fileWrapper.remove(NAME);
+          fileWrapper.add(NAME, new JsonPrimitive(name + "_subtask0." + extension));
+        }
       }
 
       private static JsonObject convertSubtaskInfosToMap(JsonObject stepOptionsJson) {

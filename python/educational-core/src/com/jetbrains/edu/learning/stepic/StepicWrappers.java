@@ -12,7 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.commons.codec.binary.Base64;
@@ -55,7 +58,7 @@ public class StepicWrappers {
     @Expose Integer executionTimeLimit;
     @Expose CodeTemplatesWrapper codeTemplates;
     @SerializedName("format_version")
-    @Expose public int formatVersion = 2;
+    @Expose public int formatVersion = 3;
     @SerializedName("last_subtask_index")
     @Expose int lastSubtaskIndex = 0;
 
