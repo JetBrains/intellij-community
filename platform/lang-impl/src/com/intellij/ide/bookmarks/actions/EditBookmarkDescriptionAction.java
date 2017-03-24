@@ -36,6 +36,7 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
   EditBookmarkDescriptionAction(Project project, JList list) {
     super(IdeBundle.message("action.bookmark.edit.description"),
           IdeBundle.message("action.bookmark.edit.description.description"), AllIcons.Actions.Edit);
+    setEnabledInModalContext(true);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta ENTER" : "control ENTER")), list);
