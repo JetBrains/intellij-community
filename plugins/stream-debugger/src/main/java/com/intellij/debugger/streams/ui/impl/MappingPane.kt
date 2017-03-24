@@ -14,7 +14,8 @@ import javax.swing.JPanel
 class MappingPane(private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
   init {
-    add(JBLabel("map"), BorderLayout.NORTH)
+    // TODO: fix this workaround
+    add(JBLabel(" "), BorderLayout.NORTH)
     add(MyDrawPane(), BorderLayout.CENTER)
   }
 
