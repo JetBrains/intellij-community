@@ -24,9 +24,8 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.Processor
-import java.beans.PropertyChangeListener
 
-abstract class StandaloneDocumentEx : StandaloneDocument(), DocumentEx {
+abstract class BaseDocumentAdapterEx : BaseDocumentAdapter(), DocumentEx {
   override fun registerRangeMarker(rangeMarker: RangeMarkerEx,
                                      start: Int,
                                      end: Int,
@@ -48,35 +47,40 @@ abstract class StandaloneDocumentEx : StandaloneDocument(), DocumentEx {
 
   override fun removeEditReadOnlyListener(listener: EditReadOnlyListener) {}
 
-  override fun replaceText(chars: CharSequence, newModificationStamp: Long) {}
+  override fun replaceText(chars: CharSequence, newModificationStamp: Long) {
+    throw UnsupportedOperationException("Not implemented")
+  }
 
-  override fun moveText(srcStart: Int, srcEnd: Int, dstOffset: Int) {}
-
-  override fun suppressGuardedExceptions() {}
-
-  override fun unSuppressGuardedExceptions() {}
-
-  override fun isInEventsHandling() = false
-
+  override fun moveText(srcStart: Int, srcEnd: Int, dstOffset: Int) {
+    throw UnsupportedOperationException("Not implemented")
+  }
+  
   override fun isInBulkUpdate() = false
 
   override fun setInBulkUpdate(value: Boolean) {}
-
-  override final fun getModificationSequence() = 0
-
+  
   override fun createLineIterator(): LineIterator = throw UnsupportedOperationException()
 }
 
-abstract class StandaloneDocument : UserDataHolderBase(), Document {
+abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
   override fun getLineSeparatorLength(line: Int) = 0
 
   override fun getModificationStamp() = 0L
 
-  override fun insertString(offset: Int, s: CharSequence) {}
+  override fun insertString(offset: Int, s: CharSequence) {
+    throw UnsupportedOperationException("Not implemented")
+  }
 
-  override fun deleteString(startOffset: Int, endOffset: Int) {}
+  override fun deleteString(startOffset: Int, endOffset: Int) {
+    throw UnsupportedOperationException("Not implemented")
+  }
 
   override fun replaceString(startOffset: Int, endOffset: Int, s: CharSequence) {
+    throw UnsupportedOperationException("Not implemented")
+  }
+  
+  override fun setText(text: CharSequence): Unit {
+    throw UnsupportedOperationException("Not implemented")
   }
 
   override fun isWritable() = false
@@ -95,16 +99,10 @@ abstract class StandaloneDocument : UserDataHolderBase(), Document {
 
   override fun createRangeMarker(startOffset: Int, endOffset: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
 
-  override fun createRangeMarker(startOffset: Int,
-                                 endOffset: Int,
-                                 surviveOnExternalChange: Boolean): RangeMarker = throw UnsupportedOperationException("Not implemented")
-
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) {
+  override fun createRangeMarker(startOffset: Int, endOffset: Int, surviveOnExternalChange: Boolean): RangeMarker {
+    throw UnsupportedOperationException("Not implemented")
   }
-
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) {
-  }
-
+  
   override fun setReadOnly(isReadOnly: Boolean) {}
 
   override fun createGuardedBlock(startOffset: Int, endOffset: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
@@ -114,11 +112,6 @@ abstract class StandaloneDocument : UserDataHolderBase(), Document {
   override fun getOffsetGuard(offset: Int): RangeMarker? = null
 
   override fun getRangeGuard(start: Int, end: Int): RangeMarker? = null
-
-  override final fun setCyclicBufferSize(bufferSize: Int) {
-  }
-
-  override fun setText(text: CharSequence): Unit = throw UnsupportedOperationException("Not implemented")
-
+  
   override fun createRangeMarker(textRange: TextRange): RangeMarker = throw UnsupportedOperationException("Not implemented")
 }

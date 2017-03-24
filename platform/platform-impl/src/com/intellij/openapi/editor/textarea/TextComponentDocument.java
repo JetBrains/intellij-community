@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.StandaloneDocument;
+import com.intellij.openapi.editor.BaseDocumentAdapter;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ import javax.swing.text.JTextComponent;
 /**
  * @author yole
  */
-public class TextComponentDocument extends StandaloneDocument {
+public class TextComponentDocument extends BaseDocumentAdapter {
   private final JTextComponent myTextComponent;
 
   public TextComponentDocument(final JTextComponent textComponent) {

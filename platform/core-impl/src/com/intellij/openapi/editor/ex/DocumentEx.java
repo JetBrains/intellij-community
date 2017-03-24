@@ -51,10 +51,14 @@ public interface DocumentEx extends Document {
    */
   void moveText(int srcStart, int srcEnd, int dstOffset);
 
-  void suppressGuardedExceptions();
-  void unSuppressGuardedExceptions();
+  default void suppressGuardedExceptions() {
+  }
+  default void unSuppressGuardedExceptions() {
+  }
 
-  boolean isInEventsHandling();
+  default boolean isInEventsHandling() {
+    return false;
+  }
 
   default void clearLineModificationFlags() {
   }
@@ -101,7 +105,9 @@ public interface DocumentEx extends Document {
   /**
    * @return modification stamp. Guaranteed to be strictly increasing on each change unlike the {@link #getModificationStamp()} which can change arbitrarily.
    */
-  int getModificationSequence();
+  default int getModificationSequence() {
+    return 0;
+  }
 }
 
 

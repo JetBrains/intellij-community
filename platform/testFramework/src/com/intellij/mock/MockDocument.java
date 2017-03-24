@@ -15,13 +15,13 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.editor.BaseDocumentAdapterEx;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.StandaloneDocumentEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
-public class MockDocument extends StandaloneDocumentEx {
+public class MockDocument extends BaseDocumentAdapterEx {
   private StringBuffer myText = new StringBuffer();
   private long myModStamp = LocalTimeCounter.currentTime();
 

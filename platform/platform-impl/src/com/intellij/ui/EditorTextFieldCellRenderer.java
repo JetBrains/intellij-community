@@ -16,9 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.BaseDocumentAdapterEx;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.StandaloneDocumentEx;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -353,7 +353,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  private static class MyDocument extends StandaloneDocumentEx {
+  private static class MyDocument extends BaseDocumentAdapterEx {
     RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {
     };
     char[] myChars = ArrayUtil.EMPTY_CHAR_ARRAY;
@@ -408,14 +408,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull
     @Override
-    public CharSequence getCharsSequence() { return myString; }
-
-    @NotNull
-    @Override
     public char[] getChars() { return myChars; }
-
-    @Override
-    public int getTextLength() { return myChars.length; }
 
     @Override
     public int getLineCount() { return myLineSet.findLineIndex(myChars.length) + 1; }

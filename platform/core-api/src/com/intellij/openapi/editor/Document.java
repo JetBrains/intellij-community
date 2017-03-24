@@ -80,7 +80,7 @@ public interface Document extends UserDataHolder {
   @NotNull
   @Contract(pure=true)
   default CharSequence getImmutableCharSequence() {
-    return getText();
+    return getCharsSequence();
   }
 
   /**
@@ -96,7 +96,9 @@ public interface Document extends UserDataHolder {
    * @see #getCharsSequence()
    */
   @Contract(pure=true)
-  int getTextLength();
+  default int getTextLength() {
+    return getImmutableCharSequence().length();
+  }
 
   /**
    * Returns the number of lines in the document.
@@ -239,7 +241,8 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  default void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  }
 
   /**
    * Removes a listener for receiving notifications about changes in the properties of the document
@@ -247,7 +250,8 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
+  default void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  }
 
   /**
    * Marks the document as read-only or read/write. This method only modifies the flag stored
@@ -325,7 +329,8 @@ public interface Document extends UserDataHolder {
    *
    * @param bufferSize the cyclic buffer size, or 0 if the document should not use a cyclic buffer.
    */
-  void setCyclicBufferSize(int bufferSize);
+  default void setCyclicBufferSize(int bufferSize) {
+  }
 
   void setText(@NotNull final CharSequence text);
 

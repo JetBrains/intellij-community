@@ -32,8 +32,6 @@ import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeListener;
-
 /**
  * @author peter
  */
@@ -102,22 +100,7 @@ public class FrozenDocument implements DocumentEx {
   public void moveText(int srcStart, int srcEnd, int dstOffset) {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void suppressGuardedExceptions() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void unSuppressGuardedExceptions() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isInEventsHandling() {
-    return false;
-  }
-
+  
   @Override
   public void clearLineModificationFlags() {
     throw new UnsupportedOperationException();
@@ -182,19 +165,8 @@ public class FrozenDocument implements DocumentEx {
 
   @NotNull
   @Override
-  public CharSequence getImmutableCharSequence() {
-    return myText;
-  }
-
-  @NotNull
-  @Override
   public char[] getChars() {
     return CharArrayUtil.fromSequence(myText);
-  }
-
-  @Override
-  public int getTextLength() {
-    return myText.length();
   }
 
   @Override
@@ -279,16 +251,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setReadOnly(boolean isReadOnly) {
     throw new UnsupportedOperationException();
   }
@@ -327,11 +289,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public void setCyclicBufferSize(int bufferSize) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setText(@NotNull CharSequence text) {
     throw new UnsupportedOperationException();
   }
@@ -356,10 +313,5 @@ public class FrozenDocument implements DocumentEx {
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int getModificationSequence() {
-    return 0;
   }
 }
