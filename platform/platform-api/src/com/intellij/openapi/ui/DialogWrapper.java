@@ -343,7 +343,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Validates user input and returns <code>List&lt;ValidationInvo&gt;</code>.
+   * Validates user input and returns <code>List&lt;ValidationInfo&gt;</code>.
    * If everything is fine the returned list is empty otherwise
    * the list contains all invalid fields with error messages.
    * This method should preferably be used when validating forms with multiply
