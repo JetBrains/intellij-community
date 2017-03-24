@@ -37,7 +37,7 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final String myDisplayName;
+  private String myDisplayName;
   private final Icon myIcon;
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
@@ -165,6 +165,10 @@ public class RunContentDescriptor implements Disposable {
 
   public String getDisplayName() {
     return myDisplayName;
+  }
+
+  public void setDisplayName(String displayName) {
+    myDisplayName = displayName;
   }
 
   public String getHelpId() {
