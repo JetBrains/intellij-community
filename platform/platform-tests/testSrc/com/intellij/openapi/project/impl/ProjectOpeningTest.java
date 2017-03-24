@@ -93,7 +93,7 @@ public class ProjectOpeningTest extends PlatformTestCase {
     assertTrue(ProjectUtil.isSameProject(projectDir.getAbsolutePath(), dirBasedProject));
     assertFalse(ProjectUtil.isSameProject(createTempDir("project2").getAbsolutePath(), dirBasedProject));
     File iprFilePath = new File(projectDir, "project.ipr");
-    assertTrue(ProjectUtil.isSameProject(iprFilePath.getAbsolutePath(), dirBasedProject));
+    assertFalse(ProjectUtil.isSameProject(iprFilePath.getAbsolutePath(), dirBasedProject));
     File miscXmlFilePath = new File(projectDir, ".idea/misc.xml");
     assertTrue(ProjectUtil.isSameProject(miscXmlFilePath.getAbsolutePath(), dirBasedProject));
   }

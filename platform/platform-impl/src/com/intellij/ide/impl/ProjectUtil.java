@@ -287,7 +287,7 @@ public class ProjectUtil {
       return false;
     }
 
-    final File projectFile = new File(projectFilePath);
+    File projectFile = new File(projectFilePath);
     if (projectFile.isDirectory()) {
       return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);
     }
@@ -298,9 +298,10 @@ public class ProjectUtil {
 
     File parent = projectFile.getParentFile();
     if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      projectFile = parent;
       parent = parent.getParentFile();
     }
-    return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
+    return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath) && projectFile.getName().equals(Project.DIRECTORY_STORE_FOLDER);
   }
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
