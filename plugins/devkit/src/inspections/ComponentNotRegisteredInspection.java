@@ -147,6 +147,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   private static boolean isActionRegistered(PsiClass psiClass) {
     final Set<PsiClass> registrationTypes = RegistrationCheckerUtil.getRegistrationTypes(psiClass, true);
     if (registrationTypes != null) {
+      if (registrationTypes.isEmpty()) return true;
       for (PsiClass type : registrationTypes) {
         if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
         if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
