@@ -184,7 +184,7 @@
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
-    
+
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
@@ -207,22 +207,20 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component"
-            id="NewApplicationComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
+    <group id="DevkitNewActions" text="Plugin DevKit" icon="AllIcons.Nodes.Plugin" popup="true"
+           class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
+      <separator/>
+      <action text="Application Component" id="NewApplicationComponent"
+              class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction"/>
+      <action text="Project Component" id="NewProjectComponent"
+              class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction"/>
+      <action text="Module Component" id="NewModuleComponent"
+              class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction"/>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction" text="Project Component" id="NewProjectComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction" text="Module Component" id="NewModuleComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
-
-    <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
 
     <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
             id="GenerateExternalization">
