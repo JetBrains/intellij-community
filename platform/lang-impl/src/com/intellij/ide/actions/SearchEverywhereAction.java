@@ -1135,9 +1135,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (value instanceof VirtualFile && myProject != null) {
+      if (myProject != null && value instanceof VirtualFile) {
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        value = ((VirtualFile)value).isDirectory() ? psiManager.findDirectory((VirtualFile)value) : psiManager.findFile((VirtualFile)value);
+        VirtualFile virtualFile = (VirtualFile)value;
+        value = !virtualFile.isValid() ? virtualFile :
+                virtualFile.isDirectory() ? psiManager.findDirectory(virtualFile) :
+                psiManager.findFile(virtualFile);
       }
 
       if (value instanceof PsiElement) {
