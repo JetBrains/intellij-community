@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,6 +162,18 @@ public class KeymapTest extends PlatformTestCase {
     assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2);
     myChild.removeShortcut(ACTION_2, mouseShortcut);
     assertThat(myChild.getActionIds(mouseShortcut)).isEmpty();
+  }
+  
+  public void testChangeMouseShortcut() throws Exception {
+    myParent.clearOwnActionsIds();
+    myChild.clearOwnActionsIds();
+
+    MouseShortcut mouseShortcut = new MouseShortcut(1, InputEvent.BUTTON2_MASK, 1);
+    myParent.addShortcut(ACTION_1, mouseShortcut);
+    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1);
+
+    myChild.addShortcut(ACTION_2, mouseShortcut);
+    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2, ACTION_1);
   }
 
   public void testRemovingShortcutLast() throws Exception {
