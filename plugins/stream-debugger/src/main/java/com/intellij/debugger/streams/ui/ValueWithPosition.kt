@@ -7,9 +7,9 @@ import com.intellij.debugger.streams.trace.TraceElement
  */
 interface ValueWithPosition {
   val traceElement: TraceElement
-  val nextValues: List<ValueWithPosition>
   val isVisible: Boolean
 
   var position: Int
   var isSelected: Boolean
 }
+
