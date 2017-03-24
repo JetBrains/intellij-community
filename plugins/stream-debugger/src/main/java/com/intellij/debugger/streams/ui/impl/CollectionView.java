@@ -18,7 +18,6 @@ package com.intellij.debugger.streams.ui.impl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.TraceContainer;
-import com.intellij.debugger.streams.ui.ValueWithPosition;
 import com.intellij.debugger.streams.ui.ValuesSelectionListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +34,6 @@ import java.util.List;
  */
 public class CollectionView extends JPanel implements Disposable, TraceContainer {
   private final CollectionTree myInstancesTree;
-  private final List<ValueWithPosition> myValues = new ArrayList<>();
 
   CollectionView(@NotNull String header, @NotNull EvaluationContextImpl evaluationContext, @NotNull List<TraceElement> values) {
     super(new BorderLayout());
@@ -52,22 +49,6 @@ public class CollectionView extends JPanel implements Disposable, TraceContainer
 
   @Override
   public void dispose() {
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-
-    final Rectangle visibleRect = myInstancesTree.getVisibleRect();
-    for (final ValueWithPosition value : myValues) {
-      final Rectangle rect = myInstancesTree.getRectByValue(value.getTraceElement());
-      if (rect == null || !visibleRect.intersects(rect)) {
-        value.setPosition(-1);
-      }
-      else {
-        value.setPosition(rect.x + rect.height / 2);
-      }
-    }
   }
 
   @Override
