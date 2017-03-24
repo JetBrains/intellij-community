@@ -40,6 +40,10 @@ import java.util.*;
  * @author yole
  */
 public class FilenameIndex {
+
+  /**
+   * @deprecated Not to be used.
+   */
   @Deprecated
   public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
