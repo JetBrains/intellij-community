@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.ui;
+package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.ui.TraceContainer;
+import com.intellij.debugger.streams.ui.ValueWithPosition;
+import com.intellij.debugger.streams.ui.ValuesSelectionListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLabel;

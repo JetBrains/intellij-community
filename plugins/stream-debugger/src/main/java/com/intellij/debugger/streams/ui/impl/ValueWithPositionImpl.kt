@@ -1,6 +1,7 @@
-package com.intellij.debugger.streams.ui
+package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.trace.TraceElement
+import com.intellij.debugger.streams.ui.ValueWithPosition
 
 /**
  * @author Vitaliy.Bibaev

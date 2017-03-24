@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.ui;
+package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.ContextUtil;

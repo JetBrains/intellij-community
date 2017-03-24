@@ -1,5 +1,6 @@
-package com.intellij.debugger.streams.ui
+package com.intellij.debugger.streams.ui.impl
 
+import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.ui.JBColor
 import java.awt.Graphics
 import javax.swing.JPanel

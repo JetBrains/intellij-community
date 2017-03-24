@@ -1,6 +1,7 @@
-package com.intellij.debugger.streams.ui;
+package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.ui.TraceController;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
