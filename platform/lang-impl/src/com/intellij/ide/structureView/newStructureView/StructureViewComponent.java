@@ -602,16 +602,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public JTree getTree() {
-    return myAbstractTreeBuilder.getTree();
+    return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
   }
 
   public AbstractTreeBuilder getTreeBuilder() {
     return myAbstractTreeBuilder;
   }
-
-  //public void setTreeBuilder(AbstractTreeBuilder treeBuilder) {
-  //  myAbstractTreeBuilder = treeBuilder;
-  //}
 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private boolean myShouldAutoScroll = true;
