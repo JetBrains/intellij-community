@@ -16,6 +16,9 @@
 package com.intellij.ui.noria
 
 import com.intellij.ui.NonFocusableCheckBox
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanel
 import java.awt.event.ActionListener
 import javax.swing.*
 import kotlin.reflect.KProperty1
@@ -67,7 +70,7 @@ class SwingToolkit : Toolkit<JComponent> {
 class PanelComponentType : PrimitiveComponentType<JPanel, Panel> {
   override val type: String = PANEL_COMPONENT_TYPE
   override fun createNode(e: Panel): JPanel =
-    JPanel().apply {
+    JBPanel<JBPanel<*>>().apply {
       layout = e.layout
     }
   override fun update(info: UpdateInfo<JPanel, Panel>) {
@@ -76,7 +79,7 @@ class PanelComponentType : PrimitiveComponentType<JPanel, Panel> {
 
 class LabelComponentType : PrimitiveComponentType<JLabel, Label> {
   override val type: String = LABEL_COMPONENT_TYPE
-  override fun createNode(e: Label): JLabel = JLabel(e.text)
+  override fun createNode(e: Label): JLabel = JBLabel(e.text)
   override fun update(info: UpdateInfo<JLabel, Label>) {
     info.updateProp(Label::text, { text = it })
   }
@@ -117,7 +120,7 @@ private fun <T : BaseProps> updateListener(info: UpdateInfo<AbstractButton, T>,
 class CheckboxComponentType : PrimitiveComponentType<JCheckBox, Checkbox> {
   override val type: String = CHECKBOX_COMPONENT_TYPE
   override fun createNode(e: Checkbox): JCheckBox {
-    val c = if (e.focusable) JCheckBox() else NonFocusableCheckBox()
+    val c = if (e.focusable) JBCheckBox() else NonFocusableCheckBox()
     c.text = e.text
     c.isSelected = e.selected
     c.isVisible = true
