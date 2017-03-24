@@ -1442,7 +1442,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
 
         if (description != null) {
-          final PsiElement referenceNameElement = expression.getReferenceNameElement();
+          final PsiElement referenceNameElement = ObjectUtils.notNull(expression.getReferenceNameElement(), expression);
           final HighlightInfo highlightInfo =
             HighlightInfo.newHighlightInfo(results.length == 0 ? HighlightInfoType.WRONG_REF : HighlightInfoType.ERROR)
               .descriptionAndTooltip(description).range(referenceNameElement).create();
