@@ -20,7 +20,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -131,6 +134,42 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return hashMap;
   }
 
+  public void initialize() {
+    StopWatch stopWatch = StopWatch.start("initialize");
+    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        resetState();
+        readCurrentUser();
+        DataPack dataPack = myRefresher.readFirstBlock();
+        fireDataPackChangeEvent(dataPack);
+        stopWatch.report();
+      }
+    };
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, myRefresher.getProgress().createProgressIndicator());
+  }
+
+  private void readCurrentUser() {
+    StopWatch sw = StopWatch.start("readCurrentUser");
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+      VirtualFile root = entry.getKey();
+      try {
+        VcsUser me = entry.getValue().getCurrentUser(root);
+        if (me != null) {
+          myCurrentUser.put(root, me);
+        }
+        else {
+          LOG.info("Username not configured for root " + root);
+        }
+      }
+      catch (VcsException e) {
+        LOG.warn("Couldn't read the username from root " + root, e);
+      }
+    }
+    sw.report();
+  }
+
   private void fireDataPackChangeEvent(@NotNull final DataPack dataPack) {
     ApplicationManager.getApplication().invokeLater(() -> {
       for (DataPackChangeListener listener : myDataPackChangeListeners) {
@@ -166,42 +205,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public VcsLogStorage getStorage() {
     return myStorage;
-  }
-
-  public void initialize() {
-    StopWatch stopWatch = StopWatch.start("initialize");
-    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        resetState();
-        readCurrentUser();
-        DataPack dataPack = myRefresher.readFirstBlock();
-        fireDataPackChangeEvent(dataPack);
-        stopWatch.report();
-      }
-    };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, myRefresher.getProgress().createProgressIndicator());
-  }
-
-  private void readCurrentUser() {
-    StopWatch sw = StopWatch.start("readCurrentUser");
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-      VirtualFile root = entry.getKey();
-      try {
-        VcsUser me = entry.getValue().getCurrentUser(root);
-        if (me != null) {
-          myCurrentUser.put(root, me);
-        }
-        else {
-          LOG.info("Username not configured for root " + root);
-        }
-      }
-      catch (VcsException e) {
-        LOG.warn("Couldn't read the username from root " + root, e);
-      }
-    }
-    sw.report();
   }
 
   private void resetState() {
