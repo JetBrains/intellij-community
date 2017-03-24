@@ -410,15 +410,17 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     
     var originalListInstance = list != null
     var child = this
+    val actionIdToShortcuts = SmartList(child.actionIdToShortcuts)
     var convertedShortcut = convertShortcut(shortcut)
     do {
-      for (id in (parent.shortcutToActionsIds().get(convertedShortcut)?.sortInRegistrationOrder() ?: emptyList<String>())) {
-        if (child.actionIdToShortcuts.containsKey(id) || actionIdToShortcuts.containsKey(keymapManager.getActionBinding(id))) {
-          // on remove shortcut we put empty list to actionIdToShortcuts, our mouseShortcutToActionIds doesn't contain mapping
-          // so, we add actions from parent keymap only if they are absent in this keymap
+      val parentList = parent.shortcutToActionsIds().get(convertedShortcut)?.sortInRegistrationOrder() ?: emptyList<String>()
+      for (id in parentList) {
+        // on remove shortcut we put empty list to actionIdToShortcuts, our mouseShortcutToActionIds doesn't contain mapping
+        // so, we add actions from parent keymap only if they are absent in this keymap
+        if (actionIdToShortcuts.firstOrNull { it.containsKey(id) || it.containsKey(keymapManager.getActionBinding(id)) } != null) {
           continue
         }
-
+        
         if (list == null) {
           list = SmartList<String>()
         }
@@ -436,6 +438,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       child = parent
       parent = child.parent ?: return ArrayUtilRt.toStringArray(list)
       convertedShortcut = child.convertShortcut(shortcut)
+      actionIdToShortcuts.add(child.actionIdToShortcuts)
     }
     while (true)
   }
