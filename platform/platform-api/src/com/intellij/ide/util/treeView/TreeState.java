@@ -213,7 +213,9 @@ public class TreeState implements JDOMExternalizable {
           //nodeDescriptor.update();
           result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), childIndex, nodeDescriptor));
         }
-        result.add(new PathElement("", "", childIndex, userObject));
+        else {
+          result.add(new PathElement("", "", childIndex, userObject));
+        }
       }
       else {
         return null;
