@@ -404,13 +404,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   
   override fun getActionIds(shortcut: MouseShortcut) = getActionIds(shortcut, { mouseShortcutToActionIds }, { convertMouseShortcut(it) })
   
-  private inline fun <T> getActionIds(shortcut: T, shortcutToActionsIds: KeymapImpl.() -> Map<T, MutableList<String>>, convertMouseShortcut: KeymapImpl.(shortcut: T) -> T): Array<String> {
+  private inline fun <T> getActionIds(shortcut: T, shortcutToActionsIds: KeymapImpl.() -> Map<T, MutableList<String>>, convertShortcut: KeymapImpl.(shortcut: T) -> T): Array<String> {
     var list = shortcutToActionsIds().get(shortcut)
     var parent = parent ?: return sortInRegistrationOrder(list)
     
     var originalListInstance = list != null
     var child = this
-    var convertedShortcut = convertMouseShortcut(shortcut)
+    var convertedShortcut = convertShortcut(shortcut)
     do {
       for (id in (parent.shortcutToActionsIds().get(convertedShortcut)?.sortInRegistrationOrder() ?: emptyList<String>())) {
         if (child.actionIdToShortcuts.containsKey(id) || actionIdToShortcuts.containsKey(keymapManager.getActionBinding(id))) {
@@ -435,7 +435,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
       child = parent
       parent = child.parent ?: return ArrayUtilRt.toStringArray(list)
-      convertedShortcut = child.convertMouseShortcut(shortcut)
+      convertedShortcut = child.convertShortcut(shortcut)
     }
     while (true)
   }
