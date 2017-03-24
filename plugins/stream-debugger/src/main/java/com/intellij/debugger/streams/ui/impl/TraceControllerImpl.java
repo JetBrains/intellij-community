@@ -56,6 +56,12 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
     return myResolvedTrace.getCall();
   }
 
+  @NotNull
+  @Override
+  public ResolvedTrace getResolvedTrace() {
+    return myResolvedTrace;
+  }
+
   @Override
   public void register(@NotNull TraceContainer listener) {
     myListeners.add(listener);
