@@ -106,6 +106,22 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("class C { void m() { Character.toChars(123, <caret>, ) } }");
   }
 
+  public void testNoHintsForMethodReference() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+                                                     "  interface I { void i(int p); }\n" +
+                                                     "  void referenced(int a) {}\n" +
+                                                     "  void m(I lambda) {}\n" +
+                                                     "  void m2() { m(this::<caret>) }\n" +
+                                                     "}");
+    complete("referenced");
+    myFixture.checkResultWithInlays("class C {\n" +
+                                    "  interface I { void i(int p); }\n" +
+                                    "  void referenced(int a) {}\n" +
+                                    "  void m(I lambda) {}\n" +
+                                    "  void m2() { m(this::referenced) }\n" +
+                                    "}");
+  }
+
   private void showParameterInfo() {
     myFixture.performEditorAction("ParameterInfo");
     UIUtil.dispatchAllInvocationEvents();

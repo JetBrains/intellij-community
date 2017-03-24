@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -387,57 +387,58 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       RunProfile profile = environment.getRunProfile();
       project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), environment);
 
-      starter.executeAsync(state, environment).done(descriptor -> {
-        AppUIUtil.invokeOnEdt(() -> {
-          if (descriptor != null) {
-            final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
-              Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
-            myRunningConfigurations.add(trinity);
-            Disposer.register(descriptor, () -> myRunningConfigurations.remove(trinity));
-            getContentManager().showRunContent(executor, descriptor, environment.getContentToReuse());
-            final ProcessHandler processHandler = descriptor.getProcessHandler();
-            if (processHandler != null) {
-              if (!processHandler.isStartNotified()) {
-                processHandler.startNotify();
-              }
-              project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), environment, processHandler);
+      starter.executeAsync(state, environment)
+        .done(descriptor -> AppUIUtil.invokeLaterIfProjectAlive(project, () -> {
+          if (descriptor == null) {
+            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
+            return;
+          }
 
-              ProcessExecutionListener listener = new ProcessExecutionListener(project, executor.getId(), environment, processHandler, descriptor);
-              processHandler.addProcessListener(listener);
+          final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
+            Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
+          myRunningConfigurations.add(trinity);
+          Disposer.register(descriptor, () -> myRunningConfigurations.remove(trinity));
+          getContentManager().showRunContent(executor, descriptor, environment.getContentToReuse());
+          final ProcessHandler processHandler = descriptor.getProcessHandler();
+          if (processHandler != null) {
+            if (!processHandler.isStartNotified()) {
+              processHandler.startNotify();
+            }
+            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), environment, processHandler);
 
-              // Since we cannot guarantee that the listener is added before process handled is start notified,
-              // we have to make sure the process termination events are delivered to the clients.
-              // Here we check the current process state and manually deliver events, while
-              // the ProcessExecutionListener guarantees each such event is only delivered once
-              // either by this code, or by the ProcessHandler.
+            ProcessExecutionListener
+              listener = new ProcessExecutionListener(project, executor.getId(), environment, processHandler, descriptor);
+            processHandler.addProcessListener(listener);
 
-              boolean terminating = processHandler.isProcessTerminating();
-              boolean terminated = processHandler.isProcessTerminated();
-              if (terminating || terminated) {
-                listener.processWillTerminate(new ProcessEvent(processHandler), false /*doesn't matter*/);
+            // Since we cannot guarantee that the listener is added before process handled is start notified,
+            // we have to make sure the process termination events are delivered to the clients.
+            // Here we check the current process state and manually deliver events, while
+            // the ProcessExecutionListener guarantees each such event is only delivered once
+            // either by this code, or by the ProcessHandler.
 
-                if (terminated) {
-                  //noinspection ConstantConditions
-                  int exitCode = processHandler.isStartNotified() ? processHandler.getExitCode() : -1;
-                  listener.processTerminated(new ProcessEvent(processHandler, exitCode));
-                }
+            boolean terminating = processHandler.isProcessTerminating();
+            boolean terminated = processHandler.isProcessTerminated();
+            if (terminating || terminated) {
+              listener.processWillTerminate(new ProcessEvent(processHandler), false /*doesn't matter*/);
+
+              if (terminated) {
+                //noinspection ConstantConditions
+                int exitCode = processHandler.isStartNotified() ? processHandler.getExitCode() : -1;
+                listener.processTerminated(new ProcessEvent(processHandler, exitCode));
               }
             }
-            environment.setContentToReuse(descriptor);
           }
-          else {
-            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
+          environment.setContentToReuse(descriptor);
+        }))
+        .rejected(e -> {
+          if (!(e instanceof ProcessCanceledException)) {
+            ExecutionException error = e instanceof ExecutionException ? (ExecutionException)e : new ExecutionException(e);
+            ExecutionUtil.handleExecutionError(project, ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
+                                               profile, error);
           }
-        }, o -> project.isDisposed());
-      }).rejected(e -> {
-        if (!(e instanceof ProcessCanceledException)) {
-          ExecutionException error = e instanceof ExecutionException ? (ExecutionException)e : new ExecutionException(e);
-          ExecutionUtil.handleExecutionError(project, ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
-                                             profile, error);
-        }
-        LOG.info(e);
-        project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
-      });
+          LOG.info(e);
+          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
+        });
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode() && !myForceCompilationInTests) {

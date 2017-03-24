@@ -180,7 +180,7 @@ class RegExpEquivalenceChecker {
     return true;
   }
 
-  public static boolean areBranchesEquivalent(RegExpBranch branch1, RegExpBranch branch2) {
+  private static boolean areBranchesEquivalent(RegExpBranch branch1, RegExpBranch branch2) {
     final RegExpAtom[] atoms1 = branch1.getAtoms();
     final RegExpAtom[] atoms2 = branch2.getAtoms();
     if (atoms1.length != atoms2.length) {
@@ -194,7 +194,7 @@ class RegExpEquivalenceChecker {
     return true;
   }
 
-  public static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {
+  private static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {
     return aChar1.getValue() == aChar2.getValue();
   }
 }

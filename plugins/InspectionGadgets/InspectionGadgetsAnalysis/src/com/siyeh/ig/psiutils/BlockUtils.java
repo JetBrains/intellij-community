@@ -21,31 +21,38 @@ import com.intellij.psi.*;
  * @author Tagir Valeev
  */
 public class BlockUtils {
+
   /**
-   * Add new statement before given anchor statement creating code block, if necessary
+   * Adds new statements before given anchor statement creating a new code block, if necessary
    *
-   * @param anchor existing statement
-   * @param newStatement a new statement which should be added before an existing one
-   * @return added physical statement
+   * @param anchor  existing statement
+   * @param newStatements  the new statements which should be added before the existing one
+   * @return last added physical statement
    */
-  public static PsiStatement addBefore(PsiStatement anchor, PsiStatement newStatement) {
+  public static PsiStatement addBefore(PsiStatement anchor, PsiStatement... newStatements) {
+    if (newStatements.length == 0) throw new IllegalArgumentException();
     PsiElement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
       oldStatement = parent;
       parent = oldStatement.getParent();
     }
-    final PsiElement result;
+    PsiElement result = null;
     if (parent instanceof PsiCodeBlock) {
-      result = parent.addBefore(newStatement, oldStatement);
+      for (PsiStatement statement : newStatements) {
+        result = parent.addBefore(statement, oldStatement);
+      }
     }
     else {
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
       final PsiBlockStatement newBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", oldStatement);
       final PsiElement codeBlock = newBlockStatement.getCodeBlock();
-      codeBlock.add(newStatement);
+      for (PsiStatement newStatement : newStatements) {
+        codeBlock.add(newStatement);
+      }
       codeBlock.add(oldStatement);
-      result = ((PsiBlockStatement)oldStatement.replace(newBlockStatement)).getCodeBlock().getStatements()[0];
+      final PsiStatement[] statements = ((PsiBlockStatement)oldStatement.replace(newBlockStatement)).getCodeBlock().getStatements();
+      result = statements[statements.length - 2];
     }
     return (PsiStatement)result;
   }

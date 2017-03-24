@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,12 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
  */
 public abstract class RunProfileStarter {
   @Nullable
-  public abstract RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException;
+  @Deprecated
+  public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    throw new AbstractMethodError();
+  }
 
   /**
-   * Async version of {@link #execute(RunProfileState, ExecutionEnvironment)}.
    * You must NOT throw exceptions in this method.
    * Instead return {@link org.jetbrains.concurrency.Promises#rejectedPromise(Throwable)} or call {@link org.jetbrains.concurrency.AsyncPromise#setError(Throwable)}
    */
