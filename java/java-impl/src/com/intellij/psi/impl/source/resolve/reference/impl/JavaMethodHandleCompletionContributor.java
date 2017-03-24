@@ -16,22 +16,25 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -69,10 +72,6 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) {
-      return;
-    }
-
     final PsiElement position = parameters.getPosition();
     if (!isInJavaContext(position)) {
       return;
@@ -86,7 +85,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  private static void addMethodHandleVariants(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
+  private static void addMethodHandleVariants(@NotNull PsiElement position, @NotNull Consumer<LookupElement> result) {
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
     if (methodCall != null) {
       final String methodName = methodCall.getMethodExpression().getReferenceName();
@@ -97,7 +96,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
 
           switch (methodName) {
             case FIND_CONSTRUCTOR:
-              addConstructorSignatures(psiClass, result);
+              addConstructorSignatures(psiClass, position, result);
               break;
 
             case FIND_VIRTUAL:
@@ -105,7 +104,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
             case FIND_SPECIAL:
               final String name = arguments.length > 1 ? computeConstantExpression(arguments[1], String.class) : null;
               if (!StringUtil.isEmpty(name)) {
-                addMethodSignatures(psiClass, name, result);
+                addMethodSignatures(psiClass, name, FIND_STATIC.equals(methodName), position, result);
               }
               break;
           }
@@ -114,60 +113,59 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  private static void addConstructorSignatures(@NotNull PsiClass psiClass, @NotNull CompletionResultSet result) {
+  private static void addConstructorSignatures(@NotNull PsiClass psiClass,
+                                               @NotNull PsiElement context,
+                                               @NotNull Consumer<LookupElement> result) {
     final String className = psiClass.getName();
     if (className != null) {
       final PsiMethod[] constructors = psiClass.getConstructors();
       if (constructors.length != 0) {
-        lookupMethodTypes(constructors, result);
+        lookupMethodTypes(Arrays.stream(constructors), context, result);
       }
       else {
-        result.addElement(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE));
+        result.consume(lookupSignature(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE, context));
       }
     }
   }
 
-  private static void addMethodSignatures(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull CompletionResultSet result) {
+  private static void addMethodSignatures(@NotNull PsiClass psiClass,
+                                          @NotNull String methodName,
+                                          boolean isStaticExpected,
+                                          @NotNull PsiElement context,
+                                          @NotNull Consumer<LookupElement> result) {
     final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
     if (methods.length != 0) {
-      lookupMethodTypes(methods, result);
+      final Stream<PsiMethod> methodStream = Arrays.stream(methods)
+        .filter(method -> method.hasModifierProperty(PsiModifier.STATIC) == isStaticExpected);
+      lookupMethodTypes(methodStream, context, result);
     }
   }
 
-  private static void lookupMethodTypes(@NotNull PsiMethod[] methods, @NotNull CompletionResultSet result) {
-    Arrays.stream(methods)
+  private static void lookupMethodTypes(@NotNull Stream<PsiMethod> methods,
+                                        @NotNull PsiElement context,
+                                        @NotNull Consumer<LookupElement> result) {
+    methods
       .map(JavaReflectionReferenceUtil::getMethodSignature)
       .filter(Objects::nonNull)
       .sorted(ReflectiveSignature::compareTo)
-      .map(JavaMethodHandleCompletionContributor::lookupSignature)
-      .forEach(result::addElement);
+      .map(signature -> lookupSignature(signature, context))
+      .forEach(result::consume);
   }
 
   @NotNull
-  private static LookupElement lookupSignature(@NotNull ReflectiveSignature signature) {
-    final String types = signature.stream()
-      .map(text -> PsiNameHelper.getShortClassName(text) + ".class")
-      .collect(Collectors.joining(", "));
-    final String text = PsiNameHelper.getShortClassName(JAVA_LANG_INVOKE_METHOD_TYPE) + "." + METHOD_TYPE + "(" + types + ")";
+  private static LookupElement lookupSignature(@NotNull ReflectiveSignature signature, @NotNull PsiElement context) {
+    final String expressionText = getMethodTypeExpressionText(signature);
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    final PsiExpression expression = factory.createExpressionFromText(expressionText, context);
 
-    final LookupElementBuilder element = LookupElementBuilder
-      .create(signature, "")
-      .withPresentableText(text)
-      .withIcon(PlatformIcons.METHOD_ICON)
-      .withInsertHandler(JavaMethodHandleCompletionContributor::handleInsertMethodType);
+    final String shortTypes = signature.getText(true, type -> PsiNameHelper.getShortClassName(type) + ".class");
+    final String presentableText = PsiNameHelper.getShortClassName(JAVA_LANG_INVOKE_METHOD_TYPE) + "." + METHOD_TYPE + shortTypes;
+    final String lookupText = METHOD_TYPE + signature.getText(true, PsiNameHelper::getShortClassName);
 
-    return PrioritizedLookupElement.withPriority(element, 1);
+    return lookupExpression(expression, PlatformIcons.METHOD_ICON, presentableText, lookupText);
   }
 
-  private static void handleInsertMethodType(InsertionContext context, LookupElement item) {
-    final Object object = item.getObject();
-    if (object instanceof ReflectiveSignature) {
-      final String text = getMethodTypeExpressionText((ReflectiveSignature)object);
-      replaceText(context, text);
-    }
-  }
-
-  private static void addFieldHandleVariants(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
+  private static void addFieldHandleVariants(@NotNull PsiElement position, @NotNull Consumer<LookupElement> result) {
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
     if (methodCall != null) {
       final String methodName = methodCall.getMethodExpression().getReferenceName();
@@ -178,7 +176,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
           if (!StringUtil.isEmpty(fieldName)) {
             final PsiClass psiClass = getReflectiveClass(arguments[0]);
             if (psiClass != null) {
-              addFieldType(psiClass, fieldName, result);
+              addFieldType(psiClass, fieldName, position, result);
             }
           }
         }
@@ -186,35 +184,36 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  private static void addFieldType(@NotNull PsiClass psiClass, @NotNull String fieldName, @NotNull CompletionResultSet result) {
+  private static void addFieldType(@NotNull PsiClass psiClass,
+                                   @NotNull String fieldName,
+                                   @NotNull PsiElement context,
+                                   @NotNull Consumer<LookupElement> result) {
     final PsiField field = psiClass.findFieldByName(fieldName, false);
     if (field != null) {
       final String typeText = getTypeText(field.getType(), field);
       if (typeText != null) {
-        final LookupElementBuilder element = LookupElementBuilder
-          .create(new TypeLiteral(typeText), "")
-          .withPresentableText(PsiNameHelper.getShortClassName(typeText) + ".class")
-          .withIcon(PlatformIcons.CLASS_ICON)
-          .withInsertHandler(JavaMethodHandleCompletionContributor::handleInsertFieldType);
-        result.addElement(PrioritizedLookupElement.withPriority(element, 1));
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+        final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
+
+        final String shortType = PsiNameHelper.getShortClassName(typeText);
+        result.consume(lookupExpression(expression, PlatformIcons.CLASS_ICON, shortType + ".class", shortType));
       }
     }
   }
 
-  private static void handleInsertFieldType(InsertionContext context, LookupElement item) {
-    final Object object = item.getObject();
-    if (object instanceof TypeLiteral) {
-      final String text = ((TypeLiteral)object).getText();
-      replaceText(context, text);
-    }
-  }
-
-  private static class TypeLiteral {
-    private final String myType;
-
-    TypeLiteral(@NotNull String type) {myType = type;}
-
-    @NotNull
-    String getText() {return myType + ".class";}
+  @NotNull
+  private static LookupElement lookupExpression(@NotNull PsiExpression expression,
+                                                @Nullable Icon icon,
+                                                @NotNull String presentableText,
+                                                @NotNull String lookupText) {
+    final LookupElement element = new ExpressionLookupItem(expression, icon, presentableText, lookupText) {
+      @Override
+      public void handleInsert(InsertionContext context) {
+        context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
+        context.commitDocument();
+        replaceText(context, getObject().getText());
+      }
+    };
+    return PrioritizedLookupElement.withPriority(element, 1);
   }
 }

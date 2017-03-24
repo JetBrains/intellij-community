@@ -45,8 +45,10 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
   fun testStaticVarHandle() = doTest(0, "psf1", "sf1", "sf2")
 
 
-  fun testVirtualType() = doTestTypes(0, "MethodType.methodType(String.class)")
-  fun testStaticType() = doTestTypes(0, "MethodType.methodType(Object.class, Object.class)")
+  fun testVirtualType() = doTestTypes(0, "MethodType.methodType(String.class)", "MethodType.methodType(String.class, int.class, int.class)")
+  fun testStaticType() = doTestTypes(1,
+                                     "MethodType.methodType(Object.class, int.class, int.class)",
+                                     "MethodType.methodType(Object.class, Object.class)")
 
   fun testGetterType() = doTestTypes(0, "int.class")
   fun testSetterType() = doTestTypes(0, "float.class")
@@ -86,7 +88,13 @@ public class Types extends Parent {
   static Object sObj;
 
   String strMethod() {return "";}
-  static Object sObjMethod(Object o) {return this;}
+  String strMethod(int n, int m) {return "";}
+  static String strMethod(int n) {return "";}
+
+  static Object objMethod(Object o) {return o;}
+  static Object objMethod(int n, int m) {return n;}
+  Object objMethod(int n) {return n;}
+
   <T> T genericMethod(T t, String s) {return t;}
   static <T> T sGenericMethod(List<T> lst, T... ts) {return ts[0];}
 }""")
@@ -105,11 +113,7 @@ public class Constructed<T> {
   private fun assertLookupTexts(compareFirst: Boolean, vararg expected: String) {
     val elements = myFixture.lookupElements
     assertNotNull(elements)
-    val lookupTexts = elements!!.map {
-      val presentation = LookupElementPresentation()
-      it.renderElement(presentation)
-      presentation.itemText
-    }
+    val lookupTexts = elements!!.map { LookupElementPresentation.renderElement(it).itemText }
 
     val actual = if (compareFirst) lookupTexts.subList(0, Math.min(expected.size, lookupTexts.size)) else lookupTexts
     assertOrderedEquals(actual, *expected)

@@ -42,8 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
 /**
  * @author Pavel.Dolgov
@@ -308,10 +307,8 @@ public class JavaReflectionReferenceUtil {
 
   @NotNull
   public static String getMethodTypeExpressionText(@NotNull ReflectiveSignature signature) {
-    final String types = signature.stream()
-      .map(text -> text + ".class")
-      .collect(Collectors.joining(", "));
-    return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + "(" + types + ")";
+    final String types = signature.getText(true, type -> type + ".class");
+    return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + types;
   }
 
 
@@ -426,9 +423,15 @@ public class JavaReflectionReferenceUtil {
       myArgumentTypes = argumentTypes;
     }
 
-    @NotNull
-    public Stream<String> stream() {
-      return Stream.concat(Stream.of(myReturnType), Arrays.stream(myArgumentTypes));
+    public String getText(boolean withReturnType, @NotNull Function<String, String> transformation) {
+      final StringJoiner joiner = new StringJoiner(", ", "(", ")");
+      if (withReturnType) {
+        joiner.add(transformation.apply(myReturnType));
+      }
+      for (String argumentType : myArgumentTypes) {
+        joiner.add(transformation.apply(argumentType));
+      }
+      return joiner.toString();
     }
 
     @NotNull
@@ -438,11 +441,7 @@ public class JavaReflectionReferenceUtil {
 
     @NotNull
     public String getShortArgumentTypes() {
-      final StringJoiner joiner = new StringJoiner(", ", "(", ")");
-      for (String argumentType : myArgumentTypes) {
-        joiner.add(PsiNameHelper.getShortClassName(argumentType));
-      }
-      return joiner.toString();
+      return getText(false, PsiNameHelper::getShortClassName);
     }
 
     @Nullable
