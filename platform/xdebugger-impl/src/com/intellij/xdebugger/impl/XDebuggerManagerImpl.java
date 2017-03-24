@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
@@ -101,7 +101,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         updateExecutionPoint(file, false);
       }
     });
-    myBreakpointManager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
+    myBreakpointManager.addBreakpointListener(new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
         if (!(breakpoint instanceof XLineBreakpoint)) {

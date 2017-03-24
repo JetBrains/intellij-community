@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,12 @@ import java.util.EventListener;
  * @author nik
  */
 public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventListener {
-  void breakpointAdded(@NotNull B breakpoint);
+  default void breakpointAdded(@NotNull B breakpoint) {
+  }
 
-  void breakpointRemoved(@NotNull B breakpoint);
+  default void breakpointRemoved(@NotNull B breakpoint) {
+  }
 
-  void breakpointChanged(@NotNull B breakpoint);
+  default void breakpointChanged(@NotNull B breakpoint) {
+  }
 }

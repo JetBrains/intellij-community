@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class BreakpointManager {
 
   public void init() {
     XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    manager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
+    manager.addBreakpointListener(new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint<?> xBreakpoint) {
         Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
