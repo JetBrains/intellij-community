@@ -47,7 +47,6 @@
     <extensionPoint qualifiedName="Edu.pluginConfigurator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.EduPluginConfigurator"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="Edu.taskDescriptionAdditionalActionsProvider" interface="com.jetbrains.edu.learning.StudyTaskDescriptionAdditionalActionsProvider"/>
     <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
     <extensionPoint qualifiedName="Edu.checkListener" interface="com.jetbrains.edu.learning.StudyCheckListener"/>
     <extensionPoint qualifiedName="Edu.studySubtaskChangeListener" interface="com.jetbrains.edu.learning.StudySubtaskChangeListener"/>
@@ -196,7 +195,6 @@
     <checkListener implementation="com.jetbrains.edu.learning.twitter.StudyTwitterAction"/>
 
     <!--course creator-->
-    <taskDescriptionAdditionalActionsProvider implementation="com.jetbrains.edu.coursecreator.CCTaskDescriptionActionsProvider"/>
     <checkListener implementation="com.jetbrains.edu.coursecreator.CCCheckListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
     <studySubtaskChangeListener implementation="com.jetbrains.edu.coursecreator.CCSubtaskChangeListener"/>

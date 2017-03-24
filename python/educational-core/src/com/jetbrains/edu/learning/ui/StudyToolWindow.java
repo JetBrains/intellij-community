@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -36,9 +35,16 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.coursecreator.actions.CCEditTaskTextAction;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.StudyFileEditorManagerListener;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
@@ -175,15 +181,8 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (configurator != null) {
       group.addAll(configurator.getTaskDescriptionActionGroup());
     }
-    addAdditionalActions(group);
+    group.add(new CCEditTaskTextAction());
     return group;
-  }
-
-  private static void addAdditionalActions(DefaultActionGroup group) {
-    StudyTaskDescriptionAdditionalActionsProvider[] providers = Extensions.getExtensions(StudyTaskDescriptionAdditionalActionsProvider.EP_NAME);
-    for (StudyTaskDescriptionAdditionalActionsProvider provider : providers) {
-      group.addAll(provider.getActions());
-    }
   }
 
   public void setTaskText(String text, VirtualFile taskDirectory, Project project) {
