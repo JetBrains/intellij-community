@@ -9,7 +9,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
@@ -288,7 +292,7 @@ public class EduStepicConnector {
         task.addTaskText(wrapper.name, wrapper.text);
       }
     } else {
-      task.setText(block.text);
+      task.addTaskText(EduNames.TASK_HTML, block.text);
     }
 
     task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore

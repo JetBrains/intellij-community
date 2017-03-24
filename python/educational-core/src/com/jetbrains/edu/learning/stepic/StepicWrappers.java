@@ -42,7 +42,6 @@ public class StepicWrappers {
 
     public static Step fromTask(Project project, @NotNull final Task task) {
       final Step step = new Step();
-      step.text = task.getTaskText(project);
       step.source = StepOptions.fromTask(project, task);
       return step;
     }
