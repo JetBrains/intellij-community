@@ -10,7 +10,7 @@ class Test {
   }
 
   interface Bar {
-    Integer _(String s);
+    Integer m(String s);
   }
 }
 
@@ -20,7 +20,7 @@ class Test1 {
         Comparable<String> c = Test1 :: length;
         Comparable<Integer> c1 =  Test1 :: length;
     }
-  
+
     public static Integer length(String s) {
       return s.length();
     }
@@ -28,9 +28,9 @@ class Test1 {
     public static Integer length(Integer s) {
       return s;
     }
-  
+
     interface Bar {
-      Integer _(String s);
+      Integer m(String s);
     }
 }
 

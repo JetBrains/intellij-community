@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.pom.java.LanguageLevel;
 
 public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/highlighting/";
@@ -88,7 +89,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA108195() { doTest(); }
   public void testDiamondInference() { doTest(); }
   public void testFunctionalInterfaceCheck() { doTest(); }
-  public void testUnderscores() { doTest(true); }
+  public void testUnderscores() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(true); }
   public void testReturnTypeAmbiguity() { doTest(); }
   public void testWildcardsAndFormalLambdaParams() { doTest(); }
   public void testFinalInitializer() { doTest(); }

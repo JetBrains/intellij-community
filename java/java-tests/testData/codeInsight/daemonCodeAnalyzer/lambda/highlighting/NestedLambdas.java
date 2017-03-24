@@ -1,9 +1,9 @@
 interface I {
-  Integer _();
+  Integer m();
 }
 
 interface I1 {
-  String _();
+  String m();
 }
 
 class Test {
