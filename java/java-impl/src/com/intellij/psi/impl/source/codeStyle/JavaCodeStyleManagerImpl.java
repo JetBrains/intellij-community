@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -681,7 +680,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NotNull
   private static String constantValueToConstantName(@NotNull String[] names) {
-    return Arrays.stream(names).collect(Collectors.joining("_"));
+    return String.join("_", names);
   }
 
   @NotNull
@@ -853,15 +852,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   public String propertyNameToVariableName(@NotNull String propertyName, @NotNull VariableKind variableKind) {
     if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
       String[] words = NameUtil.nameToWords(propertyName);
-      StringBuilder buffer = new StringBuilder();
-      for (int i = 0; i < words.length; i++) {
-        String word = words[i];
-        if (i > 0) {
-          buffer.append("_");
-        }
-        buffer.append(StringUtil.toUpperCase(word));
-      }
-      return buffer.toString();
+      return StringUtil.join(words, StringUtil::toUpperCase, "_");
     }
 
     String prefix = getPrefixByVariableKind(variableKind);
