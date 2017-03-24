@@ -107,7 +107,7 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
   private static int requiresFlags(int access) {
     int flags = 0;
     if (isSet(access, Opcodes.ACC_TRANSITIVE)) flags |= ModifierFlags.TRANSITIVE_MASK;
-    if (isSet(access, Opcodes.ACC_STATIC_PHASE) || isSet(access, Opcodes.ACC_FINAL)) flags |= ModifierFlags.STATIC_MASK;
+    if (isSet(access, Opcodes.ACC_STATIC_PHASE)) flags |= ModifierFlags.STATIC_MASK;
     return flags;
   }
 }
