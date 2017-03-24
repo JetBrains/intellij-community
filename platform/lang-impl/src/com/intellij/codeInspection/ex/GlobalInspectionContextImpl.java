@@ -360,7 +360,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           Disposer.dispose(view);
         }
       }
-      else if (view != null) {
+      else if (view != null && !view.isDisposed() && getCurrentScope() != null) {
         addView(view);
         view.update();
       }
@@ -420,7 +420,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (!file.isValid()) {
           return;
         }
-        LOG.assertTrue(scope.contains(file.getVirtualFile()), file.getName());
+        if (!scope.contains(file.getVirtualFile())) {
+          LOG.error(file.getName()+"; scope: "+scope);
+        }
         inspectFile(file, inspectionManager, localTools, globalSimpleTools, map);
       })) {
         throw new ProcessCanceledException();
