@@ -1222,6 +1222,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             .map(PyWithItem::getTarget)
             .select(PyTargetExpression.class)
             .forEach(result::add);
+
+          super.visitPyWithStatement(node);
         }
       });
       return result;
