@@ -21,7 +21,6 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.compiler.chainsSearch.*;
-import com.intellij.compiler.classFilesIndex.chainsSearch.*;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.TargetType;
 import com.intellij.openapi.application.ApplicationManager;
