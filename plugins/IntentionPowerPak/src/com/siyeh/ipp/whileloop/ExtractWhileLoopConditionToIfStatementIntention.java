@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,21 @@ package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new WhileLoopPredicate();
   }
 
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiWhileStatement whileStatement =
-      (PsiWhileStatement)element.getParent();
+  @Override
+  protected void processIntention(@NotNull PsiElement element) {
+    final PsiWhileStatement whileStatement = (PsiWhileStatement)element.getParent();
     if (whileStatement == null) {
       return;
     }
@@ -43,14 +42,9 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
     final String conditionText = condition.getText();
     final PsiManager manager = whileStatement.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final PsiExpression newCondition =
-      factory.createExpressionFromText("true", whileStatement);
-    condition.replace(newCondition);
+    condition.replace(factory.createExpressionFromText("true", whileStatement));
     final PsiStatement body = whileStatement.getBody();
-    final String ifStatementText = "if (!(" + conditionText + ")) break;";
-    final PsiStatement ifStatement =
-      factory.createStatementFromText(ifStatementText,
-                                      whileStatement);
+    final PsiStatement ifStatement = factory.createStatementFromText("if (!(" + conditionText + ")) break;", whileStatement);
     final PsiElement newElement;
     if (body instanceof PsiBlockStatement) {
       final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
@@ -59,9 +53,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
       newElement = codeBlock.addBefore(ifStatement, bodyElement);
     }
     else if (body != null) {
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)factory.createStatementFromText("{}",
-                                                           whileStatement);
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", whileStatement);
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       codeBlock.add(ifStatement);
       if (!(body instanceof PsiEmptyStatement)) {
