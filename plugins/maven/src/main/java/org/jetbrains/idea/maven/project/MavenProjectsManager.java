@@ -20,6 +20,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -27,6 +28,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -76,7 +78,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent, Disposable, ProjectComponent {
   private static final int IMPORT_DELAY = 1000;
   private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
@@ -127,7 +129,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), null);
+    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
   }
 
   @Override
@@ -148,9 +150,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void disposeComponent() {
-    super.disposeComponent();
-    Disposer.dispose(mySaveQueue);
+  public void dispose() {
   }
 
   public ModificationTracker getModificationTracker() {

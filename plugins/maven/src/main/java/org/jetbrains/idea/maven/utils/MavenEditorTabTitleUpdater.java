@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.util.List;
 
-public class MavenEditorTabTitleUpdater extends MavenSimpleProjectComponent {
+public class MavenEditorTabTitleUpdater extends MavenSimpleProjectComponent implements BaseComponent {
   public MavenEditorTabTitleUpdater(Project project) {
     super(project);
   }
