@@ -31,9 +31,7 @@ def process_args(argv):
         if arg == '-h' or arg == '-?' or arg == '--help':
             print_usage(argv[0])
             exit(0)
-        elif arg == 'diff' and i == 0:
-            args.append(arg)
-        elif arg == 'merge' and i == 0:
+        elif i == 0 and (arg == 'diff' or arg == 'merge' or arg == '--temp-project'):
             args.append(arg)
         elif arg == '-l' or arg == '--line':
             args.append(arg)
