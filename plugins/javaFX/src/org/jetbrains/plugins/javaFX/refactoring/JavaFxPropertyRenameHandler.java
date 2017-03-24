@@ -108,9 +108,11 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
         doRenameFxId(fxIdValueElement, newName, false, false);
       }
       else {
-        RenameDialog2Kt.showRenameDialogSimple(fxIdValueElement, editor, null, (request) -> {
-          doRenameFxId(fxIdValueElement, request.getNewName(), request.getDialog().getSearchInComments().getValue(), request.isPreview());
-        });
+        RenameDialog2Kt.showRenameDialogSimple(fxIdValueElement, editor, null, (request) ->
+          doRenameFxId(fxIdValueElement,
+                       request.getNewName(),
+                       request.getDialog().getSearchInComments().getValue(),
+                       request.isPreview()));
       }
     }
   }
