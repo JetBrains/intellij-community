@@ -90,16 +90,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final TraceController previous = controllers.get(i - 1);
       final TraceController current = controllers.get(i);
 
-      final CollectionView before = new CollectionView("Before", context, previous.getValues());
-      final CollectionView after = new CollectionView("After", context, current.getValues());
-      previous.register(before);
-      current.register(after);
-
-      final JPanel panel = new JPanel(new GridLayout(1, 3));
-      //panel.add(new MappingPane(beforeSharedValues));
-      panel.add(before);
-      panel.add(after);
-      tab.setContent(panel, BorderLayout.CENTER);
+      final StreamTracesMappingView view = new StreamTracesMappingView(context, previous, current);
+      tab.setContent(view, BorderLayout.CENTER);
     }
 
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
