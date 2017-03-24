@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,7 +36,10 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
@@ -80,23 +85,21 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   protected static Color getBackgroundColor(@Nullable Object value) {
     if (value instanceof PsiElement) {
-      final PsiElement psiElement = (PsiElement)value;
-      final FileColorManager colorManager = FileColorManager.getInstance(psiElement.getProject());
+      PsiElement psiElement = (PsiElement)value;
+      Project project = psiElement.getProject();
 
-      if (colorManager.isEnabled()) {
-        VirtualFile file = null;
-        PsiFile psiFile = psiElement.getContainingFile();
+      VirtualFile file = null;
+      PsiFile psiFile = psiElement.getContainingFile();
 
-        if (psiFile != null) {
-          file = psiFile.getVirtualFile();
-        } else if (psiElement instanceof PsiDirectory) {
-          file = ((PsiDirectory)psiElement).getVirtualFile();
-        }
-        final Color fileBgColor = file != null ? colorManager.getRendererBackground(file) : null;
-
-        if (fileBgColor != null) {
-          return fileBgColor;
-        }
+      if (psiFile != null) {
+        file = psiFile.getVirtualFile();
+      }
+      else if (psiElement instanceof PsiDirectory) {
+        file = ((PsiDirectory)psiElement).getVirtualFile();
+      }
+      Color fileBgColor = file != null ? EditorTabbedContainer.calcTabColor(project, file) : null;
+      if (fileBgColor != null) {
+        return fileBgColor;
       }
     }
 
@@ -126,17 +129,15 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (psiFile != null) {
           VirtualFile vFile = psiFile.getVirtualFile();
           if (vFile != null) {
-            if (WolfTheProblemSolver.getInstance(psiFile.getProject()).isProblemFile(vFile)) {
+            Project project = psiFile.getProject();
+            if (WolfTheProblemSolver.getInstance(project).isProblemFile(vFile)) {
               isProblemFile = true;
             }
-            FileStatus status = FileStatusManager.getInstance(psiFile.getProject()).getStatus(vFile);
+            FileStatus status = FileStatusManager.getInstance(project).getStatus(vFile);
             color = status.getColor();
 
-            final FileColorManager colorManager = FileColorManager.getInstance(psiFile.getProject());
-            if (colorManager.isEnabled()) {
-              final Color fileBgColor = colorManager.getRendererBackground(psiFile);
-              bgColor = fileBgColor == null ? bgColor : fileBgColor;
-            }
+            Color fileBgColor = EditorTabbedContainer.calcTabColor(project, vFile);
+            bgColor = fileBgColor == null ? bgColor : fileBgColor;
           }
         }
 
