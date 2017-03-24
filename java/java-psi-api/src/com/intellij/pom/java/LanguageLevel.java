@@ -41,7 +41,7 @@ public enum LanguageLevel {
   JDK_1_9("Java 9", JavaCoreBundle.message("jdk.1.9.language.level.description"), "9"),
   JDK_X("Java X", JavaCoreBundle.message("jdk.X.language.level.description"), "");
 
-  public static final LanguageLevel HIGHEST = JDK_1_8; // TODO! when language level 9 is really supported, update this field
+  public static final LanguageLevel HIGHEST = JDK_1_9;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final String myName;
