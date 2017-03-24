@@ -17,6 +17,7 @@ package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
+import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
 import com.intellij.psi.*;
@@ -42,57 +43,44 @@ public class CachedRelevantStaticMethodSearcher {
   @NotNull
   public List<ContextRelevantStaticMethod> getRelevantStaticMethods(PsiType type, int minOccurrence) {
     String resultQualifiedClassName = type.getCanonicalText();
-    if (resultQualifiedClassName == null ||
-        ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type) ||
+    if (ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type) ||
         myCompletionContext.getTarget().getClassQName().equals(resultQualifiedClassName)) {
       return Collections.emptyList();
     }
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues = myIndexReader.getMethods(resultQualifiedClassName);
-    if (!indexValues.isEmpty()) {
-      int occurrences = 0;
-      List<ContextRelevantStaticMethod> relevantMethods = new ArrayList<>();
-      for (OccurrencesAware<MethodIncompleteSignature> indexValue : extractStaticMethods(indexValues)) {
-        MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
-        PsiMethod method;
-        if (myCachedResolveResults.containsKey(methodInvocation)) {
-          method = myCachedResolveResults.get(methodInvocation);
-        }
-        else {
-          PsiMethod[] methods = myCompletionContext.resolve(methodInvocation);
-          method = MethodChainsSearchUtil
-            .getMethodWithMinNotPrimitiveParameters(methods, myCompletionContext.getTarget().getTargetClass());
-          myCachedResolveResults.put(methodInvocation, method);
-          if (method == null) {
-            return Collections.emptyList();
-          }
-        }
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues = myIndexReader.findMethods(resultQualifiedClassName, true);
+    int occurrences = 0;
+    List<ContextRelevantStaticMethod> relevantMethods = new SmartList<>();
+    for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
+      MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
+      PsiMethod method;
+      if (myCachedResolveResults.containsKey(methodInvocation)) {
+        method = myCachedResolveResults.get(methodInvocation);
+      }
+      else {
+        PsiMethod[] methods = myCompletionContext.resolve(methodInvocation);
+        method = MethodChainsSearchUtil
+          .getMethodWithMinNotPrimitiveParameters(methods, myCompletionContext.getTarget().getTargetClass());
+        myCachedResolveResults.put(methodInvocation, method);
         if (method == null) {
           return Collections.emptyList();
         }
-        if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
-          if (isMethodValid(method, myCompletionContext, resultQualifiedClassName)) {
-            occurrences += indexValue.getOccurrences();
-            if (myCompletionContext.getResolveScope().contains(method.getContainingFile().getVirtualFile())) {
-              relevantMethods.add(new ContextRelevantStaticMethod(method, null));
-            }
-            if (occurrences >= minOccurrence) {
-              return relevantMethods;
-            }
+      }
+      if (method == null) {
+        return Collections.emptyList();
+      }
+      if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        if (isMethodValid(method, myCompletionContext, resultQualifiedClassName)) {
+          occurrences += indexValue.getOccurrences();
+          if (myCompletionContext.getResolveScope().contains(method.getContainingFile().getVirtualFile())) {
+            relevantMethods.add(new ContextRelevantStaticMethod(method, null));
+          }
+          if (occurrences >= minOccurrence) {
+            return relevantMethods;
           }
         }
       }
     }
     return Collections.emptyList();
-  }
-
-  private static List<OccurrencesAware<MethodIncompleteSignature>> extractStaticMethods(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues) {
-    List<OccurrencesAware<MethodIncompleteSignature>> relevantStaticMethods = new SmartList<>();
-    for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
-      if (indexValue.getUnderlying().isStatic()) {
-        relevantStaticMethods.add(indexValue);
-      }
-    }
-    return relevantStaticMethods;
   }
 
   private static boolean isMethodValid(@Nullable PsiMethod method,

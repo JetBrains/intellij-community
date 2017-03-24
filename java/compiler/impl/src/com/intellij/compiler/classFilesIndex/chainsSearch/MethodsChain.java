@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
+import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;

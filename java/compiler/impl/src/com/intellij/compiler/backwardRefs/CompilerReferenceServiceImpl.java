@@ -20,7 +20,6 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
-import com.intellij.compiler.classFilesIndex.chainsSearch.MethodIncompleteSignature;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -51,11 +50,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.InvertedIndex;
-import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashSet;
@@ -65,8 +61,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
-import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.IOException;
 import java.util.*;
@@ -170,77 +164,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     closeReaderIfNeed(false);
   }
 
-  @Override
-  public TreeSet<OccurrencesAware<MethodIncompleteSignature>> getMethods(String rawReturnType) {
-    try {
-      myReadDataLock.lock();
-
-      if (myReader == null) return null;
-      JavaLightUsageAdapter adapter = new JavaLightUsageAdapter();
-      try {
-        final int type = adapter.findMembersForReturnType(rawReturnType, myReader.getNameEnumerator());
-        return Stream.of(new SignatureData(type, true), new SignatureData(type, false)).flatMap(sd -> {
-          try {
-            List<LightRef> refs = new SmartList<>();
-            myReader.getIndex().get(CompilerIndices.BACK_MEMBER_SIGN).getData(sd).forEach((id, _refs) -> {
-              refs.addAll(_refs);
-              return true;
-            });
-            return refs.stream().map(x -> new Object() {
-              LightRef myRef = x;
-              SignatureData mySignatureData = sd;
-            });
-          }
-          catch (StorageException e) {
-            throw new RuntimeException(e);
-          }
-        }).map(ref -> {
-          int[] res = new int[]{0};
-          try {
-            myReader.getIndex().get(CompilerIndices.BACK_USAGES).getData(ref.myRef).forEach((id, c) -> {
-              res[0] += c;
-              return true;
-            });
-          }
-          catch (StorageException e) {
-            throw new RuntimeException(e);
-          }
-          if (!(ref.myRef instanceof LightRef.JavaLightMethodRef)) return null;
-          return new OccurrencesAware<>(new MethodIncompleteSignature((LightRef.JavaLightMethodRef)ref.myRef, ref.mySignatureData, myReader.getNameEnumerator()), res[0]);
-
-        }).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-      return null;//TODO
-    } finally {
-      myReadDataLock.unlock();
-    }
-  }
-
-  @Override
-  public boolean getCoupleOccurrences(LightRef ref1, LightRef ref2) {
-    //TODO seems it works!
-    final InvertedIndex<LightRef, Integer, CompiledFileData> usages = myReader.getIndex().get(CompilerIndices.BACK_USAGES);
-    try {
-      final TIntHashSet setUnion = InvertedIndexUtil.collectInputIdsContainingAllKeys(usages, Arrays.asList(ref1, ref2), null, null, null);
-      final TIntHashSet set1 = InvertedIndexUtil.collectInputIdsContainingAllKeys(usages, Collections.singletonList(ref1), null, null, null);
-      final TIntHashSet set2 = InvertedIndexUtil.collectInputIdsContainingAllKeys(usages, Collections.singletonList(ref2), null, null, null);
-
-      if ((set1.size() - setUnion.size()) * 10 < setUnion.size()) {
-        return true;
-      }
-      if ((set2.size() - setUnion.size()) * 10 < setUnion.size()) {
-        return true;
-      }
-    }
-    catch (StorageException e) {
-      throw new RuntimeException(e);
-    }
-    return false;
-  }
-
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
@@ -296,6 +219,75 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
+
+  @NotNull
+  @Override
+  public TreeSet<OccurrencesAware<MethodIncompleteSignature>> findMethods(@NotNull String rawReturnType, boolean onlyStatic) {
+    try {
+      myReadDataLock.lock();
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      try {
+        final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
+        Stream.Builder<SignatureData> builder = Stream.<SignatureData>builder().add(new SignatureData(type, true));
+        if (!onlyStatic) {
+          builder.accept(new SignatureData(type, false));
+        }
+        return builder.build()
+          .flatMap(sd -> myReader.getMembersFor(sd)
+            .stream()
+            .filter(r -> r instanceof LightRef.JavaLightMethodRef)
+            .map(r -> new OccurrencesAware<>(
+              new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+              myReader.getOccurrenceCount(r))))
+          .collect(Collectors.toCollection(TreeSet::new));
+      }
+      catch (Exception e) {
+        //noinspection ConstantConditions
+        return onException(e, "find methods");
+      }
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public boolean areCorrelated(@NotNull LightRef ref1, @NotNull LightRef ref2, int correlationThreshold) {
+    try {
+      myReadDataLock.lock();
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      try {
+        final TIntHashSet ids1 = myReader.getAllContainingFileIds(ref1);
+        final TIntHashSet ids2 = myReader.getAllContainingFileIds(ref2);
+        final TIntHashSet intersection = intersection(ids1, ids2);
+        if ((ids1.size() - intersection.size()) * correlationThreshold < intersection.size()) {
+          return true;
+        }
+        if ((ids1.size() - intersection.size()) * correlationThreshold < intersection.size()) {
+          return true;
+        }
+        return false;
+      }
+      catch (Exception e) {
+        //noinspection ConstantConditions
+        return onException(e, "correlation");
+      }
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public String getName(int idx) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      return myReader.getNameEnumerator().getName(idx);
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
   private Integer calculateOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
     LanguageLightRefAdapter adapter = null;
     if (isConstructorSuggestion) {
@@ -306,7 +298,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
     final CompilerElementInfo searchElementInfo = asCompilerElements(element, false, false);
     if (searchElementInfo == null) return null;
-
 
     myReadDataLock.lock();
     try {
@@ -325,9 +316,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         } else {
           return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
         }
-      }
-      catch (StorageException e) {
-        throw new RuntimeException(e);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -671,15 +659,23 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   @Nullable
-  private <T> T onException(@NotNull RuntimeException e, @NotNull String actionName) {
+  private <T> T onException(@NotNull Exception e, @NotNull String actionName) {
     if (e instanceof ProcessCanceledException) {
-      throw e;
+      throw (ProcessCanceledException)e;
     }
-    final Throwable cause = e.getCause();
-    if (cause instanceof PersistentEnumeratorBase.CorruptedException || cause instanceof StorageException) {
+
+    Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
+    if (unwrapped instanceof PersistentEnumeratorBase.CorruptedException || unwrapped instanceof StorageException) {
       closeReaderIfNeed(true);
     }
     LOG.error("an exception during " + actionName + " calculation", e);
     return null;
+  }
+
+  @NotNull
+  private static TIntHashSet intersection(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
+    TIntHashSet result = (TIntHashSet)set1.clone();
+    result.retainAll(set2.toArray());
+    return result;
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.THashSet;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.File;
@@ -98,19 +100,61 @@ class CompilerReferenceReader {
   }
 
   @Nullable
-  Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) throws StorageException {
-    if (checkDefinitions && hasMultipleDefinitions(classDef)) {
-      return null;
-    }
-    final int[] count = {0};
-    myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(classDef).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
-      @Override
-      public boolean perform(int id, Collection<LightRef> value) {
-        count[0] += value.size();
-        return true;
+  Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) {
+    try {
+      if (checkDefinitions && hasMultipleDefinitions(classDef)) {
+        return null;
       }
-    });
-    return count[0];
+      final int[] count = {0};
+      myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(classDef).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
+        @Override
+        public boolean perform(int id, Collection<LightRef> value) {
+          count[0] += value.size();
+          return true;
+        }
+      });
+      return count[0];
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  int getOccurrenceCount(@NotNull LightRef element) {
+    try {
+      int[] result = new int[]{0};
+      myIndex.get(CompilerIndices.BACK_USAGES).getData(element).forEach(
+        new ValueContainer.ContainerAction<Integer>() {
+          @Override
+          public boolean perform(int id, Integer value) {
+            result[0] += value;
+            return true;
+          }
+        });
+      return result[0];
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  List<LightRef> getMembersFor(@NotNull SignatureData data) {
+    try {
+      List<LightRef> result = new ArrayList<>();
+      myIndex.get(CompilerIndices.BACK_MEMBER_SIGN).getData(data).forEach((id, refs) -> {
+        result.addAll(refs);
+        return true;
+      });
+      return result;
+    } catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  TIntHashSet getAllContainingFileIds(@NotNull LightRef ref) throws StorageException {
+    return InvertedIndexUtil.collectInputIdsContainingAllKeys(myIndex.get(CompilerIndices.BACK_USAGES), Collections.singletonList(ref), null, null, null);
   }
 
   @NotNull
@@ -123,19 +167,6 @@ class CompilerReferenceReader {
     if (removeIndex) {
       CompilerBackwardReferenceIndex.removeIndexFiles(myBuildDir);
     }
-  }
-
-  public int getOccurrenceCount(@NotNull LightRef element) throws StorageException {
-    int[] result = new int[]{0};
-    myIndex.get(CompilerIndices.BACK_USAGES).getData(element).forEach(
-      new ValueContainer.ContainerAction<Integer>() {
-        @Override
-        public boolean perform(int id, Integer value) {
-          result[0] += value;
-          return true;
-        }
-      });
-    return result[0];
   }
 
   public CompilerBackwardReferenceIndex getIndex() {

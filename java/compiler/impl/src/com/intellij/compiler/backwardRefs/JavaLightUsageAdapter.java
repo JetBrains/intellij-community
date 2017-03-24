@@ -164,10 +164,6 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
     return ((PsiClass) candidate).isInheritor((PsiClass) baseClass, false);
   }
 
-  public int findMembersForReturnType(@NotNull String returnType, @NotNull NameEnumerator names) throws IOException {
-    return names.tryEnumerate(returnType);
-  }
-
   private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {
     if (!(element instanceof PsiModifierListOwner)) return true;
     if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;

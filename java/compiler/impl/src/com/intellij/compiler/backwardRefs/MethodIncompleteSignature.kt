@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.classFilesIndex.chainsSearch
+package com.intellij.compiler.backwardRefs
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -22,27 +22,25 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.jps.backwardRefs.LightRef
-import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.backwardRefs.SignatureData
-import java.io.IOException
 
 class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
                                 private val signatureData: SignatureData,
-                                private val nameEnumerator: NameEnumerator) {
+                                private val refService: CompilerReferenceServiceEx) {
   companion object {
     val CONSTRUCTOR_METHOD_NAME = "<init>"
   }
 
   val name: String by lazy {
-    denumerate(ref.name)
+    refService.getName(ref.name)
   }
 
   val owner: String by lazy {
-    denumerate(ref.owner.name)
+    refService.getName(ref.owner.name)
   }
 
   val rawReturnType: String by lazy {
-    denumerate(signatureData.rawReturnType)
+    refService.getName(signatureData.rawReturnType)
   }
 
   val parameterCount: Int
@@ -68,15 +66,6 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
       .toTypedArray()
   }
 
-  private fun denumerate(idx: Int): String {
-    try {
-      return nameEnumerator.valueOf(idx)!!
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
-  }
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other?.javaClass != javaClass) return false
@@ -96,6 +85,6 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
   }
 
   override fun toString(): String {
-    return owner + (if (isStatic) "." else "#") + name + "(" + parameterCount + ")"
+    return owner + (if (isStatic) "" else "#") + name + "(" + parameterCount + ")"
   }
 }

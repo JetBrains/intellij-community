@@ -16,6 +16,7 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
+import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +56,7 @@ public class ChainsSearcher {
   private static SearchInitializer createInitializer(TargetType target,
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.getMethods(target.getClassQName());
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethods(target.getClassQName(), false);
     return new SearchInitializer(methods, context);
   }
 
@@ -104,7 +105,7 @@ public class ChainsSearcher {
         continue;
       }
       String currentReturnType = headSignature.getOwner();
-      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.getMethods(currentReturnType);
+      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethods(currentReturnType, false);
       MaxSizeTreeSet<OccurrencesAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<>(maxResultSize);
       for (OccurrencesAware<MethodIncompleteSignature> indexValue : nextMethods) {
@@ -136,7 +137,7 @@ public class ChainsSearcher {
         boolean isBreak = false;
         for (OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
           if (!isBreak) {
-            if (indexReader.getCoupleOccurrences(sign.getUnderlying().getRef(), headSignature.getRef())) {
+            if (indexReader.areCorrelated(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.CORRELATION)) {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;

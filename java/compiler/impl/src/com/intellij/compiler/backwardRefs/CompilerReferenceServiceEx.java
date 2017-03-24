@@ -17,18 +17,28 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
-import com.intellij.compiler.classFilesIndex.chainsSearch.MethodIncompleteSignature;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.SortedSet;
 
+/**
+ * The service is used for java relevant chain completion
+ */
 public abstract class CompilerReferenceServiceEx extends CompilerReferenceService {
   protected CompilerReferenceServiceEx(Project project) {
     super(project);
   }
 
-  public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> getMethods(String rawReturnType);
+  @NotNull
+  public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethods(@NotNull String rawReturnType, boolean onlyStatic)
+    throws ReferenceIndexUnavailableException;
 
-  public abstract boolean getCoupleOccurrences(LightRef ref1, LightRef ref2);
+  public abstract boolean areCorrelated(@NotNull LightRef ref1, @NotNull LightRef ref2, int correlationThreshold)
+    throws ReferenceIndexUnavailableException;
+
+  @NotNull
+  public abstract String getName(int idx)
+    throws ReferenceIndexUnavailableException;
 }
