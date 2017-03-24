@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
@@ -140,18 +139,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInGenerics() { doTest(2, "int", "char", "final"); }
   public void testIntInGenerics2() { doTest(2, "int", "char", "final"); }
   public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
-
-  public void testPrivateInJava9Interface() {
-    LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel oldLevel = levelProjectExtension.getLanguageLevel();
-    try {
-      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_9);
-      doTest();
-    }
-    finally {
-      levelProjectExtension.setLanguageLevel(oldLevel);
-    }
-  }
+  public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
 
   public void testTryInExpression() {
     configureByFile(BASE_PATH + getTestName(true) + ".java");

@@ -460,13 +460,8 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testMethodRefNotInContextInferredFilterWithNonAcceptableSince() {
     //though test extracts method reference which is not suppose to appear with language level 1.7
     //@since 1.8 in Consumer prevent it to appear at first position
-    try {
-      setLanguageLevel(LanguageLevel.JDK_1_7);
-      doTest(new MockIntroduceVariableHandler("l", false, false, false, "D<java.lang.Integer>", false));
-    }
-    finally {
-      setLanguageLevel(getLanguageLevel());
-    }
+    setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "D<java.lang.Integer>", false));
   }
 
   public void testOneLineLambdaVoidCompatible() {
