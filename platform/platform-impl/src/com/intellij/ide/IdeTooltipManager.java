@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -54,7 +54,7 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
-public class IdeTooltipManager implements ApplicationComponentAdapter, Disposable, AWTEventListener {
+public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";

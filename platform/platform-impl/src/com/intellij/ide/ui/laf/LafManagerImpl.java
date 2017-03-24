@@ -94,7 +94,7 @@ import java.util.List;
     @Storage(value = "options.xml", deprecated = true)
   }
 )
-public final class LafManagerImpl extends LafManager implements ApplicationComponentAdapter, PersistentStateComponent<Element>, Disposable {
+public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";

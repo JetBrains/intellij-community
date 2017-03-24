@@ -40,7 +40,9 @@ import java.util.concurrent.TimeUnit;
   name = "StatisticsApplicationUsages",
   storages = @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
 )
-public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements ApplicationComponentAdapter, PersistentStateComponent<Element> {
+public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements
+                                                                                                PersistentStateComponent<Element>,
+                                                                                                ApplicationComponent {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
   private static final String TOKENIZER = ",";

@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffManager;
 
-public class MigrateDiffApplicationComponent implements ApplicationComponentAdapter {
+public class MigrateDiffApplicationComponent implements ApplicationComponent {
   @Override
   public void initComponent() {
     DiffManager.getInstance().registerDiffTool(MigrateDiffTool.INSTANCE);

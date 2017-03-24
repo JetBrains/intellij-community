@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author yole
  */
-public class PerformanceWatcher extends ApplicationComponent.Adapter implements Disposable {
+public class PerformanceWatcher implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";

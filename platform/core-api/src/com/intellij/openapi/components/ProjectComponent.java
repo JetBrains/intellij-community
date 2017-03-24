@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,14 @@ public interface ProjectComponent extends BaseComponent {
    * Note that components may be created for even unopened projects and this method can be never
    * invoked for a particular component instance (for example for default project).
    */
-  void projectOpened();
+  default void projectOpened() {
+  }
 
   /**
    * Invoked when the project corresponding to this component instance is closed.<p>
    * Note that components may be created for even unopened projects and this method can be never
    * invoked for a particular component instance (for example for default project).
    */
-  void projectClosed();
+  default void projectClosed() {
+  }
 }

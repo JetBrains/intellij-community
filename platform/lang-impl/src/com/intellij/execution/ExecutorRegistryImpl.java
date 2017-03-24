@@ -28,7 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, ApplicationComponentAdapter {
+public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
