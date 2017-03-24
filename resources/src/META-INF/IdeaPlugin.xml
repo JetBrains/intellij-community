@@ -1808,9 +1808,9 @@
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
-                            implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor"/>
+                            implementationClass="com.intellij.compiler.chainsSearch.completion.MethodsChainsCompletionContributor"/>
     <weigher order="first" key="completion" id="methodsChains"
-             implementationClass="com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsWeigher"/>
+             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodsChainsWeigher"/>
 
     <applicationService serviceInterface="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"
                         serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>

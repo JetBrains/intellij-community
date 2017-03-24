@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.classFilesIndex.chainsSearch;
+package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
+import com.intellij.compiler.chainsSearch.context.ContextRelevantStaticMethod;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;

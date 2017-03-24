@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.classFilesIndex.chainsSearch;
+package com.intellij.compiler.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.GetterLookupSubLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.SubLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
+import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.GetterLookupSubLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.SubLookupElement;
+import com.intellij.compiler.chainsSearch.context.ContextRelevantStaticMethod;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionLookupElementUtil.createLookupElement;
+import static com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionLookupElementUtil.createLookupElement;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class MethodsChainLookupRangingHelper {

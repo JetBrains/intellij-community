@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup;
+package com.intellij.compiler.chainsSearch.completion.lookup;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
+import com.intellij.compiler.chainsSearch.ChainRelevance;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.ui.JBColor;

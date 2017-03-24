@@ -16,7 +16,7 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
+import com.intellij.compiler.chainsSearch.OccurrencesAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;

@@ -17,9 +17,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
+import com.intellij.compiler.chainsSearch.ChainRelevance;
+import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;

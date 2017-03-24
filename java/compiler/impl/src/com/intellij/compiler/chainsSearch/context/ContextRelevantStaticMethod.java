@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.classFilesIndex.chainsSearch.context;
+package com.intellij.compiler.chainsSearch.context;
 
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.StaticMethodSubLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.SubLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.StaticMethodSubLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.SubLookupElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import gnu.trove.TIntObjectHashMap;

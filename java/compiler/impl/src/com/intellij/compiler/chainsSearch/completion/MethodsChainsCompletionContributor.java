@@ -1,13 +1,29 @@
-package com.intellij.compiler.classFilesIndex.chainsSearch.completion;
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
+import com.intellij.compiler.chainsSearch.*;
 import com.intellij.compiler.classFilesIndex.chainsSearch.*;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
+import com.intellij.compiler.chainsSearch.context.TargetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -24,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForMethodCallParameter;
-import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForVariableAssignment;
+import static com.intellij.compiler.chainsSearch.completion.CompletionContributorPatternUtil.patternForMethodCallParameter;
+import static com.intellij.compiler.chainsSearch.completion.CompletionContributorPatternUtil.patternForVariableAssignment;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 
 /**
