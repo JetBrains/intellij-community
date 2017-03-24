@@ -165,6 +165,12 @@ public class FrozenDocument implements DocumentEx {
 
   @NotNull
   @Override
+  public CharSequence getImmutableCharSequence() {
+    return myText;
+  }
+
+  @NotNull
+  @Override
   public char[] getChars() {
     return CharArrayUtil.fromSequence(myText);
   }

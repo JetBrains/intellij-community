@@ -80,7 +80,7 @@ public interface Document extends UserDataHolder {
   @NotNull
   @Contract(pure=true)
   default CharSequence getImmutableCharSequence() {
-    return getCharsSequence();
+    return getText();
   }
 
   /**
