@@ -2,6 +2,7 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -199,7 +200,11 @@ public class CCUtils {
     if (course == null) {
       return false;
     }
-    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    Language language = course.getLanguageById();
+    if (language == null) {
+      return false;
+    }
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     if (configurator == null) {
       return false;
     }

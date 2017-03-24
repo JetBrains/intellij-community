@@ -73,7 +73,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/community/python/educational-core/course-creator/testData";
+    return "/community/python/educational-core/testData";
   }
 
   @Override

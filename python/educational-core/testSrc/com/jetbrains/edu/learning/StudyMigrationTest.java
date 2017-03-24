@@ -34,6 +34,6 @@ public class StudyMigrationTest {
 
   @NotNull
   protected Path getTestDataPath() {
-    return Paths.get(PlatformTestUtil.getCommunityPath(), "python/educational-core/student/testData/migration");
+    return Paths.get(PlatformTestUtil.getCommunityPath(), "python/educational-core/testData/migration");
   }
 }

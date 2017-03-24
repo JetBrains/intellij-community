@@ -97,6 +97,6 @@ public class StudyStepicFormatTest {
 
   @NotNull
   private static String getTestDataPath() {
-    return FileUtil.join(PlatformTestUtil.getCommunityPath(), "python/educational-core/student/testData/stepic");
+    return FileUtil.join(PlatformTestUtil.getCommunityPath(), "python/educational-core/testData/stepic");
   }
 }
