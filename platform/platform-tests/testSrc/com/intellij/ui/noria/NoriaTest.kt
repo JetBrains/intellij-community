@@ -57,15 +57,12 @@ class NoriaTest : TestCase() {
   fun `test component building`() {
     val root = TestNode("panel", Unit)
     val c = component<Unit>("my component") { u, l ->
-      panel {
-        props = Panel(layout = DummyLayout)
-        label {
-          props = Label("my label")
-        }
+      panel(Panel(layout = DummyLayout)) {
+        label(Label("my label")) {}
       }
     }
-    mount(Disposer.newDisposable(), buildElement<Unit> {
-      c { props = Unit }
+    mount(Disposer.newDisposable(), buildElement(Unit) {
+      c(Unit) {}
     }, root, TestToolkit())
     assertEquals(TestNode("panel", Unit).apply {
       children = arrayListOf(TestNode("panel", props = Panel(DummyLayout)).apply {
@@ -78,16 +75,13 @@ class NoriaTest : TestCase() {
     val root = TestNode("panel", Unit)
     val text = cell("my label")
     val c = component<Unit>("my component") { u, l ->
-      panel {
-        props = Panel(layout = DummyLayout)
-        label {
-          props = Label(text.value)
-        }
+      panel(Panel(layout = DummyLayout)) {
+        label(Label(text.value)) {}
       }
     }
 
-    mount(Disposer.newDisposable(), buildElement<Unit> {
-      c { props = Unit }
+    mount(Disposer.newDisposable(), buildElement(Unit) {
+      c(Unit) {}
     }, root, TestToolkit())
     text.value = "updated label"
 
@@ -103,18 +97,16 @@ class NoriaTest : TestCase() {
 
     val count = cell(0)
     val c = component<Unit>("my component") { u, l ->
-      panel {
-        props = Panel(layout = DummyLayout)
+      panel(Panel(layout = DummyLayout)) {
         for (i in 0..count.value)
-        label {
+        label(Label("label $i")) {
           key = i
-          props = Label("label $i")
         }
       }
     }
 
-    mount(Disposer.newDisposable(), buildElement<Unit> {
-      c { props = Unit }
+    mount(Disposer.newDisposable(), buildElement(Unit) {
+      c(Unit) { }
     }, root, TestToolkit())
 
     assertEquals(TestNode("panel", Unit).apply {
@@ -148,20 +140,14 @@ class NoriaTest : TestCase() {
     var rootReconcile = 0
 
     val controls = component<ControlProps>("controls") { cp, ch ->
-      panel {
+      panel(Panel(DummyLayout)) {
         controlReconcile++
         inc = { cp.c.value++ }
         dec = { cp.c.value-- }
-        props = Panel(DummyLayout)
 
-        button {
-          props = Button(text = "Inc",
-                         onClick = inc)
-        }
-        button {
-          props = Button(text = "Dec",
-                         onClick = dec)
-        }
+        button(Button(text = "Inc", onClick = inc)) {}
+        button(Button(text = "Dec",
+                      onClick = dec)) {}
       }
     }
 
@@ -170,36 +156,31 @@ class NoriaTest : TestCase() {
       rootReconcile++
       masterCbToggle = { cbEnabled.value = it }
       cbChange = { cbSelected.value = it }
-      panel {
-        props = Panel(DummyLayout)
-        label {
+      panel(Panel(DummyLayout)) {
+        label(Label(text = if (allOn.value) "ON" else "OFF")) {
           key = "label"
-          props = Label(text = if (allOn.value) "ON" else "OFF")
         }
-        checkbox {
-          key = "master"
-          props = Checkbox(text = "enabled",
+        checkbox(Checkbox(text = "enabled",
                            selected = cbEnabled.value,
-                           onChange = masterCbToggle)
+                           onChange = masterCbToggle)) {
+          key = "master"
         }
         for (i in 0..counter.value) {
-          checkbox {
-            key = i
-            props = Checkbox(text = "$i",
+          checkbox(Checkbox(text = "$i",
                              selected = cbSelected.value,
                              enabled = cbEnabled.value,
-                             onChange = cbChange)
+                             onChange = cbChange)) {
+            key = i
           }
         }
-        controls {
+        controls(ControlProps(c = counter)) {
           key = "controls"
-          props = ControlProps(c = counter)
         }
       }
     }
 
-    mount(Disposer.newDisposable(), buildElement<Unit> {
-      rootComponent { props = Unit }
+    mount(Disposer.newDisposable(), buildElement(Unit) {
+      rootComponent(Unit) { }
     }, root, TestToolkit())
 
     inc()

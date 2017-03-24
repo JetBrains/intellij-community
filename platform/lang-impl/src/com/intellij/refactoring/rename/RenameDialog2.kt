@@ -197,10 +197,9 @@ fun RenameDialog2.show() {
   val errorText = cell { validation.value.error }
 
   val renamePanel = component<Unit>("renamePanel") { u, ch ->
-    panel {
-      props = Panel(layout = GridBagLayout())
-      label {
-        props = Label(nameLabel).apply {
+    panel(Panel(layout = GridBagLayout())) {
+      label(Label(nameLabel)) {
+        props.apply {
           key = "name"
           constraints = GridBagConstraints().apply {
             insets = JBUI.insetsBottom(4)
@@ -211,14 +210,14 @@ fun RenameDialog2.show() {
           }
         }
       }
-      nameSuggester {
-        key = "name suggester"
-        props = NameSuggester(suggestedNames = suggestedNames,
+      nameSuggester(NameSuggester(suggestedNames = suggestedNames,
                               selection = {initialSelection.apply(it)},
                               onChange = { newName.value = it },
                               project = project,
                               fileType = FileTypes.PLAIN_TEXT,
-                              editor = editor).apply {
+                              editor = editor)) {
+        key = "name suggester"
+        props.apply {
           autoFocus = true
           constraints = GridBagConstraints().apply {
             insets = JBUI.insetsBottom(8)
@@ -237,15 +236,14 @@ fun RenameDialog2.show() {
   }
 
   val northPanel = component<Unit>("north") { u, ch ->
-    renamePanel {
-      props = Unit
+    renamePanel(Unit) {
       beforeCheckboxHook.accept(this)
       if (searchForReferences != null) {
-        checkbox {
-          key = "searchForRefs"
-          props = Checkbox(text = RefactoringBundle.message("search.for.references"),
+        checkbox(Checkbox(text = RefactoringBundle.message("search.for.references"),
                            selected = searchForReferences!!.value,
-                           onChange = { searchForReferences!!.value = it }).apply {
+                           onChange = { searchForReferences!!.value = it })) {
+          key = "searchForRefs"
+          props.apply {
             constraints = GridBagConstraints().apply {
               insets = JBUI.insetsBottom(4)
               gridwidth = 1
@@ -257,11 +255,11 @@ fun RenameDialog2.show() {
           }
         }
       }
-      checkbox {
-        key = "searchInComments"
-        props = Checkbox(text = RefactoringBundle.getSearchInCommentsAndStringsText(),
+      checkbox(Checkbox(text = RefactoringBundle.getSearchInCommentsAndStringsText(),
                          selected = searchInComments.value,
-                         onChange = { searchInComments.value = it }).apply {
+                         onChange = { searchInComments.value = it })) {
+        key = "searchInComments"
+        props.apply {
           constraints = GridBagConstraints().apply {
             insets = JBUI.insetsBottom(4)
             gridwidth = 1
@@ -273,11 +271,11 @@ fun RenameDialog2.show() {
         }
       }
       if (searchTextOccurrencesEnabled) {
-        checkbox {
-          key = "searchForTextOccurrences"
-          props = Checkbox(text = RefactoringBundle.getSearchForTextOccurrencesText(),
+        checkbox(Checkbox(text = RefactoringBundle.getSearchForTextOccurrencesText(),
                            selected = searchTextOccurrences.value,
-                           onChange = { searchTextOccurrences.value = it }).apply {
+                           onChange = { searchTextOccurrences.value = it })) {
+          key = "searchForTextOccurrences"
+          props.apply {
             constraints = GridBagConstraints().apply {
               insets = JBUI.insetsBottom(4)
               gridwidth = GridBagConstraints.REMAINDER
@@ -289,11 +287,11 @@ fun RenameDialog2.show() {
         }
       }
       factoriesFlags.keys.forEachIndexed { i, factory ->
-        checkbox {
-          key = factory.optionName
-          props = Checkbox(text = factory.optionName!!,
+        checkbox(Checkbox(text = factory.optionName!!,
                            selected = factoriesFlags[factory]!!,
-                           onChange = { factoriesFlags[factory] = it }).apply {
+                           onChange = { factoriesFlags[factory] = it })) {
+          key = factory.optionName
+          props.apply {
             constraints = GridBagConstraints().apply {
               insets = JBUI.insetsBottom(4)
               gridwidth = if (i % 2 == 0) 1 else GridBagConstraints.REMAINDER
@@ -311,8 +309,8 @@ fun RenameDialog2.show() {
     title = RefactoringBundle.message("rename.title"),
     errorText = errorText,
     helpId = if (hasHelp) RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement) else null,
-    north = buildElement<Panel> {
-      northPanel { props = Unit }
+    north = buildElement(Unit) {
+      northPanel(Unit) {}
     },
     actions = listOf(
       NoriaAction(name = RefactoringBundle.message("refactor.button"),

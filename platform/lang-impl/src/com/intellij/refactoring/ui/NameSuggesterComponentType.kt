@@ -42,10 +42,11 @@ data class NameSuggester(val suggestedNames: List<String>,
                          val editor: Editor?,
                          override var autoFocus: Boolean = false) : BaseProps by BasePropsData(), Focusable
 
-val nameSuggester = primitiveComponent<NameSuggester>("nameSuggester")
+val NAME_SUGGESTER_COMPONENT_TYPE = "nameSuggester"
+val nameSuggester = primitiveComponent<NameSuggester>(NAME_SUGGESTER_COMPONENT_TYPE)
 
 class NameSuggesterComponentType : PrimitiveComponentType<NameSuggestionsField, NameSuggester> {
-  override val type: String = "nameSuggester"
+  override val type: String = NAME_SUGGESTER_COMPONENT_TYPE
 
   override fun createNode(e: NameSuggester): NameSuggestionsField {
     val field = NameSuggestionsField(e.suggestedNames.toTypedArray(), e.project, e.fileType, e.editor)

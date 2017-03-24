@@ -65,7 +65,7 @@ class SwingToolkit : Toolkit<JComponent> {
 }
 
 class PanelComponentType : PrimitiveComponentType<JPanel, Panel> {
-  override val type: String = "panel"
+  override val type: String = PANEL_COMPONENT_TYPE
   override fun createNode(e: Panel): JPanel =
     JPanel().apply {
       layout = e.layout
@@ -75,7 +75,7 @@ class PanelComponentType : PrimitiveComponentType<JPanel, Panel> {
 }
 
 class LabelComponentType : PrimitiveComponentType<JLabel, Label> {
-  override val type: String = "label"
+  override val type: String = LABEL_COMPONENT_TYPE
   override fun createNode(e: Label): JLabel = JLabel(e.text)
   override fun update(info: UpdateInfo<JLabel, Label>) {
     info.updateProp(Label::text, { text = it })
@@ -85,7 +85,7 @@ class LabelComponentType : PrimitiveComponentType<JLabel, Label> {
 val LISTENER = "noria.listener"
 
 class ButtonComponentType : PrimitiveComponentType<JButton, Button> {
-  override val type: String = "button"
+  override val type: String = BUTTON_COMPONENT_TYPE
   override fun createNode(e: Button): JButton {
     val b = JButton(e.text)
     val newListener = ActionListener { e.onClick() }
@@ -115,7 +115,7 @@ private fun <T : BaseProps> updateListener(info: UpdateInfo<AbstractButton, T>,
 }
 
 class CheckboxComponentType : PrimitiveComponentType<JCheckBox, Checkbox> {
-  override val type: String = "checkbox"
+  override val type: String = CHECKBOX_COMPONENT_TYPE
   override fun createNode(e: Checkbox): JCheckBox {
     val c = if (e.focusable) JCheckBox() else NonFocusableCheckBox()
     c.text = e.text

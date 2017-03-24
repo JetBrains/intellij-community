@@ -32,20 +32,24 @@ data class Checkbox(val text: String,
                     val enabled: Boolean = true,
                     val onChange: (Boolean) -> Unit) : BaseProps by BasePropsData()
 
-val checkbox = primitiveComponent<Checkbox>("checkbox")
+val CHECKBOX_COMPONENT_TYPE = "checkbox"
+val checkbox = primitiveComponent<Checkbox>(CHECKBOX_COMPONENT_TYPE)
 
 data class Button(val text: String = "",
                   val onClick: () -> Unit) : BaseProps by BasePropsData()
 
-val button = primitiveComponent<Button>("button")
+val BUTTON_COMPONENT_TYPE = "button"
+val button = primitiveComponent<Button>(BUTTON_COMPONENT_TYPE)
 
 data class Label(var text: String = "") : BaseProps by BasePropsData()
 
-val label = primitiveComponent<Label>("label")
+val LABEL_COMPONENT_TYPE = "label"
+val label = primitiveComponent<Label>(LABEL_COMPONENT_TYPE)
 
 data class Panel(val layout: LayoutManager = FlowLayout()) : BaseProps by BasePropsData()
 
-val panel = primitiveComponent<Panel>("panel")
+val PANEL_COMPONENT_TYPE = "panel"
+val panel = primitiveComponent<Panel>(PANEL_COMPONENT_TYPE)
 
 
 interface PrimitiveComponentType<C : Any, in T : BaseProps> {

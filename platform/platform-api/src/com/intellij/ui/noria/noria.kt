@@ -462,7 +462,9 @@ class ElementBuilder<T: Any>(val parent: ElementBuilder<*>? = null) {
   var type: ElementType? = null
   var key: Any? = null
   val children: MutableList<Element> = arrayListOf()
-  var props: T? = null
+  var _props: T? = null
+  var props: T get() = _props!!
+  set(value) { _props = value }
 
   fun child(e: Element) {
     children.add(e.copy(
@@ -479,7 +481,7 @@ class ElementBuilder<T: Any>(val parent: ElementBuilder<*>? = null) {
         type = type!!,
         key = key,
         children = children,
-        props = props!!,
+        props = props,
         index = 0)
     if (children.distinctBy { it.key }.count() != children.count()) {
       throw IllegalArgumentException("not unique keys in element $result")
@@ -488,28 +490,32 @@ class ElementBuilder<T: Any>(val parent: ElementBuilder<*>? = null) {
   }
 }
 
-fun <P : Any> primitiveComponent(type: String): ElementBuilder<*>.(ElementBuilder<P>.() -> Unit) -> Unit =
-    { bb ->
+fun <P : Any> primitiveComponent(type: String): ElementBuilder<*>.(p: P, ElementBuilder<P>.() -> Unit) -> Unit =
+    { p, bb ->
       val builder = ElementBuilder<P>(this)
+      builder.props = p
       builder.bb()
       builder.type = ElementType(type)
       builder.done()
     }
 
 fun<P: Any> component(type: String,
-                      body: ElementBuilder<P>.(P, List<Element>) -> Unit): ElementBuilder<*>.(ElementBuilder<P>.() -> Unit) -> Unit =
+                      body: ElementBuilder<P>.(P, List<Element>) -> Unit): ElementBuilder<*>.(p: P, ElementBuilder<P>.() -> Unit) -> Unit =
     statefulComponent(type, {body})
 
-inline fun<T: Any> buildElement(bb: ElementBuilder<T>.() -> Unit): Element {
-  val eb = ElementBuilder<T>()
+inline fun<P: Any> buildElement(p: P, bb: ElementBuilder<P>.() -> Unit): Element {
+  val eb = ElementBuilder<P>()
+  eb.props = p
   eb.bb()
   return eb.children.last()
 }
 
 fun<P: Any> statefulComponent(type: String,
-                              body: () -> ElementBuilder<P>.(P, List<Element>) -> Unit): ElementBuilder<*>.(ElementBuilder<P>.() -> Unit) -> Unit =
-   { bb ->
+                              body: () -> ElementBuilder<P>.(P, List<Element>) -> Unit):
+  ElementBuilder<*>.(p: P, ElementBuilder<P>.() -> Unit) -> Unit =
+   { p, bb ->
      val elementBuilder = ElementBuilder<P>(this)
+     elementBuilder.props = p
      elementBuilder.bb()
      elementBuilder.type = ElementType(
          type = type,
