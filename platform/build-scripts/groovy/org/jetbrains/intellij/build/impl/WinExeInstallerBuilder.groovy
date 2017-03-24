@@ -107,7 +107,7 @@ class WinExeInstallerBuilder {
       ant.exec(command: "\"$installScriptPath\"" +
                         " \"${buildContext.paths.communityHome}\"")
 
-      ant.exec(command: "\"${buildContext.paths.communityHome}/nsis/nsis-3.01/bin/makensis\"" +
+      ant.exec(command: "\"${buildContext.paths.communityHome}/build/tools/nsis/nsis-3.01/bin/makensis\"" +
       " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
       " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
                  " -DNSIS_DIR=\"${box}/NSIS\"" +
