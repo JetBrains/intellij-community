@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -55,7 +56,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) ?: return
+    val info = getHintInfoFromProvider(offset, file, editor) ?: return
     
     e.presentation.text = when (info) {
       is HintInfo.OptionInfo -> "Show Hints Settings..."
@@ -71,7 +72,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
     InlayParameterHintsExtension.forLanguage(language) ?: return
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) ?: return
+    val info = getHintInfoFromProvider(offset, file, editor) ?: return
     
     val newPreselectedPattern = when (info) {
       is HintInfo.OptionInfo -> null
@@ -103,13 +104,13 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
 
   private fun isMethodHintAtOffset(editor: Editor, file: PsiFile): Boolean {
     val offset = editor.caretModel.offset
-    return getHintInfoFromProvider(offset, file) is MethodInfo
+    return getHintInfoFromProvider(offset, file, editor) is MethodInfo
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val offset = editor.caretModel.offset
 
-    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
+    val info = getHintInfoFromProvider(offset, file, editor) as? MethodInfo ?: return
     ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
     refreshAllOpenEditors()
     
@@ -185,7 +186,7 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
 
   private fun getOptionHintAtOffset(editor: Editor, file: PsiFile): HintInfo.OptionInfo? {
     val offset = editor.caretModel.offset
-    return getHintInfoFromProvider(offset, file) as? HintInfo.OptionInfo
+    return getHintInfoFromProvider(offset, file, editor) as? HintInfo.OptionInfo
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -269,12 +270,20 @@ private fun refreshAllOpenEditors() {
 }
 
 
-private fun getHintInfoFromProvider(offset: Int, file: PsiFile): HintInfo? {
-  val element = file.findElementAt(offset)
-  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
+private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor): HintInfo? {
+  val element = file.findElementAt(offset) ?: return null
+  val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
   
-  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getHintInfo(e) != null }) ?: return null
-  return hintsProvider.getHintInfo(method)
+  val isHintOwnedByElement: (PsiElement) -> Boolean = { e -> provider.getHintInfo(e) != null && e.isOwnsInlayInEditor(editor) }
+  val method = PsiTreeUtil.findFirstParent(element, isHintOwnedByElement) ?: return null
+  
+  return provider.getHintInfo(method)
+}
+
+
+fun PsiElement.isOwnsInlayInEditor(editor: Editor): Boolean {
+  val start = if (textRange.isEmpty) textRange.startOffset else textRange.startOffset + 1
+  return !editor.inlayModel.getInlineElementsInRange(start, textRange.endOffset).isEmpty()
 }
 
 fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
