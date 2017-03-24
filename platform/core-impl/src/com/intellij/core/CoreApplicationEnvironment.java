@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -42,7 +41,6 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -67,7 +65,6 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
@@ -87,9 +84,15 @@ public class CoreApplicationEnvironment {
   private final CoreLocalFileSystem myLocalFileSystem;
   protected final VirtualFileSystem myJarFileSystem;
   @NotNull private final Disposable myParentDisposable;
+  private final boolean myUnitTestMode;
 
   public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
+    this(parentDisposable, true);
+  }
+
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
     myParentDisposable = parentDisposable;
+    myUnitTestMode = unitTestMode;
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -138,7 +141,12 @@ public class CoreApplicationEnvironment {
 
   @NotNull
   protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
-    return new MockApplicationEx(parentDisposable);
+    return new MockApplicationEx(parentDisposable) {
+      @Override
+      public boolean isUnitTestMode() {
+        return myUnitTestMode;
+      }
+    };
   }
 
   @NotNull
