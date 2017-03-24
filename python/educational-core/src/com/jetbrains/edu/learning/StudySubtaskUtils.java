@@ -7,7 +7,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -16,16 +15,22 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ArrayUtil;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
@@ -85,37 +90,75 @@ public class StudySubtaskUtils {
     }
     transformTestFile(project, toSubtaskIndex, taskDir);
     task.setActiveSubtaskIndex(toSubtaskIndex);
-    updateUI(project, task, taskDir, navigateToTask);
+    updateUI(project, task, taskDir, !CCUtils.isCourseCreator(project) && navigateToTask);
+    if (CCUtils.isCourseCreator(project)) {
+      updateOpenedTestFiles(project, taskDir, fromSubtaskIndex, toSubtaskIndex);
+    }
+  }
 
-    for (StudySubtaskChangeListener listener : Extensions.getExtensions(StudySubtaskChangeListener.EP_NAME)) {
-      listener.subtaskChanged(project, task, fromSubtaskIndex, toSubtaskIndex);
+  private static void updateOpenedTestFiles(@NotNull Project project,
+                                            @NotNull VirtualFile taskDir,
+                                            int fromTaskNumber,
+                                            int toSubtaskNumber) {
+    String fromSubtaskTestName = getTestFileName(project, fromTaskNumber);
+    String toSubtaskTestName = getTestFileName(project, toSubtaskNumber);
+    if (fromSubtaskTestName == null || toSubtaskTestName == null) {
+      return;
+    }
+    VirtualFile fromTest = taskDir.findChild(fromSubtaskTestName);
+    VirtualFile toTest = taskDir.findChild(toSubtaskTestName);
+    if (fromTest == null || toTest == null) {
+      return;
+    }
+    FileEditorManager editorManager = FileEditorManager.getInstance(project);
+    if (editorManager.isFileOpen(fromTest)) {
+      VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
+      boolean isSelected = ArrayUtil.contains(fromTest, selectedFiles);
+      editorManager.closeFile(fromTest);
+      editorManager.openFile(toTest, isSelected);
+      if (!isSelected) {
+        for (VirtualFile file : selectedFiles) {
+          editorManager.openFile(file, true);
+        }
+      }
     }
   }
 
   private static void transformTestFile(@NotNull Project project, int toSubtaskIndex, VirtualFile taskDir) {
-    Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+
+    String subtaskTestFileName = getTestFileName(project, toSubtaskIndex);
+    if (subtaskTestFileName == null) {
       return;
     }
-    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
-    if (configurator == null) {
-      return;
-    }
-    String defaultTestFileName = configurator.getTestFileName();
-    String nameWithoutExtension = FileUtil.getNameWithoutExtension(defaultTestFileName);
-    String extension = FileUtilRt.getExtension(defaultTestFileName);
-    String subtaskTestFileName = nameWithoutExtension + EduNames.SUBTASK_MARKER + toSubtaskIndex;
-    VirtualFile subtaskTestFile = taskDir.findChild(subtaskTestFileName + ".txt");
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(subtaskTestFileName);
+    String extension = FileUtilRt.getExtension(subtaskTestFileName);
+    VirtualFile subtaskTestFile = taskDir.findChild(nameWithoutExtension + ".txt");
     if (subtaskTestFile != null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          subtaskTestFile.rename(project, subtaskTestFileName + "." + extension);
+          subtaskTestFile.rename(project, nameWithoutExtension + "." + extension);
         }
         catch (IOException e) {
           LOG.error(e);
         }
       });
     }
+  }
+
+  @Nullable
+  private static String getTestFileName(@NotNull Project project, int subtaskIndex) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return null;
+    }
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
+      return null;
+    }
+    String defaultTestFileName = configurator.getTestFileName();
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(defaultTestFileName);
+    String extension = FileUtilRt.getExtension(defaultTestFileName);
+    return nameWithoutExtension + EduNames.SUBTASK_MARKER + subtaskIndex + "." + extension;
   }
 
   public static void updateUI(@NotNull Project project, @NotNull Task task, VirtualFile taskDir, boolean navigateToTask) {
