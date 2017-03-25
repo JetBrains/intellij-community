@@ -15,6 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.formatting.IndentInfo;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +56,20 @@ public class JDComment {
     myMultiLineComment = value;
   }
 
+  protected String getContinuationIndent() {
+    CodeStyleSettings settings = myFormatter.getSettings();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+    return new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
+  }
+
+  protected String getContinuationPrefix(String prefix) {
+    if (myFormatter.getSettings().JD_INDENT_ON_CONTINUATION) {
+      return prefix + getContinuationIndent();
+    } else {
+      return prefix;
+    }
+  }
+
   @Nullable
   public String generate(@NotNull String indent) {
     final String prefix;
@@ -76,9 +94,11 @@ public class JDComment {
 
     generateSpecial(prefix, sb);
 
+    final String continuationPrefix = getContinuationPrefix(prefix);
+
     if (!isNull(myUnknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
       for (String aUnknownList : myUnknownList) {
-        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix));
+        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix, continuationPrefix));
       }
     }
 
@@ -86,7 +106,7 @@ public class JDComment {
       JDTag tag = JDTag.SEE;
       for (String aSeeAlsoList : mySeeAlsoList) {
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), prefix);
+          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), continuationPrefix);
         sb.append(tagDescription);
       }
     }
@@ -94,14 +114,14 @@ public class JDComment {
     if (!isNull(mySince)) {
       JDTag tag = JDTag.SINCE;
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(mySince, prefix + tag.getWithEndWhitespace(), prefix);
+        .formatJDTagDescription(mySince, prefix + tag.getWithEndWhitespace(), continuationPrefix);
       sb.append(tagDescription);
     }
 
     if (myDeprecated != null) {
       JDTag tag = JDTag.DEPRECATED;
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), prefix);
+        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), continuationPrefix);
       sb.append(tagDescription);
     }
 
