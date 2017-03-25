@@ -41,9 +41,7 @@ public class JDMethodComment extends JDParamListOwnerComment {
     if (myReturnTag != null) {
       if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || !myReturnTag.trim().isEmpty()) {
         JDTag tag = JDTag.RETURN;
-        sb.append(prefix);
-        sb.append(tag.getWithEndWhitespace());
-        sb.append(myFormatter.getParser().formatJDTagDescription(myReturnTag, prefix, true, tag.getDescriptionPrefix(prefix).length()));
+        sb.append(myFormatter.getParser().formatJDTagDescription(myReturnTag, prefix + tag.getWithEndWhitespace(), prefix));
         if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_RETURN) {
           sb.append(prefix);
           sb.append('\n');

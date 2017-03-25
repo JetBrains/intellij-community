@@ -536,16 +536,6 @@ public class JDParser {
     },
   };
 
-  @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String s, @NotNull CharSequence prefix) {
-    return formatJDTagDescription(s, prefix, false, 0);
-  }
-  
-  @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String s, @NotNull CharSequence prefix, boolean wrapLinesShorterRightMargin) {
-    return formatJDTagDescription(s, prefix, false, 0, wrapLinesShorterRightMargin);
-  }
-
   private static boolean lineHasUnclosedPreTag(@NotNull String line) {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_START) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
@@ -555,36 +545,36 @@ public class JDParser {
   }
 
   @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String str,
-                                                 @NotNull CharSequence prefix,
-                                                 boolean firstLineShorter,
-                                                 int firstLinePrefixLength) {
-    return formatJDTagDescription(str, prefix, firstLineShorter, firstLinePrefixLength, true);
+  protected StringBuilder formatJDTagDescription(@Nullable String str, @NotNull CharSequence prefix) {
+    return formatJDTagDescription(str, prefix, prefix);
   }
-  
+
   /**
-   * Returns formatted JavaDoc tag description, according to selected configuration
-   * @param str JavaDoc tag description
-   * @param prefix JavaDoc prefix(like "      *  ") which will be appended to every new line
-   * @param firstLineShorter flag if first line should be shorter (has another prefix length than other lines)
-   * @param firstLinePrefixLength first line prefix length
+   * Returns formatted JavaDoc tag description, according to selected configuration. Prefixs
+   * may be specified for the first lines and all subsequent lines. This distinction allows
+   * partially manual formatting of the first line (by moving content from the description
+   * to the first line prefix) and allow continuation lines to use different indentation.
+   *
+   * @param str                JavaDoc tag description
+   * @param firstLinePrefix    prefix to be added to the first line
+   * @param continuationPrefix prefix to be added to lines after the first
    * @return formatted JavaDoc tag description
    */
   @NotNull
   protected StringBuilder formatJDTagDescription(@Nullable String str,
-                                                 @NotNull CharSequence prefix,
-                                                 boolean firstLineShorter,
-                                                 int firstLinePrefixLength,
-                                                 boolean isWrapLinesShorterRightMargin)
+                                                 @NotNull CharSequence firstLinePrefix,
+                                                 @NotNull CharSequence continuationPrefix)
   {
     final int rightMargin = mySettings.getRightMargin(JavaLanguage.INSTANCE);
-    final int maxCommentLength = rightMargin - prefix.length();
-    
-    StringBuilder sb = new StringBuilder();
+    final int maxCommentLength = rightMargin - continuationPrefix.length();
+    final int firstLinePrefixLength = firstLinePrefix.length();
+    final boolean firstLineShorter = firstLinePrefixLength > continuationPrefix.length();
+
+    StringBuilder sb = new StringBuilder(firstLinePrefix);
     List<String> list;
-    
-    boolean canWrap = isWrapLinesShorterRightMargin || hasLineLongerThan(str, maxCommentLength);
-    
+
+    boolean canWrap = !mySettings.JD_PRESERVE_LINE_FEEDS || hasLineLongerThan(str, maxCommentLength);
+
     //If wrap comments selected, comments should be wrapped by the right margin
     if (mySettings.WRAP_COMMENTS && canWrap) {
       list = toArrayWrapping(str, maxCommentLength);
@@ -628,7 +618,7 @@ public class JDParser {
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
-        if (i != 0) sb.append(prefix);
+        if (i != 0) sb.append(continuationPrefix);
         if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
           sb.append(P_START_TAG);
         }

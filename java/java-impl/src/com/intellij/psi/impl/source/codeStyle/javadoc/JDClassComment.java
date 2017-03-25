@@ -40,16 +40,12 @@ public class JDClassComment extends JDParamListOwnerComment {
     if (!isNull(myAuthorsList)) {
       JDTag tag = JDTag.AUTHOR;
       for (String author : myAuthorsList) {
-        sb.append(prefix);
-        sb.append(tag.getWithEndWhitespace());
-        sb.append(myFormatter.getParser().formatJDTagDescription(author, tag.getDescriptionPrefix(prefix)));
+        sb.append(myFormatter.getParser().formatJDTagDescription(author, prefix + tag.getWithEndWhitespace(), prefix));
       }
     }
     if (!isNull(myVersion)) {
-      sb.append(prefix);
       JDTag tag = JDTag.VERSION;
-      sb.append(tag.getWithEndWhitespace());
-      sb.append(myFormatter.getParser().formatJDTagDescription(myVersion, tag.getDescriptionPrefix(prefix)));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myVersion, prefix + tag.getWithEndWhitespace(), prefix));
     }
   }
 
