@@ -12,11 +12,9 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 public class CCVirtualFileListener extends VirtualFileAdapter {
 
@@ -48,7 +46,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     String taskRelativePath = StudyUtils.pathRelativeToTask(createdFile);
 
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
-    if (configurator != null && configurator.excludeFromArchive(new File(createdFile.getPath()))) {
+    if (configurator != null && configurator.excludeFromArchive(createdFile.getName())) {
       return;
     }
 
@@ -67,8 +65,6 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
-
-    CCUtils.createResourceFile(createdFile, course, taskVF);
 
     task.addTaskFile(taskRelativePath, 1);
   }
@@ -89,7 +85,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null || path.contains(FileUtil.toSystemIndependentName(course.getCourseDirectory()))) {
+    if (course == null) {
       return;
     }
     final TaskFile taskFile = StudyUtils.getTaskFile(project, removedFile);
@@ -112,7 +108,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
     VirtualFile courseDir = project.getBaseDir();
     CCUtils.updateHigherElements(courseDir.getChildren(), file -> course.getLesson(file.getName()), removedLesson.getIndex(), EduNames.LESSON, -1);
-    course.getLessons().remove(removedLesson);
+    course.removeLesson(removedLesson);
   }
 
   private static void deleteTask(@NotNull final Course course, @NotNull final VirtualFile removedTask) {

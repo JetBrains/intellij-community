@@ -17,15 +17,13 @@ public class CCOptions implements StudyOptionsProvider {
   public JComponent createComponent() {
     if (CCSettings.getInstance().useHtmlAsDefaultTaskFormat()) {
       myHtmlRadioButton.setSelected(true);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myHtmlRadioButton, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(myHtmlRadioButton, true));
     }
     else {
       myMarkdownRadioButton.setSelected(true);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myMarkdownRadioButton, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(myMarkdownRadioButton, true));
     }
     return myPanel;
   }

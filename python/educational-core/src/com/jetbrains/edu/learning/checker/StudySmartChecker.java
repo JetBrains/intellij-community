@@ -21,7 +21,6 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 
 public class StudySmartChecker {
@@ -40,7 +39,6 @@ public class StudySmartChecker {
                                 @NotNull final VirtualFile virtualFile,
                                 @NotNull final Document usersDocument) {
     VirtualFile fileWindows = null;
-    File resourceFile = null;
     VirtualFile windowCopy = null;
     try {
       final int index = placeholder.getIndex();
@@ -49,7 +47,6 @@ public class StudySmartChecker {
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
-        resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
         TaskFile windowTaskFile = answerTaskFile.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(virtualFile));
         if (windowTaskFile == null) {
           return;
@@ -81,9 +78,6 @@ public class StudySmartChecker {
     finally {
       StudyUtils.deleteFile(windowCopy);
       StudyUtils.deleteFile(fileWindows);
-      if (resourceFile != null && resourceFile.exists() && !resourceFile.delete()) {
-        LOG.error("failed to delete", resourceFile.getPath());
-      }
     }
   }
 }

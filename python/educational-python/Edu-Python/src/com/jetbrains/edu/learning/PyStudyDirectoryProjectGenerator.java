@@ -23,9 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
@@ -126,7 +127,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
                                @NotNull Module module,
                                @Nullable PyProjectSynchronizer synchronizer) {
     myGenerator.generateProject(project, baseDir);
-    final String testHelper = "test_helper.py";
+    final String testHelper = EduNames.TEST_HELPER;
     if (baseDir.findChild(testHelper) != null) return;
     final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
@@ -159,11 +160,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   @Override
   public JPanel extendBasePanel() throws ProcessCanceledException {
     return mySettingsPanel;
-  }
-
-  @NotNull
-  public List<CourseInfo> getCourses() {
-    return myGenerator.getCoursesUnderProgress(false, "Getting Courses", ProjectManager.getInstance().getDefaultProject());
   }
 
   public void setSelectedCourse(CourseInfo course) {

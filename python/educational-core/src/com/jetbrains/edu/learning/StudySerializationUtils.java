@@ -528,9 +528,9 @@ public class StudySerializationUtils {
             stepOptionsJson = convertToSecondVersion(stepOptionsJson);
           case 2:
             stepOptionsJson = convertToThirdVersion(stepOptionsJson);
-            // uncomment for future versions
-            //case 3:
-            //  stepOptionsJson = convertToFourthVersion(stepOptionsJson);
+          // uncomment for future versions
+          //case 3:
+          //  stepOptionsJson = convertToFourthVersion(stepOptionsJson);
         }
         convertSubtaskInfosToMap(stepOptionsJson);
         StepicWrappers.StepOptions stepOptions =

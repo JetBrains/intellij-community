@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.SerializedName;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of class which contains information to be shawn in course description in tool window
@@ -152,10 +150,11 @@ public class CourseInfo {
 
   public static CourseInfo fromCourse(@Nullable final Course course) {
     if (course == null) return null;
-    final List<CourseInfo> infos = StudyProjectGenerator.getCoursesFromCache().stream().
-      filter(info -> info.id == course.getId()).collect(Collectors.toList());
-    if (infos.isEmpty()) return null;
-    return infos.get(0);
+    CourseInfo courseInfo = new CourseInfo();
+    courseInfo.setName(course.getName());
+    courseInfo.setDescription(course.getDescription());
+    courseInfo.setAuthors(course.getAuthors());
+    return courseInfo;
   }
 
   public List<Integer> getSections() {

@@ -15,10 +15,7 @@
  */
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,16 +27,14 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class CCRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
-  private static final Logger LOG = Logger.getInstance(CCRefactoringElementListenerProvider.class);
 
   @Nullable
   @Override
@@ -94,21 +89,8 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       if (taskFile == null) {
         return;
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, oldName);
-        if (patternFile != null) {
-          try {
-            patternFile.delete(CCRefactoringElementListenerProvider.class);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
-      });
-
       taskFiles.remove(oldName);
       taskFiles.put(StudyUtils.pathRelativeToTask(file.getVirtualFile()), taskFile);
-      CCUtils.createResourceFile(file.getVirtualFile(), course, taskDir.getVirtualFile());
     }
 
     @Override

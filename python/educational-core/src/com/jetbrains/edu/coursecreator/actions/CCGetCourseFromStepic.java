@@ -15,25 +15,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
-import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.Map;
 
 import static com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive.createAnswerFile;
-import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
-import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.flushCourse;
 
 public class CCGetCourseFromStepic extends DumbAwareAction {
 
@@ -66,21 +63,17 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
 
     final Course course = EduStepicConnector.getCourse(project, info);
     if (course != null) {
-      flushCourse(course);
 
-      final File courseDirectory = StudyUtils.getCourseDirectory(course);
       ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
         final VirtualFile[] children = baseDir.getChildren();
         for (VirtualFile child : children) {
           StudyUtils.deleteFile(child);
         }
-        StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+        StudyGenerator.createCourse(course, baseDir);
       }));
 
 
       StudyTaskManager.getInstance(project).setCourse(course);
-      File courseDir = new File(OUR_COURSES_DIR, course.getName() + "-" + project.getName());
-      course.setCourseDirectory(courseDir.getPath());
       course.setCourseMode(CCUtils.COURSE_MODE);
       project.getBaseDir().refresh(false, true);
       int index = 1;

@@ -18,13 +18,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Course {
   @Expose private List<Lesson> lessons = new ArrayList<>();
   @Expose private List<StepicUser> authors = new ArrayList<>();
   @Expose private String description;
   @Expose private String name;
-  private String myCourseDirectory = "";
   @Expose private int id;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
   @Expose private boolean isAdaptive = false;
@@ -35,8 +35,7 @@ public class Course {
   private String courseType = EduNames.PYCHARM;
   private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
 
-  public Course() {
-  }
+  public Course() {}
 
   /**
    * Initializes state of course
@@ -48,18 +47,28 @@ public class Course {
   }
 
   public List<Lesson> getLessons() {
-    return lessons;
+    return getLessons(false);
+  }
+
+  public List<Lesson> getLessons(boolean withAadditional) {
+    return withAadditional ? lessons
+           : lessons.stream().filter(lesson -> !EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())).collect(Collectors.toList());
   }
 
   public void setLessons(List<Lesson> lessons) {
     this.lessons = lessons;
   }
+
   public void addLessons(List<Lesson> lessons) {
     this.lessons.addAll(lessons);
   }
 
   public void addLesson(@NotNull final Lesson lesson) {
     lessons.add(lesson);
+  }
+
+  public void removeLesson(Lesson lesson) {
+    lessons.remove(lesson);
   }
 
   public Lesson getLesson(@NotNull final String name) {
@@ -116,14 +125,6 @@ public class Course {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public String getCourseDirectory() {
-    return myCourseDirectory;
-  }
-
-  public void setCourseDirectory(@NotNull final String courseDirectory) {
-    myCourseDirectory = courseDirectory;
   }
 
   public String getDescription() {

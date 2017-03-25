@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,12 +14,11 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,9 +45,6 @@ public class CCProjectComponent extends AbstractProjectComponent {
       CCProjectService.getInstance(myProject).setCourse(null);
       oldCourse.initCourse(true);
       oldCourse.setCourseMode(CCUtils.COURSE_MODE);
-      File coursesDir = new File(PathManager.getConfigPath(), "courses");
-      File courseDir = new File(coursesDir, oldCourse.getName() + "-" + myProject.getName());
-      oldCourse.setCourseDirectory(courseDir.getPath());
       StudyUtils.registerStudyToolWindow(oldCourse, myProject);
       transformFiles(oldCourse, myProject);
     }

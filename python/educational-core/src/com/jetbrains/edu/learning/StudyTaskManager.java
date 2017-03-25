@@ -13,14 +13,12 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +37,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public int VERSION = 5;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
-  public List<String> myInvisibleFiles = new ArrayList<>();
 
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
@@ -150,12 +147,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
       VERSION = CURRENT_VERSION;
       if (myCourse != null) {
         myCourse.initCourse(true);
-        if (version != VERSION) {
-          final File updatedCourse = new File(StudyProjectGenerator.OUR_COURSES_DIR, myCourse.getName());
-          if (updatedCourse.exists()) {
-            myCourse.setCourseDirectory(updatedCourse.getAbsolutePath());
-          }
-        }
       }
     }
     catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
@@ -165,14 +156,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, StudyTaskManager.class);
-  }
-
-  public void addInvisibleFiles(String filePath) {
-    myInvisibleFiles.add(filePath);
-  }
-
-  public boolean isInvisibleFile(String path) {
-    return myInvisibleFiles.contains(path);
   }
 
   public boolean shouldUseJavaFx() {

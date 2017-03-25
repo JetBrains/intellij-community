@@ -21,6 +21,11 @@ import java.util.Map;
 
 /**
  * Implementation of task which contains task files, tests, input file for tests
+ *
+ * To implement new task there are 3 steps to be done:
+ * - extend Task class
+ * - go to Lesson and update elementTypes in taskList AbstractCollection. Needed for proper xml serialization
+ * - Update TaskSerializer and TaskDeserializer in StudySerializationUtil to handle json serialization
  */
 public class Task implements StudyItem {
   @Expose private String name;
@@ -35,8 +40,10 @@ public class Task implements StudyItem {
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
-  protected Map<String, String> testsText = new HashMap<>();
-  protected Map<String, String> taskTexts = new HashMap<>();
+  @SerializedName("test_files")
+  @Expose protected Map<String, String> testsText = new HashMap<>();
+  @SerializedName("task_texts")
+  @Expose protected Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;

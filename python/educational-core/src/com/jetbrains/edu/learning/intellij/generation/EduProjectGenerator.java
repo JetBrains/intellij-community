@@ -8,8 +8,6 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 public class EduProjectGenerator extends StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(EduProjectGenerator.class);
 
@@ -21,6 +19,5 @@ public class EduProjectGenerator extends StudyProjectGenerator {
       return;
     }
     StudyTaskManager.getInstance(project).setCourse(course);
-    course.setCourseDirectory(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()).getAbsolutePath());
   }
 }

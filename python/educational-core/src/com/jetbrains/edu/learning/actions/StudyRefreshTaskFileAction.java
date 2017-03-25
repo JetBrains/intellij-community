@@ -76,7 +76,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
       }
     }
     else {
-      if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
+      if (!resetTaskFile(editor.getDocument(), project, taskFile)) {
         Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
         return;
       }
@@ -95,16 +95,13 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
       () -> IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true));
 
     StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
-    showBalloon(project, "You can start again now", MessageType.INFO);
+    showBalloon(project, MessageType.INFO);
   }
 
   private static boolean resetTaskFile(@NotNull final Document document,
                                        @NotNull final Project project,
-                                       TaskFile taskFile,
-                                       String name) {
-    if (!resetDocument(document, taskFile, name)) {
-      return false;
-    }
+                                       TaskFile taskFile) {
+    resetDocument(document, taskFile);
     final Task task = taskFile.getTask();
     task.setStatus(StudyStatus.Unchecked);
     if (task instanceof ChoiceTask) {
@@ -116,9 +113,9 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     return true;
   }
 
-  private static void showBalloon(@NotNull final Project project, String text, @NotNull final MessageType messageType) {
+  private static void showBalloon(@NotNull final Project project, @NotNull final MessageType messageType) {
     BalloonBuilder balloonBuilder =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, messageType, null);
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You can start again now", messageType, null);
     final Balloon balloon = balloonBuilder.createBalloon();
     StudyEditor selectedStudyEditor = StudyUtils.getSelectedStudyEditor(project);
     assert selectedStudyEditor != null;
@@ -135,19 +132,14 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   }
 
 
-  private static boolean resetDocument(@NotNull final Document document,
-                                       @NotNull final TaskFile taskFile,
-                                       String fileName) {
-    final Document patternDocument = StudyUtils.getPatternDocument(taskFile, fileName);
-    if (patternDocument == null) {
-      return false;
-    }
+  private static void resetDocument(@NotNull final Document document,
+                                       @NotNull final TaskFile taskFile) {
     StudyUtils.deleteGuardedBlocks(document);
     taskFile.setTrackChanges(false);
     clearDocument(document);
-    document.setText(patternDocument.getCharsSequence());
+
+    document.setText(taskFile.text);
     taskFile.setTrackChanges(true);
-    return true;
   }
 
   private static void clearDocument(@NotNull final Document document) {
