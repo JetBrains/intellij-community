@@ -76,6 +76,7 @@ public class GitUpdateProcess {
 
   @NotNull private final List<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
+  private final boolean myCheckForTrackedBranchExistance;
   private final UpdatedFiles myUpdatedFiles;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final GitMerger myMerger;
@@ -84,9 +85,11 @@ public class GitUpdateProcess {
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
-                          boolean checkRebaseOverMergeProblem) {
+                          boolean checkRebaseOverMergeProblem,
+                          boolean checkForTrackedBranchExistance) {
     myProject = project;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
+    myCheckForTrackedBranchExistance = checkForTrackedBranchExistance;
     myGit = Git.getInstance();
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -285,6 +288,7 @@ public class GitUpdateProcess {
     LOG.info("updateImpl: defining updaters...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
+      if (trackedBranches.get(root) == null) continue;
       GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, trackedBranches, root, myProgressIndicator, myUpdatedFiles,
                                                  updateMethod);
       if (updater.isUpdateNeeded()) {
@@ -330,12 +334,15 @@ public class GitUpdateProcess {
       }
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, branch);
       if (trackInfo == null) {
-        final String branchName = branch.getName();
         LOG.info(String.format("checkTrackedBranchesConfigured: no track info for current branch %s in %s", branch, repository));
-        notifyImportantError(repository.getProject(), "Can't Update", getNoTrackedBranchError(repository, branchName));
-        return null;
+        if (myCheckForTrackedBranchExistance) {
+          notifyImportantError(repository.getProject(), "Can't Update", getNoTrackedBranchError(repository, branch.getName()));
+          return null;
+        }
       }
-      trackedBranches.put(root, new GitBranchPair(branch, trackInfo.getRemoteBranch()));
+      else {
+        trackedBranches.put(root, new GitBranchPair(branch, trackInfo.getRemoteBranch()));
+      }
     }
     return trackedBranches;
   }

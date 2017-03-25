@@ -81,7 +81,7 @@ class GitSubmoduleTest : GitPlatformTest() {
       reposInActualOrder.add(it)
     }
 
-    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false)
+    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
     assertOrder(reposInActualOrder)

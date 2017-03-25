@@ -96,7 +96,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   private fun updateWithRebase(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false).update(UpdateMethod.REBASE)
+    return GitUpdateProcess(myProject, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true).update(UpdateMethod.REBASE)
   }
 
   private fun File.commitAndPush() {

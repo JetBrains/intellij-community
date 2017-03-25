@@ -412,7 +412,7 @@ public class GitPushOperation {
                                    boolean checkForRebaseOverMergeProblem) {
     GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator,
                                                         new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
-                                                        checkForRebaseOverMergeProblem).update(updateMethod);
+                                                        checkForRebaseOverMergeProblem, false).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
       repository.update();
