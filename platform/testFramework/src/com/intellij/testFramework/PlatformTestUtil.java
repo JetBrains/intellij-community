@@ -583,11 +583,16 @@ public class PlatformTestUtil {
       if (COVERAGE_ENABLED_BUILD) return;
       Timings.getStatistics(); // warm-up, measure
 
+      if (attempts == 1) {
+        System.gc();
+      }
+
       while (true) {
         attempts--;
         CpuUsageData data;
         try {
           if (setup != null) setup.run();
+          waitForAllBackgroundActivityToCalmDown();
           data = CpuUsageData.measureCpuUsage(test);
         }
         catch (RuntimeException|Error throwable) {
@@ -691,12 +696,22 @@ public class PlatformTestUtil {
     }
   }
 
+  private static void waitForAllBackgroundActivityToCalmDown() {
+    for (int i = 0; i < 50; i++) {
+      CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
+      if (!data.hasAnyActivityBesides(Thread.currentThread())) {
+        break;
+      }
+    }
+  }
+
 
   public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expected, 4, actionToMeasure);
   }
 
-  public static long measure(@NotNull Runnable actionToMeasure) {
+  private static long measure(@NotNull Runnable actionToMeasure) {
+    waitForAllBackgroundActivityToCalmDown();
     long start = System.currentTimeMillis();
     actionToMeasure.run();
     long finish = System.currentTimeMillis();
