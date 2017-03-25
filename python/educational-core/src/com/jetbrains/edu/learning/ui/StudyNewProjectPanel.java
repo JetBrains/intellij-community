@@ -61,6 +61,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private JTextPane myDescriptionPane;
   private JComponent myAnchor;
   private final StudyProjectGenerator myGenerator;
+  private boolean isLocal = false;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
@@ -68,10 +69,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepik</u> to open the adaptive course </html>";
   private static final String LOGIN_TO_STEPIC = "Login to Stepik";
 
-  public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
+  public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator, boolean isLocal) {
     super(new VerticalFlowLayout(true, true));
     myGenerator = generator;
-
+    this.isLocal = isLocal;
     layoutPanel();
     initListeners();
   }
@@ -120,7 +121,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
   private void initCoursesCombobox() {
     myAvailableCourses =
-      myGenerator.getCoursesUnderProgress(false, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
+      myGenerator.getCoursesUnderProgress(!isLocal, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
     if (myAvailableCourses.contains(CourseInfo.INVALID_COURSE)) {
       setError(CONNECTION_ERROR);
     }
