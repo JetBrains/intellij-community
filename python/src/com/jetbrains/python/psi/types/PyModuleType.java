@@ -369,10 +369,13 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                                PointInImport point) {
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location,
                                                                                   psiElement -> !(psiElement instanceof PyImportElement) ||
-                                                                                                                                                                          PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement, null);
+                                                                                                PsiTreeUtil.getParentOfType(psiElement,
+                                                                                                                            PyImportStatementBase.class) instanceof PyFromImportStatement,
+                                                                                  null);
     if (suppressParentheses) {
       processor.suppressParentheses();
     }
+    processor.allowLazyLookupItems();
     processor.setPlainNamesOnly(point == PointInImport.AS_NAME); // no parens after imported function names
     return processor;
   }
