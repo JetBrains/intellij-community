@@ -262,14 +262,17 @@ public class StudySerializationUtils {
       final Element adaptive = getChildWithName(courseElement, ADAPTIVE);
       for (Element lesson : getChildList(courseElement, LESSONS)) {
         for (Element task : getChildList(lesson, TASK_LIST)) {
-          final Element lastSubtaskIndex = getChildWithName(task, LAST_SUBTASK_INDEX);
-          final Element theoryTask = getChildWithName(task, THEORY_TAG);
-          final Element adaptiveParams = getChildWithName(task, ADAPTIVE_TASK_PARAMETERS);
-          final boolean hasAdaptiveParams = !adaptiveParams.getChildren().isEmpty();
-          if (Integer.valueOf(lastSubtaskIndex.getAttributeValue(VALUE)) != 0) {
+          final Element lastSubtaskIndex = getChildWithName(task, LAST_SUBTASK_INDEX, true); //could be broken by 3->4 migration
+          final Element adaptiveParams = getChildWithName(task, ADAPTIVE_TASK_PARAMETERS, true);
+          Element theoryTask = getChildWithName(task, THEORY_TAG, true);
+          if (theoryTask == null && adaptiveParams != null) {
+            theoryTask = getChildWithName(adaptiveParams, THEORY_TAG, true);
+          }
+          final boolean hasAdaptiveParams = adaptiveParams != null && !adaptiveParams.getChildren().isEmpty();
+          if (lastSubtaskIndex != null && Integer.valueOf(lastSubtaskIndex.getAttributeValue(VALUE)) != 0) {
             task.setName(TASK_WITH_SUBTASKS);
           }
-          else if (Boolean.valueOf(theoryTask.getAttributeValue(VALUE))) {
+          else if (theoryTask != null && Boolean.valueOf(theoryTask.getAttributeValue(VALUE))) {
             task.setName(THEORY_TASK);
           }
           else if (hasAdaptiveParams) {
@@ -525,9 +528,9 @@ public class StudySerializationUtils {
             stepOptionsJson = convertToSecondVersion(stepOptionsJson);
           case 2:
             stepOptionsJson = convertToThirdVersion(stepOptionsJson);
-          // uncomment for future versions
-          //case 3:
-          //  stepOptionsJson = convertToFourthVersion(stepOptionsJson);
+            // uncomment for future versions
+            //case 3:
+            //  stepOptionsJson = convertToFourthVersion(stepOptionsJson);
         }
         convertSubtaskInfosToMap(stepOptionsJson);
         StepicWrappers.StepOptions stepOptions =
