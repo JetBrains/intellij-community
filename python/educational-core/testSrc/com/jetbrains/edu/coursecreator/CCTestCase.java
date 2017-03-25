@@ -90,7 +90,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     task.setIndex(1);
     lesson.addTask(task);
     lesson.setIndex(1);
-    course.getLessons().add(lesson);
+    course.addLesson(lesson);
     course.setCourseMode(CCUtils.COURSE_MODE);
     course.initCourse(false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -117,6 +117,8 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     taskFile.setTask(task);
     task.getTaskFiles().put(name, taskFile);
     VirtualFile file = copyFileToTask(name);
+
+    taskFile.name = name;
     myFixture.configureFromExistingVirtualFile(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     for (AnswerPlaceholder placeholder : getPlaceholders(document, false)) {
