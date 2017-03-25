@@ -61,6 +61,10 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   private StudyNewProjectPanel mySettingsPanel;
 
   public PyStudyDirectoryProjectGenerator() {
+    this(false);
+  }
+
+  public PyStudyDirectoryProjectGenerator(boolean isLocal) {
     myGenerator = new StudyProjectGenerator();
     myGenerator.addSettingsStateListener(new StudyProjectGenerator.SettingsListener() {
       @Override
@@ -69,7 +73,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       }
     });
 
-    mySettingsPanel = new StudyNewProjectPanel(myGenerator);
+    mySettingsPanel = new StudyNewProjectPanel(myGenerator, isLocal);
     mySettingsPanel.registerValidators(new FacetValidatorsManager() {
       public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
         throw new UnsupportedOperationException();

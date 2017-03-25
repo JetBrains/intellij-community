@@ -61,7 +61,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       ProjectUtil.openProject(projectDir.getPath(), null, false);
     }
     else {
-      final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
+      final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator(true);
       final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
       final String bundledCoursePath = configurator.getBundledCoursePath();
       CourseInfo introCourse = generator.getGenerator().getCourseInfo(bundledCoursePath);

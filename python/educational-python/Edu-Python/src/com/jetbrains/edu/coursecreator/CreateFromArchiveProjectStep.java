@@ -10,8 +10,8 @@ import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.python.newProject.steps.PyCharmNewProjectStep;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ class CreateFromArchiveProjectStep extends PyCharmNewProjectStep {
 
     private final Project myProject;
     private final Module myModule;
-    private PyStudyDirectoryProjectGenerator myGenerator = new PyStudyDirectoryProjectGenerator();
+    private PyStudyDirectoryProjectGenerator myGenerator = new PyStudyDirectoryProjectGenerator(true);
 
     public MyCustomization(Project project,
                            Module module) {

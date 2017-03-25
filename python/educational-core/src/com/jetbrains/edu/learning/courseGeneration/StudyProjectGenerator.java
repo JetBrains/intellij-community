@@ -123,7 +123,7 @@ public class StudyProjectGenerator {
     if (force) {
       myCourses = execCancelable(() -> EduStepicConnector.getCourses(StepicUpdateSettings.getInstance().getUser()));
     }
-    if (force || myCourses == null || myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {
+    if (myCourses == null || myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {
       myCourses = Collections.singletonList(getBundledIntro());
     }
     sortCourses(myCourses);
