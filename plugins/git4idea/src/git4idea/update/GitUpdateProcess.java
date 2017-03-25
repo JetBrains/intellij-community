@@ -182,7 +182,13 @@ public class GitUpdateProcess {
         GitRebaseOverMergeProblem.Decision decision = GitRebaseOverMergeProblem.showDialog();
         if (decision == GitRebaseOverMergeProblem.Decision.MERGE_INSTEAD) {
           for (GitRepository repo : problematicRoots) {
-            updaters.put(repo, new GitMergeUpdater(myProject, myGit, repo.getRoot(), trackedBranches, myProgressIndicator, myUpdatedFiles));
+            VirtualFile root = repo.getRoot();
+            GitBranchPair branchAndTracked = trackedBranches.get(root);
+            if (branchAndTracked == null) {
+              LOG.error("No tracked branch information for root " + root);
+              continue;
+            }
+            updaters.put(repo, new GitMergeUpdater(myProject, myGit, root, branchAndTracked, myProgressIndicator, myUpdatedFiles));
           }
         }
         else if (decision == GitRebaseOverMergeProblem.Decision.CANCEL_OPERATION) {
@@ -288,8 +294,9 @@ public class GitUpdateProcess {
     LOG.info("updateImpl: defining updaters...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
-      if (trackedBranches.get(root) == null) continue;
-      GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, trackedBranches, root, myProgressIndicator, myUpdatedFiles,
+      GitBranchPair branchAndTracked = trackedBranches.get(root);
+      if (branchAndTracked == null) continue;
+      GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, branchAndTracked, root, myProgressIndicator, myUpdatedFiles,
                                                  updateMethod);
       if (updater.isUpdateNeeded()) {
         updaters.put(repository, updater);

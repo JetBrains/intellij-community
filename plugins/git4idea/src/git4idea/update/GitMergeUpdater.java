@@ -61,10 +61,10 @@ public class GitMergeUpdater extends GitUpdater {
 
   public GitMergeUpdater(Project project, @NotNull Git git,
                          VirtualFile root,
-                         final Map<VirtualFile, GitBranchPair> trackedBranches,
+                         final GitBranchPair branchAndTracked,
                          ProgressIndicator progressIndicator,
                          UpdatedFiles updatedFiles) {
-    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+    super(project, git, root, branchAndTracked, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -80,7 +80,7 @@ public class GitMergeUpdater extends GitUpdater {
     String originalText = myProgressIndicator.getText();
     myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
     try {
-      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myTrackedBranches.get(myRoot).getDest()).getName(),
+      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myBranchPair.getDest()).getName(),
                                             asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
                                             GitStandardProgressAnalyzer.createListener(myProgressIndicator));
       myProgressIndicator.setText(originalText);
@@ -152,9 +152,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     // git log --name-status master..origin/master
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String currentBranch = gitBranchPair.getBranch().getName();
-    String remoteBranch = gitBranchPair.getDest().getName();
+    String currentBranch = myBranchPair.getBranch().getName();
+    String remoteBranch = myBranchPair.getDest().getName();
     try {
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
       if (repository == null) {
