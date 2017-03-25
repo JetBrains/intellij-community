@@ -39,6 +39,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -49,14 +50,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
-import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.flushCourse;
 
 
 public class StudyProjectComponent implements ProjectComponent {
@@ -150,15 +149,8 @@ public class StudyProjectComponent implements ProjectComponent {
     final CourseInfo info = CourseInfo.fromCourse(currentCourse);
     if (info == null) return;
 
-    final File resourceDirectory = new File(currentCourse.getCourseDirectory());
-    if (resourceDirectory.exists()) {
-      FileUtil.delete(resourceDirectory);
-    }
-
     final Course course = EduStepicConnector.getCourse(myProject, info);
-
     if (course == null) return;
-    flushCourse(course);
     course.initCourse(false);
 
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
@@ -175,14 +167,14 @@ public class StudyProjectComponent implements ProjectComponent {
       Lesson studentLesson = currentCourse.getLesson(lesson.getId());
       final String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex);
 
-      final File lessonDir = new File(myProject.getBasePath(), lessonDirName);
-      if (!lessonDir.exists()){
-        final File fromLesson = new File(resourceDirectory, lessonDirName);
+      final VirtualFile baseDir = myProject.getBaseDir();
+      final VirtualFile lessonDir = baseDir.findChild(lessonDirName);
+      if (lessonDir == null) {
         try {
-          FileUtil.copyDir(fromLesson, lessonDir);
+          StudyGenerator.createLesson(lesson, baseDir);
         }
         catch (IOException e) {
-          LOG.warn("Failed to copy lesson " + fromLesson.getPath());
+          LOG.error("Failed to create lesson");
         }
         lesson.setIndex(lessonIndex);
         lesson.initLesson(currentCourse, false);
@@ -210,15 +202,14 @@ public class StudyProjectComponent implements ProjectComponent {
         task.setIndex(index);
 
         final String taskDirName = EduNames.TASK + String.valueOf(index);
-        final File toTask = new File(lessonDir, taskDirName);
+        final VirtualFile taskDir = lessonDir.findChild(taskDirName);
 
-        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lessonDirName, taskDirName);
-        final File taskDir = new File(taskPath);
-        if (!taskDir.exists()) return;
-        final File[] taskFiles = taskDir.listFiles();
-        if (taskFiles == null) continue;
-        for (File fromFile : taskFiles) {
-          copyFile(fromFile, new File(toTask, fromFile.getName()));
+        if (taskDir != null) return;
+        try {
+          StudyGenerator.createTask(task, lessonDir);
+        }
+        catch (IOException e) {
+          LOG.error("Failed to create task");
         }
         tasks.add(task);
       }
@@ -229,17 +220,6 @@ public class StudyProjectComponent implements ProjectComponent {
     final Notification notification =
       new Notification("Update.course", "Course update", "Current course is synchronized", NotificationType.INFORMATION);
     notification.notify(myProject);
-  }
-
-  private static void copyFile(@NotNull final File from, @NotNull final File to) {
-    if (from.exists()) {
-      try {
-        FileUtil.copyFileOrDir(from, to);
-      }
-      catch (IOException e) {
-        LOG.warn("Failed to copy " + from.getName());
-      }
-    }
   }
 
   private void addShortcut(@NotNull final String actionIdString, @NotNull final String[] shortcuts) {

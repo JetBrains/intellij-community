@@ -8,34 +8,37 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
+import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
@@ -137,27 +140,22 @@ public class CCUtils {
       return folder;
     }
     final Ref<VirtualFile> generatedRoot = new Ref<>();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
-              VirtualFile contentRootForFile =
-                ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
-              if (contentRootForFile == null) {
-                return;
-              }
-              ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(),
-                                                               Collections.singletonList(generatedRoot.get().getUrl()));
-            }
-            catch (IOException e) {
-              LOG.info("Failed to create folder for generated files", e);
-            }
+        try {
+          generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
+          VirtualFile contentRootForFile =
+            ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
+          if (contentRootForFile == null) {
+            return;
           }
-        });
+          ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(),
+                                                           Collections.singletonList(generatedRoot.get().getUrl()));
+        }
+        catch (IOException e) {
+          LOG.info("Failed to create folder for generated files", e);
+        }
       }
     });
     return generatedRoot.get();
@@ -211,63 +209,6 @@ public class CCUtils {
     return configurator.isTestFile(file);
   }
 
-  public static void createResourceFile(VirtualFile createdFile, Course course, VirtualFile taskVF) {
-    VirtualFile lessonVF = taskVF.getParent();
-    if (lessonVF == null) {
-      return;
-    }
-
-    String taskResourcesPath = FileUtil.join(course.getCourseDirectory(), lessonVF.getName(), taskVF.getName());
-    File taskResourceFile = new File(taskResourcesPath);
-    if (!taskResourceFile.exists()) {
-      if (!taskResourceFile.mkdirs()) {
-        LOG.info("Failed to create resources for task " + taskResourcesPath);
-      }
-    }
-    try {
-      File toFile = new File(taskResourceFile, createdFile.getName());
-      FileUtil.copy(new File(createdFile.getPath()), toFile);
-    }
-    catch (IOException e) {
-      LOG.info("Failed to copy created task file to resources " + createdFile.getPath());
-    }
-  }
-
-
-  public static void updateResources(Project project, Task task, VirtualFile taskDir) {
-    Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
-      return;
-    }
-    VirtualFile lessonVF = taskDir.getParent();
-    if (lessonVF == null) {
-      return;
-    }
-
-    String taskResourcesPath = FileUtil.join(course.getCourseDirectory(), lessonVF.getName(), taskDir.getName());
-    File taskResourceFile = new File(taskResourcesPath);
-    if (!taskResourceFile.exists()) {
-      if (!taskResourceFile.mkdirs()) {
-        LOG.info("Failed to create resources for task " + taskResourcesPath);
-      }
-    }
-    VirtualFile studentDir = LocalFileSystem.getInstance().findFileByIoFile(taskResourceFile);
-    if (studentDir == null) {
-      return;
-    }
-    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-      String name = entry.getKey();
-      VirtualFile answerFile = taskDir.findFileByRelativePath(name);
-      if (answerFile == null) {
-        continue;
-      }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null,
-                                   task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
-      });
-    }
-  }
-
   public static void updateActionGroup(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
@@ -314,5 +255,59 @@ public class CCUtils {
         }
       }
     });
+  }
+
+  @Nullable
+  public static Lesson createAdditionalLesson(Course course, Project project) {
+    final VirtualFile baseDir = project.getBaseDir();
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+
+    final Lesson lesson = new Lesson();
+    lesson.setName(EduNames.PYCHARM_ADDITIONAL);
+    final Task task = new Task();
+    task.setLesson(lesson);
+    task.setName(EduNames.PYCHARM_ADDITIONAL);
+    task.setIndex(1);
+
+    VfsUtilCore.visitChildrenRecursively(baseDir, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        final String name = file.getName();
+        if (name.equals(EduNames.COURSE_META_FILE) || name.equals(EduNames.HINTS) || name.startsWith(".")) return false;
+        String sanitizedName = FileUtil.sanitizeFileName(course.getName());
+        final String archiveName = sanitizedName.startsWith("_") ? EduNames.COURSE : sanitizedName;
+        if (name.equals(archiveName + ".zip")) return false;
+        if (GENERATED_FILES_FOLDER.equals(name) || Project.DIRECTORY_STORE_FOLDER.equals(name)) {
+          return false;
+        }
+        if (file.isDirectory()) return true;
+
+        if (StudyUtils.isTaskDescriptionFile(name) || StudyUtils.isTestsFile(project, name)) return true;
+
+        if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(name))) {
+          return false;
+        }
+        final TaskFile taskFile = StudyUtils.getTaskFile(project, file);
+        if (taskFile == null) {
+          final String path = VfsUtilCore.getRelativePath(file, baseDir);
+          try {
+            if (EduUtils.isImage(file.getName())) {
+              task.addTestsTexts(path, Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
+            }
+            else {
+              task.addTestsTexts(path, FileUtil.loadTextAndClose(file.getInputStream()));
+            }
+          }
+          catch (IOException e) {
+            LOG.error("Can't find file " + path);
+          }
+        }
+        return true;
+      }
+    });
+    if (task.getTestsText().isEmpty()) return null;
+    lesson.addTask(task);
+    lesson.setIndex(1);
+    return lesson;
   }
 }

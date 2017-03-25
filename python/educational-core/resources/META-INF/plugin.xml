@@ -198,7 +198,6 @@
     <checkListener implementation="com.jetbrains.edu.learning.twitter.StudyTwitterAction"/>
 
     <!--course creator-->
-    <checkListener implementation="com.jetbrains.edu.coursecreator.CCCheckListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
   </extensions>
 </idea-plugin>

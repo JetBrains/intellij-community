@@ -27,15 +27,16 @@ import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Map;
-
-import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 public class CCFromCourseArchive extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCFromCourseArchive.class.getName());
@@ -80,8 +81,6 @@ public class CCFromCourseArchive extends DumbAwareAction {
       }
 
       StudyTaskManager.getInstance(project).setCourse(course);
-      File courseDir = new File(OUR_COURSES_DIR, course.getName() + "-" + project.getName());
-      course.setCourseDirectory(courseDir.getPath());
       course.setCourseMode(CCUtils.COURSE_MODE);
       project.getBaseDir().refresh(false, true);
       int index = 1;

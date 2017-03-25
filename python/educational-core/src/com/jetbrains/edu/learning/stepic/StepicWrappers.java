@@ -5,8 +5,6 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -18,12 +16,10 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
-import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -89,21 +85,11 @@ public class StepicWrappers {
           }
           String name = entry.getKey();
           VirtualFile answerFile = taskDir.findFileByRelativePath(name);
-          Pair<VirtualFile, TaskFile> pair = EduUtils.createStudentFile(StepicWrappers.class, project, answerFile, stepicDir, null, 0);
-          if (pair == null) {
+          TaskFile studentTaskFile = EduUtils.createStudentFile(project, answerFile, null, 0);
+          if (studentTaskFile == null) {
             return;
           }
-          VirtualFile virtualFile = pair.getFirst();
-          TaskFile taskFile = pair.getSecond();
-          try {
-            InputStream stream = virtualFile.getInputStream();
-            taskFile.text =
-              EduUtils.isImage(name) ? Base64.encodeBase64URLSafeString(FileUtil.loadBytes(stream)) : FileUtil.loadTextAndClose(stream);
-          }
-          catch (IOException e) {
-            LOG.error("Can't find file " + virtualFile.getPath());
-          }
-          source.files.add(taskFile);
+          source.files.add(studentTaskFile);
         });
       }
       return source;

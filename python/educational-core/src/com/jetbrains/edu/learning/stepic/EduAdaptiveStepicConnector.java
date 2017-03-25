@@ -7,16 +7,17 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
@@ -27,7 +28,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.CodeTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -45,12 +45,14 @@ import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
@@ -67,7 +69,6 @@ public class EduAdaptiveStepicConnector {
   private static final String CODE_TASK_TYPE = "code";
   private static final String CHOICE_TYPE_TEXT = "choice";
   private static final String TEXT_STEP_TYPE = "text";
-  private static final String DEFAULT_TASK_NAME = "code.py";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull Project project, @NotNull Course course) {
@@ -78,7 +79,7 @@ public class EduAdaptiveStepicConnector {
         return null;
       }
 
-      StepicUser user = StudySettings.getInstance().getUser();
+      StepicUser user = StepicUpdateSettings.getInstance().getUser();
       if (user == null) {
         LOG.warn("User is null");
         return null;
@@ -128,7 +129,16 @@ public class EduAdaptiveStepicConnector {
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
-      ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project, "Connection problems, Please, try again"));
+
+      final String connectionMessages = "Connection problems, Please, try again";
+      final Balloon balloon =
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(connectionMessages, MessageType.ERROR, null)
+          .createBalloon();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (StudyUtils.getSelectedEditor(project) != null) {
+          StudyUtils.showCheckPopUp(project, balloon);
+        }
+      });
     }
     catch (URISyntaxException e) {
       LOG.warn(e.getMessage());
@@ -194,8 +204,8 @@ public class EduAdaptiveStepicConnector {
   private static void createMockTaskFile(@NotNull Task task, String editorText) {
     final TaskFile taskFile = new TaskFile();
     taskFile.text = editorText;
-    taskFile.name = "code";
-    task.taskFiles.put(DEFAULT_TASK_NAME, taskFile);
+    taskFile.name = "code.py";
+    task.taskFiles.put("code.py", taskFile);
   }
 
   @Nullable
@@ -252,7 +262,9 @@ public class EduAdaptiveStepicConnector {
     request.setConfig(requestConfig);
   }
 
-  public static boolean postRecommendationReaction(@NotNull String lessonId, @NotNull String user, int reaction) {
+  public static boolean postRecommendationReaction(@NotNull String lessonId,
+                                                   @NotNull String user,
+                                                   int reaction) {
     final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.RECOMMENDATION_REACTIONS_URL);
     final String json = new Gson()
       .toJson(new StepicWrappers.RecommendationReactionWrapper(new StepicWrappers.RecommendationReaction(reaction, user, lessonId)));
@@ -276,100 +288,74 @@ public class EduAdaptiveStepicConnector {
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
-      return false;
     }
+    return false;
   }
 
-  public static void addNextRecommendedTask(@NotNull Project project, @NotNull ProgressIndicator indicator, int reactionToPost) {
+  public static void addNextRecommendedTask(@NotNull Project project,
+                                            @NotNull ProgressIndicator indicator,
+                                            int reaction) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course != null && editor != null && editor.getTaskFile() != null) {
-      indicator.checkCanceled();
-      final StepicUser user = StudySettings.getInstance().getUser();
-      if (user == null) {
-        LOG.warn("Can't get next recommendation: user is null");
-        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
-                                                                                                 "Can't get next recommendation: you're not authorized"));
-        return;
-      }
-
-      final Lesson adaptive = editor.getTaskFile().getTask().getLesson();
-      final boolean reactionPosted = postRecommendationReaction(String.valueOf(adaptive.getId()), String.valueOf(user.getId()), reactionToPost);
-
-      if (!reactionPosted) {
-        LOG.warn("Recommendation reaction wasn't posted");
-        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project, "Couldn't post your reactionToPost"));
-        return;
-      }
-
+    if (course == null || editor == null || editor.getTaskFile() == null) {
+      return;
+    }
+    indicator.checkCanceled();
+    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    if (user == null) {
+      LOG.warn("Can't get next recommendation: user is null");
+      ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
+                                                                                               "Can't get next recommendation: you're not authorized"));
+      return;
+    }
+    final Lesson lesson = course.getLessons().get(0);
+    if (lesson == null) return;
+    final boolean recommendationReaction = postRecommendationReaction(String.valueOf(lesson.getId()),
+                                                                      String.valueOf(user.getId()), reaction);
+    if (recommendationReaction) {
       indicator.checkCanceled();
       final Task task = getNextRecommendation(project, course);
 
-      if (task == null) {
-        ApplicationManager
-          .getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project, "Couldn't load a new recommendation"));
-        return;
-      }
-
-      task.initTask(adaptive, false);
-      boolean replaceCurrentTask = reactionToPost == TOO_HARD_RECOMMENDATION_REACTION || reactionToPost == TOO_BORING_RECOMMENDATION_REACTION;
-      if (replaceCurrentTask) {
-        replaceCurrentTask(project, editor, task);
+      if (task != null) {
+        task.initTask(lesson, false);
+        if (reaction == TOO_HARD_RECOMMENDATION_REACTION || reaction == TOO_BORING_RECOMMENDATION_REACTION) {
+          replaceCurrentTask(project, task, lesson);
+        }
+        else {
+          addNewTask(project, course, task, lesson);
+        }
       }
       else {
-        addAsNextTask(project, editor, task);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final Balloon balloon = JBPopupFactory.getInstance().
+            createHtmlTextBalloonBuilder("Couldn't load a new recommendation", MessageType.ERROR, null).createBalloon();
+          StudyUtils.showCheckPopUp(project, balloon);
+        });
       }
-
       ApplicationManager.getApplication().invokeLater(() -> {
         VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
         ProjectView.getInstance(project).refresh();
-        StudyNavigator.navigateToTask(project, task);
       });
+    }
+    else {
+      LOG.warn("Recommendation reactions weren't posted");
+      ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project, "Couldn't post your reaction"));
     }
   }
 
-  private static void replaceCurrentTask(@NotNull Project project, @NotNull StudyEditor editor, @NotNull Task task) {
-    Course course = StudyTaskManager.getInstance(project).getCourse();
-    assert course != null;
-
-    final Lesson adaptive = editor.getTaskFile().getTask().getLesson();
-    int taskIndex = adaptive.getTaskList().size();
-
-    task.setLesson(adaptive);
-    task.setIndex(taskIndex);
-    adaptive.getTaskList().set(taskIndex - 1, task);
-
-    copyTaskFileParameters(editor, task);
-
-    final String lessonName = EduNames.LESSON + adaptive.getIndex();
-    updateCache(course, task, lessonName);
-    updateProjectFiles(project, task, lessonName, taskIndex);
-    setToolWindowText(project, task);
-  }
-
-  private static void addAsNextTask(@NotNull Project project, @NotNull StudyEditor editor, @NotNull Task task) {
-    Course course = StudyTaskManager.getInstance(project).getCourse();
-    assert course != null;
-
-    final Lesson adaptive = editor.getTaskFile().getTask().getLesson();
-    adaptive.addTask(task);
-    task.setIndex(adaptive.getTaskList().size());
-    adaptive.initLesson(course, true);
-
-    final String lessonName = EduNames.LESSON + adaptive.getIndex();
-    updateCache(course, task, lessonName);
-    createFilesForNewTask(project, task, lessonName, course.getCourseDirectory());
-  }
-
-  private static void createFilesForNewTask(@NotNull Project project,
-                                            @NotNull Task task,
-                                            @NotNull String lessonName,
-                                            @NotNull String courseDirectory) {
+  private static void addNewTask(@NotNull Project project, Course course, Task task, Lesson lesson) {
+    final String lessonName = EduNames.LESSON + String.valueOf(lesson.getIndex());
+    lesson.addTask(task);
+    task.setIndex(lesson.getTaskList().size());
     final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
+
     if (lessonDir != null) {
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          StudyGenerator.createTask(task, lessonDir, new File(courseDirectory, lessonName), project);
+          final String taskName = EduNames.TASK + String.valueOf(task.getIndex());
+          StudyGenerator.createTask(task, lessonDir);
+          lesson.initLesson(course, true);
+          StudyNavigator.navigateToTask(project, lessonName, taskName);
         }
         catch (IOException e) {
           LOG.warn(e.getMessage());
@@ -378,56 +364,30 @@ public class EduAdaptiveStepicConnector {
     }
   }
 
-  private static void copyTaskFileParameters(@NotNull StudyEditor editor, @NotNull Task task) {
-    final Map<String, TaskFile> taskFiles = task.getTaskFiles();
-    if (taskFiles.size() == 1) {
-      TaskFile newTaskFile = (TaskFile)taskFiles.values().toArray()[0];
-      setTaskFileParameters(editor, task, newTaskFile);
-      updateEditorText(editor, newTaskFile);
-    }
-    else {
-      LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
-    }
-  }
+  private static void replaceCurrentTask(@NotNull Project project, Task task, Lesson lesson) {
+    final Task unsolvedTask = lesson.getTaskList().get(lesson.getTaskList().size() - 1);
+    final String lessonName = EduNames.LESSON + String.valueOf(lesson.getIndex());
+    task.setLesson(unsolvedTask.getLesson());
+    task.setIndex(unsolvedTask.getIndex());
+    lesson.getTaskList().set(lesson.getTaskList().size() - 1, task);
+    ApplicationManager.getApplication().invokeLater(() -> StudyNavigator.navigateToTask(project, task));
 
-  private static void setToolWindowText(@NotNull Project project, @NotNull Task task) {
+    final String taskName = EduNames.TASK + String.valueOf(lesson.getTaskList().size());
+    final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
+
+    if (lessonDir != null) {
+      try {
+        StudyGenerator.createTask(task, lessonDir);
+      }
+      catch (IOException e) {
+        LOG.warn(e.getMessage());
+      }
+    }
     final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
     if (window != null) {
-      window.setTaskText(StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription()), task.getTaskDir(project), project);
+      window.setTaskText(StudyUtils.wrapTextToDisplayLatex(unsolvedTask.getTaskDescription()), unsolvedTask.getTaskDir(project), project);
     }
-  }
-
-  private static void updateProjectFiles(@NotNull Project project, @NotNull Task task, @NotNull String lessonName, int taskIndex) {
-    final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
-    if (lessonDir != null) {
-      final File taskResourceRoot = new File(lessonDir.getCanonicalPath(), EduNames.TASK + taskIndex);
-      StudyProjectGenerator.createFiles(taskResourceRoot, task.getTaskTexts());
-      StudyProjectGenerator.createFiles(taskResourceRoot, task.getTestsText());
-    }
-  }
-
-  private static void updateCache(@NotNull Course course, @NotNull Task task, @NotNull String lessonName) {
-    String taskName = EduNames.TASK + task.getIndex();
-    final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
-    final File taskDir = new File(lessonDirectory, taskName);
-    StudyProjectGenerator.flushTask(task, taskDir);
-    StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-  }
-
-  private static void updateEditorText(@NotNull StudyEditor editor, @NotNull TaskFile newTaskFile) {
-    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final Document document = editor.getEditor().getDocument();
-      document.setText(newTaskFile.text);
-    }));
-  }
-
-  private static void setTaskFileParameters(@NotNull StudyEditor editor, @NotNull Task task, @NotNull TaskFile newTaskFile) {
-    TaskFile currentTaskFile = editor.getTaskFile();
-    currentTaskFile.text = newTaskFile.text;
-    currentTaskFile.name = newTaskFile.name;
-    currentTaskFile.setTask(task);
-    task.getTaskFiles().clear();
-    task.taskFiles.put(DEFAULT_TASK_NAME, currentTaskFile);
+    StudyNavigator.navigateToTask(project, lessonName, taskName);
   }
 
   @NotNull
@@ -482,7 +442,7 @@ public class EduAdaptiveStepicConnector {
       taskFile.name = CODE_TASK_TYPE;
       final String templateForTask = getCodeTemplateForTask(project, task, step.options.codeTemplates);
       taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-      task.taskFiles.put(DEFAULT_TASK_NAME, taskFile);
+      task.taskFiles.put("code.py", taskFile);
     }
     return task;
   }
@@ -543,7 +503,6 @@ public class EduAdaptiveStepicConnector {
     return answer;
   }
 
-  @NotNull
   public static Pair<Boolean, String> checkCodeTask(@NotNull Project project, @NotNull Task task, @NotNull StepicUser user) {
     int attemptId = -1;
     try {

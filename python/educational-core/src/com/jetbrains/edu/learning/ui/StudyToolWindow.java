@@ -324,7 +324,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     int taskNum = 0;
     int taskSolved = 0;
     for (Lesson lesson : lessons) {
-      if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
       taskNum += lesson.getTaskList().size();
       taskSolved += getSolvedTasks(lesson);
     }

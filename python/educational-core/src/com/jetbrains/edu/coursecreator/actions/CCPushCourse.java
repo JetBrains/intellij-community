@@ -11,12 +11,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -59,11 +59,11 @@ public class CCPushCourse extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           for (Lesson lesson : course.getLessons()) {
             if (lesson.getId() > 0) {
-              CCStepicConnector.updateLesson(project, lesson, indicator);
+              CCStepicConnector.updateLesson(project, lesson);
             }
             else {
               final CourseInfo info = CourseInfo.fromCourse(course);
-              final int lessonId = CCStepicConnector.postLesson(project, lesson, indicator);
+              final int lessonId = CCStepicConnector.postLesson(project, lesson);
               if (lessonId != -1) {
                 final List<Integer> sections = info.getSections();
                 final Integer sectionId = sections.get(sections.size() - 1);

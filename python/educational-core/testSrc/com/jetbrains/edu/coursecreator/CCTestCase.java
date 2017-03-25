@@ -81,7 +81,6 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     super.setUp();
     Course course = new Course();
     course.setName("test course");
-    course.setCourseDirectory(getProject().getBasePath());
     StudyTaskManager.getInstance(getProject()).setCourse(course);
 
     Lesson lesson = new Lesson();
@@ -125,7 +124,6 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     }
     taskFile.sortAnswerPlaceholders();
     StudyUtils.drawAllAnswerPlaceholders(myFixture.getEditor(), taskFile);
-    CCUtils.createResourceFile(file, StudyTaskManager.getInstance(getProject()).getCourse(), file.getParent());
     return file;
   }
 

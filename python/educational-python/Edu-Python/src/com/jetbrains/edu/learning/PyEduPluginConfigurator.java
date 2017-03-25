@@ -14,12 +14,14 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.PathUtil;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,9 +67,8 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public boolean excludeFromArchive(@NotNull File pathname) {
-    String name = pathname.getName();
-    return name.contains("__pycache__") || name.contains(".pyc");
+  public boolean excludeFromArchive(@NotNull String name) {
+    return name.contains("__pycache__") || name.endsWith(".pyc");
   }
 
   @Override
@@ -125,5 +126,18 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   @Override
   public StudyCheckAction getCheckAction() {
     return new PyStudyCheckAction();
+  }
+
+  @Override
+  public String getBundledCoursePath() {
+    @NonNls String jarPath = PathUtil.getJarPathForClass(PyEduPluginConfigurator.class);
+    if (jarPath.endsWith(".jar")) {
+      final File jarFile = new File(jarPath);
+
+      File pluginBaseDir = jarFile.getParentFile();
+      return new File(new File(pluginBaseDir, "courses"), "Introduction to Python.zip").getPath();
+    }
+
+    return new File(new File(jarPath, "courses"), "Introduction to Python.zip").getPath();
   }
 }

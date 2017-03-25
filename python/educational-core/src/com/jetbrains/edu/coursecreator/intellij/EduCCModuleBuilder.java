@@ -28,7 +28,6 @@ import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.intellij.generation.EduCourseModuleBuilder;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.function.Function;
@@ -93,8 +91,6 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     Language language = wrapper.getLanguage();
     course.setLanguage(language.getID());
     course.setCourseMode(CCUtils.COURSE_MODE);
-    File courseDir = new File(StudyProjectGenerator.OUR_COURSES_DIR, myPanel.getName() + "-" + project.getName());
-    course.setCourseDirectory(courseDir.getPath());
     StudyTaskManager.getInstance(project).setCourse(course);
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     String languageName = language.getDisplayName();

@@ -13,18 +13,20 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,68 +122,52 @@ public class EduUtils {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 
-
-  public static VirtualFile copyFile(Object requestor, VirtualFile toDir, VirtualFile file) {
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      FileDocumentManager.getInstance().saveDocument(document);
-    }
-    String taskRelativePath = StudyUtils.pathRelativeToTask(file);
-    try {
-      VirtualFile userFile = toDir.findFileByRelativePath(taskRelativePath);
-      if (userFile != null) {
-        userFile.delete(requestor);
-      }
-      return VfsUtil.copyFileRelative(requestor, file, toDir, taskRelativePath);
-    }
-    catch (IOException e) {
-      LOG.info("Failed to create file " + taskRelativePath + "  in folder " + toDir.getPath(), e);
-    }
-    return null;
-  }
-
   @Nullable
-  public static Pair<VirtualFile, TaskFile> createStudentFile(Object requestor,
-                                                              Project project,
-                                                              VirtualFile answerFile,
-                                                              VirtualFile parentDir,
-                                                              @Nullable Task task,
-                                                              int targetSubtaskIndex) {
-
-    VirtualFile studentFile = copyFile(requestor, parentDir, answerFile);
-    if (studentFile == null) {
-      return null;
-    }
-    Document studentDocument = FileDocumentManager.getInstance().getDocument(studentFile);
-    if (studentDocument == null) {
-      return null;
-    }
-    if (task == null) {
-      task = StudyUtils.getTaskForFile(project, answerFile);
+  public static TaskFile createStudentFile(Project project, VirtualFile answerFile, @Nullable Task task, int targetSubtaskIndex) {
+    try {
       if (task == null) {
+        task = StudyUtils.getTaskForFile(project, answerFile);
+        if (task == null) {
+          return null;
+        }
+        task = task.copy();
+      }
+      TaskFile taskFile = task.getTaskFile(StudyUtils.pathRelativeToTask(answerFile));
+      if (taskFile == null) {
         return null;
       }
-      task = task.copy();
-    }
-    TaskFile taskFile = task.getTaskFile(StudyUtils.pathRelativeToTask(answerFile));
-    if (taskFile == null) {
-      return null;
-    }
-    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
-    studentDocument.addDocumentListener(listener);
-    taskFile.setTrackLengths(false);
-    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      if (task instanceof TaskWithSubtasks) {
-        int fromSubtask = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
-        placeholder.switchSubtask(studentDocument, fromSubtask, targetSubtaskIndex);
+      if (isImage(taskFile.name)) {
+        taskFile.text = Base64.encodeBase64String(answerFile.contentsToByteArray());
+        return taskFile;
       }
+      final LightVirtualFile studentFile = new LightVirtualFile("student_task", PlainTextFileType.INSTANCE,
+                                                                VfsUtilCore.loadText(answerFile));
+      Document studentDocument = FileDocumentManager.getInstance().getDocument(studentFile);
+      if (studentDocument == null) {
+        return null;
+      }
+      EduDocumentListener listener = new EduDocumentListener(taskFile, false);
+      studentDocument.addDocumentListener(listener);
+      taskFile.setTrackLengths(false);
+      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        if (task instanceof TaskWithSubtasks) {
+          int fromSubtask = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
+          placeholder.switchSubtask(studentDocument, fromSubtask, targetSubtaskIndex);
+        }
+      }
+      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        replaceWithTaskText(studentDocument, placeholder, targetSubtaskIndex);
+      }
+      taskFile.setTrackChanges(true);
+      studentDocument.removeDocumentListener(listener);
+      taskFile.text = studentDocument.getImmutableCharSequence().toString();
+      return taskFile;
     }
-    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      replaceWithTaskText(studentDocument, placeholder, targetSubtaskIndex);
+    catch (IOException e) {
+      LOG.error("Failed to convert answer file to student one");
     }
-    taskFile.setTrackChanges(true);
-    studentDocument.removeDocumentListener(listener);
-    return Pair.create(studentFile, taskFile);
+
+    return null;
   }
 
   private static void replaceWithTaskText(Document studentDocument, AnswerPlaceholder placeholder, int toSubtaskIndex) {

@@ -12,9 +12,10 @@ import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class EduStepicUpdater {
@@ -50,24 +51,27 @@ public class EduStepicUpdater {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final List<CourseInfo> courses = EduStepicConnector.getCourses(null);
-      final List<CourseInfo> cachedCourses = StudyProjectGenerator.getCoursesFromCache();
-      StudyProjectGenerator.flushCache(courses);
       StudySettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
-      courses.removeAll(cachedCourses);
-      if (!courses.isEmpty() && !cachedCourses.isEmpty()) {
+      if (!courses.isEmpty()) {
+        List<CourseInfo> updated = new ArrayList<>();
+        for (CourseInfo course : courses) {
+          if (course.getUpdateDate().after(new Date(StepicUpdateSettings.getInstance().getLastTimeChecked()))) {
+            updated.add(course);
+          }
+        }
+        if (updated.isEmpty()) return;
         final String message;
         final String title;
-        if (courses.size() == 1) {
-          message = courses.get(0).getName();
+        if (updated.size() == 1) {
+          message = updated.get(0).getName();
           title = "New course available";
         }
         else {
           title = "New courses available";
-          message = StringUtil.join(courses, CourseInfo::getName, ", ");
+          message = StringUtil.join(updated, CourseInfo::getName, ", ");
         }
-        final Notification notification =
-          new Notification("New.course", title, message, NotificationType.INFORMATION);
+        final Notification notification = new Notification("New.course", title, message, NotificationType.INFORMATION);
         notification.notify(null);
       }
     });
@@ -79,8 +83,7 @@ public class EduStepicUpdater {
   }
 
   private static boolean checkNeeded() {
-    final List<CourseInfo> courses = StudyProjectGenerator.getCoursesFromCache();
-    long timeToNextCheck = StudySettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
-    return courses.isEmpty() || timeToNextCheck <= 0;
+    long timeToNextCheck = StepicUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+    return timeToNextCheck <= 0;
   }
 }

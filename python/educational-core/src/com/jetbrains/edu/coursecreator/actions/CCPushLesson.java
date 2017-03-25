@@ -12,11 +12,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,11 +77,11 @@ public class CCPushLesson extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText("Uploading lesson to " + EduStepicNames.STEPIC_URL);
         if (lesson.getId() > 0) {
-          CCStepicConnector.updateLesson(project, lesson, indicator);
+          CCStepicConnector.updateLesson(project, lesson);
         }
         else {
           final CourseInfo info = CourseInfo.fromCourse(course);
-          final int lessonId = CCStepicConnector.postLesson(project, lesson, indicator);
+          final int lessonId = CCStepicConnector.postLesson(project, lesson);
           final List<Integer> sections = info.getSections();
           final Integer sectionId = sections.get(sections.size()-1);
           CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);

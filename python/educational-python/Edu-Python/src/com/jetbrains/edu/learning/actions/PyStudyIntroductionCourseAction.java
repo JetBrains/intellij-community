@@ -19,9 +19,10 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep;
 import com.jetbrains.python.newProject.steps.PythonGenerateProjectCallback;
 import icons.InteractiveLearningPythonIcons;
@@ -44,7 +45,8 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     if (projectDir.exists()) {
       return;
     }
-    if (StudyProjectGenerator.getBundledIntro() != null) {
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
+    if (configurator.getBundledCoursePath() != null) {
       return;
     }
     Presentation presentation = e.getPresentation();
@@ -60,7 +62,9 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     }
     else {
       final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-      CourseInfo introCourse = StudyProjectGenerator.getBundledIntro();
+      final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
+      final String bundledCoursePath = configurator.getBundledCoursePath();
+      CourseInfo introCourse = generator.getGenerator().getCourseInfo(bundledCoursePath);
       if (introCourse == null) {
         return;
       }

@@ -94,9 +94,9 @@ public class PyStudyCheckAction extends StudyCheckAction {
             }
             final Course course = myTaskManger.getCourse();
             if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-              CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-                StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
-              }));
+              CommandProcessor.getInstance().runUndoTransparentAction(
+                () -> ApplicationManager.getApplication().runWriteAction(
+                  () -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
             }
           }
           final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);

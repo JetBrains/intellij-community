@@ -21,8 +21,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public interface EduPluginConfigurator {
   String EP_NAME = "Edu.pluginConfigurator";
   LanguageExtension<EduPluginConfigurator> INSTANCE = new LanguageExtension<>(EP_NAME);
@@ -64,7 +62,7 @@ public interface EduPluginConfigurator {
   /**
    * Used in educator plugin to filter files to be packed into course archive
    */
-  boolean excludeFromArchive(@NotNull File pathname);
+  boolean excludeFromArchive(@NotNull String name);
 
   /**
    * @return true for all the test files including tests for subtasks
@@ -128,4 +126,7 @@ public interface EduPluginConfigurator {
                                          @Nullable String moduleDir) {
   }
 
+  default String getBundledCoursePath() {
+    return null;
+  }
 }
