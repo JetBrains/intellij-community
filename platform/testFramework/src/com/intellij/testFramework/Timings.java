@@ -19,7 +19,6 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
-import java.util.Arrays;
 
 /**
  * @author peter
@@ -30,20 +29,15 @@ public class Timings {
 
   public static final long CPU_TIMING;
   public static final long IO_TIMING;
-  public static final long MACHINE_TIMING;
 
   /**
    * Measured on dual core p4 3HZ 1gig ram
    */
-  public static final long ETALON_TIMING = 438;
   public static final long ETALON_CPU_TIMING = 200;
   public static final long ETALON_IO_TIMING = 100;
 
-  private static final long[] CPU_TIMING_DATA;
-
   static {
     CpuTimings timings = CpuTimings.calcStableCpuTiming();
-    CPU_TIMING_DATA = timings.rawData;
     CPU_TIMING = timings.average;
 
     long start = System.currentTimeMillis();
@@ -89,8 +83,6 @@ public class Timings {
       }
     }
     IO_TIMING = System.currentTimeMillis() - start;
-
-    MACHINE_TIMING = CPU_TIMING + IO_TIMING;
   }
 
   /**
@@ -99,14 +91,13 @@ public class Timings {
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
-    return Math.max(1, (int)(1.0 * value * ETALON_TIMING / MACHINE_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
+    return Math.max(1, (int)(1.0 * value * ETALON_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
   }
 
   public static String getStatistics() {
     return
       " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
       ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
-      ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon) " +
-      Runtime.getRuntime().availableProcessors() + " cores.\nRaw timings data: " + Arrays.toString(CPU_TIMING_DATA);
+      Runtime.getRuntime().availableProcessors() + " cores.";
   }
 }

@@ -461,7 +461,7 @@ public class PlatformTestUtil {
   public static void assertTiming(final String message, final long expectedMs, final long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    final long expectedOnMyMachine = Math.max(1, expectedMs * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
+    long expectedOnMyMachine = Math.max(1, expectedMs * Timings.CPU_TIMING / Timings.ETALON_CPU_TIMING);
 
     // Allow 10% more in case of test machine is busy.
     String logMessage = message;
@@ -472,11 +472,8 @@ public class PlatformTestUtil {
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
                   " Expected on Standard machine: " + expectedMs + ";" +
-                  " Actual on Standard: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
-                  ", I/O=" + Timings.IO_TIMING + "." +
-                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the Standard)" +
-                  ".";
+                  ", I/O=" + Timings.IO_TIMING + ".";
     final double acceptableChangeFactor = 1.1;
     if (actual < expectedOnMyMachine) {
       System.out.println(logMessage);
