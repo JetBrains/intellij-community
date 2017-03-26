@@ -56,7 +56,7 @@ private fun waitForImage(image: Image?): Boolean {
   return !mediaTracker.isErrorID(1)
 }
 
-internal enum class ImageType(private val suffix: String) {
+enum class ImageType(private val suffix: String) {
   BASIC(""), RETINA("@2x"), DARCULA("_dark"), RETINA_DARCULA("@2x_dark");
 
   fun getBasicName(name: String): String = StringUtil.trimEnd(name, suffix)

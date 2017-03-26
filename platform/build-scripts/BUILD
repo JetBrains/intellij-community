@@ -2,8 +2,10 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "platform-build-scripts",
+    srcs = ["icons/src"],
     resources = ["groovy"],
     tags = ["managed"],
+    test_srcs = ["icons/tests"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -34,5 +36,7 @@ iml_module(
         "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
         "//tools/idea/plugins/groovy/rt:groovy_rt[module]",
         "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
     ],
 )

@@ -641,3 +641,38 @@ java_import(
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
+
+java_import(
+    name = "jediterm-pty-2.5",
+    jars = ["jediterm-pty-2.5.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "fest-assert-1.5.0-SNAPSHOT",
+    jars = ["fest-assert-1.5.0-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "fest-reflect-2.0-SNAPSHOT",
+    jars = ["fest-reflect-2.0-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "fest-swing-1.4-SNAPSHOT",
+    jars = ["fest-swing-1.4-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "fest-util-1.3.0-SNAPSHOT",
+    jars = ["fest-util-1.3.0-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)

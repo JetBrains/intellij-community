@@ -27,7 +27,7 @@ import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, val used: Boolean, val deprecated: Boolean) {
+class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, val used: Boolean, val deprecated: Boolean) {
   var files: MutableMap<ImageType, File> = HashMap()
   var ambiguous: Boolean = false
 
@@ -35,7 +35,7 @@ internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, v
   val presentablePath: File get() = file ?: files.values.first() ?: File("<unknown>")
 }
 
-internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
+class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
   private val result = HashMap <String, ImagePaths>()
 
   private val usedIconsRobots: MutableSet<File> = HashSet()

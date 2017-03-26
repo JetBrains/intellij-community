@@ -57,6 +57,7 @@ iml_module(
         "xml/relaxng/test",
         "platform/xdebugger-impl/testSrc",
         "platform/credential-store/test",
+        "platform/configuration-store-impl/testSrc",
         "platform/testFramework/testSrc",
     ],
     test_tags = ["manual"],
@@ -123,6 +124,7 @@ iml_module(
         "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",
         "//tools/idea/xml/openapi:xml-openapi[module]",
         "//tools/idea/platform/icons[module]",
         "//tools/idea/.idea/libraries:swingx",
@@ -168,6 +170,7 @@ iml_module(
         "//tools/analytics-library/protos:analytics-protos[module]",
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea/platform/testFramework/bootstrap:tests_bootstrap[module]",
         "//tools/idea/resources-en[module]",
@@ -330,7 +333,6 @@ iml_module(
         "plugins/generate-tostring/src",
     ],
     javacopts = ["-XepAllErrorsAsWarnings"],
-    resources = ["plugins/generate-tostring/resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -417,7 +419,6 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinTest[test]",
         "//tools/idea/platform/built-in-server-api[module, test]",
         "//tools/idea/.idea/libraries:memoryfilesystem[test]",
-        "//tools/idea:configuration-store-tests[module, test]",
     ],
 )
 
@@ -498,4 +499,34 @@ py_test(
     name = "test_studio",
     srcs = ["test_studio.py"],
     tags = ["manual"],
+)
+
+iml_module(
+    name = "python-community-plugin-build-patches",
+    resources = ["python/build/patches"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "testGuiFramework",
+    srcs = ["platform/testGuiFramework/src"],
+    tags = ["managed"],
+    test_srcs = ["platform/testGuiFramework/testSrc"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/.idea/libraries:fest"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea/.idea/libraries:fest",
+        "//tools/idea/.idea/libraries:JUnit4",
+        "//tools/idea/java/openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea/platform/bootstrap[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
+        "//tools/idea/platform/testRunner[module]",
+        "//tools/idea/platform/external-system-rt[module]",
+        "//tools/idea/platform/platform-main[module]",
+        "//tools/idea/.idea/libraries:jsr305",
+    ],
 )

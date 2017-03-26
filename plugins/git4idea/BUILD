@@ -9,11 +9,7 @@ iml_module(
     ],
     resources = ["resources"],
     tags = ["managed"],
-    test_srcs = [
-        "tests",
-        "test-features",
-        "test-stepdefs",
-    ],
+    test_srcs = ["tests"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -40,7 +36,6 @@ iml_module(
         "//tools/idea/platform/dvcs-impl[module]",
         "//tools/idea/.idea/libraries:cucumber-core[test]",
         "//tools/idea/.idea/libraries:JSch",
-        "//tools/idea/build/cucumber-test-runner[module, test]",
         "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",
         "//tools/idea/platform/vcs-log/impl:vcs-log-impl[module]",
         "//tools/idea/platform/vcs-log/graph:vcs-log-graph[module]",
@@ -52,5 +47,6 @@ iml_module(
         "//tools/idea/platform/vcs-tests[module, test]",
         "//tools/idea/platform/util[module]",
         "//tools/idea/.idea/libraries:cucumber-testing[test]",
+        "//tools/idea:testGuiFramework[module, test]",
     ],
 )

@@ -15,5 +15,6 @@ iml_module(
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/jps/model-api:jps-model-api[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:Xerces",
     ],
 )

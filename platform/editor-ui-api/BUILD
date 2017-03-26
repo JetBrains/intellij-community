@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/platform/annotations[module]",
         "//tools/idea/platform/projectModel-api[module]",
         "//tools/idea/platform/indexing-api[module]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

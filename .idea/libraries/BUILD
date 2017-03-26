@@ -254,6 +254,7 @@ java_library(
     name = "KotlinJavaRuntime",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/base/bazel:kotlin-runtime"],
 )
 
 java_library(
@@ -1068,41 +1069,35 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/gradle/lib:commons-lang-2.6",
-        "//tools/idea/plugins/gradle/lib:gradle-cli-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-resources-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-core-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-dependency-management-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-logging-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-native-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-reporting-3.2",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-core-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-resources-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-version-info-3.3",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/gradle/lib:commons-lang-2.6",
-        "//tools/idea/plugins/gradle/lib:gradle-cli-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-resources-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-core-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-dependency-management-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-logging-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-native-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.2",
-        "//tools/idea/plugins/gradle/lib:gradle-reporting-3.2",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-core-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-messaging-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-model-core-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-process-services-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-resources-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-3.3",
+        "//tools/idea/plugins/gradle/lib:gradle-version-info-3.3",
     ],
 )
 
@@ -1112,4 +1107,48 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
     runtime_deps = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
+)
+
+java_library(
+    name = "uast",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/uast:1.0/uast-common-1.0",
+        "//prebuilts/tools/common/uast:1.0/uast-java-1.0",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/uast:1.0/uast-common-1.0",
+        "//prebuilts/tools/common/uast:1.0/uast-java-1.0",
+    ],
+)
+
+java_library(
+    name = "jediterm-pty",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:jediterm-pty-2.5"],
+    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.5"],
+)
+
+java_library(
+    name = "fest",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/lib:fest-assert-1.5.0-SNAPSHOT",
+        "//tools/idea/lib:fest-reflect-2.0-SNAPSHOT",
+        "//tools/idea/lib:fest-swing-1.4-SNAPSHOT",
+        "//tools/idea/lib:fest-util-1.3.0-SNAPSHOT",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea/lib:fest-assert-1.5.0-SNAPSHOT",
+        "//tools/idea/lib:fest-reflect-2.0-SNAPSHOT",
+        "//tools/idea/lib:fest-swing-1.4-SNAPSHOT",
+        "//tools/idea/lib:fest-util-1.3.0-SNAPSHOT",
+    ],
 )
