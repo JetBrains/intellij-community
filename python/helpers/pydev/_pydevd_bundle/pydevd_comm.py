@@ -77,7 +77,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
-import pydevd_file_utils
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
@@ -681,9 +681,9 @@ class NetCommandFactory:
 
                 #print "name is ", my_name
 
-                abs_path_real_path_and_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(curr_frame)
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
 
-                myFile = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
+                myFile = norm_file_to_client(abs_path_real_path_and_base[0])
                 if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
                     # myFile is a byte string encoded using the file system encoding
                     # convert it to utf8
@@ -975,6 +975,18 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             t.additional_info.pydev_next_line = int(self.line)
             t.additional_info.pydev_func_name = self.func_name
             t.additional_info.pydev_state = STATE_RUN
+
+
+#=======================================================================================================================
+# InternalSetTracingThread
+#=======================================================================================================================
+class InternalSetTracingThread(InternalThreadCommand):
+    """Revert using tracing function inside thread, sometimes needed while frame evaluation debugging"""
+    def __init__(self, thread_id):
+        self.thread_id = thread_id
+
+    def do_it(self, dbg):
+        dbg.SetTrace(dbg.trace_dispatch)
 
 
 #=======================================================================================================================
@@ -1444,3 +1456,57 @@ def pydevd_find_thread_by_id(thread_id):
 
     return None
 
+
+def pydevd_check_frame_for_new_breakpoint(main_debugger, breakpoint, filepath):
+    """ If frame evaluation is enabled and breakpoint was added while running debug session there are two cases:
+        * the frame isn't under execution yet, we'll handle all its breakpoints in frame evaluation function
+        * the frame is already under execution, we need to enable old tracing function and disable it after exiting the frame
+    """
+    if not main_debugger.ready_to_run:
+        # do it it only debug session is started
+        return
+
+    threads = threading.enumerate()
+    try:
+        for t in threads:
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                continue
+            additional_info = None
+            try:
+                additional_info = t.additional_info
+            except AttributeError:
+                pass  # that's ok, no info currently set
+            if additional_info is None:
+                continue
+
+            frame_executed = None
+            func_name = breakpoint.func_name
+            for frame in additional_info.iter_frames(t):
+                current_frame = frame
+                while current_frame is not None:
+                    try:
+                        # Make fast path faster!
+                        abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[current_frame.f_code.co_filename]
+                    except:
+                        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(current_frame)
+
+                    if abs_path_real_path_and_base[1] == filepath:
+                        # compare functions' names
+                        current_func = current_frame.f_code.co_name
+                        if func_name == current_func or (func_name == "None" and current_func == "<module>"):
+                            frame_executed = current_frame
+                            break
+                    current_frame = current_frame.f_back
+            if frame_executed is not None:
+                # SetTrace should be executed within the thread
+                thread_id = get_thread_id(t)
+                int_cmd = InternalSetTracingThread(thread_id)
+                main_debugger.post_internal_command(int_cmd, thread_id)
+
+                main_debugger.set_trace_for_frame_and_parents(frame_executed, overwrite_prev_trace=True)
+                if thread_id not in main_debugger.disable_tracing_after_exit_frames:
+                    main_debugger.disable_tracing_after_exit_frames[thread_id] = set()
+                # tracing function inside frame shouldn't be removed until the program exits this frame
+                main_debugger.disable_tracing_after_exit_frames[thread_id].add(frame_executed)
+    except:
+        traceback.print_exc()

@@ -287,7 +287,9 @@ public class TreeState implements JDOMExternalizable {
       callback.doWhenDone(new TreeRunnable("TreeState.applyTo: on done") {
         @Override
         public void perform() {
-          applySelected(tree, node);
+          if (tree.getSelectionCount() == 0) {
+            applySelected(tree, node);
+          }
         }
       });
     }

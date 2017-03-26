@@ -76,7 +76,9 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(EncodingProjectManagerImpl.this::reloadAlreadyLoadedDocuments);
+        if (project == myProject) {
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(EncodingProjectManagerImpl.this::reloadAlreadyLoadedDocuments);
+        }
       }
     });
   }
@@ -363,6 +365,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     Charset charset = myProjectCharset;
     // if the project charset was not specified, use the IDE encoding, save this back
     return charset == null ? myIdeEncodingManager.getDefaultCharset() : charset;
+  }
+
+  @Nullable
+  public Charset getConfiguredDefaultCharset() {
+    return myProjectCharset;
   }
 
   @Override

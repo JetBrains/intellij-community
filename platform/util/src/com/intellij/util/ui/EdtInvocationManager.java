@@ -50,7 +50,7 @@ public abstract class EdtInvocationManager {
   }
 
   /**
-   * 'True' {@link EdtInvocationManager} implementation which works with real EDT.
+   * The default {@link EdtInvocationManager} implementation which works with the EDT via SwingUtilities.
    */
   private static class SwingEdtInvocationManager extends EdtInvocationManager {
     @Override

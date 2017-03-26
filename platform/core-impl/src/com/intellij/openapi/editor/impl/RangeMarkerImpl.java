@@ -97,12 +97,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
 
     if (node != null) {
-      node.processAliveKeys(new Processor<RangeMarkerEx>() {
-        @Override
-        public boolean process(RangeMarkerEx markerEx) {
-          myNode.getTree().beforeRemove(markerEx, reason);
-          return true;
-        }
+      node.processAliveKeys(markerEx -> {
+        myNode.getTree().beforeRemove(markerEx, reason);
+        return true;
       });
     }
   }

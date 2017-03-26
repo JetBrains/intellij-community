@@ -21,6 +21,7 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,8 +36,8 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   final int moreRectAxisSize;
   public Rectangle moreRect;
 
-  public JComponent hToolbar;
-  public JComponent vToolbar;
+  public WeakReference<JComponent> hToolbar;
+  public WeakReference<JComponent> vToolbar;
 
   public Rectangle firstGhost;
   public boolean firstGhostVisible;
@@ -46,7 +47,7 @@ public class SingleRowPassInfo extends LayoutPassInfo {
 
   public Insets insets;
 
-  public JComponent comp;
+  public WeakReference<JComponent> comp;
   public Rectangle tabRectangle;
   final int scrollOffset;
 

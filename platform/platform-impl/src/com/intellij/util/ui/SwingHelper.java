@@ -627,12 +627,15 @@ public class SwingHelper {
   public static void setHtml(@NotNull JEditorPane editorPane,
                              @NotNull String bodyInnerHtml,
                              @Nullable Color foregroundColor) {
-    String html = String.format(
-      "<html><head>%s</head><body>%s</body></html>",
+    editorPane.setText(buildHtml(
       UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, null, null),
       bodyInnerHtml
-    );
-    editorPane.setText(html);
+    ));
+  }
+
+  @NotNull
+  public static String buildHtml(@NotNull String headInnerHtml, @NotNull String bodyInnedHtml) {
+    return "<html><head>" + headInnerHtml + "</head><body>" + bodyInnedHtml + "</body></html>";
   }
 
   @NotNull
@@ -752,13 +755,11 @@ public class SwingHelper {
                                             @Nullable final Consumer<String> hyperlinkListener) {
     disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
     final Font font = UIUtil.getLabelFont();
-    String html = String.format(
-      "<html><head>%s</head><body>%s</body></html>",
+    String html = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
       innerHtml
     );
-    String disabled = String.format(
-      "<html><head>%s</head><body>%s</body></html>",
+    String disabled = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
       disabledHtml
     );

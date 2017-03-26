@@ -119,7 +119,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   @Override
   public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
     final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
-    if (rootConfigurable.updateProjectTree(modules, targetGroup)) { //inside project root editor
+    if (rootConfigurable.updateProjectTree(modules)) { //inside project root editor
       if (targetGroup != null) {
         rootConfigurable.selectNodeInTree(targetGroup.toString());
       }

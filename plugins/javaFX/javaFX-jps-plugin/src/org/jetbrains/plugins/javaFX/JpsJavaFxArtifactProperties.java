@@ -80,7 +80,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myKeypass;
     private boolean myConvertCss2Bin;
     public JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
-    private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+    private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
     private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
     public String getTitle() {

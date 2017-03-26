@@ -27,6 +27,7 @@ import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -75,10 +76,10 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
   }
 
   @Nullable
-  private SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
-                                                   @NotNull Project project,
-                                                   @NotNull DebuggerContextImpl context,
-                                                   boolean nearest) {
+  private static SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
+                                                          @NotNull Project project,
+                                                          @NotNull DebuggerContextImpl context,
+                                                          boolean nearest) {
     final ReferenceType type = descriptor.getField().declaringType();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String fieldName = descriptor.getField().name();
@@ -142,10 +143,10 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
   }
 
   @Nullable
-  private SourcePosition getSourcePositionForLocalVariable(String name,
-                                                           @NotNull Project project,
-                                                           @NotNull DebuggerContextImpl context,
-                                                           boolean nearest) {
+  private static SourcePosition getSourcePositionForLocalVariable(String name,
+                                                                  @NotNull Project project,
+                                                                  @NotNull DebuggerContextImpl context,
+                                                                  boolean nearest) {
     PsiElement place = PositionUtil.getContextElement(context);
     if (place == null) return null;
 
@@ -154,8 +155,12 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
 
     PsiFile containingFile = psiVariable.getContainingFile();
     if(containingFile == null) return null;
-    if (nearest) {
-      return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);
+    try {
+      if (nearest) {
+        return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);
+      }
+    }
+    catch (IndexNotReadyException ignore) {
     }
     return SourcePosition.createFromElement(psiVariable);
   }

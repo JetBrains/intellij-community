@@ -90,8 +90,9 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
 
   @Override
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-    Object value = element.getValue();
-    return value instanceof PsiMethod || value instanceof PsiField;
+    // Classes, anonymous classes and lambdas
+    // can be in anywhere, i.e. in fields, methods and blocks
+    return false;
   }
 
   @Override

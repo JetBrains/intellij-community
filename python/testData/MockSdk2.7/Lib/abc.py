@@ -6,3 +6,7 @@ class ABCMeta:
 
 def abstractmethod(foo):
     pass
+
+
+def abstractproperty(foo):
+    pass

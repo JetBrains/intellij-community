@@ -23,10 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -50,8 +47,6 @@ public class ParameterInfoComponent extends JPanel {
 
   private final OneElementComponent[] myPanels;
 
-  private static final Color BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color HIGHLIGHTED_BORDER_COLOR = new JBColor(new Color(231, 254, 234), Gray._100);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
@@ -106,7 +101,7 @@ public class ParameterInfoComponent extends JPanel {
 
     myObjects = objects;
 
-    setBackground(BACKGROUND_COLOR);
+    setBackground(HintUtil.getInformationColor());
 
     myHandler = handler;
     myPanels = new OneElementComponent[myObjects.length];
@@ -209,7 +204,9 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public Color getDefaultParameterColor() {
-      return myObjects[i].equals(myHighlighted) ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
+      Color color = HintUtil.getInformationColor();
+      return !myObjects[i].equals(myHighlighted) ? color :
+             ColorUtil.isDark(color) ? ColorUtil.brighter(color, 2) : ColorUtil.darker(color, 2);
     }
   }
 

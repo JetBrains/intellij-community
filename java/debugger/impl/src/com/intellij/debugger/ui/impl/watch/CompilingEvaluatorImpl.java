@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -65,8 +65,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   @NotNull
   protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
-      Module module = ApplicationManager.getApplication().runReadAction(
-        (Computable<Module>)() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
+      Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
       List<String> options = new ArrayList<>();
       options.add("-encoding");
       options.add("UTF-8");
@@ -137,7 +136,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   }
 
   private File generateTempSourceFile(File workingDir) throws IOException {
-    Pair<String, String> fileData = ApplicationManager.getApplication().runReadAction((Computable<Pair<String, String>>)() -> {
+    Pair<String, String> fileData = ReadAction.compute(() -> {
       PsiFile file = myData.getGeneratedInnerClass().getContainingFile();
       return Pair.create(file.getName(), file.getText());
     });
@@ -162,7 +161,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         try {
           ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
-            psiContext.getContainingFile(),
+            findPhysicalContext(psiContext),
             fragmentFactory.apply(psiContext),
             getGeneratedClassName());
           if (data != null) {
@@ -176,5 +175,17 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       });
     }
     return null;
+  }
+
+  @NotNull
+  private static PsiElement findPhysicalContext(@NotNull PsiElement element) {
+    while (!element.isPhysical()) {
+      PsiElement context = element.getContext();
+      if (context == null) {
+        break;
+      }
+      element = context;
+    }
+    return element;
   }
 }

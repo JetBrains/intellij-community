@@ -36,7 +36,7 @@ public class VMOptionsTest {
   @Before
   public void setUp() throws IOException {
     myFile = myTempDir.newFile("vmoptions.txt");
-    FileUtil.writeToFile(myFile, "-Xmx512m\n-XX:MaxPermSize=128m");
+    FileUtil.writeToFile(myFile, "-Xmx512m\n-XX:MaxMetaspaceSize=128m");
     System.setProperty("jb.vmOptionsFile", myFile.getPath());
   }
 
@@ -48,7 +48,7 @@ public class VMOptionsTest {
   @Test
   public void testReading() {
     assertEquals(512, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
-    assertEquals(128, VMOptions.readOption(VMOptions.MemoryKind.PERM_GEN, false));
+    assertEquals(128, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
   }
 
   @Test
@@ -56,50 +56,50 @@ public class VMOptionsTest {
     FileUtil.writeToFile(myFile, "");
 
     assertEquals(-1, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
-    assertEquals(-1, VMOptions.readOption(VMOptions.MemoryKind.PERM_GEN, false));
+    assertEquals(-1, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
   }
 
   @Test
   public void testReadingKilos() throws IOException {
-    FileUtil.writeToFile(myFile, "-Xmx512000k -XX:MaxPermSize=128000K -XX:ReservedCodeCacheSize=256000K");
+    FileUtil.writeToFile(myFile, "-Xmx512000k -XX:MaxMetaspaceSize=128000K -XX:ReservedCodeCacheSize=256000K");
 
     assertEquals(512000 / 1024, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
-    assertEquals(128000 / 1024, VMOptions.readOption(VMOptions.MemoryKind.PERM_GEN, false));
+    assertEquals(128000 / 1024, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
     assertEquals(256000 / 1024, VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, false));
   }
 
   @Test
   public void testReadingGigs() throws IOException {
-    FileUtil.writeToFile(myFile, "-Xmx512g\n-XX:MaxPermSize=128G");
+    FileUtil.writeToFile(myFile, "-Xmx512g\n-XX:MaxMetaspaceSize=128G");
 
     assertEquals(512 * 1024, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
-    assertEquals(128 * 1024, VMOptions.readOption(VMOptions.MemoryKind.PERM_GEN, false));
+    assertEquals(128 * 1024, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
   }
 
   @Test
   public void testReadingWithoutUnit() throws IOException {
-    FileUtil.writeToFile(myFile, "-Xmx512\n-XX:MaxPermSize=128");
+    FileUtil.writeToFile(myFile, "-Xmx512\n-XX:MaxMetaspaceSize=128");
 
     assertEquals(512, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
-    assertEquals(128, VMOptions.readOption(VMOptions.MemoryKind.PERM_GEN, false));
+    assertEquals(128, VMOptions.readOption(VMOptions.MemoryKind.METASPACE, false));
   }
 
   @Test
   public void testWriting() throws IOException {
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.PERM_GEN, 512);
+    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 512);
 
-    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxPermSize=512m");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxMetaspaceSize=512m");
   }
 
   @Test
   public void testWritingPreservingLocation() throws IOException {
-    FileUtil.writeToFile(myFile, "-someOption\n-Xmx512m\n-XX:MaxPermSize=128m\n-anotherOption");
+    FileUtil.writeToFile(myFile, "-someOption\n-Xmx512m\n-XX:MaxMetaspaceSize=128m\n-anotherOption");
 
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.PERM_GEN, 256);
+    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
 
-    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-someOption -Xmx1024m -XX:MaxPermSize=256m -anotherOption");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-someOption -Xmx1024m -XX:MaxMetaspaceSize=256m -anotherOption");
   }
 
   @Test
@@ -107,10 +107,10 @@ public class VMOptionsTest {
     FileUtil.writeToFile(myFile, "-someOption");
 
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.PERM_GEN, 256);
+    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
     VMOptions.writeOption(VMOptions.MemoryKind.CODE_CACHE, 256);
 
-    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-someOption -Xmx1024m -XX:MaxPermSize=256m -XX:ReservedCodeCacheSize=256m");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-someOption -Xmx1024m -XX:MaxMetaspaceSize=256m -XX:ReservedCodeCacheSize=256m");
   }
 
   @Test
@@ -118,9 +118,9 @@ public class VMOptionsTest {
     FileUtil.setReadOnlyAttribute(myFile.getPath(), true);
 
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.PERM_GEN, 256);
+    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
 
-    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxPermSize=256m");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxMetaspaceSize=256m");
   }
 
   @Test
@@ -128,8 +128,8 @@ public class VMOptionsTest {
     FileUtil.delete(myFile);
 
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
-    VMOptions.writeOption(VMOptions.MemoryKind.PERM_GEN, 256);
+    VMOptions.writeOption(VMOptions.MemoryKind.METASPACE, 256);
 
-    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxPermSize=256m");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxMetaspaceSize=256m");
   }
 }

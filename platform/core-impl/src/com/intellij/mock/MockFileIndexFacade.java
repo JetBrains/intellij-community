@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class MockFileIndexFacade extends FileIndexFacade {
   private final Module myModule;
-  private final List<VirtualFile> myLibraryRoots = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myLibraryRoots = new ArrayList<>();
 
   public MockFileIndexFacade(final Project project) {
     super(project);

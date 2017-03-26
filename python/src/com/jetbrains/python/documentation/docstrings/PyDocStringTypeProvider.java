@@ -78,4 +78,21 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
     }
     return Ref.create(type);
   }
+
+  /**
+   * Unify generics in the constructor according to the legacy type hints syntax.
+   */
+  @Nullable
+  @Override
+  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final PyFunction init = cls.findInitOrNew(true, context);
+    if (init != null) {
+      final PyType initType = context.getType(init);
+      final PyCallableType callableType = PyUtil.as(initType, PyCallableType.class);
+      if (callableType != null) {
+        return callableType.getReturnType(context);
+      }
+    }
+    return null;
+  }
 }

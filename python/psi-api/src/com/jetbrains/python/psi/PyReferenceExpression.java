@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+import java.util.List;
+
 public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenceOwner {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
@@ -30,13 +30,25 @@ public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenc
    * Goes through a chain of assignment statements until a non-assignment expression is encountered.
    * Starts at this, expecting it to resolve to a target of an assignment.
    * <i>Note: currently limited to non-branching definite assignments.</i>
-   * @return value that is assigned to this element via a chain of definite assignments, or an empty resolve result.
-   * <i>Note: will return null if the assignment chain ends in a target of a non-assignment statement such as 'for'.</i>
    *
-   * @param resolveContext the resolve context
+   * @param resolveContext resolve context
+   * @return the value that is assigned to this element via a chain of definite assignments, or an empty resolve result.
+   * <i>Note: will return null if the assignment chain ends in a target of a non-assignment statement such as 'for'.</i>
+   * @see PyReferenceExpression#multiFollowAssignmentsChain(PyResolveContext)
    */
   @NotNull
-  QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext);
+  QualifiedResolveResult followAssignmentsChain(@NotNull PyResolveContext resolveContext);
+
+  /**
+   * Goes through a chain of assignment statements until a non-assignment expression is encountered.
+   * Starts at this, expecting it to resolve to a target of an assignment.
+   *
+   * @param resolveContext resolve context
+   * @return the values that could be assigned to this element via a chain of assignments, or an empty list.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext);
 
   @NotNull
   PsiPolyVariantReference getReference();

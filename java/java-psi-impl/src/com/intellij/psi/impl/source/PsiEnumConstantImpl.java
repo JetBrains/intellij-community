@@ -194,14 +194,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public boolean isDeprecated() {
-    final PsiFieldStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.isDeprecated();
-    }
-
-    PsiDocComment docComment = getDocComment();
-    return docComment != null && docComment.findTagByName("deprecated") != null ||
-           getModifierList().findAnnotation("java.lang.Deprecated") != null;
+    return PsiFieldImpl.isFieldDeprecated(this, getGreenStub());
   }
 
   @Override

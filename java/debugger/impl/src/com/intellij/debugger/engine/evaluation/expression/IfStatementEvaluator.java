@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ public class IfStatementEvaluator implements Evaluator {
   private Modifier myModifier;
 
   public IfStatementEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
-    myConditionEvaluator = new DisableGC(conditionEvaluator);
-    myThenEvaluator = new DisableGC(thenEvaluator);
-    myElseEvaluator = elseEvaluator == null ? null : new DisableGC(elseEvaluator);
+    myConditionEvaluator = DisableGC.create(conditionEvaluator);
+    myThenEvaluator = DisableGC.create(thenEvaluator);
+    myElseEvaluator = elseEvaluator == null ? null : DisableGC.create(elseEvaluator);
   }
 
   public Modifier getModifier() {

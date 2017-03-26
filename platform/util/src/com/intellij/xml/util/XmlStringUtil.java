@@ -34,7 +34,8 @@ public class XmlStringUtil {
   @NotNull
   public static String wrapInCDATA(@NotNull String str) {
     StringBuilder sb = new StringBuilder();
-    int cur = 0, len = str.length();
+    int cur = 0;
+    int len = str.length();
     while (cur < len) {
       int next = StringUtil.indexOf(str, CDATA_END, cur);
       sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next + 1)).append(CDATA_END);
@@ -184,7 +185,7 @@ public class XmlStringUtil {
         if (numberEnd > 0) {
           int charCode;
           try {
-            charCode = numberEnd == (i + 1) ? '#' : Integer.parseInt(text.substring(i + 1, numberEnd), 16);
+            charCode = numberEnd == i + 1 ? '#' : Integer.parseInt(text.substring(i + 1, numberEnd), 16);
           }
           catch (NumberFormatException e) {
             continue;

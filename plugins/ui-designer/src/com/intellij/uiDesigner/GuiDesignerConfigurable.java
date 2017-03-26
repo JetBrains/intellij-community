@@ -16,8 +16,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -33,12 +32,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -189,7 +188,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
             myProgressWindow.setText(UIDesignerBundle.message("progress.converting", vFile.getPresentableUrl()));
             myProgressWindow.setFraction(((double)i) / ((double)methods.length));
             if (vFile.isWritable()) {
-              FormSourceCodeGenerator.cleanup(aClass);
+              WriteAction.run(() -> FormSourceCodeGenerator.cleanup(aClass));
             }
           }
           catch (IncorrectOperationException e) {
@@ -203,10 +202,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
      * Launches vanish/generate sources processes
      */
     private void applyImpl() {
-      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         vanishGeneratedSources();
-      }), "", null);
+      }, "", null);
     }
 
     public void run() {

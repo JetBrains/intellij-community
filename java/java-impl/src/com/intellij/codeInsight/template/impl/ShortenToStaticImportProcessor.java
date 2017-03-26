@@ -25,6 +25,8 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,7 +48,7 @@ import static java.util.Arrays.asList;
  * @author Denis Zhdanov
  * @since 4/27/11 3:07 PM
  */
-public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor {
+public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor, DumbAware {
 
   private static final List<StaticImporter> IMPORTERS = asList(new SingleMemberStaticImporter(), new OnDemandStaticImporter());
   
@@ -62,6 +64,13 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
        return;
     }
 
+    DumbService.getInstance(project).withAlternativeResolveEnabled(
+      () -> doStaticImport(project, editor, file, getStaticImportTargets(templateRange, file)));
+  }
+
+  @NotNull
+  private static List<Pair<PsiElement, StaticImporter>> getStaticImportTargets(RangeMarker templateRange,
+                                                                               PsiFile file) {
     List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<>();
     for (
       PsiElement element = PsiUtilCore.getElementAtOffset(file, templateRange.getStartOffset());
@@ -75,7 +84,13 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
         }
       }
     }
+    return staticImportTargets;
+  }
 
+  private static void doStaticImport(Project project,
+                                     Editor editor,
+                                     PsiFile file,
+                                     List<Pair<PsiElement, StaticImporter>> staticImportTargets) {
     Collections.reverse(staticImportTargets);
     for (Pair<PsiElement, StaticImporter> pair : staticImportTargets) {
       if (pair.first.isValid()) {

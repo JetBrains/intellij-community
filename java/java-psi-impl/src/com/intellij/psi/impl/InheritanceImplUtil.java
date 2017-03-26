@@ -145,7 +145,7 @@ public class InheritanceImplUtil {
     }
 
     if (checkedClasses == null) {
-      checkedClasses = new THashSet<PsiClass>();
+      checkedClasses = new THashSet<>();
     }
     checkedClasses.add(aClass);
 
@@ -187,7 +187,7 @@ public class InheritanceImplUtil {
 
     Set<PsiClass> checkedClasses = null;
     if (classToByPass != null) {
-      checkedClasses = new THashSet<PsiClass>();
+      checkedClasses = new THashSet<>();
       checkedClasses.add(classToByPass);
     }
     return isInheritor(candidateClass.getManager(), candidateClass, baseClass, true, checkedClasses);

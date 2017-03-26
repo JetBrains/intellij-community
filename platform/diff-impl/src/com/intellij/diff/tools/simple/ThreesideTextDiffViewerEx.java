@@ -446,7 +446,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       assert editors.length == 3;
     }
 
-    public void install(@Nullable List<MergeLineFragment> fragments,
+    public void install(@Nullable List<? extends MergeLineFragment> fragments,
                         @NotNull UserDataHolder context,
                         @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(fragments, fragment -> new int[]{

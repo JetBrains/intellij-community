@@ -17,7 +17,6 @@ package git4idea.merge;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -77,7 +76,7 @@ public class GitPullDialog extends DialogWrapper {
     setTitle(GitBundle.getString("pull.title"));
     myProject = project;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
 
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
     myGitRoot.addActionListener(new ActionListener() {

@@ -169,7 +169,7 @@ public class JUnit4Framework extends JavaTestFramework {
 
   @Override
   public boolean isParameterized(PsiClass clazz) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
+    PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(clazz);
     return annotation != null && JUnitUtil.isParameterized(annotation);
   }
 

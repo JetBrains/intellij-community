@@ -37,8 +37,8 @@ import java.util.Map;
  * @author maxim
  */
 public abstract class NamedObjectProviderBinding implements ProviderBinding {
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<String, List<ProviderInfo<ElementPattern>>>(5);
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<String, List<ProviderInfo<ElementPattern>>>(5);
+  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<>(5);
+  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<>(5);
 
   public void registerProvider(@NonNls @NotNull String[] names,
                                @NotNull ElementPattern filter,
@@ -52,10 +52,10 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
       List<ProviderInfo<ElementPattern>> psiReferenceProviders = map.get(key);
 
       if (psiReferenceProviders == null) {
-        map.put(key, psiReferenceProviders = new SmartList<ProviderInfo<ElementPattern>>());
+        map.put(key, psiReferenceProviders = new SmartList<>());
       }
 
-      psiReferenceProviders.add(new ProviderInfo<ElementPattern>(provider, filter, priority));
+      psiReferenceProviders.add(new ProviderInfo<>(provider, filter, priority));
     }
   }
 
@@ -73,14 +73,14 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   @Override
   public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
     for (final List<ProviderInfo<ElementPattern>> list : myNamesToProvidersMap.values()) {
-      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<ProviderInfo<ElementPattern>>(list)) {
+      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(list)) {
         if (trinity.provider.equals(provider)) {
           list.remove(trinity);
         }
       }
     }
     for (final List<ProviderInfo<ElementPattern>> list : myNamesToProvidersMapInsensitive.values()) {
-      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<ProviderInfo<ElementPattern>>(list)) {
+      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(list)) {
         if (trinity.provider.equals(provider)) {
           list.remove(trinity);
         }
@@ -115,7 +115,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
       catch (IndexNotReadyException ignored) {
       }
       if (suitable) {
-        output.add(new ProviderInfo<ProcessingContext>(info.provider, context, info.priority));
+        output.add(new ProviderInfo<>(info.provider, context, info.priority));
       }
     }
   }

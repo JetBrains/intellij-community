@@ -36,6 +36,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
@@ -73,6 +74,10 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       final PyRemoteLibrariesNode remoteLibrariesNode = PyRemoteLibrariesNode.create(project, sdk, settings);
       if (remoteLibrariesNode != null) {
         newChildren.add(remoteLibrariesNode);
+      }
+      final PyTypeShedNode typeShedNode = PyTypeShedNode.Companion.create(project, sdk, settings);
+      if (typeShedNode != null) {
+        newChildren.add(typeShedNode);
       }
       return newChildren;
     }
@@ -115,14 +120,20 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     for (AbstractTreeNode child : children) {
       if (child instanceof PsiDirectoryNode) {
         PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
-        if (directory.getVirtualFile().equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+        if (directory == null) {
           continue;
         }
         VirtualFile dir = directory.getVirtualFile();
+        if (dir.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory())) {
+          continue;
+        }
         if (dir.getFileSystem() instanceof JarFileSystem) {
-          dir = ((JarFileSystem)directory.getVirtualFile().getFileSystem()).getLocalVirtualFileFor(directory.getVirtualFile());
+          dir = ((JarFileSystem)dir.getFileSystem()).getLocalVirtualFileFor(dir);
         }
         if (dir == null) {
+          continue;
+        }
+        if (PyTypeShed.INSTANCE.isInside(dir)) {
           continue;
         }
         VirtualFile dirParent = dir.getParent();

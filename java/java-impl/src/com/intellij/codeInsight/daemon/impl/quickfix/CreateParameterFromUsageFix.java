@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -70,47 +70,45 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
+    TransactionGuard.getInstance().submitTransactionLater(targetClass.getProject(), () -> {
+      if (!myReferenceExpression.isValid()) return;
+      if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
 
-    final Project project = myReferenceExpression.getProject();
+      final Project project = myReferenceExpression.getProject();
 
-    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
-    PsiType type = expectedTypes[0];
+      PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+      PsiType type = expectedTypes[0];
 
-    final String varName = myReferenceExpression.getReferenceName();
-    PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
-    LOG.assertTrue(method != null);
-    method = IntroduceParameterHandler.chooseEnclosingMethod(method);
-    if (method == null) return;
+      final String varName = myReferenceExpression.getReferenceName();
+      PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
+      LOG.assertTrue(method != null);
+      method = IntroduceParameterHandler.chooseEnclosingMethod(method);
+      if (method == null) return;
 
-    method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-    if (method == null) return;
+      method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+      if (method == null) return;
 
-    final List<ParameterInfoImpl> parameterInfos =
-      new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
-    if (!method.isVarArgs()) {
-      parameterInfos.add(parameterInfo);
-    }
-    else {
-      parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
-    }
+      final List<ParameterInfoImpl> parameterInfos =
+        new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+      ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
+      if (!method.isVarArgs()) {
+        parameterInfos.add(parameterInfo);
+      }
+      else {
+        parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
+      }
 
-    final Application application = ApplicationManager.getApplication();
-    final PsiMethod finalMethod = method;
-    application.invokeLater(() -> {
-      if (project.isDisposed()) return;
-      if (application.isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
         ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-        String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(finalMethod.getModifierList()));
+        String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
         ChangeSignatureProcessor processor =
-          new ChangeSignatureProcessor(project, finalMethod, false, modifier, finalMethod.getName(), finalMethod.getReturnType(), array);
+          new ChangeSignatureProcessor(project, method, false, modifier, method.getName(), method.getReturnType(), array);
         processor.run();
       }
       else {
         try {
           JavaChangeSignatureDialog dialog =
-            JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
+            JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, true, myReferenceExpression);
           dialog.setParameterInfos(parameterInfos);
           if (dialog.showAndGet()) {
             for (ParameterInfoImpl info : parameterInfos) {
@@ -118,7 +116,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
                 final String newParamName = info.getName();
                 if (!Comparing.strEqual(varName, newParamName)) {
                   final PsiExpression newExpr =
-                    JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, finalMethod);
+                    JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, method);
                   new WriteCommandAction(project) {
                     @Override
                     protected void run(@NotNull Result result) throws Throwable {

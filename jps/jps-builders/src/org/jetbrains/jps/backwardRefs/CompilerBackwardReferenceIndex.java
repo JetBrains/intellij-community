@@ -63,9 +63,9 @@ public class CompilerBackwardReferenceIndex {
       }
     }
   });
-  private volatile boolean myRebuildRequired;
+  private volatile Exception myRebuildRequestCause;
 
-  public CompilerBackwardReferenceIndex(File buildDir) {
+  public CompilerBackwardReferenceIndex(File buildDir, boolean readOnly) {
     myIndicesDir = getIndexDir(buildDir);
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
       throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
@@ -81,10 +81,10 @@ public class CompilerBackwardReferenceIndex {
         }
       };
 
-      myIndices = new HashMap<ID<?, ?>, InvertedIndex<?, ?, CompiledFileData>>();
+      myIndices = new HashMap<>();
       for (IndexExtension<LightRef, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices()) {
         //noinspection unchecked
-        myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir));
+        myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
 
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
@@ -116,21 +116,28 @@ public class CompilerBackwardReferenceIndex {
 
   public void close() {
     myLowMemoryWatcher.stop();
-    final CommonProcessors.FindFirstProcessor<BuildDataCorruptedException> exceptionProc =
-      new CommonProcessors.FindFirstProcessor<BuildDataCorruptedException>();
+    final CommonProcessors.FindFirstProcessor<Exception> exceptionProc =
+      new CommonProcessors.FindFirstProcessor<>();
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
     for (InvertedIndex<?, ?, CompiledFileData> index : myIndices.values()) {
       close(index, exceptionProc);
     }
-    final BuildDataCorruptedException exception = exceptionProc.getFoundValue();
+    final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
       removeIndexFiles(myIndicesDir);
-      throw exception;
+      if (myRebuildRequestCause == null) {
+        throw new RuntimeException(exception);
+      }
+      return;
     }
-    if (myRebuildRequired) {
+    if (myRebuildRequestCause != null) {
       removeIndexFiles(myIndicesDir);
     }
+  }
+
+  Exception getRebuildRequestCause() {
+    return myRebuildRequestCause;
   }
 
   public static void removeIndexFiles(File buildDir) {
@@ -185,16 +192,21 @@ public class CompilerBackwardReferenceIndex {
     }
   }
 
-  private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<BuildDataCorruptedException> exceptionProcessor) {
+  void setRebuildRequestCause(Exception e) {
+    LOG.error(e);
+    myRebuildRequestCause = e;
+  }
+
+  private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
     try {
       index.dispose();
     }
-    catch (BuildDataCorruptedException e) {
+    catch (RuntimeException e) {
       exceptionProcessor.process(e);
     }
   }
 
-  private static void close(Closeable closeable, Processor<BuildDataCorruptedException> exceptionProcessor) {
+  private static void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {
@@ -208,19 +220,20 @@ public class CompilerBackwardReferenceIndex {
 
   class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, CompiledFileData> {
     public CompilerMapReduceIndex(@NotNull final IndexExtension<Key, Value, CompiledFileData> extension,
-                                  @NotNull final File indexDir)
+                                  @NotNull final File indexDir,
+                                  boolean readOnly)
       throws IOException {
       super(extension,
-            createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir),
-            new MapBasedForwardIndex<Key, Value>(extension) {
+            createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
+            readOnly ? null : new MapBasedForwardIndex<Key, Value>(extension) {
               @NotNull
               @Override
               public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
                 ID<Key, Value> id = extension.getName();
-                return new PersistentHashMap<Integer, Collection<Key>>(new File(indexDir, id + ".inputs"),
-                                                                       EnumeratorIntegerDescriptor.INSTANCE,
-                                                                       new InputIndexDataExternalizer<Key>(extension.getKeyDescriptor(),
-                                                                                                           id));
+                return new PersistentHashMap<>(new File(indexDir, id + ".inputs"),
+                                               EnumeratorIntegerDescriptor.INSTANCE,
+                                               new InputIndexDataExternalizer<>(extension.getKeyDescriptor(),
+                                                                                id));
               }
             });
     }
@@ -232,20 +245,22 @@ public class CompilerBackwardReferenceIndex {
 
     @Override
     protected void requestRebuild(Exception e) {
-      myRebuildRequired = true;
-      throw new BuildDataCorruptedException(e);
+      setRebuildRequestCause(e);
     }
   }
 
   private static <Key, Value> IndexStorage<Key, Value> createIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                                                                           @NotNull DataExternalizer<Value> valueExternalizer,
                                                                           @NotNull ID<Key, Value> indexId,
-                                                                          @NotNull File indexDir) throws IOException {
+                                                                          @NotNull File indexDir,
+                                                                          boolean readOnly) throws IOException {
     return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.toString()),
                                            keyDescriptor,
                                            valueExternalizer,
                                            16 * 1024,
-                                           false) {
+                                           false,
+                                           true,
+                                           readOnly) {
       @Override
       public void checkCanceled() {
         //TODO

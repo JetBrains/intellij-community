@@ -16,15 +16,21 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.*;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 import static javax.swing.SwingConstants.EAST;
 import static javax.swing.SwingConstants.WEST;
@@ -33,18 +39,33 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  public static final Color GLOW_COLOR = new JBColor(new Color(96, 132, 212), new Color(96, 175, 255));
+  private static final Color GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
 
-  public static void paintFocusRing(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height));
+  private static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      return new Color(0x80ff0f0f, true);
+    } else {
+      return (UIUtil.isUnderDarcula()) ? new Color(0x8b3c3c) : new Color(0xe53e4d);
+    }
+  });
+
+  private static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      return new Color(0x80f2aaaa, true);
+    } else {
+      return (UIUtil.isUnderDarcula()) ? new Color(0x725252) : new Color(0xebbcbc);
+    }
+  });
+
+  private static final Color BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
+  private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
+
+  public static void paintFocusRing(Graphics g, Rectangle bounds) {
+    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
   }
 
   public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height), true);
-  }
-
-  private static Color getGlow() {
-    return new JBColor(new Color(35, 121, 212), new Color(96, 175, 255));
+    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
   }
 
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
@@ -54,11 +75,11 @@ public class DarculaUIUtil {
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
     int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(getGlow(), 180 - correction),
-      ColorUtil.toAlpha(getGlow(), 120 - correction),
-      ColorUtil.toAlpha(getGlow(), 70  - correction),
-      ColorUtil.toAlpha(getGlow(), 100 - correction),
-      ColorUtil.toAlpha(getGlow(), 50  - correction)
+      ColorUtil.toAlpha(GLOW_COLOR, 180 - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 120 - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 70  - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 100 - correction),
+      ColorUtil.toAlpha(GLOW_COLOR, 50  - correction)
     };
 
     final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -98,9 +119,55 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
+  public static void paintErrorBorder(Graphics2D g, int width, int height, boolean hasFocus) {
+    int lw = SystemInfo.isMac && UIUtil.isUnderIntelliJLaF() ? JBUI.scale(3) : JBUI.scale(2);
+    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
+
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+    g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+    g.setStroke(new OuterStroke(lw));
+    g.draw(shape);
+  }
+
   public static boolean isCurrentEventShiftDownEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
+  }
+
+  public static void showErrorTip(JComponent component) {
+    BalloonBuilder bb = (BalloonBuilder)component.getClientProperty("JComponent.error.balloonBuilder");
+    if (bb != null) {
+      component.putClientProperty("JComponent.error.balloonBuilder", null);
+
+      Balloon balloon = bb.setPointerSize(new JBDimension(17, 6))
+        .setCornerToPointerDistance(JBUI.scale(30))
+        .setBorderColor(BALLOON_BORDER)
+        .setFillColor(BALLOON_BACKGROUND)
+        .setHideOnFrameResize(false)
+        .setRequestFocus(false)
+        .setAnimationCycle(300)
+        .setShadow(false)
+        .createBalloon();
+
+      JComponent root = component.getRootPane();
+      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, root);
+      Dimension bSize = balloon.getPreferredSize();
+      if (componentPos.y >= bSize.height) {
+        balloon.show(new PositionTracker<Balloon>(component) {
+          @Override public RelativePoint recalculateLocation(Balloon balloon) {
+            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), 0));
+          }
+        }, Balloon.Position.above);
+      } else {
+        balloon.show(new PositionTracker<Balloon>(component) {
+          @Override public RelativePoint recalculateLocation(Balloon balloon) {
+            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), getComponent().getHeight()));
+          }
+        }, Balloon.Position.below);
+      }
+    }
   }
 
   /**
@@ -117,5 +184,38 @@ public class DarculaUIUtil {
       }
     }
     return -1;
+  }
+
+  private static class OuterStroke implements Stroke {
+    private final BasicStroke stroke;
+
+    private OuterStroke(float width) {
+      stroke = new BasicStroke(width);
+    }
+
+    public Shape createStrokedShape(Shape s) {
+      float lw = stroke.getLineWidth();
+      float delta = lw / 2f;
+
+      if (s instanceof Rectangle2D) {
+        Rectangle2D rs = (Rectangle2D) s;
+        return stroke.createStrokedShape(
+          new Rectangle2D.Double(rs.getX() - delta,
+                                 rs.getY() - delta,
+                                 rs.getWidth() + lw,
+                                 rs.getHeight() + lw));
+      } else if (s instanceof RoundRectangle2D) {
+        RoundRectangle2D rrs = (RoundRectangle2D) s;
+        return stroke.createStrokedShape(
+          new RoundRectangle2D.Double(rrs.getX() - delta,
+                                      rrs.getY() - delta,
+                                      rrs.getWidth() + lw,
+                                      rrs.getHeight() + lw,
+                                      rrs.getArcWidth() + lw,
+                                      rrs.getArcHeight() + lw));
+      } else {
+        throw new UnsupportedOperationException("Shape is not supported");
+      }
+    }
   }
 }

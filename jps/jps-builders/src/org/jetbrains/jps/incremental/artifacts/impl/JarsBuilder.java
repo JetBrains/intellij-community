@@ -82,7 +82,7 @@ public class JarsBuilder {
       return false;
     }
 
-    myBuiltJars = new HashMap<JarInfo, File>();
+    myBuiltJars = new HashMap<>();
     try {
       for (JarInfo jar : sortedJars) {
         myContext.checkCanceled();
@@ -120,7 +120,7 @@ public class JarsBuilder {
 
   @Nullable
   private JarInfo[] sortJars() {
-    final DFSTBuilder<JarInfo> builder = new DFSTBuilder<JarInfo>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
+    final DFSTBuilder<JarInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
     if (!builder.isAcyclic()) {
       final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();
       String message = "Cannot build: circular dependency found between '" + dependency.getFirst().getPresentableDestination() +
@@ -148,11 +148,11 @@ public class JarsBuilder {
 
     FileUtil.createParentDirs(jarFile);
     final String targetJarPath = jar.getDestination().getOutputFilePath();
-    List<String> packedFilePaths = new ArrayList<String>();
+    List<String> packedFilePaths = new ArrayList<>();
     Manifest manifest = loadManifest(jar, packedFilePaths);
     final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
 
-    final THashSet<String> writtenPaths = new THashSet<String>();
+    final THashSet<String> writtenPaths = new THashSet<>();
     try {
       if (manifest != null) {
         writtenPaths.add(JarFile.MANIFEST_NAME);
@@ -390,7 +390,7 @@ public class JarsBuilder {
     }
 
     public Iterator<JarInfo> getIn(final JarInfo n) {
-      Set<JarInfo> ins = new HashSet<JarInfo>();
+      Set<JarInfo> ins = new HashSet<>();
       final DestinationInfo destination = n.getDestination();
       if (destination instanceof JarDestinationInfo) {
         ins.add(((JarDestinationInfo)destination).getJarInfo());

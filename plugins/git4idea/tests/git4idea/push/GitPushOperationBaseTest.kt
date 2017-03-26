@@ -20,7 +20,6 @@ import com.intellij.dvcs.push.PushSupport
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
@@ -29,26 +28,19 @@ import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
-import git4idea.test.GitPlatformTest
-import git4idea.test.GitTestUtil
-import git4idea.test.MockVcsHelper
-import git4idea.test.TestDialogHandler
+import git4idea.test.*
 import git4idea.update.GitUpdateResult
 import java.io.File
 
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
   protected lateinit var myPushSupport: GitPushSupport
-  protected lateinit var myVcsHelper: MockVcsHelper
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     myPushSupport = findGitPushSupport()
-    myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
@@ -61,7 +53,7 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     val parentRepo = createParentRepo(parentName)
     val broRepo = createBroRepo(broName, parentRepo)
 
-    val repository = GitTestUtil.createRepository(myProject, repoRoot)
+    val repository = createRepository(myProject, repoRoot)
     cd(repository)
     git("remote add origin " + parentRepo.path)
     git("push --set-upstream origin master:master")

@@ -586,7 +586,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           final PsiType returnType = emptyMethod.getReturnType();
           LOG.assertTrue(returnType != null);
           final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
-          NavigationUtil.getPsiElementPopup(psiClasses, PsiClassListCellRenderer.INSTANCE, title,
+          NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
                                             new PsiElementProcessor<PsiClass>() {
                                               @Override
                                               public boolean execute(@NotNull PsiClass psiClass) {

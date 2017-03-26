@@ -162,7 +162,7 @@ public abstract class VirtualFileVisitor<T> {
   public final void setValueForChildren(@Nullable T value) {
     myValue = value;
     if (myValueStack == null) {
-      myValueStack = new Stack<T>();
+      myValueStack = new Stack<>();
     }
   }
 

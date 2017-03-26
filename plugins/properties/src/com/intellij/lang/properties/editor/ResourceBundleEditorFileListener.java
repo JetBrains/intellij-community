@@ -31,9 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,14 +90,14 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
   }
 
   private class MyVfsEventsProcessor {
-    private final AtomicReference<Set<EventWithType>> myEventQueue = new AtomicReference<>(new THashSet<>());
+    private final AtomicReference<Set<EventWithType>> myEventQueue = new AtomicReference<>(ContainerUtil.newConcurrentSet());
 
     private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
         @Override
         protected void execute(@NotNull Update[] updates) {
           final ReadTask task = new ReadTask() {
-            final Set<EventWithType> myEvents = myEventQueue.getAndSet(new THashSet<>());
+            final Set<EventWithType> myEvents = myEventQueue.getAndSet(ContainerUtil.newConcurrentSet());
 
             @Nullable
             @Override

@@ -15,11 +15,10 @@
  */
 package org.jetbrains.plugins.javaFX.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -164,7 +163,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
                                @NotNull String className,
                                Function<VirtualFile, T> f,
                                GlobalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction((Computable<List<T>>)() -> {
+    return ReadAction.compute(() -> {
       final Collection<VirtualFile> files;
       try {
         files = FileBasedIndex.getInstance().getContainingFiles(id, className,

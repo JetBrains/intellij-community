@@ -1,1 +1,1 @@
-module_attr = 0
+module_only_attr = 0

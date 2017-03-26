@@ -29,13 +29,7 @@ public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualif
    */
   PsiJavaCodeReferenceElement[] EMPTY_ARRAY = new PsiJavaCodeReferenceElement[0];
 
-  ArrayFactory<PsiJavaCodeReferenceElement> ARRAY_FACTORY = new ArrayFactory<PsiJavaCodeReferenceElement>() {
-    @NotNull
-    @Override
-    public PsiJavaCodeReferenceElement[] create(int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiJavaCodeReferenceElement[count];
-    }
-  };
+  ArrayFactory<PsiJavaCodeReferenceElement> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiJavaCodeReferenceElement[count];
 
   /**
    * Returns the element representing the name of the referenced element.

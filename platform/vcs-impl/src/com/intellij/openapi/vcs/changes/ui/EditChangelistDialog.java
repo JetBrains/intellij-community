@@ -42,7 +42,7 @@ public class EditChangelistDialog extends DialogWrapper {
       @Override
       protected void nameChanged(String errorMessage) {
         setOKActionEnabled(errorMessage == null);
-        setErrorText(errorMessage);
+        setErrorText(errorMessage, myPanel);
       }
     };
     myPanel.setChangeListName(list.getName());

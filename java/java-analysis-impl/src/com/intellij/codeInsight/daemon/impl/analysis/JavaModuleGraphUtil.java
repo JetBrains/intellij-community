@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class JavaModuleGraphUtil {
     Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
       Result.create(exportsMap(source), source.getContainingFile()));
     Set<String> targets = exports.get(packageName);
-    return targets != null && (targets.isEmpty() || targets.contains(target.getModuleName()));
+    return targets != null && (targets.isEmpty() || targets.contains(target.getName()));
   }
 
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
@@ -116,7 +116,7 @@ public class JavaModuleGraphUtil {
 
   private static Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
     Map<String, Set<String>> map = ContainerUtil.newHashMap();
-    for (PsiExportsStatement statement : source.getExports()) {
+    for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
       List<String> targets = statement.getModuleNames();
       map.put(pkg, targets.isEmpty() ? Collections.emptySet() : ContainerUtil.newTroveSet(targets));
@@ -128,27 +128,27 @@ public class JavaModuleGraphUtil {
   // The resulting graph is used for tracing readability.
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
-    Set<String> publicEdges = ContainerUtil.newTroveSet();
+    Set<String> transitiveEdges = ContainerUtil.newTroveSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
       Optional.ofNullable(ContainerUtil.getFirstItem(files))
         .map(PsiManager.getInstance(project)::findFile)
         .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .ifPresent(m -> visit(m, relations, publicEdges));
+        .ifPresent(m -> visit(m, relations, transitiveEdges));
     }
 
     Graph<PsiJavaModule> graph = GraphGenerator.generate(new ChameleonGraph<>(relations, true));
-    return new RequiresGraph(graph, publicEdges);
+    return new RequiresGraph(graph, transitiveEdges);
   }
 
-  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> publicEdges) {
+  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> transitiveEdges) {
     if (!relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
       for (PsiRequiresStatement statement : module.getRequires()) {
         for (PsiJavaModule dependency : PsiJavaModuleReference.multiResolve(statement, statement.getModuleName(), false)) {
           relations.putValue(module, dependency);
-          if (statement.isPublic()) publicEdges.add(RequiresGraph.key(dependency, module));
-          visit(dependency, relations, publicEdges);
+          if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
+          visit(dependency, relations, transitiveEdges);
         }
       }
     }
@@ -156,11 +156,11 @@ public class JavaModuleGraphUtil {
 
   private static class RequiresGraph {
     private final OutboundSemiGraph<PsiJavaModule> myGraph;
-    private final Set<String> myPublicEdges;
+    private final Set<String> myTransitiveEdges;
 
-    public RequiresGraph(OutboundSemiGraph<PsiJavaModule> graph, Set<String> publicEdges) {
+    public RequiresGraph(OutboundSemiGraph<PsiJavaModule> graph, Set<String> transitiveEdges) {
       myGraph = graph;
-      myPublicEdges = publicEdges;
+      myTransitiveEdges = transitiveEdges;
     }
 
     public boolean reads(PsiJavaModule source, PsiJavaModule destination) {
@@ -169,7 +169,7 @@ public class JavaModuleGraphUtil {
         Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
         while (directReaders.hasNext()) {
           PsiJavaModule next = directReaders.next();
-          if (source.equals(next) || myPublicEdges.contains(key(destination, next)) && reads(source, next)) {
+          if (source.equals(next) || myTransitiveEdges.contains(key(destination, next)) && reads(source, next)) {
             return true;
           }
         }
@@ -178,7 +178,7 @@ public class JavaModuleGraphUtil {
     }
 
     public static String key(PsiJavaModule module, PsiJavaModule exporter) {
-      return module.getModuleName() + '/' + exporter.getModuleName();
+      return module.getName() + '/' + exporter.getName();
     }
   }
 

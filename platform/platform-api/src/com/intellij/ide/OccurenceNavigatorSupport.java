@@ -31,7 +31,7 @@ import java.util.List;
 public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
   private final JTree myTree;
 
-  public OccurenceNavigatorSupport(JTree tree) {
+  public OccurenceNavigatorSupport(@NotNull JTree tree) {
     myTree = tree;
   }
 

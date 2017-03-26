@@ -59,22 +59,22 @@ public class GithubShareDialog extends DialogWrapper {
     String repositoryName = getRepositoryName();
     String remoteName = getRemoteName();
     if (StringUtil.isEmpty(repositoryName)){
-      setErrorText("No repository name selected");
+      setErrorText("No repository name selected", myGithubSharePanel.getPanel());
       setOKActionEnabled(false);
       return;
     }
     if (myAvailableNames.contains(repositoryName)){
-      setErrorText("Repository with selected name already exists");
+      setErrorText("Repository with selected name already exists", myGithubSharePanel.getPanel());
       setOKActionEnabled(false);
       return;
     }
     if (myAvailableRemotes.contains(remoteName)) {
-      setErrorText("Remote with selected name already exists");
+      setErrorText("Remote with selected name already exists", myGithubSharePanel.getPanel());
       setOKActionEnabled(false);
       return;
     }
     if (!GITHUB_REPO_PATTERN.matcher(repositoryName).matches()){
-      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores");
+      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores", myGithubSharePanel.getPanel());
       setOKActionEnabled(false);
       return;
     }

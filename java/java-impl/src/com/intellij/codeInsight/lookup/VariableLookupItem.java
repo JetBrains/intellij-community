@@ -45,6 +45,7 @@ import java.awt.*;
 * @author peter
 */
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
+  private static final String EQ = " = ";
   @Nullable private final MemberLookupHelper myHelper;
   private final Color myColor;
   private final String myTailText;
@@ -77,7 +78,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     String initText = initializer == null ? null : initializer.getText();
     if (StringUtil.isEmpty(initText)) return null;
 
-    String prefix = var instanceof PsiEnumConstant ? "" : " = ";
+    String prefix = var instanceof PsiEnumConstant ? "" : EQ;
     String suffix = var instanceof PsiEnumConstant && ((PsiEnumConstant)var).getInitializingClass() != null ? " {...}" : "";
     return StringUtil.trimLog(prefix + initText + suffix, 30);
   }
@@ -159,7 +160,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       presentation.setTypeText(getType().getPresentableText());
     }
     if (myTailText != null && StringUtil.isEmpty(presentation.getTailText())) {
-      presentation.setTailText(myTailText, true);
+      if (myTailText.startsWith(EQ)) {
+        presentation.appendTailTextItalic(" (" + myTailText + ")", true);
+      } else {
+        presentation.setTailText(myTailText, true);
+      }
     }
   }
 

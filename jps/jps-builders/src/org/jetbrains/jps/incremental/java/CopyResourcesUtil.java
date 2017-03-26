@@ -93,7 +93,7 @@ public final class CopyResourcesUtil {
       "VerticalInfo",
     };
 
-    List<File> copied = new ArrayList<File>();
+    List<File> copied = new ArrayList<>();
     for (String runtimeClass : runtimeClasses) {
       copied.add(copyClass(targetDir, "com/intellij/uiDesigner/core/" + runtimeClass, deleteOnExit));
     }

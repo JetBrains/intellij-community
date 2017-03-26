@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,11 @@ public interface GroovyCommonClassNames {
     "org.codehaus.groovy.runtime.StringGroovyMethods",
     "org.codehaus.groovy.runtime.SwingGroovyMethods",
     "org.codehaus.groovy.runtime.XmlGroovyMethods",
-    "org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods"
+    "org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods",
+    "org.codehaus.groovy.runtime.dgmimpl.NumberNumberPlus",
+    "org.codehaus.groovy.runtime.dgmimpl.NumberNumberMultiply",
+    "org.codehaus.groovy.runtime.dgmimpl.NumberNumberMinus",
+    "org.codehaus.groovy.runtime.dgmimpl.NumberNumberDiv"
   ));
 
   Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(newLinkedHashSet(

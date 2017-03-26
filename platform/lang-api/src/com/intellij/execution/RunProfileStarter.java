@@ -20,6 +20,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * The callback used to execute a process from the {@link ExecutionManager#startRunProfile(RunProfileStarter, com.intellij.execution.configurations.RunProfileState, com.intellij.execution.runners.ExecutionEnvironment)}
@@ -29,4 +32,19 @@ import org.jetbrains.annotations.Nullable;
 public abstract class RunProfileStarter {
   @Nullable
   public abstract RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException;
+
+  /**
+   * Async version of {@link #execute(RunProfileState, ExecutionEnvironment)}.
+   * You must NOT throw exceptions in this method.
+   * Instead return {@link org.jetbrains.concurrency.Promises#rejectedPromise(Throwable)} or call {@link org.jetbrains.concurrency.AsyncPromise#setError(Throwable)}
+   */
+  public Promise<RunContentDescriptor> executeAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
+    try {
+      RunContentDescriptor result = execute(state, environment);
+      return Promise.resolve(result);
+    }
+    catch (ExecutionException e) {
+      return rejectedPromise(e);
+    }
+  }
 }

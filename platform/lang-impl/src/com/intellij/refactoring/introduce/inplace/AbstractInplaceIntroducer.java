@@ -332,10 +332,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   @Override
   public void finish(boolean success) {
     myFinished = true;
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-    if (templateState != null) {
-      myEditor.putUserData(ACTIVE_INTRODUCE, null);
-    }
+    myEditor.putUserData(ACTIVE_INTRODUCE, null);
     if (myDocumentAdapter != null) {
       myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
     }

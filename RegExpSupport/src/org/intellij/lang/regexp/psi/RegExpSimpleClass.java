@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a simple character class.
  */
-public interface RegExpSimpleClass extends RegExpAtom, RegExpClassElement, RegExpCharRange.Endpoint {
+public interface RegExpSimpleClass extends RegExpAtom, RegExpClassElement {
     enum Kind {
         /** . */  ANY,
         /** \d */ DIGIT,

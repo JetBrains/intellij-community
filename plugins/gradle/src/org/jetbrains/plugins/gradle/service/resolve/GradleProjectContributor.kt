@@ -21,7 +21,6 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -54,7 +53,6 @@ class GradleProjectContributor : GradleMethodContextContributor {
   }
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    val psiManager = GroovyPsiManager.getInstance(place.project)
-    return GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GRADLE_API_PROJECT)
+    return GradleResolverUtil.processDeclarations(processor, state, place, GRADLE_API_PROJECT)
   }
 }

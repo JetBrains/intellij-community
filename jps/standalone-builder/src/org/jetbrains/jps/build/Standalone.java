@@ -128,7 +128,7 @@ public class Standalone {
     }
 
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, initializer);
-    Set<String> modulesSet = new HashSet<String>(Arrays.asList(modules));
+    Set<String> modulesSet = new HashSet<>(Arrays.asList(modules));
     List<String> artifactsList = Arrays.asList(artifacts);
     File dataStorageRoot;
     if (cacheDirPath != null) {
@@ -171,7 +171,7 @@ public class Standalone {
   public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
                               final boolean allModules, List<String> artifactsList, boolean allArtifacts, final boolean includeTests,
                               final MessageHandler messageHandler) throws Exception {
-    List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    List<TargetTypeBuildScope> scopes = new ArrayList<>();
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests()) {
         TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);

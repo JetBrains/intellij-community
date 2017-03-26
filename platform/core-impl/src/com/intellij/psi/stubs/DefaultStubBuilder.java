@@ -68,8 +68,8 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   protected class StubBuildingWalkingVisitor {
-    private final Stack<StubElement> parentStubs = new Stack<StubElement>();
-    private final Stack<ASTNode> parentNodes = new Stack<ASTNode>();
+    private final Stack<StubElement> parentStubs = new Stack<>();
+    private final Stack<ASTNode> parentNodes = new Stack<>();
     private final BooleanStack parentNodesStubbed = new BooleanStack();
 
     protected StubBuildingWalkingVisitor(ASTNode root, StubElement parentStub) {

@@ -54,7 +54,7 @@ public class EditSdkDialog extends DialogWrapper {
       @Override
       protected void textChanged(DocumentEvent e) {
         String nameError = nameValidator.fun(getName());
-        setErrorText(nameError);
+        setErrorText(nameError, myNameTextField);
         setOKActionEnabled(nameError == null);
       }
     });

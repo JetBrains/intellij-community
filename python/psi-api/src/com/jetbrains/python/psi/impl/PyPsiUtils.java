@@ -624,7 +624,7 @@ public class PyPsiUtils {
     Preconditions.checkArgument(!module.isDisposed(), String.format("Module %s is disposed", module));
   }
 
-  @NotNull
+  @Nullable
   public static PsiFileSystemItem getFileSystemItem(@NotNull PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       return (PsiFileSystemItem)element;

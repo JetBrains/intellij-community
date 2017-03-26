@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ public class JavaParser {
   public static final JavaParser INSTANCE = new JavaParser();
 
   private final FileParser myFileParser;
+  private final ModuleParser myModuleParser;
   private final DeclarationParser myDeclarationParser;
   private final StatementParser myStatementParser;
   private final ExpressionParser myExpressionParser;
@@ -28,6 +29,7 @@ public class JavaParser {
 
   public JavaParser() {
     myFileParser = new FileParser(this);
+    myModuleParser = new ModuleParser(this);
     myDeclarationParser = new DeclarationParser(this);
     myStatementParser = new StatementParser(this);
     myExpressionParser = new ExpressionParser(this);
@@ -37,6 +39,11 @@ public class JavaParser {
   @NotNull
   public FileParser getFileParser() {
     return myFileParser;
+  }
+
+  @NotNull
+  public ModuleParser getModuleParser() {
+    return myModuleParser;
   }
 
   @NotNull

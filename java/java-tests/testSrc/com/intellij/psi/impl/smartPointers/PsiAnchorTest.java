@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiAnchor;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -37,6 +35,19 @@ public class PsiAnchorTest extends LightCodeInsightFixtureTestCase {
 
     assertInstanceOf(file.findElementAt(0), PsiWhiteSpace.class);
     assertNull(anchor.retrieve());
+  }
+
+  public void testInjectedAnchor() {
+    new MyTestInjector(getPsiManager()).injectAll(getTestRootDisposable());
+    myFixture.configureByText("a.java", "class X { String java=\"class <caret>Foo {}\"}");
+    PsiClass cls = (PsiClass)myFixture.getElementAtCaret();
+    assertEquals("Foo", cls.getName());
+    PsiAnchor anchor = PsiAnchor.create(cls);
+
+    myFixture.type('\n');
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    assertNull(anchor.retrieve()); // file is changed, so we can't restore. But this call shouldn't throw exceptions.
   }
 
 }

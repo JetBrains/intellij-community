@@ -31,7 +31,8 @@ public interface DashboardNode {
 
   @Nullable
   default Content getContent() {
-    return getDescriptor() == null ? null : getDescriptor().getAttachedContent();
+    RunContentDescriptor descriptor = getDescriptor();
+    return descriptor == null ? null : descriptor.getAttachedContent();
   }
 
   Project getProject();

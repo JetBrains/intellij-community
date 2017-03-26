@@ -196,7 +196,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
         assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
-        myCachedType = new SoftReference<PsiType>(type);
+        myCachedType = new SoftReference<>(type);
       }
       return type;
     }
@@ -303,13 +303,9 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     if (substitutor == PsiSubstitutor.EMPTY) {
-      return CachedValuesManager.getCachedValue(this, new CachedValueProvider<MethodSignature>() {
-        @Nullable
-        @Override
-        public Result<MethodSignature> compute() {
-          MethodSignature signature = MethodSignatureBackedByPsiMethod.create(PsiMethodImpl.this, PsiSubstitutor.EMPTY);
-          return Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
+      return CachedValuesManager.getCachedValue(this, () -> {
+        MethodSignature signature = MethodSignatureBackedByPsiMethod.create(PsiMethodImpl.this, PsiSubstitutor.EMPTY);
+        return CachedValueProvider.Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
     }
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
@@ -350,12 +346,8 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public SearchScope getUseScope() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      @Override
-      public SearchScope compute() {
-        return PsiImplUtil.getMemberUseScope(PsiMethodImpl.this);
-      }
-    });
+    return ApplicationManager.getApplication().runReadAction(
+      (Computable<SearchScope>)() -> PsiImplUtil.getMemberUseScope(PsiMethodImpl.this));
   }
 
   @Override

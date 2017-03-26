@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="devkit-jps-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="images" />
   </component>
 </module>

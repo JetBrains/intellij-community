@@ -3283,8 +3283,7 @@ public void testSCR260() throws Exception {
       "        list.clear();\n" +
       "    }\n" +
       "};",
-      "@SuppressWarnings(\"unchecked\")\n" +
-      "final List<String> list = new ArrayList<String>();\n" +
+      "@SuppressWarnings(\"unchecked\") final List<String> list = new ArrayList<String>();\n" +
       "new Runnable() {\n" +
       "    @Override\n" +
       "    public void run() {\n" +

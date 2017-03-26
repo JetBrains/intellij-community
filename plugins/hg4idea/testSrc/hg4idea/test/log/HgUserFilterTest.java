@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUserFilterTest;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import hg4idea.test.HgPlatformTest;
 import junit.framework.TestCase;
@@ -92,7 +91,7 @@ public class HgUserFilterTest extends HgPlatformTest {
 
   public static HgLogProvider findLogProvider(@NotNull Project project) {
     List<VcsLogProvider> providers =
-      ContainerUtil.filter(Extensions.getExtensions(VcsLogManager.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {
+      ContainerUtil.filter(Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {
         @Override
         public boolean value(VcsLogProvider provider) {
           return provider.getSupportedVcs().equals(HgVcs.getKey());

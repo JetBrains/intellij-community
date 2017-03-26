@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -180,10 +181,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       if (newModifierList != null && modifierList != null) {
         // remove final when PsiDeclarationFactory adds one by mistake
         newModifierList.setModifierProperty(PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL));
-        final PsiAnnotation[] annotations = modifierList.getAnnotations();
-        for (PsiAnnotation annotation : annotations) {
-          newModifierList.add(annotation);
-        }
+        GenerateMembersUtil.copyAnnotations(modifierList, newModifierList);
       }
       return newDeclaration;
     }

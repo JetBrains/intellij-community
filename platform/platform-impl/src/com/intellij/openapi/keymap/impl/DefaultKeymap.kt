@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import gnu.trove.THashMap
 import org.jdom.Element
-import java.net.URL
 import java.util.*
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap")
@@ -65,7 +64,7 @@ open class DefaultKeymap {
 
         LOG.catchAndLog {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key")).rootElement
+            override fun read() = provider.load(key) { JDOMUtil.load(it) }
 
             override fun updateDigest(scheme: KeymapImpl) {
             }

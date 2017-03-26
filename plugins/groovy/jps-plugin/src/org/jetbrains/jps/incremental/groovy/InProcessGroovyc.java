@@ -71,7 +71,7 @@ class InProcessGroovyc implements GroovycFlavor {
                                         final GroovycOutputParser parser) throws Exception {
     boolean jointPossible = forStubs && !myHasStubExcludes;
     final LinkedBlockingQueue<String> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
-                                                ? new LinkedBlockingQueue<String>() : null;
+                                                ? new LinkedBlockingQueue<>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
@@ -79,12 +79,9 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    final Future<Void> future = ourExecutor.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
-        return null;
-      }
+    final Future<Void> future = ourExecutor.submit(() -> {
+      runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
+      return null;
     });
     if (mailbox == null) {
       future.get();
@@ -216,12 +213,9 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        String fileName = StringUtil.getShortName(s, '/');
-        return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
-      }
+    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, s -> {
+      String fileName = StringUtil.getShortName(s, '/');
+      return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
     });
 
     LOG.debug("Groovy jars: " + groovyJars);
@@ -297,7 +291,7 @@ class InProcessGroovyc implements GroovycFlavor {
       }
     };
 
-    ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, wrapper));
+    ourParentLoaderCache = new SoftReference<>(Pair.create(groovyAll, wrapper));
     return wrapper;
   }
 

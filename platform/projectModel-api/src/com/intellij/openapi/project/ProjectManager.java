@@ -32,9 +32,9 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
 
   /**
-   * Gets <code>ProjectManager</code> instance.
+   * Gets {@code ProjectManager} instance.
    *
-   * @return <code>ProjectManager</code> instance
+   * @return {@code ProjectManager} instance
    */
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ProjectManager.class);
@@ -107,7 +107,7 @@ public abstract class ProjectManager {
   public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
 
   /**
-   * Closes the specified project.
+   * Closes the specified project, but does not dispose it.
    *
    * @param project the project to close.
    * @return true if the project was closed successfully, false if the closing was disallowed by the close listeners.

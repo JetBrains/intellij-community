@@ -355,4 +355,8 @@ public class PyDebugValue extends XNamedValue {
   public String getTypeQualifier() {
     return myTypeQualifier;
   }
+
+  public boolean isTemporary() {
+    return myTempName != null;
+  }
 }

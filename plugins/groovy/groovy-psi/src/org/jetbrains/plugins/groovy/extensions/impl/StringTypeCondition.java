@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package org.jetbrains.plugins.groovy.extensions.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 public class StringTypeCondition extends NamedArgumentDescriptorImpl {
 
@@ -42,6 +42,6 @@ public class StringTypeCondition extends NamedArgumentDescriptorImpl {
 
   @Override
   public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
-    return GroovyPsiManager.isInheritorCached(type, myTypeName);
+    return InheritanceUtil.isInheritor(type, myTypeName);
   }
 }

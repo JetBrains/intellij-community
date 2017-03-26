@@ -15,12 +15,12 @@
  */
 class ForNameDeclaredField {
   void foo() {
-    Class.forName("Test").getDeclaredField("num3");
+    Class.forName("Test").getDeclaredField("num1");
   }
 }
 
 class Test {
   public int num;
   public int num2;
-  int num3;
+  int num1;
 }

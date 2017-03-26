@@ -297,6 +297,10 @@ public class PsiCopyPasteManager {
       }
       else if (element instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+        if (directories.length == 0) {
+          LOG.error("No directories for " + element + " of " + element.getClass());
+          return null;
+        }
         psiFile = directories[0];
       }
       else {

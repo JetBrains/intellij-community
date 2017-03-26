@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -105,9 +104,8 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             lambdaExpression = (PsiLambdaExpression)codeStyleManager.reformat(lambdaExpression);
             paramsString = lambdaExpression.getParameterList().getText();
             final LookupElementBuilder builder =
-              LookupElementBuilder.create(functionalInterfaceMethod, paramsString)
+              LookupElementBuilder.create(functionalInterfaceMethod, paramsString + " -> ")
                 .withPresentableText(paramsString + " -> {}")
-                .withInsertHandler((context, item) -> EditorModificationUtil.insertStringAtCaret(context.getEditor(), " -> "))
                 .withTypeText(functionalInterfaceType.getPresentableText())
                 .withIcon(AllIcons.Nodes.Function);
             LookupElement lambdaElement = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
@@ -150,7 +148,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
     Consumer<PsiType> consumer = eachReturnType -> {
       PsiClass psiClass = PsiUtil.resolveClassInType(eachReturnType);
-      if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
+      if (psiClass == null || !MethodReferenceResolver.canBeConstructed(psiClass)) return;
 
       if (eachReturnType.getArrayDimensions() == 0) {
         PsiMethod[] constructors = psiClass.getConstructors();
@@ -159,7 +157,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
           }
         }
-        if (constructors.length == 0 && params.length == 0 && MethodReferenceResolver.canBeConstructed(psiClass)) {
+        if (constructors.length == 0 && params.length == 0) {
           result.consume(createConstructorReferenceLookup(functionalInterfaceType, eachReturnType));
         }
       }
@@ -279,7 +277,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
             JavaResolveUtil.isAccessible(psiMethod, null, psiMethod.getModifierList(), originalPosition, null, null)) {
           LookupElement methodRefLookupElement = createMethodRefOnClass(functionalInterfaceType, psiMethod, qualifierClass);
           if (prioritize && containingClass == paramClass) {
-            methodRefLookupElement = PrioritizedLookupElement.withPriority(methodRefLookupElement, 1);
+            methodRefLookupElement = PrioritizedLookupElement.withExplicitProximity(methodRefLookupElement, 1);
           }
           result.add(methodRefLookupElement);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,50 @@ public class PyBreadcrumbsTest extends PyTestCase {
   }
 
   public void testFunction() {
+    doTest();
+  }
+
+  public void testFunctionBodySpaceCaret() {
+    doTest();
+  }
+
+  public void testFunctionBodyCaret() {
+    doTest();
+  }
+
+  public void testFunctionBodySpaceCaretNewLineFunction() {
+    doTest();
+  }
+
+  public void testFunctionNewLineSpaceCaretNewLineFunction() {
+    doTest();
+  }
+
+  public void testFunctionNewLineCaretNewLineFunction() {
+    doTest();
+  }
+
+  public void testFunctionNewLineSpaceCaretSpaceFunction() {
+    doTest();
+  }
+
+  public void testFunctionNewLineCaretSpaceFunction() {
+    doTest();
+  }
+
+  public void testMultiLineDictLiteralCaretAfterFirstKeyValueExpression() {
+    doTest();
+  }
+
+  public void testSingleLineDictLiteralCaretAfterFirstKeyValueExpression() {
+    doTest();
+  }
+
+  public void testSingleLineDictLiteralCaretAfterComma() {
+    doTest();
+  }
+
+  public void testSingleLineDictLiteralCaretAfterSecondKeyValueExpression() {
     doTest();
   }
 

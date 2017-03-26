@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.List;
 
@@ -234,7 +233,7 @@ public class XsltCommandLineState extends CommandLineState {
                     };
                     ApplicationManager.getApplication().runWriteAction(runnable1);
                 };
-                SwingUtilities.invokeLater(runnable);
+              ApplicationManager.getApplication().invokeLater(runnable);
             }
         }
     }

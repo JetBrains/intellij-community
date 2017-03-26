@@ -31,7 +31,9 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -111,7 +113,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   public void testSurviveOnProjectReopen() throws Exception {
     File foo = PlatformTestCase.createTempDir("foo");
     Project reloaded = null;
-    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
     try {
       assertNotNull(project);
       FileTemplateManager manager = FileTemplateManager.getInstance(project);
@@ -136,6 +138,48 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     finally {
       closeProject(project);
       closeProject(reloaded);
+    }
+  }
+
+  public void testAddRemoveShared() throws Exception {
+    File foo = PlatformTestCase.createTempDir("foo");
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    try {
+      assertNotNull(project);
+      FileTemplateManager manager = FileTemplateManager.getInstance(project);
+      manager.setCurrentScheme(manager.getProjectScheme());
+      manager.saveAllTemplates();
+
+      FileTemplateSettings settings = ServiceManager.getService(project, FileTemplateSettings.class);
+      FTManager ftManager = settings.getDefaultTemplatesManager();
+      File root = ftManager.getConfigRoot(false);
+      assertTrue(root.exists());
+      File file = new File(root, "Foo.java");
+      assertTrue(file.createNewFile());
+      manager.saveAllTemplates();
+      assertTrue(file.exists());
+
+      /*
+      FileTemplate template = manager.addTemplate("Foo", "java");
+      // now remove it via "remove template" call
+      manager.removeTemplate(template);
+      manager.saveAllTemplates();
+      assertFalse(file.exists());
+      */
+
+      // check "setTemplates" call
+      FileTemplateBase templateBase = (FileTemplateBase)manager.addTemplate("Foo", "java");
+      List<FileTemplate> templates = new ArrayList<>(ftManager.getAllTemplates(true));
+      assertTrue(templates.contains(templateBase));
+      ftManager.saveTemplates();
+      assertTrue(file.exists());
+
+      templates.remove(templateBase);
+      manager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, templates);
+      assertFalse(file.exists());
+    }
+    finally {
+      closeProject(project);
     }
   }
 

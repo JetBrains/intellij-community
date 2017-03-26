@@ -1,5 +1,5 @@
 try:
-    from _pydevd_bundle.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo
+    from _pydevd_bundle.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo, global_cache_skips, global_cache_frame_skips
 except ImportError:
     try:
         import struct
@@ -25,6 +25,7 @@ except ImportError:
         check_name = '_pydevd_bundle.%s' % (mod_name,)
         mod = __import__(check_name)
         mod = getattr(mod, mod_name)
-        trace_dispatch, PyDBAdditionalThreadInfo = mod.trace_dispatch, mod.PyDBAdditionalThreadInfo
+        trace_dispatch, PyDBAdditionalThreadInfo, global_cache_skips, global_cache_frame_skips = \
+            mod.trace_dispatch, mod.PyDBAdditionalThreadInfo, mod.global_cache_skips, mod.global_cache_frame_skips
     except ImportError:
         raise

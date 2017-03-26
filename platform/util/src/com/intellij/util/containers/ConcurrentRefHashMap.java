@@ -25,7 +25,6 @@ package com.intellij.util.containers;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
@@ -406,10 +405,5 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public boolean equals(final K o1, final K o2) {
     return o1.equals(o2);
-  }
-
-  @TestOnly
-  int underlyingMapSize() {
-    return myMap.size();
   }
 }

@@ -77,7 +77,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   }
 
   protected Map<String, String> getPathVariables() {
-    Map<String, String> variables = new HashMap<String, String>();
+    Map<String, String> variables = new HashMap<>();
     variables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
     variables.put(PathMacroUtil.USER_HOME_NAME, SystemProperties.getUserHome());
     return variables;

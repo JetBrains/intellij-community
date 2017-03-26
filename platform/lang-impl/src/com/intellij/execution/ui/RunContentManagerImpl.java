@@ -17,8 +17,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.dashboard.RuntimeDashboardContributor;
-import com.intellij.execution.dashboard.RuntimeDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardContributor;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -93,7 +93,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       registerToolWindow(executor, toolWindowManager);
     }
 
-    RuntimeDashboardManager dashboardManager = RuntimeDashboardManager.getInstance(myProject);
+    RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
     initToolWindow(null, dashboardManager.getToolWindowId(), dashboardManager.getToolWindowIcon(),
                    dashboardManager.getDashboardContentManager());
 
@@ -569,8 +569,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null) {
       ConfigurationType type = settings.getType();
-      if (RuntimeDashboardContributor.isShowInDashboard(type)) {
-        return RuntimeDashboardManager.getInstance(myProject).getToolWindowId();
+      if (RunDashboardContributor.isShowInDashboard(type)) {
+        return RunDashboardManager.getInstance(myProject).getToolWindowId();
       }
     }
     return null;
@@ -582,7 +582,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     // TODO [konstantin.aleev] Check remaining places where Executor.getToolWindowId() is used
     // Also there are some places where ToolWindowId.RUN or ToolWindowId.DEBUG are used directly.
     // For example, HotSwapProgressImpl.NOTIFICATION_GROUP. All notifications for this group is shown in Debug tool window,
-    // however such notifications should be shown in Runtime Dashboard tool window, if run content is redirected to Runtime Dashboard tool window.
+    // however such notifications should be shown in Run Dashboard tool window, if run content is redirected to Run Dashboard tool window.
     String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment.getRunnerAndConfigurationSettings());
     return toolWindowId != null ? toolWindowId : executionEnvironment.getExecutor().getToolWindowId();
   }
@@ -592,7 +592,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     List<Content> contents = new ArrayList<>();
     ContainerUtil.addAll(contents, getContentManagerForRunner(runnerInfo, null).getContents());
     ContainerUtil.addAll(contents,
-                         myToolwindowIdToContentManagerMap.get(RuntimeDashboardManager.getInstance(myProject).getToolWindowId()).getContents());
+                         myToolwindowIdToContentManagerMap.get(RunDashboardManager.getInstance(myProject).getToolWindowId()).getContents());
     for (Content content : contents) {
       RunContentDescriptor runContentDescriptor = getRunContentDescriptorByContent(content);
       assert runContentDescriptor != null;
@@ -683,21 +683,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) {
         return true;
       }
-      final boolean destroyProcess;
-      //noinspection deprecation
-      if (processHandler.isSilentlyDestroyOnClose() || Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
-        destroyProcess = true;
+      GeneralSettings.ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(
+        myProject, descriptor.getDisplayName(), processHandler);
+      if (rc == null) { // cancel
+        return false;
       }
-      else {
-        //todo[nik] this is a temporary solution for the following problem: some configurations should not allow user to choose between 'terminating' and 'detaching'
-        boolean canDisconnect = !Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
-        GeneralSettings.ProcessCloseConfirmation rc =
-          TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), canDisconnect, processHandler.detachIsDefault());
-        if (rc == null) { // cancel
-          return false;
-        }
-        destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
-      }
+      boolean destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
       if (destroyProcess) {
         processHandler.destroyProcess();
       }

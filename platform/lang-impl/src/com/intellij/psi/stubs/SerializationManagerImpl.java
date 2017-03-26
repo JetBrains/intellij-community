@@ -48,7 +48,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
       myNameStorage = new PersistentStringEnumerator(myFile, true);
-      myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
+      myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
     }
     catch (IOException e) {
       nameStorageCrashed();
@@ -58,7 +58,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
     finally {
       registerSerializer(PsiFileStubImpl.TYPE);
-      ShutDownTracker.getInstance().registerShutdownTask(() -> performShutdown());
+      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     }
   }
 
@@ -78,7 +78,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
 
         IOUtil.deleteAllFilesStartingWith(myFile);
         myNameStorage = new PersistentStringEnumerator(myFile, true);
-        myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
+        myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
         for (ObjectStubSerializer serializer : myAllSerializers) {
           myStubSerializationHelper.assignId(serializer);
         }

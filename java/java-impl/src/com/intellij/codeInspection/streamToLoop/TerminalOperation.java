@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -67,13 +68,13 @@ abstract class TerminalOperation extends Operation {
                                           @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
-        FunctionHelper fn = FunctionHelper.create(args[0], 1);
+        FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
         return fn == null ? null : new ForEachTerminalOperation(fn);
       }
       return null;
     }
     if(name.equals("count") && args.length == 0) {
-      return new TemplateBasedOperation("count", "long", "0", "{acc}++;");
+      return TemplateBasedOperation.counting();
     }
     if(name.equals("sum") && args.length == 0) {
       return TemplateBasedOperation.summing(resultType);
@@ -92,6 +93,12 @@ abstract class TerminalOperation extends Operation {
     if((name.equals("findFirst") || name.equals("findAny")) && args.length == 0) {
       PsiType optionalElementType = OptionalUtil.getOptionalElementType(resultType);
       return optionalElementType == null ? null : new FindTerminalOperation(optionalElementType.getCanonicalText());
+    }
+    if(name.equals("toList") && args.length == 0) {
+      return ToCollectionTerminalOperation.toList(resultType);
+    }
+    if(name.equals("toSet") && args.length == 0) {
+      return ToCollectionTerminalOperation.toSet(resultType);
     }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
@@ -169,8 +176,7 @@ abstract class TerminalOperation extends Operation {
         return ToCollectionTerminalOperation.toList(resultType);
       case "toSet":
         if (collectorArgs.length != 0) return null;
-        return new ToCollectionTerminalOperation(resultType,
-                                                 FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
+        return ToCollectionTerminalOperation.toSet(resultType);
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
@@ -204,7 +210,7 @@ abstract class TerminalOperation extends Operation {
         return null;
       case "counting":
         if (collectorArgs.length != 0) return null;
-        return new TemplateBasedOperation("count", "long", "0", "{acc}++;");
+        return TemplateBasedOperation.counting();
       case "summingInt":
       case "summingLong":
       case "summingDouble": {
@@ -414,8 +420,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myAccumulator.suggestVariableName(inVar, 1);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myAccumulator.preprocessVariable(context, inVar, 1);
     }
 
     @Override
@@ -424,7 +430,7 @@ abstract class TerminalOperation extends Operation {
       String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").get(0);
       String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), ResultKind.FINAL);
       myAccumulator.transform(context, acc, inVar.getName());
-      return myAccumulator.getText()+";\n";
+      return myAccumulator.getStatementText();
     }
   }
 
@@ -539,8 +545,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -563,10 +569,14 @@ abstract class TerminalOperation extends Operation {
   interface CollectorOperation {
     // Non-trivial finishers are not supported
     default void transform(StreamToLoopReplacementContext context, String item) {}
-    default void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
+    default void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
     default void registerReusedElements(Consumer<PsiElement> consumer) {}
     String getSupplier();
     String getAccumulatorUpdater(StreamVariable inVar, String acc);
+
+    default String getMerger(StreamVariable inVar, String map, String key) {
+      return null;
+    }
 
     default PsiType correctReturnType(PsiType type) {return type;}
   }
@@ -650,7 +660,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     CollectorOperation asCollector() {
-      return myFinisherTemplate.equals("{acc}") && !TypeConversionUtil.isPrimitive(myAccType) ? this : null;
+      return myFinisherTemplate.equals("{acc}") ? this : null;
     }
 
     @Override
@@ -663,15 +673,30 @@ abstract class TerminalOperation extends Operation {
       return myUpdateTemplate.replace("{acc}", acc).replace("{item}", inVar.getName());
     }
 
+    @Override
+    public String getMerger(StreamVariable inVar, String map, String key) {
+      String boxedType = PsiTypesUtil.boxIfPossible(myAccType);
+      if (boxedType.equals(myAccType)) return null;
+      String val = myUpdateTemplate.equals("{acc}++;") ? "1L" : "(" + myAccType + ")" + inVar;
+      String merger = boxedType + "::sum";
+      return map + ".merge(" + key + "," + val + "," + merger + ");\n";
+    }
+
     @NotNull
     static TemplateBasedOperation summing(PsiType type) {
-      return new TemplateBasedOperation("sum", type.getCanonicalText(), "0", "{acc}+={item};");
+      String defValue = type.equals(PsiType.DOUBLE) ? "0.0" : type.equals(PsiType.LONG) ? "0L" : "0";
+      return new TemplateBasedOperation("sum", type.getCanonicalText(), defValue, "{acc}+={item};");
     }
 
     @NotNull
     static TemplateBasedOperation summarizing(@NotNull PsiType resultType) {
       return new TemplateBasedOperation("stat", resultType.getCanonicalText(), "new " + resultType.getCanonicalText() + "()",
                                         "{acc}.accept({item});");
+    }
+
+    @NotNull
+    static TemplateBasedOperation counting() {
+      return new TemplateBasedOperation("count", "long", "0L", "{acc}++;");
     }
   }
 
@@ -699,7 +724,14 @@ abstract class TerminalOperation extends Operation {
 
     @NotNull
     private static ToCollectionTerminalOperation toList(@NotNull PsiType resultType) {
-      return new ToCollectionTerminalOperation(resultType, FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
+      return new ToCollectionTerminalOperation(resultType,
+                                               FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
+    }
+
+    @NotNull
+    private static ToCollectionTerminalOperation toSet(@NotNull PsiType resultType) {
+      return new ToCollectionTerminalOperation(resultType,
+                                               FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
     }
   }
 
@@ -791,9 +823,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myKeyExtractor.suggestVariableName(inVar, 0);
-      myValueExtractor.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myKeyExtractor.preprocessVariable(context, inVar, 0);
+      myValueExtractor.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -858,9 +890,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myKeyExtractor.suggestVariableName(inVar, 0);
-      myCollector.suggestNames(inVar, outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myKeyExtractor.preprocessVariable(context, inVar, 0);
+      myCollector.preprocessVariables(context, inVar, outVar);
     }
 
     @Override
@@ -873,7 +905,10 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String getAccumulatorUpdater(StreamVariable inVar, String map) {
-      String acc = map+".computeIfAbsent("+myKeyExtractor.getText()+","+myKeyVar+"->"+myCollector.getSupplier()+")";
+      String key = myKeyExtractor.getText();
+      String merger = myCollector.getMerger(inVar, map, key);
+      if (merger != null) return merger;
+      String acc = map + ".computeIfAbsent(" + key + "," + myKeyVar + "->" + myCollector.getSupplier() + ")";
       return myCollector.getAccumulatorUpdater(inVar, acc);
     }
   }
@@ -896,9 +931,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myPredicate.suggestVariableName(inVar, 0);
-      myCollector.suggestNames(inVar, outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myPredicate.preprocessVariable(context, inVar, 0);
+      myCollector.preprocessVariables(context, inVar, outVar);
     }
 
     @Override
@@ -911,7 +946,10 @@ abstract class TerminalOperation extends Operation {
       myCollector.transform(context, inVar.getName());
       context.addBeforeStep(map + ".put(false, " + myCollector.getSupplier() + ");");
       context.addBeforeStep(map + ".put(true, " + myCollector.getSupplier() + ");");
-      return myCollector.getAccumulatorUpdater(inVar, map + ".get(" + myPredicate.getText() + ")");
+      String key = myPredicate.getText();
+      String merger = myCollector.getMerger(inVar, map, key);
+      if (merger != null) return merger;
+      return myCollector.getAccumulatorUpdater(inVar, map + ".get(" + key + ")");
     }
   }
 
@@ -933,8 +971,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myMapper.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myMapper.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -963,13 +1001,13 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       createVariable(context, inVar.getName());
-      return myVariable.getDeclaration() + "=" + myMapper.getText() + ";\n" + myDownstream.generate(myVariable, context);
+      return myVariable.getDeclaration(myMapper.getText()) + myDownstream.generate(myVariable, context);
     }
 
     private void createVariable(StreamToLoopReplacementContext context, String item) {
       myMapper.transform(context, item);
       myVariable = new StreamVariable(myMapper.getResultType());
-      myDownstream.suggestNames(myVariable, StreamVariable.STUB);
+      myDownstream.preprocessVariables(context, myVariable, StreamVariable.STUB);
       myMapper.suggestFinalOutputNames(context, null, null).forEach(myVariable::addOtherNameCandidate);
       myVariable.register(context);
     }
@@ -982,8 +1020,13 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String getAccumulatorUpdater(StreamVariable inVar, String acc) {
-      return myVariable.getDeclaration() + "=" + myMapper.getText() + ";\n" +
-             myDownstreamCollector.getAccumulatorUpdater(myVariable, acc);
+      return myVariable.getDeclaration(myMapper.getText()) + myDownstreamCollector.getAccumulatorUpdater(myVariable, acc);
+    }
+
+    @Override
+    public String getMerger(StreamVariable inVar, String map, String key) {
+      String merger = myDownstreamCollector.getMerger(myVariable, map, key);
+      return merger == null ? null : myVariable.getDeclaration(myMapper.getText()) + merger;
     }
   }
 
@@ -1009,6 +1052,11 @@ abstract class TerminalOperation extends Operation {
     public String getAccumulatorUpdater(StreamVariable inVar, String acc) {
       return myDownstreamCollector.getAccumulatorUpdater(new StreamVariable(myMapper.getResultType(), myMapper.getText()), acc);
     }
+
+    @Override
+    public String getMerger(StreamVariable inVar, String map, String key) {
+      return myDownstreamCollector.getMerger(new StreamVariable(myMapper.getResultType(), myMapper.getText()), map, key);
+    }
   }
 
   static class ForEachTerminalOperation extends TerminalOperation {
@@ -1019,8 +1067,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(inVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, inVar, 0);
     }
 
     @Override
@@ -1031,7 +1079,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       myFn.transform(context, inVar.getName());
-      return myFn.getText()+";\n";
+      return myFn.getStatementText();
     }
   }
 
@@ -1053,8 +1101,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myOrigin.suggestNames(inVar, outVar);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myOrigin.preprocessVariables(context, inVar, outVar);
     }
 
     @Override

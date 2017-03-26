@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -39,8 +40,8 @@ import java.beans.PropertyChangeListener;
  * @author Sergey.Malenkov
  */
 final class ShortcutFilteringPanel extends JPanel {
-  final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(new VerticalLayout(JBUI.scale(2)));
-  final MouseShortcutPanel myMousePanel = new MouseShortcutPanel(true);
+  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(new VerticalLayout(JBUI.scale(2)));
+  private final MouseShortcutPanel myMousePanel = new MouseShortcutPanel(true);
 
   private Shortcut myShortcut;
   private JBPopup myPopup;
@@ -144,9 +145,9 @@ final class ShortcutFilteringPanel extends JPanel {
         .setMovable(true)
         .createPopup();
       IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-        boolean isEscWasPressed = false;
+        boolean isEscWasPressed;
         @Override
-        public boolean dispatch(AWTEvent e) {
+        public boolean dispatch(@NotNull AWTEvent e) {
           if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED) {
             boolean isEsc =  ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE;
             if (isEscWasPressed && isEsc) {

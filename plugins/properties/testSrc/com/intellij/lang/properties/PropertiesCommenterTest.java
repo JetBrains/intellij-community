@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   public void testProp1() { doTest(); }
   public void testUncomment() { doTest(); }
+  public void testExclamationMark() { doTest(); }
 
   @NotNull
   @Override

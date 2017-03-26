@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,30 @@
  */
 package com.intellij.codeInsight.hints.settings;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hints.HintUtilsKt;
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
-import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
+import com.intellij.codeInsight.hints.Option;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
@@ -45,69 +52,90 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
+
 public class ParameterNameHintsConfigurable extends DialogWrapper {
-  public JPanel myConfigurable;
-  private EditorTextField myEditorTextField;
+
+  private JPanel myConfigurable;
   private ComboBox<Language> myCurrentLanguageCombo;
-
-  private JBCheckBox myShowWhenMultipleParamsWithSameType;
-  private JBCheckBox myDoNotShowIfParameterNameContainedInMethodName;
-  private JPanel myOptionsPanel;
-  private JPanel myBlacklistPanel;
-
-  private final Language myInitiallySelectedLanguage;
-  private final String myNewPreselectedItem;
-
-  private final Map<Language, String> myBlackLists;
+  
+  private Map<Language, EditorTextField> myEditors;
+  private Map<Language, Boolean> myIsValidPatterns;
+  private Map<Option, JBCheckBox> myOptions;
+  
+  private JPanel myPanel;
+  private CardLayout myCardLayout;
 
   public ParameterNameHintsConfigurable() {
     this(null, null);
   }
-  
+
   public ParameterNameHintsConfigurable(@Nullable Language selectedLanguage,
                                         @Nullable String newPreselectedPattern) {
     super(null);
-    myInitiallySelectedLanguage = selectedLanguage;
-
-    myNewPreselectedItem = newPreselectedPattern;
-    myBlackLists = ContainerUtil.newHashMap();
-
     setTitle("Configure Parameter Name Hints");
     init();
-
-    myOptionsPanel.setVisible(true);
-    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
-    myBlacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
+    
+    if (selectedLanguage != null) {
+      showLanguagePanel(selectedLanguage);
+      myCurrentLanguageCombo.setSelectedItem(selectedLanguage);
+      if (newPreselectedPattern != null) {
+        addSelectedText(selectedLanguage, newPreselectedPattern);
+      }
+    }
   }
 
-  private void updateOkEnabled() {
-    String text = myEditorTextField.getText();
-    List<String> rules = StringUtil.split(text, "\n");
-    boolean hasAnyInvalid = rules
-      .stream()
-      .filter((e) -> !e.trim().isEmpty())
-      .map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
-      .anyMatch((e) -> e == null);
+  private void addSelectedText(@NotNull Language language, @NotNull String newPreselectedPattern) {
+    EditorTextField textField = myEditors.get(language);
+
+    String text = textField.getText();
+    int startOffset = text.length();
+    text += "\n" + newPreselectedPattern;
+    int endOffset = text.length();
+
+    textField.setText(text);
+    textField.addSettingsProvider((editor) -> {
+      SelectionModel model = editor.getSelectionModel();
+      model.setSelection(startOffset + 1, endOffset);
+    });
+  }
+
+  private void updateOkEnabled(@NotNull Language language, @NotNull EditorTextField editorTextField) {
+    String text = editorTextField.getText();
+    List<Integer> invalidLines = HintUtilsKt.getBlackListInvalidLineNumbers(text);
     
-    getOKAction().setEnabled(!hasAnyInvalid);
+    myIsValidPatterns.put(language, invalidLines.isEmpty());
+    boolean isEveryOneValid = !myIsValidPatterns.containsValue(false);
+    
+    getOKAction().setEnabled(isEveryOneValid);
+    highlightErrorLines(invalidLines, editorTextField);
+  }
+
+  private static void highlightErrorLines(@NotNull List<Integer> lines, @NotNull EditorTextField editorTextField) {
+    Editor editor = editorTextField.getEditor();
+    if (editor == null) return;
+
+    final TextAttributes attributes = editor.getColorsScheme().getAttributes(ERRORS_ATTRIBUTES);
+    final Document document = editor.getDocument();
+    final int totalLines = document.getLineCount();
+
+    MarkupModel model = editor.getMarkupModel();
+    model.removeAllHighlighters();
+    lines.stream()
+      .filter((current) -> current < totalLines)
+      .forEach((line) -> model.addLineHighlighter(line, HighlighterLayer.ERROR, attributes));
   }
 
   @Override
   protected void doOKAction() {
     super.doOKAction();
-
-    Language language = (Language)myCurrentLanguageCombo.getModel().getSelectedItem();
-    myBlackLists.put(language, myEditorTextField.getText());
-
-    myBlackLists.entrySet().forEach((entry) -> {
-      Language lang = entry.getKey();
-      String text = entry.getValue();
-      storeBlackListDiff(lang, text);
+    
+    myEditors.forEach((language, editor) -> {
+      String blacklist = editor.getText();
+      storeBlackListDiff(language, blacklist);
     });
-
-    ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-    settings.setDoNotShowIfMethodNameContainsParameterName(myDoNotShowIfParameterNameContainedInMethodName.isSelected());
-    settings.setShowForParamsWithSameType(myShowWhenMultipleParamsWithSameType.isSelected());
+    
+    myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
   }
 
   private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {
@@ -130,33 +158,110 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    List<Language> languages = getBaseLanguagesWithProviders();
+    myOptions = ContainerUtil.newHashMap();
+    myEditors = ContainerUtil.newHashMap();
+    myIsValidPatterns = ContainerUtil.newHashMap();
 
-    Language selected = myInitiallySelectedLanguage;
-    if (selected == null) {
-      selected = languages.get(0);
-    }
+    List<Language> allLanguages = getBaseLanguagesWithProviders();
+    Language selected = allLanguages.get(0);
 
-    String text = getLanguageBlackList(selected);
-    myEditorTextField = createEditor(text, myNewPreselectedItem);
-    myEditorTextField.addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        updateOkEnabled();
-      }
-    });
+    initLanguageCombo(selected, allLanguages);
 
-    myDoNotShowIfParameterNameContainedInMethodName = new JBCheckBox();
-    myShowWhenMultipleParamsWithSameType = new JBCheckBox();
+    myCardLayout = new CardLayout();
+    myPanel = new JPanel(myCardLayout);
 
-    ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-    myDoNotShowIfParameterNameContainedInMethodName.setSelected(settings.isDoNotShowIfMethodNameContainsParameterName());
-    myShowWhenMultipleParamsWithSameType.setSelected(settings.isShowForParamsWithSameType());
+    allLanguages.forEach((language -> {
+      JPanel panel = createLanguagePanel(language);
+      myPanel.add(panel, language.getDisplayName());
+    }));
 
-    initLanguageCombo(languages, selected);
+    myCardLayout.show(myPanel, selected.getDisplayName());
   }
 
-  private void initLanguageCombo(List<Language> languages, Language selected) {
+  @NotNull
+  private JPanel createLanguagePanel(@NotNull Language language) {
+    JPanel blacklistPanel = createBlacklistPanel(language);
+    JPanel optionsPanel = createOptionsPanel(language);
+
+    JPanel panel = new JPanel();
+    BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+    panel.setLayout(layout);
+
+    if (blacklistPanel != null) {
+      panel.add(blacklistPanel);
+    }
+
+    if (optionsPanel != null) {
+      panel.add(optionsPanel);
+    }
+    
+    return panel;
+  }
+
+  @Nullable
+  private JPanel createBlacklistPanel(@NotNull Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (!provider.isBlackListSupported()) return null;
+
+    String blackList = getLanguageBlackList(language);
+
+    EditorTextField editorTextField = createEditorField(blackList);
+    editorTextField.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        updateOkEnabled(language, editorTextField);
+      }
+    });
+    updateOkEnabled(language, editorTextField);
+    
+    myEditors.put(language, editorTextField);
+
+    JPanel blacklistPanel = new JPanel();
+
+    BoxLayout layout = new BoxLayout(blacklistPanel, BoxLayout.Y_AXIS);
+    blacklistPanel.setLayout(layout);
+    blacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
+    
+    blacklistPanel.add(new JBLabel(getBlacklistExplanationHTML(language)));
+    blacklistPanel.add(editorTextField);
+
+    return blacklistPanel;
+  }
+
+  @NotNull
+  private String getBlacklistExplanationHTML(Language language) {
+    InlayParameterHintsProvider hintsProvider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (hintsProvider == null) {
+      return CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation");
+    }
+    return hintsProvider.getBlacklistExplanationHTML();
+  }
+
+  @Nullable
+  private JPanel createOptionsPanel(@NotNull Language language) {
+    List<Option> options = getOptions(language);
+    if (options.isEmpty()) {
+      return null;
+    }
+
+    JPanel languageOptionsPanel = new JPanel();
+    BoxLayout boxLayout = new BoxLayout(languageOptionsPanel, BoxLayout.Y_AXIS);
+    languageOptionsPanel.setLayout(boxLayout);
+
+    if (!options.isEmpty()) {
+      languageOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    }
+
+    for (Option option : options) {
+      JBCheckBox box = new JBCheckBox(option.getName(), option.get());
+      myOptions.put(option, box);
+      languageOptionsPanel.add(box);
+    }
+
+    return languageOptionsPanel;
+  }
+
+  private void initLanguageCombo(Language selected, List<Language> languages) {
     ListComboBoxModel<Language> model = new ListComboBoxModel<>(languages);
     
     myCurrentLanguageCombo = new ComboBox<>(model);
@@ -172,18 +277,23 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       @Override
       public void itemStateChanged(ItemEvent e) {
         Language language = (Language)e.getItem();
-        if (e.getStateChange() == ItemEvent.DESELECTED) {
-          myBlackLists.put(language, myEditorTextField.getText());
-        }
-        else if (e.getStateChange() == ItemEvent.SELECTED) {
-          String text = myBlackLists.get(language);
-          if (text == null) {
-            text = getLanguageBlackList(language);
-          }
-          myEditorTextField.setText(text);
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          showLanguagePanel(language);
         }
       }
     });
+  }
+
+  private void showLanguagePanel(@NotNull Language language) {
+    myCardLayout.show(myPanel, language.getDisplayName());
+  }
+  
+  private static List<Option> getOptions(Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (provider != null) {
+      return provider.getSupportedOptions();
+    }
+    return ContainerUtil.emptyList();
   }
 
   @NotNull
@@ -199,32 +309,16 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   @NotNull
   private static List<Language> getBaseLanguagesWithProviders() {
-    return Language.getRegisteredLanguages()
+    return HintUtilsKt
+      .getHintProviders()
       .stream()
-      .filter(lang -> lang.getBaseLanguage() == null)
-      .filter(lang -> InlayParameterHintsExtension.INSTANCE.forLanguage(lang) != null)
+      .map((langWithImplementation) -> langWithImplementation.getFirst())
       .sorted(Comparator.comparingInt(l -> l.getDisplayName().length()))
       .collect(Collectors.toList());
   }
-
-  private static EditorTextField createEditor(@NotNull String text, @Nullable String newPreselectedItem) {
-    final TextRange range;
-    if (newPreselectedItem != null) {
-      text += "\n";
-      
-      final int startOffset = text.length();
-      text += newPreselectedItem;
-      range = new TextRange(startOffset, text.length());
-    }
-    else {
-      range = null;
-    }
-
-    return createEditorField(text, range);
-  }
-
+  
   @NotNull
-  private static EditorTextField createEditorField(@NotNull String text, @Nullable TextRange rangeToSelect) {
+  private static EditorTextField createEditorField(@NotNull String text) {
     Document document = EditorFactory.getInstance().createDocument(text);
     EditorTextField field = new EditorTextField(document, null, FileTypes.PLAIN_TEXT, false, false);
     field.setPreferredSize(new Dimension(200, 350));
@@ -232,11 +326,6 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       editor.setVerticalScrollbarVisible(true);
       editor.setHorizontalScrollbarVisible(true);
       editor.getSettings().setAdditionalLinesCount(2);
-      if (rangeToSelect != null) {
-        editor.getCaretModel().moveToOffset(rangeToSelect.getStartOffset());
-        editor.getScrollingModel().scrollVertically(document.getTextLength() - 1);
-        editor.getSelectionModel().setSelection(rangeToSelect.getStartOffset(), rangeToSelect.getEndOffset());
-      }
     });
     return field;
   }

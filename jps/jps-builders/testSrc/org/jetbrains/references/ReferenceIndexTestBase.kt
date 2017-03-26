@@ -78,7 +78,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
     val pd = createProjectDescriptor(BuildLoggingManager(TestProjectBuilderLogger()))
     val manager = pd.dataManager
     val buildDir = manager.dataPaths.dataStorageRoot
-    val index = CompilerBackwardReferenceIndex(buildDir)
+    val index = CompilerBackwardReferenceIndex(buildDir, true)
 
     try {
       val fileEnumerator = index.filePathEnumerator
@@ -146,8 +146,10 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       result.append(classDefs.joinToString(separator = "\n"))
 
       return result.toString()
-    } finally {
+    }
+    finally {
       index.close()
+      pd.release()
     }
   }
 

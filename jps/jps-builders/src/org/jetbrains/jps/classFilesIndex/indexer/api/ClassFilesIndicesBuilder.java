@@ -43,7 +43,7 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
   private static final String PROGRESS_MESSAGE = "Indexing class-files...";
   public static final String PROPERTY_NAME = "intellij.compiler.output.index";
 
-  private final Collection<ClassFilesIndexWriter> myIndexWriters = new ArrayList<ClassFilesIndexWriter>();
+  private final Collection<ClassFilesIndexWriter> myIndexWriters = new ArrayList<>();
 
   @Override
   @SuppressWarnings("unchecked")

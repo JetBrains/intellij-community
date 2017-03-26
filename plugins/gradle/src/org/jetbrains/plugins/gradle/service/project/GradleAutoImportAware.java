@@ -21,14 +21,24 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.openapi.util.text.StringUtil.endsWith;
 
 /**
  * @author Denis Zhdanov
@@ -42,6 +52,10 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     if (!changedFileOrDirPath.endsWith(GradleConstants.EXTENSION)) {
       return null;
     }
+    File file = new File(changedFileOrDirPath);
+    if(file.isDirectory()) {
+      return null;
+    }
 
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     assert manager != null;
@@ -50,7 +64,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     if (projectsSettings.isEmpty()) {
       return null;
     }
-    Map<String, String> rootPaths = ContainerUtilRt.newHashMap();
+    Map<String, String> rootPaths = ContainerUtil.newHashMap();
     for (ExternalProjectSettings setting : projectsSettings) {
       if(setting != null) {
         for (String path : setting.getModules()) {
@@ -59,12 +73,47 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       }
     }
 
-    for (File f = new File(changedFileOrDirPath).getParentFile(); f != null; f = f.getParentFile()) {
+    for (File f = file.getParentFile(); f != null; f = f.getParentFile()) {
       String dirPath = f.getAbsolutePath();
       if (rootPaths.containsKey(dirPath)) {
         return rootPaths.get(dirPath);
       }
     }
     return null;
+  }
+
+  @Override
+  public List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+    final List<File> files = new SmartList<>();
+
+    // add global gradle.properties
+    String serviceDirectoryPath = GradleSettings.getInstance(project).getServiceDirectoryPath();
+    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "gradle.properties"));
+    // add init script
+    files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "init.gradle"));
+    // TODO add init scripts from USER_HOME/.gradle/init.d/ directory
+
+    // add project-specific gradle.properties
+    GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
+    files.add(new File(projectSettings == null ? projectPath : projectSettings.getExternalProjectPath(), "gradle.properties"));
+
+    // add wrapper config file
+    if (projectSettings != null && projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {
+      files.add(new File(projectSettings.getExternalProjectPath(), "gradle/wrapper/gradle-wrapper.properties"));
+    }
+
+    // add gradle scripts
+    Set<String> subProjectPaths = projectSettings != null && /*!projectSettings.getModules().isEmpty() &&*/
+                                  FileUtil.pathsEqual(projectSettings.getExternalProjectPath(), projectPath)
+                                  ? projectSettings.getModules() : ContainerUtil.set(projectPath);
+    for (String path : subProjectPaths) {
+      File[] gradleScripts =
+        new File(path).listFiles(file -> !file.isDirectory() && endsWith(file.getName(), "." + GradleConstants.EXTENSION));
+      if (gradleScripts == null) continue;
+      ContainerUtil.addAll(files, gradleScripts);
+    }
+
+    return files;
   }
 }

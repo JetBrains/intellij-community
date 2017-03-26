@@ -64,7 +64,7 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
   @NotNull
   @Override
   public List<GradleResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
-    final List<GradleResourceRootDescriptor> result = new ArrayList<GradleResourceRootDescriptor>();
+    final List<GradleResourceRootDescriptor> result = new ArrayList<>();
 
     GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
     GradleModuleResourceConfiguration moduleConfig = projectConfig.moduleConfigurations.get(myModule.getName());
@@ -116,7 +116,7 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
   public Collection<File> getOutputRoots(CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
-    final Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> result = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);

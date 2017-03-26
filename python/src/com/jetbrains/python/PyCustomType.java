@@ -15,12 +15,12 @@
  */
 package com.jetbrains.python;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.jetbrains.NotNullPredicate;
@@ -51,6 +51,8 @@ public class PyCustomType implements PyClassLikeType {
 
   private final boolean myInstanceType;
 
+  @Nullable private final String myQualifiedName;
+
 
   /**
    * @param filter       filter to filter methods from classes (may be null to do no filtering)
@@ -59,10 +61,11 @@ public class PyCustomType implements PyClassLikeType {
    *                     (like ctor)
    * @param typesToMimic types to "mimic": delegate calls to  (must be one at least!)
    */
-  public PyCustomType(@Nullable final Processor<PyElement> filter,
+  public PyCustomType(@Nullable String qualifiedName,
+                      @Nullable final Processor<PyElement> filter,
                       final boolean instanceType,
                       @NotNull final PyClassLikeType... typesToMimic) {
-    Preconditions.checkArgument(typesToMimic.length > 0, "Provide at least one class");
+    myQualifiedName = qualifiedName;
     myFilter = filter;
     myTypesToMimic.addAll(Collections2.filter(Arrays.asList(typesToMimic), NotNullPredicate.INSTANCE));
     myInstanceType = instanceType;
@@ -81,18 +84,27 @@ public class PyCustomType implements PyClassLikeType {
     return !myInstanceType;
   }
 
+  @NotNull
   @Override
   public final PyClassLikeType toInstance() {
     return myInstanceType
            ? this
-           : new PyCustomType(myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[myTypesToMimic.size()]));
+           : new PyCustomType(myQualifiedName, myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[0]));
   }
 
+
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myInstanceType
+           ? new PyCustomType(myQualifiedName, myFilter, false, myTypesToMimic.toArray(new PyClassLikeType[0]))
+           : this;
+  }
 
   @Nullable
   @Override
   public final String getClassQName() {
-    return null;
+    return myQualifiedName;
   }
 
   @NotNull
@@ -207,6 +219,10 @@ public class PyCustomType implements PyClassLikeType {
   @Nullable
   @Override
   public final String getName() {
+    if (myQualifiedName != null) {
+      return QualifiedName.fromDottedString(myQualifiedName).getLastComponent();
+    }
+
     final Collection<String> classNames = new ArrayList<>(myTypesToMimic.size());
     for (final PyClassLikeType type : myTypesToMimic) {
       String name = type.getName();

@@ -10,11 +10,10 @@ REGEXP_FILE
             RegExpClosureImpl: <[ab]*?>
               RegExpClassImpl: <[ab]>
                 PsiElement(CLASS_BEGIN)('[')
-                RegExpUnionImpl: <ab>
-                  RegExpCharImpl: <a>
-                    PsiElement(CHARACTER)('a')
-                  RegExpCharImpl: <b>
-                    PsiElement(CHARACTER)('b')
+                RegExpCharImpl: <a>
+                  PsiElement(CHARACTER)('a')
+                RegExpCharImpl: <b>
+                  PsiElement(CHARACTER)('b')
                 PsiElement(CLASS_END)(']')
               RegExpQuantifierImpl: <*?>
                 PsiElement(STAR)('*')

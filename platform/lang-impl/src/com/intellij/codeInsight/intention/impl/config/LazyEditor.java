@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 /**
  * @author Dmitry Avdeev
@@ -170,6 +171,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
     return getEditor().visualPositionToXY(visible);
   }
 
+  @NotNull
+  @Override
+  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    return getEditor().visualPositionToPoint2D(pos);
+  }
+
   @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
@@ -203,6 +210,12 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull final Point p) {
+    return getEditor().xyToVisualPosition(p);
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     return getEditor().xyToVisualPosition(p);
   }
 

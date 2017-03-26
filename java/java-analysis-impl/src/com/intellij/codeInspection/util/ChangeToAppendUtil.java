@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public class ChangeToAppendUtil {
           if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             isString = true;
           }
-          builder.append(operand.getText());
+          builder.append(CommentTracker.textWithSurroundingComments(operand));
         }
         else {
           isConstant = false;
@@ -76,7 +77,8 @@ public class ChangeToAppendUtil {
       }
     }
     else {
-      append(concatenation.getText(), useStringValueOf && (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)), out);
+      append(CommentTracker.textWithSurroundingComments(concatenation),
+             useStringValueOf && (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)), out);
     }
     return out;
   }

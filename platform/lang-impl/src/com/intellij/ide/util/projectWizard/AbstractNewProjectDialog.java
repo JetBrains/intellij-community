@@ -21,19 +21,20 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 
 /**
@@ -47,6 +48,18 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     init();
   }
 
+  @Override
+  protected void init() {
+    super.init();
+    DialogWrapperPeer peer = getPeer();
+    JRootPane pane = peer.getRootPane();
+    if (pane != null) {
+      JBDimension size = JBUI.size(FlatWelcomeFrame.MAX_DEFAUL_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT);
+      pane.setMinimumSize(size);
+      pane.setPreferredSize(size);
+    }
+  }
+
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
@@ -56,10 +69,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     Disposer.register(getDisposable(), () -> root.removeAll());
 
     Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
-    Dimension size = JBUI.size(666, 385);
     JPanel component = pair.first;
-    component.setMinimumSize(size);
-    component.setPreferredSize(size);
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

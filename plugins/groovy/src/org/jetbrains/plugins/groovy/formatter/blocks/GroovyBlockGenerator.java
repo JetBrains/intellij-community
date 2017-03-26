@@ -617,20 +617,20 @@ public class GroovyBlockGenerator {
       ArrayList<ASTNode> childList = new ArrayList<>();
       PsiFile groovyFile = psi.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
       if (groovyFile instanceof GroovyFileBase) {
-        addChildNodes(groovyFile, childList, range);
+        addChildNodes(groovyFile, childList, range, psi);
       }
       return childList.toArray(new ASTNode[childList.size()]);
     }
     return node.getChildren(null);
   }
 
-  private static void addChildNodes(PsiElement elem, ArrayList<ASTNode> childNodes, TextRange range) {
+  private static void addChildNodes(PsiElement elem, ArrayList<ASTNode> childNodes, TextRange range, PsiElement root) {
     ASTNode node = elem.getNode();
-    if (range.contains(elem.getTextRange()) && node != null) {
+    if (range.contains(elem.getTextRange()) && node != null && elem != root) {
       childNodes.add(node);
     } else {
       for (PsiElement child : elem.getChildren()) {
-        addChildNodes(child, childNodes, range);
+        addChildNodes(child, childNodes, range, root);
       }
     }
 

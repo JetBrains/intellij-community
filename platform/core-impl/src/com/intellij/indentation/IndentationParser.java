@@ -67,7 +67,7 @@ public abstract class IndentationParser implements PsiParser {
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();
-    final ArrayList<PsiBuilder.Marker> containerMarkers = new ArrayList<PsiBuilder.Marker>();
+    final ArrayList<PsiBuilder.Marker> containerMarkers = new ArrayList<>();
     if (myContainerTypes != null) {
       for (IElementType ignored : myContainerTypes) {
         final PsiBuilder.Marker containerMarker = builder.mark();
@@ -87,7 +87,7 @@ public abstract class IndentationParser implements PsiParser {
       advanceLexer(builder);
     }
 
-    final Stack<BlockInfo> stack = new Stack<BlockInfo>();
+    final Stack<BlockInfo> stack = new Stack<>();
     stack.push(new BlockInfo(currentIndent, builder.mark(), builder.getTokenType()));
 
     PsiBuilder.Marker startLineMarker = null;

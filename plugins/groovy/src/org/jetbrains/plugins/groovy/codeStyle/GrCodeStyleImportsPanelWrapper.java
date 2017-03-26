@@ -62,12 +62,12 @@ public class GrCodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    myImportsPanel.apply(settings.getCustomSettings(GroovyCodeStyleSettings.class));
+    myImportsPanel.apply(settings);
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return myImportsPanel.isModified(settings.getCustomSettings(GroovyCodeStyleSettings.class));
+    return myImportsPanel.isModified(settings);
   }
 
   @Override
@@ -77,7 +77,7 @@ public class GrCodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
-    myImportsPanel.reset(settings.getCustomSettings(GroovyCodeStyleSettings.class));
+    myImportsPanel.reset(settings);
   }
 
   @Override

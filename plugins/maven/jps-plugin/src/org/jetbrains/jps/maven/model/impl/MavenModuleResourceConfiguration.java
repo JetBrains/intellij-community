@@ -55,15 +55,15 @@ public class MavenModuleResourceConfiguration {
 
   @Tag("model-map")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  public Map<String, String> modelMap = new HashMap<String, String>();
+  public Map<String, String> modelMap = new HashMap<>();
 
   @Tag("properties")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  public Map<String, String> properties = new HashMap<String, String>();
+  public Map<String, String> properties = new HashMap<>();
 
   @Tag("filtering-excluded-extensions")
   @AbstractCollection(surroundWithTag = false, elementTag = "extension")
-  public Set<String> filteringExclusions = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+  public Set<String> filteringExclusions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
   @OptionTag
   public String escapeString = null;
@@ -82,17 +82,17 @@ public class MavenModuleResourceConfiguration {
 
   @Tag("resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
-  public List<ResourceRootConfiguration> resources = new ArrayList<ResourceRootConfiguration>();
+  public List<ResourceRootConfiguration> resources = new ArrayList<>();
 
   @Tag("test-resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
-  public List<ResourceRootConfiguration> testResources = new ArrayList<ResourceRootConfiguration>();
+  public List<ResourceRootConfiguration> testResources = new ArrayList<>();
 
   public Set<String> getFilteringExcludedExtensions() {
     if (filteringExclusions.isEmpty()) {
       return MavenProjectConfiguration.DEFAULT_FILTERING_EXCLUDED_EXTENSIONS;
     }
-    final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     result.addAll(MavenProjectConfiguration.DEFAULT_FILTERING_EXCLUDED_EXTENSIONS);
     result.addAll(filteringExclusions);
     return Collections.unmodifiableSet(result);

@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,9 @@ import org.jetbrains.annotations.Nullable;
 public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+    if (PyiUtil.isInsideStub(param)) {
+      return null;
+    }
     final String name = param.getName();
     if (name != null) {
       final PyFunction functionSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(func, context);
@@ -52,6 +56,9 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (PyiUtil.isInsideStub(callable)) {
+      return null;
+    }
     final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(callable, context);
     if (callableSkeleton != null) {
       return Ref.create(context.getReturnType(callableSkeleton));
@@ -61,6 +68,9 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement target, TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (PyiUtil.isInsideStub(target)) {
+      return null;
+    }
     if (target instanceof PyTargetExpression) {
       final PyTargetExpression targetSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext((PyTargetExpression)target, context);
       if (targetSkeleton != null) {
@@ -73,6 +83,9 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (PyiUtil.isInsideStub(callable)) {
+      return null;
+    }
     final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(callable, context);
     if (callableSkeleton != null) {
       return context.getType(callableSkeleton);

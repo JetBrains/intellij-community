@@ -26,6 +26,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.regex.Pattern;
@@ -34,14 +35,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
-  public boolean isApplicable(final PsiElement element) {
-    if (element instanceof PsiClass) {
-      final String qualifiedName = ((PsiClass)element).getQualifiedName();
-      if (qualifiedName != null) {
-        return !qualifiedName.endsWith("Test") && !qualifiedName.endsWith("TestCase");
-      }
-    }
-    return false;
+  public boolean isApplicable(@NotNull final PsiElement element) {
+    return element instanceof PsiClass && TestFrameworks.detectFramework((PsiClass)element) == null;
   }
 
   public String getOptionName() {
@@ -70,14 +65,14 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
         PsiShortNamesCache cache = PsiShortNamesCache.getInstance(aClass.getProject());
 
         String klassName = aClass.getName();
-        Pattern pattern = Pattern.compile(".*" + klassName + ".*" + "Test(Case)?");
+        Pattern pattern = Pattern.compile(".*" + klassName + ".*");
 
         HashSet<String> names = new HashSet<>();
         cache.getAllClassNames(names);
         for (String eachName : names) {
           if (pattern.matcher(eachName).matches()) {
             for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {
-              if (TestFrameworks.getInstance().isTestClass(eachClass)) {
+              if (TestFrameworks.detectFramework(eachClass) != null) {
                 myElements.add(eachClass);
               }
             }

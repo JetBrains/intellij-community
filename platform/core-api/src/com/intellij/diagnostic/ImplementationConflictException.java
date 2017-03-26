@@ -29,7 +29,7 @@ public class ImplementationConflictException extends RuntimeException {
 
   public ImplementationConflictException(String message, Throwable cause, @NotNull Object ...implementationObjects) {
     super(message, cause);
-    final List<Class<?>> classes = new ArrayList<Class<?>>(implementationObjects.length);
+    final List<Class<?>> classes = new ArrayList<>(implementationObjects.length);
     for (Object object : implementationObjects) {
       classes.add(object.getClass());
     }

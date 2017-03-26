@@ -51,7 +51,7 @@ public class LinearBekController extends CascadeController {
 
     long start = System.currentTimeMillis();
     myLinearBekGraphBuilder.collapseAll();
-    LOG.info("Linear bek took " + (System.currentTimeMillis() - start) / 1000.0 + " sec");
+    LOG.debug("Linear bek took " + (System.currentTimeMillis() - start) / 1000.0 + " sec");
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.application.options.emmet.XmlEmmetConfigurable;
 import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
@@ -28,7 +27,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -108,7 +106,6 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return name + "=\"" + value + '"';
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   private static void closeUnclosingTags(@NotNull XmlTag root) {
     final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<>();
     Project project = root.getProject();
@@ -131,11 +128,13 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
           VirtualFile file = tag.getContainingFile().getVirtualFile();
           if (file != null) {
             final Document document = FileDocumentManager.getInstance().getDocument(file);
-            documentManager.doPostponedOperationsAndUnblockDocument(document);
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-              documentManager.commitDocument(document);
-            });
+            if (document != null) {
+              documentManager.doPostponedOperationsAndUnblockDocument(document);
+              ApplicationManager.getApplication().runWriteAction(() -> {
+                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+                documentManager.commitDocument(document);
+              });
+            }
           }
         }
       }
@@ -148,11 +147,5 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(node);
     final ASTNode endTagEnd = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(node);
     return emptyTagEnd != null || endTagEnd != null;
-  }
-  
-  @Nullable
-  @Override
-  public Configurable createConfigurable() {
-    return new XmlEmmetConfigurable();
   }
 }

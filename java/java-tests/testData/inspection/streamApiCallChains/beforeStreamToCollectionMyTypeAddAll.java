@@ -1,4 +1,4 @@
-// "Replace with 'Test.MyType' constructor" "true"
+// "Replace with 'Test.MyType' constructor" "false"
 
 import java.util.*;
 import java.util.stream.*;

@@ -92,7 +92,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
 
     @Override
     public List<SourcePathAndRootIndex> read(@NotNull DataInput in) throws IOException {
-      List<SourcePathAndRootIndex> result = new SmartList<SourcePathAndRootIndex>();
+      List<SourcePathAndRootIndex> result = new SmartList<>();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         final String path = IOUtil.readUTF(stream);

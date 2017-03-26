@@ -1,7 +1,8 @@
-void m() {
-  LongAdder l = new LongAdder();
+public class X {
+  void m() {
+    LongAdder l = new LongAdder();
 
-  l.increment();
-
-  long res = l.sum();
+    l.increment();
+    long res = l.sum();
+  }
 }

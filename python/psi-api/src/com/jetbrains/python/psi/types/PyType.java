@@ -66,6 +66,7 @@ public interface PyType {
   Key<Set<String>> CTX_NAMES = new Key<>("Completion variants names");
 
   /**
+   * TODO rename it to something like getPresentableName(), because it's not clear that these names are actually visible to end-user
    * @return name of the type
    */
   @Nullable

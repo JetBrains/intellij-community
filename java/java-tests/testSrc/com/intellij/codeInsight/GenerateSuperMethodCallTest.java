@@ -35,6 +35,7 @@ public class GenerateSuperMethodCallTest extends LightCodeInsightTestCase {
 
   public void testImplement() throws Exception { doTest(); }
   public void testOverride() throws Exception { doTest(); }
+  public void testOverrideInNestedBlock() throws Exception { doTest(); }
 
 
   private void doTest() throws Exception {

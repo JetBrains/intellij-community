@@ -156,7 +156,9 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      commandLineArgs.add("--info");
+      if(!commandLineArgs.contains("--quiet")) {
+        commandLineArgs.add("--info");
+      }
       commandLineArgs.add("--recompile-scripts");
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.ColorUtil;
@@ -203,6 +204,8 @@ public class JBLabel extends JLabel implements AnchorableComponent {
       setCopyable(false);
       setCopyable(true);
     }
+
+    UISettings.setupComponentAntialiasing(this);
   }
 
   /**

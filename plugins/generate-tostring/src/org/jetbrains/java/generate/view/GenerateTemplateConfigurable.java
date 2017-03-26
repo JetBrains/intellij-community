@@ -37,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiType;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -105,9 +106,9 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
       JLabel label =
-        !availableImplicits.isEmpty() ? new MultiLineLabel("<html>Available implicit variables:\n" + StringUtil.join(availableImplicits, ", ") + (myHint != null ? "<br/>" + myHint : "") + "</html>") 
-                                      : new JLabel(myHint);
-      label.setPreferredSize(JBUI.size(250, 30));
+        new JLabel("<html>" + 
+                   (!availableImplicits.isEmpty() ? "Available implicit variables:<br/>" + StringUtil.join(availableImplicits, ", ") + "<br/>": "") +
+                   (myHint != null ? myHint : "") + "</html>");
       panel.add(label, BorderLayout.SOUTH);
       return panel;
     }

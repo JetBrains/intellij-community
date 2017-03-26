@@ -103,6 +103,9 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
                 (IS_PY3K and sys.version_info[1] >= 3))
 
 
+INTERACTIVE_MODE_AVAILABLE = os.getenv('DISPLAY') is not None
+
+
 def protect_libraries_from_patching():
     """
     In this function we delete some modules from `sys.modules` dictionary and import them again inside
@@ -154,20 +157,6 @@ except:
         except NameError:
             def dict_contains(d, key):
                 return d.has_key(key)
-try:
-    dict_pop = dict.pop
-except:
-    #=======================================================================================================================
-    # Jython 2.1
-    #=======================================================================================================================
-    def dict_pop(d, key, default=None):
-        try:
-            ret = d[key]
-            del d[key]
-            return ret
-        except:
-            return default
-
 
 if IS_PY3K:
     def dict_keys(d):

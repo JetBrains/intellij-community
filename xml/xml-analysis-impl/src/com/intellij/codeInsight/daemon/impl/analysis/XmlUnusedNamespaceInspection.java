@@ -269,8 +269,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       XmlAttribute attribute = (XmlAttribute)element;
       XmlTag parent = attribute.getParent();
 
-      if (!FileModificationService.getInstance().prepareFileForWrite(parent.getContainingFile())) return null;
-
       SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
 
       doRemove(project, attribute, parent);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,8 @@ public interface UnnamedConfigurable {
    * Loads the settings from the configurable component to the Swing form.
    * This method is called on EDT immediately after the form creation or later upon user's request.
    */
-  void reset();
+  default void reset() {
+  }
 
   /**
    * Notifies the configurable component that the Swing form will be closed.

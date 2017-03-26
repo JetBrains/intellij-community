@@ -31,7 +31,7 @@ public class GroovyRegExpHost extends JavaRegExpHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    if (group.isNamedGroup()) {
+    if (group.getType() == RegExpGroup.Type.NAMED_GROUP) {
       final String version = getGroovyVersion(group);
       return version != null && version.compareTo(GroovyConfigUtils.GROOVY2_0) >= 0;
     }

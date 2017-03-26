@@ -53,6 +53,7 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
           if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
               !Registry.is("editor.config.stop.at.project.root")) {
             for (Editor editor : editorFactory.getAllEditors()) {
+              if (editor.isDisposed()) continue;;
               ((EditorEx)editor).reinitSettings();
             }
           }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Point;
 
@@ -25,7 +26,7 @@ import java.awt.Point;
  * will have the line number 10 in its logical position.
  * <p>
  * Logical position may store additional parameters that define its mapping to {@link VisualPosition}. Rationale is that
- * single logical <code>(line; column)</code> pair matches soft wrap-introduced virtual space, i.e. different visual positions
+ * single logical {@code (line; column)} pair matches soft wrap-introduced virtual space, i.e. different visual positions
  * correspond to the same logical position. It's convenient to store exact visual location details within the logical
  * position in order to relief further {@code 'logical position' -> 'visual position'} mapping.
  * <p>
@@ -68,7 +69,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * to the current logical position.
    * <p>
    * Instead of directly using this value, EditorUtil.getSoftWrapCountAfterLineStart(Editor, LogicalPosition) method can be used,
-   * it will work regardless of whether current <code>LogicalPosition</code> instance is {@link #visualPositionAware}.
+   * it will work regardless of whether current {@code LogicalPosition} instance is {@link #visualPositionAware}.
    *
    * @see #visualPositionAware
    */
@@ -96,11 +97,11 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   public final int foldingColumnDiff;
 
   /**
-   * If <code>true</code>, this position is associated with succeeding character (in logical order), otherwise it's associated with 
+   * If {@code true}, this position is associated with succeeding character (in logical order), otherwise it's associated with
    * preceding character. This can make difference in bidirectional text, where logical positions which differ only in this flag's value
    * can have different visual positions.
    * <p>
-   * This field has no impact on equality and comparison relationships between <code>LogicalPosition</code> instances.
+   * This field has no impact on equality and comparison relationships between {@code LogicalPosition} instances.
    */
   public final boolean leansForward;
 
@@ -183,7 +184,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   }
 
   /**
-   * Constructs a new <code>LogicalPosition</code> instance with a given value of {@link #leansForward} flag.
+   * Constructs a new {@code LogicalPosition} instance with a given value of {@link #leansForward} flag.
    */
   public LogicalPosition leanForward(boolean value) {
     return new LogicalPosition(line, column, value);
@@ -214,7 +215,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
            + (leansForward ? "; leans forward" : "");
   }
 
-  public int compareTo(LogicalPosition position) {
+  @Override
+  public int compareTo(@NotNull LogicalPosition position) {
     if (line != position.line) return line - position.line;
     if (column != position.column) return column - position.column;
     if (softWrapLinesBeforeCurrentLogicalLine != position.softWrapLinesBeforeCurrentLogicalLine) return softWrapLinesBeforeCurrentLogicalLine - position.softWrapLinesBeforeCurrentLogicalLine;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,6 +352,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$dollarSlashy9() throws Throwable { doTest() }
 
+  void testregex$dollarSlashy10() { doTest() }
+
+  void testregex$dollarSlashy11() { doTest() }
+
   void testregex$dollarSlashyCode() throws Throwable { doTest() }
 
   void testregex$dollarSlashyCodeUnfinished() throws Throwable { doTest() }
@@ -509,6 +513,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testcommandExpr$indexAccess2() { doTest() }
 
   void testcommandExpr$indexAccess3() { doTest() }
+
+  void testcommandExpr$indexAccess4() { doTest() }
 
   void testcommandExpr$closureArg2() { doTest() }
 
@@ -848,4 +854,6 @@ Groovy script
   }
 
   void testspecial$mapHang() { doTest() }
+
+  void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
 }

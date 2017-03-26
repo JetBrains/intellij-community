@@ -61,12 +61,13 @@ class BaseLayoutSpec {
   }
 
   /**
-   * Exclude the specified directory when {@code moduleName} is packed into JAR file.
-   * <strong>This is a temporary method added to keep layout of some old plugins. If some directory from a module shouldn't be included into the
-   * module JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
-   * @param excludedDirectory path to the directory to be exclude relatively to the module output root
+   * Exclude the specified files when {@code moduleName} is packed into JAR file.
+   * <strong>This is a temporary method added to keep layout of some old plugins. If some files from a module shouldn't be included into the
+   * module JAR it's strongly recommended to move these files outside of the module source roots.</strong>
+   * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g. {@code "foo/**"}
+   * to exclude 'foo' directory
    */
-  void excludeFromModule(String moduleName, String excludedDirectory) {
-    layout.moduleExcludes.put(moduleName, excludedDirectory)
+  void excludeFromModule(String moduleName, String excludedPattern) {
+    layout.moduleExcludes.put(moduleName, excludedPattern)
   }
 }

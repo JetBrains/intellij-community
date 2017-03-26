@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,12 +105,19 @@ public class IteratorDeclaration {
     PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
     if (call.getArgumentList().getExpressions().length != 0) return null;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
-    if (!"iterator".equals(methodExpression.getReferenceName())) return null;
+    boolean listIterator = "listIterator".equals(methodExpression.getReferenceName());
+    if (!"iterator".equals(methodExpression.getReferenceName()) && !listIterator) return null;
     PsiMethod method = call.resolveMethod();
-    if (method == null || !InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_ITERABLE)) return null;
-    boolean isCollection = InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_UTIL_COLLECTION);
-    PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType) || !((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_UTIL_ITERATOR)) return null;
+    if (method == null) return null;
+    boolean isCollection;
+    if (listIterator) {
+      if (!InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_UTIL_LIST)) return null;
+      isCollection = true;
+    } else {
+      if (!InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_ITERABLE)) return null;
+      isCollection = InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_UTIL_COLLECTION);
+    }
+    if (!InheritanceUtil.isInheritor(variable.getType(), CommonClassNames.JAVA_UTIL_ITERATOR)) return null;
     return new IteratorDeclaration(variable, methodExpression.getQualifierExpression(), isCollection);
   }
 

@@ -27,6 +27,7 @@ public class MakePrivateIntentionTest extends IPPTestCase {
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
+  public void testLocalClass() { assertIntentionNotAvailable(IntentionPowerPackBundle.message("make.public.intention.name")); }
   public void testMethod() { doTest(); }
   public void testAnnotatedMember() { doTest(); }
 

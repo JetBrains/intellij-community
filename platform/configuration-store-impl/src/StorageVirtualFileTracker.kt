@@ -89,7 +89,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
               }
             }
             is VFileCreateEvent -> {
-              if (storage is FileBasedStorage) {
+              if (storage is FileBasedStorage && event.requestor !is StateStorage.SaveSession) {
                 storage.setFile(event.file, null)
               }
             }

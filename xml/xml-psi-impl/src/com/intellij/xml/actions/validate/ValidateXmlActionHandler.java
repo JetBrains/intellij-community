@@ -65,7 +65,7 @@ public class ValidateXmlActionHandler {
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
   private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
   private static final Key<String[]> KNOWN_NAMESPACES_KEY = Key.create("KnownNamespacesKey");
-  private static final Key<Map<String, String>> ENTITIES_KEY = Key.create("EntityManagerKey");
+  private static final Key<Map<String, XMLEntityManager.Entity>> ENTITIES_KEY = Key.create("EntityManagerKey");
 
   private Project myProject;
   private XmlFile myFile;
@@ -315,10 +315,15 @@ public class ValidateXmlActionHandler {
 
   private static void configureEntityManager(XmlFile file, SAXParser parser) throws SAXException {
     XMLEntityManager entityManager = (XMLEntityManager)parser.getXMLReader().getProperty(ENTITY_MANAGER_PROPERTY_ID);
-    Map<String, String> entities = file.getUserData(ENTITIES_KEY);
+    Map<String, XMLEntityManager.Entity> entities = file.getUserData(ENTITIES_KEY);
     if (entities != null) {
       // passing of entityManager object would break validation, so we copy its entities
-      XercesAccessor.getEntities(entityManager).putAll(entities);
+      Map<String, XMLEntityManager.Entity> map = XercesAccessor.getEntities(entityManager);
+      for (Map.Entry<String, XMLEntityManager.Entity> entry : entities.entrySet()) {
+        if (entry.getValue().isEntityDeclInExternalSubset()) {
+          map.put(entry.getKey(), entry.getValue());
+        }
+      }
     }
     else {
       file.putUserData(ENTITIES_KEY, XercesAccessor.getEntities(entityManager));

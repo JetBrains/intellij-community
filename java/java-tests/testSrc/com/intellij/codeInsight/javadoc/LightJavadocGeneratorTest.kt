@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.javadoc
 
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiJavaFile
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.loadElement
 
 class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
@@ -45,7 +45,7 @@ class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
     val file = myFixture.configureByText("module-info.java", text)
     val module = (file as PsiJavaFile).moduleDeclaration!!
     val docInfo = JavaDocInfoGeneratorFactory.create(project, module).generateDocInfo(null)!!
-    val body = JDOMUtil.loadDocument(docInfo).rootElement.getChild("body")
+    val body = loadElement(docInfo).getChild("body")
     assertThat(body).isEqualTo(expected)
   }
 }

@@ -568,11 +568,6 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   @Override
-  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-
-  }
-
-  @Override
   public String getHelpId() {
     return "reference.settings.injection.language.injection.settings.java.parameter";
   }

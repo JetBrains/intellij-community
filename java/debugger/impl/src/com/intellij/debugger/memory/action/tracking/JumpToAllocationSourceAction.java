@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.debugger.memory.action.tracking;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.action.DebuggerTreeAction;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.StackFramePopup;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -45,9 +45,9 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
     if (project != null && stack != null) {
       final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if (session != null) {
-        final GlobalSearchScope searchScope = DebuggerManager.getInstance(project)
-          .getDebugProcess(session.getDebugProcess().getProcessHandler()).getSearchScope();
-        new StackFramePopup(project, stack, searchScope).show();
+        DebugProcessImpl process = (DebugProcessImpl)DebuggerManager.getInstance(project)
+          .getDebugProcess(session.getDebugProcess().getProcessHandler());
+        StackFramePopup.show(stack, process);
       }
     }
   }

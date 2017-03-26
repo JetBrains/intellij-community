@@ -16,13 +16,18 @@
 package com.intellij.debugger.memory.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.sun.jdi.ReferenceType;
 
 abstract class ShowInstancesAction extends ClassesActionBase {
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = isEnabled(e);
+    final Presentation presentation = e.getPresentation();
+    final ReferenceType ref = getSelectedClass(e);
+    final boolean enabled = isEnabled(e) && ref != null && ref.virtualMachine().canGetInstanceInfo();
+    presentation.setEnabled(enabled);
     if (enabled) {
-      e.getPresentation().setText(String.format("%s (%d)", getLabel(), getInstancesCount(e)));
+      presentation.setText(String.format("%s (%d)", getLabel(), getInstancesCount(e)));
     }
   }
 

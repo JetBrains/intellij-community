@@ -236,21 +236,21 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       myNotificationPopupAlreadyShown = false;
     }
     else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      ApplicationManager.getApplication()
-        .invokeLater(() -> showErrorNotification(tryGetFromMessages(myMessagePool.getFatalErrors(false, false))));
-      myNotificationPopupAlreadyShown = true;
+      Project project = myFrame.getProject();
+      if (project != null) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
+          showErrorNotification(notificationText, project);
+        }, project.getDisposed());
+        myNotificationPopupAlreadyShown = true;
+      }
     }
   }
 
   private static final String ERROR_TITLE = DiagnosticBundle.message("error.new.notification.title");
   private static final String ERROR_LINK = DiagnosticBundle.message("error.new.notification.link");
 
-  private void showErrorNotification(@Nullable String notificationText) {
-    Project project = myFrame.getProject();
-    if (project == null) {
-      return;
-    }
-
+  private void showErrorNotification(@Nullable String notificationText, @NotNull Project project) {
     Notification notification = new Notification("", AllIcons.Ide.FatalError, notificationText == null ? ERROR_TITLE : "", null,
                                                  notificationText == null ? "" : notificationText, NotificationType.ERROR, null);
 

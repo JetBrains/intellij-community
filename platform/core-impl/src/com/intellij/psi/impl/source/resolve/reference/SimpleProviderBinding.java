@@ -35,10 +35,10 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 class SimpleProviderBinding implements ProviderBinding {
-  private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<ElementPattern>>();
+  private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<>();
 
   void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern pattern, double priority) {
-    myProviderPairs.add(new ProviderInfo<ElementPattern>(provider, pattern, priority));
+    myProviderPairs.add(new ProviderInfo<>(provider, pattern, priority));
   }
 
   @Override
@@ -50,7 +50,7 @@ class SimpleProviderBinding implements ProviderBinding {
 
   @Override
   public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
-    for (final ProviderInfo<ElementPattern> trinity : new ArrayList<ProviderInfo<ElementPattern>>(myProviderPairs)) {
+    for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(myProviderPairs)) {
       if (trinity.provider.equals(provider)) {
         myProviderPairs.remove(trinity);
       }

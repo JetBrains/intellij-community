@@ -86,7 +86,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     final PsiFile file = holder.getFile();
     if (!PsiUtil.isLanguageLevel5OrHigher(file) || nullabilityAnnotationsNotAvailable(file)) {
-      return new PsiElementVisitor() { };
+      return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
       @Override
@@ -479,6 +479,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
   private boolean isNonAnnotatedOverridingNotNull(PsiMethod method, PsiMethod superMethod) {
     return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL &&
+           !(method.getReturnType() instanceof PsiPrimitiveType) &&
            !getNullityManager(method).hasNullability(method) &&
            isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL);
   }

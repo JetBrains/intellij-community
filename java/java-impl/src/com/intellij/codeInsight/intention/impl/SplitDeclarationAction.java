@@ -137,7 +137,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         }
 
         final PsiElement parent = block.getParent();
-        final PsiAssignmentExpression replaced = (PsiAssignmentExpression)decl.replace(statement);
+        PsiExpressionStatement replaced = (PsiExpressionStatement)decl.replace(statement);
         if (!(parent instanceof PsiCodeBlock)) {
           final PsiBlockStatement blockStatement =
             (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
@@ -149,7 +149,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         else {
           parent.addBefore(varDeclStatement, block);
         }
-        return replaced;
+        return (PsiAssignmentExpression)replaced.getExpression();
       }
       else {
         return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, decl)).getExpression();

@@ -38,7 +38,7 @@ public class VMOptions {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.VMOptions");
 
   public enum MemoryKind {
-    HEAP("Xmx", ""), PERM_GEN("XX:MaxPermSize", "="), CODE_CACHE("XX:ReservedCodeCacheSize", "=");
+    HEAP("Xmx", ""), PERM_GEN("XX:MaxPermSize", "="), METASPACE("XX:MaxMetaspaceSize", "="), CODE_CACHE("XX:ReservedCodeCacheSize", "=");
 
     public final String optionName;
     public final String option;

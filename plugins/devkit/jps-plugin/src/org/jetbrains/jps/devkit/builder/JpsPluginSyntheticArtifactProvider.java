@@ -59,7 +59,7 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
   @NotNull
   @Override
   public List<JpsArtifact> createArtifacts(@NotNull JpsModel model) {
-    List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>();
+    List<JpsArtifact> artifacts = new ArrayList<>();
     for (JpsTypedModule<JpsSimpleElement<JpsPluginModuleProperties>> module : model.getProject().getModules(JpsPluginModuleType.INSTANCE)) {
       artifacts.add(createArtifact(module, module.getProperties().getData()));
     }
@@ -87,10 +87,7 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
             }
           }
         }
-        catch (JDOMException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
+        catch (JDOMException | IOException e) {
           LOG.info(e);
         }
       }

@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention.*;
-import static com.jetbrains.python.codeInsight.intentions.TypeIntention.getCallable;
+import static com.jetbrains.python.codeInsight.intentions.TypeIntention.getMultiCallable;
 import static com.jetbrains.python.codeInsight.intentions.TypeIntention.resolvesToFunction;
 
 /**
@@ -78,9 +78,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    final PyCallable callable = getCallable(elementAt);
-
-    annotateTypes(editor, callable);
+    getMultiCallable(elementAt).forEach(callable -> annotateTypes(editor, callable));
   }
 
   public static void annotateTypes(Editor editor, PyCallable callable) {

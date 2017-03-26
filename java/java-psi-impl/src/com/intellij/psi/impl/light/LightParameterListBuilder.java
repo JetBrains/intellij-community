@@ -26,7 +26,7 @@ import java.util.List;
  * @author peter
  */
 public class LightParameterListBuilder extends LightElement implements PsiParameterList {
-  private final List<PsiParameter> myParameters = new ArrayList<PsiParameter>();
+  private final List<PsiParameter> myParameters = new ArrayList<>();
   private PsiParameter[] myCachedParameters;
 
   public LightParameterListBuilder(PsiManager manager, Language language) {
@@ -59,7 +59,7 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
   }
 
   @Override
-  public int getParameterIndex(PsiParameter parameter) {
+  public int getParameterIndex(@NotNull PsiParameter parameter) {
     return myParameters.indexOf(parameter);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.gpp;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
@@ -104,7 +104,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
       PsiType valueType = value == null ? null : value.getType();
       final List<ResolveResult> applicable = ContainerUtil.newArrayList();
 
-      if (value == null || GroovyPsiManager.isInheritorCached(valueType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+      if (value == null || InheritanceUtil.isInheritor(valueType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
         final List<ResolveResult> byName = ContainerUtil.newArrayList();
         for (Pair<PsiMethod, PsiSubstitutor> variant : GppClosureParameterTypeProvider.getMethodsToOverrideImplementInInheritor(classType, false)) {
           final PsiMethod method = variant.first;

@@ -18,7 +18,6 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +34,14 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
   private                 List<Block> myBlocks;
 
   /**
-   *  main code                  prefix    injected code        suffix
-   *     |                         |            |                 |
-   *     |                       xxx!!!!!!!!!!!!!!!!!!!!!!!!!!!!xxx
-   * ...............................!!!!!!!!!!!!!!!!!!!!!!!!!!!!....................
-   *                                ^
-   *                              offset
-   *
+   * <pre>
+   *  main code     prefix    injected code        suffix
+   *     |            |            |                 |
+   *     |          xxx!!!!!!!!!!!!!!!!!!!!!!!!!!!!xxx
+   * ..................!!!!!!!!!!!!!!!!!!!!!!!!!!!!..........
+   *                   ^
+   *                 offset
+   * </pre>
    * @param original block inside injected code
    * @param offset start offset of injected code inside the main document
    * @param range range of code inside injected document which is really placed in the main document
@@ -182,5 +182,9 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
   @Override
   public String toString() {
     return myOriginal.toString();
+  }
+
+  public Block getOriginal() {
+    return myOriginal;
   }
 }

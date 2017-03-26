@@ -245,7 +245,7 @@ internal class ApplicationStoreTest {
   fun `modification tracker`() {
     testAppConfig.refreshVfs()
 
-    @State(name = "A", storages = arrayOf(Storage("a.xml")))
+    @State(name = "modificationTrackerA", storages = arrayOf(Storage("a.xml")))
     open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
       var options = TestState()
 
@@ -300,13 +300,13 @@ internal class ApplicationStoreTest {
 
     assertThat(componentFile).hasContent("""
     <application>
-      <component name="A" foo="new" />
+      <component name="modificationTrackerA" foo="new" />
     </application>""".trimIndent())
   }
 
   @Test
   @RunsInEdt
-  fun PersistentStateComponentWithModificationTracker() {
+  fun persistentStateComponentWithModificationTracker() {
     testAppConfig.refreshVfs()
 
     @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))

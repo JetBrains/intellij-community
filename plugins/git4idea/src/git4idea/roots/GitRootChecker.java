@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsRootChecker;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -41,7 +40,7 @@ public class GitRootChecker extends VcsRootChecker {
   }
 
   @Override
-  public boolean isVcsDir(@Nullable String path) {
-    return path != null && path.toLowerCase().endsWith(GitUtil.DOT_GIT);
+  public boolean isVcsDir(@NotNull String path) {
+    return path.toLowerCase().endsWith(GitUtil.DOT_GIT);
   }
 }

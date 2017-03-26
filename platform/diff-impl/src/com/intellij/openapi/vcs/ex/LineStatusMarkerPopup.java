@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -36,7 +38,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
@@ -70,7 +74,7 @@ public abstract class LineStatusMarkerPopup {
   }
 
   @NotNull
-  protected abstract ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable);
+  protected abstract List<AnAction> createToolbarActions(@Nullable Point mousePosition);
 
   @NotNull
   protected FileType getFileType() {
@@ -78,7 +82,7 @@ public abstract class LineStatusMarkerPopup {
   }
 
   protected boolean isShowInnerDifferences() {
-    return false;
+    return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
   }
 
 
@@ -214,7 +218,8 @@ public abstract class LineStatusMarkerPopup {
     }
 
     EditorFragmentComponent fragmentComponent =
-      EditorFragmentComponent.createEditorFragmentComponent(uEditor, myRange.getVcsLine1(), myRange.getVcsLine2(), false, false);
+      EditorFragmentComponent.createEditorFragmentComponent(myEditor.getContentComponent(), uEditor,
+                                                            myRange.getVcsLine1(), myRange.getVcsLine2(), false, false);
 
     EditorFactory.getInstance().releaseEditor(uEditor);
 
@@ -225,6 +230,25 @@ public abstract class LineStatusMarkerPopup {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return "";
     return file.getName();
+  }
+
+  @NotNull
+  private ActionToolbar buildToolbar(@Nullable Point mousePosition, @NotNull Disposable parentDisposable) {
+    List<AnAction> actions = createToolbarActions(mousePosition);
+
+    JComponent editorComponent = myEditor.getComponent();
+    for (AnAction action : actions) {
+      DiffUtil.registerAction(action, editorComponent);
+    }
+
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ActionUtil.getActions(editorComponent).removeAll(actions);
+      }
+    });
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), true);
   }
 
   private static class PopupPanel extends JPanel {
@@ -298,5 +322,24 @@ public abstract class LineStatusMarkerPopup {
     public int getEditorTextOffset() {
       return 3; // myEditorComponent.getInsets().left
     }
+  }
+
+  public abstract static class ToggleByWordDiffActionBase extends ToggleAction implements DumbAware {
+    public ToggleByWordDiffActionBase() {
+      super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
+      reshowPopup();
+    }
+
+    protected abstract void reshowPopup();
   }
 }

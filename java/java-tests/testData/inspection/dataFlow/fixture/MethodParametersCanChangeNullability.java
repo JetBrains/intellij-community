@@ -24,6 +24,15 @@ class Test {
     return null;
   }
 
+  void foo(@NotNull String param) {
+    if (equals(3)) {
+      param = null;
+    }
+    if (param != null) {
+      System.out.println();
+    }
+  }
+
 }
 
 interface Element {

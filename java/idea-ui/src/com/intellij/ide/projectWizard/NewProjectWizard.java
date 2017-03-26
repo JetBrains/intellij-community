@@ -45,7 +45,6 @@ public class NewProjectWizard extends AbstractProjectWizard {
   }
 
   protected void init(@NotNull ModulesProvider modulesProvider) {
-    myWizardContext.setNewWizard(true);
     myWizardContext.setModulesProvider(modulesProvider);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);

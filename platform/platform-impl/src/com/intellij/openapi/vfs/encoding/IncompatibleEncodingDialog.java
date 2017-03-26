@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -120,6 +121,11 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
           }
         }
         close(CONVERT_EXIT_CODE);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return !FileUtilRt.isTooLarge(virtualFile.getLength());
       }
     };
     if (!SystemInfo.isMac && safeToConvert == EncodingUtil.Magic8.NO_WAY) {

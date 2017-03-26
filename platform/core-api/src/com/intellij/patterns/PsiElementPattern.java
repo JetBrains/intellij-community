@@ -182,7 +182,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   @NotNull
   public Self withName(@NotNull final ElementPattern<String> name) {
-    return with(new PsiNamePatternCondition<T>("withName", name));
+    return with(new PsiNamePatternCondition<>("withName", name));
   }
 
   @NotNull

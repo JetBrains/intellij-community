@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.internal.inspector;
 
+import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -24,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
@@ -37,7 +40,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -221,7 +223,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myWrapperPanel.repaint();
     }
 
+    @Override
+    public void dispose() {
+      super.dispose();
+      DialogWrapper.cleanupRootPane(rootPane);
+      DialogWrapper.cleanupWindowListeners(this);
+    }
+
     public void close() {
+      if (myComponent == null) return;
       setHighlightingEnabled(false);
       myComponent = null;
       setVisible(false);
@@ -563,6 +573,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Override
     protected void paintComponent(final Graphics g) {
       Graphics2D g2d = (Graphics2D)g;
+      GraphicsConfig config = new GraphicsConfig(g).setAntialiasing(UISettings.getShadowInstance().getIdeAAType() != AntialiasingType.OFF);
       Rectangle bounds = getBounds();
 
       g2d.setColor(getBackground());
@@ -599,6 +610,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       g2d.drawRect(innerX - boxSize * 2, innerY - boxSize * 2, innerWidth + boxSize * 4, innerHeight + boxSize * 4);
       drawInsets(g2d, fm, "insets", myInsets, boxSize * 2, fontHeight, innerX, innerY, innerWidth, innerHeight);
+
+      config.restore();
     }
 
     private static void drawInsets(Graphics2D g2d, FontMetrics fm, String name, Insets insets, int offset, int fontHeight, int innerX, int innerY, int innerWidth, int innerHeight) {
@@ -1003,7 +1016,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
-    Map<Component, InspectorWindow> myComponentToInspector = new WeakKeyWeakValueHashMap<>();
 
     public UiInspector() {
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
@@ -1011,31 +1023,18 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     public void dispose() {
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-      for (InspectorWindow w : myComponentToInspector.values()) {
-        w.close();
+      for (Window window : Window.getWindows()) {
+        if (window instanceof InspectorWindow) {
+          ((InspectorWindow)window).close();
+        }
       }
-      myComponentToInspector.clear();
     }
 
     public void showInspector(@NotNull Component c) {
-      InspectorWindow window = myComponentToInspector.get(c);
-      if (window != null) {
-        window.myHierarchyTree.setModel(buildModel(c));
-        window.myHierarchyTree.setCellRenderer(new ComponentTreeCellRenderer(c));
-        window.myHierarchyTree.expandPath();
-
-        window.switchInfo(c);
-        window.setHighlightingEnabled(true);
-        window.setVisible(true);
-        window.toFront();
-      }
-      else {
-        window = new InspectorWindow(c);
-        myComponentToInspector.put(c, window);
-        window.pack();
-        window.setVisible(true);
-        window.toFront();
-      }
+      Window window = new InspectorWindow(c);
+      window.pack();
+      window.setVisible(true);
+      window.toFront();
     }
 
     public void eventDispatched(AWTEvent event) {

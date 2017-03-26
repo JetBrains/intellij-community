@@ -38,7 +38,7 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
-    final ArrayList<BuildTargetType<?>> types = new ArrayList<BuildTargetType<?>>();
+    final ArrayList<BuildTargetType<?>> types = new ArrayList<>();
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
     return types;

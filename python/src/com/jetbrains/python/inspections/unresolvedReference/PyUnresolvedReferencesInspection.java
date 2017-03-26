@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           myIsEnabled = false;
         }
         else if (isPyCharm) {
-          myIsEnabled = PythonSdkType.getSdk(anchor) != null || PyUtil.isInScratchFile(anchor);
+          myIsEnabled = PythonSdkType.findPythonSdk(anchor) != null || PyUtil.isInScratchFile(anchor);
         }
         else {
           myIsEnabled = true;
@@ -812,7 +812,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
-        if (extension.ignoreUnresolvedMember(type, name)) {
+        if (extension.ignoreUnresolvedMember(type, name, myTypeEvalContext)) {
           return true;
         }
       }
@@ -1007,8 +1007,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     public void highlightUnusedImports() {
+      final PyInspectionExtension[] extensions = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
       final List<PsiElement> unused = collectUnusedImportElements();
       for (PsiElement element : unused) {
+        if (Arrays.stream(extensions).anyMatch(extension -> extension.ignoreUnused(element))) {
+          continue;
+        }
         if (element.getTextLength() > 0) {
           registerProblem(element, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new OptimizeImportsQuickFix());
         }

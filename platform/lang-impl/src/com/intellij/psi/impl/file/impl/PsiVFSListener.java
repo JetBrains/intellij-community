@@ -30,11 +30,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
@@ -45,7 +45,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -404,7 +403,6 @@ public class PsiVFSListener extends VirtualFileAdapter {
       }
     }
 
-    ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myManager.getProject())).fastenBelts(vFile);
     ApplicationManager.getApplication().runWriteAction(
       new ExternalChangeAction() {
         @Override
@@ -708,6 +706,18 @@ public class PsiVFSListener extends VirtualFileAdapter {
       } else {
         handleVfsChangeWithoutPsi(file);
       }
+    }
+
+    @Override
+    public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
+      PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
+      if (!file.isValid() || psiFile == null || !FileUtilRt.isTooLarge(file.getLength()) || psiFile instanceof PsiLargeFile) return;
+      ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
+        @Override
+        public void run() {
+          myFileManager.reloadFromDisk(psiFile, true);
+        }
+      });
     }
   }
 

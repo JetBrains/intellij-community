@@ -24,6 +24,7 @@ import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
@@ -66,6 +67,17 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     }
 
     new IntroduceVariableHandler().invoke(project, editor, statement.getExpression());
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
   }
 
   private static PsiExpressionStatement detectExpressionStatement(@NotNull PsiElement element) {

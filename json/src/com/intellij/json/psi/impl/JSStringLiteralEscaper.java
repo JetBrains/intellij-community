@@ -62,7 +62,8 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
       c = chars.charAt(index++);
       if (escapeBacktick && c == '`') {
         outChars.append(c);
-      } else if (regExp) {
+      }
+      else if (regExp) {
         if (c != '/') {
           outChars.append('\\');
         }
@@ -178,7 +179,8 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
             break;
 
           default:
-            return false;
+            outChars.append(c);
+            break;
         }
       }
 

@@ -27,7 +27,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.GCUtil;
+import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -15,8 +15,26 @@
  */
 package com.intellij.xml.impl.schema;
 
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Mike
  */
 public abstract class TypeDescriptor {
+
+  protected final XmlTag myTag;
+
+  protected TypeDescriptor() {
+    this(null);
+  }
+
+  protected TypeDescriptor(XmlTag tag) {
+    myTag = tag;
+  }
+
+  @Nullable
+  public XmlTag getDeclaration(){
+    return myTag;
+  }
 }

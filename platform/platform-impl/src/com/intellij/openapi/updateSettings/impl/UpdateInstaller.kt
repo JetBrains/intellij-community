@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
@@ -38,7 +39,10 @@ object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean, indicator: ProgressIndicator): Array<String> {
+  fun downloadPatchFile(patch: PatchInfo,
+                        toBuild: BuildNumber,
+                        forceHttps: Boolean,
+                        indicator: ProgressIndicator): File {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
     val product = ApplicationInfo.getInstance().build.productCode
@@ -51,31 +55,46 @@ object UpdateInstaller {
     val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else baseUrl + '/'), patchName)
     val patchFile = File(getTempDir(), "patch.jar")
     HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
-
-    indicator.text = IdeBundle.message("update.preparing.patch.progress")
-    return preparePatchCommand(patchFile)
+    return patchFile
   }
 
   @JvmStatic
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
-    indicator.text = IdeBundle.message("progress.downloading.plugins")
+    indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
-    var installed = false
+    UpdateChecker.saveDisabledToUpdatePlugins()
 
     val disabledToUpdate = UpdateChecker.disabledToUpdatePlugins
+    val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
-          val descriptor = downloader.descriptor
-          if (descriptor != null) {
-            downloader.install()
-            installed = true
-          }
+        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator) && downloader.descriptor != null) {
+          readyToInstall += downloader
         }
+        indicator.checkCanceled()
       }
+      catch (e: ProcessCanceledException) { throw e }
       catch (e: Exception) {
         Logger.getInstance(UpdateChecker::class.java).info(e)
       }
+    }
+
+    var installed = false
+
+    try {
+      indicator.startNonCancelableSection()
+      for (downloader in readyToInstall) {
+        try {
+          downloader.install()
+          installed = true
+        }
+        catch (e: Exception) {
+          Logger.getInstance(UpdateChecker::class.java).info(e)
+        }
+      }
+    }
+    finally {
+      indicator.finishNonCancelableSection()
     }
 
     return installed
@@ -87,12 +106,17 @@ object UpdateInstaller {
     if (tempDir.exists()) FileUtil.delete(tempDir)
   }
 
-  private fun preparePatchCommand(patchFile: File): Array<String> {
+  @JvmStatic
+  @Throws(IOException::class)
+  fun preparePatchCommand(patchFile: File): Array<String> {
     val log4j = findLib("log4j.jar")
     val jna = findLib("jna.jar")
     val jnaUtils = findLib("jna-platform.jar")
 
     val tempDir = getTempDir()
+    if (FileUtil.isAncestor(PathManager.getHomePath(), tempDir.path, true)) {
+      throw IOException("Temp directory inside installation: $tempDir")
+    }
     if (!(tempDir.exists() || tempDir.mkdirs())) {
       throw IOException("Cannot create temp directory: $tempDir")
     }

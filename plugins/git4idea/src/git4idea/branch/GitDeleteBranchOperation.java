@@ -20,7 +20,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -349,7 +348,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     new Task.Backgroundable(myProject, "Deleting Remote Branch " + myBranchName + "...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        GitBrancher brancher = ServiceManager.getService(getProject(), GitBrancher.class);
+        GitBrancher brancher = GitBrancher.getInstance(getProject());
         for (String remoteBranch : myTrackedBranches.keySet()) {
           brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(myTrackedBranches.get(remoteBranch)));
         }

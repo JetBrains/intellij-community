@@ -31,7 +31,6 @@ import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.*;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -44,12 +43,14 @@ import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
-  private final Project myProject;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
   private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<>();
   private final SvnAuthenticationManager myManager;
 
-  public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {
+  public SvnInteractiveAuthenticationProvider(@NotNull SvnVcs vcs, SvnAuthenticationManager manager) {
     myManager = manager;
+    myVcs = vcs;
     myProject = vcs.getProject();
   }
 
@@ -74,8 +75,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final MyCallState callState = new MyCallState(true, false);
     myCallState.set(callState);
     // once we came here, we don't know _correct_ auth todo +-
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-    configuration.clearCredentials(kind, realm);
+    myVcs.getSvnConfiguration().clearCredentials(kind, realm);
 
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;

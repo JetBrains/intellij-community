@@ -21,7 +21,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class JdkVersionUtil {
-  private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<JavaSdkVersion, String[]>(JavaSdkVersion.class);
+  private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<>(JavaSdkVersion.class);
 
   static {
     VERSION_STRINGS.put(JavaSdkVersion.JDK_1_0, new String[]{"1.0"});

@@ -284,6 +284,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/extensions/testExtensions.iml" filepath="$PROJECT_DIR$/platform/testFramework/extensions/testExtensions.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/testFramework.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/testFramework-java.iml" filepath="$PROJECT_DIR$/java/testFramework/testFramework-java.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/platform/testGuiFramework/testGuiFramework.iml" filepath="$PROJECT_DIR$/platform/testGuiFramework/testGuiFramework.iml" group="platform"/>
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/testRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng/testng.iml" filepath="$PROJECT_DIR$/plugins/testng/testng.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" group="plugins" />
@@ -328,6 +329,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/yaml.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/python/build/patches/python-community-plugin-build-patches.iml" filepath="$PROJECT_DIR$/python/build/patches/python-community-plugin-build-patches.iml" group="python" />
     </modules>
   </component>
 </project>

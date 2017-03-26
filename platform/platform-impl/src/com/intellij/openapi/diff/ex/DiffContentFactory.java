@@ -22,6 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link com.intellij.diff.DiffContentFactory} instead
+ */
+@Deprecated
 public class DiffContentFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.ex.DiffContentFactory");
 

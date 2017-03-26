@@ -53,13 +53,13 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
   @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return process(Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)), consumer);
+    return process(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
   }
 
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    return processAsync(Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)), consumer);
+    return processAsync(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
   }
 
   private boolean process(@NotNull Set<M> processedElements, @NotNull Processor<T> consumer) {

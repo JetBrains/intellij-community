@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.PROJECT_CONFIG_DIR
 import com.intellij.configurationStore.StoreAwareProjectManager
-import com.intellij.configurationStore.loadAndUseProject
-import com.intellij.configurationStore.saveStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -88,12 +86,12 @@ class ProjectInspectionManagerTest {
       file.delete()
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
@@ -157,7 +155,7 @@ class ProjectInspectionManagerTest {
       </component>""".trimIndent())
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
     }
   }

@@ -51,7 +51,7 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   private final JButton myCancelButton;
   private final JFrame myFrame;
 
-  private final Queue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<Runnable> myQueue = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final AtomicBoolean hasError = new AtomicBoolean(false);
@@ -137,30 +137,33 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   }
 
   private void startRequestDispatching() {
-    new Thread(() -> {
-      while (true) {
-        try {
-          //noinspection BusyWait
-          Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-          Runner.printStackTrace(e);
-          return;
-        }
-
-        final List<UpdateRequest> pendingRequests = new ArrayList<>();
-        UpdateRequest request;
-        while ((request = myQueue.poll()) != null) {
-          pendingRequests.add(request);
-        }
-
-        SwingUtilities.invokeLater(() -> {
-          for (UpdateRequest each : pendingRequests) {
-            each.perform();
+    new Thread("Updater UI Dispatcher") {
+      @Override
+      public void run() {
+        while (true) {
+          try {
+            //noinspection BusyWait
+            Thread.sleep(100);
           }
-        });
+          catch (InterruptedException e) {
+            Runner.printStackTrace(e);
+            return;
+          }
+
+          List<Runnable> pendingRequests = new ArrayList<>();
+          Runnable request;
+          while ((request = myQueue.poll()) != null) {
+            pendingRequests.add(request);
+          }
+
+          SwingUtilities.invokeLater(() -> {
+            for (Runnable each : pendingRequests) {
+              each.run();
+            }
+          });
+        }
       }
-    }, "swing updater dispatch").start();
+    }.start();
   }
 
   private void doCancel() {
@@ -199,7 +202,8 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
           setProgress(100);
           myCancelButton.setText(EXIT_BUTTON_TITLE);
           myCancelButton.setEnabled(true);
-        } else {
+        }
+        else {
           exit();
         }
       }

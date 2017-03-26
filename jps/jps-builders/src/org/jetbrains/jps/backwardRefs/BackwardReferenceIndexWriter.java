@@ -45,6 +45,10 @@ public class BackwardReferenceIndexWriter {
     myIndex = index;
   }
 
+  Exception getRebuildRequestCause() {
+    return myIndex.getRebuildRequestCause();
+  }
+
   public static void closeIfNeed() {
     if (ourInstance != null) {
       try {
@@ -65,7 +69,7 @@ public class BackwardReferenceIndexWriter {
     if (isEnabled()) {
       boolean isRebuild = isRebuildInAllJavaModules(context);
 
-      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context))) {
+      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context)) || !JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
         return;
       }
@@ -82,7 +86,7 @@ public class BackwardReferenceIndexWriter {
       }
 
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
-        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir));
+        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false));
       }
     } else {
       CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
@@ -153,12 +157,18 @@ public class BackwardReferenceIndexWriter {
     return ref.getModifiers().contains(Modifier.PRIVATE);
   }
 
-  private static int id(JavacRef ref, NameEnumerator nameEnumerator) {
+  private int id(JavacRef ref, NameEnumerator nameEnumerator) {
     return id(ref.getName(), nameEnumerator);
   }
 
-  private static int id(String name, NameEnumerator nameEnumerator) {
-    return nameEnumerator.enumerate(name);
+  private int id(String name, NameEnumerator nameEnumerator) {
+    try {
+      return nameEnumerator.enumerate(name);
+    }
+    catch (IOException ex) {
+      myIndex.setRebuildRequestCause(ex);
+      return 0;
+    }
   }
 
   private static boolean isRebuildInAllJavaModules(CompileContext context) {

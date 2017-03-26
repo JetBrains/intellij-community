@@ -23,11 +23,11 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,11 +55,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
     final Project project = targetClass.getProject();
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (project.isDisposed()) {
-        return;
-      }
-
+    TransactionGuard.getInstance().submitTransactionLater(project, () -> {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       final PsiNewExpression newExpression = getNewExpression();

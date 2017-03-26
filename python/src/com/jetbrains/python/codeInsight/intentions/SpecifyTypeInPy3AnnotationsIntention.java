@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -77,10 +78,10 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       annotateParameter(project, editor, parameter, true);
     }
     else {
-      PyCallable callable = getCallable(elementAt);
-      if (callable instanceof PyFunction) {
-        annotateReturnType(project, (PyFunction)callable, true);
-      }
+      StreamEx
+        .of(getMultiCallable(elementAt))
+        .select(PyFunction.class)
+        .forEach(function -> annotateReturnType(project, function, true));
     }
   }
 

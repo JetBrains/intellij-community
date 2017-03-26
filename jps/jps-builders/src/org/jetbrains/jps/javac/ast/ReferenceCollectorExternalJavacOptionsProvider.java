@@ -30,7 +30,7 @@ public class ReferenceCollectorExternalJavacOptionsProvider implements ExternalJ
   @NotNull
   @Override
   public Collection<String> getOptions(@NotNull JavaCompilingTool tool) {
-    List<String> options = new ArrayList<String>(2);
+    List<String> options = new ArrayList<>(2);
     if (tool.getId().equals(JavaCompilers.JAVAC_ID)) {
       final JavacReferenceCollectorOptions
         javacReferenceCollectorOptions = new JavacReferenceCollectorOptions();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -83,15 +80,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myIgnoreExternalSuperNotNull.addActionListener(actionListener);
       myRequireNNFieldsInitialized.addActionListener(actionListener);
       myReportNullLiteralsPassedNotNullParameter.addActionListener(actionListener);
-      myConfigureAnnotationsButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
-          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-          final NullableNotNullDialog dialog = new NullableNotNullDialog(project);
-          dialog.show();
-        }
-      });
+      myConfigureAnnotationsButton.addActionListener(NullableNotNullDialog.createActionListener(this));
       reset();
     }
 

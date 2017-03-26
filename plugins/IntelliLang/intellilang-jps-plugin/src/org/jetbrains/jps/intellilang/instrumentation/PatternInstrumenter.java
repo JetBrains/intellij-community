@@ -39,13 +39,13 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private boolean myHasAssertions;
   private boolean myHasStaticInitializer;
 
-  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<String>();
+  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
 
   private final String myPatternAnnotationClassName;
   final InstrumentationType myInstrumentationType;
   private final InstrumentationClassFinder myClassFinder;
-  private final Map<String, String> myAnnotationNameToPatternMap = new HashMap<String, String>(); // can contain null values!
-  private final Set<String> myProcessedAnnotations = new HashSet<String>(); // checked annotation classes
+  private final Map<String, String> myAnnotationNameToPatternMap = new HashMap<>(); // can contain null values!
+  private final Set<String> myProcessedAnnotations = new HashSet<>(); // checked annotation classes
 
   String myClassName;
   private boolean myInstrumented;
@@ -250,7 +250,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       final InputStream is = myClassFinder.getClassBytesAsStream(annotationClassName);
       if (is != null) {
         try {
-          final Ref<String> patternString = new Ref<String>(null);
+          final Ref<String> patternString = new Ref<>(null);
           // dig into annotation class and check if it is annotated with pattern annotation.
           // if yes, load the pattern string from the pattern annotation and associate it with this annotation
           final ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {

@@ -28,13 +28,13 @@ import java.util.List;
 class ControlFlowImpl implements ControlFlow {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowImpl");
 
-  private final List<Instruction> myInstructions = new ArrayList<Instruction>();
-  private final ObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new ObjectIntHashMap<PsiElement>();
-  private final ObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new ObjectIntHashMap<PsiElement>();
-  private final List<PsiElement> myElementsForInstructions = new ArrayList<PsiElement>();
+  private final List<Instruction> myInstructions = new ArrayList<>();
+  private final ObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new ObjectIntHashMap<>();
+  private final ObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new ObjectIntHashMap<>();
+  private final List<PsiElement> myElementsForInstructions = new ArrayList<>();
   private boolean myConstantConditionOccurred;
 
-  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
+  private final Stack<PsiElement> myElementStack = new Stack<>();
 
   void addInstruction(Instruction instruction) {
     myInstructions.add(instruction);

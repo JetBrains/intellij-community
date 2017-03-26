@@ -20,21 +20,14 @@ import com.intellij.diff.util.LineRange;
 import org.jetbrains.annotations.NotNull;
 
 class ChangedBlock {
-  private final int myLine1;
-  private final int myLine2;
-
   @NotNull private final LineRange myRange1;
   @NotNull private final LineRange myRange2;
 
   @NotNull private final LineFragment myLineFragment;
 
-  public ChangedBlock(int line1,
-                      int line2,
-                      @NotNull LineRange range1,
+  public ChangedBlock(@NotNull LineRange range1,
                       @NotNull LineRange range2,
                       @NotNull LineFragment lineFragment) {
-    myLine1 = line1;
-    myLine2 = line2;
     myRange1 = range1;
     myRange2 = range2;
     myLineFragment = lineFragment;
@@ -51,11 +44,11 @@ class ChangedBlock {
   }
 
   public int getLine1() {
-    return myLine1;
+    return myRange1.start;
   }
 
   public int getLine2() {
-    return myLine2;
+    return myRange2.end;
   }
 
   @NotNull

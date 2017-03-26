@@ -282,18 +282,20 @@ public class GithubConnection {
   @NotNull
   private static GithubStatusCodeException getStatusCodeException(@NotNull CloseableHttpResponse response) {
     StatusLine statusLine = response.getStatusLine();
+    int statusCode = statusLine.getStatusCode();
+    String reason = statusCode + " " + statusLine.getReasonPhrase();
     try {
       HttpEntity entity = response.getEntity();
       if (entity != null) {
         GithubErrorMessage error = fromJson(parseResponse(entity.getContent()), GithubErrorMessage.class);
-        String message = statusLine.getReasonPhrase() + " - " + error.getMessage();
-        return new GithubStatusCodeException(message, error, statusLine.getStatusCode());
+        String message = reason + " - " + error.getMessage();
+        return new GithubStatusCodeException(message, error, statusCode);
       }
     }
     catch (IOException e) {
       LOG.info(e);
     }
-    return new GithubStatusCodeException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
+    return new GithubStatusCodeException(reason, statusCode);
   }
 
   @NotNull

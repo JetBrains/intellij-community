@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,18 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject);
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myIndicesFixture.tearDown();
-    super.tearDown();
+    try {
+      myIndicesFixture.tearDown();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testClassSearch() throws Exception {
@@ -117,12 +121,12 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   private List<String> getClassSearchResults(String pattern) {
     List<String> actualArtifacts = new ArrayList<>();
     for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
-      String s = eachResult.className + "(" + eachResult.packageName + ")";
+      StringBuilder s = new StringBuilder(eachResult.className + "(" + eachResult.packageName + ")");
       for (MavenArtifactInfo eachVersion : eachResult.versions) {
-        if (s.length() > 0) s += " ";
-        s += eachVersion.getGroupId() + ":" + eachVersion.getArtifactId()+ ":" + eachVersion.getVersion();
+        if (s.length() > 0) s.append(" ");
+        s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
       }
-      actualArtifacts.add(s);
+      actualArtifacts.add(s.toString());
     }
     return actualArtifacts;
   }
@@ -130,12 +134,12 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   private void assertArtifactSearchResults(String pattern, String... expected) {
     List<String> actual = new ArrayList<>();
     for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher(true).search(myProject, pattern, 100)) {
-      String s = "";
+      StringBuilder s = new StringBuilder();
       for (MavenArtifactInfo eachVersion : eachResult.versions) {
-        if (s.length() > 0) s += " ";
-        s += eachVersion.getGroupId() + ":" + eachVersion.getArtifactId()+ ":" + eachVersion.getVersion();
+        if (s.length() > 0) s.append(" ");
+        s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
       }
-      actual.add(s);
+      actual.add(s.toString());
     }
     assertOrderedElementsAreEqual(actual, expected);
   }

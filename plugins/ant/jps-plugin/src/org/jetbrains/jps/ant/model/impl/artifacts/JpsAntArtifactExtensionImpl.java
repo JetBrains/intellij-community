@@ -62,7 +62,7 @@ public class JpsAntArtifactExtensionImpl extends JpsCompositeElementBase<JpsAntA
 
   @Override
   public List<BuildFileProperty> getAntProperties() {
-    final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
+    final List<BuildFileProperty> properties = new ArrayList<>();
     properties.add(new BuildFileProperty(ARTIFACT_OUTPUT_PATH_PROPERTY, getArtifact().getOutputPath()));
     properties.addAll(myProperties.myUserProperties);
     return properties;

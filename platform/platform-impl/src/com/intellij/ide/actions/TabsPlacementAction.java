@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,38 @@ public abstract class TabsPlacementAction extends ToggleAction implements DumbAw
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return UISettings.getInstance().EDITOR_TAB_PLACEMENT == getPlace();
+    return UISettings.getInstance().getEditorTabPlacement() == getPlace();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    UISettings.getInstance().EDITOR_TAB_PLACEMENT = getPlace();
+    UISettings.getInstance().setEditorTabPlacement(getPlace());
     LafManager.getInstance().repaintUI();
     UISettings.getInstance().fireUISettingsChanged();
   }
 
-  public static class Top    extends TabsPlacementAction {int getPlace() {return SwingConstants.TOP;}}
-  public static class Left   extends TabsPlacementAction {int getPlace() {return SwingConstants.LEFT;}}
-  public static class Bottom extends TabsPlacementAction {int getPlace() {return SwingConstants.BOTTOM;}}
-  public static class Right  extends TabsPlacementAction {int getPlace() {return SwingConstants.RIGHT;}}
-  public static class None   extends TabsPlacementAction {int getPlace() {return UISettings.TABS_NONE;}}
+  public static class Top extends TabsPlacementAction {
+    @Override
+    int getPlace() {return SwingConstants.TOP;}
+  }
+
+  public static class Left extends TabsPlacementAction {
+    @Override
+    int getPlace() {return SwingConstants.LEFT;}
+  }
+
+  public static class Bottom extends TabsPlacementAction {
+    @Override
+    int getPlace() {return SwingConstants.BOTTOM;}
+  }
+
+  public static class Right extends TabsPlacementAction {
+    @Override
+    int getPlace() {return SwingConstants.RIGHT;}
+  }
+
+  public static class None extends TabsPlacementAction {
+    @Override
+    int getPlace() {return UISettings.TABS_NONE;}
+  }
 }

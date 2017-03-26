@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -37,7 +38,6 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -137,7 +137,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     Object[] candidates = context.getObjectsToView();
     PsiExpression[] args = o.getExpressions();
-    PsiElement realResolve = null;
+    PsiCall call = getCall(o);
+    PsiElement realResolve = call != null ? call.resolveMethod() : null;
+
+    PsiMethod chosenMethod = CompletionMemory.getChosenMethod(call);
+    CandidateInfo chosenInfo = null;
+    CandidateInfo completeMatch = null;
 
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
@@ -202,17 +207,23 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
 
       context.setUIComponentEnabled(i, enabled);
-      if (candidates.length > 1 &&
-          enabled &&
-          parms.length == args.length &&
-          isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
-        if (realResolve == null) {
-          PsiCall call = getCall(o);
-          if (call != null) realResolve = call.resolveMethod();
-          if (realResolve == null) realResolve = PsiUtilCore.NULL_PSI_ELEMENT;
+      if (candidates.length > 1 && enabled) {
+        if (chosenMethod == method) {
+          chosenInfo = candidate;
         }
-        if (realResolve == PsiUtilCore.NULL_PSI_ELEMENT || realResolve == method) context.setHighlightedParameter(candidate);
+
+        if (parms.length == args.length && realResolve == method &&
+            isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
+          completeMatch = candidate;
+        }
       }
+    }
+
+    if (chosenInfo != null) {
+      context.setHighlightedParameter(chosenInfo);
+    }
+    else if (completeMatch != null) {
+      context.setHighlightedParameter(completeMatch);
     }
   }
 

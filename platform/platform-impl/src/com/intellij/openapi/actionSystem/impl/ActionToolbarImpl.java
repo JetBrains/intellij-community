@@ -38,6 +38,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -59,7 +60,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ActionToolbarImpl extends JPanel implements ActionToolbar {
+public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
   private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<>();
@@ -1235,6 +1236,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @Override
   public void setSecondaryActionsTooltip(String secondaryActionsTooltip) {
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
+  }
+
+  @NotNull
+  @Override
+  public List<AnAction> getActions(boolean originalProvider) {
+    return getActions();
   }
 
   @NotNull

@@ -125,7 +125,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     if (level == null) return HighlightDisplayLevel.WARNING;
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
-      LOG.error("Can't find highlight display level: " + level);
+      LOG.error("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; and short name: " + shortName);
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;

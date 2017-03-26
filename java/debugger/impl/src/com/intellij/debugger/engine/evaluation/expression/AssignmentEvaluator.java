@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class AssignmentEvaluator implements Evaluator{
 
   public AssignmentEvaluator(@NotNull Evaluator leftEvaluator, @NotNull Evaluator rightEvaluator) {
     myLeftEvaluator = leftEvaluator;
-    myRightEvaluator = new DisableGC(rightEvaluator);
+    myRightEvaluator = DisableGC.create(rightEvaluator);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

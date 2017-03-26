@@ -419,7 +419,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasIgnored = new File(ignored.getPath());
     final FileGroupInfo groupInfo = new FileGroupInfo();
     groupInfo.onFileEnabled(ignored);
-    SvnPropertyService.doAddToIgnoreProperty(myVcs, myProject, false, new VirtualFile[]{ignored}, groupInfo);
+    SvnPropertyService.doAddToIgnoreProperty(myVcs, false, new VirtualFile[]{ignored}, groupInfo);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -452,7 +452,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasIgnored = new File(ignored.getPath());
     final FileGroupInfo groupInfo = new FileGroupInfo();
     groupInfo.onFileEnabled(ignored);
-    SvnPropertyService.doAddToIgnoreProperty(myVcs, myProject, false, new VirtualFile[]{ignored}, groupInfo);
+    SvnPropertyService.doAddToIgnoreProperty(myVcs, false, new VirtualFile[]{ignored}, groupInfo);
     checkin();
 
     myDirtyScopeManager.markEverythingDirty();

@@ -153,8 +153,8 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   }
 
   private fun updateTableWidth() {
-    var maxNameWidth = 0
-    var maxUrlWidth = 0
+    var maxNameWidth = 30
+    var maxUrlWidth = 250
     for (node in nodes) {
       val fontMetrics = table.getFontMetrics(UIManager.getFont("Table.font").deriveFont(Font.BOLD))
       val nameWidth = fontMetrics.stringWidth(node.getPresentableString())
@@ -168,7 +168,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     table.columnModel.getColumn(NAME_COLUMN).preferredWidth = maxNameWidth
     table.columnModel.getColumn(URL_COLUMN).preferredWidth = maxUrlWidth
 
-    val defaultPreferredHeight = table.preferredScrollableViewportSize.height
+    val defaultPreferredHeight = table.rowHeight*(table.rowCount+3)
     table.preferredScrollableViewportSize = Dimension(maxNameWidth + maxUrlWidth + DEFAULT_HGAP, defaultPreferredHeight)
   }
 

@@ -145,7 +145,7 @@ public class ProblemsViewImpl extends ProblemsView{
       if (!myProject.isDisposed()) {
         final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
         if (tw != null) {
-          final boolean active = myPanel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
+          final boolean active = myPanel.getErrorViewStructure().hasMessages(EnumSet.of(ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.NOTE));
           tw.setIcon(active ? myActiveIcon : myPassiveIcon);
         }
       }

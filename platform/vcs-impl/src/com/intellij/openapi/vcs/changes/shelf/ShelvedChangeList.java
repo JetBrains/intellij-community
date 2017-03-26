@@ -74,6 +74,21 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
     mySchemeName = DESCRIPTION;
   }
 
+  public static ShelvedChangeList copy(@NotNull ShelvedChangeList list) {
+    ShelvedChangeList copied = new ShelvedChangeList();
+    copied.PATH = list.PATH;
+    copied.DESCRIPTION = list.DESCRIPTION;
+    copied.DATE = list.DATE;
+    copied.myBinaryFiles = new ArrayList<>();
+    for (ShelvedBinaryFile file : list.getBinaryFiles()) {
+      copied.myBinaryFiles.add(new ShelvedBinaryFile(file.BEFORE_PATH, file.AFTER_PATH, file.SHELVED_PATH));
+    }
+    copied.mySchemeName = list.DESCRIPTION;
+    copied.myRecycled = list.isRecycled();
+    copied.myToDelete = list.isMarkedToDelete();
+    return copied;
+  }
+
   public boolean isRecycled() {
     return myRecycled;
   }

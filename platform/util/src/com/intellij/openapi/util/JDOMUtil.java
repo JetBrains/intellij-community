@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -53,6 +55,12 @@ import java.util.List;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
   private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
+  public static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
+    @Override
+    public boolean value(Attribute attribute) {
+      return !StringUtil.isEmpty(attribute.getValue());
+    }
+  };
 
   private JDOMUtil() { }
 
@@ -84,12 +92,21 @@ public class JDOMUtil {
   }
 
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
+    return areElementsEqual(e1, e2, false);
+  }
+
+  /**
+   *
+   * @param ignoreEmptyAttrValues defines if elements like <element foo="bar" skip_it=""/> and <element foo="bar"/> are 'equal'
+   * @return <code>true</code> if two elements are deep-equals by their content and attributes
+   */
+  public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2, boolean ignoreEmptyAttrValues) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
     return Comparing.equal(e1.getName(), e2.getName())
-           && attListsEqual(e1.getAttributes(), e2.getAttributes())
-           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
+           && attListsEqual(e1.getAttributes(), e2.getAttributes(), ignoreEmptyAttrValues)
+           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
@@ -124,30 +141,14 @@ public class JDOMUtil {
     return i * 31 + s.hashCode();
   }
 
+  /**
+   * @deprecated Use Element.getChildren() directly
+   */
   @NotNull
-  public static Content[] getContent(@NotNull Element m) {
-    List<Content> list = m.getContent();
-    return list.toArray(new Content[list.size()]);
-  }
-
-  @NotNull
+  @Deprecated
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[list.size()]);
-  }
-
-  public static void addContent(@NotNull final Element targetElement, final Object node) {
-    if (node instanceof Content) {
-      Content content = (Content)node;
-      targetElement.addContent(content);
-    }
-    else if (node instanceof List) {
-      //noinspection unchecked
-      targetElement.addContent((List)node);
-    }
-    else {
-      throw new IllegalArgumentException("Wrong node: " + node);
-    }
   }
 
   public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
@@ -182,7 +183,7 @@ public class JDOMUtil {
     return result;
   }
 
-  public static void appendLegalized(@NotNull StringBuilder sb, char each) {
+  private static void appendLegalized(@NotNull StringBuilder sb, char each) {
     if (each == '<' || each == '>') {
       sb.append(each == '<' ? "&lt;" : "&gt;");
     }
@@ -201,14 +202,14 @@ public class JDOMUtil {
     }
   }
 
-  private static boolean contentListsEqual(final List c1, final List c2) {
+  private static boolean contentListsEqual(final List c1, final List c2, boolean ignoreEmptyAttrValues) {
     if (c1 == null && c2 == null) return true;
     if (c1 == null || c2 == null) return false;
 
     Iterator l1 = c1.listIterator();
     Iterator l2 = c2.listIterator();
     while (l1.hasNext() && l2.hasNext()) {
-      if (!contentsEqual((Content)l1.next(), (Content)l2.next())) {
+      if (!contentsEqual((Content)l1.next(), (Content)l2.next(), ignoreEmptyAttrValues)) {
         return false;
       }
     }
@@ -216,29 +217,28 @@ public class JDOMUtil {
     return l1.hasNext() == l2.hasNext();
   }
 
-  private static boolean contentsEqual(Content c1, Content c2) {
+  private static boolean contentsEqual(Content c1, Content c2, boolean ignoreEmptyAttrValues) {
     if (!(c1 instanceof Element) && !(c2 instanceof Element)) {
       return c1.getValue().equals(c2.getValue());
     }
 
-    return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2);
+    return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
-  private static boolean attListsEqual(@NotNull List a1, @NotNull List a2) {
-    if (a1.size() != a2.size()) return false;
-    for (int i = 0; i < a1.size(); i++) {
-      if (!attEqual((Attribute)a1.get(i), (Attribute)a2.get(i))) return false;
+  private static boolean attListsEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
+    if (ignoreEmptyAttrValues) {
+      l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
+      l2 = ContainerUtil.filter(l2, NOT_EMPTY_VALUE_CONDITION);
+    }
+    if (l1.size() != l2.size()) return false;
+    for (int i = 0; i < l1.size(); i++) {
+      if (!attEqual(l1.get(i), l2.get(i))) return false;
     }
     return true;
   }
 
   private static boolean attEqual(@NotNull Attribute a1, @NotNull Attribute a2) {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
-  }
-
-  @NotNull
-  public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
-    return getSaxBuilder().build(new CharArrayReader(chars, 0, length));
   }
 
   private static SAXBuilder getSaxBuilder() {
@@ -270,13 +270,22 @@ public class JDOMUtil {
     return saxBuilder;
   }
 
+  /**
+   * @deprecated Use load
+   */
   @NotNull
+  @Deprecated
   public static Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
     return loadDocument(new CharSequenceReader(seq));
   }
 
   @NotNull
-  public static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
+  public static Element load(@NotNull CharSequence seq) throws IOException, JDOMException {
+    return load(new CharSequenceReader(seq));
+  }
+
+  @NotNull
+  private static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
     try {
       return getSaxBuilder().build(reader);
     }
@@ -340,13 +349,19 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull File file, String lineSeparator) throws IOException {
-    writeParent(document, file, lineSeparator);
+    write(document, file, lineSeparator);
   }
 
-  public static void writeParent(@NotNull Parent element, @NotNull File file, String lineSeparator) throws IOException {
+  public static void write(@NotNull Parent element, @NotNull File file) throws IOException {
+    write(element, file, "\n");
+  }
+
+  public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
+    FileUtil.createParentDirs(file);
+
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
     try {
-      writeParent(element, stream, lineSeparator);
+      write(element, stream, lineSeparator);
     }
     finally {
       stream.close();
@@ -354,10 +369,10 @@ public class JDOMUtil {
   }
 
   public static void writeDocument(@NotNull Document document, @NotNull OutputStream stream, String lineSeparator) throws IOException {
-    writeParent(document, stream, lineSeparator);
+    write(document, stream, lineSeparator);
   }
 
-  public static void writeParent(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
+  public static void write(@NotNull Parent element, @NotNull OutputStream stream, @NotNull String lineSeparator) throws IOException {
     OutputStreamWriter writer = new OutputStreamWriter(stream, CharsetToolkit.UTF8_CHARSET);
     try {
       if (element instanceof Document) {
@@ -394,10 +409,10 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String writeParent(Parent element, String lineSeparator) {
+  public static String write(Parent element, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
-      writeParent(element, writer, lineSeparator);
+      write(element, writer, lineSeparator);
       return writer.toString();
     }
     catch (IOException e) {
@@ -405,7 +420,7 @@ public class JDOMUtil {
     }
   }
 
-  public static void writeParent(Parent element, Writer writer, String lineSeparator) throws IOException {
+  public static void write(Parent element, Writer writer, String lineSeparator) throws IOException {
     if (element instanceof Element) {
       writeElement((Element) element, writer, lineSeparator);
     } else if (element instanceof Document) {

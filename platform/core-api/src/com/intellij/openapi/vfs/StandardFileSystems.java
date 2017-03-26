@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,21 +31,25 @@ public class StandardFileSystems {
   public static final String JRT_PROTOCOL = "jrt";
   public static final String JRT_PROTOCOL_PREFIX = JRT_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
 
-  private static final NotNullLazyValue<VirtualFileSystem> ourLocal = new NotNullLazyValue<VirtualFileSystem>() {
-    @NotNull
-    @Override
-    protected VirtualFileSystem compute() {
-      return VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL);
+  private static final ClearableLazyValue<VirtualFileSystem> ourLocal = CachedSingletonsRegistry.markLazyValue(
+    new ClearableLazyValue<VirtualFileSystem>() {
+      @NotNull
+      @Override
+      protected VirtualFileSystem compute() {
+        return VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL);
+      }
     }
-  };
+  );
 
-  private static final NotNullLazyValue<VirtualFileSystem> ourJar = new NotNullLazyValue<VirtualFileSystem>() {
-    @NotNull
-    @Override
-    protected VirtualFileSystem compute() {
-      return VirtualFileManager.getInstance().getFileSystem(JAR_PROTOCOL);
+  private static final ClearableLazyValue<VirtualFileSystem> ourJar = CachedSingletonsRegistry.markLazyValue(
+    new ClearableLazyValue<VirtualFileSystem>() {
+      @NotNull
+      @Override
+      protected VirtualFileSystem compute() {
+        return VirtualFileManager.getInstance().getFileSystem(JAR_PROTOCOL);
+      }
     }
-  };
+  );
 
   public static VirtualFileSystem local() {
     return ourLocal.getValue();

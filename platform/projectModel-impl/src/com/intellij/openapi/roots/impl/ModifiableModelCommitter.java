@@ -52,6 +52,9 @@ public class ModifiableModelCommitter {
         ModuleRootManagerImpl.doCommit(model);
       }
       for (ModifiableRootModel model : modelsToDispose) {
+        if (model instanceof RootModelImpl) {
+          ((RootModelImpl)model).checkModuleExtensionModification();
+        }
         model.dispose();
       }
     });

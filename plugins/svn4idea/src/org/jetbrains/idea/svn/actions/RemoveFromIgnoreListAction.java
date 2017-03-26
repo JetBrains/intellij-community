@@ -18,11 +18,10 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
@@ -31,54 +30,52 @@ import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 public class RemoveFromIgnoreListAction extends BasicAction {
   private String myActionName;
   private final boolean myUseCommonExtension;
-  private final IgnoreInfoGetter myInfoGetter;
+  @NotNull private final IgnoreInfoGetter myInfoGetter;
 
-  public RemoveFromIgnoreListAction(final boolean useCommonExtension, final IgnoreInfoGetter getter) {
+  public RemoveFromIgnoreListAction(boolean useCommonExtension, @NotNull IgnoreInfoGetter getter) {
     myUseCommonExtension = useCommonExtension;
     myInfoGetter = getter;
   }
 
-  public void setActionText(final String name) {
+  public void setActionText(String name) {
     myActionName = name;
   }
 
-  protected String getActionName(final AbstractVcs vcs) {
+  @NotNull
+  @Override
+  protected String getActionName() {
     return SvnBundle.message("action.name.undo.ignore.files");
   }
 
-  public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
 
+    presentation.setEnabledAndVisible(true);
     presentation.setText(myActionName);
     presentation.setDescription(SvnBundle.message("action.Subversion.UndoIgnore.description"));
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     return true;
   }
 
   @Override
-  protected void doVcsRefresh(Project project, VirtualFile file) {
-    final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    if (file != null && (file.getParent() != null)) {
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
+    if (file.getParent() != null) {
       vcsDirtyScopeManager.fileDirty(file.getParent());
     }
   }
 
-  protected boolean needsFiles() {
-    return true;
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, final DataContext context)
-      throws VcsException {
-
-  }
-
-  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
-      throws VcsException {
-    SvnPropertyService.doRemoveFromIgnoreProperty(activeVcs, project, myUseCommonExtension, file, myInfoGetter);
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+    SvnPropertyService.doRemoveFromIgnoreProperty(vcs, myUseCommonExtension, files, myInfoGetter);
   }
 
   protected boolean isBatchAction() {

@@ -483,9 +483,12 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     else if (tokenType == JavaTokenType.TILDE) {
       if (operandValue instanceof Character) operandValue = Integer.valueOf(((Character)operandValue).charValue());
       if (isIntegral(operandValue)) {
-        value = operandValue instanceof Long
-                ? Long.valueOf(~((Number)operandValue).longValue())
-                : Integer.valueOf(~((Number)operandValue).intValue());
+        if (operandValue instanceof Long) {
+          value = Long.valueOf(~((Number)operandValue).longValue());
+        }
+        else {
+          value = Integer.valueOf(~((Number)operandValue).intValue());
+        }
       }
     }
     else if (tokenType == JavaTokenType.EXCL) {
@@ -549,7 +552,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
 
       Set<PsiVariable> oldVisitedVars = myVisitedVars;
-      if (myVisitedVars == null) { myVisitedVars = new THashSet<PsiVariable>(); }
+      if (myVisitedVars == null) { myVisitedVars = new THashSet<>(); }
 
       myVisitedVars.add(variable);
       try {

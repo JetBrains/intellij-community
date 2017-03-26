@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ToolbarDecorator;
@@ -76,20 +76,20 @@ public class DependencyConfigurable extends BaseConfigurable {
 
   @Override
   public JComponent createComponent() {
-    myDenyRulesModel = new MyTableModel(myProject, new ColumnInfo[]{DENY_USAGES_OF, DENY_USAGES_IN}, true);
+    myDenyRulesModel = new MyTableModel(new ColumnInfo[]{DENY_USAGES_OF, DENY_USAGES_IN}, true);
     myDenyRulesModel.setSortable(false);
 
-    myAllowRulesModel = new MyTableModel(myProject, new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
+    myAllowRulesModel = new MyTableModel(new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
     myAllowRulesModel.setSortable(false);
 
     myDenyTable = new TableView<>(myDenyRulesModel);
-    myDenyPanel.add(createRulesPanel(myDenyRulesModel, myDenyTable), BorderLayout.CENTER);
+    myDenyPanel.add(createRulesPanel(myDenyTable), BorderLayout.CENTER);
     myAllowTable = new TableView<>(myAllowRulesModel);
-    myAllowPanel.add(createRulesPanel(myAllowRulesModel, myAllowTable), BorderLayout.CENTER);
+    myAllowPanel.add(createRulesPanel(myAllowTable), BorderLayout.CENTER);
     return myWholePanel;
   }
 
-  private JPanel createRulesPanel(MyTableModel model, TableView<DependencyRule> table) {
+  private JPanel createRulesPanel(TableView<DependencyRule> table) {
     table.setSurrendersFocusOnKeystroke(true);
     table.setPreferredScrollableViewportSize(JBUI.size(300, 150));
     table.setShowGrid(true);
@@ -260,19 +260,17 @@ public class DependencyConfigurable extends BaseConfigurable {
   }
 
   private static class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
-    private final Project myProject;
     private final boolean myDenyRule;
 
-    public MyTableModel(final Project project, final ColumnInfo[] columnInfos, final boolean isDenyRule) {
+    public MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {
       super(columnInfos);
-      myProject = project;
       myDenyRule = isDenyRule;
     }
 
     @Override
     public void addRow() {
       ArrayList<DependencyRule> newList = new ArrayList<>(getItems());
-      final NamedScope scope = DefaultScopesProvider.getAllScope();
+      final NamedScope scope = CustomScopesProviderEx.getAllScope();
       newList.add(new DependencyRule(scope, scope, myDenyRule));
       setItems(newList);
     }

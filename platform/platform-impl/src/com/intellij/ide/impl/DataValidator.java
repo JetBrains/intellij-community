@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.impl;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -72,7 +73,14 @@ public abstract class DataValidator<T> {
   public static <T> T findInvalidData(String dataId, Object data, final Object dataSource) {
     if (data == null) return null;
     DataValidator<T> validator = getValidator(dataId);
-    if (validator != null) return validator.findInvalid(dataId, (T)data, dataSource);
+    if (validator != null) {
+      try {
+        return validator.findInvalid(dataId, (T)data, dataSource);
+      }
+      catch (ClassCastException e) {
+        throw new AssertionError("Object of incorrect type returned for key '" + dataId + "' by " + dataSource, e);
+      }
+    }
     return null;
   }
 
@@ -81,6 +89,8 @@ public abstract class DataValidator<T> {
     ourValidators.put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new ArrayValidator<>(VIRTUAL_FILE_VALIDATOR));
     ourValidators.put(CommonDataKeys.PROJECT.getName(), PROJECT_VALIDATOR);
     ourValidators.put(CommonDataKeys.EDITOR.getName(), EDITOR_VALIDATOR);
+    ourValidators.put(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()), EDITOR_VALIDATOR);
+    ourValidators.put(CommonDataKeys.HOST_EDITOR.getName(), EDITOR_VALIDATOR);
   }
 
   public static class ArrayValidator<T> extends DataValidator<T[]> {

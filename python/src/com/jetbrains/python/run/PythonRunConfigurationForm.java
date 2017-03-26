@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
@@ -31,6 +32,8 @@ import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -46,9 +49,13 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JComponent anchor;
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
+  private JBCheckBox myEmulateTerminalCheckbox;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
+    myCommonOptionsForm.addInterpreterModeListener((isRemoteInterpreter) -> {
+      emulateTerminalEnabled(!isRemoteInterpreter);
+    });
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
 
     myProject = configuration.getProject();
@@ -74,7 +81,30 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myScriptTextField.addActionListener(listener);
 
+    if (SystemInfo.isWindows) {
+      //TODO: enable it on Windows when it works there
+      emulateTerminalEnabled(false);
+    }
+
+    myEmulateTerminalCheckbox.setSelected(false);
+
+    myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        updateShowCommandLineEnabled();
+      }
+    });
+
     setAnchor(myCommonOptionsForm.getAnchor());
+  }
+
+  private void updateShowCommandLineEnabled() {
+    myShowCommandLineCheckbox.setEnabled(!myEmulateTerminalCheckbox.isVisible() || !myEmulateTerminalCheckbox.isSelected());
+  }
+
+  private void emulateTerminalEnabled(boolean flag) {
+    myEmulateTerminalCheckbox.setVisible(flag);
+    updateShowCommandLineEnabled();
   }
 
   public JComponent getPanel() {
@@ -114,6 +144,16 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
     myShowCommandLineCheckbox.setSelected(showCommandLineAfterwards);
+  }
+
+  @Override
+  public boolean emulateTerminal() {
+    return myEmulateTerminalCheckbox.isSelected();
+  }
+
+  @Override
+  public void setEmulateTerminal(boolean emulateTerminal) {
+    myEmulateTerminalCheckbox.setSelected(emulateTerminal);
   }
 
   @Override

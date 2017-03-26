@@ -187,12 +187,8 @@ public class DebugUtil {
         }
       }
       if (psiElement != null && extra != null ) {
-        extra.consume(psiElement, new Consumer<PsiElement>() {
-          @Override
-          public void consume(PsiElement element) {
-            treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null);
-          }
-        });
+        extra.consume(psiElement,
+                      element -> treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null));
       }
     }
     catch (IOException e) {
@@ -238,7 +234,7 @@ public class DebugUtil {
       buffer.append('\n');
 
       if (!isLeaf) {
-        final Ref<LighterASTNode[]> kids = new Ref<LighterASTNode[]>();
+        final Ref<LighterASTNode[]> kids = new Ref<>();
         final int numKids = tree.getChildren(tree.prepareForGetChildren(node), kids);
         if (numKids == 0) {
           StringUtil.repeatSymbol(buffer, ' ', indent + 2);
@@ -477,12 +473,8 @@ public class DebugUtil {
         child = child.getNextSibling();
       }
       if (extra != null) {
-        extra.consume(root, new Consumer<PsiElement>() {
-          @Override
-          public void consume(PsiElement element) {
-            psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null);
-          }
-        });
+        extra.consume(root,
+                      element -> psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null));
       }
     }
     catch (IOException e) {
@@ -514,8 +506,8 @@ public class DebugUtil {
     }
   }
 
-  private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
-  private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
+  private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<>();
+  private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<>();
   private static final Set<Integer> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
 
   /**

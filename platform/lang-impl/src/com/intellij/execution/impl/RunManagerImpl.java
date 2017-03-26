@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 @State(
   name = "RunManager",
@@ -66,7 +67,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<>();
 
-  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new TreeMap<>();
+  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new ConcurrentSkipListMap<>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
@@ -356,6 +357,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     checkRecentsLimit();
 
     mySharedConfigurations.put(newId, shared);
+    if (shared) {
+      settings.setTemporary(false);
+    }
     setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
 
     if (existingSettings == settings) {
@@ -798,7 +802,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Nullable
-  private String findExistingConfigurationId(@Nullable RunnerAndConfigurationSettings settings) {
+  String findExistingConfigurationId(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null) {
       for (Map.Entry<String, RunnerAndConfigurationSettings> entry : myConfigurations.entrySet()) {
         if (entry.getValue() == settings) {

@@ -21,8 +21,10 @@ import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,15 +37,17 @@ import java.util.List;
 public class XmlNsPrefixAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof XmlTag || element instanceof XmlAttribute) {
-      List<SchemaPrefixReference> references = ContainerUtil.findAll(element.getReferences(), SchemaPrefixReference.class);
-      for (SchemaPrefixReference reference : references) {
-        TextRange rangeInElement = reference.getRangeInElement();
-        if (!rangeInElement.isEmpty()) {
-          TextRange range = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
-          holder.createInfoAnnotation(range, null).setTextAttributes(XmlHighlighterColors.XML_NS_PREFIX);
-        }
-      }
+    if (PsiUtilCore.getElementType(element) != XmlTokenType.XML_NAME) return;
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof XmlTag) && !(parent instanceof XmlAttribute)) return;
+    TextRange elementRange = element.getTextRange();
+    List<SchemaPrefixReference> references = ContainerUtil.findAll(parent.getReferences(), SchemaPrefixReference.class);
+    for (SchemaPrefixReference ref : references) {
+      TextRange rangeInElement = ref.getRangeInElement();
+      if (rangeInElement.isEmpty()) continue;
+      TextRange range = rangeInElement.shiftRight(ref.getElement().getTextRange().getStartOffset());
+      if (!range.intersects(elementRange)) continue;
+      holder.createInfoAnnotation(range, null).setTextAttributes(XmlHighlighterColors.XML_NS_PREFIX);
     }
   }
 }

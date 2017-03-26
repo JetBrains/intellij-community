@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,10 +86,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,7 +101,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -127,6 +123,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -155,6 +152,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   public static final int MAX_TOP_HIT = 15;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
+  private static final Border RENDERER_BORDER = JBUI.Borders.empty(0, 0, 2, 0);
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -178,6 +176,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
+
+  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<JBPopup>("SearchEverywherePopup");
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
@@ -723,7 +723,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     registerDataProvider(panel, project);
     final RelativePoint showPoint;
     if (parent != null) {
-      int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
+      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
       if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
         height -= 20;
       }
@@ -1100,14 +1100,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp.setBackground(UIUtil.getListBackground(isSelected));
         bg = cmp.getBackground();
       }
-      myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
       String title = getModel().titleIndex.getTitle(index);
       myMainPanel.removeAll();
       if (title != null) {
         myTitle.setText(title);
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
-      myMainPanel.add(cmp, BorderLayout.CENTER);
+      JPanel wrapped = new JPanel(new BorderLayout());
+      wrapped.setBackground(bg);
+      wrapped.setBorder(RENDERER_BORDER);
+      wrapped.add(cmp, BorderLayout.CENTER);
+      myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {
         myMainPanel.setAccessible((Accessible)cmp);
       }
@@ -1665,7 +1668,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                   //some elements are non-physical like DB columns
                                   boolean isElementWithoutFile = element != null && element.getContainingFile() == null;
                                   boolean isFileInScope = virtualFile != null && (includeLibs || scope.accept(virtualFile));
-                                  if (isElementWithoutFile || isFileInScope) {
+                                  boolean isSpecialElement = element == null && virtualFile == null; //all Rider elements don't have any psi elements within
+                                  if (isElementWithoutFile || isFileInScope || isSpecialElement) {
                                     symbols.add(o);
                                   }
                                 }
@@ -2027,11 +2031,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setShowShadow(false)
               .setShowBorder(false)
               .createPopup();
+            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
             //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(null);
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
+                project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                   resetFields();
                   myNonProjectCheckBox.setSelected(false);

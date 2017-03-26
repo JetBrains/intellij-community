@@ -89,7 +89,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     final Collection<PsiDirectory> directories = getAllDirectories(includeLibrarySources);
     for (final PsiDirectory directory : directories) {
       if (scope.contains(directory.getVirtualFile())) {
-        if (result == null) result = new ArrayList<PsiDirectory>();
+        if (result == null) result = new ArrayList<>();
         result.add(directory);
       }
     }

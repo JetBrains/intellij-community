@@ -36,13 +36,13 @@ public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile 
   private boolean myEnabled = false;
   private boolean myObtainProcessorsFromClasspath = true;
   private String myProcessorPath = "";
-  private final Set<String> myProcessors = new THashSet<String>(1); // empty list means all discovered
-  private final Map<String, String> myProcessorOptions = new THashMap<String, String>(1); // key=value map of options
+  private final Set<String> myProcessors = new THashSet<>(1); // empty list means all discovered
+  private final Map<String, String> myProcessorOptions = new THashMap<>(1); // key=value map of options
   private String myGeneratedProductionDirectoryName = DEFAULT_PRODUCTION_DIR_NAME;
   private String myGeneratedTestsDirectoryName = DEFAULT_TESTS_DIR_NAME;
   private boolean myOutputRelativeToContentRoot = false;
 
-  private final Set<String> myModuleNames = new THashSet<String>(1);
+  private final Set<String> myModuleNames = new THashSet<>(1);
 
   public ProcessorConfigProfileImpl(String name) {
     myName = name;

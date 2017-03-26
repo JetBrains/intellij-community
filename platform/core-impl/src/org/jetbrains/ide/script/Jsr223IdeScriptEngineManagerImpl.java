@@ -49,34 +49,22 @@ import java.util.concurrent.Future;
 class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
 
-  private final Future<ScriptEngineManager> myManagerFuture = PooledThreadExecutor.INSTANCE.submit(new Callable<ScriptEngineManager>() {
-    @Override
-    public ScriptEngineManager call() {
-      long start = System.currentTimeMillis();
-      try {
-        return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE, new Computable<ScriptEngineManager>() {
-          @Override
-          public ScriptEngineManager compute() {
-            return new ScriptEngineManager();
-          }
-         });
-      }
-      finally {
-        long end = System.currentTimeMillis();
-        LOG.info(ScriptEngineManager.class.getName() + " initialized in " + (end - start) + " ms");
-      }
+  private final Future<ScriptEngineManager> myManagerFuture = PooledThreadExecutor.INSTANCE.submit(() -> {
+    long start = System.currentTimeMillis();
+    try {
+      return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE,
+                                                (Computable<ScriptEngineManager>)() -> new ScriptEngineManager());
+    }
+    finally {
+      long end = System.currentTimeMillis();
+      LOG.info(ScriptEngineManager.class.getName() + " initialized in " + (end - start) + " ms");
     }
   });
 
   @NotNull
   @Override
   public List<String> getLanguages() {
-    return ContainerUtil.map(getScriptEngineManager().getEngineFactories(), new Function<ScriptEngineFactory, String>() {
-      @Override
-      public String fun(ScriptEngineFactory factory) {
-        return factory.getLanguageName();
-      }
-    });
+    return ContainerUtil.map(getScriptEngineManager().getEngineFactories(), factory -> factory.getLanguageName());
   }
 
   @NotNull
@@ -96,24 +84,16 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @Override
   public IdeScriptEngine getEngineForLanguage(@NotNull final String language, @Nullable ClassLoader loader) {
     ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    return ClassLoaderUtil.runWithClassLoader(l, new Computable<IdeScriptEngine>() {
-      @Override
-      public IdeScriptEngine compute() {
-        return createIdeScriptEngine(getScriptEngineManager().getEngineByName(language));
-      }
-    });
+    return ClassLoaderUtil.runWithClassLoader(l,
+                                              (Computable<IdeScriptEngine>)() -> createIdeScriptEngine(getScriptEngineManager().getEngineByName(language)));
   }
 
   @Nullable
   @Override
   public IdeScriptEngine getEngineForFileExtension(@NotNull final String extension, @Nullable ClassLoader loader) {
     ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    return ClassLoaderUtil.runWithClassLoader(l, new Computable<IdeScriptEngine>() {
-      @Override
-      public IdeScriptEngine compute() {
-        return createIdeScriptEngine(getScriptEngineManager().getEngineByExtension(extension));
-      }
-    });
+    return ClassLoaderUtil.runWithClassLoader(l,
+                                              (Computable<IdeScriptEngine>)() -> createIdeScriptEngine(getScriptEngineManager().getEngineByExtension(extension)));
   }
 
   @Override

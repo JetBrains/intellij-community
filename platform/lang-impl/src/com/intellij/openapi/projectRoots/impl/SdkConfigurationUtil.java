@@ -53,12 +53,25 @@ public class SdkConfigurationUtil {
                                final NullableConsumer<Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final SdkType... sdkTypes) {
+    createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
+  }
+
+  public static void createSdk(@Nullable final Project project,
+                               final Sdk[] existingSdks,
+                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final boolean createIfExists,
+                               final boolean followSymLinks,
+                               final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
     }
 
     FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
+    // XXX: Workaround for PY-21787 since the native macOS dialog always follows symlinks
+    if (!followSymLinks) {
+      descriptor.setForcedToUseIdeaFileChooser(true);
+    }
     VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.completion
+
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -266,15 +264,7 @@ use\
     LookupElement groovyUtilTuple = elements.find { it.psiElement instanceof PsiClass && it.psiElement.qualifiedName == 'groovy.lang.Tuple'}
     assertNotNull(elements as String, groovyUtilTuple)
 
-    LookupImpl lookup = getLookup()
-    lookup.setCurrentItem(tuple)
-
-    new WriteCommandAction(myFixture.project, file) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        lookup.finishLookup('\n' as char)
-      }
-    }.execute()
+    lookup.finishLookup('\n' as char, tuple)
 
     myFixture.checkResult('''\
 import p.Tuple

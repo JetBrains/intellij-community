@@ -175,7 +175,7 @@ public class JUnitConfigurationModel {
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
     setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
-    setJUnitTextValue(METHOD, data.getMethodName());
+    setJUnitTextValue(METHOD, data.getMethodNameWithSignature());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
     setJUnitTextValue(CATEGORY, data.getCategory());

@@ -798,11 +798,16 @@ public abstract class InplaceRefactoring {
   public static boolean canStartAnotherRefactoring(Editor editor, Project project, RefactoringActionHandler handler, PsiElement... element) {
     final InplaceRefactoring inplaceRefactoring = getActiveInplaceRenamer(editor);
     return StartMarkAction.canStart(project) == null ||
-           (inplaceRefactoring != null && element.length == 1 && inplaceRefactoring.startsOnTheSameElement(handler, element[0]));
+           (inplaceRefactoring != null && inplaceRefactoring.startsOnTheSameElements(editor, handler, element));
   }
 
   public static InplaceRefactoring getActiveInplaceRenamer(Editor editor) {
     return editor != null ? editor.getUserData(INPLACE_RENAMER) : null;
+  }
+
+  protected boolean startsOnTheSameElements(Editor editor, RefactoringActionHandler handler,
+                                            PsiElement[] element) {
+    return element.length == 1 && startsOnTheSameElement(handler, element[0]);
   }
 
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {

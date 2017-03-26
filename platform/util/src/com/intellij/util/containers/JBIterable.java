@@ -87,6 +87,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public static <E> JBIterable<E> from(@Nullable Iterable<? extends E> iterable) {
     if (iterable == null) return empty();
     if (iterable instanceof JBIterable) return (JBIterable<E>)iterable;
+    if (iterable instanceof Collection && ((Collection)iterable).isEmpty()) return empty();
     return new JBIterable<E>((Iterable<E>)iterable) {
       @Override
       public Iterator<E> iterator() {
@@ -390,7 +391,8 @@ public abstract class JBIterable<E> implements Iterable<E> {
           public T nextImpl() {
             if (cur != null && cur.hasNext()) return cur.next();
             if (!iterator.hasNext()) return stop();
-            cur = fun.fun(iterator.next()).iterator();
+            Iterable<? extends T> next = fun.fun(iterator.next());
+            cur = next == null ? null : next.iterator();
             return skip();
           }
         };

@@ -100,9 +100,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private Map<Key, Object> myUserData;
   private IElementType myCachedTokenType;
 
-  private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<LazyParseableToken>();
+  private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
 
-  private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
+  private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @NotNull
     @Override
     public StartMarker create() {
@@ -115,7 +115,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   });
 
-  private final LimitedPool<DoneMarker> DONE_MARKERS = new LimitedPool<DoneMarker>(2000, new LimitedPool.ObjectFactory<DoneMarker>() {
+  private final LimitedPool<DoneMarker> DONE_MARKERS = new LimitedPool<>(2000, new LimitedPool.ObjectFactory<DoneMarker>() {
     @NotNull
     @Override
     public DoneMarker create() {
@@ -127,13 +127,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneMarker.clean();
     }
   });
-  private static final ArrayFactory<IElementType> myElementTypeArrayFactory = new ArrayFactory<IElementType>() {
-    @NotNull
-    @Override
-    public IElementType[] create(int count) {
-      return count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
-    }
-  };
+  private static final ArrayFactory<IElementType> myElementTypeArrayFactory =
+    count -> count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
 
   public static void registerWhitespaceToken(@NotNull IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -1644,7 +1639,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
-        myPool = new LimitedPool<Token>(1000, new LimitedPool.ObjectFactory<Token>() {
+        myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<Token>() {
           @Override
           public void cleanup(@NotNull final Token token) {
             token.clean();
@@ -1656,7 +1651,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
             return new TokenNode();
           }
         });
-        myLazyPool = new LimitedPool<LazyParseableToken>(200, new LimitedPool.ObjectFactory<LazyParseableToken>() {
+        myLazyPool = new LimitedPool<>(200, new LimitedPool.ObjectFactory<LazyParseableToken>() {
           @Override
           public void cleanup(@NotNull final LazyParseableToken token) {
             token.clean();

@@ -69,7 +69,9 @@ public class PyNames {
   public static final String INIT = "__init__";
   public static final String DICT = "__dict__";
   public static final String DOT_PY = ".py";
+  public static final String DOT_PYI = ".pyi";
   public static final String INIT_DOT_PY = INIT + DOT_PY;
+  public static final String INIT_DOT_PYI = INIT + DOT_PYI;
 
   public static final String SETUP_DOT_PY = "setup" + DOT_PY;
 
@@ -88,13 +90,9 @@ public class PyNames {
   public static final String TRUE = "True";
   public static final String FALSE = "False";
 
-  public static final String FAKE_OLD_BASE = "___Classobj";
-  public static final String FAKE_GENERATOR = "__generator";
-  public static final String FAKE_FUNCTION = "__function";
-  public static final String FAKE_METHOD = "__method";
-  public static final String FAKE_NAMEDTUPLE = "__namedtuple";
-  public static final String FAKE_COROUTINE = "__coroutine";
-  public static final String FAKE_ASYNC_GENERATOR = "__asyncgenerator";
+  public static final String TYPES_FUNCTION_TYPE = "types.FunctionType";
+  public static final String TYPES_METHOD_TYPE = "types.UnboundMethodType";
+  public static final String TYPES_INSTANCE_TYPE = "types.InstanceType";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
@@ -203,8 +201,6 @@ public class PyNames {
 
   public static final String NOSE_TEST = "nose";
   public static final String PY_TEST = "pytest";
-  public static final String AT_TEST = "Attest";
-  public static final String AT_TEST_IMPORT = "attest";
 
   public static final String TEST_CASE = "TestCase";
 

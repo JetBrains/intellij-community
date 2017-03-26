@@ -61,12 +61,7 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   private static PsiType[] flattenAndRemoveDuplicates(final PsiType[] conjuncts) {
     try {
-      final Set<PsiType> flattenConjuncts = PsiCapturedWildcardType.guard.doPreventingRecursion(conjuncts, true, new Computable<Set<PsiType>>() {
-        @Override
-        public Set<PsiType> compute() {
-          return flatten(conjuncts, ContainerUtil.<PsiType>newLinkedHashSet());
-        }
-      });
+      final Set<PsiType> flattenConjuncts = PsiCapturedWildcardType.guard.doPreventingRecursion(conjuncts, true, () -> flatten(conjuncts, ContainerUtil.<PsiType>newLinkedHashSet()));
       if (flattenConjuncts == null) {
         return conjuncts;
       }
@@ -117,12 +112,7 @@ public class PsiIntersectionType extends PsiType.Stub {
   @NotNull
   @Override
   public String getPresentableText(final boolean annotated) {
-    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getPresentableText(annotated);
-      }
-    }, " & ");
+    return StringUtil.join(myConjuncts, psiType -> psiType.getPresentableText(annotated), " & ");
   }
 
   @NotNull
@@ -134,12 +124,7 @@ public class PsiIntersectionType extends PsiType.Stub {
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getInternalCanonicalText();
-      }
-    }, " & ");
+    return StringUtil.join(myConjuncts, psiType -> psiType.getInternalCanonicalText(), " & ");
   }
 
   @Override

@@ -42,6 +42,12 @@ public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
     testByCount(0, new String[] { null });
   }
 
+  public void testEmptyFile() throws Throwable {
+    configureFromFileText("a.cs", "<caret>");
+    complete();
+    testByCount(1, "abstract", "x");
+  }
+
   public void testPlainTextSubstitution() throws IOException {
     FileTypeManagerEx.getInstanceEx().registerFileType(MockLanguageFileType.INSTANCE, "xxx");
     try {

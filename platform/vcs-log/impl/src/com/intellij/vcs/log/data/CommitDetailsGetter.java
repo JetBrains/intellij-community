@@ -18,11 +18,11 @@ import java.util.Map;
  */
 public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails> {
 
-  CommitDetailsGetter(@NotNull VcsLogStorage hashMap,
+  CommitDetailsGetter(@NotNull VcsLogStorage storage,
                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                       @NotNull VcsLogIndex index,
                       @NotNull Disposable parentDisposable) {
-    super(hashMap, logProviders, new VcsCommitCache<>(), index, parentDisposable);
+    super(storage, logProviders, new VcsCommitCache<>(), index, parentDisposable);
   }
 
   @Nullable

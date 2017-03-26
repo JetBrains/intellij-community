@@ -3,13 +3,12 @@ REGEXP_FILE
     RegExpBranchImpl: <[a[^b]]>
       RegExpClassImpl: <[a[^b]]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <a[^b]>
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpClassImpl: <[^b]>
-            PsiElement(CLASS_BEGIN)('[')
-            PsiElement(CARET)('^')
-            RegExpCharImpl: <b>
-              PsiElement(CHARACTER)('b')
-            PsiElement(CLASS_END)(']')
+        RegExpCharImpl: <a>
+          PsiElement(CHARACTER)('a')
+        RegExpClassImpl: <[^b]>
+          PsiElement(CLASS_BEGIN)('[')
+          PsiElement(CARET)('^')
+          RegExpCharImpl: <b>
+            PsiElement(CHARACTER)('b')
+          PsiElement(CLASS_END)(']')
         PsiElement(CLASS_END)(']')

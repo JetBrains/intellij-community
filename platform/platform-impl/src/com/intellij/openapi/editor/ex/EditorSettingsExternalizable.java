@@ -549,22 +549,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.SHOW_PARAMETER_NAME_HINTS = value;
   }
 
-  public int getMinParamNameLengthToShow() {
-    return myOptions.MIN_PARAM_NAME_LENGTH_TO_SHOW;
-  }
-  
-  public void setMinParamNameLengthToShow(int value) {
-    myOptions.MIN_PARAM_NAME_LENGTH_TO_SHOW = value;
-  }
-  
-  public int getMinArgsToShow() {
-    return myOptions.MIN_PARAMS_TO_SHOW;
-  }
-  
-  public void setMinArgsToShow(int minParamsToShow) {
-    myOptions.MIN_PARAMS_TO_SHOW = minParamsToShow;
-  }
-
   public boolean isKeepTrailingSpacesOnCaretLine() {
     return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
   }

@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -59,26 +58,6 @@ public abstract class AbstractTestEvent implements TestEvent {
   @NotNull
   protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
     return GradleRunnerUtil.getTestLocationUrl(name, fqClassName);
-  }
-
-  protected String getTestName(@NotNull XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    return eventXml.queryXml("/ijLog/event/test/descriptor/@name");
-  }
-
-  protected String getParentTestId(@NotNull XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    return eventXml.queryXml("/ijLog/event/test/@parentId");
-  }
-
-  protected String getTestId(@NotNull XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    return eventXml.queryXml("/ijLog/event/test/@id");
-  }
-
-  protected String getTestClassName(@NotNull XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    return eventXml.queryXml("/ijLog/event/test/descriptor/@className");
-  }
-
-  protected TestEventResult getTestEventResultType(@NotNull XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    return TestEventResult.fromValue(eventXml.queryXml("/ijLog/event/test/result/@resultType"));
   }
 
   protected void addToInvokeLater(final Runnable runnable) {

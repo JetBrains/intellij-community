@@ -30,7 +30,7 @@ public class ShowModuleGroupsAction extends ToggleAction {
 
   public ShowModuleGroupsAction(final Runnable update) {
     super("Show Module Groups",
-          "Show/hide module groups", AllIcons.Nodes.ModuleGroup);
+          "Show/hide module groups", AllIcons.Actions.GroupByModuleGroup);
     myUpdate = update;
   }
 

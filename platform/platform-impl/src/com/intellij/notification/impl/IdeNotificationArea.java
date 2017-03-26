@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,13 +71,16 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     updateStatus();
   }
 
+  @Override
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
     updateStatus();
@@ -88,6 +91,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component)myStatusBar));
   }
 
+  @Override
   @NotNull
   public String ID() {
     return WIDGET_ID;
@@ -105,7 +109,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
-    if (UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
       setVisible(true);
       setIcon(icon);
     }

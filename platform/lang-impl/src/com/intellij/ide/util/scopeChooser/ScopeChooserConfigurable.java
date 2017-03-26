@@ -119,13 +119,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     loadComponentState();
 
     final List<String> order = getScopesState().myOrder;
-    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
-      @Override
-      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
-        final int idx1 = order.indexOf(((MyNode)o1).getDisplayName());
-        final int idx2 = order.indexOf(((MyNode)o2).getDisplayName());
-        return idx1 - idx2;
-      }
+    TreeUtil.sortRecursively(myRoot, (o1, o2) -> {
+      final int idx1 = order.indexOf(o1.getDisplayName());
+      final int idx2 = order.indexOf(o2.getDisplayName());
+      return idx1 - idx2;
     });
 
     if (getScopesState().myOrder.size() != myRoot.getChildCount()) {

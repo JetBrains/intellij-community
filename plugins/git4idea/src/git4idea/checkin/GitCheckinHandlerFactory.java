@@ -16,7 +16,6 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -117,7 +116,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      final Git git = ServiceManager.getService(Git.class);
+      final Git git = Git.getInstance();
 
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
       final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();

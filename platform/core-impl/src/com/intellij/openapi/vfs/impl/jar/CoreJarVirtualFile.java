@@ -48,7 +48,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
     if (parent != null) {
       if (parent.myChildren == null) {
-        parent.myChildren = new SmartList<VirtualFile>();
+        parent.myChildren = new SmartList<>();
       }
       parent.myChildren.add(this);
     }

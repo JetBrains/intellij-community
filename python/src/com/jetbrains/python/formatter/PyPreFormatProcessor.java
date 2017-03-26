@@ -82,16 +82,10 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
       final PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
       final Document document = manager.getDocument(element.getContainingFile());
       if (document != null) {
-        manager.doPostponedOperationsAndUnblockDocument(document);
-        try {
-          // collect all comments
-          element.accept(this);
-          for (Couple<PsiComment> pair : myCommentReplacements) {
-            pair.getFirst().replace(pair.getSecond());
-          }
-        }
-        finally {
-          manager.commitDocument(document);
+        // collect all comments
+        element.accept(this);
+        for (Couple<PsiComment> pair : myCommentReplacements) {
+          pair.getFirst().replace(pair.getSecond());
         }
       }
       return TextRange.create(range.getStartOffset(), range.getEndOffset() + myDelta);

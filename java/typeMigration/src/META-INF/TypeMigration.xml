@@ -33,9 +33,9 @@
       <category>Java/Concurrency</category>
     </intentionAction>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="Guava"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Guava"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
+                     groupName="Java 8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
                      displayName="Guava's functional primitives can be replaced by Java"/>
 

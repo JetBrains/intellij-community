@@ -27,10 +27,15 @@ class SerializableStoresNonSerializable {
         System.out.println(<warning descr="Serializable local class 'D' implicitly stores non-Serializable object of type 'B'">b</warning>);
       }
     }
+    new C(b.hashCode()) {
+
+    };
   }
 }
 interface A extends java.io.Serializable {
   void m();
 }
 class B {}
-class C implements java.io.Serializable {}
+class C implements java.io.Serializable {
+  C(int id) {}
+}

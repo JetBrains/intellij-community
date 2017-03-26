@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,24 @@ class EdtTestUtil {
 
 @TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {
-  val application = ApplicationManager.getApplication()
-  if (application is ApplicationImpl) {
-    var exception: Throwable? = null
-    application.invokeAndWait {
-      try {
-        runnable()
-      } catch (e: Throwable) {
-        exception = e
-      }
+  val app = ApplicationManager.getApplication()
+  if (app is ApplicationImpl) {
+    if (app.isDispatchThread()) {
+      // reduce stack trace
+      runnable()
     }
-    ExceptionUtil.rethrowAllAsUnchecked(exception)
+    else {
+      var exception: Throwable? = null
+      app.invokeAndWait {
+        try {
+          runnable()
+        }
+        catch (e: Throwable) {
+          exception = e
+        }
+      }
+      ExceptionUtil.rethrowAllAsUnchecked(exception)
+    }
     return
   }
 

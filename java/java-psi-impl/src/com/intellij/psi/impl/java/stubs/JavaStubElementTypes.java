@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,11 @@ public interface JavaStubElementTypes {
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
   JavaModuleElementType MODULE = new JavaModuleElementType();
   JavaRequiresStatementElementType REQUIRES_STATEMENT = new JavaRequiresStatementElementType();
-  JavaExportsStatementElementType EXPORTS_STATEMENT = new JavaExportsStatementElementType();
+  JavaUsesStatementElementType USES_STATEMENT = new JavaUsesStatementElementType();
+  JavaProvidesStatementElementType PROVIDES_STATEMENT = new JavaProvidesStatementElementType();
+
+  JavaPackageAccessibilityStatementElementType EXPORTS_STATEMENT = new JavaPackageAccessibilityStatementElementType("EXPORTS_STATEMENT");
+  JavaPackageAccessibilityStatementElementType OPENS_STATEMENT = new JavaPackageAccessibilityStatementElementType("OPENS_STATEMENT");
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull
@@ -120,6 +125,13 @@ public interface JavaStubElementTypes {
     @Override
     public ASTNode createCompositeNode() {
       return new TypeParameterExtendsBoundsListElement();
+    }
+  };
+  JavaClassReferenceListElementType PROVIDES_WITH_LIST = new JavaClassReferenceListElementType("PROVIDES_WITH_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new CompositeElement(this);
     }
   };
 

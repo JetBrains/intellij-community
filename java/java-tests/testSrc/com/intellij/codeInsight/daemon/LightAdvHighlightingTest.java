@@ -75,8 +75,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
-  private void doTest(boolean checkWarnings, boolean checkInfos) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+  private void doTest(boolean checkWarnings) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
   @Override
@@ -104,68 +104,68 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testCanHaveBody() { doTest(false, false); }
-  public void testInheritFinal() { doTest(false, false); }
-  public void testBreakOutside() { doTest(false, false); }
-  public void testLoop() { doTest(false, false); }
-  public void testIllegalModifiersCombination() { doTest(false, false); }
-  public void testModifierAllowed() { doTest(false, false); }
-  public void testAbstractMethods() { doTest(false, false); }
-  public void testInstantiateAbstract() { doTest(false, false); }
-  public void testDuplicateClassMethod() { doTest(false, false); }
-  public void testStringLiterals() { doTest(false, false); }
-  public void testStaticInInner() { doTest(false, false); }
-  public void testInvalidExpressions() { doTest(false, false); }
-  public void testIllegalVoidType() { doTest(false, false); }
-  public void testIllegalType() { doTest(false, false); }
-  public void testOperatorApplicability() { doTest(false, false); }
-  public void testIncompatibleTypes() { doTest(false, false); }
-  public void testCtrCallIsFirst() { doTest(false, false); }
-  public void testAccessLevelClash() { doTest(false, false); }
-  public void testCasts() { doTest(false, false); }
-  public void testOverrideConflicts() { doTest(false, false); }
-  public void testOverriddenMethodIsFinal() { doTest(false, false); }
-  public void testMissingReturn() { doTest(false, false); }
-  public void testUnreachable() { doTest(false, false); }
-  public void testFinalFieldInit() { doTest(false, false); }
-  public void testLocalVariableInitialization() { doTest(false, false); }
-  public void testVarDoubleInitialization() { doTest(false, false); }
-  public void testFieldDoubleInitialization() { doTest(false, false); }
-  public void testAssignToFinal() { doTest(false, false); }
-  public void testUnhandledExceptionsInSuperclass() { doTest(false, false); }
-  public void testNoUnhandledExceptionsMultipleInheritance() { doTest(false, false); }
-  public void testIgnoreSuperMethodsInMultipleOverridingCheck() { doTest(false, false); }
-  public void testFalseExceptionsMultipleInheritance() { doTest(true, false); }
-  public void testAssignmentCompatible () { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(false, false); }
-  public void testMustBeBoolean() { doTest(false, false); }
+  public void testCanHaveBody() { doTest(false); }
+  public void testInheritFinal() { doTest(false); }
+  public void testBreakOutside() { doTest(false); }
+  public void testLoop() { doTest(false); }
+  public void testIllegalModifiersCombination() { doTest(false); }
+  public void testModifierAllowed() { doTest(false); }
+  public void testAbstractMethods() { doTest(false); }
+  public void testInstantiateAbstract() { doTest(false); }
+  public void testDuplicateClassMethod() { doTest(false); }
+  public void testStringLiterals() { doTest(false); }
+  public void testStaticInInner() { doTest(false); }
+  public void testInvalidExpressions() { doTest(false); }
+  public void testIllegalVoidType() { doTest(false); }
+  public void testIllegalType() { doTest(false); }
+  public void testOperatorApplicability() { doTest(false); }
+  public void testIncompatibleTypes() { doTest(false); }
+  public void testCtrCallIsFirst() { doTest(false); }
+  public void testAccessLevelClash() { doTest(false); }
+  public void testCasts() { doTest(false); }
+  public void testOverrideConflicts() { doTest(false); }
+  public void testOverriddenMethodIsFinal() { doTest(false); }
+  public void testMissingReturn() { doTest(false); }
+  public void testUnreachable() { doTest(false); }
+  public void testFinalFieldInit() { doTest(false); }
+  public void testLocalVariableInitialization() { doTest(false); }
+  public void testVarDoubleInitialization() { doTest(false); }
+  public void testFieldDoubleInitialization() { doTest(false); }
+  public void testAssignToFinal() { doTest(false); }
+  public void testUnhandledExceptionsInSuperclass() { doTest(false); }
+  public void testNoUnhandledExceptionsMultipleInheritance() { doTest(false); }
+  public void testIgnoreSuperMethodsInMultipleOverridingCheck() { doTest(false); }
+  public void testFalseExceptionsMultipleInheritance() { doTest(true); }
+  public void testAssignmentCompatible () { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(false); }
+  public void testMustBeBoolean() { doTest(false); }
 
-  public void testNumericLiterals() { doTest(false, false); }
-  public void testInitializerCompletion() { doTest(false, false); }
+  public void testNumericLiterals() { doTest(false); }
+  public void testInitializerCompletion() { doTest(false); }
 
-  public void testUndefinedLabel() { doTest(false, false); }
-  public void testDuplicateSwitchLabels() { doTest(false, false); }
-  public void testStringSwitchLabels() { doTest(false, false); }
-  public void testIllegalForwardReference() { doTest(false, false); }
-  public void testStaticOverride() { doTest(false, false); }
-  public void testCyclicInheritance() { doTest(false, false); }
-  public void testReferenceMemberBeforeCtrCalled() { doTest(false, false); }
-  public void testLabels() { doTest(false, false); }
-  public void testUnclosedBlockComment() { doTest(false, false); }
-  public void testUnclosedComment() { doTest(false, false); }
-  public void testUnclosedDecl() { doTest(false, false); }
+  public void testUndefinedLabel() { doTest(false); }
+  public void testDuplicateSwitchLabels() { doTest(false); }
+  public void testStringSwitchLabels() { doTest(false); }
+  public void testIllegalForwardReference() { doTest(false); }
+  public void testStaticOverride() { doTest(false); }
+  public void testCyclicInheritance() { doTest(false); }
+  public void testReferenceMemberBeforeCtrCalled() { doTest(false); }
+  public void testLabels() { doTest(false); }
+  public void testUnclosedBlockComment() { doTest(false); }
+  public void testUnclosedComment() { doTest(false); }
+  public void testUnclosedDecl() { doTest(false); }
   public void testSillyAssignment() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    doTest(true, false);
+    doTest(true);
   }
-  public void testTernary() { doTest(false, false); }
-  public void testDuplicateClass() { doTest(false, false); }
-  public void testCatchType() { doTest(false, false); }
-  public void testMustBeThrowable() { doTest(false, false); }
-  public void testUnhandledMessingWithFinally() { doTest(false, false); }
-  public void testSerializableStuff() {  doTest(true, false); }
-  public void testDeprecated() { doTest(true, false); }
-  public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
-  public void testExpressionsInSwitch () { doTest(false, false); }
+  public void testTernary() { doTest(false); }
+  public void testDuplicateClass() { doTest(false); }
+  public void testCatchType() { doTest(false); }
+  public void testMustBeThrowable() { doTest(false); }
+  public void testUnhandledMessingWithFinally() { doTest(false); }
+  public void testSerializableStuff() {  doTest(true); }
+  public void testDeprecated() { doTest(true); }
+  public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true); }
+  public void testExpressionsInSwitch () { doTest(false); }
   public void testAccessInner() throws IOException {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
                                      "" +
@@ -190,7 +190,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     try {
       UIUtil.dispatchAllInvocationEvents();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      doTest(false, false);
+      doTest(false);
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -203,66 +203,66 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testExceptionNeverThrown() { doTest(true, false); }
-  public void testExceptionNeverThrownInTry() { doTest(false, false); }
+  public void testExceptionNeverThrown() { doTest(true); }
+  public void testExceptionNeverThrownInTry() { doTest(false); }
 
-  public void testSwitchStatement() { doTest(false, false); }
-  public void testAssertExpression() { doTest(false, false); }
+  public void testSwitchStatement() { doTest(false); }
+  public void testAssertExpression() { doTest(false); }
 
-  public void testSynchronizedExpression() { doTest(false, false); }
-  public void testExtendMultipleClasses() { doTest(false, false); }
-  public void testRecursiveConstructorInvocation() { doTest(false, false); }
-  public void testMethodCalls() { doTest(false, false); }
+  public void testSynchronizedExpression() { doTest(false); }
+  public void testExtendMultipleClasses() { doTest(false); }
+  public void testRecursiveConstructorInvocation() { doTest(false); }
+  public void testMethodCalls() { doTest(false); }
   public void testSingleTypeImportConflicts() throws IOException {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
     UIUtil.dispatchAllInvocationEvents();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    doTest(false, false);
+    doTest(false);
   }
-  public void testMultipleSingleTypeImports() { doTest(true, false); } //duplicate imports
-  public void testNotAllowedInInterface() { doTest(false, false); }
-  public void testQualifiedNew() { doTest(false, false); }
-  public void testEnclosingInstance() { doTest(false, false); }
+  public void testMultipleSingleTypeImports() { doTest(true); } //duplicate imports
+  public void testNotAllowedInInterface() { doTest(false); }
+  public void testQualifiedNew() { doTest(false); }
+  public void testEnclosingInstance() { doTest(false); }
 
-  public void testStaticViaInstance() { doTest(true, false); } // static via instance
-  public void testQualifiedThisSuper() { doTest(true, false); } //illegal qualified this or super
+  public void testStaticViaInstance() { doTest(true); } // static via instance
+  public void testQualifiedThisSuper() { doTest(true); } //illegal qualified this or super
 
-  public void testAmbiguousMethodCall() { doTest(false, false); }
+  public void testAmbiguousMethodCall() { doTest(false); }
 
-  public void testImplicitConstructor() { doTest(false, false); }
-  public void testDotBeforeDecl() { doTest(false, false); }
-  public void testComputeConstant() { doTest(false, false); }
+  public void testImplicitConstructor() { doTest(false); }
+  public void testDotBeforeDecl() { doTest(false); }
+  public void testComputeConstant() { doTest(false); }
 
-  public void testAnonInAnon() { doTest(false, false); }
-  public void testAnonBaseRef() { doTest(false, false); }
-  public void testReturn() { doTest(false, false); }
-  public void testInterface() { doTest(false, false); }
-  public void testExtendsClause() { doTest(false, false); }
-  public void testMustBeFinal() { doTest(false, false); }
+  public void testAnonInAnon() { doTest(false); }
+  public void testAnonBaseRef() { doTest(false); }
+  public void testReturn() { doTest(false); }
+  public void testInterface() { doTest(false); }
+  public void testExtendsClause() { doTest(false); }
+  public void testMustBeFinal() { doTest(false); }
 
-  public void testXXX() { doTest(false, false); }
-  public void testUnused() { doTest(true, false); }
-  public void testQualifierBeforeClassName() { doTest(false, false); }
+  public void testXXX() { doTest(false); }
+  public void testUnused() { doTest(true); }
+  public void testQualifierBeforeClassName() { doTest(false); }
   public void testQualifiedSuper() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
-    doTest(false, false);
+    doTest(false);
   }
 
-  public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false, false); }
+  public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false); }
 
-  public void testCastFromVoid() { doTest(false, false); }
-  public void testCatchUnknownMethod() { doTest(false, false); }
-  public void testIDEADEV8822() { doTest(false, false); }
-  public void testIDEADEV9201() { doTest(false, false); }
-  public void testIDEADEV25784() { doTest(false, false); }
-  public void testIDEADEV13249() { doTest(false, false); }
-  public void testIDEADEV11919() { doTest(false, false); }
-  public void testIDEA67829() { doTest(false, false); }
-  public void testMethodCannotBeApplied() { doTest(false, false); }
-  public void testDefaultPackageClassInStaticImport() { doTest(false, false); }
+  public void testCastFromVoid() { doTest(false); }
+  public void testCatchUnknownMethod() { doTest(false); }
+  public void testIDEADEV8822() { doTest(false); }
+  public void testIDEADEV9201() { doTest(false); }
+  public void testIDEADEV25784() { doTest(false); }
+  public void testIDEADEV13249() { doTest(false); }
+  public void testIDEADEV11919() { doTest(false); }
+  public void testIDEA67829() { doTest(false); }
+  public void testMethodCannotBeApplied() { doTest(false); }
+  public void testDefaultPackageClassInStaticImport() { doTest(false); }
 
-  public void testUnusedParamsOfPublicMethod() { doTest(true, false); }
-  public void testInnerClassesShadowing() { doTest(false, false); }
+  public void testUnusedParamsOfPublicMethod() { doTest(true); }
+  public void testInnerClassesShadowing() { doTest(false); }
 
   public void testUnusedParamsOfPublicMethodDisabled() {
     UnusedSymbolLocalInspectionBase tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
@@ -270,7 +270,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     String oldVal = tool.getParameterVisibility();
     try {
       tool.setParameterVisibility(PsiModifier.PRIVATE);
-      doTest(true, false);
+      doTest(true);
     }
     finally {
       tool.setParameterVisibility(oldVal);
@@ -278,7 +278,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnusedInspectionNonPrivateMembers() {
-    doTest(true, false);
+    doTest(true);
   }
 
   public void testUnusedNonPrivateMembers2() {
@@ -319,7 +319,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
     try {
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase(true);
-      doTest(true, false);
+      doTest(true);
     }
     finally {
       point.unregisterExtension(extension);
@@ -328,7 +328,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
-    doTest(true, false);
+    doTest(true);
     WriteCommandAction.runWriteCommandAction(null, () -> {
       PsiDirectory directory = myFile.getParent();
       assertNotNull(myFile.toString(), directory);
@@ -401,31 +401,31 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
   }
 
-  public void testClassicRethrow() { doTest(false, false); }
-  public void testRegexp() { doTest(false, false); }
-  public void testUnsupportedFeatures() { doTest(false, false); }
-  public void testThisBeforeSuper() { doTest(false, false); }
-  public void testExplicitConstructorInvocation() { doTest(false, false); }
-  public void testThisInInterface() { doTest(false, false); }
-  public void testInnerClassConstantReference() { doTest(false, false); }
-  public void testIDEA60875() { doTest(false, false); }
-  public void testIDEA71645() { doTest(false, false); }
-  public void testIDEA18343() { doTest(false, false); }
-  public void testNewExpressionClass() { doTest(false, false); }
-  public void testInnerClassObjectLiteralFromSuperExpression() { doTest(false, false); }
-  public void testPrivateFieldInSuperClass() { doTest(false, false); }
-  public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() { doTest(false, false); }
+  public void testClassicRethrow() { doTest(false); }
+  public void testRegexp() { doTest(false); }
+  public void testUnsupportedFeatures() { doTest(false); }
+  public void testThisBeforeSuper() { doTest(false); }
+  public void testExplicitConstructorInvocation() { doTest(false); }
+  public void testThisInInterface() { doTest(false); }
+  public void testInnerClassConstantReference() { doTest(false); }
+  public void testIDEA60875() { doTest(false); }
+  public void testIDEA71645() { doTest(false); }
+  public void testIDEA18343() { doTest(false); }
+  public void testNewExpressionClass() { doTest(false); }
+  public void testInnerClassObjectLiteralFromSuperExpression() { doTest(false); }
+  public void testPrivateFieldInSuperClass() { doTest(false); }
+  public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() { doTest(false); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
   public void testNestedLocalClasses() throws Exception {
-    doTest(false, false);
+    doTest(false);
   }
 
   public void testAmbiguousConstants() throws Exception {
-    doTest(false, false);
+    doTest(false);
   }
 
   public void testInsane() throws IOException {
@@ -470,7 +470,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
-  public void testIllegalWhitespaces() { doTest(false, false); }
+  public void testIllegalWhitespaces() { doTest(false); }
 
   // must stay public for PicoContainer to work
   public static class MyAnnotator implements Annotator {

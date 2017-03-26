@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.config.GitSharedSettings;
@@ -82,14 +83,21 @@ public class GitUncommitAction extends DumbAwareAction {
     VcsShortCommitDetails commit = log.getSelectedShortDetails().get(0);
     Hash hash = commit.getId();
     VirtualFile root = commit.getRoot();
-    GitRepository repository = getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
+    GitRepository repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.getRoot());
     if (repository == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
+    DataPackBase dataPackBase = ((VisiblePack)ui.getDataPack()).getDataPack();
+    if (!(dataPackBase instanceof DataPack)) {
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
     // support undo only for the last commit in the branch
-    DataPack dataPack = (DataPack)((VisiblePack)ui.getDataPack()).getDataPack();
+    DataPack dataPack = (DataPack)dataPackBase;
     List<Integer> children = dataPack.getPermanentGraph().getChildren(data.getCommitIndex(hash, root));
     if (!children.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);

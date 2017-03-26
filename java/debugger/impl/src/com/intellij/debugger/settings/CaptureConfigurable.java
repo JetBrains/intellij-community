@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,33 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.xmlb.XmlSerializer;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
+import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +55,11 @@ import java.util.List;
  * @author egor
  */
 public class CaptureConfigurable implements SearchableConfigurable {
+  private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
+
+  private MyTableModel myTableModel;
+  private JCheckBox myCaptureVariables;
+
   @NotNull
   @Override
   public String getId() {
@@ -45,36 +69,138 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Nullable
   @Override
   public JComponent createComponent() {
-    MyTableModel tableModel = new MyTableModel();
+    myTableModel = new MyTableModel();
 
-    JBTable table = new JBTable(tableModel);
+    JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
 
     TableColumnModel columnModel = table.getColumnModel();
     TableUtil.setupCheckboxColumn(columnModel.getColumn(MyTableModel.ENABLED_COLUMN));
 
-    return ToolbarDecorator.createDecorator(table)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          tableModel.addRow();
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table);
+    decorator.setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        myTableModel.addRow();
+      }
+    });
+    decorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.removeSelectedItems(table);
+      }
+    });
+    decorator.setMoveUpAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.moveSelectedItemsUp(table);
+      }
+    });
+    decorator.setMoveDownAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        TableUtil.moveSelectedItemsDown(table);
+      }
+    });
+
+    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() == 1;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> {
+          try {
+            myTableModel.add(c.clone());
+            table.getSelectionModel().setSelectionInterval(table.getRowCount() - 1, table.getRowCount() - 1);
+          }
+          catch (CloneNotSupportedException ex) {
+            LOG.error(ex);
+          }
+        });
+      }
+    });
+
+    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+          @Override
+          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+            return super.isFileVisible(file, showHiddenFiles) &&
+                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == FileTypes.ARCHIVE);
+          }
+
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            return file.getFileType() == StdFileTypes.XML;
+          }
+        };
+        descriptor.setDescription("Please select a file to import.");
+        descriptor.setTitle("Import Capture Points");
+
+        VirtualFile file = FileChooser.chooseFile(descriptor, e.getProject(), null);
+        if (file == null) return;
+        try {
+          Document document = JDOMUtil.loadDocument(file.getInputStream());
+          table.getSelectionModel().clearSelection();
+          int start = table.getRowCount();
+          List<Element> children = document.getRootElement().getChildren();
+          children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
+          table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(table);
+        catch (Exception ex) {
+          final String msg = ex.getLocalizedMessage();
+          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
         }
-      }).setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.moveSelectedItemsUp(table);
+      }
+    });
+    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.Actions.Export) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
+          .createSaveFileDialog(new FileSaverDescriptor("Export Selected Capture Points to File...", "", "xml"), e.getProject())
+          .save(null, null);
+        if (wrapper == null) return;
+
+        Element rootElement = new Element("capture-points");
+        selectedCapturePoints(table).forEach(c -> {
+          try {
+            CapturePoint clone = c.clone();
+            clone.myEnabled = false;
+            rootElement.addContent(XmlSerializer.serialize(clone));
+          }
+          catch (CloneNotSupportedException ex) {
+            LOG.error(ex);
+          }
+        });
+        try {
+          JDOMUtil.write(rootElement, wrapper.getFile());
         }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.moveSelectedItemsDown(table);
+        catch (Exception ex) {
+          final String msg = ex.getLocalizedMessage();
+          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
         }
-      }).createPanel();
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+    });
+
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel();
+    panel.addToCenter(decorator.createPanel());
+
+    myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
+    panel.addToBottom(myCaptureVariables);
+    return panel;
+  }
+
+  private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
+    return IntStreamEx.of(table.getSelectedRows()).map(table::convertRowIndexToModel).mapToObj(myTableModel::get);
   }
 
   private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
@@ -82,24 +208,28 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public static final int CLASS_COLUMN = 1;
     public static final int METHOD_COLUMN = 2;
     public static final int PARAM_COLUMN = 3;
+    public static final int INSERT_CLASS_COLUMN = 4;
+    public static final int INSERT_METHOD_COLUMN = 5;
+    public static final int INSERT_KEY_EXPR = 6;
 
-    String[] columnNames = new String[]{"", "Class name", "Method name", "Param index"};
-    List<CapturePoint> capturePoints = DebuggerSettings.getInstance().getCapturePoints();
+    static final String[] COLUMN_NAMES =
+      new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
+    List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
 
     public String getColumnName(int column) {
-      return columnNames[column];
+      return COLUMN_NAMES[column];
     }
 
     public int getRowCount() {
-      return capturePoints.size();
+      return myCapturePoints.size();
     }
 
     public int getColumnCount() {
-      return columnNames.length;
+      return COLUMN_NAMES.length;
     }
 
     public Object getValueAt(int row, int col) {
-      CapturePoint point = capturePoints.get(row);
+      CapturePoint point = myCapturePoints.get(row);
       switch (col) {
         case ENABLED_COLUMN:
           return point.myEnabled;
@@ -108,7 +238,13 @@ public class CaptureConfigurable implements SearchableConfigurable {
         case METHOD_COLUMN:
           return point.myMethodName;
         case PARAM_COLUMN:
-          return point.myParamNo;
+          return point.myCaptureKeyExpression;
+        case INSERT_CLASS_COLUMN:
+          return point.myInsertClassName;
+        case INSERT_METHOD_COLUMN:
+          return point.myInsertMethodName;
+        case INSERT_KEY_EXPR:
+          return point.myInsertKeyExpression;
       }
       return null;
     }
@@ -118,7 +254,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
     }
 
     public void setValueAt(Object value, int row, int col) {
-      CapturePoint point = capturePoints.get(row);
+      CapturePoint point = myCapturePoints.get(row);
       switch (col) {
         case ENABLED_COLUMN:
           point.myEnabled = (boolean)value;
@@ -130,7 +266,16 @@ public class CaptureConfigurable implements SearchableConfigurable {
           point.myMethodName = (String)value;
           break;
         case PARAM_COLUMN:
-          point.myParamNo = (int)value;
+          point.myCaptureKeyExpression = (String)value;
+          break;
+        case INSERT_CLASS_COLUMN:
+          point.myInsertClassName = (String)value;
+          break;
+        case INSERT_METHOD_COLUMN:
+          point.myInsertMethodName = (String)value;
+          break;
+        case INSERT_KEY_EXPR:
+          point.myInsertKeyExpression = (String)value;
           break;
       }
       fireTableCellUpdated(row, col);
@@ -140,45 +285,53 @@ public class CaptureConfigurable implements SearchableConfigurable {
       switch (columnIndex) {
         case ENABLED_COLUMN:
           return Boolean.class;
-        case PARAM_COLUMN:
-          return Integer.class;
       }
       return String.class;
     }
 
-    public void addRow() {
-      capturePoints.add(new CapturePoint());
+    CapturePoint get(int idx) {
+      return myCapturePoints.get(idx);
+    }
+
+    public void add(CapturePoint p) {
+      myCapturePoints.add(p);
       int lastRow = getRowCount() - 1;
       fireTableRowsInserted(lastRow, lastRow);
     }
 
+    public void addRow() {
+      add(new CapturePoint());
+    }
+
     public void removeRow(final int row) {
-      if (row >= 0 && row < getRowCount()) {
-        capturePoints.remove(row);
-        fireTableRowsDeleted(row, row);
-      }
+      myCapturePoints.remove(row);
+      fireTableRowsDeleted(row, row);
     }
   }
 
   @Override
   public boolean isModified() {
-    return false;
+    return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
+           !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-
+    DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
+    DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
   }
 
   @Override
   public void reset() {
-
+    myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
+    myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    myTableModel.fireTableDataChanged();
   }
 
   @Nls
   @Override
   public String getDisplayName() {
-    return "Capture";
+    return DebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
   @Nullable

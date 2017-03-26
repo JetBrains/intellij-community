@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,23 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    */
   boolean hasKeywordContainer();
 
-  String getPresentableText(boolean includeDefaultValue);
+  /**
+   * @param includeDefaultValue if true, include the default values after an "=".
+   * @return representation of parameter list
+   */
+  @NotNull
+  default String getPresentableText(boolean includeDefaultValue) {
+    return getPresentableText(includeDefaultValue, null);
+  }
+
+  /**
+   * @param includeDefaultValue if true, include the default values after an "=".
+   * @param context             context to be used to resolve argument type
+   * @return representation of parameter list
+   * Also includes expected argument type for every parameter if {@code context} is not null and resolved type is not unknown.
+   */
+  @NotNull
+  String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context);
 
   @Nullable
   PyFunction getContainingFunction();

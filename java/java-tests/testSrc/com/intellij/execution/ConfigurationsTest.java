@@ -200,7 +200,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 //    checkCantRun(configuration, "No tests found in the package '");
 
     configuration.getPersistentData().PACKAGE_NAME = "com.abcent";
-    checkCantRun(configuration, "Package 'com.abcent' not found");
+    checkCantRun(configuration, "Package 'com.abcent' does not exist");
   }
 
   public void testAllInPackageForCommonAncestorModule() throws IOException, ExecutionException {
@@ -482,12 +482,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     try {
       configuration.checkConfiguration();
     }
-    catch (RuntimeConfigurationError e) {
+    catch (RuntimeConfigurationException e) {
       assertTrue(e.getLocalizedMessage().startsWith(reasonBeginning));
       return;
-    }
-    catch (RuntimeConfigurationException ignored) {
-
     }
 
     RunProfileState state = configuration.getState(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironmentBuilder(myProject, DefaultRunExecutor.getRunExecutorInstance()).runProfile(configuration).build());

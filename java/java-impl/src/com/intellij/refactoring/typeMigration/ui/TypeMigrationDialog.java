@@ -27,6 +27,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -86,12 +87,11 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void canRun() throws ConfigurationException {
-    if (myScopeChooserCombo.getSelectedScope() == null) throw new ConfigurationException("Scope is not chosen");
-  }
-
-  @Override
   protected void doAction() {
+    if (myScopeChooserCombo.getSelectedScope() == null) {
+      Messages.showErrorDialog("Scope is not chosen", "Error");
+      return;
+    }
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
     if (myRules == null) {
       myRules = new TypeMigrationRules();

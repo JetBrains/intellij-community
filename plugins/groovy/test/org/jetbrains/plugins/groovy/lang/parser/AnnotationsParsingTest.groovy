@@ -48,4 +48,6 @@ class AnnotationsParsingTest extends GroovyParsingTestCase {
   void testKeywordsAttributes() { doTest() }
 
   void testMess() { doTest() }
+
+  void testTypeParameters() { doTest() }
 }

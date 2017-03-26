@@ -36,7 +36,6 @@ class AnchorElementInfo extends SelfElementInfo {
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile, Identikit.ByAnchor identikit) {
     super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
-    assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
     myStubElementTypeAndId = pack(-1, null);
   }
   // will restore by stub index until file tree get loaded

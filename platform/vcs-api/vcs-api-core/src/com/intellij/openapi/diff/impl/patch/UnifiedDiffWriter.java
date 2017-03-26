@@ -54,8 +54,13 @@ public class UnifiedDiffWriter {
 
   public static void write(@Nullable Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
                            @Nullable final CommitContext commitContext) throws IOException {
-    final PatchEP[] extensions = project == null ? new PatchEP[0] : Extensions.getExtensions(PatchEP.EP_NAME, project);
+    final PatchEP[] extensions = getPatchExtensions(project);
     write(project, patches, writer, lineSeparator, extensions, commitContext);
+  }
+
+  @NotNull
+  public static PatchEP[] getPatchExtensions(@Nullable Project project) {
+    return project == null ? new PatchEP[0] : Extensions.getExtensions(PatchEP.EP_NAME, project);
   }
 
   public static void write(@Nullable Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,

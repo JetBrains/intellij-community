@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,7 @@ public class InvalidWriteAccessSearcher {
                                                                           @NotNull Map<String, GrVariable> variables,
                                                                           @NotNull Set<GrVariable> alreadyInitialized) {
     DFAEngine<MyData> engine = new DFAEngine<>(flow, new MyDFAInstance(), new MySemilattice());
-    final ArrayList<MyData> dfaResult = engine.performDFAWithTimeout();
+    final List<MyData> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) return null;
 
 
@@ -68,7 +67,7 @@ public class InvalidWriteAccessSearcher {
 
   private static class MyDFAInstance implements DfaInstance<MyData> {
     @Override
-    public void fun(MyData e, Instruction instruction) {
+    public void fun(@NotNull MyData e, @NotNull Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)instruction).isWrite()) {
         e.add(((ReadWriteVariableInstruction)instruction).getVariableName());
       }
@@ -79,22 +78,17 @@ public class InvalidWriteAccessSearcher {
     public MyData initial() {
       return new MyData();
     }
-
-    @Override
-    public boolean isForward() {
-      return true;
-    }
   }
 
   private static class MySemilattice implements Semilattice<MyData> {
     @NotNull
     @Override
-    public MyData join(@NotNull ArrayList<MyData> ins) {
+    public MyData join(@NotNull List<MyData> ins) {
       return new MyData(ins);
     }
 
     @Override
-    public boolean eq(MyData e1, MyData e2) {
+    public boolean eq(@NotNull MyData e1, @NotNull MyData e2) {
       return e1.equals(e2);
     }
   }

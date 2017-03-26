@@ -31,11 +31,11 @@ public class JpsPathVariablesConfigurationImpl extends JpsElementBase<JpsPathVar
   private Map<String, String> myPathVariables;
 
   public JpsPathVariablesConfigurationImpl() {
-    myPathVariables = new LinkedHashMap<String, String>();
+    myPathVariables = new LinkedHashMap<>();
   }
 
   private JpsPathVariablesConfigurationImpl(Map<String, String> pathVariables) {
-    myPathVariables = new LinkedHashMap<String, String>(pathVariables);
+    myPathVariables = new LinkedHashMap<>(pathVariables);
   }
 
   @NotNull

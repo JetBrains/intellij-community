@@ -324,7 +324,7 @@ public class MarkerType {
       return null;
     }
 
-    Comparator<PsiClass> comparator = PsiClassListCellRenderer.INSTANCE.getComparator();
+    Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
     Arrays.sort(subclasses, comparator);
 
     String start = DaemonBundle.message(aClass.isInterface() ? "interface.is.implemented.by.header" : "class.is.subclassed.by.header");
@@ -462,7 +462,7 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
-      PsiClass psiClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)myMethod::getContainingClass);
+      PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
       FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
         @Override
         public boolean process(final PsiFunctionalExpression expr) {

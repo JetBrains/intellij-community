@@ -18,7 +18,10 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -43,22 +46,22 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
-                        @NotNull Map<VirtualFile, CompressedRefs> refs,
-                        @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull final VcsLogStorage hashMap,
-                        boolean full) {
+  public static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
+                               @NotNull Map<VirtualFile, CompressedRefs> refs,
+                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                               @NotNull VcsLogStorage storage,
+                               boolean full) {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), hashMap, providers);
+      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), storage, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
-      refsModel = new RefsModel(refs, getHeads(commits), hashMap, providers);
-      Function<Integer, Hash> hashGetter = createHashGetter(hashMap);
+      refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
+      Function<Integer, Hash> hashGetter = VcsLogStorageImpl.createHashGetter(storage);
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
-      Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
+      Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
       StopWatch sw = StopWatch.start("building graph");
       permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
@@ -66,15 +69,6 @@ public class DataPack extends DataPackBase {
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);
-  }
-
-  @NotNull
-  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogStorage hashMap) {
-    return commitIndex -> {
-      CommitId commitId = hashMap.getCommitId(commitIndex);
-      if (commitId == null) return null;
-      return commitId.getHash();
-    };
   }
 
   @NotNull
@@ -96,10 +90,10 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogStorage hashMap) {
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogStorage storage) {
     Set<Integer> result = new HashSet<>();
     for (VcsRef vcsRef : branches) {
-      result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
+      result.add(storage.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
     }
     return result;
   }

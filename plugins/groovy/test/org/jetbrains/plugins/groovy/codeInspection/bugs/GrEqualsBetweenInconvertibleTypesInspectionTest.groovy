@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,16 @@
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
+@CompileStatic
 class GrEqualsBetweenInconvertibleTypesInspectionTest extends GrHighlightingTestBase {
 
-  @Override
-  InspectionProfileEntry[] getCustomInspections() {
-    return new GrEqualsBetweenInconvertibleTypesInspection()
-  }
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final InspectionProfileEntry[] customInspections = [new GrEqualsBetweenInconvertibleTypesInspection()]
 
   void test() {
     testHighlighting('''
@@ -37,11 +39,9 @@ A a = new A()
 B b = new B()
 C c = new C()
     
-<warning descr="'==' between objects of inconvertible types 'String' and 'Integer'">s == i</warning>
-<warning descr="'==' between objects of inconvertible types 'Integer' and 'String'">i == s</warning>
-<warning descr="'==' between objects of inconvertible types 'A' and 'B'">a == b</warning>
+a <warning descr="'==' between objects of inconvertible types 'A' and 'B'">==</warning> b
 b == c
-<warning descr="'==' between objects of inconvertible types 'C' and 'A'">c == a</warning>
+c <warning descr="'==' between objects of inconvertible types 'C' and 'A'">==</warning> a
 
 s.<warning descr="'equals()' between objects of inconvertible types 'String' and 'Integer'">equals</warning>(i)
 i.<warning descr="'equals()' between objects of inconvertible types 'Integer' and 'String'">equals</warning>(s)
@@ -54,6 +54,27 @@ i.<warning descr="'equals()' between objects of inconvertible types 'Integer' an
 a.<warning descr="'equals()' between objects of inconvertible types 'A' and 'B'">equals</warning> b
 b.equals c
 c.<warning descr="'equals()' between objects of inconvertible types 'C' and 'A'">equals</warning> a
+a.<warning descr="'equals()' between objects of inconvertible types 'A' and 'LinkedHashMap<String, B>'">equals</warning>(a: b)
+a.<warning descr="'equals()' between objects of inconvertible types 'A' and 'Closure<Void>'">equals</warning> {}
+
+def test(Number n, Character c, String s, GString gs) {
+  n == n
+  n == c
+  n == s
+  n <warning descr="'==' between objects of inconvertible types 'Number' and 'GString'">==</warning> gs
+  c == n
+  c == c
+  c == s
+  c <warning descr="'==' between objects of inconvertible types 'Character' and 'GString'">==</warning> gs
+  s == n
+  s == c
+  s == s
+  s == gs
+  gs <warning descr="'==' between objects of inconvertible types 'GString' and 'Number'">==</warning> n
+  gs <warning descr="'==' between objects of inconvertible types 'GString' and 'Character'">==</warning> c
+  gs == s
+  gs == gs
+}
 ''')
   }
 }

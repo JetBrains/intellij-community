@@ -406,7 +406,8 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     @Override
     public StatusBar getStatusBar() {
-      return myOwner != null && myOwner.myStatusBar != null ? myOwner.myStatusBar : myParent.getStatusBar();
+      StatusBar ownerBar = myOwner != null ? myOwner.myStatusBar : null;
+      return ownerBar != null ? ownerBar : myParent != null ? myParent.getStatusBar() : null;
     }
 
     @Override

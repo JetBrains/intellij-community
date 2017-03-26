@@ -83,11 +83,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return pointer;
     }
 
-    pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile, forInjected);
+    pointer = new SmartPsiElementPointerImpl<>(myProject, element, containingFile, forInjected);
     if (containingFile != null) {
       trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
-    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointerImpl>(pointer));
+    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<>(pointer));
     return pointer;
   }
 
@@ -114,9 +114,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
                                                           @NotNull TextRange range,
                                                           boolean forInjected) {
-    if (!file.isValid()) {
-      LOG.error("Invalid element:" + file);
-    }
+    PsiUtilCore.ensureValid(file);
     SmartPointerTracker.processQueue();
     SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range), forInjected);
     trackPointer(pointer, file.getViewProvider().getVirtualFile());

@@ -22,6 +22,4 @@ import javax.swing.table.TableCellRenderer;
  */
 public interface ColoredCellRenderer extends TableCellRenderer {
   void setColored(boolean colored);
-
-  boolean getColored();
 }

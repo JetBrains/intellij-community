@@ -104,24 +104,29 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     synchronized (lock) {
       if (myData.contains(element)) return true;
       myData.add(element);
+      if (comparator != null) {
+        Collections.sort(myData, comparator);
+      }
     }
 
     myAlarm.addRequest(() -> {
       myAlarm.cancelAllRequests();
-      if (myCanceled) return;
-      if (myPopup.isDisposed()) return;
-      ArrayList<PsiElement> data = new ArrayList<>();
-      synchronized (lock) {
-        if (comparator != null) {
-          Collections.sort(myData, comparator);
-        }
-        data.addAll(myData);
-      }
-      replaceModel(data);
-      myPopup.setCaption(getCaption(getCurrentSize()));
-      myPopup.pack(true, true);
+      refreshModelImmediately();
     }, 200, ModalityState.stateForComponent(content));
     return true;
+  }
+
+  private void refreshModelImmediately() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myCanceled) return;
+    if (myPopup.isDisposed()) return;
+    List<PsiElement> data;
+    synchronized (lock) {
+      data = new ArrayList<>(myData);
+    }
+    replaceModel(data);
+    myPopup.setCaption(getCaption(getCurrentSize()));
+    myPopup.pack(true, true);
   }
 
   public int getCurrentSize() {
@@ -138,12 +143,13 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    myPopup.setCaption(getCaption(getCurrentSize()));
+    refreshModelImmediately();
     paintBusy(false);
   }
 
   @Override
   public void onFinished() {
+    myAlarm.cancelAllRequests();
     myFinished = true;
   }
 

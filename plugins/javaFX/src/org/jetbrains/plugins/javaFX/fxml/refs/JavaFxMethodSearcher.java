@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -65,34 +65,31 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
                                    @NotNull Processor<PsiReference> consumer) {
     final Project project = PsiUtilCore.getProjectInReadAction(psiMethod);
     final SearchScope scope =
-      ApplicationManager.getApplication().runReadAction((Computable<SearchScope>)queryParameters::getEffectiveSearchScope);
+      ReadAction.compute(queryParameters::getEffectiveSearchScope);
     if (scope instanceof LocalSearchScope) {
       final VirtualFile[] vFiles = ((LocalSearchScope)scope).getVirtualFiles();
       for (VirtualFile vFile : vFiles) {
         if (JavaFxFileTypeFactory.isFxml(vFile)) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
           if (psiFile != null) {
-            final Boolean goOn = ApplicationManager.getApplication().runReadAction(
-              (Computable<Boolean>)() -> searchMethodInFile(psiMethod, psiFile, consumer));
+            final Boolean goOn = ReadAction.compute(() -> searchMethodInFile(psiMethod, psiFile, consumer));
             if (!goOn) break;
           }
         }
       }
     }
     else if (scope instanceof GlobalSearchScope) {
-      final String propertyName = ApplicationManager.getApplication().runReadAction(
-        (Computable<String>)() -> PropertyUtil.getPropertyName(psiMethod.getName()));
+      final String propertyName = ReadAction.compute(() -> PropertyUtil.getPropertyName(psiMethod.getName()));
       if (propertyName == null) return;
 
-      final String className = ApplicationManager.getApplication().runReadAction(
-        (Computable<String>)() -> {
+      final String className = ReadAction.compute(() -> {
           final PsiClass psiClass = psiMethod.getContainingClass();
           return psiClass != null ? psiClass.getName() : null;
         });
       if (className == null) return;
 
       final GlobalSearchScope fxmlScope = new JavaFxScopeEnlarger.GlobalFxmlSearchScope((GlobalSearchScope)scope);
-      final VirtualFile[] filteredFiles = ApplicationManager.getApplication().runReadAction((Computable<VirtualFile[]>)() ->
+      final VirtualFile[] filteredFiles = ReadAction.compute(() ->
         CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(className, UsageSearchContext.IN_PLAIN_TEXT, fxmlScope, true));
       if (ArrayUtil.isEmpty(filteredFiles)) return;
 

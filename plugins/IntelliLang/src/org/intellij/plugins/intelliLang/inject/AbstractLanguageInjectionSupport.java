@@ -17,7 +17,6 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -57,13 +56,15 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return false;
   }
 
+  @Override
+  public boolean useDefaultCommentInjector() {
+    return true;
+  }
+
   @Nullable
   @Override
   public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
     return InjectorUtils.findCommentInjection(host, "comment", commentRef);
-  }
-
-  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
   }
 
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {

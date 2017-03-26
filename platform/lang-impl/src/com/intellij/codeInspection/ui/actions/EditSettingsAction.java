@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.ObjectUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,7 +47,8 @@ public class EditSettingsAction extends InspectionViewActionBase {
     InspectionProfileImpl inspectionProfile = view.getCurrentProfile();
 
     if (view.isSingleInspectionRun()) {
-      InspectionToolWrapper tool = inspectionProfile.getInspectionTool(inspectionProfile.getSingleTool(), view.getProject());
+      InspectionToolWrapper tool =
+        ObjectUtils.notNull(inspectionProfile.getInspectionTool(ObjectUtils.notNull(inspectionProfile.getSingleTool()), view.getProject()));
       JComponent panel = tool.getTool().createOptionsPanel();
       if (panel != null) {
         final DialogBuilder builder = new DialogBuilder()

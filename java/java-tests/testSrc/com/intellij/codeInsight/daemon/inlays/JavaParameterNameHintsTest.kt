@@ -15,14 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-class JavaInlayParameterHintsTest : InlayParameterHintsTest() {
+class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
   fun check(text: String) {
-    checkInlays("A.java", text)
+    myFixture.configureByText("A.java", text)
+    myFixture.testInlays()
   }
 
   fun `test insert literal arguments`() {
@@ -36,7 +38,7 @@ class Groo {
   String title = "Testing...";
   char ch = 'q';
 
-  configure(<hint text="testNow"/>true, <hint text="times"/>555, <hint text="pii"/>3.141f, <hint text="title"/>"Huge Title", <hint text="terminate"/>'c', <hint text="file"/>null);
+  configure(<hint text="testNow:"/>true, <hint text="times:"/>555, <hint text="pii:"/>3.141f, <hint text="title:"/>"Huge Title", <hint text="terminate:"/>'c', <hint text="file:"/>null);
   configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
  }
 
@@ -51,11 +53,11 @@ class Groo {
   fun `test do not show for Exceptions`() {
     check("""
 class Fooo {
-  
+
   public void test() {
     Throwable t = new IllegalStateException("crime");
   }
-  
+
 }
 """)
   }
@@ -66,10 +68,10 @@ class Fooo {
 
  public void test() {
    String message = "sdfsdfdsf";
-   assertEquals(<hint text="expected"/>"fooo", message);
+   assertEquals(<hint text="expected:"/>"fooo", message);
 
    String title = "TT";
-   show(title, <hint text="message"/>"Hi");
+   show(title, <hint text="message:"/>"Hi");
  }
 
  public void assertEquals(String expected, String actual) {}
@@ -77,7 +79,7 @@ class Fooo {
 
 }""")
   }
-  
+
 
   fun `test no hints for generic builders`() {
     check("""
@@ -96,9 +98,27 @@ class Stream<T> {
   public Stream<T> skip(int n) {}
 }
 """)
+
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    check("""
+class Foo {
+  void test() {
+    new IntStream().skip(<hint text="n:"/>10);
+    new Stream<Integer>().skip(<hint text="n:"/>10);
+  }
+}
+
+class IntStream {
+  public IntStream skip(int n) {}
+}
+
+class Stream<T> {
+  public Stream<T> skip(int n) {}
+}
+""")
   }
 
-  
+
   fun `test do not show hints on setters`() {
     check("""class Groo {
 
@@ -114,7 +134,7 @@ class Stream<T> {
 
 }""")
   }
-  
+
 
   fun `test single varargs hint`() {
     check("""
@@ -122,7 +142,7 @@ public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(<hint text="test"/>13, <hint text="...booleans"/>false);
+    testBooleanVarargs(<hint text="test:"/>13, <hint text="...booleans:"/>false);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -139,7 +159,7 @@ public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(<hint text="test"/>13);
+    testBooleanVarargs(<hint text="test:"/>13);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -150,14 +170,14 @@ public class VarArgTest {
 """)
   }
 
-  
+
   fun `test multiple vararg hint`() {
     check("""
 public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(<hint text="test"/>13, <hint text="...booleans"/>false, true, false);
+    testBooleanVarargs(<hint text="test:"/>13, <hint text="...booleans:"/>false, true, false);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -167,8 +187,8 @@ public class VarArgTest {
 }
 """)
   }
-  
-  
+
+
   fun `test do not inline known subsequent parameter names`() {
     check("""
 public class Test {
@@ -196,7 +216,7 @@ public class Test {
 }
 """)
   }
-  
+
 
   fun `test show if can be assigned`() {
     check("""
@@ -204,7 +224,7 @@ public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
-    count(<hint text="test"/>100, <hint text="boo"/>false, <hint text="seq"/>"Hi!");
+    count(<hint text="test:"/>100, <hint text="boo:"/>false, <hint text="seq:"/>"Hi!");
   }
 
   public void count(Integer test, Boolean boo, CharSequence seq) {
@@ -221,8 +241,8 @@ public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
-    count(<hint text="test"/>-1, obj);
-    count(<hint text="test"/>+1, obj);
+    count(<hint text="test:"/>-1, obj);
+    count(<hint text="test:"/>+1, obj);
   }
 
   public void count(int test, Object obj) {
@@ -234,46 +254,42 @@ public class CharSymbol {
   }
 
   fun `test inline literal arguments with crazy settings`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
     check("""
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
     System.out.println("AAA");
-    main(<hint text="isActive"/>true,<hint text="requestFocus"/>false, /*comment*/<hint text="xoo"/>2);
+    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, /*comment*/<hint text="xoo:"/>2);
   }
 }
 """)
-  
+
   }
 
 
   fun `test ignored methods`() {
     check("""
 public class Test {
-  
+
   List<String> list = new ArrayList<>();
   StringBuilder builder = new StringBuilder();
 
   public void main() {
     System.out.println("A");
     System.out.print("A");
-    
+
     list.add("sss");
     list.get(1);
     list.set(1, "sss");
-    
+
     setNewIndex(10);
     "sss".contains("s");
     builder.append("sdfsdf");
     "sfsdf".startWith("s");
     "sss".charAt(3);
-    
-    clearStatus(<hint text="updatedRecently"/>false);
+
+    clearStatus(<hint text="updatedRecently:"/>false);
   }
-  
+
   void print(String s) {}
   void println(String s) {}
   void get(int index) {}
@@ -287,10 +303,6 @@ public class Test {
   }
 
   fun `test hints for generic arguments`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
     check("""
 
 class QList<E> {
@@ -304,8 +316,8 @@ class QCmp<E> {
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.compare(<hint text="o1"/>0, /** ddd */<hint text="o2"/>3);
-    l.add(<hint text="query"/>1, <hint text="obj"/>"uuu");
+    c.compare(<hint text="o1:"/>0, /** ddd */<hint text="o2:"/>3);
+    l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
 """)
@@ -317,7 +329,7 @@ public class Test {
 
   public void main() {
     System.out.println("AAA");
-    Checker r = new Checker(<hint text="isActive"/>true, <hint text="requestFocus"/>false) {
+    Checker r = new Checker(<hint text="isActive:"/>true, <hint text="requestFocus:"/>false) {
         @Override
         void test() {
         }
@@ -343,7 +355,7 @@ public class Test {
 
   public static void main() {
     System.out.println();
-    Test t = new Test(<hint text="counter"/>10, <hint text="shouldTest"/>false);
+    Test t = new Test(<hint text="counter:"/>10, <hint text="shouldTest:"/>false);
   }
 
 }
@@ -359,7 +371,7 @@ public class VarArgTest {
     int test = 13;
     boolean isCheck = false;
     boolean isOk = true;
-    testBooleanVarargs(test, <hint text="...booleans"/>isCheck, true, isOk);
+    testBooleanVarargs(test, <hint text="...booleans:"/>isCheck, true, isOk);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -373,9 +385,9 @@ public class VarArgTest {
   fun `test if any param matches inline all`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
-    check(<hint text="x"/>10, <hint text="paramNameLength"/>1000);
+    check(<hint text="x:"/>10, <hint text="paramNameLength:"/>1000);
   }
 
   public void check(int x, int paramNameLength) {
@@ -388,10 +400,10 @@ public class VarArgTest {
   fun `test inline common name pair if more that 2 args`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
     String s = "su";
-    check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, s);
+    check(<hint text="beginIndex:"/>10, <hint text="endIndex:"/>1000, s);
   }
 
   public void check(int beginIndex, int endIndex, String params) {
@@ -404,11 +416,11 @@ public class VarArgTest {
   fun `test ignore String methods`() {
     check("""
 class Test {
-  
+
   public void main() {
     String.format("line", "eee", "www");
   }
-  
+
 }
 """)
   }
@@ -416,9 +428,9 @@ class Test {
   fun `test inline common name pair if more that 2 args xxx`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
-    check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, <hint text="x"/>"su");
+    check(<hint text="beginIndex:"/>10, <hint text="endIndex:"/>1000, <hint text="x:"/>"su");
   }
 
   public void check(int beginIndex, int endIndex, String x) {
@@ -431,9 +443,9 @@ public class VarArgTest {
   fun `test inline this`() {
     check("""
 public class VarArgTest {
-  
+
   public void main() {
-    check(<hint text="test"/>this, <hint text="endIndex"/>1000);
+    check(<hint text="test:"/>this, <hint text="endIndex:"/>1000);
   }
 
   public void check(VarArgTest test, int endIndex) {
@@ -446,10 +458,10 @@ public class VarArgTest {
   fun `test inline strange methods`() {
     check("""
 public class Test {
-  
+
   void main() {
-    createContent(<hint text="manager"/>null);
-    createNewContent(<hint text="test"/>this);
+    createContent(<hint text="manager:"/>null);
+    createNewContent(<hint text="test:"/>this);
   }
 
   Content createContent(DockManager manager) {}
@@ -470,17 +482,37 @@ class Builder {
 }
 
 class Test {
-  
+
   public void test() {
     Builder builder = new Builder();
-    builder.await(<hint text="value"/>true);
+    builder.await(<hint text="value:"/>true);
     builder.bwait(false).timeWait(100);
   }
-  
+
+}
+""")
+    
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    check("""
+class Builder {
+  void await(boolean value) {}
+  Builder bwait(boolean xvalue) {}
+  Builder timeWait(int millis) {}
+}
+
+class Test {
+
+  public void test() {
+    Builder builder = new Builder();
+    builder.await(<hint text="value:"/>true);
+    builder.bwait(<hint text="xvalue:"/>false).timeWait(<hint text="millis:"/>100);
+  }
+
 }
 """)
   }
 
+  
   fun `test builder method only method with one param`() {
     check("""
 class Builder {
@@ -493,16 +525,35 @@ class Test {
     Builder builder = new Builder();
     builder
     .trew(false)
-    .qwit(<hint text="value"/>true, <hint text="sValue"/>"value");
+    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
   }
 }
 """)
+
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    check("""
+class Builder {
+  Builder qwit(boolean value, String sValue) {}
+  Builder trew(boolean value) {}
+}
+
+class Test {
+  public void test() {
+    Builder builder = new Builder();
+    builder
+    .trew(<hint text="value:"/>false)
+    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
   }
+}
+""")
+  
+  }
+  
 
   fun `test do not show single parameter hint if it is string literal`() {
     check("""
 public class Test {
-  
+
   public void test() {
     debug("Error message");
     info("Error message", new Object());
@@ -510,22 +561,22 @@ public class Test {
 
   void debug(String message) {}
   void info(String message, Object error) {}
-  
+
 }
 """)
   }
-  
+
   fun `test show single`() {
     check("""
 class Test {
 
   void main() {
-    blah(<hint text="a"/>1, <hint text="b"/>2);
+    blah(<hint text="a:"/>1, <hint text="b:"/>2);
     int z = 2;
-    draw(<hint text="x"/>10, <hint text="y"/>20, z);
+    draw(<hint text="x:"/>10, <hint text="y:"/>20, z);
     int x = 10;
     int y = 12;
-    drawRect(x, y, <hint text="w"/>10, <hint text="h"/>12);
+    drawRect(x, y, <hint text="w:"/>10, <hint text="h:"/>12);
   }
 
   void blah(int a, int b) {}
@@ -539,13 +590,17 @@ class Test {
   fun `test do not show for setters`() {
     check("""
 class Test {
-  
+
   void main() {
     set(10);
+    setWindow(100);
+    setWindow(<hint text="height:"/>100, <hint text="weight:">);
   }
-  
+
   void set(int newValue) {}
-  
+  void setWindow(int newValue) {}
+  void setWindow(int height, int weight) {}
+
 }
 """)
   }
@@ -564,13 +619,13 @@ class Test {
   fun `test more blacklisted items`() {
     check("""
 class Test {
-  
+
   void test() {
     System.getProperty("aaa");
     System.setProperty("aaa", "bbb");
     new Key().create(10);
   }
-  
+
 }
 
 class Key {
@@ -580,13 +635,13 @@ class Key {
   }
 
   fun `test poly and binary expressions`() {
-    check("""
+      check("""
 class Test {
   void test() {
-    xxx(<hint text="followTheSum"/>100);
-    check(<hint text="isShow">1 + 1);
-    check(<hint text="isShow"/>1 + 1 + 1);
-    yyy(<hint text="followTheSum"/>200);
+    xxx(<hint text="followTheSum:"/>100);
+    check(<hint text="isShow:"/>1 + 1);
+    check(<hint text="isShow:"/>1 + 1 + 1);
+    yyy(<hint text="followTheSum:"/>200);
   }
   void check(int isShow) {}
   void xxx(int followTheSum) {}
@@ -600,7 +655,7 @@ class Test {
     check("""
 class Test {
   void test() {
-    check(<hint text="isShow"/>1000);  
+    check(<hint text="isShow:"/>1000);
   }
   void check(int isShow) {}
 }
@@ -608,7 +663,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
     check("""
 class Test {
   void main() {
@@ -622,12 +677,12 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
     check("""
 class Test {
   void main() {
-    timeoutExecution(<hint text="timeout"/>1000, <hint text="message"/>"xxx");
-    createSpace(<hint text="space"/>true, <hint text="a"/>10);
+    timeoutExecution(<hint text="timeout:"/>1000, <hint text="message:"/>"xxx");
+    createSpace(<hint text="space:"/>true, <hint text="a:"/>10);
   }
   void timeoutExecution(int timeout, String message) {}
   void createSpace(boolean space, int a) {}
@@ -636,13 +691,13 @@ class Test {
   }
 
   fun `test show same params`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
     String c = "c";
     String d = "d";
-    test(<hint text="parent"/>c, <hint text="child"/>d);
+    test(<hint text="parent:"/>c, <hint text="child:"/>d);
   }
   void test(String parent, String child) {
   }
@@ -651,12 +706,12 @@ class Test {
   }
 
   fun `test show triple`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
     String c = "c";
-    test(<hint text="parent"/>c, <hint text="child"/>c, <hint text="grandParent"/>c);
+    test(<hint text="parent:"/>c, <hint text="child:"/>c, <hint text="grandParent:"/>c);
   }
   void test(String parent, String child, String grandParent) {
   }
@@ -665,14 +720,14 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
     String c = "c";
     String d = "d";
     int v = 10;
-    test(<hint text="parent"/>c, <hint text="child"/>d, <hint text="vx"/>v, <hint text="vy"/>v);
+    test(<hint text="parent:"/>c, <hint text="child:"/>d, <hint text="vx:"/>v, <hint text="vy:"/>v);
   }
   void test(String parent, String child, int vx, int vy) {
   }
@@ -684,7 +739,7 @@ class Test {
     check("""
 class Test {
   void main() {
-    test(<hint text="a"/>10, x);
+    test(<hint text="a:"/>10, x);
   }
   void test(int a, String bS) {}
   void test(int a, int bI) {}
@@ -696,7 +751,7 @@ class Test {
     check("""
 class Test {
   void main() {
-    new X(<hint text="a"/>10, x);
+    new X(<hint text="a:"/>10, x);
   }
 }
 

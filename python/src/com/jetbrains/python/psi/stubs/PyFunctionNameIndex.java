@@ -38,10 +38,12 @@ public class PyFunctionNameIndex extends StringStubIndexExtension<PyFunction> {
     return KEY;
   }
 
+  @NotNull
   public static Collection<PyFunction> find(String name, Project project, GlobalSearchScope scope) {
     return StubIndex.getElements(KEY, name, project, scope, PyFunction.class);
   }
 
+  @NotNull
   public static Collection<PyFunction> find(String name, Project project) {
     return StubIndex.getElements(KEY, name, project, ProjectScope.getAllScope(project), PyFunction.class);
   }

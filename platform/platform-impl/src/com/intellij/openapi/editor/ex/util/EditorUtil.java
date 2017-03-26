@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.*;
@@ -73,6 +75,12 @@ public final class EditorUtil {
 
   public static boolean isPasswordEditor(@Nullable Editor editor) {
     return editor != null && editor.getContentComponent() instanceof JPasswordField;
+  }
+
+  @Nullable
+  public static EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    return editor instanceof EditorEx ? (EditorEx)editor : null;
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
@@ -859,8 +867,8 @@ public final class EditorUtil {
 
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    int size = UISettings.getInstance().PRESENTATION_MODE
-               ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
+    int size = UISettings.getInstance().getPresentationMode()
+               ? UISettings.getInstance().getPresentationModeFontSize() - 4 : scheme.getEditorFontSize();
     return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 

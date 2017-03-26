@@ -131,9 +131,9 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   @Override
   protected void messageReceived(ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
     SessionData sessionData = context.channel().attr(SESSION_DATA).get();
-
-    UUID sessionId;
-    if (sessionData == null) {
+    final boolean isFirstMessage = sessionData == null;
+    final UUID sessionId;
+    if (isFirstMessage) {
       // this is the first message for this session, so fill session data with missing info
       final CmdlineRemoteProto.Message.UUID id = message.getSessionId();
       sessionId = new UUID(id.getMostSigBits(), id.getLeastSigBits());
@@ -143,60 +143,65 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
         sessionData.channel = context.channel();
         context.channel().attr(SESSION_DATA).set(sessionData);
       }
-      if (myCanceledSessions.contains(sessionId)) {
-        context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
-      }
     }
     else {
       sessionId = sessionData.sessionId;
     }
 
-    final BuilderMessageHandler handler = sessionData != null? sessionData.handler : null;
-    if (handler == null) {
-      // todo
-      LOG.info("No message handler registered for session " + sessionId);
-      return;
-    }
+    try {
+      final BuilderMessageHandler handler = sessionData != null? sessionData.handler : null;
+      if (handler == null) {
+        // todo
+        LOG.info("No message handler registered for session " + sessionId);
+        return;
+      }
 
-    final CmdlineRemoteProto.Message.Type messageType = message.getType();
-    switch (messageType) {
-      case FAILURE:
-        handler.handleFailure(sessionId, message.getFailure());
-        break;
-
-      case BUILDER_MESSAGE:
-        final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
-        final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
-        if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
-          //noinspection SynchronizationOnLocalVariableOrMethodParameter
-          synchronized (sessionData) {
-            final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
-            if (params != null) {
-              sessionData.state = SessionData.State.RUNNING;
-              handler.buildStarted(sessionId);
-              sessionData.params = null;
-              context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
-            }
-            else {
-              if (sessionData.state == SessionData.State.INITIAL) {
-                sessionData.state = SessionData.State.WAITING_PARAMS;
+      final CmdlineRemoteProto.Message.Type messageType = message.getType();
+      switch (messageType) {
+        case FAILURE:
+          handler.handleFailure(sessionId, message.getFailure());
+          break;
+  
+        case BUILDER_MESSAGE:
+          final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
+          final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
+          if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (sessionData) {
+              final CmdlineRemoteProto.Message.ControllerMessage params = sessionData.params;
+              if (params != null) {
+                sessionData.state = SessionData.State.RUNNING;
+                handler.buildStarted(sessionId);
+                sessionData.params = null;
+                context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
               }
               else {
-                // this message is expected to be sent only once.
-                // To be on the safe side, cancel the session
-                cancelSession(sessionId);
+                if (sessionData.state == SessionData.State.INITIAL) {
+                  sessionData.state = SessionData.State.WAITING_PARAMS;
+                }
+                else {
+                  // this message is expected to be sent only once.
+                  // To be on the safe side, cancel the session
+                  cancelSession(sessionId);
+                }
               }
             }
           }
-        }
-        else {
-          handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
-        }
-        break;
-
-      default:
-        LOG.info("Unsupported message type " + messageType);
-        break;
+          else {
+            handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
+          }
+          break;
+  
+        default:
+          LOG.info("Unsupported message type " + messageType);
+          break;
+      }
+    }
+    finally {
+      if (isFirstMessage && myCanceledSessions.contains(sessionId)) {
+        // handle the case when the session had been cancelled before communication even started
+        context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+      }
     }
   }
 

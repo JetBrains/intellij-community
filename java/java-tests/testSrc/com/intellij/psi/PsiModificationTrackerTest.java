@@ -38,6 +38,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -334,6 +335,41 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     delete(file.getParent());
 
     assertNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
+    assertFalse(count1 == tracker.getJavaStructureModificationCount());
+  }
+
+  public void testClassShouldNotDisappearWithoutEvents_InCodeBlock() throws Exception {
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+
+    String barStr = "class Bar {}";
+    PsiFile file = addFileToProject("Foo.java", "class Foo {{" + barStr + "}}");
+    JBIterable<PsiClass> barQuery = SyntaxTraverser.psiTraverser(file).filter(PsiClass.class).filter(o -> "Bar".equals(o.getName()));
+    assertNotNull(barQuery.first());
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    int index = document.getText().indexOf(barStr);
+    long count1 = tracker.getJavaStructureModificationCount();
+    //WriteCommandAction.runWriteCommandAction(getProject(), () -> bar.delete());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(index, index + barStr.length(), ""));
+    PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+
+    assertNull(barQuery.first());
+    assertFalse(count1 == tracker.getJavaStructureModificationCount());
+  }
+
+  public void testClassShouldNotAppearWithoutEvents_InCodeBlock() throws Exception {
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+
+    String barStr = "class Bar {}";
+    PsiFile file = addFileToProject("Foo.java", "class Foo {{" + "}}");
+    JBIterable<PsiClass> barQuery = SyntaxTraverser.psiTraverser(file).filter(PsiClass.class).filter(o -> "Bar".equals(o.getName()));
+    assertNull(barQuery.first());
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    int index = document.getText().indexOf("}}");
+    long count1 = tracker.getJavaStructureModificationCount();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(index, barStr));
+    PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+
+    assertNotNull(barQuery.first());
     assertFalse(count1 == tracker.getJavaStructureModificationCount());
   }
 

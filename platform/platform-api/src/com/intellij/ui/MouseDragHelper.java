@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
    * @return false if Settings -> Appearance -> Drag-n-Drop with ALT pressed only is selected but event doesn't have ALT modifier
    */
   public static boolean checkModifiers(InputEvent event) {
-    if (event == null || !UISettings.getInstance().DND_WITH_PRESSED_ALT_ONLY) return true;
+    if (event == null || !UISettings.getInstance().getDndWithPressedAltOnly()) return true;
     return (event.getModifiers() & InputEvent.ALT_MASK) != 0;
   }
 
@@ -70,16 +70,19 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     if (myGlassPane != null) return;
 
     new UiNotifyConnector(myDragComponent, new Activatable() {
+      @Override
       public void showNotify() {
         attach();
       }
 
+      @Override
       public void hideNotify() {
         detach(true);
       }
     });
 
     Disposer.register(myParentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         stop();
       }
@@ -125,6 +128,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return 2;
   }
 
+  @Override
   public void mousePressed(final MouseEvent e) {
     if (!canStartDragging(e)) return;
 
@@ -141,6 +145,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     }
   }
 
+  @Override
   public void mouseReleased(final MouseEvent e) {
     if (myCancelled) {
       myCancelled = false;
@@ -179,6 +184,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myDetachingMode = false;
   }
 
+  @Override
   public void mouseDragged(final MouseEvent e) {
     if (myPressPointScreen == null || myCancelled) return;
 
@@ -260,15 +266,19 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
            Math.abs(myPressPointScreen.y - screen.y - myDelta.height) < DRAG_START_DEADZONE;
   }
 
+  @Override
   public void mouseClicked(final MouseEvent e) {
   }
 
+  @Override
   public void mouseEntered(final MouseEvent e) {
   }
 
+  @Override
   public void mouseExited(final MouseEvent e) {
   }
 
+  @Override
   public void mouseMoved(final MouseEvent e) {
   }
 

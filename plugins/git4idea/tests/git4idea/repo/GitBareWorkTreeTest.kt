@@ -15,10 +15,10 @@
  */
 package git4idea.repo
 
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.tac
-import git4idea.test.GitTestUtil.cloneRepo
-import git4idea.test.GitTestUtil.initRepo
+import git4idea.test.cloneRepo
+import git4idea.test.initRepo
+import git4idea.test.cd
+import git4idea.test.tac
 import java.io.File
 
 class GitBareWorkTreeTest : GitWorkTreeBaseTest() {

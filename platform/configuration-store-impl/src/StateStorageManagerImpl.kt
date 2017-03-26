@@ -95,7 +95,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   /**
    * @param expansion System-independent
    */
-  fun addMacro(key: String, expansion: String):Boolean {
+  fun addMacro(key: String, expansion: String): Boolean {
     LOG.assertTrue(!key.isEmpty())
 
     val value: String
@@ -113,7 +113,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       value = expansion
     }
 
-    // you must not add duplicated macro, but our ModuleImpl.setModuleFilePath does it (it will be fixed later)
+    // e.g ModuleImpl.setModuleFilePath update macro value
     for (macro in macros) {
       if (key == macro.key) {
         macro.value = value
@@ -148,11 +148,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return if (path.endsWith('/')) path.substring(0, path.length - 1) else path
   }
 
+  // storageCustomizer - to ensure that other threads will use fully constructed and configured storage (invoked under the same lock as created)
   fun getOrCreateStorage(collapsedPath: String,
                          roamingType: RoamingType = RoamingType.DEFAULT,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
                          @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
-                         exclusive: Boolean = false): StateStorage {
+                         exclusive: Boolean = false,
+                         storageCustomizer: (StateStorage.() -> Unit)? = null): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
     val key: String
     if (storageClass == StateStorage::class.java) {
@@ -165,9 +167,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       key = storageClass.name!!
     }
 
-    return storageLock.read { storages.get(key) } ?: storageLock.write {
-      storages.getOrPut(key, { createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive) })
+    val storage = storageLock.read { storages.get(key) } ?: return storageLock.write {
+      storages.getOrPut(key) {
+        val storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
+        storageCustomizer?.let { storage.it() }
+        storage
+      }
     }
+
+    storageCustomizer?.let { storage.it() }
+    return storage
   }
 
   fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }

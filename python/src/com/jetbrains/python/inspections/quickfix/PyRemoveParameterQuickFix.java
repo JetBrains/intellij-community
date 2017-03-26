@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import org.jetbrains.annotations.NonNls;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Map;
 
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
@@ -39,38 +39,33 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
     return PyBundle.message("QFIX.NAME.remove.parameter");
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
-    assert element instanceof PyParameter;
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    final PsiElement parameter = descriptor.getPsiElement();
+    assert parameter instanceof PyParameter;
 
-    final PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
 
-    if (pyFunction != null) {
-      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(pyFunction, false);
-      for (UsageInfo usage : usages) {
-        final PsiElement usageElement = usage.getElement();
-        if (usageElement != null) {
-          final PsiElement callExpression = usageElement.getParent();
-          if (callExpression instanceof PyCallExpression) {
-            final PyArgumentList argumentList = ((PyCallExpression)callExpression).getArgumentList();
-            if (argumentList != null) {
-              final PyResolveContext resolveContext = PyResolveContext.noImplicits();
-              final PyCallExpression.PyArgumentsMapping mapping = ((PyCallExpression)callExpression).mapArguments(resolveContext);
-              for (Map.Entry<PyExpression, PyNamedParameter> parameterEntry : mapping.getMappedParameters().entrySet()) {
-                if (parameterEntry.getValue().equals(element)) {
-                  parameterEntry.getKey().delete();
-                }
-              }
-            }
-          }
-        }
-      }
-      final PyStringLiteralExpression expression = pyFunction.getDocStringExpression();
-      final String paramName = ((PyParameter)element).getName();
-      if (expression != null && paramName != null) {
-        PyDocstringGenerator.forDocStringOwner(pyFunction).withoutParam(paramName).buildAndInsert();
+    if (function != null) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits();
+
+      StreamEx
+        .of(PyRefactoringUtil.findUsages(function, false))
+        .map(UsageInfo::getElement)
+        .nonNull()
+        .map(PsiElement::getParent)
+        .select(PyCallExpression.class)
+        .flatMap(callExpression -> callExpression.multiMapArguments(resolveContext).stream())
+        .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())
+        .filter(entry -> entry.getValue() == parameter)
+        .forEach(entry -> entry.getKey().delete());
+
+      final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
+      final String parameterName = ((PyParameter)parameter).getName();
+      if (docStringExpression != null && parameterName != null) {
+        PyDocstringGenerator.forDocStringOwner(function).withoutParam(parameterName).buildAndInsert();
       }
     }
-    element.delete();
+
+    parameter.delete();
   }
 }

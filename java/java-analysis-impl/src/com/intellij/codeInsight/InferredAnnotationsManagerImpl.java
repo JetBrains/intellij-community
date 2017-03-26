@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,13 +58,13 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return fromBytecode;
     }
 
-    if (listOwner instanceof PsiMethod) {
+    if (listOwner instanceof PsiMethodImpl) {
       if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN)) {
-        return getInferredContractAnnotation((PsiMethod)listOwner);
+        return getInferredContractAnnotation((PsiMethodImpl)listOwner);
       }
 
       if ((AnnotationUtil.NOT_NULL.equals(annotationFQN) || AnnotationUtil.NULLABLE.equals(annotationFQN))) {
-        PsiAnnotation anno = getInferredNullityAnnotation((PsiMethod)listOwner);
+        PsiAnnotation anno = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
         return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
       }
     }
@@ -97,7 +98,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   }
 
   @Nullable
-  private PsiAnnotation getInferredContractAnnotation(PsiMethod method) {
+  private PsiAnnotation getInferredContractAnnotation(PsiMethodImpl method) {
     if (method.getModifierList().findAnnotation(ORG_JETBRAINS_ANNOTATIONS_CONTRACT) != null) {
       return null;
     }
@@ -106,7 +107,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   }
 
   @Nullable
-  private PsiAnnotation getInferredNullityAnnotation(PsiMethod method) {
+  private PsiAnnotation getInferredNullityAnnotation(PsiMethodImpl method) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     if (AnnotationUtil.findAnnotation(method, manager.getNotNulls(), true) != null || AnnotationUtil.findAnnotation(method, manager.getNullables(), true) != null) {
       return null;
@@ -159,16 +160,16 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       }
     }
 
-    if (listOwner instanceof PsiMethod) {
+    if (listOwner instanceof PsiMethodImpl) {
       PsiAnnotation hardcoded = getHardcodedContractAnnotation((PsiMethod)listOwner);
       if (hardcoded != null) {
         result.add(hardcoded);
       } else if (!ignoreInference(listOwner, ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
-        ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethod)listOwner));
+        ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
       }
 
       if (!ignoreInference(listOwner, AnnotationUtil.NOT_NULL) || !ignoreInference(listOwner, AnnotationUtil.NULLABLE)) {
-        PsiAnnotation annotation = getInferredNullityAnnotation((PsiMethod)listOwner);
+        PsiAnnotation annotation = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
         if (annotation != null && !ignoreInference(listOwner, annotation.getQualifiedName())) {
           result.add(annotation);
         }

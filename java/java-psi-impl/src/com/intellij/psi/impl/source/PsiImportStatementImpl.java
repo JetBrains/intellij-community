@@ -24,13 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStatement {
   public static final PsiImportStatementImpl[] EMPTY_ARRAY = new PsiImportStatementImpl[0];
-  public static final ArrayFactory<PsiImportStatementImpl> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementImpl>() {
-    @NotNull
-    @Override
-    public PsiImportStatementImpl[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementImpl[count];
-    }
-  };
+  public static final ArrayFactory<PsiImportStatementImpl> ARRAY_FACTORY =
+    count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementImpl[count];
 
   public PsiImportStatementImpl(final PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_STATEMENT);

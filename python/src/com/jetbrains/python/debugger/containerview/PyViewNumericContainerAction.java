@@ -22,8 +22,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.array.NumpyArrayTable;
-import com.jetbrains.python.debugger.dataframe.DataFrameTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,27 +43,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   }
 
   public static void showNumericViewer(Project project, PyDebugValue debugValue) {
-    String nodeType = debugValue.getType();
-    final ViewNumericContainerDialog dialog;
-    if ("ndarray".equals(nodeType)) {
-      dialog = new ViewNumericContainerDialog(project, (dialogWrapper) -> {
-        NumpyArrayTable arrayTable = new NumpyArrayTable(project, dialogWrapper, debugValue);
-        arrayTable.init();
-        return arrayTable.getComponent().getMainPanel();
-      });
-    }
-    else if (("DataFrame".equals(nodeType))) {
-      dialog = new ViewNumericContainerDialog(project, (dialogWrapper) -> {
-        DataFrameTable dataFrameTable = new DataFrameTable(project, dialogWrapper, debugValue);
-        dataFrameTable.init();
-        return dataFrameTable.getComponent().getMainPanel();
-      });
-    }
-    else {
-      throw new IllegalStateException("Cannot render node type: " + nodeType);
-    }
-
-    dialog.show();
+    PyDataView.getInstance(project).show(debugValue);
   }
 
   @Nullable

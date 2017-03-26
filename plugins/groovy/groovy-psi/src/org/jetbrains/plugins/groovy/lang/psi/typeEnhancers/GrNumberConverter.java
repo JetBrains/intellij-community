@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class GrNumberConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.EXPLICIT_CAST || position == ApplicableTo.RETURN_VALUE;
+    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
   }
 
   @Nullable

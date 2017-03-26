@@ -22,7 +22,7 @@ class ForNameDeclaredMethod {
 class Test {
   public void method(){}
   public void method2(A a, B b){}
-  void method3(){}
+  void method1(){}
 }
 
 class A {}

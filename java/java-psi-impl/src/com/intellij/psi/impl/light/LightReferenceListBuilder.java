@@ -28,7 +28,7 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class LightReferenceListBuilder extends LightElement implements PsiReferenceList {
-  private final List<PsiJavaCodeReferenceElement> myRefs = new ArrayList<PsiJavaCodeReferenceElement>();
+  private final List<PsiJavaCodeReferenceElement> myRefs = new ArrayList<>();
   private PsiJavaCodeReferenceElement[] myCachedRefs;
   private PsiClassType[] myCachedTypes;
   private final Role myRole;

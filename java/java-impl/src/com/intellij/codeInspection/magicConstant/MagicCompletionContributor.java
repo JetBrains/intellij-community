@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -69,7 +68,7 @@ public class MagicCompletionContributor extends CompletionContributor {
   }
 
   @Nullable
-  private static MagicConstantInspection.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
+  public static MagicConstantInspection.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
     MagicConstantInspection.AllowedValues allowedValues = null;
     for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
       MagicConstantInspection.AllowedValues values = MagicConstantInspection.getAllowedValues(pair.first, pair.second, null);

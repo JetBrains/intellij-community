@@ -98,6 +98,12 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setRequestFocus(boolean requestFocus);
 
+  @NotNull
+  default BalloonBuilder setPointerSize(Dimension size) { return this; }
+
+  @NotNull
+  default BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
+
   BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick);
 
   /**

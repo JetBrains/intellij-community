@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,6 +229,26 @@ class Bar {
                       "</body></html>"
 
     assert doc == expected
+  }
+
+  void "test at method name with overloads"() {
+    def input = """\
+      class Foo {
+        void foo(String s) {
+          s.region<caret>Matches()
+        } 
+      }""".stripIndent()
+
+    def actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
+
+    def expected =
+      "<html>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
+      "<br>" +
+      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
+      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
+      "</html>"
+
+    assert actual == expected
   }
 
   private void configure(String text) {

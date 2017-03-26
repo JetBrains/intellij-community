@@ -365,7 +365,8 @@ class BeforeRunStepsPanel extends JPanel {
         BeforeRunTask task = (BeforeRunTask)value;
         BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), task.getProviderId());
         if (provider != null) {
-          setIcon(provider.getTaskIcon(task));
+          Icon icon = provider.getTaskIcon(task);
+          setIcon(icon != null ? icon : provider.getIcon());
           setText(provider.getDescription(task));
         }
       }

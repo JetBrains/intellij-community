@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,18 @@ import javax.swing.*;
 public class LambdaSmartStepTarget extends SmartStepTarget{
   private final PsiLambdaExpression myLambda;
   private final int myOrdinal;
+  private final boolean myAsync;
 
-  public LambdaSmartStepTarget(@NotNull PsiLambdaExpression lambda, @Nullable String label, @Nullable PsiElement highlightElement, int ordinal, Range<Integer> lines) {
+  public LambdaSmartStepTarget(@NotNull PsiLambdaExpression lambda,
+                               @Nullable String label,
+                               @Nullable PsiElement highlightElement,
+                               int ordinal,
+                               Range<Integer> lines,
+                               boolean async) {
     super(label, highlightElement, true, lines);
     myLambda = lambda;
     myOrdinal = ordinal;
+    myAsync = async;
   }
 
   public PsiLambdaExpression getLambda() {
@@ -45,6 +52,10 @@ public class LambdaSmartStepTarget extends SmartStepTarget{
 
   public int getOrdinal() {
     return myOrdinal;
+  }
+
+  public boolean isAsync() {
+    return myAsync;
   }
 
   @Nullable

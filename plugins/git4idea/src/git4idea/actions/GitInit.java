@@ -17,7 +17,6 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -77,7 +76,7 @@ public class GitInit extends DumbAwareAction {
           return;
         }
 
-        GitCommandResult result = ServiceManager.getService(Git.class).init(project, root);
+        GitCommandResult result = Git.getInstance().init(project, root);
         if (!result.success()) {
           GitVcs vcs = GitVcs.getInstance(project);
           if (vcs != null && vcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {

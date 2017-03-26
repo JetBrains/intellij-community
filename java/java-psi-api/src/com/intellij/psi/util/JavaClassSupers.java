@@ -46,5 +46,10 @@ public abstract class JavaClassSupers {
                                                           @NotNull GlobalSearchScope resolveScope,
                                                           @NotNull PsiSubstitutor derivedSubstitutor);
 
+  /**
+   * Called internally when it's expected that derivedClass extends superClass, but no super class substitutor can be found for them
+   */
+  public abstract void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass);
+
 
 }

@@ -18,6 +18,8 @@ package git4idea.push;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.push.VcsPushOptionValue;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
@@ -45,12 +47,23 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   @Override
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                    @Nullable VcsPushOptionValue optionValue, boolean force) {
+    expireExistingErrorsAndWarnings();
     GitPushTagMode pushTagMode = (GitPushTagMode)optionValue;
     GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force).execute();
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
     rememberTargets(pushSpecs);
+  }
+
+  protected void expireExistingErrorsAndWarnings() {
+    GitPushResultNotification[] existingNotifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(GitPushResultNotification.class, myProject);
+    for (GitPushResultNotification notification : existingNotifications) {
+      if (notification.getType() != NotificationType.INFORMATION) {
+        notification.expire();
+      }
+    }
   }
 
   private void rememberTargets(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs) {

@@ -66,13 +66,13 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     String errorPrefix = myTabbedPane.getTitleAt(myTabbedPane.indexOfComponent(component)) + ": ";
 
     setOKActionEnabled(! forbidSave);
-    setInvalid(errorPrefix + text);
+    setInvalid(errorPrefix + text, myTabbedPane);
   }
 
   public void onSuccess() {
     if (isVisible()) {
       setOKActionEnabled(true);
-      setInvalid(null);
+      setInvalid(null, null);
     }
   }
 
@@ -85,7 +85,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
       component.apply();
     } catch (ConfigurationException e) {
       myTabbedPane.setSelectedComponent(component.createComponent());
-      setInvalid(e.getMessage());
+      setInvalid(e.getMessage(), myTabbedPane);
       return false;
     }
     return true;
@@ -149,9 +149,9 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
   private boolean valid;
 
-  public void setInvalid(final String text) {
+  private void setInvalid(final String text, JComponent component) {
     valid = (text == null) || ("".equals(text.trim()));
-    setErrorText(text);
+    setErrorText(text, component);
   }
 
   public boolean enabled() {

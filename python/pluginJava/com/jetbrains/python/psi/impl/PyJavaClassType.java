@@ -128,9 +128,16 @@ public class PyJavaClassType implements PyClassLikeType {
     return myDefinition;
   }
 
+  @NotNull
   @Override
   public PyClassLikeType toInstance() {
     return myDefinition ? new PyJavaClassType(myClass, false) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myDefinition ? this : new PyJavaClassType(myClass, true);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
 }
 
-fun isValidProjectPath(path: String): Boolean {
+@JvmOverloads
+fun isValidProjectPath(path: String, anyRegularFileIsValid: Boolean = false): Boolean {
   val file = try {
     Paths.get(path)
   }
@@ -58,7 +59,12 @@ fun isValidProjectPath(path: String): Boolean {
   }
 
   val attributes = file.basicAttributesIfExists() ?: return false
-  return if (attributes.isDirectory) file.resolve(Project.DIRECTORY_STORE_FOLDER).exists() else path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)
+  return if (attributes.isDirectory) {
+    file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
+  }
+  else {
+    anyRegularFileIsValid || path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)
+  }
 }
 
 fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {

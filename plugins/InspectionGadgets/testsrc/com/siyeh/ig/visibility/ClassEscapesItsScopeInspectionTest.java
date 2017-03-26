@@ -17,19 +17,40 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ClassEscapesItsScopeInspectionTest extends LightInspectionTestCase {
+  private ClassEscapesItsScopeInspection myInspection = new ClassEscapesItsScopeInspection();
 
-  public void testClassEscapesItsScope() { doTest(); }
+  public void testClassEscapesItsScope() { doTest(true, true); }
+
+  public void testGenericParameterEscapesItsScope() { doTest(true, true); }
+
+  public void testExposedByPublic() {
+    doTest(true, false);
+  }
+
+  public void testExposedByPackageLocal() {
+    doTest(false, true);
+  }
+
+  private void doTest(boolean checkPublicApi, boolean checkPackageLocal) {
+    myInspection.checkPublicApi = checkPublicApi;
+    myInspection.checkPackageLocal = checkPackageLocal;
+    try {
+      doTest();
+    }
+    finally {
+      myInspection.checkPublicApi = myInspection.checkPackageLocal = false;
+    }
+  }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ClassEscapesItsScopeInspection();
+    return myInspection;
   }
 }

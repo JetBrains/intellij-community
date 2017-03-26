@@ -28,10 +28,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
+import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -41,7 +42,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import java.util.List;
-import java.util.Set;
+
+import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Vladislav.Soroka
@@ -87,12 +89,21 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myCompositeRootSettings != null) {
-      Pair[] pairs = myTree.getCheckedNodes(Pair.class, null);
-      Set<String> compositeParticipants = new HashSet<>();
-      for (Pair pair : pairs) {
-        compositeParticipants.add(pair.second.toString());
+      Pair[] compositeParticipants = myTree.getCheckedNodes(Pair.class, null);
+      if (compositeParticipants.length == 0) {
+        myCompositeRootSettings.setCompositeBuild(null);
       }
-      myCompositeRootSettings.setCompositeParticipants(compositeParticipants.isEmpty() ? null : compositeParticipants);
+      else {
+        GradleProjectSettings.CompositeBuild compositeBuild = new GradleProjectSettings.CompositeBuild();
+        compositeBuild.setCompositeDefinitionSource(CompositeDefinitionSource.IDE);
+        for (Pair participant : compositeParticipants) {
+          BuildParticipant buildParticipant = new BuildParticipant();
+          buildParticipant.setRootProjectName(participant.first.toString());
+          buildParticipant.setRootPath(participant.second.toString());
+          compositeBuild.getCompositeParticipants().add(buildParticipant);
+        }
+        myCompositeRootSettings.setCompositeBuild(compositeBuild);
+      }
     }
     super.doOKAction();
   }
@@ -113,7 +124,14 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
       List<TreeNode> nodes = ContainerUtil.newArrayList();
       for (GradleProjectSettings projectSettings : GradleSettings.getInstance(myProject).getLinkedProjectsSettings()) {
         if (projectSettings == myCompositeRootSettings) continue;
-        boolean added = myCompositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath());
+        if (projectSettings.getCompositeBuild() != null &&
+            projectSettings.getCompositeBuild().getCompositeDefinitionSource() == CompositeDefinitionSource.SCRIPT) {
+          continue;
+        }
+
+        GradleProjectSettings.CompositeBuild compositeBuild = myCompositeRootSettings.getCompositeBuild();
+        boolean added = compositeBuild != null && compositeBuild.getCompositeParticipants().stream()
+          .anyMatch(participant -> pathsEqual(participant.getRootPath(), projectSettings.getExternalProjectPath()));
 
         String representationName = myExternalSystemUiAware.getProjectRepresentationName(
           projectSettings.getExternalProjectPath(), projectSettings.getExternalProjectPath());
@@ -154,7 +172,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     final Object root = treeModel.getRoot();
     if (!(root instanceof CheckedTreeNode)) return;
 
-    for (TreeNode node : TreeUtil.childrenToArray((CheckedTreeNode)root)) {
+    for (TreeNode node : TreeUtil.listChildren((CheckedTreeNode)root)) {
       if (!(node instanceof CheckedTreeNode)) continue;
       consumer.consume(((CheckedTreeNode)node));
     }

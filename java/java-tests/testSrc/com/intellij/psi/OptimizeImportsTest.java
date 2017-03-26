@@ -53,6 +53,10 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testExcludeNonStaticElementsFromStaticConflictingMembers() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(".java");
   }

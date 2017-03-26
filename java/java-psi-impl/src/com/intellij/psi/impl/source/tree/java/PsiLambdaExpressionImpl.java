@@ -101,12 +101,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   public boolean isValueCompatible() {
     //it could be called when functional type of lambda expression is not yet defined (during lambda expression compatibility constraint reduction)
     //thus inferred results for calls inside could be wrong and should not be cached
-    final Boolean result = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(this, false, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return isValueCompatibleNoCache();
-      }
-    });
+    final Boolean result = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(this, false, () -> isValueCompatibleNoCache());
     return result != null && result;
   }
 

@@ -184,7 +184,7 @@ public abstract class EditorFactory {
 
   /**
    * Registers a listener for receiving notifications when editor instances are created and released
-   * and removes the listener when the <code>'parentDisposable'</code> gets disposed.
+   * and removes the listener when the {@code parentDisposable} gets disposed.
    *
    * @param listener         the listener instance.
    * @param parentDisposable the Disposable which triggers the removal of the listener

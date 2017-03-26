@@ -161,6 +161,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testRuby19105() throws Throwable {
+    doTest();
+  }
+
   public void testEmptyMultiline() throws Throwable {
     doTest();
   }
@@ -204,7 +208,7 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testSingleQuotedEscapes() {
     doTest();
   }
-  
+
   public void testUnicodeNewlines() {
     doTest();
   }

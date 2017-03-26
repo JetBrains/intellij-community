@@ -1,7 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
-  ext.kotlin_version = '1.0.3'
+  ext.kotlin_version = '1.0.6'
   repositories {
     mavenCentral()
   }
@@ -20,7 +20,8 @@ subprojects {
   apply plugin: "org.jetbrains.intellij"
 
   tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-
+  targetCompatibility = '1.8'
+  sourceCompatibility = '1.8'
   sourceSets {
     main {
       java.srcDirs 'src', '../src', '../gen'
@@ -60,7 +61,7 @@ subprojects {
   task extractPyCharm(type: Copy) {
     from zipTree(configurations.pycharm.filter{dep -> dep.name.startsWith("pycharmPC-") && dep.name.endsWith(".zip")}[0])
     into rootProject.projectDir.toString() + "/gradleBuild/pycharm"
-    include "**/*.jar"
+    include "**/pycharm*.jar"
   }
 
   intellij {
@@ -89,6 +90,7 @@ project(':student-python') {
   }
 
   compileJava.dependsOn(extractPyCharm)
+  compileKotlin.dependsOn(extractPyCharm)
 
   intellij {
     pluginName 'student-python'

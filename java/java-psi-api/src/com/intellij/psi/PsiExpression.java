@@ -30,20 +30,9 @@ public interface PsiExpression extends PsiAnnotationMemberValue {
    */
   PsiExpression[] EMPTY_ARRAY = new PsiExpression[0];
 
-  ArrayFactory<PsiExpression> ARRAY_FACTORY = new ArrayFactory<PsiExpression>() {
-    @NotNull
-    @Override
-    public PsiExpression[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiExpression[count];
-    }
-  };
+  ArrayFactory<PsiExpression> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiExpression[count];
 
-  Function<PsiExpression, PsiType> EXPRESSION_TO_TYPE = new NullableFunction<PsiExpression, PsiType>() {
-    @Override
-    public PsiType fun(final PsiExpression expression) {
-      return expression.getType();
-    }
-  };
+  Function<PsiExpression, PsiType> EXPRESSION_TO_TYPE = (NullableFunction<PsiExpression, PsiType>)expression -> expression.getType();
 
   /**
    * Returns the type of the expression.

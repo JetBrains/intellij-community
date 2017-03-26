@@ -15,14 +15,11 @@
  */
 package com.intellij.util;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author pegov
  */
 public interface Producer<T> {
   
-  @Nullable
   T produce();
   
 }

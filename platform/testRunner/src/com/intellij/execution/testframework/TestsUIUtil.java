@@ -243,7 +243,7 @@ public class TestsUIUtil {
         else if (notStartedCount > 0) {
           myTitle = ignoredCount > 0 ? "Tests Ignored" : ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
           myText = passedCount + " passed, " + notStartedCount + (ignoredCount > 0 ? " ignored" : " not started");
-          myType = ignoredCount == 0 ? MessageType.WARNING : MessageType.ERROR;
+          myType = ignoredCount > 0 ? MessageType.WARNING : MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");

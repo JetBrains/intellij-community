@@ -27,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator> {
   public static final ExtensionPointName<LanguageExtensionPoint<ExternalAnnotator>> EP_NAME = ExtensionPointName.create("com.intellij.externalAnnotator");
@@ -40,12 +39,8 @@ public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnota
 
   @NotNull
   public static List<ExternalAnnotator> allForFile(@NotNull Language language, @NotNull final PsiFile file) {
-    final Set<ExternalAnnotator> annotators = ContainerUtil.newHashSet();
-    while (language != null) {
-      annotators.addAll(INSTANCE.forKey(language));
-      language = language.getBaseLanguage();
-    }
-    final ExternalAnnotatorsFilter[] filters = Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
+    List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
+    ExternalAnnotatorsFilter[] filters = Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
     return ContainerUtil.findAll(annotators, annotator -> {
       for (ExternalAnnotatorsFilter filter : filters) {
         if (filter.isProhibited(annotator, file)) {

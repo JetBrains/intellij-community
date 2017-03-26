@@ -56,13 +56,8 @@ public abstract class TestFrameworks {
   
   @Nullable
   public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<TestFramework>() {
-      @Nullable
-      @Override
-      public Result<TestFramework> compute() {
-        return Result.create(computeFramework(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
+      .create(computeFramework(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   @Nullable

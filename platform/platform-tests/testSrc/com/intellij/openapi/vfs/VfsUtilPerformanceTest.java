@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
@@ -182,7 +183,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     Ref<Throwable> ex = Ref.create();
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), true,
+      Arrays.asList(new Object[JobSchedulerImpl.CORES_COUNT]), ProgressManager.getInstance().getProgressIndicator(), false,
       o -> {
         try {
           doAsyncRefreshTest();

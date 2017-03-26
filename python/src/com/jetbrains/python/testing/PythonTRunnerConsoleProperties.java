@@ -17,8 +17,7 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.testframework.sm.runner.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,5 +51,24 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
   @Override
   public SMTestLocator getTestLocator() {
     return myLocator;
+  }
+
+  /**
+   * Makes configuration id-based,
+   * @see GeneralIdBasedToSMTRunnerEventsConvertor
+   */
+  final void makeIdTestBased() {
+    setIdBasedTestTree(true);
+    getProject().getMessageBus().connect(this)
+      .subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
+        @Override
+        public void onTestFailed(@NotNull final SMTestProxy test) {
+          SMTestProxy currentTest = test.getParent();
+          while (currentTest != null) {
+            currentTest.setTestFailed(" ", null, false);
+            currentTest = currentTest.getParent();
+          }
+        }
+      });
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ex.Tools;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -117,7 +118,7 @@ public abstract class InspectionsFilter {
            && mySuitableLanguageIds.isEmpty();
   }
 
-  public boolean matches(final Tools tools, final InspectionConfigTreeNode node) {
+  public boolean matches(@NotNull Tools tools, final InspectionConfigTreeNode node) {
     if (myShowOnlyCleanupInspections && !tools.getTool().isCleanupTool()) {
       return false;
     }

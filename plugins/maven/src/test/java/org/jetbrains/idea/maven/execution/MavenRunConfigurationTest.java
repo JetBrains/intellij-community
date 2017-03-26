@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -28,8 +28,12 @@ import java.util.Arrays;
 public class MavenRunConfigurationTest extends IdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
-    MavenServerManager.getInstance().shutdown(true);
-    super.tearDown();
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testSaveLoadRunnerParameters() {

@@ -50,10 +50,10 @@ public class BuildDataManager implements StorageOwner {
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
 
-  private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<SourceToOutputMappingImpl>> mySourceToOutputs = 
-    new ConcurrentHashMap<BuildTarget<?>, AtomicNotNullLazyValue<SourceToOutputMappingImpl>>(16, 0.75f, CONCURRENCY_LEVEL);
+  private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<SourceToOutputMappingImpl>> mySourceToOutputs =
+    new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
   private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<BuildTargetStorages>> myTargetStorages =
-    new ConcurrentHashMap<BuildTarget<?>, AtomicNotNullLazyValue<BuildTargetStorages>>(16, 0.75f, CONCURRENCY_LEVEL);
+    new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
 
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;

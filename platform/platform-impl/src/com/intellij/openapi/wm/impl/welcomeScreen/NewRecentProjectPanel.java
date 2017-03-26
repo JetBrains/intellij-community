@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   @Override
   protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
     final JBList list = super.createList(recentProjectActions, size);
+
     list.setBackground(FlatWelcomeFrame.getProjectsBackground());
     list.addKeyListener(new KeyAdapter() {
       @Override
@@ -249,7 +250,11 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
               name.setText(((ReopenProjectAction)value).getProjectName());
+              final String realPath = ((ReopenProjectAction)value).getProjectPath();
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
+              if (!realPath.equals(path.getText())) {
+                projectsWithLongPathes.add((ReopenProjectAction)value);
+              }
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
 

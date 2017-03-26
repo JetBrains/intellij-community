@@ -151,7 +151,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   private static boolean isUndoable(VirtualFileEvent e) {
-    return !e.isFromRefresh();
+    return !e.isFromRefresh() || e.getFile().getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
   }
 
   private void registerUndoableAction(VirtualFileEvent e) {

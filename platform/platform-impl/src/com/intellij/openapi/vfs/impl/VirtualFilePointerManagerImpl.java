@@ -489,6 +489,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       synchronized (this) {
         String urlBefore = node.myFileAndUrl.second;
         Pair<VirtualFile,String> after = node.update();
+        assert after != null : "can't invalidate inside modification";
         String urlAfter = after.second;
         if (URL_COMPARATOR.compare(urlBefore, urlAfter) != 0 || !urlAfter.endsWith(node.part)) {
           List<VirtualFilePointerImpl> myPointers = new SmartList<>();

@@ -16,7 +16,7 @@
 package git4idea.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -618,7 +618,7 @@ public class GitHistoryUtils {
 
   @Nullable
   private static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction((Computable<VcsLogObjectsFactory>)() -> {
+    return ReadAction.compute(() -> {
       if (!project.isDisposed()) {
         return ServiceManager.getService(project, VcsLogObjectsFactory.class);
       }
@@ -835,7 +835,15 @@ public class GitHistoryUtils {
 
     List<T> commits = ContainerUtil.newArrayList();
 
-    loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+    try {
+      loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+    }
+    catch (VcsException e) {
+      if (commits.isEmpty()) {
+        throw e;
+      }
+      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
+    }
 
     return commits;
   }
@@ -860,12 +868,14 @@ public class GitHistoryUtils {
                                  String... parameters)
     throws VcsException {
 
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
+                                    Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
     GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
     StopWatch sw = StopWatch.start("loading details");
 
-    processHandlerOutputByLine(h, parser, record -> converter.consume(record));
+    processHandlerOutputByLine(h, parser, converter);
 
     sw.report();
   }
@@ -1055,8 +1065,8 @@ public class GitHistoryUtils {
         int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
         if (bodyEnd >= 0) {
           myIsInsideBody = false;
-          myOutput.append(line.substring(0, bodyEnd + 1));
-          processOutputLine(line.substring(bodyEnd + 1));
+          myOutput.append(line.substring(0, bodyEnd + GitLogParser.RECORD_END.length()));
+          processOutputLine(line.substring(bodyEnd + GitLogParser.RECORD_END.length()));
         }
         else {
           myOutput.append(line).append("\n");

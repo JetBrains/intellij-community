@@ -17,6 +17,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -410,5 +412,17 @@ public class EditorModificationUtil {
       return false;
     }
     return true;
+  }
+
+  /**
+   * @return true when not viewer
+   *         false otherwise, additionally information hint with warning would be shown
+   */
+  public static boolean checkModificationAllowed(Editor editor) {
+    if (!editor.isViewer()) return true;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
+
+    HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.viewer.hint"));
+    return false;
   }
 }

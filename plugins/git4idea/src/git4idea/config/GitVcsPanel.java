@@ -19,7 +19,6 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -89,7 +88,7 @@ public class GitVcsPanel {
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     if (!project.isDefault()) {
-      final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+      final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
       mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
     }
     else {

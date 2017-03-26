@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInf
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -76,11 +77,11 @@ public class PyPostfixUtils {
   }
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {
-    return selectorAllExpressionsWithCurrentOffset(Conditions.<PsiElement>alwaysTrue());
+    return selectorAllExpressionsWithCurrentOffset(Conditions.alwaysTrue());
   }
 
   public static PostfixTemplateExpressionSelector selectorTopmost() {
-    return selectorTopmost(Conditions.<PsiElement>alwaysTrue());
+    return selectorTopmost(Conditions.alwaysTrue());
   }
 
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
@@ -89,7 +90,7 @@ public class PyPostfixUtils {
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         PyExpressionStatement exprStatement = PsiTreeUtil.getNonStrictParentOfType(context, PyExpressionStatement.class);
         PyExpression expression = exprStatement != null ? PsiTreeUtil.getChildOfType(exprStatement, PyExpression.class) : null;
-        return ContainerUtil.<PsiElement>createMaybeSingletonList(expression);
+        return ContainerUtil.createMaybeSingletonList(expression);
       }
     };
   }
@@ -99,6 +100,9 @@ public class PyPostfixUtils {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(context.getContainingFile(), offset - 1);
+        if (elementAtCaret instanceof PsiComment) {
+          return Collections.emptyList();
+        }
         while (elementAtCaret != null) {
           if (elementAtCaret instanceof PyStatement) {
             return Collections.singletonList(elementAtCaret);

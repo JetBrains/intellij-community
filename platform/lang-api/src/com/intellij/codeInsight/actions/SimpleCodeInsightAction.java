@@ -28,9 +28,4 @@ public abstract class SimpleCodeInsightAction extends CodeInsightAction implemen
   protected CodeInsightActionHandler getHandler() {
     return this;
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

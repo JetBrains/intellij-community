@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.Module;
@@ -76,10 +75,7 @@ public class MavenFoldersImporter {
       }
 
       if (!rootModels.isEmpty()) {
-        ModifiableRootModel[] modelsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-        if (modelsArray.length > 0) {
-          ModifiableModelCommitter.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
-        }
+        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels.get((0)).getProject()).getModifiableModel());
       }
     });
   }
@@ -221,9 +217,7 @@ public class MavenFoldersImporter {
     }
 
     if (myImportingSettings.isExcludeTargetFolder()) {
-      if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
         myModel.addExcludedFolder(targetDir.getPath());
-      }
     }
   }
 

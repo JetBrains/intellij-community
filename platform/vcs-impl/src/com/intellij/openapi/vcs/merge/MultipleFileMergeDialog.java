@@ -262,39 +262,49 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     if (!beforeResolve(files)) {
       return;
     }
-    
-    for (final VirtualFile file : files) {
-      final Ref<Exception> ex = new Ref<>();
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          try {
-            if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
-              if (!DiffUtil.makeWritable(myProject, file)) {
-                throw new IOException("File is read-only: " + file.getPresentableName());
-              }
-              MergeData data = myProvider.loadRevisions(file);
-              if (isCurrent) {
-                file.setBinaryContent(data.CURRENT);
-              }
-              else {
-                file.setBinaryContent(data.LAST);
-                checkMarkModifiedProject(file);
-              }
-            }
-            markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
-          }
-          catch (Exception e) {
-            ex.set(e);
-          }
-        }, "Accept " + (isCurrent ? "Yours" : "Theirs"), null);
-      });
-      if (!ex.isNull()) {
-        //noinspection ThrowableResultOfMethodCallIgnored
-        Messages.showErrorDialog(myRootPanel, "Error saving merged data: " + ex.get().getMessage());
-        break;
+
+    try {
+      for (VirtualFile file : files) {
+        acceptFileRevision(file, isCurrent);
+        markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
       }
     }
+    catch (Exception e) {
+      LOG.warn(e);
+      Messages.showErrorDialog(myRootPanel, "Error saving merged data: " + e.getMessage());
+    }
+
     updateModelFromFiles();
+  }
+
+  private void acceptFileRevision(@NotNull VirtualFile file, boolean isCurrent) throws Exception {
+    if (myProvider instanceof MergeProvider2 && !myMergeSession.canMerge(file)) return;
+
+    if (!DiffUtil.makeWritable(myProject, file)) {
+      throw new IOException("File is read-only: " + file.getPresentableName());
+    }
+
+    MergeData data = myProvider.loadRevisions(file);
+
+    Ref<Exception> ex = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          if (isCurrent) {
+            file.setBinaryContent(data.CURRENT);
+          }
+          else {
+            file.setBinaryContent(data.LAST);
+            checkMarkModifiedProject(file);
+          }
+        }
+        catch (Exception e) {
+          ex.set(e);
+        }
+      });
+    }, "Accept " + (isCurrent ? "Yours" : "Theirs"), null);
+
+    if (!ex.isNull()) throw ex.get();
   }
 
   private void markFileProcessed(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) {

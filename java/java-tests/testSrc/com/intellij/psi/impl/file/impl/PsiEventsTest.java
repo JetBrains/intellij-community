@@ -17,7 +17,6 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,7 +33,6 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.Processor;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +42,6 @@ import java.io.IOException;
 
 @SkipSlowTestLocally
 public class PsiEventsTest extends PsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.PsiEventsTest");
-
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;
   private VirtualFile mySrcDir1;
@@ -182,8 +178,8 @@ public class PsiEventsTest extends PsiTestCase {
 
 
     if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
-      Processor<PsiDirectory> isReallyLeak = directory -> directory.getVirtualFile().equals(myPrjDir1);
-      LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class, isReallyLeak);
+      LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class,
+                           directory -> directory.getVirtualFile().equals(myPrjDir1));
 
       String dumpPath = FileUtil.createTempFile(
         new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof.zip",
@@ -339,12 +335,9 @@ public class PsiEventsTest extends PsiTestCase {
     final EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
-        return null;
-      }
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
+      return null;
     });
 
 
@@ -359,12 +352,9 @@ public class PsiEventsTest extends PsiTestCase {
       }
     }.assertCompleted(listener.getEventsString());
 
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-        return null;
-      }
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
+      return null;
     });
   }
 
@@ -584,10 +574,10 @@ public class PsiEventsTest extends PsiTestCase {
     rename(virtualFile, "b.xml");
   }
 
-  String newText;
-  String original;
-  String eventsFired = "";
-  PsiTreeChangeListener listener;
+  private String newText;
+  private String original;
+  private String eventsFired = "";
+  private PsiTreeChangeListener listener;
   public void testBeforeAfterChildrenChange() throws Throwable {
     listener = new PsiTreeChangeListener() {
       @Override
@@ -754,32 +744,32 @@ public class PsiEventsTest extends PsiTestCase {
 
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
 
       @Override
       public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        checkCommitted(true, event);
+        checkCommitted(event);
       }
     }, getTestRootDisposable());
 
@@ -793,11 +783,11 @@ public class PsiEventsTest extends PsiTestCase {
     assertTrue(documentManager.isCommitted(document));
   }
 
-  private static void checkCommitted(boolean shouldBeCommitted, PsiTreeChangeEvent event) {
+  private static void checkCommitted(PsiTreeChangeEvent event) {
     PsiFile file = event.getFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);
-    assertEquals(shouldBeCommitted, documentManager.isCommitted(document));
+    assertTrue(documentManager.isCommitted(document));
   }
 
   public void testTreeChangePreprocessorThrowsException() throws Exception {

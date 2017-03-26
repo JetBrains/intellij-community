@@ -16,9 +16,8 @@
 package com.intellij.util;
 
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -38,7 +37,7 @@ public class PsiErrorElementUtil {
   private PsiErrorElementUtil() {}
 
   public static boolean hasErrors(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       if (project.isDisposed() || !virtualFile.isValid()) return false;
 
       PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);

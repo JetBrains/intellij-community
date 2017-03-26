@@ -58,7 +58,7 @@
           <text value="Label"/>
         </properties>
       </component>
-      <component id="11e32" class="com.intellij.ui.components.JBLabel" binding="myPermGenSizeLabel">
+      <component id="11e32" class="com.intellij.ui.components.JBLabel" binding="myMetaspaceSizeLabel">
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="1" use-parent-layout="false"/>
         </constraints>
@@ -67,7 +67,7 @@
           <text value="Label"/>
         </properties>
       </component>
-      <component id="2cb23" class="javax.swing.JTextField" binding="myPermGenSizeField" default-binding="true">
+      <component id="2cb23" class="javax.swing.JTextField" binding="myMetaspaceSizeField" default-binding="true">
         <constraints>
           <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -75,7 +75,7 @@
           <columns value="6"/>
         </properties>
       </component>
-      <component id="e1ed0" class="com.intellij.ui.components.JBLabel" binding="myPermGenUnitsLabel">
+      <component id="e1ed0" class="com.intellij.ui.components.JBLabel" binding="myMetaspaceUnitsLabel">
         <constraints>
           <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -83,7 +83,7 @@
           <text value="MB"/>
         </properties>
       </component>
-      <component id="59bf8" class="com.intellij.ui.components.JBLabel" binding="myPermGenCurrentValueLabel">
+      <component id="59bf8" class="com.intellij.ui.components.JBLabel" binding="myMetaspaceCurrentValueLabel">
         <constraints>
           <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

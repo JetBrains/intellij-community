@@ -17,9 +17,11 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Processor;
@@ -98,11 +100,10 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
 
     @NotNull
     public SearchScope getScope() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-        @Override
-        public SearchScope compute() {
-          return myScope.intersectWith(PsiSearchHelper.SERVICE.getInstance(myElement.getProject()).getUseScope(myElement));
-        }
+      return ReadAction.compute(() -> {
+        PsiFile file = myElement.getContainingFile();
+        return myScope.intersectWith(
+          PsiSearchHelper.SERVICE.getInstance(myElement.getProject()).getUseScope(file != null ? file : myElement));
       });
     }
   }

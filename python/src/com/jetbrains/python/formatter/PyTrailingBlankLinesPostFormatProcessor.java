@@ -55,7 +55,6 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
   public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     final PsiFile psiFile = source.getContainingFile();
     if (isApplicableTo(psiFile)) {
-      applyPendingChangesToPsi(source);
       final TextRange whitespaceRange = findTrailingWhitespacesRange(psiFile);
       if (source.getTextRange().intersects(whitespaceRange)) {
         replaceOrDeleteTrailingWhitespaces(psiFile, whitespaceRange);
@@ -64,41 +63,18 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     return source;
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (!isApplicableTo(source)) {
       return rangeToReformat;
     }
-    applyPendingChangesToPsi(source);
     final TextRange oldWhitespaceRange = findTrailingWhitespacesRange(source);
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
       final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces(source, oldWhitespaceRange);
-      final int delta = newWhitespaceRange.getLength() - oldWhitespaceRange.getLength();
-      if (oldWhitespaceRange.contains(rangeToReformat)) {
-        return newWhitespaceRange;
-      }
-      else if (rangeToReformat.contains(oldWhitespaceRange)) {
-        return rangeToReformat.grown(delta);
-      }
-      else if (oldWhitespaceRange.getEndOffset() > rangeToReformat.getEndOffset()) {
-        return new TextRange(rangeToReformat.getStartOffset(),
-                             Math.min(rangeToReformat.getEndOffset(), newWhitespaceRange.getEndOffset()));
-      }
-      else if (oldWhitespaceRange.getStartOffset() < rangeToReformat.getStartOffset()) {
-        final int unionLength = rangeToReformat.getEndOffset() - oldWhitespaceRange.getStartOffset();
-        return TextRange.from(Math.max(oldWhitespaceRange.getStartOffset(), rangeToReformat.getStartOffset() + delta),
-                              Math.min(rangeToReformat.getLength(), unionLength + delta));
-      }
+      return rangeToReformat.grown(oldWhitespaceRange.getLength() - newWhitespaceRange.getLength());
     }
     return rangeToReformat;
-  }
-
-  private static void applyPendingChangesToPsi(@NotNull PsiElement source) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(source.getContainingFile().getProject());
-    final Document document = documentManager.getDocument(source.getContainingFile());
-    if (document != null) {
-      documentManager.doPostponedOperationsAndUnblockDocument(document);
-    }
   }
 
   @NotNull
@@ -119,29 +95,25 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
   @NotNull
   private static TextRange replaceOrDeleteTrailingWhitespaces(@NotNull final PsiFile pyFile, @NotNull final TextRange whitespaceRange) {
     final Project project = pyFile.getProject();
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document document = documentManager.getDocument(pyFile);
-    if (document != null) {
-      final PyCodeStyleSettings customSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
-      final boolean addLineFeed = customSettings.BLANK_LINE_AT_FILE_END || EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF();
-      try {
-        final String text = addLineFeed ? "\n" : "";
-        // Do not add extra blank line in empty file
-        if (!text.isEmpty() && whitespaceRange.getStartOffset() != 0) {
-          if (!whitespaceRange.isEmpty()) {
-            document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), text);
-          }
-          else {
-            document.insertString(document.getTextLength(), text);
-          }
+    final PyCodeStyleSettings customSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
+    final boolean addLineFeed = customSettings.BLANK_LINE_AT_FILE_END || EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF();
+    
+    final String realWhitespace = whitespaceRange.substring(pyFile.getText());
+    final String desiredWhitespace = addLineFeed ? "\n" : "";
+
+    // Do not add extra blank line in empty file
+    if (!realWhitespace.equals(desiredWhitespace) && (desiredWhitespace.isEmpty() || whitespaceRange.getStartOffset() != 0)) {
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      final Document document = documentManager.getDocument(pyFile);
+      if (document != null) {
+        documentManager.doPostponedOperationsAndUnblockDocument(document);
+        try {
+          document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), desiredWhitespace);
+          return TextRange.from(whitespaceRange.getStartOffset(), desiredWhitespace.length());
         }
-        else if (!whitespaceRange.isEmpty()) {
-          document.deleteString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset());
+        finally {
+          documentManager.commitDocument(document);
         }
-        return TextRange.from(whitespaceRange.getStartOffset(), text.length());
-      }
-      finally {
-        documentManager.commitDocument(document);
       }
     }
     return whitespaceRange;

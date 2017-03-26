@@ -52,7 +52,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   static {
     if (!DebugAssertions.DEBUG) {
       final Application app = ApplicationManager.getApplication();
-      DebugAssertions.DEBUG = app.isEAP() || app.isInternal();
+      DebugAssertions.DEBUG = app.isInternal();
     }
   }
 
@@ -106,6 +106,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
           if (keys != null) {
             return new CollectionInputDataDiffBuilder<>(inputId, keys);
           }
+        }
+
+        if (mySnapshotInputMappings != null) {
+          return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
         }
       }
       if (myForwardIndex != null) {

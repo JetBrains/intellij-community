@@ -41,7 +41,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
   @NotNull
   @Override
   protected List<T> buildExtensions(@NotNull final String key, @NotNull final Class classKey) {
-    final Set<String> allSupers = new THashSet<String>();
+    final Set<String> allSupers = new THashSet<>();
     collectSupers(classKey, allSupers);
     return buildExtensions(allSupers);
   }

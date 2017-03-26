@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,16 @@
  */
 package com.jetbrains.python.breadcrumbs
 
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.source.tree.LeafElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
+import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.*
 
@@ -27,10 +34,10 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     private val LANGUAGES = arrayOf(PythonLanguage.getInstance())
     private val HELPERS = listOf<Helper<*>>(
       LambdaHelper,
-      SimpleHelper<PyTryPart>(PyTryPart::class.java, "try"),
+      SimpleHelper(PyTryPart::class.java, "try"),
       ExceptHelper,
-      SimpleHelper<PyFinallyPart>(PyFinallyPart::class.java, "finally"),
-      SimpleHelper<PyElsePart>(PyElsePart::class.java, "else"),
+      SimpleHelper(PyFinallyPart::class.java, "finally"),
+      SimpleHelper(PyElsePart::class.java, "else"),
       IfHelper,
       ForHelper,
       WhileHelper,
@@ -42,7 +49,24 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
   }
 
   override fun getLanguages() = LANGUAGES
+
   override fun acceptElement(e: PsiElement) = getHelper(e) != null
+
+  override fun getParent(e: PsiElement): PsiElement? {
+    val default = e.parent
+
+    val currentOffset = currentOffset(e) ?: return default
+    if (!isElementToMoveBackward(e, currentOffset)) return default
+
+    val nonWhiteSpace = moveBackward(e, currentOffset) ?: return default
+
+    val psiFile = e.containingFile ?: return default
+    val document = PsiDocumentManager.getInstance(e.project).getDocument(psiFile) ?: return default
+    val sameLine = document.getLineNumber(nonWhiteSpace.textOffset) == document.getLineNumber(currentOffset)
+
+    return if (sameLine) nonWhiteSpace.parent else default
+  }
+
   override fun getElementInfo(e: PsiElement) = getHelper(e)!!.elementInfo(e as PyElement)
   override fun getElementTooltip(e: PsiElement) = getHelper(e)!!.elementTooltip(e as PyElement)
 
@@ -53,7 +77,30 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     return HELPERS.firstOrNull { it.type.isInstance(e) && (it as Helper<in PyElement>).accepts(e) } as Helper<in PyElement>?
   }
 
-  private abstract class Helper<T: PyElement>(val type: Class<T>) {
+  private fun currentOffset(e: PsiElement): Int? {
+    val virtualFile = e.containingFile?.virtualFile ?: return null
+    val selectedEditor = FileEditorManager.getInstance(e.project).getSelectedEditor(virtualFile) as? TextEditor ?: return null
+
+    return selectedEditor.editor.caretModel.offset
+  }
+
+  private fun isElementToMoveBackward(e: PsiElement, currentOffset: Int): Boolean {
+    if (e is PsiWhiteSpace) return true
+    if (e !is LeafElement || e.startOffset < currentOffset) return false
+
+    val elementType = e.elementType
+    return elementType == PyTokenTypes.COMMA || elementType in PyTokenTypes.CLOSE_BRACES
+  }
+
+  private fun moveBackward(e: PsiElement, currentOffset: Int): PsiElement? {
+    var result = PsiTreeUtil.prevLeaf(e)
+    while (result != null && isElementToMoveBackward(result, currentOffset)) {
+      result = PsiTreeUtil.prevLeaf(result)
+    }
+    return result
+  }
+
+  private abstract class Helper<T : PyElement>(val type: Class<T>) {
     abstract fun accepts(e: T): Boolean
     abstract fun elementInfo(e: T): String
     abstract fun elementTooltip(e: T): String

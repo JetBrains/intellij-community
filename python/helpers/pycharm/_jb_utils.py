@@ -37,6 +37,15 @@ def jb_escape_output(output):
     return "##[jetbrains{0}".format(output)
 
 
+class OptionDescription(object):
+    """
+    Wrapper for argparse/optparse option (see VersionAgnosticUtils#get_options)
+    """
+    def __init__(self, name, description, action=None):
+        self.name = name
+        self.description = description
+        self.action = action
+
 class VersionAgnosticUtils(object):
     """
     "six" emulator: this class fabrics appropriate tool to use regardless python version.
@@ -44,11 +53,15 @@ class VersionAgnosticUtils(object):
     """
 
     @staticmethod
+    def is_py3k():
+        return sys.version_info >= (3, 0)
+
+    @staticmethod
     def __new__(cls, *more):
         """
         Fabrics Py2 or Py3 instance based on py version
         """
-        real_class = _Py3KUtils if sys.version_info >= (3, 0) else _Py2Utils
+        real_class = _Py3KUtils if VersionAgnosticUtils.is_py3k() else _Py2Utils
         return super(cls, real_class).__new__(real_class, *more)
 
     def to_unicode(self, obj):
@@ -58,6 +71,15 @@ class VersionAgnosticUtils(object):
         :return: unicode string
         """
 
+        raise NotImplementedError()
+
+    def get_options(self, *args):
+        """
+        Hides agrparse/optparse difference
+        
+        :param args:  OptionDescription
+        :return: options namespace
+        """
         raise NotImplementedError()
 
 
@@ -75,6 +97,17 @@ class _Py2Utils(VersionAgnosticUtils):
             return unicode(str(obj).decode("utf-8")) # or it may have __str__
 
 
+    def get_options(self, *args):
+        import optparse
+
+        parser = optparse.OptionParser()
+        for option in args:
+            assert isinstance(option, OptionDescription)
+            parser.add_option(option.name, help=option.description, action=option.action)
+        (options, _) = parser.parse_args()
+        return options
+
+
 class _Py3KUtils(VersionAgnosticUtils):
     """
     Util for Py3
@@ -82,3 +115,12 @@ class _Py3KUtils(VersionAgnosticUtils):
 
     def to_unicode(self, obj):
         return str(obj)
+
+    def get_options(self, *args):
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        for option in args:
+            assert isinstance(option, OptionDescription)
+            parser.add_argument(option.name, help=option.description, action=option.action)
+        return parser.parse_args()

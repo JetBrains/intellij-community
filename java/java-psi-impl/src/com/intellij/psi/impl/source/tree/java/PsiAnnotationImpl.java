@@ -36,12 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation {
-  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
-    @Override
-    public PsiAnnotation fun(Project project, String text) {
-      return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(text, null);
-    }
-  };
+  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR =
+    (project, text) -> JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(text, null);
 
   public PsiAnnotationImpl(final PsiAnnotationStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION);

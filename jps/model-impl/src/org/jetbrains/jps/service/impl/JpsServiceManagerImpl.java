@@ -28,8 +28,8 @@ import java.util.concurrent.ConcurrentMap;
  * @author nik
  */
 public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>(16, 0.75f, 1);
-  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<>(16, 0.75f, 1);
   private volatile JpsPluginManager myPluginManager;
 
   @Override
@@ -59,7 +59,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final List<T> extensions = new ArrayList<T>(loadExtensions(extensionClass));
+      final List<T> extensions = new ArrayList<>(loadExtensions(extensionClass));
       cached = myExtensions.putIfAbsent(extensionClass, extensions);
       if (cached == null) {
         cached = extensions;

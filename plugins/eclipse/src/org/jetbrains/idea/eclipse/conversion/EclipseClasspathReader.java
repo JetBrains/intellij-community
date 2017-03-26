@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +110,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     }
     int idx = 0;
     EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
-    Set<String> libs = new HashSet<>();
+    Set<String> libs = new THashSet<>();
     for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, o, idx++,
@@ -302,6 +301,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   }
 
 
+  @Override
   protected String prepareValidUrlInsideJar(String url) {
     final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
     if (localFile != null) {

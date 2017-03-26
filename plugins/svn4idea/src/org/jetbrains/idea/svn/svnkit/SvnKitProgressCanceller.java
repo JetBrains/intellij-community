@@ -20,13 +20,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SvnKitProgressCanceller implements ISVNCanceller {
 
   public void checkCancelled() throws SVNCancelException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null && indicator.isCanceled()) {
       throw new SVNCancelException();
     }

@@ -226,7 +226,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     return null;
   }
 
-  @SuppressWarnings({"deprecation", "SSBasedInspection"})
   @Override
   public void show() {
     super.show();
@@ -471,7 +470,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     // clear both our and swing hard refs
     if (myRootPane != null) {
-      Disposer.dispose(myRootPane);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        myRootPane.removeNotify();
+      }
       myRootPane = null;
       setRootPane(new JRootPane());
     }

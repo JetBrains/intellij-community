@@ -76,6 +76,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static java.util.Collections.singletonList;
 
 public class CopiesPanel {
 
@@ -243,7 +244,7 @@ public class CopiesPanel {
               mergeFrom(wcInfo, root, editorPane);
             } else if (CLEANUP.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Cleanup")) return;
-              new CleanupWorker(new VirtualFile[] {root}, myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
+              new CleanupWorker(myVcs, singletonList(root)).execute();
             }
           }
         }

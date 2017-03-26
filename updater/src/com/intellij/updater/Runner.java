@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.spi.NOPLogger;
+import org.apache.log4j.spi.NOPLoggerRepository;
 
 import java.io.*;
 import java.net.URI;
@@ -61,6 +63,7 @@ public class Runner {
       // See usage for an explanation of these flags
       boolean binary = Arrays.asList(args).contains("--zip_as_binary");
       boolean strict = Arrays.asList(args).contains("--strict");
+      boolean normalized = Arrays.asList(args).contains("--normalized");
       String hashAlgorithm = getArgument(args, "hash_algorithm");
       // Ensure the hashAlgorithm is valid
       if (!Digester.isValidAlgorithm(hashAlgorithm)) {
@@ -71,7 +74,12 @@ public class Runner {
       boolean supportLargeFiles = Arrays.asList(args).contains("--large_files");
 
       String root = getArgument(args, "root");
-      root = root == null ? "" : (root.endsWith("/") ? root : root + "/");
+      if (root == null) {
+        root = "";
+      }
+      else if (!root.endsWith("/")) {
+        root += "/";
+      }
 
       List<String> ignoredFiles = extractArguments(args, "ignored");
       List<String> criticalFiles = extractArguments(args, "critical");
@@ -91,6 +99,7 @@ public class Runner {
         .setHashAlgorithm(hashAlgorithm)
         .setSupportLargeFiles(supportLargeFiles)
         .setBinary(binary)
+        .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
         .setOptionalFiles(optionalFiles)
@@ -110,7 +119,7 @@ public class Runner {
         install(jarFile, destFolder);
       }
       else {
-        apply(jarFile, destFolder);
+        apply(jarFile, destFolder, Arrays.asList(args).contains("--toolbox-ui"));
       }
     }
     else {
@@ -197,12 +206,12 @@ public class Runner {
 
   public static List<String> extractArguments(String[] args, String paramName) {
     List<String> result = new ArrayList<>();
+    String prefix = paramName + '=';
     for (String param : args) {
-      if (param.startsWith(paramName + "=")) {
-        param = param.substring((paramName + "=").length());
-        for (StringTokenizer tokenizer = new StringTokenizer(param, ";"); tokenizer.hasMoreTokens();) {
-          String each = tokenizer.nextToken();
-          result.add(each);
+      if (param.startsWith(prefix)) {
+        StringTokenizer tokenizer = new StringTokenizer(param.substring(prefix.length()), ";");
+        while (tokenizer.hasMoreTokens()) {
+          result.add(tokenizer.nextToken());
         }
       }
     }
@@ -236,6 +245,11 @@ public class Runner {
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root." +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators." +
+      "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
+      "                  A normalized patch must be used to move from an installation that was patched\n" +
+      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
+      "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
+      "                  guarantees that the patched version will match exactly the original one.\n" +
       "    --hash_algorithm=<hashAlgorithm>: The digest algorithm used to detect differences in files.\n" +
       "                                      hashAlgorithm can be any MessageDigest algorithm (MD5, SHA-1, SHA-256), or \n" +
       "                                      \"crc\" (the default).\n" +
@@ -249,7 +263,7 @@ public class Runner {
   private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
     UpdaterUI ui = new ConsoleUpdaterUI();
     try {
-      File tempPatchFile = Utils.createTempFile();
+      File tempPatchFile = Utils.getTempFile("patch");
       PatchFileCreator.create(spec, tempPatchFile, ui);
 
       logger().info("Packing JAR file: " + spec.getPatchFile() );
@@ -265,6 +279,7 @@ public class Runner {
             }
           }
         }
+
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
@@ -282,18 +297,16 @@ public class Runner {
   }
 
   private static void install(String jarFile, String destFolder) throws Exception {
-    new StandaloneSwingUpdaterUI(new StandaloneSwingUpdaterUI.InstallOperation() {
-      @Override
-      public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-        logger().info("Installing patch to the " + destFolder);
-        return doInstall(jarFile, ui, destFolder);
-      }
+    new StandaloneSwingUpdaterUI(ui -> {
+      logger().info("Installing patch to the " + destFolder);
+      return doInstall(jarFile, ui, destFolder);
     });
   }
 
-  private static void apply(String jarFile, String destFolder) throws Exception {
-     logger().info("Applying patch to the " + destFolder);
-    final boolean success = doInstall(jarFile, new ConsoleUpdaterUI(), destFolder);
+  private static void apply(String jarFile, String destFolder, boolean toolboxUi) throws Exception {
+    logger().info("Applying patch to the " + destFolder);
+    UpdaterUI ui = toolboxUi ? new ToolboxUpdaterUI() : new ConsoleUpdaterUI();
+    boolean success = doInstall(jarFile, ui, destFolder);
     if (!success) {
       System.exit(1);
     }
@@ -302,7 +315,7 @@ public class Runner {
   public static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
     try {
       try {
-        File patchFile = Utils.createTempFile();
+        File patchFile = Utils.getTempFile("patch");
 
         logger().info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
@@ -317,8 +330,9 @@ public class Runner {
 
         File destDir = new File(destFolder);
         PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
-        Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
-        return PatchFileCreator.apply(result, options, ui);
+        List<ValidationResult> problems = result.validationResults;
+        Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+        return PatchFileCreator.apply(result, resolutions, ui);
       }
       catch (Throwable e) {
         printStackTrace(e);
@@ -358,6 +372,15 @@ public class Runner {
     catch (URISyntaxException e) {
       printStackTrace(e);
       throw new IOException(e.getMessage());
+    }
+  }
+
+  static void initTestLogger() {
+    if (logger == null) {
+      logger = new NOPLogger(new NOPLoggerRepository(), "root");
+    }
+    else if (!(logger instanceof NOPLogger)) {
+      throw new IllegalStateException("Non-test logger already defined");
     }
   }
 }

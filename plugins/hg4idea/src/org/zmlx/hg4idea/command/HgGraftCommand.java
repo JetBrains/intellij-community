@@ -59,7 +59,7 @@ public class HgGraftCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
   }
 }

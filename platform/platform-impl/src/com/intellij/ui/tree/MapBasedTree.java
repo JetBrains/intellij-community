@@ -207,12 +207,28 @@ public final class MapBasedTree<K, N> {
       return leaf;
     }
 
-    public List<N> getChildren() {
-      return children == null ? null : children.stream().map(entry -> entry.node).collect(toList());
-    }
-
     public boolean isLoadingRequired() {
       return children == null;
+    }
+
+    public int getChildCount() {
+      return children == null ? 0 : children.size();
+    }
+
+    public N getChild(int index) {
+      if (children != null && 0 <= index && index < children.size()) {
+        return children.get(index).getNode();
+      }
+      return null;
+    }
+
+    public int getIndexOf(N child) {
+      if (children != null) {
+        for (int i = 0; i < children.size(); i++) {
+          if (child == children.get(i).getNode()) return i;
+        }
+      }
+      return -1;
     }
 
     void setLoadingChildren(N loading) {

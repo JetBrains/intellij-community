@@ -20,8 +20,10 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ImagesBundle;
+import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Thumbnail thumbnail is a component with thumbnails for a set of {@link com.intellij.openapi.vfs.VirtualFile}.
@@ -72,4 +74,12 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
   boolean isVisible();
 
   void activate();
+
+  void setFilter(ThemeFilter filter);
+
+  /**
+   * null means all files accepted
+   */
+  @Nullable
+  ThemeFilter getFilter();
 }

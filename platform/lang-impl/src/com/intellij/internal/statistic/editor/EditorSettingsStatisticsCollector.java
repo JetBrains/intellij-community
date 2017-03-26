@@ -78,8 +78,6 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isSmartHome(), true, "smartHome");
     addIfDiffers(set, es.isCamelWords(), false, "camelWords");
     addIfDiffers(set, es.isShowParameterNameHints(), true, "editor.inlay.parameter.hints");
-    addIfDiffers(set, es.getMinArgsToShow(), 2, "editor.inlay.parameter.hints.min.args");
-    addIfDiffers(set, es.getMinParamNameLengthToShow(), 3, "editor.inlay.parameter.hints.min.param.length");
 
     RichCopySettings rcs = RichCopySettings.getInstance();
     addIfDiffers(set, rcs.isEnabled(), true, "richCopy");

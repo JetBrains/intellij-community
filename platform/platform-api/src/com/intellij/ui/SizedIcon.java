@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,6 +45,7 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon {
     myScaledDelegate = null;
   }
 
+  @NotNull
   @Override
   protected SizedIcon copy() {
     return new SizedIcon(this);

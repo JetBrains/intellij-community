@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 
 import java.util.HashMap;
@@ -34,10 +35,11 @@ import java.util.Map;
 public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
   public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiElement resolve,
+                                @NotNull GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
+    PsiElement resolve = resolveResult.getElement();
     if (!forCompletion || !(resolve instanceof PsiMethod)) return;
 
     PsiType returnType = ((PsiMethod)resolve).getReturnType();

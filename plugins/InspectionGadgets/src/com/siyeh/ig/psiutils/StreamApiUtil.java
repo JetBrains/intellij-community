@@ -29,6 +29,11 @@ import org.jetbrains.annotations.Nullable;
 public class StreamApiUtil {
   @Contract("null -> null")
   public static PsiType getStreamElementType(PsiType type) {
+    return getStreamElementType(type, true);
+  }
+
+  @Contract("null, _ -> null")
+  public static PsiType getStreamElementType(PsiType type, boolean variableType) {
     if(!(type instanceof PsiClassType)) return null;
     PsiClass aClass = ((PsiClassType)type).resolve();
     if(com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) {
@@ -44,8 +49,8 @@ public class StreamApiUtil {
       return null;
     }
     PsiType streamType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false);
-    if(streamType instanceof PsiCapturedWildcardType) {
-      streamType = ((PsiCapturedWildcardType)streamType).getUpperBound();
+    if (variableType) {
+      streamType = GenericsUtil.getVariableTypeByExpressionType(streamType);
     }
     return streamType;
   }

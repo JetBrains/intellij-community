@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public abstract class FontLayoutService {
 
   public abstract int getHeight(@NotNull FontMetrics fontMetrics);
   
-  public abstract int getAscent(@NotNull FontMetrics fontMetrics);
+  public abstract int getDescent(@NotNull FontMetrics fontMetrics);
   
   @TestOnly
   public static void setInstance(@Nullable FontLayoutService fontLayoutService) {
@@ -110,8 +110,8 @@ public abstract class FontLayoutService {
     }
 
     @Override
-    public int getAscent(@NotNull FontMetrics fontMetrics) {
-      return fontMetrics.getAscent();
+    public int getDescent(@NotNull FontMetrics fontMetrics) {
+      return fontMetrics.getDescent();
     }
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
@@ -140,7 +141,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @NotNull
   public PsiDirectory[] getSubdirectories() {
     VirtualFile[] files = myFile.getChildren();
-    ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
+    ArrayList<PsiDirectory> dirs = new ArrayList<>();
     for (VirtualFile file : files) {
       PsiDirectory dir = myManager.findDirectory(file);
       if (dir != null) {
@@ -155,7 +156,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public PsiFile[] getFiles() {
     if (!myFile.isValid()) throw new InvalidVirtualFileAccessException(myFile);
     VirtualFile[] files = myFile.getChildren();
-    ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       PsiFile psiFile = myManager.findFile(file);
       if (psiFile != null) {
@@ -167,6 +168,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiDirectory findSubdirectory(@NotNull String name) {
+    ProgressManager.checkCanceled();
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findDirectory(childVFile);
@@ -174,6 +176,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiFile findFile(@NotNull String name) {
+    ProgressManager.checkCanceled();
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     if (!childVFile.isValid()) {
@@ -209,7 +212,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     checkValid();
 
     VirtualFile[] files = myFile.getChildren();
-    final ArrayList<PsiElement> children = new ArrayList<PsiElement>(files.length);
+    final ArrayList<PsiElement> children = new ArrayList<>(files.length);
     processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
       @Override
       public boolean execute(@NotNull final PsiFileSystemItem element) {

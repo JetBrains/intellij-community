@@ -34,6 +34,6 @@ public class JpsElementChildRoleBase<E extends JpsElement> extends JpsElementChi
   }
 
   public static <E extends JpsElement> JpsElementChildRoleBase<E> create(String debugName) {
-    return new JpsElementChildRoleBase<E>(debugName);
+    return new JpsElementChildRoleBase<>(debugName);
   }
 }

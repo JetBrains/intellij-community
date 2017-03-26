@@ -53,6 +53,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
+  private boolean mySchemesPanelEnabled;
   private boolean myIsDisposed = false;
   private final Action mySetFromAction = new AbstractAction("Set from...") {
     @Override
@@ -71,11 +72,12 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   private final static String SELECTED_TAB = "settings.code.style.selected.tab";
 
-  public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory) {
+  public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory, boolean schemesPanelEnabled) {
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
     mySchemesPanel = new CodeStyleSchemesPanel(model);
+    mySchemesPanelEnabled = schemesPanelEnabled;
     myProperties = PropertiesComponent.getInstance();
 
     model.addListener(new CodeStyleSettingsListener(){
@@ -93,10 +95,15 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       }
 
       @Override
-      public void currentSettingsChanged() {
+      public void beforeCurrentSettingsChanged() {
         if (!myIsDisposed) {
           ensureCurrentPanel().onSomethingChanged();
         }
+      }
+
+      @Override
+      public void afterCurrentSettingsChanged() {
+         mySchemesPanel.updateOnCurrentSettingsChange();
       }
 
       @Override
@@ -115,10 +122,20 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     JLabel link = new SwingActionLink(mySetFromAction);
     link.setVerticalAlignment(SwingConstants.BOTTOM);
 
-    JPanel top = new JPanel(new BorderLayout());
-    top.add(BorderLayout.WEST, mySchemesPanel);
-    top.add(BorderLayout.EAST, link);
-    top.setBorder(JBUI.Borders.empty(10));
+    JPanel top = new JPanel();
+    top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
+
+    if (mySchemesPanelEnabled) {
+      JPanel linkPanel = new JPanel();
+      linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
+      linkPanel.add(Box.createVerticalGlue());
+      linkPanel.add(link);
+      top.add(mySchemesPanel);
+      top.add(Box.createRigidArea(new Dimension(10,0)));
+      top.add(linkPanel);
+    }
+
+    top.setBorder(JBUI.Borders.empty(10, 10, 0, 10));
     add(top, BorderLayout.NORTH);
     add(mySettingsPanel, BorderLayout.CENTER);
 
@@ -175,10 +192,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public void reset() {
-    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
-      panel.reset();
-    }
-
+    clearPanels();
     onCurrentSchemeChanged();
   }
 
@@ -190,8 +204,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public void apply() throws ConfigurationException {
-    final NewCodeStyleSettingsPanel[] panels = getPanels();
-    for (NewCodeStyleSettingsPanel panel : panels) {
+    for (NewCodeStyleSettingsPanel panel : getPanels()) {
       if (panel.isModified()) panel.apply();
     }
   }
@@ -248,7 +261,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
-  
+
   public Set<String> processListOptions() {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);

@@ -59,15 +59,15 @@ class MapBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
-  public void init(@NotNull Type originalType) {
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     ParameterizedType type = (ParameterizedType)originalType;
     Type[] typeArguments = type.getActualTypeArguments();
 
     keyClass = XmlSerializerImpl.typeToClass(typeArguments[0]);
     valueClass = XmlSerializerImpl.typeToClass(typeArguments[1]);
 
-    keyBinding = XmlSerializerImpl.getClassBinding(keyClass, typeArguments[0], null);
-    valueBinding = XmlSerializerImpl.getClassBinding(valueClass, typeArguments[1], null);
+    keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
+    valueBinding = serializer.getBinding(valueClass, typeArguments[1]);
   }
 
   @Override
@@ -77,7 +77,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element serialized = myMapAnnotation == null || myMapAnnotation.surroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
@@ -112,7 +112,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     List<Element> childNodes;
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
       assert elements.size() == 1;
@@ -125,8 +125,12 @@ class MapBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
+  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return null;
+  }
+
   @Nullable
-  public Object deserialize(Object context, @NotNull Element element) {
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
     if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
       return deserialize(context, element.getChildren());
     }
@@ -159,7 +163,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return map;
   }
 
-  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @NotNull SerializationFilter filter) {
+  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
     if (value == null) {
       return;
     }
@@ -191,7 +195,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
       assert binding != null;
       for (Element element : entry.getChildren()) {
         if (binding.isBoundTo(element)) {
-          return binding.deserialize(context, element);
+          return binding.deserializeUnsafe(context, element);
         }
       }
     }

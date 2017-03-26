@@ -133,7 +133,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
     FileUtil.createIfDoesntExist(file);
-    return new PersistentHashMap<Key,T>(file, myKeyDescriptor, myStateExternalizer);
+    return new PersistentHashMap<>(file, myKeyDescriptor, myStateExternalizer);
   }
 
   public void flush(boolean memoryCachesOnly) {

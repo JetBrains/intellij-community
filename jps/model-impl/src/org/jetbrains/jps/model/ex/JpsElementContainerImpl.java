@@ -26,7 +26,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
-  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new THashMap<JpsElementChildRole<?>, JpsElement>(1);
+  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new THashMap<>(1);
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
   public JpsElementContainerImpl(@NotNull JpsCompositeElementBase<?> parent) {

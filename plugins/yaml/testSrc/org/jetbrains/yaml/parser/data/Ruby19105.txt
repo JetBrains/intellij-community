@@ -1,0 +1,35 @@
+YAML file
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)(''Fn::Join':')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML sequence
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML quoted text
+              PsiElement(scalar string)('''')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML sequence
+              YAML sequence item
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                YAML mapping
+                  YAML key value
+                    PsiElement(scalar key)('Ref:')
+                    PsiWhiteSpace(' ')
+                    YAML plain scalar text
+                      PsiElement(text)('hostedZoneName')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              YAML sequence item
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('a')

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.tree.MapBasedTree.Entry;
+import com.intellij.util.concurrency.Command;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +41,7 @@ import static java.util.Collections.unmodifiableList;
 /**
  * @author Sergey.Malenkov
  */
-public class AsyncTreeModel extends InvokableTreeModel {
+public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final CmdGetRoot rootLoader = new CmdGetRoot("Load root", null);
   private final AtomicBoolean rootLoaded = new AtomicBoolean();
@@ -80,17 +84,17 @@ public class AsyncTreeModel extends InvokableTreeModel {
     }
   };
 
-  public AsyncTreeModel(TreeModel model) {
+  public AsyncTreeModel(@NotNull TreeModel model) {
     if (model instanceof Disposable) {
       Disposer.register(this, (Disposable)model);
     }
-    if (model instanceof InvokableTreeModel) {
-      InvokableTreeModel invokable = (InvokableTreeModel)model;
-      processor = new Command.Processor(super.invoker, invokable.invoker);
+    Invoker foreground = new Invoker.EDT(this);
+    Invoker background = foreground;
+    if (model instanceof InvokerSupplier) {
+      InvokerSupplier supplier = (InvokerSupplier)model;
+      background = supplier.getInvoker();
     }
-    else {
-      processor = new Command.Processor(super.invoker, new Invoker.BackgroundQueue(this));
-    }
+    this.processor = new Command.Processor(foreground, background);
     this.model = model;
     this.model.addTreeModelListener(listener);
   }
@@ -110,18 +114,19 @@ public class AsyncTreeModel extends InvokableTreeModel {
 
   @Override
   public Object getChild(Object object, int index) {
-    List<Object> children = getChildren(object);
-    return 0 <= index && index < children.size() ? children.get(index) : null;
+    Entry<Object> entry = getEntry(object, true);
+    return entry == null ? null : entry.getChild(index);
   }
 
   @Override
   public int getChildCount(Object object) {
-    return getChildren(object).size();
+    Entry<Object> entry = getEntry(object, true);
+    return entry == null ? 0 : entry.getChildCount();
   }
 
   @Override
   public boolean isLeaf(Object object) {
-    Entry<Object> entry = getEntry(object);
+    Entry<Object> entry = getEntry(object, false);
     return entry == null || entry.isLeaf();
   }
 
@@ -131,26 +136,13 @@ public class AsyncTreeModel extends InvokableTreeModel {
   }
 
   @Override
-  public int getIndexOfChild(Object parent, Object object) {
-    return getIndex(getChildren(parent), object);
-  }
-
-  @NotNull
-  @Override
-  protected Invoker createInvoker() {
-    return new Invoker.EDT(this);
+  public int getIndexOfChild(Object object, Object child) {
+    Entry<Object> entry = getEntry(object, true);
+    return entry == null ? -1 : entry.getIndexOf(child);
   }
 
   protected Object createLoadingNode() {
     return null;
-  }
-
-  private static int getIndex(List<Object> children, Object object) {
-    int index = children.size();
-    while (0 < index--) {
-      if (object == children.get(index)) break;
-    }
-    return index;
   }
 
   private boolean isValidThread() {
@@ -159,17 +151,10 @@ public class AsyncTreeModel extends InvokableTreeModel {
     return false;
   }
 
-  private Entry<Object> getEntry(Object object) {
-    return object == null || !isValidThread() ? null : tree.findEntry(object);
-  }
-
-  private List<Object> getChildren(Object object) {
-    Entry<Object> entry = getEntry(object);
-    if (entry == null) return emptyList();
-    List<Object> children = entry.getChildren();
-    if (children != null) return children;
-    loadChildren(entry, true);
-    return entry.getChildren();
+  private Entry<Object> getEntry(Object object, boolean loadChildren) {
+    Entry<Object> entry = object == null || !isValidThread() ? null : tree.findEntry(object);
+    if (entry != null && loadChildren && entry.isLoadingRequired()) loadChildren(entry, true);
+    return entry;
   }
 
   private void loadChildren(Entry<Object> entry, boolean insertLoadingNode) {

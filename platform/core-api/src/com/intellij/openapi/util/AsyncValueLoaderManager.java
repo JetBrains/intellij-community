@@ -53,7 +53,7 @@ public abstract class AsyncValueLoaderManager<HOST, VALUE> {
   private AsyncResult<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
     AsyncResult<VALUE> asyncResult = fieldUpdater.get(host);
     if (asyncResult == null) {
-      if (!fieldUpdater.compareAndSet(host, null, asyncResult = new AsyncResult<VALUE>())) {
+      if (!fieldUpdater.compareAndSet(host, null, asyncResult = new AsyncResult<>())) {
         return fieldUpdater.get(host);
       }
     }
@@ -66,7 +66,7 @@ public abstract class AsyncValueLoaderManager<HOST, VALUE> {
         return asyncResult;
       }
 
-      if (!fieldUpdater.compareAndSet(host, asyncResult, asyncResult = new AsyncResult<VALUE>())) {
+      if (!fieldUpdater.compareAndSet(host, asyncResult, asyncResult = new AsyncResult<>())) {
         AsyncResult<VALUE> valueFromAnotherThread = fieldUpdater.get(host);
         while (valueFromAnotherThread == null) {
           if (fieldUpdater.compareAndSet(host, null, asyncResult)) {

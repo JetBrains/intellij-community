@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,22 +128,9 @@ public class UnaryPlusInspection extends BaseInspection {
           return;
         }
       }
-      else if (TypeUtils.unaryNumericPromotion(type) != type) {
-        PsiExpression expression = prefixExpression;
-        PsiElement parent = expression.getParent();
-        while (parent instanceof PsiParenthesizedExpression) {
-          expression = (PsiExpression)parent;
-          parent = parent.getParent();
-        }
-        final PsiElement grandParent = parent.getParent();
-        if (parent instanceof PsiExpressionList && grandParent instanceof PsiCall) {
-          // unary plus might have been used as cast to int
-          final PsiCall call = (PsiCall)grandParent;
-          final PsiMethod method = call.resolveMethod();
-          if (MethodCallUtils.findMethodWithReplacedArgument(call, expression, operand) != method) {
-            return;
-          }
-        }
+      else if (TypeUtils.unaryNumericPromotion(type) != type && MethodCallUtils.isNecessaryForSurroundingMethodCall(prefixExpression, operand)) {
+        // unary plus might have been used as cast to int
+        return;
       }
       registerError(token, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }

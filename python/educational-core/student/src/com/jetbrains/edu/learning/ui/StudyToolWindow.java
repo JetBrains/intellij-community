@@ -149,8 +149,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     myCardLayout.swipe(myContentPanel, panelId, JBCardLayout.SwipeDirection.AUTO);
   }
 
-  //used in checkiO plugin.
-  @SuppressWarnings("unused")
   public void setBottomComponent(JComponent component) {
     mySplitPane.setSecondComponent(component);
   }

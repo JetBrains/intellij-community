@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class ActivateNavigationBarAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    if (project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR) {
+    if (project != null && UISettings.getInstance().getShowNavigationBar()) {
       final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       final IdeRootPane ideRootPane = (IdeRootPane)frame.getRootPane();
       JComponent component = ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
@@ -50,7 +50,7 @@ public class ActivateNavigationBarAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     UISettings settings = UISettings.getInstance();
-    final boolean enabled = project != null && settings.SHOW_NAVIGATION_BAR && !settings.PRESENTATION_MODE;
+    final boolean enabled = project != null && settings.getShowNavigationBar() && !settings.getPresentationMode();
     e.getPresentation().setEnabled(enabled);
   }
 }

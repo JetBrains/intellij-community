@@ -23,6 +23,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -530,7 +531,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     @NotNull
     private PsiFile nextFile(FileTreeIterator it) {
-      return ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)it::next);
+      return ReadAction.compute(it::next);
     }
 
     private boolean hasFilesToProcess(FileTreeIterator it) {

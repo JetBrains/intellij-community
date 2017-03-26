@@ -32,8 +32,10 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -83,8 +85,11 @@ import java.util.*;
 import java.util.List;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
-  public static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf6f6f6), new Color(0x4d4f51));
-  private static Logger LOGGER = Logger.getInstance(DocumentationComponent.class);
+
+  private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
+
+  private static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf6f6f6), new Color(0x4d4f51));
+  public static final ColorKey COLOR_KEY = ColorKey.createColorKey("DOCUMENTATION_COLOR", DOCUMENTATION_COLOR);
 
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
   @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
@@ -130,7 +135,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           url = new URL(builtInServerManager.addAuthToken(parsedUrl).toExternalForm());
         }
         catch (MalformedURLException e) {
-          LOGGER.warn(e);
+          LOG.warn(e);
         }
       }
       return Toolkit.getDefaultToolkit().createImage(url);
@@ -258,7 +263,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       // Note: Making the caret visible is merely for convenience
       myEditorPane.getCaret().setVisible(true);
     }
-    myEditorPane.setBackground(DOCUMENTATION_COLOR);
+    myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
     myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit(false));
     myScrollPane = new JBScrollPane(myEditorPane) {
       @Override
@@ -398,7 +403,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       forward.registerCustomShortcutSet(forwardShortcutSet, myEditorPane);
     }
     catch (InvalidDataException e) {
-      LOGGER.error(e);
+      LOG.error(e);
     }
     
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
@@ -981,7 +986,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         myEditorPane.setCaretPosition(startOffset);
       }
       catch (BadLocationException e) {
-        LOGGER.warn("Error highlighting link", e);
+        LOG.warn("Error highlighting link", e);
       }
     }
     else if (myHighlightingTag != null) {
@@ -1112,7 +1117,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
       catch (Exception e) {
-        LOGGER.warn("Error painting link highlight", e);
+        LOG.warn("Error painting link highlight", e);
       }
     }
   }

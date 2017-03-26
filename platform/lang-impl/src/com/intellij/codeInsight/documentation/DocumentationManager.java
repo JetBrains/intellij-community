@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -185,10 +186,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         final JBPopup hint = getDocInfoHint();
         if (hint != null) {
-          if (action instanceof HintManagerImpl.ActionToIgnore) {
+          if (action instanceof ShowQuickDocInfoAction) {
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
+          if (action instanceof HintManagerImpl.ActionToIgnore) return;
           if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;

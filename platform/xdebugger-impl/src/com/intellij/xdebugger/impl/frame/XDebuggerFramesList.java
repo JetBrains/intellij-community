@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -124,7 +126,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   @Override
   protected ListCellRenderer createListRenderer() {
-    return new XDebuggerFrameListRenderer(myProject);
+    return new XDebuggerGroupedFrameListRenderer();
   }
 
   @Override
@@ -137,6 +139,39 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       else {
         mySelectedFrame = null;
       }
+    }
+  }
+
+  private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
+    public XDebuggerGroupedFrameListRenderer() {
+      super(new ListItemDescriptorAdapter() {
+        @Nullable
+        @Override
+        public String getTextFor(Object value) {
+          return null;
+        }
+
+        @Override
+        public boolean hasSeparatorAboveOf(Object value) {
+          if (value instanceof ItemWithSeparatorAbove) {
+            return ((ItemWithSeparatorAbove)value).hasSeparatorAbove();
+          }
+          return false;
+        }
+      });
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      return component;
+    }
+
+    @Override
+    protected JComponent createItemComponent() {
+      createLabel();
+      return new XDebuggerFrameListRenderer(myProject);
     }
   }
 
@@ -184,5 +219,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       }
       stackFrame.customizePresentation(this);
     }
+  }
+
+  public interface ItemWithSeparatorAbove {
+    boolean hasSeparatorAbove();
   }
 }

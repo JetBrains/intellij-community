@@ -25,13 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
   public static final PsiImportStaticStatementImpl[] EMPTY_ARRAY = new PsiImportStaticStatementImpl[0];
-  public static final ArrayFactory<PsiImportStaticStatementImpl> ARRAY_FACTORY = new ArrayFactory<PsiImportStaticStatementImpl>() {
-    @NotNull
-    @Override
-    public PsiImportStaticStatementImpl[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportStaticStatementImpl[count];
-    }
-  };
+  public static final ArrayFactory<PsiImportStaticStatementImpl> ARRAY_FACTORY =
+    count -> count == 0 ? EMPTY_ARRAY : new PsiImportStaticStatementImpl[count];
 
   public PsiImportStaticStatementImpl(final PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_STATIC_STATEMENT);

@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="projectModel-api" />
     <orderEntry type="module" module-name="indexing-api" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

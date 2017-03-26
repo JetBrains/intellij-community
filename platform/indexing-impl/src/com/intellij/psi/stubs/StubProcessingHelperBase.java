@@ -172,15 +172,10 @@ public abstract class StubProcessingHelperBase {
     return true;
   }
 
-  private void inconsistencyDetected(@NotNull ObjectStubTree stubTree, PsiFileWithStubSupport psiFile) {
-    LOG.error(stubTreeAndIndexDoNotMatch(stubTree, psiFile));
+  private void inconsistencyDetected(@NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+    LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch("PSI and index do not match.", stubTree, psiFile));
     onInternalError(psiFile.getVirtualFile());
   }
-
-  /***
-   * Returns a message to log when stub tree and index do not match
-   */
-  protected abstract Object stubTreeAndIndexDoNotMatch(@NotNull ObjectStubTree stubTree, PsiFileWithStubSupport psiFile);
 
   protected abstract void onInternalError(VirtualFile file);
 

@@ -5,17 +5,16 @@ REGEXP_FILE
         PsiElement(REDUNDANT_ESCAPE)('\-')
       RegExpClassImpl: <[\*\-\[\]\\\+]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <\*\-\[\]\\\+>
-          RegExpCharImpl: <\*>
-            PsiElement(REDUNDANT_ESCAPE)('\*')
-          RegExpCharImpl: <\->
-            PsiElement(ESC_CHARACTER)('\-')
-          RegExpCharImpl: <\[>
-            PsiElement(ESC_CHARACTER)('\[')
-          RegExpCharImpl: <\]>
-            PsiElement(ESC_CHARACTER)('\]')
-          RegExpCharImpl: <\\>
-            PsiElement(ESC_CHARACTER)('\\')
-          RegExpCharImpl: <\+>
-            PsiElement(REDUNDANT_ESCAPE)('\+')
+        RegExpCharImpl: <\*>
+          PsiElement(REDUNDANT_ESCAPE)('\*')
+        RegExpCharImpl: <\->
+          PsiElement(ESC_CHARACTER)('\-')
+        RegExpCharImpl: <\[>
+          PsiElement(ESC_CHARACTER)('\[')
+        RegExpCharImpl: <\]>
+          PsiElement(ESC_CHARACTER)('\]')
+        RegExpCharImpl: <\\>
+          PsiElement(ESC_CHARACTER)('\\')
+        RegExpCharImpl: <\+>
+          PsiElement(REDUNDANT_ESCAPE)('\+')
         PsiElement(CLASS_END)(']')

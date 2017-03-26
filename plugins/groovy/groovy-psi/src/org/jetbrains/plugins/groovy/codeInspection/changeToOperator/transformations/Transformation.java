@@ -18,15 +18,19 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 public abstract class Transformation {
 
-  public abstract boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options);
+  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return couldApplyInternal(methodCall, options) && (!options.withoutAdditionalParentheses() || !needParentheses(methodCall, options));
+  }
+
+  protected abstract boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
+  protected abstract boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options);
 
   public abstract void apply(@NotNull GrMethodCall methodCall, @NotNull Options options);
 
@@ -37,17 +41,18 @@ public abstract class Transformation {
     return invokedExpression.getQualifierExpression();
   }
 
-  @NotNull
-  public static GrExpression parenthesize(@NotNull GrExpression expression, int parentPrecedence) {
-    if (ParenthesesUtils.getPrecedence(expression) >= parentPrecedence) {
-      return createParenthesizedExpr(expression);
-    }
-    return expression;
+  public boolean checkArgumentsCount(@NotNull GrMethodCall callExpression, int count) {
+    if (callExpression.getNamedArguments().length != 0) return false;
+    return callExpression.getExpressionArguments().length + callExpression.getClosureArguments().length ==  count;
   }
 
   @NotNull
-  private static GrExpression createParenthesizedExpr(@NotNull GrExpression expression) {
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    return factory.createParenthesizedExpr(expression);
+  public GrExpression getArgument(@NotNull GrMethodCall callExpression, int index) {
+    GrExpression[] expressionArguments = callExpression.getExpressionArguments();
+    if (index < expressionArguments.length) {
+      return expressionArguments[index];
+    }
+
+    return callExpression.getClosureArguments()[index - expressionArguments.length];
   }
 }

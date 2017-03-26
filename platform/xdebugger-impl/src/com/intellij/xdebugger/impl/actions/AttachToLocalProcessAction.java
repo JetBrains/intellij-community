@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -61,7 +62,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
   public AttachToLocalProcessAction() {
     super(XDebuggerBundle.message("xdebugger.attach.toLocal.action"),
-          XDebuggerBundle.message("xdebugger.attach.toLocal.action.description"), null);
+          XDebuggerBundle.message("xdebugger.attach.toLocal.action.description"), AllIcons.Debugger.AttachToProcess);
   }
 
   @Override

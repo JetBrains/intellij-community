@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,11 +79,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
+  public void init(@NotNull final String path, @Nullable VirtualFile file, @Nullable final Runnable beforeComponentCreation) {
     init((ProgressIndicator)null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-      ServiceKt.getStateStore(this).setPath(path);
+      ServiceKt.getStateStore(this).setPath(path, file);
 
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();

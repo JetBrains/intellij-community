@@ -86,7 +86,7 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
   }
 
-  override fun getShellProcessCommand(): MutableList<String>? {
+  override fun getShellProcessCommand(): MutableList<String> {
     val shellPath = shell
 
     if (shellPath == null || !File(shellPath).canExecute()) {

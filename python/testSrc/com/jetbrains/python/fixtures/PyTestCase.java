@@ -88,7 +88,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static final String PYTHON_2_MOCK_SDK = "2.7";
   public static final String PYTHON_3_MOCK_SDK = "3.4";
 
-  private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
+  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 

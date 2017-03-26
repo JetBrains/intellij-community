@@ -15,37 +15,57 @@
  */
 package com.intellij.codeInsight.hints
 
-import com.intellij.lang.Language
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.LanguageExtension
-import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
+
 
 object InlayParameterHintsExtension: LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
 
-@ApiStatus.Experimental
-interface InlayParameterHintsProvider {
 
-  /**
-   * Hints for params to be shown
-   */
-  fun getParameterHints(element: PsiElement): List<InlayInfo>
+data class InlayInfo(val text: String, val offset: Int)
 
-  /**
-   * Provides fully qualified method name (e.g. "java.util.Map.put") and list of it's parameter names.
-   * Used to obtain method information when adding it to blacklist
-   */
-  fun getMethodInfo(element: PsiElement): MethodInfo?
-  
-  /**
-   * Default list of patterns for which hints should not be shown
-   */
-  val defaultBlackList: Set<String>
 
-  /**
-   * Returns language which blacklist will be appended to the resulting one
-   * E.g. to prevent possible Groovy and Kotlin extensions from showing hints for blacklisted java methods. 
-   */
-  fun getBlackListDependencyLanguage(): Language? = null
-  
+sealed class HintInfo {
+
+  open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>) : HintInfo() {
+    open fun getMethodName(): String {
+      val start = fullyQualifiedName.lastIndexOf('.') + 1
+      return fullyQualifiedName.substring(start)
+    }
+  }
+
+  open class OptionInfo(protected val option: Option) : HintInfo() {
+    
+    open fun disable() = alternate()
+    open fun enable() = alternate()
+    
+    private fun alternate() {
+      val current = option.get()
+      option.set(!current)
+    }
+    
+    open val optionName = option.name
+  }
+
+}
+
+data class Option(val id: String,
+                  val name: String,
+                  val defaultValue: Boolean) {
+
+  fun get(): Boolean {
+    return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue
+  }
+
+  fun set(newValue: Boolean) {
+    val settings = ParameterNameHintsSettings.getInstance()
+    if (newValue == defaultValue) {
+      settings.setOption(id, null)
+    }
+    else {
+      settings.setOption(id, newValue)
+    }
+  }
+
 }
 

@@ -154,7 +154,7 @@ class CommunityRepositoryModules {
     },
     plugin("student-python") {
       withResource("resources/courses", "lib/courses")
-      excludeFromModule("student-python", "courses")
+      excludeFromModule("student-python", "courses/**")
     },
     plugin("maven") {
       withModule("maven-jps-plugin")
@@ -194,15 +194,6 @@ class CommunityRepositoryModules {
       withModule("gradle-tooling-extension-impl")
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
-      //todo[nik] add these jars to some library instead?
-      withResource("lib/native-platform-freebsd-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-freebsd-i386-0.11.jar", "lib")
-      withResource("lib/native-platform-linux-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-linux-i386-0.11.jar", "lib")
-      withResource("lib/native-platform-osx-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-osx-i386-0.11.jar", "lib")
-      withResource("lib/native-platform-windows-amd64-0.11.jar", "lib")
-      withResource("lib/native-platform-windows-i386-0.11.jar", "lib")
     },
     plugin("junit") {
       mainJarName = "idea-junit.jar"
@@ -329,7 +320,7 @@ class CommunityRepositoryModules {
       mainJarName = "Groovy.jar"
       withModule("groovy-psi", mainJarName)
       withModule("structuralsearch-groovy", mainJarName)
-      excludeFromModule("groovy-psi", "standardDsls")
+      excludeFromModule("groovy-psi", "standardDsls/**")
       withModule("groovy-jps-plugin")
       withModule("groovy_rt")
       withModule("groovy-rt-constants")

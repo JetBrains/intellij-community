@@ -31,8 +31,8 @@ import java.util.List;
 
 public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNodeVisitor {
   @NotNull private final LighterAST ast;
-  private final Stack<IndexedLighterASTNode[]> childrenStack = new Stack<IndexedLighterASTNode[]>();
-  private final Stack<IndexedLighterASTNode> parentStack = new Stack<IndexedLighterASTNode>();
+  private final Stack<IndexedLighterASTNode[]> childrenStack = new Stack<>();
+  private final Stack<IndexedLighterASTNode> parentStack = new Stack<>();
 
   // wrapper around LighterASTNode which remembers its position in parents' children list for performance
   private static class IndexedLighterASTNode {

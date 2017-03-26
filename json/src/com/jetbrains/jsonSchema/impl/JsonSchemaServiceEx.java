@@ -32,6 +32,9 @@ public interface JsonSchemaServiceEx extends JsonSchemaService {
 
   void visitSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Processor<JsonSchemaObject> consumer);
 
+  //! the only point for refreshing json schema caches
+  void dropProviderFromCache(@NotNull VirtualFile schemaFile);
+
   @Nullable
   VirtualFile getSchemaFileById(@NotNull String id, VirtualFile referent);
 

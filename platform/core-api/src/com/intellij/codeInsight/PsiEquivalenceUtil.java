@@ -120,7 +120,7 @@ public class PsiEquivalenceUtil {
                                                  @Nullable Condition<PsiElement> isElementSignificantCondition,
                                                  boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     for (ASTNode node : children1) {
       final PsiElement child = node.getPsi();
       if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment)) &&
@@ -134,12 +134,7 @@ public class PsiEquivalenceUtil {
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
                                               final List<Couple<PsiElement>> result,
                                               PsiElement scope) {
-    findChildRangeDuplicates(first, last, scope, new PairConsumer<PsiElement, PsiElement>() {
-      @Override
-      public void consume(final PsiElement start, final PsiElement end) {
-        result.add(Couple.of(start, end));
-      }
-    });
+    findChildRangeDuplicates(first, last, scope, (start, end) -> result.add(Couple.of(start, end)));
   }
 
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last, PsiElement scope,

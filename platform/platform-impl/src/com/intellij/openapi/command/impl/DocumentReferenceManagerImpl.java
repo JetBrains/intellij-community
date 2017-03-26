@@ -32,6 +32,7 @@ import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -144,4 +145,11 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private static void assertInDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    myDeletedFilePathToRef.clear();
+    myDocToRef.clear();
+  }
+
 }

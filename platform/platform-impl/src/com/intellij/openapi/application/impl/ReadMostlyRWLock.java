@@ -48,7 +48,7 @@ import java.util.concurrent.locks.LockSupport;
 class ReadMostlyRWLock {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ReadMostlyRWLock");
   private final Thread writeThread;
-  private volatile boolean writeRequested;  // this writer is requesting or obtained the write access
+  volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private volatile boolean writeAcquired;   // this writer obtained the write lock
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();

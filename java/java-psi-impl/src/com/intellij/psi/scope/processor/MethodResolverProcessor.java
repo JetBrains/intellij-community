@@ -41,14 +41,15 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
 
   public MethodResolverProcessor(PsiClass classConstr, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place, @NotNull PsiFile placeFile) {
     super(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList,
-                                                                                      PsiUtil.getLanguageLevel(placeFile))}, new SmartList<CandidateInfo>());
+                                                                                      PsiUtil.getLanguageLevel(placeFile))},
+          new SmartList<>());
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
   }
 
   public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers) {
-    super(place, placeFile, resolvers, new SmartList<CandidateInfo>());
+    super(place, placeFile, resolvers, new SmartList<>());
   }
 
   @Override

@@ -112,6 +112,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             application.invokeLater(() -> {
               //noinspection DialogTitleCapitalization
               Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e1.getMessage(), "Reload List of Packages");
+              LOG.info("Error updating list of repository packages", e1);
               myPackages.setPaintBusy(false);
             }, ModalityState.any());
           }
@@ -249,6 +250,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void handleInstallationStarted(String packageName) {
+    myNotificationArea.hide();
     setDownloadStatus(true);
     myCurrentlyInstalling.add(packageName);
     if (myPackageListener != null) {
@@ -282,7 +284,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         });
       }
       catch(IOException e) {
-        LOG.info("Error updating list of installed packages:" + e);
+        LOG.info("Error updating list of installed packages", e);
       }
     });
   }
@@ -306,6 +308,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           if (myMainPanel.isShowing()) {
             Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
           }
+          LOG.info("Error initializing model", e);
           setDownloadStatus(false);
         }, ModalityState.any());
       }

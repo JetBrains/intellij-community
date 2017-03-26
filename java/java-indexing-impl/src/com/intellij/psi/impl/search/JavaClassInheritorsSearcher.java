@@ -17,11 +17,11 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,7 +50,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progress != null) {
       progress.pushState();
-      String className = ApplicationManager.getApplication().runReadAction((Computable<String>)baseClass::getName);
+      String className = ReadAction.compute(baseClass::getName);
       progress.setText(className != null ?
                        PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
                        PsiBundle.message("psi.search.inheritors.progress"));
@@ -90,7 +90,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       if (subClass instanceof PsiAnonymousClass && !parameters.isIncludeAnonymous()) {
         continue;
       }
-      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
+      if (ReadAction.compute(() ->
         checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
         return false;
       }
@@ -105,22 +105,22 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     if (cached == null) {
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
       Function<PsiAnchor, PsiClass> converter =
-        anchor -> ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)() -> (PsiClass)anchor.retrieve());
+        anchor -> ReadAction.compute(() -> (PsiClass)anchor.retrieve());
       Predicate<PsiClass> applicableFilter =
         candidate -> !(candidate instanceof PsiAnonymousClass) && candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-      boolean isPhysical = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical);
+      boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
       LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
         DirectClassInheritorsSearch.search(candidate, scopeToUse).forEach(subClass -> {
           ProgressManager.checkCanceled();
-          PsiAnchor pointer = ApplicationManager.getApplication().runReadAction((Computable<PsiAnchor>)() -> PsiAnchor.create(subClass));
+          PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue
           processor.consume(pointer);
           return true;
         });
 
-      PsiAnchor seed = ApplicationManager.getApplication().runReadAction((Computable<PsiAnchor>)() -> PsiAnchor.create(baseClass));
+      PsiAnchor seed = ReadAction.compute(() -> PsiAnchor.create(baseClass));
       // lazy collection: store underlying queue as PsiAnchors, generate new elements by running direct inheritors
       Iterable<PsiClass> computed = new LazyConcurrentCollection<>(seed, converter, applicableFilter, generator);
       // make sure concurrent calls of this method always return the same collection to avoid expensive duplicate work
@@ -183,11 +183,10 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   static boolean isJavaLangObject(@NotNull final PsiClass baseClass) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> baseClass.isValid() && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName()));
+    return ReadAction.compute(() -> baseClass.isValid() && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName()));
   }
 
   private static boolean isFinal(@NotNull final PsiClass baseClass) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
+    return ReadAction.compute(() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
   }
 }

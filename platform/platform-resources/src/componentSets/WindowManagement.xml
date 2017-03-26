@@ -24,6 +24,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager</implementation-class>
+      <headless-implementation-class/>
       <skipForDefaultProject/>
     </component>
   </project-components>

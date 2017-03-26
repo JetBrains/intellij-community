@@ -17,8 +17,8 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop, \
+    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, pydevd_check_frame_for_new_breakpoint
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, \
     STATE_RUN
 
 
@@ -327,6 +327,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                     py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
 
                 py_db.set_tracing_for_untraced_contexts(overwrite_prev_trace=True)
+                if py_db.frame_eval_func is not None:
+                    pydevd_check_frame_for_new_breakpoint(py_db, breakpoint, file)
 
             elif cmd_id == CMD_REMOVE_BREAK:
                 #command to remove some breakpoint
@@ -536,11 +538,11 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if exception_type == 'python':
                     try:
                         cp = py_db.break_on_uncaught_exceptions.copy()
-                        dict_pop(cp, exception, None)
+                        cp.pop(exception, None)
                         py_db.break_on_uncaught_exceptions = cp
 
                         cp = py_db.break_on_caught_exceptions.copy()
-                        dict_pop(cp, exception, None)
+                        cp.pop(exception, None)
                         py_db.break_on_caught_exceptions = cp
                     except:
                         pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])

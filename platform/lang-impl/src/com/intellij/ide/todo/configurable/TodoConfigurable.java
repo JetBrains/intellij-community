@@ -53,9 +53,9 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   private JPanel myPanel;
   private JBTable myPatternsTable;
   private JBTable myFiltersTable;
-  private final List<TodoPattern> myPatterns;
+  protected final List<TodoPattern> myPatterns;
   private final PatternsTableModel myPatternsModel;
-  private final List<TodoFilter> myFilters;
+  protected final List<TodoFilter> myFilters;
   private final FiltersTableModel myFiltersModel;
 
   /**
@@ -70,7 +70,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
   private boolean arePatternsModified() {
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
-    TodoPattern[] initialPatterns = todoConfiguration.getTodoPatterns();
+    TodoPattern[] initialPatterns = getTodoPatternsToDisplay(todoConfiguration);
     if (initialPatterns.length != myPatterns.size()) {
       return true;
     }
@@ -82,7 +82,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return false;
   }
 
-  private boolean areFiltersModified() {
+  protected boolean areFiltersModified() {
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
     TodoFilter[] initialFilters = todoConfiguration.getTodoFilters();
     if (initialFilters.length != myFilters.size()) {
@@ -329,7 +329,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
-  private void stopEditing() {
+  protected void stopEditing() {
     if (myPatternsTable.isEditing()) {
       TableCellEditor editor = myPatternsTable.getCellEditor();
       if (editor != null) {
@@ -360,7 +360,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     // Patterns
     myPatterns.clear();
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
-    TodoPattern[] patterns = todoConfiguration.getTodoPatterns();
+    TodoPattern[] patterns = getTodoPatternsToDisplay(todoConfiguration);
     for (TodoPattern pattern : patterns) {
       myPatterns.add(pattern.clone());
     }
@@ -372,6 +372,11 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
       myFilters.add(filter.clone());
     }
     myFiltersModel.fireTableDataChanged();
+  }
+
+  @NotNull
+  protected TodoPattern[] getTodoPatternsToDisplay(TodoConfiguration todoConfiguration) {
+    return todoConfiguration.getTodoPatterns();
   }
 
   private final class MyFilterNameTableCellRenderer extends DefaultTableCellRenderer {

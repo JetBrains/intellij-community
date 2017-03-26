@@ -65,9 +65,9 @@ public class PyTypeTest extends PyTestCase {
   public void testBinaryExprType() {
     doTest("int",
            "expr = 1 + 2");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '1' + '2'");
-    doTest("Union[str, unicode]",
+    doTest("str",
            "expr = '%s' % ('a')");
     doTest("List[int]",
            "expr = [1] + [2]");
@@ -461,7 +461,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testPropertyOfUnionType() {
-    doTest("int", "def f():\n" +
+    doTest("Optional[int]", "def f():\n" +
                   "    '''\n" +
                   "    :rtype: int or slice\n" +
                   "    '''\n" +
@@ -535,7 +535,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testGeneratorFunctionType() {
-    doTest("__generator[str, Any, int]",
+    doTest("Generator[str, Any, int]",
            "def f():\n" +
            "    yield 'foo'\n" +
            "    return 0\n" +
@@ -550,7 +550,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7021
   public void testGeneratorComprehensionType() {
-    doTest("__generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
+    doTest("Generator[str, Any, None]", "expr = (str(x) for x in range(10))\n");
   }
 
   // PY-7021
@@ -1227,21 +1227,6 @@ public class PyTypeTest extends PyTestCase {
                     "    expr = foo\n");
   }
 
-  // PY-18427
-  public void testConditionalTypeInDocstring() {
-    doTest("Union[str, int]",
-           "if something:\n" +
-           "    Type = int\n" +
-           "else:\n" +
-           "    Type = str\n" +
-           "\n" +
-           "def f(expr):\n" +
-           "    '''\n" +
-           "    :type expr: Type\n" +
-           "    '''\n" +
-           "    pass\n");
-  }
-
   // PY-18254
   public void testFunctionTypeCommentInStubs() {
     doMultiFileTest("MyClass",
@@ -1446,7 +1431,8 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-20797
-  public void testValueOfEmptyDefaultDict() {
+  // TODO: Enable after switching to collections stub from Typeshed
+  public void _testValueOfEmptyDefaultDict() {
     doTest("list",
            "from collections import defaultdict\n" +
            "expr = defaultdict(lambda: [])['x']\n");
@@ -1476,16 +1462,48 @@ public class PyTypeTest extends PyTestCase {
            "expr = float.fromhex(\"0.5\")");
   }
 
+  // PY-13159
+  public void testAbsAbstractProperty() {
+    doTest("str",
+           "import abc\n" +
+           "class D:\n" +
+           "    @abc.abstractproperty\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
+  public void testAbsAbstractPropertyWithFrom() {
+    doTest("str",
+           "from abc import abstractproperty\n" +
+           "class D:\n" +
+           "    @abstractproperty\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
+  // TODO: enable this test when properties will be calculated with TypeEvalContext
+  public void ignoredTestAbsAbstractPropertyWithAs() {
+    doTest("str",
+           "from abc import abstractproperty as ap\n" +
+           "class D:\n" +
+           "    @ap\n" +
+           "    def foo(self):\n" +
+           "        return 'foo'\n" +
+           "expr = D().foo");
+  }
+
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
-    doTest("Any",
+    doTest("Optional[Any]",
            "d = {}\n" +
            "expr = d.get(\"abc\", None)");
   }
 
   // PY-20757
   public void testMinOrNone() {
-    doTest("Union[None, Any]",
+    doTest("Optional[Any]",
            "def get_value(v):\n" +
            "    if v:\n" +
            "        return min(v)\n" +
@@ -1619,6 +1637,44 @@ public class PyTypeTest extends PyTestCase {
            "    if not foo:\n" +
            "        return None\n" +
            "    expr = foo");
+  }
+
+  // PY-22037
+  public void testAncestorPropertyReturnsSelf() {
+    doTest("Child",
+           "class Master(object):\n" +
+           "    @property\n" +
+           "    def me(self):\n" +
+           "        return self\n" +
+           "class Child(Master):\n" +
+           "    pass\n" +
+           "child = Child()\n" +
+           "expr = child.me");
+  }
+
+  // PY-22181
+  public void testIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def next(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __iter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "for expr in a:\n" +
+           "    print(expr)");
+  }
+
+  public void testImportedPropertyResult() {
+    doMultiFileTest("Any",
+                    "from .temporary import get_class\n" +
+                    "class Example:\n" +
+                    "    def __init__(self):\n" +
+                    "        expr = self.ins_class\n" +
+                    "    @property\n" +
+                    "    def ins_class(self):\n" +
+                    "        return get_class()");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

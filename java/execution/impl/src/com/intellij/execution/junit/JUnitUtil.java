@@ -44,6 +44,7 @@ public class JUnitUtil {
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
+  @NonNls public static final String TEST5_PACKAGE_FQN = "org.junit.jupiter.api";
   @NonNls public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
   @NonNls public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
   @NonNls public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
@@ -123,7 +124,7 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
     if (checkClass && checkRunWith) {
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RUN_WITH);
+      PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
         return !isParameterized(annotation);
       }
@@ -251,7 +252,8 @@ public class JUnitUtil {
   }
 
   public static boolean isJUnit5(GlobalSearchScope scope, Project project) {
-    return JavaPsiFacade.getInstance(project).findClass(TEST5_ANNOTATION, scope) != null;
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(TEST5_PACKAGE_FQN);
+    return aPackage != null && aPackage.getDirectories(scope).length > 0;
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {
@@ -283,6 +285,14 @@ public class JUnitUtil {
   public static PsiClass getTestCaseClass(final SourceScope scope) throws NoJUnitException {
     if (scope == null) throw new NoJUnitException();
     return getTestCaseClass(scope.getLibrariesScope(), scope.getProject());
+  }
+
+  public static void checkTestCase(SourceScope scope, Project project) throws NoJUnitException {
+    if (scope == null) throw new NoJUnitException();
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("junit.framework");
+    if (aPackage == null || aPackage.getDirectories(scope.getLibrariesScope()).length == 0) {
+      throw new NoJUnitException();
+    }
   }
 
   private static PsiClass getTestCaseClass(final GlobalSearchScope scope, final Project project) throws NoJUnitException {
@@ -363,6 +373,10 @@ public class JUnitUtil {
       if (isSuiteMethod(method)) return method;
     }
     return null;
+  }
+
+  public static PsiAnnotation getRunWithAnnotation(PsiClass aClass) {
+    return AnnotationUtil.findAnnotationInHierarchy(aClass, Collections.singleton(RUN_WITH));
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {

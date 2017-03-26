@@ -229,7 +229,7 @@ public class ChangeContextUtil {
                   PsiClass thisExprClass = thisQualifier != null
                                            ? (PsiClass)thisQualifier.resolve()
                                            : RefactoringChangeUtil.getThisClass(refExpr);
-                  if (currentClass.equals(thisExprClass) || thisExprClass.isInheritor(realParentClass, true)){ // qualifier is not necessary
+                  if (thisExprClass != null && (thisExprClass.equals(currentClass) || thisExprClass.isInheritor(realParentClass, true))){ // qualifier is not necessary
                     needQualifier = false;
                   }
                 }

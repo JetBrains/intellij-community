@@ -131,8 +131,10 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     if (virtualFile == null) return PsiUtil.getLanguageLevel(myProject);
 
-    final LanguageLevel fileLevel = virtualFile.getUserData(LanguageLevel.KEY);
-    if (fileLevel != null) return fileLevel;
+    // For default project, do not look into virtual file system.
+    // It is important for Upsource, where operations are done in default project to
+    // prevent expensive look-up into VFS
+    if (myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
 
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {

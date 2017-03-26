@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     return
   }
 
-  java(jvm: SystemInfo.isMac ? "$workIdeaHome/jre/jdk/Contents/Home/jre/bin/java" : "$workIdeaHome/jre/jre/bin/java",
+  java(jvm: SystemInfo.isMac ? "$workIdeaHome/jdk/Contents/Home/jre/bin/java" : "$workIdeaHome/jre/jre/bin/java",
        fork: "true", classname: "dummy", outputproperty: "jvmVersionOutput") {
     jvmarg(value: "-version")
   }
@@ -62,11 +62,19 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     it.startsWith(jreArtifactPrefix) && it.endsWith(jreArchitecture == "64" ? "_x64.tar.gz" : "_x86.tar.gz") && !it.contains("debug")
   }
   get src: "$jreTeamcityUrl/builds/id:$buildId/artifacts/content/$platform/$artifact", dest: deployDir
-  mkdir dir: "$deployDir/jre"
   if (SystemInfo.isWindows) {
+    mkdir dir: "$deployDir/jre"
     untar src: "$deployDir/$artifact", dest: "$deployDir/jre", compression: "gzip"
   }
-  else {
+  else if (SystemInfo.isMac) {
+    // untar task doesn't support symlinks, so we need to use native tar executable
+    exec(executable: "tar", dir: "$deployDir") {
+      arg(value: "-xf")
+      arg(value: "$artifact")
+    }
+  }
+  else if (SystemInfo.isLinux) {
+    mkdir dir: "$deployDir/jre"
     // untar task doesn't support symlinks, so we need to use native tar executable
     exec(executable: "tar", dir: "$deployDir") {
       arg(value: "-xf")

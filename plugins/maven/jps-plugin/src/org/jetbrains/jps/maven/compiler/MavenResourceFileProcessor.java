@@ -142,7 +142,7 @@ public class MavenResourceFileProcessor {
       assert propertyName != null;
 
       if (resolvedProperties == null) {
-        resolvedProperties = new HashMap<String, String>();
+        resolvedProperties = new HashMap<>();
       }
 
       String propertyValue = resolvedProperties.get(propertyName);
@@ -196,7 +196,7 @@ public class MavenResourceFileProcessor {
   private Map<String, String> getProperties() {
     Map<String, String> props = myProperties;
     if (props == null) {
-      props = new HashMap<String, String>(myModuleConfiguration.properties);
+      props = new HashMap<>(myModuleConfiguration.properties);
       String timestampFormat = props.get(MAVEN_BUILD_TIMESTAMP_FORMAT_PROPERTY);
       if (timestampFormat == null) {
         timestampFormat = "yyyyMMdd-HHmm"; // See ModelInterpolator.DEFAULT_BUILD_TIMESTAMP_FORMAT

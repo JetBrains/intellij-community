@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
@@ -33,6 +34,13 @@ public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
 
     mySuite = createSuiteProxy();
     mySimpleTest = createTestProxy();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (mySuite != null) Disposer.dispose(mySuite);
+    if (mySimpleTest != null) Disposer.dispose(mySimpleTest);
+    super.tearDown();
   }
 
   protected SMTestProxy createTestProxy() {

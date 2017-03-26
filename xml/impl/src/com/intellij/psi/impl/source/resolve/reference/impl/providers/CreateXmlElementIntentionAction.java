@@ -68,7 +68,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
     if (!myIsAvailableEvaluated) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myRef.getElement(), XmlTag.class);
       if (tag != null) {
-        final XmlNSDescriptorImpl descriptor = myRef.getDescriptor(tag, myRef.getCanonicalText());
+        final XmlNSDescriptorImpl descriptor = myRef.getDescriptor(tag, myRef.getCanonicalText(), new boolean[1]);
 
         if (descriptor != null &&
             descriptor.getDescriptorFile() != null &&

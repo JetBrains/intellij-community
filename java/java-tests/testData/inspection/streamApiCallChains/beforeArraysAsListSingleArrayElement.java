@@ -5,6 +5,6 @@ import java.util.stream.Stream;
 
 public class ArraysStreamSingleElementArray {
   Stream<String[]> stream(String[] args) {
-    return Arrays.<Strin<caret>g[]>asList(args).stream();
+    return Arrays.<String[]>asList(args).st<caret>ream();
   }
 }

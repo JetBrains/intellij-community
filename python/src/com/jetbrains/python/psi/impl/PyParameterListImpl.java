@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +116,8 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     return result.get();
   }
 
-  public String getPresentableText(final boolean includeDefaultValue) {
+  @NotNull
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     final StringBuilder target = new StringBuilder();
     final String COMMA = ", ";
     target.append("(");
@@ -132,7 +134,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
         }
 
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          target.append(param.getRepr(includeDefaultValue));
+          target.append(param.getRepr(includeDefaultValue, context));
           if (!last) target.append(COMMA);
         }
 

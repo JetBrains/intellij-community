@@ -42,7 +42,7 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
   @Override
   public Navigatable getNavigatable(@NotNull LineCol position) {
     Project project = getProject();
-    if (project == null || project.isDefault() || !myFile.isValid()) return null;
+    if (!DiffUtil.canNavigateToFile(project, myFile)) return null;
     return new OpenFileDescriptor(project, myFile, position.line, position.column);
   }
 

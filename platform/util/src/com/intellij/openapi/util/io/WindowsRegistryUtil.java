@@ -72,7 +72,7 @@ public class WindowsRegistryUtil {
   @NotNull
   public static List<String> readRegistryBranch(@NotNull String location) {
     List<String> result = new ArrayList<String>();
-    StringBuilder output = readRegistry("reg query \"" + location + "\" /s");
+    StringBuilder output = readRegistry("reg query \"" + location + "\"");
     if (output != null) {
       for (int pos = output.indexOf(location); pos != -1; pos = output.indexOf(location, pos + location.length())) {
         int pos2 = output.indexOf("\r\n", pos + location.length());

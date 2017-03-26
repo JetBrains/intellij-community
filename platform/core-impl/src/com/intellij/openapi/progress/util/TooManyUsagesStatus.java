@@ -65,7 +65,7 @@ public class TooManyUsagesStatus {
     FEW_USAGES, WARNING_DIALOG_SHOWN, USER_RESPONDED
   }
 
-  private final AtomicReference<Status> tooManyUsagesStatus = new AtomicReference<Status>(Status.FEW_USAGES);
+  private final AtomicReference<Status> tooManyUsagesStatus = new AtomicReference<>(Status.FEW_USAGES);
   private final CountDownLatch waitWhileUserClick = new CountDownLatch(1);
 
   public void pauseProcessingIfTooManyUsages() {

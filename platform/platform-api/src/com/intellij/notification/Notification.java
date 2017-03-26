@@ -15,6 +15,7 @@
  */
 package com.intellij.notification;
 
+import com.google.common.util.concurrent.Atomics;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -26,6 +27,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,7 @@ import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Notification bean class contains <b>title:</b>subtitle, content (plain text or HTML) and actions.
@@ -65,7 +68,7 @@ public class Notification {
   private String myDropDownText;
   private List<AnAction> myActions;
 
-  private boolean myExpired;
+  private AtomicReference<Boolean> myExpired = Atomics.newReference(false);
   private Runnable myWhenExpired;
   private Boolean myImportant;
   private WeakReference<Balloon> myBalloonRef;
@@ -102,10 +105,9 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(isTitle() || isContent(),
+    LOG.assertTrue(hasTitle() || hasContent(),
                    "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
-
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
+    id = calculateId(this);
   }
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
@@ -132,8 +134,8 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(isContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
+    LOG.assertTrue(hasContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    id = calculateId(this);
   }
 
   /**
@@ -159,7 +161,7 @@ public class Notification {
     return myGroupId;
   }
 
-  public boolean isTitle() {
+  public boolean hasTitle() {
     return !StringUtil.isEmptyOrSpaces(myTitle) || !StringUtil.isEmptyOrSpaces(mySubtitle);
   }
 
@@ -190,7 +192,7 @@ public class Notification {
     return this;
   }
 
-  public boolean isContent() {
+  public boolean hasContent() {
     return !StringUtil.isEmptyOrSpaces(myContent);
   }
 
@@ -282,17 +284,14 @@ public class Notification {
   }
 
   public boolean isExpired() {
-    return myExpired;
+    return myExpired.get();
   }
 
   public void expire() {
-    if (myExpired) {
-      return;
-    }
+    if (!myExpired.compareAndSet(false, true)) return;
 
+    UIUtil.invokeLaterIfNeeded(() -> hideBalloon());
     NotificationsManager.getNotificationsManager().expire(this);
-    hideBalloon();
-    myExpired = true;
 
     Runnable whenExpired = myWhenExpired;
     if (whenExpired != null) whenExpired.run();
@@ -346,5 +345,10 @@ public class Notification {
     }
 
     return getListener() != null || !ContainerUtil.isEmpty(myActions);
+  }
+
+  @NotNull
+  private static String calculateId(@NotNull Object notification) {
+    return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
   }
 }

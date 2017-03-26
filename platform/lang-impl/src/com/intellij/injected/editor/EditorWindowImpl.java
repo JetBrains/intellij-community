@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Iterator;
 import java.util.List;
@@ -399,6 +400,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return logicalToVisualPosition(xyToLogicalPosition(p));
   }
 
+  @NotNull
+  @Override
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    checkValid();
+    Point2D pp = p.getX() >= 0 && p.getY() >= 0 ? p : new Point2D.Double(Math.max(p.getX(), 0), Math.max(p.getY(), 0));
+    LogicalPosition hostPos = myDelegate.visualToLogicalPosition(myDelegate.xyToVisualPosition(pp));
+    return logicalToVisualPosition(hostToInjected(hostPos));
+  }
+
   @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
@@ -448,6 +458,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   public Point visualPositionToXY(@NotNull final VisualPosition pos) {
     checkValid();
     return logicalPositionToXY(visualToLogicalPosition(pos));
+  }
+
+  @NotNull
+  @Override
+  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    checkValid();
+    LogicalPosition hostLogical = injectedToHost(visualToLogicalPosition(pos));
+    VisualPosition hostVisual = myDelegate.logicalToVisualPosition(hostLogical);
+    return myDelegate.visualPositionToPoint2D(hostVisual);
   }
 
   @Override

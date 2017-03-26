@@ -157,7 +157,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
                                                      boolean ignorePlaceName,
                                                      boolean lookForward) {
     final String[] names = baseNameInfo.names;
-    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<String>(names.length);
+    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<>(names.length);
     for (String name : names) {
       if (ignorePlaceName && place instanceof PsiNamedElement) {
         final String placeName = ((PsiNamedElement)place).getName();

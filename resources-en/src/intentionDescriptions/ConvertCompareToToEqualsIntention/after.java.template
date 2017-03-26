@@ -1,4 +1,6 @@
-void m(String s1, String s2) {
-  if (!s1.equals(s2)) {
+public class X {
+  void m(String s1, String s2) {
+    if (!s1.equals(s2)) {
+    }
   }
 }

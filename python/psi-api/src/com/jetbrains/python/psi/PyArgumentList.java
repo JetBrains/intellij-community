@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,8 @@ public interface PyArgumentList extends PyElement {
   PyKeywordArgument getKeywordArgument(String name);
 
   /**
-   * TODO: Copy/Paste with {@link com.jetbrains.python.psi.PyCallExpression#addArgument(PyExpression)} ?
    * Adds argument to the appropriate place:
-   * {@link com.jetbrains.python.psi.PyKeywordArgument} goes to the end.
+   * {@link PyKeywordArgument} goes to the end.
    * All other go before key arguments (if any) but after last non-key arguments.
    * Commas should be set correctly as well.
    *

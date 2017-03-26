@@ -1,3 +1,4 @@
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -11,12 +12,11 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 /**
- *
  * * Message Spec
- *   http://ipython.org/ipython-doc/dev/development/messaging.html
- *
+ * http://ipython.org/ipython-doc/dev/development/messaging.html
+ * <p>
  * * Notebook REST API
- *   https://github.com/ipython/ipython/wiki/IPEP-16%3A-Notebook-multi-directory-dashboard-and-URL-mapping
+ * https://github.com/ipython/ipython/wiki/IPEP-16%3A-Notebook-multi-directory-dashboard-and-URL-mapping
  *
  * @author vlan
  */
@@ -33,7 +33,7 @@ public class WebSocketConnectionTest extends TestCase {
         assertTrue(connection.getKernelId().length() > 0);
         connection.shutdown();
       }
-    }, null);
+    }, null, DefaultProjectFactory.getInstance().getDefaultProject(), "");
     connection.close();
   }
 
@@ -60,7 +60,7 @@ public class WebSocketConnectionTest extends TestCase {
           connection.shutdown();
         }
       }
-    }, null);
+    }, null, DefaultProjectFactory.getInstance().getDefaultProject(), "");
     connection.close();
     assertTrue(evaluated.get());
   }
@@ -94,7 +94,7 @@ public class WebSocketConnectionTest extends TestCase {
           connection.shutdown();
         }
       }
-    }, null);
+    }, null, DefaultProjectFactory.getInstance().getDefaultProject(), "");
     connection.close();
     assertTrue(evaluated.get());
   }

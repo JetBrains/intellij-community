@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -260,7 +261,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
           }
         });
 
-        if (inlineAll.get() && ReferencesSearch.search(local).findFirst() == null) {
+        if (inlineAll.get() && ReferencesSearch.search(local).findFirst() == null && editor != null) {
           QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
         }
 
@@ -283,7 +284,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(project, runnable, RefactoringBundle.message("inline.command", localName), null);
+    CommandProcessor.getInstance().executeCommand(project, () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(runnable), RefactoringBundle.message("inline.command", localName), null);
   }
 
   @Nullable

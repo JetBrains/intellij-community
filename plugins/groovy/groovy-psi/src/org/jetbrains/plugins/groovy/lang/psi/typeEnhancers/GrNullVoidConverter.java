@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ public class GrNullVoidConverter extends GrTypeConverter {
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
     switch (position) {
-      case EXPLICIT_CAST:
       case RETURN_VALUE:
       case ASSIGNMENT:
       case METHOD_PARAMETER:
@@ -50,22 +49,7 @@ public class GrNullVoidConverter extends GrTypeConverter {
 
     final PsiClassType objectType = TypesUtil.getJavaLangObject(context);
 
-    if (currentPosition == ApplicableTo.EXPLICIT_CAST) {
-      if (PsiType.VOID.equals(TypesUtil.unboxPrimitiveTypeWrapper(targetType))) {  // cast to V(v)oid
-        if (actualType.equals(objectType)) return ConversionResult.WARNING;   // cast Object to V(v)oid compiles but fails at runtime
-        if (PsiType.VOID.equals(targetType)) {                                     // cast to void
-          // can cast void to void only
-          return PsiType.VOID.equals(actualType) ? ConversionResult.OK : ConversionResult.ERROR;
-        }
-        else {                                                                // cast to Void
-          // can cast Void, void and null to Void
-          return actualType == PsiType.NULL || PsiType.VOID.equals(TypesUtil.unboxPrimitiveTypeWrapper(actualType))
-                 ? ConversionResult.OK
-                 : ConversionResult.ERROR;
-        }
-      }
-    }
-    else if (currentPosition == ApplicableTo.RETURN_VALUE) {
+    if (currentPosition == ApplicableTo.RETURN_VALUE) {
       if (targetType.equals(objectType) && PsiType.VOID.equals(actualType)) {
         return ConversionResult.OK;                                           // can return void from Object
       }
@@ -73,8 +57,6 @@ public class GrNullVoidConverter extends GrTypeConverter {
 
     if (PsiType.VOID.equals(actualType)) {
       switch (currentPosition) {
-        case EXPLICIT_CAST:
-          return ConversionResult.ERROR;
         case RETURN_VALUE: {
           // we can return void values from method returning enum
           if (isEnum(targetType)) return ConversionResult.OK;

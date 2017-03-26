@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.application.options.colors.ColorSettingsUtil;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -53,7 +54,7 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
     }
     else {
       for (ColorSettingsPage page : getRegisteredPages()) {
-        for (AttributesDescriptor descriptor : page.getAttributeDescriptors()) {
+        for (AttributesDescriptor descriptor : ColorSettingsUtil.getAllAttributeDescriptors(page)) {
           if (descriptor.getKey() == key) {
             Pair<ColorSettingsPage,AttributesDescriptor> result = Pair.create(page, descriptor);
             myKeyToDescriptorMap.put(key, result);

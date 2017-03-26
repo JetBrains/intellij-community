@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
@@ -95,7 +94,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   @NotNull
   @TestOnly
   public static MultiMap<String, ArchivedProjectTemplate> createFromText(@NotNull String value) throws IOException, JDOMException {
-    return create(JDOMUtil.loadDocument(value).getRootElement());
+    return create(JdomKt.loadElement(value));
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,8 +46,8 @@ abstract class BaseStreamApiMigration {
                                                PsiType expressionType) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
-    InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
-    if (status != InitializerUsageStatus.UNKNOWN) {
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
+    if (status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
       if (ExpressionUtils.isZero(initializer)) {
         PsiType type = var.getType();
@@ -64,12 +65,12 @@ abstract class BaseStreamApiMigration {
                                        InitializerUsageStatus status) {
     Project project = loopStatement.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    if(status == InitializerUsageStatus.DECLARED_JUST_BEFORE) {
+    if(status == ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE) {
       initializer.replace(elementFactory.createExpressionFromText(replacement, loopStatement));
       removeLoop(loopStatement);
       return var;
     } else {
-      if(status == InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
+      if(status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
         initializer.delete();
       }
       return

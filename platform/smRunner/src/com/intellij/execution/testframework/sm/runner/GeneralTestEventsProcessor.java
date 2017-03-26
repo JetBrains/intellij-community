@@ -216,6 +216,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
+          if (myProject.isDisposed()) {
+            return;
+          }
           myTransferToEDTQueue.drain();
         }
       });

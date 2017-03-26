@@ -280,16 +280,10 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
 
   @Nullable
   public PsiMethod getSourceMirrorMethod() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMethod>() {
-      @Nullable
-      @Override
-      public Result<PsiMethod> compute() {
-        return Result.create(calcSourceMirrorMethod(),
-                             getContainingFile(),
-                             getContainingFile().getNavigationElement(),
-                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker());
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calcSourceMirrorMethod(),
+                                                                                            getContainingFile(),
+                                                                                            getContainingFile().getNavigationElement(),
+                                                                                            FileIndexFacade.getInstance(getProject()).getRootModificationTracker()));
   }
 
   @Nullable

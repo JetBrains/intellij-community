@@ -352,7 +352,8 @@ def has_line_breaks(plugin):
 
 
 def cmd_step_into(plugin, main_debugger, frame, event, args, stop_info, stop):
-    main_debugger, filename, info, thread = args
+    info = args[2]
+    thread = args[3]
     plugin_stop = False
     if _is_django_suspended(thread):
         stop_info['django_stop'] = event == 'call' and _is_django_render_call(frame)
@@ -364,7 +365,8 @@ def cmd_step_into(plugin, main_debugger, frame, event, args, stop_info, stop):
 
 
 def cmd_step_over(plugin, main_debugger, frame, event, args, stop_info, stop):
-    main_debugger, filename, info, thread = args
+    info = args[2]
+    thread = args[3]
     plugin_stop = False
     if _is_django_suspended(thread):
         stop_info['django_stop'] = event == 'call' and _is_django_render_call(frame)
@@ -382,7 +384,8 @@ def cmd_step_over(plugin, main_debugger, frame, event, args, stop_info, stop):
 
 
 def stop(plugin, main_debugger, frame, event, args, stop_info, arg, step_cmd):
-    main_debugger, filename, info, thread = args
+    main_debugger = args[0]
+    thread = args[3]
     if dict_contains(stop_info, 'django_stop') and stop_info['django_stop']:
         frame = suspend_django(main_debugger, thread, frame, step_cmd)
         if frame:
@@ -392,7 +395,9 @@ def stop(plugin, main_debugger, frame, event, args, stop_info, arg, step_cmd):
 
 
 def get_breakpoint(plugin, main_debugger, pydb_frame, frame, event, args):
-    main_debugger, filename, info, thread = args
+    main_debugger = args[0]
+    filename = args[1]
+    info = args[2]
     flag = False
     django_breakpoint = None
     new_frame = None
@@ -421,10 +426,11 @@ def suspend(plugin, main_debugger, thread, frame, bp_type):
     return None
 
 def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
-    main_debugger, filename, info, thread = args
+    main_debugger = args[0]
+    thread = args[3]
     exception, value, trace = arg
     if main_debugger.django_exception_break and \
-            get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
+                    get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
             just_raised(trace) and _is_django_exception_break_context(frame):
         render_frame = _find_django_render_frame(frame)
         if render_frame:

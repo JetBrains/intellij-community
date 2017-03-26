@@ -16,20 +16,27 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.PrePushHandler;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +45,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VcsPushDialog extends DialogWrapper {
 
@@ -54,7 +62,6 @@ public class VcsPushDialog extends DialogWrapper {
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
-
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
@@ -122,8 +129,7 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myController.push(false);
-    close(OK_EXIT_CODE);
+    push(false);
   }
 
   @Override
@@ -171,6 +177,67 @@ public class VcsPushDialog extends DialogWrapper {
     return ID;
   }
 
+  @CalledInAwt
+  private void push(boolean forcePush) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
+    new Task.Modal(myController.getProject(), "Checking Commits...", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        result.set(myController.executeHandlers(indicator));
+      }
+
+      @Override
+      public void onSuccess() {
+        super.onSuccess();
+        if (result.get() == PrePushHandler.Result.OK) {
+          doPush();
+        }
+        else if (result.get() == PrePushHandler.Result.ABORT_AND_CLOSE) {
+          doCancelAction();
+        }
+        else if (result.get() == PrePushHandler.Result.ABORT) {
+          // cancel push and leave the push dialog open
+        }
+      }
+
+      private void doPush() {
+        myController.push(forcePush);
+        close(OK_EXIT_CODE);
+      }
+
+      @Override
+      public void onThrowable(@NotNull Throwable error) {
+        if (error instanceof PushController.HandlerException) {
+          super.onThrowable(error.getCause());
+
+          String handlerName = ((PushController.HandlerException)error).getHandlerName();
+          suggestToSkipOrPush(handlerName + " has failed. See log for more details.\n" +
+                              "Would you like to skip pre-push checking and continue or cancel push completely?");
+        } else {
+          super.onThrowable(error);
+        }
+      }
+
+      @Override
+      public void onCancel() {
+        super.onCancel();
+        suggestToSkipOrPush("Would you like to skip pre-push checking and continue or cancel push completely?");
+      }
+
+      private void suggestToSkipOrPush(@NotNull String message) {
+        if (Messages.showOkCancelDialog(myProject,
+                                        message,
+                                        "Push",
+                                        "&Push Anyway",
+                                        "&Cancel",
+                                        UIUtil.getWarningIcon()) == Messages.OK) {
+          doPush();
+        }
+      }
+    }.queue();
+  }
+
   public void updateOkActions() {
     myPushAction.setEnabled(canPush());
     if (myForcePushAction != null) {
@@ -205,8 +272,7 @@ public class VcsPushDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myController.ensureForcePushIsNeeded()) {
-        myController.push(true);
-        close(OK_EXIT_CODE);
+        push(true);
       }
     }
   }
@@ -221,8 +287,7 @@ public class VcsPushDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      myController.push(false);
-      close(OK_EXIT_CODE);
+      push(false);
     }
 
     @Override

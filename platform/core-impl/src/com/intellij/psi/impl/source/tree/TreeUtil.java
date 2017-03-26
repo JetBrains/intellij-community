@@ -231,7 +231,7 @@ public class TreeUtil {
   public static ASTNode findCommonParent(ASTNode one, ASTNode two) {
     // optimization
     if (one == two) return one;
-    final Set<ASTNode> parents = new HashSet<ASTNode>(20);
+    final Set<ASTNode> parents = new HashSet<>(20);
     while (one != null) {
       parents.add(one);
       one = one.getTreeParent();
@@ -246,12 +246,12 @@ public class TreeUtil {
   public static Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
     if (one == two) return Couple.of(null, null);
 
-    LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
+    LinkedList<ASTNode> oneParents = new LinkedList<>();
     while (one != null) {
       oneParents.add(one);
       one = one.getTreeParent();
     }
-    LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
+    LinkedList<ASTNode> twoParents = new LinkedList<>();
     while (two != null) {
       twoParents.add(two);
       two = two.getTreeParent();

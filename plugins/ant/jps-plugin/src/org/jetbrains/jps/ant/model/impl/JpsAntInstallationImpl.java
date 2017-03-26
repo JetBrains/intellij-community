@@ -70,7 +70,7 @@ public class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImp
   }
 
   public static List<String> getClasspath(final List<String> classpath, final List<String> jarDirectories) {
-    List<String> result = new ArrayList<String>(classpath);
+    List<String> result = new ArrayList<>(classpath);
     for (String directory : jarDirectories) {
       addAllJarsFromDirectory(result, new File(directory));
     }

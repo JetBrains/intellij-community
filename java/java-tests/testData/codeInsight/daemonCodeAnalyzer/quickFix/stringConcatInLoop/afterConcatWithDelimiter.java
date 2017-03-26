@@ -8,7 +8,12 @@ public class Main {
             if (/*before*/res.length() > 0) {
                 res.append(", ");
             }
-            res.append(s);
+            if (s.contains("'")) {
+                res.append('[' // bracket
+                ).append(s).append(']');
+            } else {
+                res.append(s);
+            }
         }
         return res.toString();
     }

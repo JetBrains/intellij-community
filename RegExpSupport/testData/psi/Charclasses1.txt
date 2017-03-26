@@ -5,11 +5,10 @@ REGEXP_FILE
         PsiElement(CHARACTER)('a')
       RegExpClassImpl: <[bc]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <bc>
-          RegExpCharImpl: <b>
-            PsiElement(CHARACTER)('b')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
+        RegExpCharImpl: <b>
+          PsiElement(CHARACTER)('b')
+        RegExpCharImpl: <c>
+          PsiElement(CHARACTER)('c')
         PsiElement(CLASS_END)(']')
       RegExpCharImpl: <d>
         PsiElement(CHARACTER)('d')

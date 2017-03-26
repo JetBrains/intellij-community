@@ -86,11 +86,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                    project, scope, module != null ? module.getName() : null, false,
                                    AnalysisUIOptions.getInstance(project), element);
     if (dlg.showAndGet()) {
+      AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
-          invokeOnScope(project, member, dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module));
+          invokeOnScope(project, member, selectedScope);
         }
       });
     }

@@ -18,6 +18,7 @@ package org.intellij.lang.regexp;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LookAheadLexer;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -30,7 +31,8 @@ public class RegExpLexer extends LookAheadLexer {
 
   @Override
   protected void lookAhead(@NotNull Lexer baseLexer) {
-    if (!RegExpTT.CHARACTERS.contains(baseLexer.getTokenType())) {
+    final IElementType tokenType = baseLexer.getTokenType();
+    if (!RegExpTT.CHARACTERS.contains(tokenType) && tokenType != RegExpTT.RBRACE) {
       advanceLexer(baseLexer);
       if (baseLexer.getTokenType() == RegExpTT.MINUS) {
         advanceAs(baseLexer, RegExpTT.CHARACTER);

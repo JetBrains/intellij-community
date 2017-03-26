@@ -97,12 +97,10 @@
   <actions>
     <group id="PlatformOpenProjectGroup">
       <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction"/>
+      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" />
+      <reference ref="NewScratchFile" />
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
-
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="PlatformOpenProjectGroup" anchor="after" relative-to-action="NewDirectoryProject"/>
-    </action>
 
     <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As..">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
  * @author yole
  */
 public class JBuilderKeymapProvider implements BundledKeymapProvider {
+  @NotNull
   @Override
   public List<String> getKeymapFileNames() {
     return Collections.singletonList("JBuilder.xml");

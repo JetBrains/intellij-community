@@ -16,15 +16,23 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.METHOD_CALL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
 
 class GetAtTransformation extends BinaryTransformation {
   @Override
-  public void apply(@NotNull GrMethodCall methodCall, @NotNull ChangeToOperatorInspection.Options options) {
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     String result = format("%s[%s]", getLhs(methodCall).getText(), getRhs(methodCall).getText());
     replaceExpression(methodCall, result);
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return checkPrecedence(METHOD_CALL_PRECEDENCE, methodCall);
   }
 }

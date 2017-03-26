@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 4, 2003
- * Time: 7:24:37 PM
+ *         Date: Oct 4, 2003
+ *         Time: 7:24:37 PM
  */
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
   @NotNull protected final Project myProject;
@@ -65,13 +65,14 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   public void canApply() throws ConfigurationException {}
+
   @Override
   public void apply() throws ConfigurationException {}
+
   @Override
   public void reset() {}
-  @Override
-  public void moduleStateChanged() {}
-  public void moduleCompileOutputChanged(final String baseUrl, final String moduleName){}
+
+  public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {}
 
   @Override
   public void disposeUIResources() {

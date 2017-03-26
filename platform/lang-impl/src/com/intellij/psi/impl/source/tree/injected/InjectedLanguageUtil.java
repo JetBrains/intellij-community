@@ -115,6 +115,7 @@ public class InjectedLanguageUtil {
 
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
+    PsiUtilCore.ensureValid(containingFile);
     return enumerate(host, containingFile, true, visitor);
   }
 

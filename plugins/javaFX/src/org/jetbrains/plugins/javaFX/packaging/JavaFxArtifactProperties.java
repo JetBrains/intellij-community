@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
@@ -24,7 +24,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -83,8 +82,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
     final Project project = compileContext.getProject();
-    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(
-      (Computable<Set<Module>>)() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
+    final Set<Module> modules = ReadAction.compute(() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
     if (modules.isEmpty()) {
       return;
     }

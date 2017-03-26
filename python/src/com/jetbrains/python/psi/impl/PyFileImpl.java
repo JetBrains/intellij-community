@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -270,6 +271,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
   }
+  //
+  //@Override
+  //public PsiElement getNavigationElement() {
+  //  final PsiElement element = PyiUtil.getOriginalElement(this);
+  //  return element != null ? element : super.getNavigationElement();
+  //}
 
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
     for (Language lang : getViewProvider().getLanguages()) {
@@ -292,24 +299,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
                                      @NotNull PsiElement place) {
     final List<String> dunderAll = getDunderAll();
     final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<>(dunderAll);
-    PsiScopeProcessor wrapper = new PsiScopeProcessor() {
+    PsiScopeProcessor wrapper = new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (!processor.execute(element, state)) return false;
+        if (!super.execute(element, state)) return false;
         if (remainingDunderAll != null && element instanceof PyElement) {
           remainingDunderAll.remove(((PyElement)element).getName());
         }
         return true;
-      }
-
-      @Override
-      public <T> T getHint(@NotNull Key<T> hintKey) {
-        return processor.getHint(hintKey);
-      }
-
-      @Override
-      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
-        processor.handleEvent(event, associated);
       }
     };
 
@@ -411,6 +408,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   @Override
   public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
+    return multiResolveName(name, true);
+  }
+
+  @NotNull
+  @Override
+  public List<RatedResolveResult> multiResolveName(@NotNull String name, boolean exported) {
     final List<RatedResolveResult> results = RecursionManager.doPreventingRecursion(this, false,
                                                                                     () -> getExportedNameCache().multiResolve(name));
     if (results != null && !results.isEmpty()) {

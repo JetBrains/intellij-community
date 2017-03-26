@@ -104,5 +104,5 @@ public class PluginBean {
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "module")
-  public List<String> modules = new ArrayList<String>();
+  public List<String> modules = new ArrayList<>();
 }

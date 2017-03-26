@@ -31,9 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "InstancesTracker", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class InstancesTracker extends AbstractProjectComponent
-    implements PersistentStateComponent<InstancesTracker.MyState> {
+  implements PersistentStateComponent<InstancesTracker.MyState> {
   private final EventDispatcher<InstancesTrackerListener> myDispatcher =
-      EventDispatcher.create(InstancesTrackerListener.class);
+    EventDispatcher.create(InstancesTrackerListener.class);
   private MyState myState = new MyState();
 
   public InstancesTracker(Project project) {
@@ -84,7 +84,7 @@ public class InstancesTracker extends AbstractProjectComponent
 
   public void setBackgroundTackingEnabled(boolean state) {
     boolean oldState = myState.isBackgroundTrackingEnabled;
-    if(state != oldState) {
+    if (state != oldState) {
       myState.isBackgroundTrackingEnabled = state;
       myDispatcher.getMulticaster().backgroundTrackingValueChanged(state);
     }
@@ -104,7 +104,6 @@ public class InstancesTracker extends AbstractProjectComponent
   static class MyState {
     boolean isBackgroundTrackingEnabled = false;
 
-    @NotNull
     @AbstractCollection(surroundWithTag = false, elementTypes = {Map.Entry.class})
     final Map<String, TrackingType> classes = new ConcurrentHashMap<>();
 

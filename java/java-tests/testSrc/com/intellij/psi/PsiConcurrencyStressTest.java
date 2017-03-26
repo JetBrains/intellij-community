@@ -26,7 +26,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -55,7 +54,6 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    ApplicationInfoImpl.setInPerformanceTest(true);
     super.setUp();
 
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);

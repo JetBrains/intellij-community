@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -48,6 +49,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     return getGlobalInstance().requestFocus(command, forced);
+  }
+
+  @Override
+  public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
+    return getGlobalInstance().requestFocusInProject(c, project);
   }
 
   @Override

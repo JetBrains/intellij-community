@@ -79,20 +79,6 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
               super.visitElement(element);
               if (isDocumentedSinceApi(element)) {
                 System.out.println(Java15APIUsageInspection.getSignature((PsiMember)element));
-                if (element instanceof PsiMethod) {
-                  OverridingMethodsSearch.search((PsiMethod)element, GlobalSearchScope.notScope(GlobalSearchScope.projectScope(getProject())), true).forEach(
-                    new Processor<PsiMethod>() {
-                      @Override
-                      public boolean process(PsiMethod method) {
-                        if (isDocumentedSinceApi(method.getNavigationElement())) {
-                          return true;
-                        }
-  
-                        notDocumented.add(Java15APIUsageInspection.getSignature(method));
-                        return true;
-                      }
-                    });
-                }
               }
             }
 

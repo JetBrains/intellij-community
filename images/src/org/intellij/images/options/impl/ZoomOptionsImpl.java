@@ -29,7 +29,7 @@ import java.beans.PropertyChangeSupport;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
-    private boolean wheelZooming;
+    private boolean wheelZooming = true;
     private boolean smartZooming = true;
     private int prefferedWidth = DEFAULT_PREFFERED_SIZE.width;
     private int prefferedHeight = DEFAULT_PREFFERED_SIZE.height;

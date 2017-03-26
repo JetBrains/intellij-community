@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,11 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     textField.getDocument().addDocumentListener(
       new DocumentAdapter() {
         protected void textChanged(final DocumentEvent e) {
-          preferredSizeChanged();
+          // Order of document listeners invocation is not defined in Swing. In practice, custom listeners like this one are invoked
+          // before internal JTextField listeners, so at this point the internal state of JTextField can be inconsistent.
+          // That's the reason for using 'invokeLater' here.
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(() -> preferredSizeChanged());
           myTextFieldModified = true;
         }
       }

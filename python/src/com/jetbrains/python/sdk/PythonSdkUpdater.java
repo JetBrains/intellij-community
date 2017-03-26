@@ -43,6 +43,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.concurrency.BlockingSet;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
@@ -135,6 +136,9 @@ public class PythonSdkUpdater implements StartupActivity {
           return;
         }
         ourScheduledToRefresh.remove(key);
+      }
+      if (project != null && project.isDisposed()) {
+        return;
       }
       ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
         @Override
@@ -278,6 +282,7 @@ public class PythonSdkUpdater implements StartupActivity {
       .addAll(filterRootPaths(sdk, evaluateSysPath(sdk), project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
@@ -292,6 +297,7 @@ public class PythonSdkUpdater implements StartupActivity {
       .addAll(getRemoteSdkMappedPaths(sdk, project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
@@ -329,7 +335,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Filters valid paths from an initial set of Python paths and returns them as virtual files.
    */
   @NotNull
-  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
+  public static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
                                                   Collections.emptyList();

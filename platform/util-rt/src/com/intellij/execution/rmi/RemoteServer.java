@@ -44,6 +44,7 @@ public class RemoteServer {
   }
 
   public static final String DOMAIN_AUTH_LIBRARY_PATH = "domain.auth.library";
+  public static final String DOMAIN_AUTH_MISSING_FILES = "Missing native authentication library: ";
 
   private static Remote ourRemote;
 
@@ -168,7 +169,7 @@ public class RemoteServer {
 
     //noinspection IOResourceOpenedButNotSafelyClosed
     InputStream is = RemoteServer.class.getResourceAsStream(path);
-    if (is == null) throw new FileNotFoundException("File " + path + " was not found inside JAR.");
+    if (is == null) throw new FileNotFoundException(DOMAIN_AUTH_MISSING_FILES + path);
 
     OutputStream os = new FileOutputStream(temp);
     try {

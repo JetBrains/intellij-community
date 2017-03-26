@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
@@ -27,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -56,13 +56,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
     subscribeToFileChanges();
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        myDisposed = true;
-        myRootIndex = null;
-      }
+    Disposer.register(project, () -> {
+      myDisposed = true;
+      myRootIndex = null;
     });
+    LowMemoryWatcher.register(() -> {
+      RootIndex index = myRootIndex;
+      if (index != null) {
+        index.onLowMemory();
+      }
+    }, project);
   }
 
   protected void subscribeToFileChanges() {

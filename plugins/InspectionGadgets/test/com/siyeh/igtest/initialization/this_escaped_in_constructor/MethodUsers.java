@@ -6,7 +6,7 @@ import static java.lang.System.*;
 class MethodUsers extends ByteArrayInputStream {
 
   {
-    setIn(this);
+    setIn(<warning descr="Escape of 'this' during object construction">this</warning>);
   }
 
   public MethodUsers(byte[] buf) {

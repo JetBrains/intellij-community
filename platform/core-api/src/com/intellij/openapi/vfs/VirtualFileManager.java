@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class VirtualFileManager implements ModificationTracker {
   public static final Topic<BulkFileListener> VFS_CHANGES =
-    new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
+    new Topic<>("NewVirtualFileSystem changes", BulkFileListener.class);
 
   public static final ModificationTracker VFS_STRUCTURE_MODIFICATIONS = new ModificationTracker() {
     @Override

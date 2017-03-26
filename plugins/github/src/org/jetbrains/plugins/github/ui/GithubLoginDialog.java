@@ -73,7 +73,7 @@ public class GithubLoginDialog extends DialogWrapper {
     }
     catch (IOException e) {
       LOG.info(e);
-      setErrorText("Can't login: " + GithubUtil.getErrorTextFromException(e));
+      setErrorText("Can't login: " + GithubUtil.getErrorTextFromException(e), myCredentialsPanel);
     }
   }
 

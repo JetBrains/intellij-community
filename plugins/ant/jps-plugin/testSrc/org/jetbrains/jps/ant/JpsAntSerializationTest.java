@@ -129,7 +129,7 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
   }
 
   private static Set<File> toFiles(List<String> classpath) {
-    Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> result = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (String path : classpath) {
       result.add(new File(path));
     }

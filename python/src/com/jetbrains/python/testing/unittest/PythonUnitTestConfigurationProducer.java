@@ -36,9 +36,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonUnitTestConfigurationProducer extends PythonTestConfigurationProducer {
+public class PythonUnitTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
   public PythonUnitTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY);
+    super(PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {
@@ -54,7 +54,7 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
 
   @Override
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
-                                   @Nullable final AbstractPythonTestRunConfiguration configuration) {
+                                   @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
     final boolean isTestFunction = super.isTestFunction(pyFunction, configuration);
     return isTestFunction || (configuration instanceof PythonUnitTestRunConfiguration &&
            !((PythonUnitTestRunConfiguration)configuration).isPureUnittest());
@@ -62,7 +62,7 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
 
   @Override
   protected boolean isTestClass(@NotNull PyClass pyClass,
-                                @Nullable final AbstractPythonTestRunConfiguration configuration,
+                                @Nullable final AbstractPythonLegacyTestRunConfiguration configuration,
                                 TypeEvalContext context) {
     final boolean isTestClass = super.isTestClass(pyClass, configuration, context);
     return isTestClass || (configuration instanceof PythonUnitTestRunConfiguration &&

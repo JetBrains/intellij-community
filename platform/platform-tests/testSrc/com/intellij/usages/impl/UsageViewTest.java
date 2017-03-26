@@ -15,6 +15,11 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -26,12 +31,15 @@ import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
+
+import java.util.Set;
 
 /**
  * User: cdr
@@ -101,5 +109,53 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     PsiElement element = psiFile.findElementAt(offset % psiFile.getTextLength());
     assertNotNull(element);
     return new UsageInfo2UsageAdapter(new UsageInfo(element));
+  }
+
+  public void testUsageViewCanRerunAfterTargetWasInvalidatedAndRestored() throws Exception {
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{" +
+                                                           "    void foo() {\n" +
+                                                           "        bar();\n" +
+                                                           "        bar();\n" +
+                                                           "    }" +
+                                                           "    void bar() {}\n" +
+                                                           "}");
+    Usage usage = createUsage(psiFile, psiFile.getText().indexOf("bar();"));
+
+    PsiElement[] members = psiFile.getChildren()[psiFile.getChildren().length - 1].getChildren();
+    PsiNamedElement bar = (PsiNamedElement)members[members.length - 3];
+    assertEquals("bar", bar.getName());
+
+    UsageTarget target = new PsiElement2UsageTargetAdapter(bar);
+    FindUsagesManager usagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
+    FindUsagesHandler handler = usagesManager.getNewFindUsagesHandler(bar, false);
+    UsageViewImpl usageView =
+      (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{bar}, PsiElement.EMPTY_ARRAY, handler, handler.getFindUsagesOptions(), false);
+
+    Disposer.register(getTestRootDisposable(), usageView);
+
+    assertTrue(usageView.canPerformReRun());
+
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    Document document = documentManager.getDocument(psiFile);
+    String barDef = "void bar() {}\n";
+    String commentedBarDef = "//" + barDef;
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      String text = document.getText();
+      document.replaceString(text.indexOf(barDef), text.indexOf(barDef) + barDef.length(), commentedBarDef);
+    });
+    documentManager.commitAllDocuments();
+    assertFalse(usageView.canPerformReRun()); // target invalidated
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      String text = document.getText();
+      document.replaceString(text.indexOf(commentedBarDef), text.indexOf(commentedBarDef) + commentedBarDef.length(), barDef);
+    });
+    documentManager.commitAllDocuments();
+
+    assertTrue(usageView.canPerformReRun());
+
+    usageView.doReRun();
+    Set<Usage> usages = usageView.getUsages();
+    assertEquals(2, usages.size());
   }
 }

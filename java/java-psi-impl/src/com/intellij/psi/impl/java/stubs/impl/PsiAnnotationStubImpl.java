@@ -64,7 +64,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
     try {
       PsiJavaParserFacade facade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
       annotation = facade.createAnnotationFromText(text, getPsi());
-      myParsedFromRepository = new SoftReference<PsiAnnotation>(annotation);
+      myParsedFromRepository = new SoftReference<>(annotation);
       return annotation;
     }
     catch (IncorrectOperationException e) {

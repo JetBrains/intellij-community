@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class EclipseEmlTest extends IdeaTestCase {
 
     final File emlFile = new File(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
     Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
-                      JDOMUtil.areElementsEqual(root, JDOMUtil.loadDocument(FileUtil.loadFile(emlFile)).getRootElement()));
+                      JDOMUtil.areElementsEqual(root, JDOMUtil.load(emlFile)));
   }
 
   private static void replaceRoot(String path, final String child, final Project project) throws IOException, JDOMException {

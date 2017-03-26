@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports the escaped meta characters, e.g. <b><code>\.</code></b>.
+Some RegExp coding styles specify that meta characters should be placed inside a character class,
+to make the regular expression easier to understand.
+For example the regex <b><code>\d+\.\d+</code></b> would be written as <code>\d+[.]\d+</code>.
+This inspection does not warn about the meta character <b><code>[</code></b>, <b><code>]</code></b> and <b><code>^</code></b>,
+because those would need additional escaping inside a character class.
+<!-- tooltip end -->
+<p><small>New in 2017.1</small>
+</body>
+</html>

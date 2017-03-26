@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static void main(String[] args) {
-    List<List<Object>> list = Arrays.<List<Object>>asL<caret>ist(Arrays.asList(1,2,3), Arrays.asList(1.0, 2.0, 3.0)).stream()
+    List<List<Object>> list = Arrays.<List<Object>>asList(Arrays.asList(1,2,3), Arrays.asList(1.0, 2.0, 3.0)).str<caret>eam()
       .collect(Collectors.toList());
   }
 }

@@ -20,9 +20,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -53,7 +53,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    if (ui != null && ui.areGraphActionsEnabled() && properties != null && !properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
+    if (ui != null && ui.areGraphActionsEnabled() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       e.getPresentation().setEnabled(true);
       if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
         e.getPresentation().setEnabled(false);

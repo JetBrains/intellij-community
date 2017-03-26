@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
@@ -39,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -68,6 +66,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   public DebugProcessEvents(Project project) {
     super(project);
+    DebuggerSettings.getInstance().addCapturePointsSettingsListener(this::createStackCapturingBreakpoints, myDisposable);
   }
 
   @Override
@@ -353,11 +352,17 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void createStackCapturingBreakpoints() {
-    if (Registry.is("debugger.capture.points")) {
-      for (CapturePoint point : DebuggerSettings.getInstance().getCapturePoints()) {
-        StackCapturingLineBreakpoint.track(this, point.myClassName, point.myMethodName, null, point.myParamNo);
+    getManagerThread().invoke(new DebuggerCommandImpl() {
+      @Override
+      public Priority getPriority() {
+        return Priority.HIGH;
       }
-    }
+
+      @Override
+      protected void action() throws Exception {
+        StackCapturingLineBreakpoint.recreateAll(DebugProcessEvents.this);
+      }
+    });
   }
 
   private void processVMDeathEvent(SuspendContextImpl suspendContext, Event event) {

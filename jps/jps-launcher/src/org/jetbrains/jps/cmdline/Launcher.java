@@ -39,7 +39,7 @@ public class Launcher {
     System.arraycopy(args, 2, jpsArgs, 0, jpsArgs.length);
     
     final StringTokenizer tokenizer = new StringTokenizer(jpsClasspath, File.pathSeparator, false);
-    final List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
       final String path = tokenizer.nextToken();
       urls.add(new File(path).toURI().toURL());

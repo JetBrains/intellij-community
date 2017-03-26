@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,11 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Document;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String s = readEntry(TEMPLATE_DESCRIPTOR);
     if (s != null) {
       try {
-        Element templateElement = JDOMUtil.loadDocument(s).getRootElement();
+        Element templateElement = JdomKt.loadElement(s);
         populateFromElement(templateElement);
         String iconPath = templateElement.getChildText("icon-path");
         if (iconPath != null) {
@@ -82,7 +81,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
     if (meta != null) {
       try {
-        Element templateElement = JDOMUtil.loadDocument(meta).getRootElement();
+        Element templateElement = JdomKt.loadElement(meta);
         String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
         if (unencoded != null) {
           myEscaped = !Boolean.valueOf(unencoded);
@@ -171,8 +170,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String iml = template.readEntry(".iml");
     if (iml == null) return ModuleType.EMPTY;
     try {
-      Document document = JDOMUtil.loadDocument(iml);
-      String type = document.getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
+      String type = JdomKt.loadElement(iml).getAttributeValue(Module.ELEMENT_TYPE);
       return ModuleTypeManager.getInstance().findByID(type);
     }
     catch (Exception e) {

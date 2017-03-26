@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import org.jetbrains.plugins.groovy.*;
 import org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl;
-import org.jetbrains.plugins.groovy.annotator.GrKeywordAndDeclarationHighlightFactory;
 import org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.annotator.checkers.*;
@@ -72,12 +71,16 @@ import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers;
 import org.jetbrains.plugins.groovy.dsl.psi.*;
+import org.jetbrains.plugins.groovy.ext.spock.SpockMemberContributor;
+import org.jetbrains.plugins.groovy.ext.spock.SpockPomDeclarationSearcher;
 import org.jetbrains.plugins.groovy.extensions.*;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.geb.*;
 import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
+import org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory;
+import org.jetbrains.plugins.groovy.highlighter.GroovyKeywordHighlightingPassFactory;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
@@ -103,8 +106,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuil
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
-import org.jetbrains.plugins.groovy.spock.SpockMemberContributor;
-import org.jetbrains.plugins.groovy.spock.SpockPomDeclarationSearcher;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor;
@@ -362,7 +363,8 @@ public class GroovyCoreEnvironment {
       projectEnvironment.addProjectExtension(PsiElementFinder.EP_NAME, new GroovyClassFinder(project));
       TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
       projectEnvironment.registerProjectComponent(GroovyUnusedImportsPassFactory.class, new GroovyUnusedImportsPassFactory(project, registrar));
-      projectEnvironment.registerProjectComponent(GrKeywordAndDeclarationHighlightFactory.class, new GrKeywordAndDeclarationHighlightFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GroovyKeywordHighlightingPassFactory.class, new GroovyKeywordHighlightingPassFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GroovyDeclarationHighlightingPassFactory.class, new GroovyDeclarationHighlightingPassFactory(project, registrar));
       projectEnvironment.registerProjectComponent(GrReferenceHighlighterFactory.class, new GrReferenceHighlighterFactory(project, registrar));
     }
   }

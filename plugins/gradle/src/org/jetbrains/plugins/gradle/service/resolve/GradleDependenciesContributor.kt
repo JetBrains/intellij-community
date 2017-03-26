@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
@@ -72,7 +73,7 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
   }
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    val psiManager = GroovyPsiManager.getInstance(place.project)
+    val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
     val methodName = methodCallInfo.firstOrNull() ?: return true
 
     val classHint = processor.getHint(ElementClassHint.KEY)
@@ -80,12 +81,12 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
     if (shouldProcessMethods && place is GrReferenceExpression && psiElement().inside(dependenciesClosure).accepts(place)) {
       if (methodCallInfo.size == 2) {
         val resolveScope = place.getResolveScope()
-        val psiClass = psiManager.findClassWithCache(GRADLE_API_DEPENDENCY_HANDLER, resolveScope) ?: return true
+        val psiClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_DEPENDENCY_HANDLER, resolveScope) ?: return true
         if (canBeMethodOf(methodName, psiClass)) {
           return true
         }
 
-        val returnClass = psiManager.createTypeByFQClassName(GRADLE_API_ARTIFACTS_DEPENDENCY, resolveScope) ?: return true
+        val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_ARTIFACTS_DEPENDENCY, resolveScope) ?: return true
         val wrappedBase = GrLightMethodBuilder(place.manager, "add").apply {
           returnType = returnClass
           containingClass = psiClass
@@ -95,7 +96,7 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
       }
     }
     if (psiElement().inside(dependencyConfigurationClosure).accepts(place)) {
-      if (GradleResolverUtil.processDeclarations(psiManager, processor, state, place,
+      if (GradleResolverUtil.processDeclarations(processor, state, place,
                                                  GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY,
                                                  GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY)) return false
     }

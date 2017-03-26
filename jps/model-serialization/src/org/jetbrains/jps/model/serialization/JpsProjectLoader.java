@@ -222,8 +222,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
 
-    final Set<File> foundFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    final List<File> moduleFiles = new ArrayList<File>();
+    final Set<File> foundFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final List<File> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final File file = new File(path);
@@ -245,21 +245,18 @@ public class JpsProjectLoader extends JpsLoaderBase {
   @NotNull
   public static List<JpsModule> loadModules(@NotNull List<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
-    List<JpsModule> modules = new ArrayList<JpsModule>();
-    List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<Future<Pair<File, Element>>>();
+    List<JpsModule> modules = new ArrayList<>();
+    List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<>();
     for (final File file : moduleFiles) {
-      futureModuleFilesContents.add(ourThreadPool.submit(new Callable<Pair<File, Element>>() {
-        @Override
-        public Pair<File, Element> call() throws Exception {
-          final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
-          final Element moduleRoot = loadRootElement(file, expander);
-          return Pair.create(file, moduleRoot);
-        }
+      futureModuleFilesContents.add(ourThreadPool.submit(() -> {
+        final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
+        final Element moduleRoot = loadRootElement(file, expander);
+        return Pair.create(file, moduleRoot);
       }));
     }
 
     try {
-      final List<String> classpathDirs = new ArrayList<String>();
+      final List<String> classpathDirs = new ArrayList<>();
       for (Future<Pair<File, Element>> moduleFile : futureModuleFilesContents) {
         final String classpathDir = moduleFile.get().getSecond().getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
         if (classpathDir != null) {
@@ -267,15 +264,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
 
-      List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
+      List<Future<JpsModule>> futures = new ArrayList<>();
       for (final Future<Pair<File, Element>> futureModuleFile : futureModuleFilesContents) {
         final Pair<File, Element> moduleFile = futureModuleFile.get();
-        futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
-          @Override
-          public JpsModule call() throws Exception {
-            return loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables);
-          }
-        }));
+        futures.add(ourThreadPool.submit(
+          () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
       }
       for (Future<JpsModule> future : futures) {
         JpsModule module = future.get();

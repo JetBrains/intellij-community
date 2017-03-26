@@ -75,10 +75,9 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
         break;
       }
     }
-    return new ProblemDescriptor[]{manager
-      .createProblemDescriptor(aClass, getDisplayName(), false,
-                               topInheritorsQuickFix.toArray(new LocalQuickFix[topInheritorsQuickFix.size()]),
-                               ProblemHighlightType.INFORMATION)};
+    return new ProblemDescriptor[]{
+      manager.createProblemDescriptor(aClass, getDisplayName(), false, ProblemHighlightType.INFORMATION, false,
+                                      topInheritorsQuickFix.toArray(new LocalQuickFix[topInheritorsQuickFix.size()]))};
   }
 
   @Nullable

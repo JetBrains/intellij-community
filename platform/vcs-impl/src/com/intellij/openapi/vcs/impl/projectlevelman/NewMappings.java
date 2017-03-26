@@ -43,7 +43,7 @@ import java.util.*;
 
 public class NewMappings {
 
-  public static Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
+  public static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.NewMappings");
   private final Object myLock;
@@ -247,7 +247,7 @@ public class NewMappings {
     return mapping.getVcs();
   }
 
-  private boolean fileMatchesMapping(final VirtualFile file,
+  private boolean fileMatchesMapping(@NotNull VirtualFile file,
                                      final Object matchContext,
                                      final String systemIndependentPath,
                                      final VcsDirectoryMapping mapping) {
@@ -271,8 +271,7 @@ public class NewMappings {
 
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) {
-        // todo callback here; don't like it
-        myDefaultVcsRootPolicy.addDefaultVcsRoots(this, vcsName, result);
+        result.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, vcsName));
       }
       else {
         final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
@@ -281,6 +280,7 @@ public class NewMappings {
         }
       }
     }
+    result.removeIf(file -> !file.isDirectory());
     return result;
   }
 
@@ -532,7 +532,7 @@ public class NewMappings {
       final String defaultVcs = haveDefaultMapping();
       if (defaultVcs == null) return Collections.emptyList();
       final List<VirtualFile> list = new ArrayList<>();
-      myDefaultVcsRootPolicy.addDefaultVcsRoots(this, defaultVcs, list);
+      list.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
         return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
       }

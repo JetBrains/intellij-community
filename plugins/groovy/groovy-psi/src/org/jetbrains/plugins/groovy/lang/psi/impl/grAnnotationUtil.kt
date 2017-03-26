@@ -19,15 +19,9 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiLiteral
-import com.intellij.psi.PsiNameValuePair
 
 fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotationMemberValue? {
-  val styleAttribute = AnnotationUtil.findDeclaredAttribute(this, attributeName)
-  return when (styleAttribute) {
-    null -> null
-    is PsiNameValuePair.Detachable -> styleAttribute.detachedValue
-    else -> styleAttribute.value
-  }
+  return AnnotationUtil.findDeclaredAttribute(this, attributeName)?.detachedValue
 }
 
 fun PsiAnnotationMemberValue?.booleanValue() = (this as? PsiLiteral)?.value as? Boolean

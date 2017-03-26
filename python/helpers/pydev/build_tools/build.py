@@ -102,13 +102,13 @@ def build():
 
 
         env = os.environ.copy()
-        if sys.version_info[:2] in ((2,7), (3,5)):
+        if sys.version_info[:2] in ((2,7), (3,5), (3, 6)):
             import setuptools # We have to import it first for the compiler to be found
             from distutils import msvc9compiler
 
             if sys.version_info[:2] == (2,7):
                 vcvarsall = msvc9compiler.find_vcvarsall(9.0)
-            elif sys.version_info[:2] == (3,5):
+            elif sys.version_info[:2] in ((3,5), (3,6)):
                 vcvarsall = msvc9compiler.find_vcvarsall(14.0)
             if vcvarsall is None or not os.path.exists(vcvarsall):
                 raise RuntimeError('Error finding vcvarsall.')
@@ -141,6 +141,8 @@ def build():
     additional_args = []
     for arg in sys.argv:
         if arg.startswith('--target-pyd-name='):
+            additional_args.append(arg)
+        if arg.startswith('--target-pyd-frame-eval='):
             additional_args.append(arg)
             break
     else:

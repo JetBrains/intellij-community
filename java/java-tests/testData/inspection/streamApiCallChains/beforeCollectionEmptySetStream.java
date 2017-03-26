@@ -5,6 +5,6 @@ import java.util.stream.Stream;
 
 class CollectionEmptySetStream {
   Stream<String> stream(String[] args) {
-    return args.length == 1 ? Col<caret>lections.<String>emptySet().stream() : Arrays.stream(args);
+    return args.length == 1 ? Collections.<String>emptySet().st<caret>ream() : Arrays.stream(args);
   }
 }

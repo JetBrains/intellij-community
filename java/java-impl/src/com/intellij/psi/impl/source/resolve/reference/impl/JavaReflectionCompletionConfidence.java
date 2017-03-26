@@ -30,7 +30,9 @@ public class JavaReflectionCompletionConfidence extends CompletionConfidence {
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     final PsiElement literal = contextElement.getParent();
-    if (literal != null && JavaReflectionReferenceContributor.PATTERN.accepts(literal)) {
+    if (literal != null &&
+        (JavaReflectionReferenceContributor.PATTERN.accepts(literal) ||
+         JavaReflectionReferenceContributor.CLASS_PATTERN.accepts(literal))) {
       return ThreeState.NO;
     }
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);

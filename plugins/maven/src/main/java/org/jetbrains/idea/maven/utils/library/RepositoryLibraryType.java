@@ -70,8 +70,8 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
 
   @Nullable
   @Override
-  public Icon getIcon(@Nullable LibraryProperties properties) {
-    if (properties == null || !(properties instanceof RepositoryLibraryProperties)) {
+  public Icon getIcon(@Nullable RepositoryLibraryProperties properties) {
+    if (properties == null) {
       return MavenIcons.MavenLogo;
     }
     RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)properties;

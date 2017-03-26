@@ -82,7 +82,7 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
   }
 
   @Override
-  public int getParameterIndex(PsiParameter parameter) {
+  public int getParameterIndex(@NotNull PsiParameter parameter) {
     //noinspection SuspiciousMethodCalls
     return myParameters.indexOf(parameter);
   }

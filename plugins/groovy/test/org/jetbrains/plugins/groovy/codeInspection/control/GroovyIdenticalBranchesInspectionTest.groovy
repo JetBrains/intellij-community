@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.control
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -35,6 +36,7 @@ class GroovyIdenticalBranchesInspectionTest extends GrHighlightingTestBase {
 
   void 'test two new expressions'() { doTest() }
 
+  @NotNull
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     def name = getName()

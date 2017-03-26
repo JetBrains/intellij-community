@@ -1,16 +1,16 @@
 <html>
 <body>
-This inspection reports any instances of Groovy statements witch attempts to put GString object as a key to map.
+This inspection reports any instances of Groovy statements which attempts to put GString object as a key to map.
 In a general way GString objects are mutable and probably should not be used as keys.
 <p>
-Also, GString entry could no be accessed with java.lang.String object with same value. Example:
+Also, GString entry could not be accessed with java.lang.String object with same value. Example:
 <br>
 <pre>
     def map = [:]
     <b><font color="#000080">def</font></b> key = 'foo'
-    map << ["${key}": 'bar']
+    map &lt&lt ["${key}": 'bar']
     <b><font color="#000080">assert </font></b> map[key] == <b><font color="#000080">null</font></b>
-
 </pre>
+<small>New in 2017.1</small>
 </body>
 </html>

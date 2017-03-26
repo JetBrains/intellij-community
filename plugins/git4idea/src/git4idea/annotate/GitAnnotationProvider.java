@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -102,7 +103,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
       realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
     }
     else {
-      realFilePath = ((GitFileRevision)revision).getPath();
+      realFilePath = ((VcsFileRevisionEx)revision).getPath();
     }
     VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
 

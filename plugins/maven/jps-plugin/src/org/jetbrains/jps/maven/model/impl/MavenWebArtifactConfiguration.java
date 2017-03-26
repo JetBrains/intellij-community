@@ -37,7 +37,7 @@ public class MavenWebArtifactConfiguration {
 
   @Tag("web-resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
-  public List<ResourceRootConfiguration> webResources = new ArrayList<ResourceRootConfiguration>();
+  public List<ResourceRootConfiguration> webResources = new ArrayList<>();
 
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;
@@ -45,7 +45,7 @@ public class MavenWebArtifactConfiguration {
   @Nullable
   public ResourceRootConfiguration getRootConfiguration(@NotNull File root) {
     if (myResourceRootsMap == null) {
-      Map<File, ResourceRootConfiguration> map = new THashMap<File, ResourceRootConfiguration>(FileUtil.FILE_HASHING_STRATEGY);
+      Map<File, ResourceRootConfiguration> map = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
       for (ResourceRootConfiguration resource : webResources) {
         map.put(new File(resource.directory), resource);
       }

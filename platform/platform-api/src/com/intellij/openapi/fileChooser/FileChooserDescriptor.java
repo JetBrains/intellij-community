@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private Condition<VirtualFile> myFileFilter = null;
+  private boolean myForcedToUseIdeaFileChooser = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
 
@@ -172,6 +173,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   public FileChooserDescriptor withRoots(@NotNull List<VirtualFile> roots) {
+    if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
     myRoots.clear();
     myRoots.addAll(roots);
     return this;
@@ -293,6 +295,14 @@ public class FileChooserDescriptor implements Cloneable {
    * @throws Exception if the the files cannot be accepted
    */
   public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+  }
+
+  public boolean isForcedToUseIdeaFileChooser() {
+    return myForcedToUseIdeaFileChooser;
+  }
+
+  public void setForcedToUseIdeaFileChooser(boolean forcedToUseIdeaFileChooser) {
+    myForcedToUseIdeaFileChooser = forcedToUseIdeaFileChooser;
   }
 
   private boolean acceptAsGeneralFile(VirtualFile file) {

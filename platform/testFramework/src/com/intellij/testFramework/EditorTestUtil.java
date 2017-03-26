@@ -98,12 +98,17 @@ public class EditorTestUtil {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     AnAction action = actionManager.getAction(actionId);
     assertNotNull(action);
+    executeAction(editor, assertActionIsEnabled, action);
+  }
+
+  public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
     action.beforeActionPerformedUpdate(event);
     if (!event.getPresentation().isEnabled()) {
-      assertFalse("Action " + actionId + " is disabled", assertActionIsEnabled);
+      assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
       return;
     }
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
     action.actionPerformed(event);
     actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class GrCharConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.EXPLICIT_CAST || position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
+    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
   }
 
   @Nullable
@@ -45,10 +45,9 @@ public class GrCharConverter extends GrTypeConverter {
     if (!PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
     if (PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
 
-    // can cast and assign numeric types to char
+    // can assign numeric types to char
     if (TypesUtil.isNumericType(rType)) {
-      if (rType instanceof PsiPrimitiveType ||
-          currentPosition != ApplicableTo.EXPLICIT_CAST && TypesUtil.unboxPrimitiveTypeWrapper(rType) instanceof PsiPrimitiveType) {
+      if (rType instanceof PsiPrimitiveType || TypesUtil.unboxPrimitiveTypeWrapper(rType) instanceof PsiPrimitiveType) {
         return PsiType.CHAR.equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
       }
       else {
@@ -78,8 +77,6 @@ public class GrCharConverter extends GrTypeConverter {
 
     if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
       switch (currentPosition) {
-        case EXPLICIT_CAST:
-          return ConversionResult.ERROR;
         case ASSIGNMENT:
         case RETURN_VALUE:
           return ConversionResult.WARNING;
@@ -96,8 +93,12 @@ public class GrCharConverter extends GrTypeConverter {
     // can cast and assign one-symbol strings to char
     if (!TypesUtil.isClassType(rType, CommonClassNames.JAVA_LANG_STRING)) return null;
 
+    return checkSingleSymbolLiteral(context) ? ConversionResult.OK : ConversionResult.ERROR;
+  }
+
+  public static boolean checkSingleSymbolLiteral(GroovyPsiElement context) {
     final GrLiteral literal = getLiteral(context);
     final Object value = literal == null ? null : literal.getValue();
-    return value == null ? null : value.toString().length() == 1 ? ConversionResult.OK : ConversionResult.ERROR;
+    return value != null && value.toString().length() == 1;
   }
 }

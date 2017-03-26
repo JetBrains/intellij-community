@@ -17,52 +17,51 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateSuperMethodCallHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     PsiMethod method = canInsertSuper(editor, file);
-    try {
-      PsiMethod template = (PsiMethod)method.copy();
+    LOG.assertTrue(method != null);
+    PsiMethod template = (PsiMethod)method.copy();
 
-      OverrideImplementUtil.setupMethodBody(template, method, method.getContainingClass());
-      PsiStatement superCall = template.getBody().getStatements()[0];
-      PsiCodeBlock body = method.getBody();
-      PsiElement toGo;
-      if (body.getLBrace() == null) {
-        toGo = body.addBefore(superCall, null);
+    OverrideImplementUtil.setupMethodBody(template, method, method.getContainingClass());
+    PsiCodeBlock templateBody = template.getBody();
+    LOG.assertTrue(templateBody != null, template);
+    PsiStatement superCall = templateBody.getStatements()[0];
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+    LOG.assertTrue(codeBlock != null);
+    PsiElement toGo;
+    if (codeBlock.getLBrace() == null) {
+      toGo = codeBlock.addBefore(superCall, null);
+    }
+    else {
+      if (element.getParent() == codeBlock) {
+        toGo = codeBlock.addBefore(superCall, element);
       }
       else {
-        toGo = body.addAfter(superCall, body.getLBrace());
+        toGo = codeBlock.addAfter(superCall, codeBlock.getLBrace());
       }
-      toGo = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(toGo);
-      editor.getCaretModel().moveToOffset(toGo.getTextOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    toGo = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(toGo);
+    editor.getCaretModel().moveToOffset(toGo.getTextOffset());
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public static PsiMethod canInsertSuper(Editor editor, PsiFile file) {
@@ -71,8 +70,8 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     if (element == null) return null;
     PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
     if (codeBlock == null) return null;
-    if (!(codeBlock.getParent() instanceof PsiMethod)) return null;
-    PsiMethod method = (PsiMethod)codeBlock.getParent();
+    PsiMethod method = PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (method == null) return null;
     List<? extends HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
     for (HierarchicalMethodSignature superSignature : superSignatures) {
       if (!superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT)) return method;

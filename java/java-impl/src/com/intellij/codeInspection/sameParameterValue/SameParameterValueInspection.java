@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,7 +55,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     private final String myValue;
     private final String myParameterName;
 
-    public InlineParameterValueFix(final String parameterName, final String value) {
+    private InlineParameterValueFix(final String parameterName, final String value) {
       myValue = value;
       myParameterName = parameterName;
     }
@@ -67,7 +68,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, myValue);
+      return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override

@@ -49,7 +49,7 @@ public class FrozenDocument implements DocumentEx {
     myText = text;
     myLineSet = lineSet;
     myStamp = stamp;
-    myTextString = textString == null ? null : new SoftReference<String>(textString);
+    myTextString = textString == null ? null : new SoftReference<>(textString);
   }
 
   @NotNull
@@ -171,7 +171,7 @@ public class FrozenDocument implements DocumentEx {
   public String getText() {
     String s = SoftReference.dereference(myTextString);
     if (s == null) {
-      myTextString = new SoftReference<String>(s = myText.toString());
+      myTextString = new SoftReference<>(s = myText.toString());
     }
     return s;
   }

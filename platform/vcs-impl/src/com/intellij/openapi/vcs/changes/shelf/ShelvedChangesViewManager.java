@@ -205,6 +205,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
+        myTree.updateUI();
         JPanel rootPanel = createRootPanel();
         myContent = new MyShelfContent(rootPanel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
@@ -227,7 +228,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
-    actionGroup.add(ActionManager.getInstance().getAction("ShelvedChangesToolbarGear"));
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());

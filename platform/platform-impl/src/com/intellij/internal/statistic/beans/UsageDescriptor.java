@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@ public class UsageDescriptor implements Comparable<UsageDescriptor> {
   public UsageDescriptor(@NotNull String key, int value) {
     myKey = ConvertUsagesUtil.ensureProperKey(key);
     myValue = value;
+  }
+
+  public UsageDescriptor(@NotNull String key) {
+    this(key, 1);
   }
 
   public String getKey() {

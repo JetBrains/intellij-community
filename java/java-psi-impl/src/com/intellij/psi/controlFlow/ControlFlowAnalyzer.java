@@ -41,11 +41,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private ControlFlowImpl myCurrentFlow;
   private final ControlFlowStack myStack = new ControlFlowStack();
-  private final Stack<PsiParameter> myCatchParameters = new Stack<PsiParameter>();// stack of PsiParameter for catch
-  private final Stack<PsiElement> myCatchBlocks = new Stack<PsiElement>();
+  private final Stack<PsiParameter> myCatchParameters = new Stack<>();// stack of PsiParameter for catch
+  private final Stack<PsiElement> myCatchBlocks = new Stack<>();
 
-  private final Stack<FinallyBlockSubroutine> myFinallyBlocks = new Stack<FinallyBlockSubroutine>();
-  private final Stack<PsiElement> myUnhandledExceptionCatchBlocks = new Stack<PsiElement>();
+  private final Stack<FinallyBlockSubroutine> myFinallyBlocks = new Stack<>();
+  private final Stack<PsiElement> myUnhandledExceptionCatchBlocks = new Stack<>();
 
   // element to jump to from inner (sub)expression in "jump to begin" situation.
   // E.g. we should jump to "then" branch if condition expression evaluated to true inside if statement
@@ -54,8 +54,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   // E.g. we should jump to "else" branch if condition expression evaluated to false inside if statement
   private final StatementStack myEndStatementStack = new StatementStack();
 
-  private final Stack<BranchingInstruction.Role> myStartJumpRoles = new Stack<BranchingInstruction.Role>();
-  private final Stack<BranchingInstruction.Role> myEndJumpRoles = new Stack<BranchingInstruction.Role>();
+  private final Stack<BranchingInstruction.Role> myStartJumpRoles = new Stack<>();
+  private final Stack<BranchingInstruction.Role> myEndJumpRoles = new Stack<>();
 
   // true if generate direct jumps for short-circuited operations,
   // e.g. jump to else branch of if statement after each calculation of '&&' operand in condition
@@ -65,13 +65,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final boolean myEvaluateConstantIfCondition;
   private final boolean myAssignmentTargetsAreElements;
 
-  private final Stack<TIntArrayList> intArrayPool = new Stack<TIntArrayList>();
+  private final Stack<TIntArrayList> intArrayPool = new Stack<>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getStartOffset(element)
-  private final Map<PsiElement, TIntArrayList> offsetsAddElementStart = new THashMap<PsiElement, TIntArrayList>();
+  private final Map<PsiElement, TIntArrayList> offsetsAddElementStart = new THashMap<>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
-  private final Map<PsiElement, TIntArrayList> offsetsAddElementEnd = new THashMap<PsiElement, TIntArrayList>();
+  private final Map<PsiElement, TIntArrayList> offsetsAddElementEnd = new THashMap<>();
   private final ControlFlowFactory myControlFlowFactory;
-  private final Map<PsiElement, ControlFlowSubRange> mySubRanges = new THashMap<PsiElement, ControlFlowSubRange>();
+  private final Map<PsiElement, ControlFlowSubRange> mySubRanges = new THashMap<>();
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
 
   ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
@@ -120,7 +120,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static class StatementStack {
-    private final Stack<PsiElement> myStatements = new Stack<PsiElement>();
+    private final Stack<PsiElement> myStatements = new Stack<>();
     private final TIntArrayList myAtStart = new TIntArrayList();
 
     private void popStatement() {
@@ -307,7 +307,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private final Map<PsiElement, List<PsiElement>> finallyBlockToUnhandledExceptions = new HashMap<PsiElement, List<PsiElement>>();
+  private final Map<PsiElement, List<PsiElement>> finallyBlockToUnhandledExceptions = new HashMap<>();
 
   private boolean patchCheckedThrowInstructionIfInsideFinally(@NotNull ConditionalThrowToInstruction instruction,
                                                               @NotNull PsiElement throwingElement,
@@ -317,7 +317,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.get(finallyBlock);
     if (unhandledExceptionCatchBlocks == null) {
-      unhandledExceptionCatchBlocks = new ArrayList<PsiElement>();
+      unhandledExceptionCatchBlocks = new ArrayList<>();
       finallyBlockToUnhandledExceptions.put(finallyBlock, unhandledExceptionCatchBlocks);
     }
     int index = unhandledExceptionCatchBlocks.indexOf(elementToJumpTo);
@@ -976,7 +976,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @NotNull
   private List<PsiElement> findThrowToBlocks(@NotNull PsiClassType throwType) {
-    List<PsiElement> blocks = new ArrayList<PsiElement>();
+    List<PsiElement> blocks = new ArrayList<>();
     for (int i = myCatchParameters.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
@@ -1531,7 +1531,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     final PsiElement body = expression.getBody();
     if (body != null) {
-      List<PsiVariable> array = new ArrayList<PsiVariable>();
+      List<PsiVariable> array = new ArrayList<>();
       addUsedVariables(array, body);
       for (PsiVariable var : array) {
         ProgressManager.checkCanceled();
@@ -1686,7 +1686,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       final PsiElement arguments = PsiTreeUtil.getChildOfType(aClass, PsiExpressionList.class);
       if (arguments != null) arguments.accept(this);
     }
-    List<PsiVariable> array = new ArrayList<PsiVariable>();
+    List<PsiVariable> array = new ArrayList<>();
     addUsedVariables(array, aClass);
     for (PsiVariable var : array) {
       ProgressManager.checkCanceled();
@@ -1734,7 +1734,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     public FinallyBlockSubroutine(@NotNull PsiElement element) {
       myElement = element;
-      myCalls = new ArrayList<CallInstruction>();
+      myCalls = new ArrayList<>();
     }
 
     @NotNull

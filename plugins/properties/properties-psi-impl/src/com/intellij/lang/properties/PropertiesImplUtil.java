@@ -87,8 +87,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @Nullable
   private static ResourceBundleWithCachedFiles getResourceBundle(@NotNull final String baseName,
-                                                                @Nullable final String extension,
-                                                                @NotNull final PsiDirectory baseDirectory) {
+                                                                 @Nullable final String extension,
+                                                                 @NotNull final PsiDirectory baseDirectory) {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
       .of(ReadAction.compute(new ThrowableComputable<PsiFile[], RuntimeException>() {

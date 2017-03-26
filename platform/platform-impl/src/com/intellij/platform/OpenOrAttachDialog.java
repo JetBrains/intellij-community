@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -82,11 +83,11 @@ public class OpenOrAttachDialog extends DialogWrapper {
     myCurrentWindowButton.addActionListener(listener1);
     myOpenInNewWindowButton.addActionListener(listener1);
   }
-  
+
   public boolean isReplace() {
     return myCurrentWindowButton.isSelected() && (!myAddCheckbox.isSelected() || myHideReplace);
   }
-  
+
   public boolean isAttach() {
     return myCurrentWindowButton.isSelected() && myAddCheckbox.isSelected() && !myHideReplace;
   }
@@ -101,5 +102,11 @@ public class OpenOrAttachDialog extends DialogWrapper {
     String mode = isAttach() ? MODE_ATTACH : isReplace() ? MODE_REPLACE : MODE_NEW;
     PropertiesComponent.getInstance().setValue(MODE_PROPERTY, mode);
     super.doOKAction();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "procedures.workingwithprojects.multiple";
   }
 }

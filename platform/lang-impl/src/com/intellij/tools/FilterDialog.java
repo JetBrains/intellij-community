@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.regex.PatternSyntaxException;
 
 class FilterDialog extends DialogWrapper {
   private final JTextField myRegexpField = new JTextField();
@@ -147,7 +148,8 @@ class FilterDialog extends DialogWrapper {
 
     try {
       checkRegexp(myRegexpField.getText());
-    } catch (InvalidExpressionException e) {
+    }
+    catch (InvalidExpressionException | PatternSyntaxException e) {
       Messages.showMessageDialog(getContentPane(), e.getMessage(), ToolsBundle.message("tools.filters.add.regex.invalid.title"), Messages.getErrorIcon());
       return;
     }

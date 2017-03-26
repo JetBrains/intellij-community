@@ -39,6 +39,15 @@ public class PyEmacsTabTest extends PyTestCase {
     doTest(
       "def test(name):\n" +
       "    if name != \"\":\n" +
+      "<caret>  print name",
+      "def test(name):\n" +
+      "    if name != \"\":\n" +
+      "        <caret>print name"
+    );
+
+    doTest(
+      "def test(name):\n" +
+      "    if name != \"\":\n" +
       "     <caret>print name",
       "def test(name):\n" +
       "    if name != \"\":\n" +
@@ -57,13 +66,13 @@ public class PyEmacsTabTest extends PyTestCase {
     doTest(
       "def test(name):\n" +
       "    if name != \"\":\n" +
-      "        print n<caret>ame",
+      "         print n<caret>ame",
       "def test(name):\n" +
       "    if name != \"\":\n" +
       "        print n<caret>ame"
     );
   }
-  
+
   public void testIndentToRight() {
     doTest(
       "def test(name):\n" +
@@ -81,14 +90,14 @@ public class PyEmacsTabTest extends PyTestCase {
     doTest(
       "def test(name):\n" +
       "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
+      "        if name == \"test\":\n" +
       "            print 123\n" +
       " print n<caret>ame",
       "def test(name):\n" +
       "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
+      "        if name == \"test\":\n" +
       "            print 123\n" +
-      "    print n<caret>ame"
+      "        print n<caret>ame"
     );
 
     doTest(
@@ -114,7 +123,7 @@ public class PyEmacsTabTest extends PyTestCase {
       "    if name != \"\":\n" +
       "        if name == \"test\"\n" +
       "            print 123\n" +
-      "        print n<caret>ame"
+      "            print n<caret>ame"
     );
 
     doTest(
@@ -315,7 +324,17 @@ public class PyEmacsTabTest extends PyTestCase {
       setLanguageLevel(null);
     }
   }
-  
+
+  public void testSequence() {
+    doTest("l = [\n" +
+           "<caret>'alpha',\n" +
+           "'beta'\n" +
+           "]",
+           "l = [\n" +
+           "    'alpha',\n" +
+           "'beta'\n" +
+           "]");
+  }
   private void doTest(String before, String after) {
     final String fileName = getTestName(false);
     myFixture.configureByText(fileName + ".py", before);

@@ -58,7 +58,7 @@ public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
   }
 
   private static List<JpsArtifact> computeSyntheticArtifacts(JpsModel model) {
-    List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>();
+    List<JpsArtifact> artifacts = new ArrayList<>();
     for (JpsSyntheticArtifactProvider provider : JpsServiceManager.getInstance().getExtensions(JpsSyntheticArtifactProvider.class)) {
       artifacts.addAll(provider.createArtifacts(model));
     }

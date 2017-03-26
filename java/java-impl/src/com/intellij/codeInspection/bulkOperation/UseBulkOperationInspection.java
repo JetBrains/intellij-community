@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -138,31 +137,13 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
 
   @Nullable
   private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
-    IndexedContainer container = IndexedContainer.fromGetExpression(getElementExpression);
-    if(container == null) return null;
-    PsiExpression indexExpression = container.extractIndexFromGetExpression(getElementExpression);
-
-    // Check that loop initialization is like `int idx = 0` and loop update is like `idx++`
-    PsiStatement initialization = loop.getInitialization();
-    if (!(initialization instanceof PsiDeclarationStatement)) return null;
-    PsiElement[] declaredElements = ((PsiDeclarationStatement)initialization).getDeclaredElements();
-    if (declaredElements.length != 1 || !(declaredElements[0] instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable indexVariable = (PsiLocalVariable)declaredElements[0];
-    if (!ExpressionUtils.isReferenceTo(indexExpression, indexVariable) ||
-        !ExpressionUtils.isZero(indexVariable.getInitializer()) ||
-        !VariableAccessUtils.variableIsIncremented(indexVariable, loop.getUpdate())) {
-      return null;
-    }
-
-    // Check that loop condition is like `idx < arr.length` or `idx < list.size()`
-    PsiBinaryExpression condition = ObjectUtils.tryCast(loop.getCondition(), PsiBinaryExpression.class);
-    if (condition == null ||
-        !condition.getOperationTokenType().equals(JavaTokenType.LT) ||
-        !ExpressionUtils.isReferenceTo(condition.getLOperand(), indexVariable)) {
-      return null;
-    }
-    PsiExpression bound = condition.getROperand();
-    return container.extractQualifierFromLengthExpression(bound);
+    CountingLoop countingLoop = CountingLoop.from(loop);
+    if (countingLoop == null || countingLoop.isIncluding() || !ExpressionUtils.isZero(countingLoop.getInitializer())) return null;
+    IndexedContainer container = IndexedContainer.fromLengthExpression(countingLoop.getBound());
+    if (container == null) return null;
+    PsiExpression index = container.extractIndexFromGetExpression(getElementExpression);
+    if (!ExpressionUtils.isReferenceTo(index, countingLoop.getCounter())) return null;
+    return container.getQualifier();
   }
 
   @Nullable

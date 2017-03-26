@@ -31,6 +31,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
+import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -271,9 +272,12 @@ class GitRepositoryReader {
           String relativePath = FileUtil.getRelativePath(refsRootDir, file);
           if (relativePath != null) {
             String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
-            String hash = loadHashFromBranchFile(file);
-            if (hash != null) {
-              result.put(branchName, hash);
+            boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
+            if (isBranchNameValid) {
+              String hash = loadHashFromBranchFile(file);
+              if (hash != null) {
+                result.put(branchName, hash);
+              }
             }
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public abstract class LoopEvaluator implements Evaluator {
 
   public LoopEvaluator(String labelName, Evaluator bodyEvaluator) {
     myLabelName = labelName;
-    myBodyEvaluator = bodyEvaluator != null ? new DisableGC(bodyEvaluator) : null;
+    myBodyEvaluator = bodyEvaluator != null ? DisableGC.create(bodyEvaluator) : null;
   }
 
   protected boolean body(EvaluationContextImpl context) throws EvaluateException {

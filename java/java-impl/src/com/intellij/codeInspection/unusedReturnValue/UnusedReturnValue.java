@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,6 +186,12 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
       return false;
     }
 
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
+    }
+
     private static void makeMethodHierarchyVoid(Project project, @NotNull PsiMethod psiMethod) {
       replaceReturnStatements(psiMethod);
       for (final PsiMethod oMethod : OverridingMethodsSearch.search(psiMethod)) {
@@ -208,12 +214,21 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     }
 
     private static void replaceReturnStatements(@NotNull final PsiMethod method) {
-      for (PsiReturnStatement returnStatement : PsiUtil.findReturnStatements(method)) {
+      final PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
+      for (int i = statements.length - 1; i >= 0; i--) {
+        final PsiReturnStatement returnStatement = statements[i];
         try {
           final PsiExpression expression = returnStatement.getReturnValue();
-          if (expression != null && !SideEffectChecker.mayHaveSideEffects(expression)) {
+          if (expression != null) {
             WriteAction.run(() -> {
-              PsiReturnStatement ret = (PsiReturnStatement)returnStatement.replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
+              final boolean mayHaveSideEffects = SideEffectChecker.mayHaveSideEffects(expression);
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+              final PsiReturnStatement ret =
+                (PsiReturnStatement)returnStatement.replace(factory.createStatementFromText("return;", returnStatement));
+              if (mayHaveSideEffects) {
+                final PsiStatement statement = factory.createStatementFromText(expression.getText() + ";", method);
+                ret.getParent().addBefore(statement, ret);
+              }
               if (UnnecessaryReturnInspection.isReturnRedundant(ret, false, null)) {
                 ret.delete();
               }

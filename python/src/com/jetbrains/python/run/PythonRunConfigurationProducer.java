@@ -99,8 +99,4 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
     }
     return true;
   }
-  @Override
-  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return other.isProducedBy(PythonRunConfigurationProducer.class);
-  }
 }

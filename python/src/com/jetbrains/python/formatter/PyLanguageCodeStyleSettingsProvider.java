@@ -119,9 +119,24 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS",
                                 PyBundle.message("formatter.align.when.multiline"),
                                 PyBundle.message("formatter.collections.and.comprehensions"));
+      
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_WRAPPING",
+                                PyBundle.message("formatter.from.import.statements"), null, WRAP_OPTIONS, WRAP_VALUES);
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS",
                                 PyBundle.message("formatter.align.when.multiline"),
-                                PyBundle.message("formatter.import.statements"));
+                                PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE",
+                                PyBundle.message("formatter.from.import.statements.force.parentheses.if.multiline"),
+                                PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE",
+                                PyBundle.message("formatter.from.import.statements.force.comma.if.multline"),
+                                PyBundle.message("formatter.from.import.statements"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PyBundle.message("formatter.dictionary.literals"), null, WRAP_OPTIONS, WRAP_VALUES);
@@ -177,17 +192,32 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "    def foo(self):\n" +
                                                        "        pass";
   @SuppressWarnings("FieldCanBeLocal")
-  private static String WRAP_SETTINGS_PREVIEW = "from foo import (bar,\n" +
-                                                "    baz)\n\n" +
-                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
+  private static String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
+                                                "\n" +
+                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
+                                                "\n" +
                                                 "def xyzzy(long_parameter_1,\n" +
                                                 "long_parameter_2):\n" +
-                                                "    pass\n\n" +
+                                                "    pass\n" +
+                                                "\n" +
                                                 "xyzzy('long_string_constant1',\n" +
                                                 "    'long_string_constant2')\n" +
+                                                "\n" +
+                                                "xyzzy(\n" +
+                                                "    'with',\n" +
+                                                "    'hanging',\n" +
+                                                "      'indent'\n" +
+                                                ")\n" +
                                                 "attrs = [e.attr for e in\n" +
-                                                "    items]\n\n" +
-                                                "if True: pass\n\n" +
+                                                "    items]\n" +
+                                                "\n" +
+                                                "ingredients = [\n" +
+                                                "    'green',\n" +
+                                                "    'eggs',\n" +
+                                                "]\n" +
+                                                "\n" +
+                                                "if True: pass\n" +
+                                                "\n" +
                                                 "try: pass\n" +
                                                 "finally: pass\n";
   @SuppressWarnings("FieldCanBeLocal")

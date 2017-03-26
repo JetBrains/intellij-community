@@ -20,44 +20,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.common.ExtraRangesProvider
 import com.intellij.util.containers.Stack
 
-interface BlockProcessor {
-  fun processLeafBlock(block: Block)
-  fun processCompositeBlock(block: Block)
-}
- 
-class AdditionalRangesExtractor(private val info: FormattingRangesInfo) : BlockProcessor {
-  
-  val totalNewRanges = mutableListOf<TextRange>()
-
-  override fun processLeafBlock(block: Block) {
-    extractRanges(block)
-  }
-
-  override fun processCompositeBlock(block: Block) {
-    extractRanges(block)
-  }
-
-  private fun extractRanges(block: Block) {
-    if (block is ExtraRangesProvider) {
-      val newRanges = block.getExtraRangesToFormat(info)
-      if (newRanges != null) {
-        totalNewRanges.addAll(newRanges)
-      }
-    }
-  }
-
-}
-
-
 class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTextRanges) : State() {
-
-  private val extractor = AdditionalRangesExtractor(formatRanges)
+  private val extendedRanges = formatRanges.extendedFormattingRanges
+  private val totalNewRanges = mutableListOf<TextRange>()
   private val state = Stack(currentRoot)
 
   init {
     setOnDone({
-      val newRangesToAdd = extractor.totalNewRanges
-      newRangesToAdd.forEach {
+      totalNewRanges.forEach {
         formatRanges.add(it, false)
       }
     })
@@ -70,23 +40,27 @@ class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTe
   }
 
   private fun processBlock(currentBlock: Block) {
-    if (formatRanges.isReadOnly(currentBlock.textRange)) {
-      extractor.processLeafBlock(currentBlock)
-    }
-    else {
-      val children = currentBlock.subBlocks
-      if (children.isEmpty()) {
-        extractor.processLeafBlock(currentBlock)
-        return
-      }
+    if (!isInsideExtendedFormattingRanges(currentBlock)) return
 
-      extractor.processCompositeBlock(currentBlock)
-
-      children
-          .filterNot { formatRanges.isReadOnly(it.textRange) }
+    currentBlock.subBlocks
           .reversed()
           .forEach { state.push(it) }
+
+    if (!formatRanges.isReadOnly(currentBlock.textRange)) {
+      extractRanges(currentBlock)
     }
   }
+
+  private fun isInsideExtendedFormattingRanges(currentBlock: Block) = extendedRanges.find { it.intersects(currentBlock.textRange) } != null
+
+  private fun extractRanges(block: Block) {
+    if (block is ExtraRangesProvider) {
+      val newRanges = block.getExtraRangesToFormat(formatRanges)
+      if (newRanges != null) {
+        totalNewRanges.addAll(newRanges)
+      }
+    }
+  }
+
 
 }

@@ -44,7 +44,7 @@ public class SharedPsiElementImplUtil {
     if (element == null || element instanceof OuterLanguageElement) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
-    List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    List<PsiReference> referencesList = new ArrayList<>();
     while (element != null) {
       addReferences(offset, element, referencesList);
       if (element instanceof PsiFile) break;

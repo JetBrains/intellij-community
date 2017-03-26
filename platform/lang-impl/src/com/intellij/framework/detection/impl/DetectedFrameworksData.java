@@ -18,6 +18,7 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -33,7 +34,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author nik
@@ -46,7 +50,7 @@ public class DetectedFrameworksData {
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<>();
-    File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + project.getName() + "." + project.getLocationHash() +
+    File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + FileUtil.sanitizeFileName(project.getName(), false) + "." + project.getLocationHash() +
                          File.separator + "files");
     myNewFiles = new TIntObjectHashMap<>();
     try {

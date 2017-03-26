@@ -63,5 +63,15 @@ class MatcherTest : TestCase() {
     matcher.assertIsMatching("java.util.Str.subs", "first", "last")
   }
 
+  fun `test setter matching`() {
+    val matcher = MatcherConstructor.createMatcher("*.set*(*)")!!
+    matcher.assertIsMatching("com.intellij.S.setProportion", "value")
+    matcher.assertIsMatching("com.intellij.S.setX", "value")
+    matcher.assertIsMatching("com.intellij.S.set", "height")
+    
+    matcher.assertNotMatching("com.intellij.S.set", "height", "weight")
+    matcher.assertNotMatching("com.intellij.S.setSize", "height", "weight")
+  }
+
 
 }

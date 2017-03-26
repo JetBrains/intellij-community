@@ -93,7 +93,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
 
     StubTree baseTree = getOrCalcStubTree(stubBindingRoot);
     if (baseTree != null) {
-      final List<PsiFileStub> roots = new SmartList<PsiFileStub>(baseTree.getRoot());
+      final List<PsiFileStub> roots = new SmartList<>(baseTree.getRoot());
       final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = StubTreeBuilder.getStubbedRoots(viewProvider);
       for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
         if (stubbedRoot.second == stubBindingRoot) continue;
@@ -141,14 +141,12 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   public String getDiagnostics() {
     ObjectStubTree stubTree = ObjectStubTree.getStubTree(this);
     T file = myFile;
-    Integer lastStubTreeHash = file == null ? null : file.getUserData(ObjectStubTree.LAST_STUB_TREE_HASH);
     return toString() +
            MoreObjects.toStringHelper("")
              .add("myFile", file)
              .add("myInvalidationReason", myInvalidationReason)
              .add("myStubRoots", Arrays.toString(myStubRoots))
              .add("stubTree", stubTree)
-             .add("lastStubTreeHash", lastStubTreeHash)
              .toString();
   }
 }

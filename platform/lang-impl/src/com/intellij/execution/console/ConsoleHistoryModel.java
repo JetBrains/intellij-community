@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ class ConsoleHistoryModel extends SimpleModificationTracker {
   }
 
   public int getMaxHistorySize() {
-    return UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
+    return UISettings.getInstance().getConsoleCommandHistoryLimit();
   }
 
   public void removeFromHistory(String statement) {

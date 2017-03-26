@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -71,14 +71,14 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     if (!myTargetMethodName.equals(name)) {
       if (DebuggerUtilsEx.isLambdaName(name)) {
         SourcePosition position = process.getPositionManager().getSourcePosition(location);
-        return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+        return ReadAction.compute(() -> {
           PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
           if (psiMethod instanceof PsiLambdaExpression) {
             PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();
             PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
             if (type != null && interfaceMethod != null && myTargetMethodName.equals(interfaceMethod.getName())) {
               try {
-                return type.getCanonicalText().equals(myDeclaringClassName.getName(process).replace('$', '.'));
+                return InheritanceUtil.isInheritor(type, myDeclaringClassName.getName(process).replace('$', '.'));
               }
               catch (EvaluateException e) {
                 LOG.info(e);
@@ -91,6 +91,9 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       return false;
     }
     if (myTargetMethodSignature != null && !signatureMatches(method, myTargetMethodSignature.getName(process))) {
+      return false;
+    }
+    if (method.isBridge()) { // skip bridge methods
       return false;
     }
     return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), location.declaringType());

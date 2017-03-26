@@ -22,13 +22,16 @@ package com.intellij.ui.speedSearch;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -37,10 +40,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class ListWithFilter<T> extends JPanel implements DataProvider {
-  private final JList myList;
+  private final JList<T> myList;
   private final SearchTextField mySearchField = new SearchTextField(false);
   private final NameFilteringListModel<T> myModel;
-  private final JScrollPane myScroller;
+  private final JScrollPane myScrollPane;
   private final MySpeedSearch mySpeedSearch;
 
   @Override
@@ -51,20 +54,11 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return null;
   }
 
-  public static boolean isSearchActive(JList list) {
-    final ListWithFilter listWithFilter = UIUtil.getParentOfType(ListWithFilter.class, list);
-    return listWithFilter != null && listWithFilter.mySpeedSearch.searchFieldShown;
+  public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer) {
+    return new ListWithFilter<>(list, scrollPane, namer);
   }
 
-  public static JComponent wrap(JList list) {
-    return wrap(list, ScrollPaneFactory.createScrollPane(list), StringUtil.createToStringFunction(Object.class));
-  }
-
-  public static <T> JComponent wrap(JList list, JScrollPane scroller, Function<T, String> namer) {
-    return new ListWithFilter<>(list, scroller, namer);
-  }
-
-  private ListWithFilter(JList list, JScrollPane scroller, Function<T, String> namer) {
+  private ListWithFilter(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer) {
     super(new BorderLayout());
 
     if (list instanceof ComponentWithEmptyText) {
@@ -72,13 +66,13 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     }
 
     myList = list;
-    myScroller = scroller;
+    myScrollPane = scrollPane;
 
     mySearchField.getTextEditor().setFocusable(false);
     mySearchField.setVisible(false);
 
     add(mySearchField, BorderLayout.NORTH);
-    add(myScroller, BorderLayout.CENTER);
+    add(myScrollPane, BorderLayout.CENTER);
 
     mySpeedSearch = new MySpeedSearch();
     mySpeedSearch.setEnabled(namer != null);
@@ -91,20 +85,6 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
         mySpeedSearch.process(e);
       }
     });
-    //new AnAction(){
-    //  @Override
-    //  public void actionPerformed(AnActionEvent e) {
-    //    final InputEvent event = e.getInputEvent();
-    //    if (event instanceof KeyEvent) {
-    //      mySpeedSearch.process((KeyEvent)event);
-    //    }
-    //  }
-    //
-    //  @Override
-    //  public void update(AnActionEvent e) {
-    //    e.getPresentation().setEnabled(mySpeedSearch.searchFieldShown);
-    //  }
-    //}.registerCustomShortcutSet(CustomShortcutSet.fromString("BACK_SPACE", "DELETE"), list);
     final int selectedIndex = myList.getSelectedIndex();
     final int modelSize = myList.getModel().getSize();
     myModel = new NameFilteringListModel<>(myList, namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
@@ -143,6 +123,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
           }
         }
       });
+      installSupplyTo(myList);
     }
 
     public void update() {
@@ -163,6 +144,11 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
       revalidate();
     }
 
+    @Override
+    public void noHits() {
+      mySearchField.getTextEditor().setBackground(LightColors.RED);
+    }
+
     private void revalidate() {
       JBPopup popup = PopupUtil.getPopupContainerFor(mySearchField);
       if (popup != null) {
@@ -173,7 +159,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   protected void onSpeedSearchPatternChanged() {
-    T prevSelection = (T)myList.getSelectedValue(); // save to restore the selection on filter drop
+    T prevSelection = myList.getSelectedValue(); // save to restore the selection on filter drop
     myModel.refilter();
     if (myModel.getSize() > 0) {
       int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
@@ -181,12 +167,12 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
         myList.setSelectedIndex(fullMatchIndex);
       }
 
-      if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains((T)myList.getSelectedValue())) {
+      if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains(myList.getSelectedValue())) {
         myList.setSelectedIndex(0);
       }
     }
     else {
-      mySearchField.getTextEditor().setBackground(LightColors.RED);
+      mySpeedSearch.noHits();
       revalidate();
     }
   }
@@ -196,7 +182,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   public JScrollPane getScrollPane() {
-    return myScroller;
+    return myScrollPane;
   }
 
   @Override

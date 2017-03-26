@@ -1,0 +1,36 @@
+package pkg;
+
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class TestAnonymousParams {
+   void foo(InputStream in, final int a) throws IOException {
+      FilterInputStream filterInputStream = new FilterInputStream(in) {
+         public int read() throws IOException {
+            return a;// 27
+         }
+      };// 24
+      filterInputStream.read();// 30
+   }// 31
+}
+
+class 'pkg/TestAnonymousParams$1' {
+   method 'read ()I' {
+      4      10
+   }
+}
+
+class 'pkg/TestAnonymousParams' {
+   method 'foo (Ljava/io/InputStream;I)V' {
+      a      12
+      c      13
+      10      14
+   }
+}
+
+Lines mapping:
+24 <-> 13
+27 <-> 11
+30 <-> 14
+31 <-> 15

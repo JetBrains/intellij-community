@@ -53,8 +53,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    shutdownIndices();
-    super.tearDown();
+    try {
+      shutdownIndices();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void initIndices() throws Exception {

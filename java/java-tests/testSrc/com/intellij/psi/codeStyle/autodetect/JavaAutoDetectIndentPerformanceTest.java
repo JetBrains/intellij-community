@@ -45,7 +45,7 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
 
     long detectingTime = trackTime(() -> ref.set(detectIndentOptions()));
     double ratio = (double)detectingTime / fileLoadTime;
-    if (ratio > 0.2) {
+    if (ratio > 0.3) {
       TeamCityLogger.error("Detecting indent have taken too much time proportionally to file read time " + ratio);
     } else {
       String msg = "Detecting indent relatively to file read " + ratio;
@@ -62,7 +62,7 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
     AbstractIndentAutoDetectionTest.detectIndentOptions();
     
     PlatformTestUtil
-      .startPerformanceTest("Detecting indent on hot file", 40, AbstractIndentAutoDetectionTest::detectIndentOptions)
+      .startPerformanceTest("Detecting indent on hot file", 100, AbstractIndentAutoDetectionTest::detectIndentOptions)
       .cpuBound()
       .useLegacyScaling().assertTiming();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
@@ -23,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import one.util.streamex.StreamEx;
@@ -30,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -61,18 +65,38 @@ public class PyTypeChecker {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                                @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
-    if (actual instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)actual;
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(classType.getPyClass());
-
-      if (actual == builtinCache.getObjectType(PyNames.BASESTRING)) {
+    final PyClassType expectedClassType = as(expected, PyClassType.class);
+    final PyClassType actualClassType = as(actual, PyClassType.class);
+    
+    // Special cases: object and type
+    if (expectedClassType != null && ArrayUtil.contains(expectedClassType.getName(), PyNames.OBJECT, PyNames.TYPE)) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(expectedClassType.getPyClass());
+      if (expectedClassType.equals(builtinCache.getObjectType())) {
+        return true;
+      }
+      if (expectedClassType.equals(builtinCache.getTypeType()) &&
+          actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
+        return true;
+      }
+    }
+    if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
+        && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
+      return false;
+    }
+    if (actualClassType != null && PyNames.BASESTRING.equals(actualClassType.getName())) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(actualClassType.getPyClass());
+      if (actualClassType.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
         return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
       }
     }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
-      final PyType bound = generic.getBound();
+      PyType bound = generic.getBound();
+      // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
+      if (generic.isDefinition() && bound instanceof PyInstantiableType) {
+        bound = ((PyInstantiableType)bound).toClass();
+      }
       if (!match(bound, actual, context, substitutions, recursive)) {
         return false;
       }
@@ -97,12 +121,6 @@ public class PyTypeChecker {
     }
     if (expected == null || actual == null) {
       return true;
-    }
-    if (expected instanceof PyClassType) {
-      final PyClass c = ((PyClassType)expected).getPyClass();
-      if ("object".equals(c.getName())) {
-        return true;
-      }
     }
     if (isUnknown(actual)) {
       return true;
@@ -138,9 +156,9 @@ public class PyTypeChecker {
       }
       return false;
     }
-    if (expected instanceof PyClassType && actual instanceof PyClassType) {
-      final PyClass superClass = ((PyClassType)expected).getPyClass();
-      final PyClass subClass = ((PyClassType)actual).getPyClass();
+    if (expectedClassType != null && actualClassType != null) {
+      final PyClass superClass = expectedClassType.getPyClass();
+      final PyClass subClass = actualClassType.getPyClass();
       if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
         final PyTupleType subTupleType = (PyTupleType)actual;
@@ -187,16 +205,19 @@ public class PyTypeChecker {
 
         return true;
       }
-      else if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
+      else if (expected instanceof PyCollectionType) {
         if (!matchClasses(superClass, subClass, context)) {
           return false;
         }
         // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
         final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
-        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
-        for (int i = 0; i < subElementTypes.size(); i++) {
-          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
-          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+        final PyCollectionType actualCollectionType = as(actual, PyCollectionType.class);
+        final List<PyType> subElementTypes = actualCollectionType != null ?
+                                             actualCollectionType.getElementTypes(context) :
+                                             Collections.emptyList();
+        for (int i = 0; i < superElementTypes.size(); i++) {
+          final PyType subElementType = i < subElementTypes.size() ? subElementTypes.get(i) : null;
+          if (!match(superElementTypes.get(i), subElementType, context, substitutions, recursive)) {
             return false;
           }
         }
@@ -206,15 +227,15 @@ public class PyTypeChecker {
       else if (matchClasses(superClass, subClass, context)) {
         return true;
       }
-      else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
+      else if (actualClassType.isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
         return true;
       }
       if (expected.equals(actual)) {
         return true;
       }
     }
-    if (actual instanceof PyFunctionTypeImpl && expected instanceof PyClassType) {
-      final PyClass superClass = ((PyClassType)expected).getPyClass();
+    if (actual instanceof PyFunctionTypeImpl && expectedClassType != null) {
+      final PyClass superClass = expectedClassType.getPyClass();
       if (PyNames.CALLABLE.equals(superClass.getName())) {
         return true;
       }
@@ -230,16 +251,15 @@ public class PyTypeChecker {
       }
       return expectedStructural.getAttributeNames().containsAll(actualStructural.getAttributeNames());
     }
-    if (expected instanceof PyStructuralType && actual instanceof PyClassType) {
-      final PyClassType actualClassType = (PyClassType)actual;
+    if (expected instanceof PyStructuralType && actualClassType != null) {
       if (overridesGetAttr(actualClassType.getPyClass(), context)) {
         return true;
       }
       final Set<String> actualAttributes = actualClassType.getMemberNames(true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
-    if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
-      final Set<String> expectedAttributes = ((PyClassType)expected).getMemberNames(true, context);
+    if (actual instanceof PyStructuralType && expectedClassType != null) {
+      final Set<String> expectedAttributes = expectedClassType.getMemberNames(true, context);
       return expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames());
     }
     if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
@@ -331,13 +351,17 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyGenericType) {
+    return isUnknown(type, true);
+  }
+
+  public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown) {
+    if (type == null || (genericsAreUnknown && type instanceof PyGenericType)) {
       return true;
     }
     if (type instanceof PyUnionType) {
       final PyUnionType union = (PyUnionType)type;
       for (PyType t : union.getMembers()) {
-        if (isUnknown(t)) {
+        if (isUnknown(t, genericsAreUnknown)) {
           return true;
         }
       }
@@ -409,7 +433,29 @@ public class PyTypeChecker {
                                   @NotNull TypeEvalContext context) {
     if (hasGenerics(type, context)) {
       if (type instanceof PyGenericType) {
-        return substitutions.get((PyGenericType)type);
+        final PyGenericType typeVar = (PyGenericType)type;
+        PyType substitution = substitutions.get(typeVar);
+        if (substitution == null) {
+          if (!typeVar.isDefinition()) {
+            final PyInstantiableType<?> classType = as(substitutions.get(typeVar.toClass()), PyInstantiableType.class);
+            if (classType != null) {
+              substitution = classType.toInstance();
+            }
+          }
+          else {
+            final PyInstantiableType<?> instanceType = as(substitutions.get(typeVar.toInstance()), PyInstantiableType.class);
+            if (instanceType != null) {
+              substitution = instanceType.toClass();
+            }
+          }
+        }
+        if (substitution instanceof PyGenericType && substitution != type) {
+          final PyType recursive = substitute(substitution, substitutions, context);
+          if (recursive != null) {
+            return recursive;
+          }
+        }
+        return substitution;
       }
       else if (type instanceof PyUnionType) {
         final PyUnionType union = (PyUnionType)type;
@@ -487,18 +533,18 @@ public class PyTypeChecker {
         if (keywordParameter == null) keywordParameter = parameter;
         keywordTypes.add(actualArgType);
       }
-      else if (!match(getExpectedArgumentType(parameter, context), actualArgType, context, substitutions)) {
+      else if (!match(parameter.getArgumentType(context), actualArgType, context, substitutions)) {
         return null;
       }
     }
 
     if (positionalParameter != null &&
-        !match(getExpectedArgumentType(positionalParameter, context), PyUnionType.union(positionalTypes), context, substitutions)) {
+        !match(positionalParameter.getArgumentType(context), PyUnionType.union(positionalTypes), context, substitutions)) {
       return null;
     }
 
     if (keywordParameter != null &&
-        !match(getExpectedArgumentType(keywordParameter, context), PyUnionType.union(keywordTypes), context, substitutions)) {
+        !match(keywordParameter.getArgumentType(context), PyUnionType.union(keywordTypes), context, substitutions)) {
       return null;
     }
 
@@ -515,20 +561,18 @@ public class PyTypeChecker {
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }
-    // Unify generics in constructor
     if (qualifierType != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      // TODO: Resolve to __new__ as well
-      final List<? extends RatedResolveResult> results = qualifierType.resolveMember(PyNames.INIT, null, AccessDirection.READ,
-                                                                                     resolveContext);
-      if (results != null && !results.isEmpty()) {
-        final PsiElement init = results.get(0).getElement();
-        if (init instanceof PyTypedElement) {
-          final PyType initType = context.getType((PyTypedElement)init);
-          if (initType instanceof PyCallableType) {
-            final PyType initReturnType = ((PyCallableType)initType).getReturnType(context);
-            if (initReturnType != null) {
-              match(initReturnType, qualifierType, context, substitutions);
+      for (PyClassType type : toPossibleClassTypes(qualifierType)) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType genericType = provider.getGenericType(type.getPyClass(), context);
+          if (genericType != null) {
+            match(genericType, qualifierType, context, substitutions);
+          }
+          for (Map.Entry<PyType, PyType> entry : provider.getGenericSubstitutions(type.getPyClass(), context).entrySet()) {
+            final PyGenericType genericKey = as(entry.getKey(), PyGenericType.class);
+            final PyType value = entry.getValue();
+            if (genericKey != null && value != null && !substitutions.containsKey(genericKey)) {
+              substitutions.put(genericKey, value);
             }
           }
         }
@@ -537,11 +581,25 @@ public class PyTypeChecker {
     return substitutions;
   }
 
+  @NotNull
+  private static List<PyClassType> toPossibleClassTypes(@NotNull PyType type) {
+    final PyClassType classType = as(type, PyClassType.class);
+    if (classType != null) {
+      return Collections.singletonList(classType);
+    }
+    final PyUnionType unionType = as(type, PyUnionType.class);
+    if (unionType != null) {
+      return StreamEx.of(unionType.getMembers()).nonNull().flatMap(t -> toPossibleClassTypes(t).stream()).toList();
+    }
+    return Collections.emptyList();
+  }
+
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
     if (superClass == null ||
         subClass == null ||
         subClass.isSubclass(superClass, context) ||
         PyABCUtil.isSubclass(subClass, superClass, context) ||
+        isStrUnicodeMatch(subClass, superClass) ||
         PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
@@ -551,29 +609,28 @@ public class PyTypeChecker {
     }
   }
 
-  @NotNull
-  public static List<AnalyzeCallResults> analyzeCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (callSite != null) {
-      final List<AnalyzeCallResults> results = new ArrayList<>();
-      for (PyCallable callable : resolveCallee(callSite, context)) {
-        final PyExpression receiver = getReceiver(callSite, callable);
-        for (List<PyParameter> parameters : PyUtil.getOverloadedParametersSet(callable, context)) {
-          final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, callable, parameters, context);
-          results.add(new AnalyzeCallResults(callable, receiver, mapping));
-        }
-      }
-      return results;
-    }
-    return Collections.emptyList();
+  private static boolean isStrUnicodeMatch(@NotNull PyClass subClass, @NotNull PyClass superClass) {
+    // TODO: Check for subclasses as well
+    return PyNames.TYPE_STR.equals(subClass.getName()) && PyNames.TYPE_UNICODE.equals(superClass.getName());
   }
 
   @NotNull
-  private static List<PyCallable> resolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public static List<AnalyzeCallResults> analyzeCallSite(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    final List<AnalyzeCallResults> results = new ArrayList<>();
+    for (PyCallable callable : multiResolveCallee(callSite, context)) {
+      final PyExpression receiver = getReceiver(callSite, callable);
+      final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, callable, context);
+      results.add(new AnalyzeCallResults(callable, receiver, mapping));
+    }
+    return results;
+  }
+
+  @NotNull
+  private static List<PyCallable> multiResolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     if (callSite instanceof PyCallExpression) {
-      final PyCallExpression callExpr = (PyCallExpression)callSite;
-      final PyCallExpression.PyMarkedCallee callee = callExpr.resolveCallee(resolveContext);
-      return callee != null ? Collections.singletonList(callee.getCallable()) : Collections.emptyList();
+      final List<PyCallExpression.PyRatedCallee> ratedCallees = ((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext);
+      return ContainerUtil.map(PyUtil.filterTopPriorityResults(ratedCallees), PyCallExpression.PyRatedCallee::getElement);
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<PyCallable> results = new ArrayList<>();
@@ -757,34 +814,16 @@ public class PyTypeChecker {
     }
   }
 
-  @Nullable
-  public static PyType getExpectedArgumentType(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
-    final PyType parameterType = context.getType(parameter);
-
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
-
-      if (parameter.isPositionalContainer()) {
-        return paramCollectionType.getIteratedItemType();
-      }
-      else if (parameter.isKeywordContainer()) {
-        return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(context), 1, null);
-      }
-    }
-
-    return parameterType;
-  }
-
   public static class AnalyzeCallResults {
     @NotNull private final PyCallable myCallable;
     @Nullable private final PyExpression myReceiver;
-    @NotNull private final Map<PyExpression, PyNamedParameter> myArguments;
+    @NotNull private final PyCallExpressionHelper.ArgumentMappingResults myMapping;
 
     public AnalyzeCallResults(@NotNull PyCallable callable, @Nullable PyExpression receiver,
-                              @NotNull Map<PyExpression, PyNamedParameter> arguments) {
+                              @NotNull PyCallExpressionHelper.ArgumentMappingResults mapping) {
       myCallable = callable;
       myReceiver = receiver;
-      myArguments = arguments;
+      myMapping = mapping;
     }
 
     @NotNull
@@ -798,8 +837,8 @@ public class PyTypeChecker {
     }
 
     @NotNull
-    public Map<PyExpression, PyNamedParameter> getArguments() {
-      return myArguments;
+    public PyCallExpressionHelper.ArgumentMappingResults getMapping() {
+      return myMapping;
     }
   }
 }

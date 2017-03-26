@@ -115,7 +115,7 @@ public class CreateClassDialog extends DialogWrapper {
     myDestinationCB.setData(myProject, getBaseDir(targetPackageName), new Pass<String>() {
       @Override
       public void pass(String s) {
-        setErrorText(s);
+        setErrorText(s, myDestinationCB);
       }
     }, myPackageComponent.getChildComponent());
   }

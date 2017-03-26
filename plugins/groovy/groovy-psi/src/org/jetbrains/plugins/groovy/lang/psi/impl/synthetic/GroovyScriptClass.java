@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,8 +232,7 @@ public class GroovyScriptClass extends GrLightTypeDefinitionBase implements Synt
   @Override
   @Nullable
   public Icon getIcon(int flags) {
-    final Icon icon = myFile.getIcon(flags);
-    RowIcon baseIcon = ElementBase.createLayeredIcon(this, icon, 0);
+    RowIcon baseIcon = ElementBase.createLayeredIcon(this, JetgroovyIcons.Groovy.Class, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

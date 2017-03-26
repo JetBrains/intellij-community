@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   private final GradleModuleBuilder myBuilder;
   @NotNull
   private final WizardContext myContext;
-
+  @NotNull
   private final GradleParentProjectForm myParentProjectForm;
 
   private String myInheritedGroupId;
@@ -249,6 +250,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public String getHelpId() {
     return "Gradle_Archetype_Dialog";
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myParentProjectForm);
   }
 }
 

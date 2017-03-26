@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ public class StreamToLoopInspectionTest extends LightQuickFixParameterizedTestCa
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new StreamToLoopInspection()
-    };
+    StreamToLoopInspection inspection = new StreamToLoopInspection();
+    inspection.SUPPORT_UNKNOWN_SOURCES = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   public void test() throws Exception { doAllTests(); }

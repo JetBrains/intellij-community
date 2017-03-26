@@ -12,11 +12,15 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
-  
+
   <application-components>
     <component>
       <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
       <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
     </component>
   </application-components>
 

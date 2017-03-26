@@ -15,9 +15,11 @@
  */
 package git4idea.history
 
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.test.GitExecutor.*
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.add
+import git4idea.test.commit
 
 class GitHistoryTest : GitSingleRepoTest() {
 

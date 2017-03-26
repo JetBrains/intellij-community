@@ -37,7 +37,7 @@ public class JavadocManagerImpl implements JavadocManager {
   private final List<JavadocTagInfo> myInfos;
 
   public JavadocManagerImpl(Project project) {
-    myInfos = new ArrayList<JavadocTagInfo>();
+    myInfos = new ArrayList<>();
 
     myInfos.add(new AuthorDocTagInfo());
     myInfos.add(new SimpleDocTagInfo("deprecated", LanguageLevel.JDK_1_3, false, PsiElement.class));
@@ -77,7 +77,7 @@ public class JavadocManagerImpl implements JavadocManager {
   @Override
   @NotNull
   public JavadocTagInfo[] getTagInfos(PsiElement context) {
-    List<JavadocTagInfo> result = new ArrayList<JavadocTagInfo>();
+    List<JavadocTagInfo> result = new ArrayList<>();
 
     for (JavadocTagInfo info : myInfos) {
       if (info.isValidInContext(context)) {

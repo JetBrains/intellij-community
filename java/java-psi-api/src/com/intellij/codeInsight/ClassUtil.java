@@ -49,7 +49,7 @@ public class ClassUtil {
     if (superClass != null && !superClass.hasModifierProperty(PsiModifier.ABSTRACT) && !superClass.isEnum() && aClass.getImplementsListTypes().length == 0) {
       return null;
     }
-    Set<PsiMethod> alreadyImplemented = new THashSet<PsiMethod>();
+    Set<PsiMethod> alreadyImplemented = new THashSet<>();
     for (HierarchicalMethodSignature signatureHierarchical : aClass.getVisibleSignatures()) {
       for (PsiMethod superS : signatureHierarchical.getMethod().findSuperMethods()) {
         add(superS, alreadyImplemented);
@@ -69,7 +69,7 @@ public class ClassUtil {
           && !alreadyImplemented.contains(method)) {
         return method;
       }
-      final List<HierarchicalMethodSignature> superSignatures = new ArrayList<HierarchicalMethodSignature>(signatureHierarchical.getInaccessibleSuperSignatures());
+      final List<HierarchicalMethodSignature> superSignatures = new ArrayList<>(signatureHierarchical.getInaccessibleSuperSignatures());
       superSignatures.addAll(signatureHierarchical.getSuperSignatures());
       for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
         final PsiMethod superMethod = superSignatureHierarchical.getMethod();

@@ -108,4 +108,11 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  public void testJunit5Assert() {
+    myFixture.addClass("package org.junit.jupiter.api; public class Assertions {\n" +
+                       "    public static void assertNotNull(Object actual){}" +
+                       "}");
+    checkHighlighting();
+  }
+
 }

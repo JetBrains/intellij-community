@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Default NamesValidator interface implementation. Uses java language keyword set and java language rules for identifier.
- */
 public class JavaNamesValidator implements NamesValidator {
   @Override
   public boolean isKeyword(@NotNull String name, Project project) {

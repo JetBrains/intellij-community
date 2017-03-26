@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The handler for git commands with text outputs
@@ -42,11 +44,15 @@ public abstract class GitTextHandler extends GitHandler {
   private final Object myProcessStateLock = new Object();
 
   protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
-    super(project, directory, command);
+    super(project, directory, command, Collections.emptyList());
   }
 
   protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
-    super(project, vcsRoot, command);
+    super(project, vcsRoot, command, Collections.emptyList());
+  }
+
+  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command, List<String> configParameters) {
+    super(project, vcsRoot, command, configParameters);
   }
 
   @Nullable
@@ -77,7 +83,8 @@ public abstract class GitTextHandler extends GitHandler {
           setExitCode(exitCode);
           cleanupEnv();
           GitTextHandler.this.processTerminated(exitCode);
-        } finally {
+        }
+        finally {
           listeners().processTerminated(exitCode);
         }
       }
@@ -156,5 +163,4 @@ public abstract class GitTextHandler extends GitHandler {
       return Registry.is("git.blocking.read") ? BaseOutputReader.Options.BLOCKING : BaseOutputReader.Options.NON_BLOCKING;
     }
   }
-
 }

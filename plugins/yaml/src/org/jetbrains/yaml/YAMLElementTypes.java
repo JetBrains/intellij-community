@@ -1,5 +1,6 @@
 package org.jetbrains.yaml;
 
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
@@ -32,4 +33,11 @@ public interface YAMLElementTypes {
     YAMLTokenTypes.TEXT,
     SCALAR_LIST_VALUE
   );
+
+  TokenSet BLANK_ELEMENTS = TokenSet.create(
+    YAMLTokenTypes.WHITESPACE,
+    TokenType.WHITE_SPACE,
+    YAMLTokenTypes.EOL,
+    YAMLTokenTypes.INDENT,
+    YAMLTokenTypes.COMMENT);
 }

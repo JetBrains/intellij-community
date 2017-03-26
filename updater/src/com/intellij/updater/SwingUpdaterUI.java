@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseDPIAwareInsets", "SSBasedInspection"})
@@ -47,18 +49,14 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public boolean showWarning(String message) {
-    Object[] choices = new Object[] { "Retry", "Exit" };
-    int choice = JOptionPane
-      .showOptionDialog(getParentComponent(), message, "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices,
-                        choices[0]);
+    Object[] choices = {"Retry", "Exit"};
+    int choice = JOptionPane.showOptionDialog(null, message, "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
     return choice == 0;
   }
 
   @Override
-  public Map<String, ValidationResult.Option> askUser(final List<ValidationResult> validationResults) throws OperationCancelledException {
-    if (validationResults.isEmpty()) return Collections.emptyMap();
-
-    final Map<String, ValidationResult.Option> result = new HashMap<>();
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+    Map<String, ValidationResult.Option> result = new HashMap<>();
     try {
       SwingUtilities.invokeAndWait(() -> {
         boolean proceed = true;
@@ -93,7 +91,8 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
           proceedButton.addActionListener(e -> dialog.setVisible(false));
           buttonsPanel.add(proceedButton);
           dialog.getRootPane().setDefaultButton(proceedButton);
-        } else {
+        }
+        else {
           dialog.getRootPane().setDefaultButton(cancelButton);
         }
 
@@ -111,12 +110,12 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
         }
 
         String message = "<html>Some conflicts were found in the installation area.<br><br>";
-
         if (proceed) {
           message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
                      " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
                      "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
-        } else {
+        }
+        else {
           message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
                      "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
         }
@@ -148,9 +147,15 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
     if (isCancelled.get()) throw new OperationCancelledException();
   }
 
+  @FunctionalInterface
+  public interface InstallOperation {
+    boolean execute(UpdaterUI ui) throws OperationCancelledException;
+  }
+
   private static class MyTableModel extends AbstractTableModel {
-    public static final String[] COLUMNS = new String[]{"File", "Action", "Problem", "Solution"};
+    public static final String[] COLUMNS = {"File", "Action", "Problem", "Solution"};
     public static final int OPTIONS_COLUMN_INDEX = 3;
+
     private final List<Item> myItems = new ArrayList<>();
 
     public MyTableModel(List<ValidationResult> validationResults) {
@@ -180,10 +185,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == OPTIONS_COLUMN_INDEX) {
-        return ValidationResult.Option.class;
-      }
-      return super.getColumnClass(columnIndex);
+      return columnIndex == OPTIONS_COLUMN_INDEX ? ValidationResult.Option.class : super.getColumnClass(columnIndex);
     }
 
     @Override
@@ -237,8 +239,8 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
     }
 
     private static class Item {
-      ValidationResult validationResult;
-      ValidationResult.Option option;
+      private ValidationResult validationResult;
+      private ValidationResult.Option option;
 
       private Item(ValidationResult validationResult, ValidationResult.Option option) {
         this.validationResult = validationResult;
@@ -259,6 +261,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
       for (ValidationResult.Option each : ((MyTableModel)table.getModel()).getOptions(row)) {
         comboModel.addElement(each);
       }
+
       @SuppressWarnings("unchecked") JComboBox<ValidationResult.Option> comboBox = (JComboBox<ValidationResult.Option>)editorComponent;
       comboBox.setModel(comboModel);
 
@@ -281,6 +284,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
         else if (kind == ValidationResult.Kind.CONFLICT) {
           color = new Color(255, 240, 240);
         }
+
         result.setBackground(color);
       }
       return result;

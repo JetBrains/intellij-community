@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public final class Presentation implements Cloneable {
             if (i >= text.length()) break;
             ch = text.charAt(i);
             if (ch != '_' && ch != '&') {
-              if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+              if (UISettings.getInstance().getDisableMnemonicsInControls()) {
                 myMnemonic = 0;
                 myDisplayedMnemonicIndex = -1;
               }

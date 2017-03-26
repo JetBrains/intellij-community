@@ -239,8 +239,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     if (Boolean.FALSE.equals(keptResult)) return ThreeState.NO;
 
     // check have credentials
-    final boolean calculatedResult =
-      factory == null ? passiveValidation(myVcs.getProject(), wcCopy.getUrl()) : passiveValidation(factory, wcCopy.getUrl());
+    boolean calculatedResult = factory == null ? passiveValidation(myVcs, wcCopy.getUrl()) : passiveValidation(factory, wcCopy.getUrl());
     myCopiesPassiveResults.put(wcCopy.getUrl(), calculatedResult);
     return calculatedResult ? ThreeState.YES : ThreeState.NO;
   }
@@ -325,10 +324,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     LOG.debug(s);
   }
 
-  public static boolean passiveValidation(final Project project, final SVNURL url) {
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(project);
-    return validationImpl(project, url, configuration, passiveManager, false, null, null, false);
+  public static boolean passiveValidation(@NotNull SvnVcs vcs, final SVNURL url) {
+    SvnConfiguration configuration = vcs.getSvnConfiguration();
+    SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(vcs);
+    return validationImpl(vcs.getProject(), url, configuration, passiveManager, false, null, null, false);
   }
 
   public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {

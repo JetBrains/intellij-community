@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,35 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binary
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
 
 /**
  * Created by Max Medvedev on 12/20/13
  */
 public class GrBinaryExpressionUtil {
 
+  private static final int[] RANKS = new int[]{
+    INTEGER_RANK, LONG_RANK, BIG_INTEGER_RANK, BIG_DECIMAL_RANK, DOUBLE_RANK
+  };
+
   public static PsiType getDefaultNumericResultType(PsiType ltype, PsiType rtype, GrOperatorExpression e) {
-    if (isBigDecimal(ltype, rtype)) return createBigDecimal(e);
-    if (isFloatOrDouble(ltype, rtype)) return createDouble(e);
-    if (isLong(ltype, rtype)) return createLong(e);
-    return createInteger(e);
+    int lRank = getTypeRank(ltype);
+    int rRank = getTypeRank(rtype);
+    int resultRank = getResultTypeRank(lRank, rRank);
+    String fqn = getTypeFqn(resultRank);
+    return fqn == null ? null : createTypeByFQClassName(fqn, e);
+  }
+
+  private static int getResultTypeRank(int lRank, int rRank) {
+    for (int rank : RANKS) {
+      if (lRank <= rank && rRank <= rank) {
+        return rank;
+      }
+    }
+    return 0;
   }
 
   public static PsiType createDouble(GrOperatorExpression e) {
@@ -63,6 +79,6 @@ public class GrBinaryExpressionUtil {
   }
 
   public static PsiType getTypeByFQName(String fqn, GrOperatorExpression e) {
-    return TypesUtil.createTypeByFQClassName(fqn, e);
+    return createTypeByFQClassName(fqn, e);
   }
 }

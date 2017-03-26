@@ -57,6 +57,11 @@ public class EmptyResourceBundle {
       public Project getProject() {
         throw new IllegalStateException();
       }
+
+      @Override
+      public boolean isValid() {
+        return false;
+      }
     };
   }
   public static ResourceBundle getInstance() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class StatementParser {
       }
       else if (braceCount == 1 && (tokenType == JavaTokenType.SEMICOLON || tokenType == JavaTokenType.RBRACE)) {
         final PsiBuilder.Marker position = builder.mark();
-        final List<IElementType> list = new SmartList<IElementType>();
+        final List<IElementType> list = new SmartList<>();
         while (true) {
           final IElementType type = builder.getTokenType();
           if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(type) || ElementType.MODIFIER_BIT_SET.contains(type) ||
@@ -381,7 +381,7 @@ public class StatementParser {
     final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false);
     if (param == null || exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
       afterParenth.rollbackTo();
-      return parseForLoopFromInitialization(builder, statement);
+      return parseForLoopFromInitializer(builder, statement);
     }
     else {
       afterParenth.drop();
@@ -390,9 +390,9 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseForLoopFromInitialization(final PsiBuilder builder, final PsiBuilder.Marker statement) {
-    final PsiBuilder.Marker init = parseStatement(builder);
-    if (init == null){
+  private PsiBuilder.Marker parseForLoopFromInitializer(PsiBuilder builder, PsiBuilder.Marker statement) {
+    PsiBuilder.Marker init = parseStatement(builder);
+    if (init == null) {
       error(builder, JavaErrorMessages.message("expected.statement"));
       if (!expect(builder, JavaTokenType.RPARENTH)) {
         done(statement, JavaElementType.FOR_STATEMENT);
@@ -400,9 +400,18 @@ public class StatementParser {
       }
     }
     else {
-      myParser.getExpressionParser().parse(builder);
+      boolean missingSemicolon = false;
+      if (getLastToken(builder) != JavaTokenType.SEMICOLON) {
+        missingSemicolon = !expectOrError(builder, JavaTokenType.SEMICOLON, "expected.semicolon");
+      }
+
+      PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+      missingSemicolon &= expr == null;
+
       if (!expect(builder, JavaTokenType.SEMICOLON)) {
-        error(builder, JavaErrorMessages.message("expected.semicolon"));
+        if (!missingSemicolon) {
+          error(builder, JavaErrorMessages.message("expected.semicolon"));
+        }
         if (!expect(builder, JavaTokenType.RPARENTH)) {
           done(statement, JavaElementType.FOR_STATEMENT);
           return statement;
@@ -418,13 +427,20 @@ public class StatementParser {
       }
     }
 
-    final PsiBuilder.Marker bodyStatement = parseStatement(builder);
+    PsiBuilder.Marker bodyStatement = parseStatement(builder);
     if (bodyStatement == null) {
       error(builder, JavaErrorMessages.message("expected.statement"));
     }
 
     done(statement, JavaElementType.FOR_STATEMENT);
     return statement;
+  }
+
+  private static IElementType getLastToken(PsiBuilder builder) {
+    IElementType token;
+    int offset = -1;
+    while (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains((token = builder.rawLookup(offset)))) offset--;
+    return token;
   }
 
   private void parseExpressionOrExpressionList(final PsiBuilder builder) {

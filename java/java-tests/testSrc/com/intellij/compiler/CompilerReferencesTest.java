@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 @SkipSlowTestLocally
 public class CompilerReferencesTest extends CompilerReferencesTestBase {
+  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/bytecodeReferences/";
   }
@@ -117,6 +118,26 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     CompilerDirectHierarchyInfo directInheritorInfo = getDirectInheritorsFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST));
     PsiClass inheritor = assertOneElement(directInheritorInfo.getHierarchyChildren().map(PsiClass.class::cast).collect(Collectors.toList()));
     assertEquals("Foo.ListImpl", inheritor.getQualifiedName());
+  }
+
+  public void testExtensionRename() {
+    final PsiFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.txt")[1];
+    rebuildProject();
+    assertOneElement(getReferentFilesForElementUnderCaret());
+    myFixture.renameElement(file, "Foo.java");
+    final PsiClass foo = myFixture.findClass("Foo");
+    assertNotNull(foo);
+    final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService.getInstance(myFixture.getProject());
+    compilerReferenceService.getScopeWithoutCodeReferences(foo);
+    assertOneElement(compilerReferenceService.getDirtyScopeHolder().getAllDirtyModulesForTest());
+  }
+
+  public void testReverseExtensionRename() {
+    final PsiFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.java")[1];
+    rebuildProject();
+    assertSize(2, getReferentFilesForElementUnderCaret());
+    myFixture.renameElement(file, "Foo.txt");
+    assertEquals("Bar.java", assertOneElement(getReferentFilesForElementUnderCaret()).getName());
   }
 
   private CompilerDirectHierarchyInfo getHierarchyForElementUnderCaret() {

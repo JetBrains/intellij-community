@@ -73,7 +73,7 @@ import java.util.List;
 /**
  * @author Sergey.Malenkov
  */
-final class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
+public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.RED;
@@ -95,7 +95,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   private Configurable myQueuedConfigurable;
   private boolean myPaintInternalInfo;
 
-  SettingsTreeView(SettingsFilter filter, ConfigurableGroup... groups) {
+  public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
@@ -575,18 +575,10 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       if (node != null) {
         project = findConfigurableProject(node, false);
       }
-      if (project != null) {
-        myProjectIcon.setIcon(selected
-                              ? AllIcons.General.ProjectConfigurableSelected
-                              : AllIcons.General.ProjectConfigurable);
-        myProjectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
-                                                           ? "configurable.default.project.tooltip"
-                                                           : "configurable.current.project.tooltip"));
-        myProjectIcon.setVisible(true);
-      }
-      else {
-        myProjectIcon.setVisible(false);
-      }
+      Configurable configurable = null;
+      if(node != null)
+        configurable = node.myConfigurable;
+      setProjectIcon(myProjectIcon, configurable, project, selected);
       // configure node icon
       Icon nodeIcon = null;
       if (value instanceof DefaultMutableTreeNode) {
@@ -633,10 +625,25 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
           view.repaint();
         }
       }
+
       return this;
     }
   }
 
+  protected void setProjectIcon(JLabel projectIcon, Configurable configurable, @Nullable Project project, boolean selected) {
+    if (project != null) {
+      projectIcon.setIcon(selected
+        ? AllIcons.General.ProjectConfigurableSelected
+        : AllIcons.General.ProjectConfigurable);
+      projectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
+        ? "configurable.default.project.tooltip"
+        : "configurable.current.project.tooltip"));
+      projectIcon.setVisible(true);
+    }
+    else {
+      projectIcon.setVisible(false);
+    }
+  }
   private final class MyTree extends SimpleTree {
     @Override
     public String getToolTipText(MouseEvent event) {

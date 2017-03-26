@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.IntentionLike;
+import com.intellij.codeInsight.intention.FileModifier;
 
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
@@ -37,6 +37,6 @@ import com.intellij.codeInsight.intention.IntentionLike;
  * @see ProblemDescriptor
  * @see com.intellij.openapi.util.Iconable
  */
-public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, IntentionLike {
+public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier {
   LocalQuickFix[] EMPTY_ARRAY = new LocalQuickFix[0];
 }

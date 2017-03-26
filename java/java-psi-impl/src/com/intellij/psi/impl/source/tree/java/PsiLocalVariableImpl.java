@@ -139,7 +139,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new THashSet<PsiVariable>());
+    return computeConstantValue(new THashSet<>());
   }
 
   @Override

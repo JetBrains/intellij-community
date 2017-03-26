@@ -45,7 +45,6 @@ import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,7 +164,7 @@ public class IdeaApplication {
 
        True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
        frame buffer content without the usual repainting, even when the EDT is blocked. */
-    if (!SystemProperties.isTrueSmoothScrollingEnabled() && Patches.SUN_BUG_ID_6209673) {
+    if (Patches.REPAINT_MANAGER_LEAK) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 

@@ -105,6 +105,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.QUOTE_END, QUOTE_CHARACTER);
 
     ourMap.put(RegExpTT.NON_CAPT_GROUP, PARENTHS);
+    ourMap.put(RegExpTT.ATOMIC_GROUP, PARENTHS);
     ourMap.put(RegExpTT.POS_LOOKBEHIND, PARENTHS);
     ourMap.put(RegExpTT.NEG_LOOKBEHIND, PARENTHS);
     ourMap.put(RegExpTT.POS_LOOKAHEAD, PARENTHS);

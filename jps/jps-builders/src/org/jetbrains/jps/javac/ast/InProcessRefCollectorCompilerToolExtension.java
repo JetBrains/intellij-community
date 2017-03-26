@@ -64,7 +64,7 @@ public class InProcessRefCollectorCompilerToolExtension extends AbstractRefColle
     final JavacFileReferencesRegistrar[] myRegistrars;
 
     private JavacFileDataConsumer() {
-      List<JavacFileReferencesRegistrar> registrars = new ArrayList<JavacFileReferencesRegistrar>();
+      List<JavacFileReferencesRegistrar> registrars = new ArrayList<>();
       for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
         if (registrar.isEnabled()) {
           registrar.initialize();

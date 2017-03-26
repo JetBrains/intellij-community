@@ -148,6 +148,11 @@ public class VcsUtil {
   }
 
   @Nullable
+  public static AbstractVcs findVcsByKey(@NotNull Project project, @NotNull VcsKey key) {
+    return ProjectLevelVcsManager.getInstance(project).findVcsByName(key.getName());
+  }
+
+  @Nullable
   public static VirtualFile getVcsRootFor(@NotNull Project project, FilePath filePath) {
     return computeValue(project, manager -> manager.getVcsRootFor(filePath));
   }

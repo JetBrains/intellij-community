@@ -109,9 +109,18 @@ public class DocumentUndoProvider implements Disposable {
     }
 
     private boolean isUndoable(Document document) {
-      if (!UndoManagerImpl.isRefresh()) return true;
+      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+      VirtualFile file = ref.getFile();
 
-      return getUndoManager().isUndoOrRedoAvailable(DocumentReferenceManager.getInstance().create(document));
+      // Allow undo even from refresh if requested
+      if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
+        return true;
+      }
+      else {
+        if (!UndoManagerImpl.isRefresh()) return true;
+      }
+
+      return getUndoManager().isUndoOrRedoAvailable(ref);
     }
   }
 }

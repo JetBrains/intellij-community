@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +38,7 @@ public class VariableInitializationChecker {
 
   public static boolean isVariableDefinitelyInitialized(@NotNull String varName, @NotNull Instruction[] controlFlow) {
     DFAEngine<Data> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(varName), new MySemilattice());
-    final ArrayList<Data> result = engine.performDFAWithTimeout();
+    final List<Data> result = engine.performDFAWithTimeout();
     if (result == null) return false;
 
     return result.get(controlFlow.length - 1).get();
@@ -68,7 +68,7 @@ public class VariableInitializationChecker {
     }
 
     @Override
-    public void fun(Data e, Instruction instruction) {
+    public void fun(@NotNull Data e, @NotNull Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction &&
           ((ReadWriteVariableInstruction)instruction).getVariableName().equals(myVar)) {
         e.set(true);
@@ -81,18 +81,13 @@ public class VariableInitializationChecker {
       return new Data(false);
     }
 
-    @Override
-    public boolean isForward() {
-      return true;
-    }
-
     private final String myVar;
   }
 
   private static class MySemilattice implements Semilattice<Data> {
     @NotNull
     @Override
-    public Data join(@NotNull ArrayList<Data> ins) {
+    public Data join(@NotNull List<Data> ins) {
       if (ins.isEmpty()) return new Data(false);
 
       boolean b = true;
@@ -104,7 +99,7 @@ public class VariableInitializationChecker {
     }
 
     @Override
-    public boolean eq(Data e1, Data e2) {
+    public boolean eq(@NotNull Data e1, @NotNull Data e2) {
       return e1.get().booleanValue() == e2.get().booleanValue();
     }
   }

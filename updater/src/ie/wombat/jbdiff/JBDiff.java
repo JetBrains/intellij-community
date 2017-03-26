@@ -28,6 +28,7 @@
 package ie.wombat.jbdiff;
 
 import com.intellij.updater.Utils;
+import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
 import java.io.*;
 import java.util.Stack;
@@ -341,7 +342,7 @@ public class JBDiff {
                  * comprises 3 x 32 bit integers. The ctrlBlock is not compressed.
                  */
 
-    ByteArrayOutputStream arrayOut = new ByteArrayOutputStream();
+    ByteArrayOutputStream arrayOut = new OpenByteArrayOutputStream();
     DataOutputStream diffOut = new DataOutputStream(arrayOut);
 
     int oldscore, scsc;
@@ -488,7 +489,7 @@ public class JBDiff {
     headerStream.writeLong(newsize);
     headerStream.flush();
 
-    Utils.copyBytesToStream(arrayOut, diffFileOut);
+    arrayOut.writeTo(diffFileOut);
 
     return newBuf;
   }

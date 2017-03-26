@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
@@ -252,11 +252,11 @@ class EditorCoordinateMapper {
   }
 
   @NotNull
-  VisualPosition xyToVisualPosition(@NotNull Point p) {
-    int visualLine = yToVisualLine(p.y);
+  VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    int visualLine = yToVisualLine((int)p.getY());
     int lastColumn = 0;
     float x = getStartX(visualLine);
-    int px = p.x;
+    float px = (float)p.getX();
     if (visualLine < myView.getEditor().getVisibleLineCount()) {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
@@ -300,7 +300,7 @@ class EditorCoordinateMapper {
   }
 
   @NotNull
-  Point visualPositionToXY(@NotNull VisualPosition pos) {
+  Point2D visualPositionToXY(@NotNull VisualPosition pos) {
     int visualLine = pos.line;
     int column = pos.column;
     int y = visualLineToY(visualLine);
@@ -316,7 +316,7 @@ class EditorCoordinateMapper {
         }
         int endColumn = fragment.getEndVisualColumn();
         if (column < endColumn || column == endColumn && !pos.leansRight) {
-          return new Point((int)fragment.visualColumnToX(column), y);
+          return new Point2D.Float(fragment.visualColumnToX(column), y);
         }
         x = fragment.getEndX();
         lastColumn = endColumn;
@@ -328,11 +328,11 @@ class EditorCoordinateMapper {
       }
     }
     int additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
-    return new Point((int)(x) + additionalShift, y);
+    return new Point2D.Float(x + additionalShift, y);
   }
 
   @NotNull
-  Point offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+  Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     offset = Math.max(0, Math.min(myDocument.getTextLength(), offset));
     offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
     int logicalLine = myDocument.getLineNumber(offset);
@@ -362,6 +362,6 @@ class EditorCoordinateMapper {
         }
       }
     }
-    return new Point((int)x, y);
+    return new Point2D.Float(x, y);
   }
 }

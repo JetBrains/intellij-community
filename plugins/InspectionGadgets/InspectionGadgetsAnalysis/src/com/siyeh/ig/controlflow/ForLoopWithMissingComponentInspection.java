@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,11 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
           continue;
         }
         final PsiVariable variable = (PsiVariable)declaredElement;
+        if (TypeUtils.variableHasTypeOrSubtype(variable, "java.util.ListIterator")) {
+          if (isHasNext(condition, variable) || isHasPrevious(condition, variable)) {
+            return true;
+          }
+        }
         if (TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_UTIL_ITERATOR)) {
           if (isHasNext(condition, variable)) {
             return true;
@@ -146,16 +151,23 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
       return isCallToBooleanZeroArgumentMethod(HardcodedMethodConstants.HAS_NEXT, condition, iterator);
     }
 
+    private boolean isHasPrevious(PsiExpression condition, PsiVariable iterator) {
+      return isCallToBooleanZeroArgumentMethod("hasPrevious", condition, iterator);
+    }
+
     private boolean isHasMoreElements(PsiExpression condition, PsiVariable enumeration) {
       return isCallToBooleanZeroArgumentMethod("hasMoreElements", condition, enumeration);
     }
 
     private boolean isCallToBooleanZeroArgumentMethod(String methodName, PsiExpression expression, PsiVariable calledOn) {
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        return isHasNext(lhs, calledOn) || isHasNext(rhs, calledOn);
+      if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          if (isCallToBooleanZeroArgumentMethod(methodName, operand, calledOn)) {
+            return true;
+          }
+        }
+        return false;
       }
       if (!(expression instanceof PsiMethodCallExpression)) {
         return false;

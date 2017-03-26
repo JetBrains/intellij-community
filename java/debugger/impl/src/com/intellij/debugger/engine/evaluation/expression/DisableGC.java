@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,18 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  *         Date: 9/30/10
  */
-public class DisableGC implements Evaluator{
+public class DisableGC implements Evaluator {
   private final Evaluator myDelegate;
 
-  public DisableGC(@NotNull Evaluator delegate) {
+  private DisableGC(@NotNull Evaluator delegate) {
     myDelegate = delegate;
+  }
+
+  public static Evaluator create(@NotNull Evaluator delegate) {
+    if (!(delegate instanceof DisableGC)) {
+      return new DisableGC(delegate);
+    }
+    return delegate;
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

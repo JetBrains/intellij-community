@@ -429,13 +429,17 @@ public class PackageAnnotator {
       boolean touchedClass = false;
       final Collection methodSigs = classData.getMethodSigs();
       for (final Object nameAndSig : methodSigs) {
+        final int covered = classData.getStatus((String)nameAndSig);
+        if (covered != LineCoverage.NONE) {
+          touchedClass = true;
+        }
+
         if (isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
           continue;
         }
-        final int covered = classData.getStatus((String)nameAndSig);
+
         if (covered != LineCoverage.NONE) {
           toplevelClassCoverageInfo.coveredMethodCount++;
-          touchedClass = true;
         }
         toplevelClassCoverageInfo.totalMethodCount++;
       }

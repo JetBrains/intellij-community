@@ -46,5 +46,6 @@ public class ConstructorParametersFixer {
     WrapArrayToArraysAsListFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
     WrapLongWithMathToIntExactFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
+    WrapStringWithFileFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
   }
 }

@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -50,6 +51,11 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   public GitRepositoryManager(@NotNull Project project, @NotNull VcsRepositoryManager vcsRepositoryManager) {
     super(vcsRepositoryManager, assertNotNull(GitVcs.getInstance(project)), GitUtil.DOT_GIT);
     mySettings = GitVcsSettings.getInstance(project);
+  }
+
+  @NotNull
+  public static GitRepositoryManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
   @Override

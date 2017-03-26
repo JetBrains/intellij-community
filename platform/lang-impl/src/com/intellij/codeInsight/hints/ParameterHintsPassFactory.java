@@ -90,7 +90,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .filter((e) -> e != null)
         .collect(Collectors.toList());
-
+      
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
     }
 
@@ -108,16 +108,23 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
     }
 
-    private static boolean isMatchedByAny(MethodInfo info, List<Matcher> matchers) {
-      return matchers.stream().anyMatch((e) -> e.isMatching(info.getFullyQualifiedName(), info.getParamNames()));
+    private static boolean isMatchedByAny(HintInfo info, List<Matcher> matchers) {
+      if (info instanceof HintInfo.MethodInfo) {
+        HintInfo.MethodInfo methodInfo = (HintInfo.MethodInfo)info;
+        return matchers.stream().anyMatch((e) -> e.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
+      }
+      return false;
     }
 
     private void process(PsiElement element, InlayParameterHintsProvider provider, List<Matcher> blackListMatchers) {
       List<InlayInfo> hints = provider.getParameterHints(element);
       if (hints.isEmpty()) return;
-      MethodInfo info = provider.getMethodInfo(element);
+      HintInfo info = provider.getHintInfo(element);
       if (info == null || !isMatchedByAny(info, blackListMatchers)) {
-        hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
+        hints.forEach((hint) -> {
+          String presentation = provider.getInlayPresentation(hint.getText());
+          myAnnotations.put(hint.getOffset(), presentation);
+        });
       }
     }
 
@@ -135,9 +142,11 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength())) {
         if (!presentationManager.isParameterHint(inlay)) continue;
         int offset = inlay.getOffset();
+        
         String newText = myAnnotations.remove(offset);
-        if (delayRemoval(inlay, caretMap)) continue;
         String oldText = presentationManager.getHintText(inlay);
+        
+        if (delayRemoval(inlay, caretMap)) continue;
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);

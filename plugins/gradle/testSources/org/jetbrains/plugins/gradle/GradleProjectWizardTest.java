@@ -74,14 +74,14 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "\n" +
                  "apply plugin: 'java'\n" +
                  "\n" +
-                 "sourceCompatibility = 1.5\n" +
+                 "sourceCompatibility = 1.8\n" +
                  "\n" +
                  "repositories {\n" +
                  "    mavenCentral()\n" +
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
+                 "    testCompile group: 'junit', name: 'junit', version: '4.12'\n" +
                  "}\n",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
   }

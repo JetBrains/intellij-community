@@ -13,7 +13,7 @@ class A {
       System.out.println(o.get());
     }
     System.out.println(o.orElse(null));
-    Set<String> set = o.isPresent() ? Collections.singleton(o.get()) : Collections.emptySet();
+    Set<String> set = o.map(Collections::singleton).orElse(Collections.emptySet());
   }
 
 }

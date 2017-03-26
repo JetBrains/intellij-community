@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -709,6 +710,18 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element) {
+    return new DeleteElementFix(element);
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @Nls @NotNull String text) {
+    return new DeleteElementFix(element, text);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createSafeDeleteFix(@NotNull PsiElement element) {
     return new SafeDeleteFix(element);
   }
@@ -830,5 +843,17 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
     return new ConvertCollectionToArrayFix(collectionExpression, arrayType);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
+    return new InsertMethodCallFix(call, method);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return new WrapStringWithFileFix(type, expression);
   }
 }

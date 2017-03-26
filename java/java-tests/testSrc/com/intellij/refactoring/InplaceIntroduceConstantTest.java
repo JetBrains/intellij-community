@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
@@ -127,6 +128,20 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
       }
     });
+  }
+
+  public void testEnsureVisibilityForAnno() throws Exception {
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = PsiModifier.PRIVATE;
+    try {
+      doTest(new Pass<AbstractInplaceIntroducer>() {
+        @Override
+        public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        }
+      });
+    }
+    finally {
+      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = null;
+    }
   }
 
   public void testCorrectFinalPosition() throws Exception {

@@ -25,8 +25,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
@@ -41,21 +43,8 @@ public abstract class DashboardTreeAction<T, C extends TreeContent> extends AnAc
     Presentation presentation = e.getPresentation();
     List<T> targetNodes = getTargetNodes(e);
 
-    boolean visible;
-    boolean enabled;
-
-    if (targetNodes == null) {
-      visible = false;
-      enabled = false;
-    }
-    else {
-      visible = true;
-      enabled = true;
-      for (T targetNode : targetNodes) {
-        visible &= isVisible4(targetNode);
-        enabled &= visible && isEnabled4(targetNode);
-      }
-    }
+    boolean visible = isVisibleForAnySelection(e) || (!targetNodes.isEmpty() && targetNodes.stream().allMatch(this::isVisible4));
+    boolean enabled = visible && (!targetNodes.isEmpty() && targetNodes.stream().allMatch(this::isEnabled4));
 
     presentation.setVisible(visible);
     presentation.setEnabled(enabled);
@@ -65,27 +54,27 @@ public abstract class DashboardTreeAction<T, C extends TreeContent> extends AnAc
   /**
    * Invokes {@link #collectNodes(AbstractTreeBuilder) collectNodes()} to collect nodes.
    * If each collected node could be casted to tree action node class,
-   * returns a list of collected nodes casted to tree action node class, otherwise returns {@code null}.
+   * returns a list of collected nodes casted to tree action node class, otherwise returns empty list.
    *
    * @param e Action event.
    * @return List of target nodes for this action.
    */
-  @Nullable
+  @NotNull
   protected List<T> getTargetNodes(AnActionEvent e) {
     C content = getTreeContent(e);
     if (content == null) {
-      return null;
+      return Collections.emptyList();
     }
     Set<?> selectedElements = collectNodes(content.getBuilder());
     int selectionCount = selectedElements.size();
     if (selectionCount == 0 || selectionCount > 1 && !isMultiSelectionAllowed()) {
-      return null;
+      return Collections.emptyList();
     }
     Class<T> targetNodeClass = getTargetNodeClass();
     List<T> result = new ArrayList<>();
     for (Object selectedElement : selectedElements) {
       if (!targetNodeClass.isInstance(selectedElement)) {
-        return null;
+        return Collections.emptyList();
       }
       result.add(targetNodeClass.cast(selectedElement));
     }
@@ -108,13 +97,13 @@ public abstract class DashboardTreeAction<T, C extends TreeContent> extends AnAc
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    List<T> targetNodes = getTargetNodes(e);
-    if (targetNodes == null) {
-      return;
-    }
-
-    List<T> verifiedTargetNodes = ContainerUtil.filter(targetNodes, targetNode -> isVisible4(targetNode) && isEnabled4(targetNode));
+    List<T> verifiedTargetNodes = getTargetNodes(e).stream().filter(node -> isVisible4(node) && isEnabled4(node))
+      .collect(Collectors.toList());
     doActionPerformed(getTreeContent(e), e, verifiedTargetNodes);
+  }
+
+  protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {
+    return false;
   }
 
   protected boolean isMultiSelectionAllowed() {
@@ -133,9 +122,7 @@ public abstract class DashboardTreeAction<T, C extends TreeContent> extends AnAc
   }
 
   protected void doActionPerformed(@NotNull C content, AnActionEvent e, List<T> nodes) {
-    for (T node : nodes) {
-      doActionPerformed(content, e, node);
-    }
+    nodes.forEach(node -> doActionPerformed(content, e , node));
   }
 
   protected void doActionPerformed(@NotNull C content, AnActionEvent e, T node) {

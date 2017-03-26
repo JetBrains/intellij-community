@@ -65,7 +65,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     SvnVcs vcs = SvnVcs.getInstance(myProject);
 
-    myAuthenticationManager = new SvnAuthenticationManager(myProject, configFile);
+    myAuthenticationManager = new SvnAuthenticationManager(vcs, configFile);
 
     myInteractiveProvider = new SvnTestInteractiveAuthentication(myAuthenticationManager);
     myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, myAuthenticationManager));

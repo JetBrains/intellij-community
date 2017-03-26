@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection
 
-import com.intellij.codeInspection.java19modules.Java9NonAccessibleTypeExposedInspection
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull
 class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(Java9NonAccessibleTypeExposedInspection())
+    myFixture.enableInspections(ClassEscapesItsScopeInspection())
     addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
     addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)
     add("apiPkg", "PublicApi", "public class PublicApi {}")
@@ -73,13 +73,13 @@ public class Highlighted {
     highlight("""package apiPkg;
 public class Highlighted {
   static { PackageLocal tmp = new PackageLocal(); System.out.println(tmp);}
-  public <warning descr="The class is not exported from the module">PackageLocal</warning> myVar;
+  public <warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> myVar;
   protected Highlighted() {}
-  public Highlighted(<warning descr="The class is not exported from the module">PackageLocal</warning> var) {
+  public Highlighted(<warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> var) {
     PackageLocal tmp = new PackageLocal(); myVar = var!= null ? var : tmp;
   }
-  public <warning descr="The class is not exported from the module">PackageLocal</warning> getVar() {return myVar;}
-  protected void setVar(<warning descr="The class is not exported from the module">PackageLocal</warning> var) {myVar = var;}
+  public <warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> var) {myVar = var;}
 }
 """)
   }
@@ -95,6 +95,14 @@ public class Highlighted {
   }
   PackageLocal getVar() {return myVar;}
   private void setVar(PackageLocal var) {myVar = var;}
+}
+""")
+  }
+  fun testPackageLocalEncapsulated2() {
+    highlight("""package apiPkg;
+public class Highlighted {
+  Highlighted(PackageLocal var) {
+  }
 }
 """)
   }
@@ -166,13 +174,13 @@ public class Highlighted {
 public class Highlighted {
   class PackageLocalNested {}
   { PackageLocalNested tmp = new PackageLocalNested(); System.out.println(tmp);}
-  public <warning descr="The class is not exported from the module">PackageLocalNested</warning> myVar;
+  public <warning descr="Class 'PackageLocalNested' is not exported from module 'MAIN'">PackageLocalNested</warning> myVar;
   protected Highlighted() {}
-  public Highlighted(<warning descr="The class is not exported from the module">PackageLocalNested</warning> var) {
+  public Highlighted(<warning descr="Class 'PackageLocalNested' is not exported from module 'MAIN'">PackageLocalNested</warning> var) {
     PackageLocalNested tmp = new PackageLocalNested(); myVar = var!= null ? var : tmp;
   }
-  public <warning descr="The class is not exported from the module">PackageLocalNested</warning> getVar() {return myVar;}
-  protected void setVar(<warning descr="The class is not exported from the module">PackageLocalNested</warning> var) {myVar = var;}
+  public <warning descr="Class 'PackageLocalNested' is not exported from module 'MAIN'">PackageLocalNested</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'PackageLocalNested' is not exported from module 'MAIN'">PackageLocalNested</warning> var) {myVar = var;}
 }
 """)
   }
@@ -180,9 +188,9 @@ public class Highlighted {
   fun testPackageLocalInInterface() {
     highlight("""package apiPkg;
 public interface Highlighted {
-  <warning descr="The class is not exported from the module">PackageLocal</warning> myVar = new PackageLocal();
-  <warning descr="The class is not exported from the module">PackageLocal</warning> getVar();
-  void setVar(<warning descr="The class is not exported from the module">PackageLocal</warning> var);
+  <warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> myVar = new PackageLocal();
+  <warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> getVar();
+  void setVar(<warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> var);
 }
 """)
   }
@@ -202,11 +210,11 @@ public interface Highlighted {
     highlight("""package apiPkg;
 import implPkg.NotExported;
 public class Highlighted {
-  public <warning descr="The class is not exported from the module">NotExported</warning> myVar;
+  public <warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning> myVar;
   protected Highlighted() {}
-  public Highlighted(<warning descr="The class is not exported from the module">NotExported</warning> var) {setVar(var);}
-  public <warning descr="The class is not exported from the module">NotExported</warning> getVar() {return myVar;}
-  protected void setVar(<warning descr="The class is not exported from the module">NotExported</warning> var) {myVar = var;}
+  public Highlighted(<warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning> var) {setVar(var);}
+  public <warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning> var) {myVar = var;}
 }
 """)
   }
@@ -221,8 +229,8 @@ public class Highlighted {
 import apiPkg.PublicOuter.PackageLocal;
 public class Highlighted {
   private PackageLocal.DoubleNested myVar;
-  public <warning descr="The class is not exported from the module">PackageLocal.DoubleNested</warning> getVar() {return myVar;}
-  protected void setVar(<warning descr="The class is not exported from the module">PackageLocal.DoubleNested</warning> var) {myVar = var;}
+  public <warning descr="Class 'PackageLocal.DoubleNested' is not exported from module 'MAIN'">PackageLocal.DoubleNested</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'PackageLocal.DoubleNested' is not exported from module 'MAIN'">PackageLocal.DoubleNested</warning> var) {myVar = var;}
 }
 """)
   }
@@ -247,11 +255,11 @@ public class Highlighted {
 import implPkg.NotExported;
 import java.util.*;
 public class Highlighted {
-  public <warning descr="The class is not exported from the module">NotExported</warning>[] myVar;
-  protected Highlighted(List<<warning descr="The class is not exported from the module">NotExported</warning>[]> list) {Iterator<NotExported[]> it = list.iterator(); myVar = it.next();}
-  public Highlighted(<warning descr="The class is not exported from the module">NotExported</warning>[] var) {myVar = var;}
-  public <warning descr="The class is not exported from the module">NotExported</warning>[] getVar() {return myVar;}
-  protected void setVar(<warning descr="The class is not exported from the module">NotExported</warning>[][] var) {myVar = var[0];}
+  public <warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning>[] myVar;
+  protected Highlighted(List<<warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning>[]> list) {Iterator<NotExported[]> it = list.iterator(); myVar = it.next();}
+  public Highlighted(<warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning>[] var) {myVar = var;}
+  public <warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning>[] getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'NotExported' is not exported from module 'MAIN'">NotExported</warning>[][] var) {myVar = var[0];}
 }""")
   }
 
@@ -265,9 +273,9 @@ import otherPkg.*;
 import implPkg.*;
 public class Highlighted {
   public void throwsPublic() throws PublicException {}
-  public void throwsPackageLocal() throws <warning descr="The class is not exported from the module">PackageLocalException</warning> {}
+  public void throwsPackageLocal() throws <warning descr="Class 'PackageLocalException' is not exported from module 'MAIN'">PackageLocalException</warning> {}
   public void throwsOther() throws OtherException {}
-  public void throwsNotExported() throws <warning descr="The class is not exported from the module">NotExportedException</warning> {}
+  public void throwsNotExported() throws <warning descr="Class 'NotExportedException' is not exported from module 'MAIN'">NotExportedException</warning> {}
 }
 """)
   }
@@ -304,24 +312,24 @@ public class Highlighted<T extends MyInterface> {
     highlight("""package apiPkg;
 import java.util.*;
 import implPkg.*;
-public class Highlighted<T extends <warning descr="The class is not exported from the module">MyInterface</warning>> {
+public class Highlighted<T extends MyInterface> {
   protected Set<T> get1() { return new HashSet<>();}
-  public Set<<warning descr="The class is not exported from the module">MyClass</warning>> get2() { return new HashSet<MyClass>();}
-  protected Set<? extends <warning descr="The class is not exported from the module">MyClass</warning>> get3() { return new HashSet<>();}
-  public <X extends Object&<warning descr="The class is not exported from the module">MyInterface</warning>> Set<X> get4() { return new HashSet<>();}
-  public Map<String, Set<<warning descr="The class is not exported from the module">MyInterface</warning>>> get5() {return new HashMap<>();}
-  public void copy1(Set<<warning descr="The class is not exported from the module">MyInterface</warning>> s) {}
-  public void copy2(Set<? super <warning descr="The class is not exported from the module">MyClass</warning>> s) {}
+  public Set<<warning descr="Class 'MyClass' is not exported from module 'MAIN'">MyClass</warning>> get2() { return new HashSet<MyClass>();}
+  protected Set<? extends <warning descr="Class 'MyClass' is not exported from module 'MAIN'">MyClass</warning>> get3() { return new HashSet<>();}
+  public <X extends Object&<warning descr="Class 'MyInterface' is not exported from module 'MAIN'">MyInterface</warning>> Set<X> get4() { return new HashSet<>();}
+  public Map<String, Set<<warning descr="Class 'MyInterface' is not exported from module 'MAIN'">MyInterface</warning>>> get5() {return new HashMap<>();}
+  public void copy1(Set<<warning descr="Class 'MyInterface' is not exported from module 'MAIN'">MyInterface</warning>> s) {}
+  public void copy2(Set<? super <warning descr="Class 'MyClass' is not exported from module 'MAIN'">MyClass</warning>> s) {}
 
-  public static class Nested1<T extends <warning descr="The class is not exported from the module">MyClass</warning>&
-      Iterable<<warning descr="The class is not exported from the module">MyInterface</warning>>> {
-    public Iterator<<warning descr="The class is not exported from the module">MyInterface</warning>> iterator() {return null;}
+  public static class Nested1<T extends MyClass&
+      Iterable<MyInterface>> {
+    public Iterator<<warning descr="Class 'MyInterface' is not exported from module 'MAIN'">MyInterface</warning>> iterator() {return null;}
   }
-  public static class Nested2<T extends <warning descr="The class is not exported from the module">MyInterface</warning>&AutoCloseable> {
+  public static class Nested2<T extends MyInterface&AutoCloseable> {
     public void close() {}
   }
-  public interface Nested3<X extends Iterable<<warning descr="The class is not exported from the module">MyInterface</warning>>> {}
-  public interface Nested4<X extends Iterable<? extends <warning descr="The class is not exported from the module">MyInterface</warning>>> {}
+  public interface Nested3<X extends Iterable<MyInterface>> {}
+  public interface Nested4<X extends Iterable<? extends MyInterface>> {}
 }
 """)
   }

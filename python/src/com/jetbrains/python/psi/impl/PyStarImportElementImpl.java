@@ -37,6 +37,8 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author dcheryasov
  */
@@ -93,21 +95,13 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
       PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
-        final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
-        if (source instanceof PyFile) {
-          PyFile sourceFile = (PyFile)source;
+        final PyFile sourceFile = as(PyUtil.turnDirIntoInit(importedFile), PyFile.class);
+        if (sourceFile != null && PyUtil.isStarImportableFrom(name, sourceFile)) {
           final PyModuleType moduleType = new PyModuleType(sourceFile);
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
                                                                                       PyResolveContext.defaultContext());
-          if (results != null && !results.isEmpty() && PyUtil.isStarImportableFrom(name, sourceFile)) {
-            if (results.isEmpty()) {
-              return Collections.emptyList();
-            }
-            final List<RatedResolveResult> res = Lists.newArrayList();
-            for (RatedResolveResult result : results) {
-              res.add(result);
-            }
-            return res;
+          if (results != null && !results.isEmpty()) {
+            return Lists.newArrayList(results);
           }
         }
       }

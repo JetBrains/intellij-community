@@ -56,6 +56,7 @@ public class ResourceBundleImpl extends ResourceBundle {
     return myDefaultPropertiesFile.getParent().getVirtualFile();
   }
 
+  @Override
   public boolean isValid() {
     return myValid && myDefaultPropertiesFile.getContainingFile().isValid();
   }

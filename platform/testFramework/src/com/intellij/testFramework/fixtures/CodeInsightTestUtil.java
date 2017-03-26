@@ -53,6 +53,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
@@ -66,6 +67,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static junit.framework.Assert.assertTrue;
@@ -157,15 +159,10 @@ public class CodeInsightTestUtil {
   public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture,
                                         @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        new ListTemplatesAction().actionPerformedImpl(fixture.getProject(), fixture.getEditor());
-        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
-        assert lookup != null;
-        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    }.execute();
+    new ListTemplatesAction().actionPerformedImpl(fixture.getProject(), fixture.getEditor());
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
+    assert lookup != null;
+    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     fixture.checkResultByFile(after, false);
   }
 
@@ -266,6 +263,8 @@ public class CodeInsightTestUtil {
     GotoTargetHandler.GotoData data = new GotoImplementationHandler().getSourceAndTargetElements(editor, file);
     if (data.listUpdaterTask != null) {
       JBList list = new JBList();
+      CollectionListModel model = new CollectionListModel(new ArrayList());
+      list.setModel(model);
       list.setModel(new NameFilteringListModel(list, Function.ID, Condition.FALSE, String::new));
       JBPopup popup = new ComponentPopupBuilderImpl(list, null).createPopup();
       data.listUpdaterTask.init((AbstractPopup)popup, list, new Ref<>());

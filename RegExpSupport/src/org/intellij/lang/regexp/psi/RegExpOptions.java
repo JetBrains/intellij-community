@@ -15,29 +15,15 @@
  */
 package org.intellij.lang.regexp.psi;
 
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * Represents an inline options element (?x) or (?-x). Returned from {@link org.intellij.lang.regexp.psi.RegExpSetOptions}
  */
 public interface RegExpOptions extends RegExpElement {
-    /**
-     * @param flag  the flag to check, e.g. 'i'
-     * @return true, when the specified flag is switched on, false otherwise.
-     */
-    boolean isSwitchedOn(char flag);
 
   /**
-   * It's possible for a flag to be both switched on and switched off.
-   * @param flag  the flag to check, e.g. 'd'
-   * @return true, when the specified flag is switched off, false otherwise.
+   * Checks whether a certain option is set.
+   * @return true, if the option is set, false otherwise.
    */
-    boolean isSwitchedOff(char flag);
+  boolean isSet(char option);
 
-    @Nullable
-    ASTNode getOptionsOn();
-
-    @Nullable
-    ASTNode getOptionsOff();
 }

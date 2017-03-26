@@ -19,6 +19,6 @@ class User1(object):
         self.x = value
 
 c = User1(10)
-print(c.get() + <warning descr="Expected type 'Number', got 'str' instead">'foo'</warning>)
+print(c.get() + <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>)
 c.put(14)
 c.put(<weak_warning descr="Expected type 'int' (matched generic type 'TypeVar('T')'), got 'str' instead">'foo'</weak_warning>)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -61,10 +61,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 /**
  * @author ven
  */
-public class TypesUtil {
+public class TypesUtil implements TypeConstants {
 
-  @NonNls
-  public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<>();
   public static final PsiPrimitiveType[] PRIMITIVES = {
     PsiType.BYTE,
     PsiType.CHAR,
@@ -165,18 +163,28 @@ public class TypesUtil {
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mBNOT, BITWISE_NEGATE);
   }
 
-  private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
+  static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
 
   static {
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, 1);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_SHORT, 2);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_INTEGER, 3);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_LONG, 4);
-    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER, 5);
-    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, 6);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_FLOAT, 7);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_DOUBLE, 8);
-    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 9);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, BYTE_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_CHARACTER, CHARACTER_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_SHORT, SHORT_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_INTEGER, INTEGER_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_LONG, LONG_RANK);
+    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER, BIG_INTEGER_RANK);
+    TYPE_TO_RANK.put(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, BIG_DECIMAL_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_FLOAT, FLOAT_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_DOUBLE, DOUBLE_RANK);
+    TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 10);
+  }
+
+  static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
+
+  static {
+    TYPE_TO_RANK.forEachEntry((fqn, rank) -> {
+      RANK_TO_TYPE.put(rank, fqn);
+      return true;
+    });
   }
 
   private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
@@ -187,18 +195,6 @@ public class TypesUtil {
     PsiType.FLOAT,
     PsiType.DOUBLE
   );
-
-  static {
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_BYTE, PsiType.BYTE);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_CHARACTER, PsiType.CHAR);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_SHORT, PsiType.SHORT);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_INTEGER, PsiType.INT);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_LONG, PsiType.LONG);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE);
-    ourQNameToUnboxed.put(CommonClassNames.JAVA_LANG_VOID, PsiType.VOID);
-  }
 
   /**
    * @deprecated see {@link #canAssign}
@@ -277,6 +273,7 @@ public class TypesUtil {
                                                       @NotNull PsiElement context,
                                                       @NotNull ApplicableTo position) {
     if (!(context instanceof GroovyPsiElement)) return null;
+    if (targetType.equals(actualType)) return ConversionResult.OK;
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
       final ConversionResult result = converter.isConvertibleEx(targetType, actualType, (GroovyPsiElement)context, position);
@@ -399,7 +396,7 @@ public class TypesUtil {
   public static ConversionResult canCast(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull PsiElement context) {
     final ConversionResult result = areTypesConvertible(targetType, actualType, context, ApplicableTo.EXPLICIT_CAST);
     if (result != null) return result;
-    return TypeConversionUtil.areTypesConvertible(targetType, actualType) ? ConversionResult.OK : ConversionResult.ERROR;
+    return TypeConversionUtil.areTypesConvertible(actualType, targetType) ? ConversionResult.OK : ConversionResult.ERROR;
   }
 
   @NotNull
@@ -421,15 +418,11 @@ public class TypesUtil {
     return TypeConversionUtil.erasure(unboxPrimitiveTypeWrapper(result));
   }
 
+  @Contract("null -> null")
+  @Nullable
   public static PsiType unboxPrimitiveTypeWrapper(@Nullable PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null) {
-        PsiType unboxed = ourQNameToUnboxed.get(psiClass.getQualifiedName());
-        if (unboxed != null) type = unboxed;
-      }
-    }
-    return type;
+    PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
+    return unboxed == null ? type : unboxed;
   }
 
   public static PsiType boxPrimitiveType(@Nullable PsiType result,

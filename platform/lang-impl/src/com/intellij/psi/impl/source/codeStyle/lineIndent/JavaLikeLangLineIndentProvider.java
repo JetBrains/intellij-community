@@ -54,6 +54,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     ElseKeyword,
     IfKeyword,
     ForKeyword,
+    TryKeyword,
     DoKeyword,
     BlockComment,
     DocBlockStart,
@@ -119,7 +120,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         }
         int statementStart = getStatementStartOffset(beforeSemicolon);
         SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
-        if (!atStatementStart.isAfterOnSameLine(ForKeyword)) {
+        if (!isInsideForLikeConstruction(atStatementStart)) {
           return myFactory.createIndentCalculator(NONE, position -> statementStart);
         }
       }
@@ -179,6 +180,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return null;
   }
 
+  protected boolean isInsideForLikeConstruction(SemanticEditorPosition position) {
+    return position.isAfterOnSameLine(ForKeyword);
+  }
 
   private int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
     position.before().beforeOptional(BlockOpeningBrace);

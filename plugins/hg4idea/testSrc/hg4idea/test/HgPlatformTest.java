@@ -76,9 +76,8 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
       ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
     }
     finally {
-      myVcs.getGlobalSettings().setHgExecutable(null);
       try {
-        clearFields(this);
+        myVcs.getGlobalSettings().setHgExecutable(null);
       }
       finally {
         super.tearDown();

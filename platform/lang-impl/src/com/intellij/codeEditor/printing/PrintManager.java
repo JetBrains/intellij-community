@@ -23,6 +23,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -30,7 +31,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -218,7 +218,7 @@ class PrintManager {
   }
 
   static TextPainter initTextPainter(final PsiFile psiFile) {
-    return ApplicationManager.getApplication().runReadAction((Computable<TextPainter>)() -> doInitTextPainter(psiFile));
+    return ReadAction.compute(() -> doInitTextPainter(psiFile));
   }
 
   private static TextPainter doInitTextPainter(final PsiFile psiFile) {

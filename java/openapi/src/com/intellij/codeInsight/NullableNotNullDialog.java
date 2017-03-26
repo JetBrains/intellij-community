@@ -15,12 +15,16 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.PsiClass;
@@ -36,6 +40,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -55,6 +61,28 @@ public class NullableNotNullDialog extends DialogWrapper {
     myProject = project;
     init();
     setTitle("Nullable/NotNull configuration");
+  }
+
+  public static JButton createConfigureAnnotationsButton(Component context) {
+    final JButton button = new JButton(InspectionsBundle.message("configure.annotations.option"));
+    button.addActionListener(createActionListener(context));
+    return button;
+  }
+
+  /**
+   * Creates an action listener showing this dialog.
+   * @param context  component where project context will be retrieved from
+   * @return the action listener
+   */
+  public static ActionListener createActionListener(Component context) {
+    return new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        new NullableNotNullDialog(project).show();
+      }
+    };
   }
 
   @Override

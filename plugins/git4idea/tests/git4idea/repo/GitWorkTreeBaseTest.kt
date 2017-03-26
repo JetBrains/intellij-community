@@ -15,14 +15,14 @@
  */
 package git4idea.repo
 
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vfs.LocalFileSystem
 import git4idea.GitUtil
 import git4idea.branch.GitBranchesCollection
 import git4idea.config.GitVersion
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
 import git4idea.test.GitPlatformTest
-import git4idea.test.GitTestUtil
+import git4idea.test.git
+import git4idea.test.registerRepo
 import org.junit.Assume.assumeTrue
 import java.io.File
 
@@ -41,7 +41,7 @@ abstract class GitWorkTreeBaseTest : GitPlatformTest() {
     git("worktree add $myProjectPath")
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myProjectPath, GitUtil.DOT_GIT))
     assertNotNull(gitDir)
-    myRepo = GitTestUtil.registerRepo(project, myProjectPath)
+    myRepo = registerRepo(project, myProjectPath)
     assertEquals(1, myGitRepositoryManager.repositories.size)
     assertNotNull(myGitRepositoryManager.getRepositoryForRoot(myProjectRoot))
   }

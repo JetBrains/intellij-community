@@ -65,7 +65,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final LoadingDecorator myLoadingDecorator;
   private final Banner myBanner;
 
-  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter) {
+  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter, final ISettingsTreeViewFactory factory) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
@@ -145,7 +145,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         }
       }
     });
-    myTreeView = new SettingsTreeView(myFilter, groups);
+    myTreeView = factory.createTreeView(myFilter, groups);
     myTreeView.myTree.addKeyListener(mySearch);
     myEditor = new ConfigurableEditor(this, null) {
       @Override
@@ -320,6 +320,10 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   @Override
   JComponent getPreferredFocusedComponent() {
     return myTreeView != null ? myTreeView.myTree : myEditor;
+  }
+
+  public void addOptionsListener(OptionsEditorColleague colleague) {
+    myFilter.myContext.addColleague(colleague);
   }
 
   void updateStatus(Configurable configurable) {

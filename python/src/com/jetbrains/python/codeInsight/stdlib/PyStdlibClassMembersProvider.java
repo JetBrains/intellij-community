@@ -90,7 +90,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
 
   @Nullable
   private static PyCallable mockPatchCallable(@NotNull PyClassType classType, @Nullable PsiElement location, @NotNull TypeEvalContext context) {
-    if (!PyNames.FAKE_FUNCTION.equals(classType.getClassQName())) {
+    if (!PyNames.TYPES_FUNCTION_TYPE.equals(classType.getClassQName())) {
       return null;
     }
 

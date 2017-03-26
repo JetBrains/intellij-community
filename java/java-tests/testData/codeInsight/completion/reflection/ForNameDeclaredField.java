@@ -22,5 +22,5 @@ class ForNameDeclaredField {
 class Test {
   public int num;
   public int num2;
-  int num3;
+  int num1;
 }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ik
  */
 public interface CharTable {
-  Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
+  Key<CharTable> CHAR_TABLE_KEY = new Key<>("Char table");
 
   @NotNull
   CharSequence intern(@NotNull CharSequence text);

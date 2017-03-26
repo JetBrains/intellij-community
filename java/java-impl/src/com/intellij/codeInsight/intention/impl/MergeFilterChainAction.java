@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,7 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
         for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
           final PsiElement referenceElement = reference.getElement();
           if (referenceElement instanceof PsiReferenceExpression) {
-            ((PsiReferenceExpression)referenceElement).handleElementRename(name);
+            ExpressionUtils.bindReferenceTo((PsiReferenceExpression)referenceElement, name);
           }
         }
       }

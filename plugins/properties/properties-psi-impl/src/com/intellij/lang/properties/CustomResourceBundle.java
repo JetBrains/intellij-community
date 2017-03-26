@@ -85,6 +85,16 @@ public class CustomResourceBundle extends ResourceBundle {
     return baseDir;
   }
 
+  @Override
+  public boolean isValid() {
+    for (PropertiesFile file : myFiles) {
+      if (!file.getContainingFile().isValid()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

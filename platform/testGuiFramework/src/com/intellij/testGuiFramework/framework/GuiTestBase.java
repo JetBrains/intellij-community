@@ -41,6 +41,7 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
@@ -94,9 +95,7 @@ public abstract class GuiTestBase {
 
   @Before
   public void setUp() throws Exception {
-    if (!canRunGuiTests()) {
-      return;
-    }
+    Assume.assumeTrue(canRunGuiTests());
 
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +42,9 @@ import static com.intellij.psi.JavaTokenType.*;
  * @author peter
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
+  private static final Set<String> OPTIONAL_METHOD_NAMES =
+    ContainerUtil.set("isPresent", "of", "ofNullable", "fromNullable", "empty", "absent",
+                      "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
   private final Set<BinopInstruction> myReachable = new THashSet<>();
@@ -109,14 +116,34 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    if (!instruction.isReferenceWrite() && instruction.getPlace() instanceof PsiReferenceExpression) {
+    PsiExpression place = instruction.getPlace();
+    if (!instruction.isReferenceWrite() && place instanceof PsiReferenceExpression) {
       DfaValue dfaValue = instruction.getValue();
       if (dfaValue instanceof DfaVariableValue) {
         DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
-        myPossibleVariableValues.putValue(instruction, constValue != null && (constValue.getValue() == null || constValue.getValue() instanceof Boolean) ? constValue : ANY_VALUE);
+        boolean report = constValue != null && shouldReportConstValue(constValue.getValue(), place);
+        myPossibleVariableValues.putValue(instruction, report ? constValue : ANY_VALUE);
       }
     }
     return super.visitPush(instruction, runner, memState);
+  }
+
+  private static boolean shouldReportConstValue(Object value, PsiElement place) {
+    return value == null || value instanceof Boolean ||
+           value.equals(new Long(0)) && isDivider(PsiUtil.skipParenthesizedExprUp(place));
+  }
+
+  private static boolean isDivider(PsiElement expr) {
+    PsiElement parent = expr.getParent();
+    if (parent instanceof PsiBinaryExpression) {
+      return ControlFlowAnalyzer.isBinaryDivision(((PsiBinaryExpression)parent).getOperationTokenType()) &&
+             ((PsiBinaryExpression)parent).getROperand() == expr;
+    }
+    if (parent instanceof PsiAssignmentExpression) {
+      return ControlFlowAnalyzer.isAssignmentDivision(((PsiAssignmentExpression)parent).getOperationTokenType()) &&
+             ((PsiAssignmentExpression)parent).getRExpression() == expr;
+    }
+    return false;
   }
 
   public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {
@@ -156,27 +183,31 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
-    DfaValue[] argValues = popCallArguments(instruction, runner, memState);
-    final DfaValue qualifier = popQualifier(instruction, runner, memState);
-
-    LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(memState);
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
-    if (argValues != null) {
-      for (MethodContract contract : instruction.getContracts()) {
-        currentStates = addContractResults(argValues, contract, currentStates, instruction, runner.getFactory(), finalStates);
-        if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
+    finalStates.addAll(handleOptionalMethods(instruction, runner, memState));
+
+    if (finalStates.isEmpty()) {
+      DfaValue[] argValues = popCallArguments(instruction, runner, memState);
+      final DfaValue qualifier = popQualifier(instruction, runner, memState);
+
+      LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(memState);
+      if (argValues != null) {
+        for (MethodContract contract : instruction.getContracts()) {
+          currentStates = addContractResults(argValues, contract, currentStates, instruction, runner.getFactory(), finalStates);
+          if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
+            }
+            finalStates.clear();
+            currentStates = ContainerUtil.newLinkedHashSet(memState);
+            break;
           }
-          finalStates.clear();
-          currentStates = ContainerUtil.newLinkedHashSet(memState);
-          break;
         }
       }
-    }
-    for (DfaMemoryState state : currentStates) {
-      state.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
-      finalStates.add(state);
+      for (DfaMemoryState state : currentStates) {
+        state.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+        finalStates.add(state);
+      }
     }
 
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
@@ -188,6 +219,66 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
     return result;
+  }
+
+  @NotNull
+  private List<DfaMemoryState> handleOptionalMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
+    if (call == null) return Collections.emptyList();
+    String methodName = call.getMethodExpression().getReferenceName();
+    if (methodName == null || !OPTIONAL_METHOD_NAMES.contains(methodName)) return Collections.emptyList();
+    PsiMethod method = call.resolveMethod();
+    if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
+    List<DfaMemoryState> closures = runner.getStackTopClosures();
+    DfaValue[] argValues = popCallArguments(instruction, runner, memState);
+    final DfaValue qualifier = popQualifier(instruction, runner, memState);
+    switch (methodName) {
+      case "isPresent": {
+        ThreeState state = memState.checkOptional(qualifier);
+        DfaConstValue.Factory constFactory = runner.getFactory().getConstFactory();
+        if (state == ThreeState.UNSURE) {
+          DfaMemoryState falseState = memState.createCopy();
+          memState.push(constFactory.getTrue());
+          memState.applyIsPresentCheck(true, qualifier);
+          falseState.push(constFactory.getFalse());
+          falseState.applyIsPresentCheck(false, qualifier);
+          return Arrays.asList(memState, falseState);
+        }
+        else {
+          memState.push(state == ThreeState.YES ? constFactory.getTrue() : constFactory.getFalse());
+        }
+        break;
+      }
+      case "of":
+      case "ofNullable":
+      case "fromNullable":
+        if ("of".equals(methodName) || (argValues != null && argValues.length == 1 && memState.isNotNull(argValues[0]))) {
+          memState.push(runner.getFactory().getOptionalFactory().getOptional(true));
+        } else {
+          memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+        }
+        break;
+      case "empty":
+      case "absent":
+        memState.push(runner.getFactory().getOptionalFactory().getOptional(false));
+        break;
+      case "filter":
+      case "flatMap":
+      case "ifPresent":
+      case "map":
+      case "or":
+      case "orElseGet":
+      case "transform":
+        for (DfaMemoryState closure : closures) {
+          closure.applyIsPresentCheck(!methodName.startsWith("or"), qualifier);
+        }
+        memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+        break;
+      default:
+        memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+        break;
+    }
+    return Collections.singletonList(memState);
   }
 
   @Nullable 

@@ -102,8 +102,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     if (error != null) {
       final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(chunk.getPresentableShortName());
       Throwable th = error;
-      final Set<Throwable> processed = new HashSet<Throwable>();
-      final Set<String> detailsMessage = new HashSet<String>();
+      final Set<Throwable> processed = new HashSet<>();
+      final Set<String> detailsMessage = new HashSet<>();
       while (th != null && processed.add(th)) {
         String details = th.getMessage();
         if (th instanceof UnknownHostException) {
@@ -157,12 +157,12 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   }
 
   private static void syncPaths(final Collection<File> required, @NotNull Collection<File> resolved) throws Exception {
-    final THashSet<File> libFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final THashSet<File> libFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     libFiles.addAll(required);
     libFiles.removeAll(resolved);
 
     if (!libFiles.isEmpty()) {
-      final Map<String, File> nameToArtifactMap = new THashMap<String, File>(FileUtil.PATH_HASHING_STRATEGY);
+      final Map<String, File> nameToArtifactMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
       for (File f : resolved) {
         final File prev = nameToArtifactMap.put(f.getName(), f);
         if (prev != null) {
@@ -226,7 +226,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
 
   @NotNull
   private static Collection<JpsTypedLibrary<JpsSimpleElement<RepositoryLibraryDescriptor>>> getRepositoryLibraries(ModuleChunk chunk) {
-    final Collection<JpsTypedLibrary<JpsSimpleElement<RepositoryLibraryDescriptor>>> result = new SmartHashSet<JpsTypedLibrary<JpsSimpleElement<RepositoryLibraryDescriptor>>>();
+    final Collection<JpsTypedLibrary<JpsSimpleElement<RepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
     for (JpsModule module : chunk.getModules()) {
       for (JpsDependencyElement dep : module.getDependenciesList().getDependencies()) {
         if (dep instanceof JpsLibraryDependency) {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Dmitry Avdeev
  *         Date: 12/5/12
  */
-public abstract class JavaDependentSdkType extends DependentSdkType {
+public abstract class JavaDependentSdkType extends DependentSdkType implements JavaSdkType {
 
   public JavaDependentSdkType(@NonNls String name) {
     super(name);
@@ -44,5 +44,10 @@ public abstract class JavaDependentSdkType extends DependentSdkType {
   @Override
   protected SdkType getDependencyType() {
     return JavaSdk.getInstance();
+  }
+
+  @Override
+  public boolean isDependent() {
+    return true;
   }
 }

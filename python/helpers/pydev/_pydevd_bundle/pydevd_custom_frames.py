@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import dict_pop, get_thread_id, Null
+from _pydevd_bundle.pydevd_constants import get_thread_id, Null
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 from _pydev_imps._pydev_saved_modules import thread, threading
 import sys
@@ -125,7 +125,7 @@ def remove_custom_frame(frame_id):
     try:
         if DEBUG:
             sys.stderr.write('remove_custom_frame: %s\n' % frame_id)
-        dict_pop(CustomFramesContainer.custom_frames, frame_id, None)
+        CustomFramesContainer.custom_frames.pop(frame_id, None)
         CustomFramesContainer._py_db_command_thread_event.set()
     finally:
         CustomFramesContainer.custom_frames_lock.release()

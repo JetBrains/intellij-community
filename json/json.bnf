@@ -40,8 +40,12 @@
         FALSE='false'
         NULL='null'
         // Actually not defined in RFC 4627, but may be used for JSON5 and helps with
-        // auto completion of keywords.
-        IDENTIFIER='regexp:[:jletter:] [:jletterdigit:]*'
+        // auto completion of keywords. Semantically, it represents "bad word" type
+        // of tokens
+        // Could be as loose as [^\s\[\]{}:,\"\']+, but is slightly more restricted
+        // for the time being to match most forms of npm package names in package.json.
+        // See https://github.com/npm/validate-npm-package-name
+        IDENTIFIER="regexp:[[:jletterdigit:]~!()*\-./@]+"
     ]
 
     extends("container|literal|reference_expression")=value

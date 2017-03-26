@@ -42,7 +42,7 @@ public class VariablesProcessor
 
   /** Collecting _all_ variables in scope */
   public VariablesProcessor(String _prefix, boolean staticSensitiveFlag){
-    this(_prefix, staticSensitiveFlag, new ArrayList<PsiVariable>());
+    this(_prefix, staticSensitiveFlag, new ArrayList<>());
   }
 
   /** Collecting _all_ variables in scope */

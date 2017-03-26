@@ -19,7 +19,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
@@ -57,6 +57,8 @@ open class FileBasedStorage(file: Path,
   private @Volatile var cachedVirtualFile: VirtualFile? = null
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
+
+  var resolveVirtualFileOnlyOnWrite = false
 
   @Volatile var file = file
     private set
@@ -120,7 +122,7 @@ open class FileBasedStorage(file: Path,
         return loadLocalDataUsingIo()
       }
 
-      val file = virtualFile
+      val file = if (resolveVirtualFileOnlyOnWrite) cachedVirtualFile else virtualFile
       if (file == null || file.isDirectory || !file.isValid) {
         LOG.debug { "Document was not loaded for $fileSpec, not a file" }
       }
@@ -130,7 +132,8 @@ open class FileBasedStorage(file: Path,
       else {
         val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
         lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
+        @Suppress("DEPRECATION")
+        return loadElement(charBuffer)
       }
       return null
     }
@@ -233,14 +236,14 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
     throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
   }
 
-  runWriteAction {
+  runUndoTransparentWriteAction {
     file.getOutputStream(requestor).use { out ->
       if (prependXmlProlog) {
         out.write(XML_PROLOG)
         out.write(lineSeparator.separatorBytes)
       }
       if (content is Element) {
-        JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
+        JDOMUtil.write(content, out, lineSeparator.separatorString)
       }
       else {
         (content as BufferExposingByteArrayOutputStream).writeTo(out)
@@ -251,7 +254,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
 
 internal fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, lineSeparator)
+  JDOMUtil.write(this, out, lineSeparator)
   return out
 }
 
@@ -289,7 +292,7 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
 }
 
 internal fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
-  runWriteAction { virtualFile.delete(requestor) }
+  runUndoTransparentWriteAction { virtualFile.delete(requestor) }
 }
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException("File is read-only: "+file)

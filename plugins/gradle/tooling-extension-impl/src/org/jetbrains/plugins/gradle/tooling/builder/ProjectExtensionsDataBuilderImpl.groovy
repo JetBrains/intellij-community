@@ -64,7 +64,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
         if (value instanceof NamedDomainObjectCollection) {
           def objectCollection = (NamedDomainObjectCollection)value
           if(!objectCollection.isEmpty()) {
-            namedObjectTypeFqn = getType(objectCollection.first())
+            namedObjectTypeFqn = getType(objectCollection.find{true})
           }
         }
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))

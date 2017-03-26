@@ -16,11 +16,8 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-
-import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpOptions;
-import org.jetbrains.annotations.Nullable;
 
 public class RegExpOptionsImpl extends RegExpElementImpl implements RegExpOptions {
     public RegExpOptionsImpl(ASTNode astNode) {
@@ -33,26 +30,7 @@ public class RegExpOptionsImpl extends RegExpElementImpl implements RegExpOption
     }
 
     @Override
-    public boolean isSwitchedOn(char flag) {
-        final ASTNode node = getOptionsOn();
-        return node != null && node.getText().indexOf(flag) >= 0;
-    }
-
-    @Override
-    public boolean isSwitchedOff(char flag) {
-        final ASTNode node = getOptionsOff();
-        return node != null && node.getText().indexOf(flag) > 0;
-    }
-
-    @Override
-    @Nullable
-    public ASTNode getOptionsOn() {
-        return getNode().findChildByType(RegExpTT.OPTIONS_ON);
-    }
-
-    @Override
-    @Nullable
-    public ASTNode getOptionsOff() {
-        return getNode().findChildByType(RegExpTT.OPTIONS_OFF);
+    public boolean isSet(char option) {
+        return getUnescapedText().indexOf(option) >= 0;
     }
 }

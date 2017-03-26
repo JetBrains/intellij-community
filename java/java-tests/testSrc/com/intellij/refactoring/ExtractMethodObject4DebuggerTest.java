@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
     final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
     final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
     final ExtractLightMethodObjectHandler.ExtractedData extractedData =
-      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), getFile(), fragment, "test");
+      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test");
     assertNotNull(extractedData);
     assertEquals(expectedCallSite, extractedData.getGeneratedCallText());
     final PsiClass innerClass = extractedData.getGeneratedInnerClass();

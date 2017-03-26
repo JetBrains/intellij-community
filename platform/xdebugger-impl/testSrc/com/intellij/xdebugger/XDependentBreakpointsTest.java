@@ -35,6 +35,12 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     myDependentBreakpointManager = myBreakpointManager.getDependentBreakpointManager();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myDependentBreakpointManager = null;
+    super.tearDown();
+  }
+
   public void testDelete() throws Exception {
     XLineBreakpoint<?> master = createMaster();
     XLineBreakpoint<?> slave = createSlave();

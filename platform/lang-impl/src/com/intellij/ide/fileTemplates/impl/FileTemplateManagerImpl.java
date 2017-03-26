@@ -391,7 +391,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     for (FTManager manager : getAllManagers()) {
       if (templatesCategory.equals(manager.getName())) {
         manager.updateTemplates(templates);
-        manager.saveTemplates();
         break;
       }
     }

@@ -167,7 +167,7 @@ public class PyIntroduceDialog extends DialogWrapper {
   private void updateControls() {
     final boolean nameValid = myValidator.isNameValid(getName(), getProject());
     setOKActionEnabled(nameValid);
-    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null);
+    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null, myNameComboBox);
   }
 
   public IntroduceHandler.InitPlace getInitPlace() {

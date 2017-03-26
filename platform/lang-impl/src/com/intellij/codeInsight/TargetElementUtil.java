@@ -199,7 +199,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
    * Note: this method can perform slow PSI activity (e.g. {@link PsiReference#resolve()}, so please avoid calling it from Swing thread.
    * @param editor editor
    * @param flags a combination of {@link #REFERENCED_ELEMENT_ACCEPTED}, {@link #ELEMENT_NAME_ACCEPTED}, {@link #LOOKUP_ITEM_ACCEPTED}
-   * @param offset offset in the editor's document           f? yt jlby dfh
+   * @param offset offset in the editor's document
    * @return a PSI element declared or referenced at the specified offset in the editor, or selected in the {@link Lookup} if shown in the editor,
    * depending on the flags passed.
    * @see #findTargetElement(Editor, int)
@@ -457,7 +457,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
   public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());
     SearchScope result = evaluator != null ? evaluator.getSearchScope(editor, element) : null;
-    return result != null ? result : PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
+    if (result != null) return result;
+
+    PsiFile file = element.getContainingFile();
+    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
   protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =

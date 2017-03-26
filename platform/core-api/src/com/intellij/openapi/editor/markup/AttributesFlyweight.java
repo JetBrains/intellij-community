@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class AttributesFlyweight {
   private static final ConcurrentMap<FlyweightKey, AttributesFlyweight> entries = ContainerUtil.newConcurrentMap();
-  private static final ThreadLocal<FlyweightKey> ourKey = new ThreadLocal<FlyweightKey>();
+  private static final ThreadLocal<FlyweightKey> ourKey = new ThreadLocal<>();
 
   private final int myHashCode;
   private final Color myForeground;

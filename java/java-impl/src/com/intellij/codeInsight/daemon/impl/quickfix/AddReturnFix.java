@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,13 @@ public class AddReturnFix implements IntentionAction {
     }
     // then try to find a conversion of local variable to the required type
     for (PsiVariable variable : variables) {
-      String conversion = getConversionToType(variable, type);
+      String conversion = getConversionToType(variable, type, true);
+      if (conversion != null) {
+        return conversion;
+      }
+    }
+    for (PsiVariable variable : variables) {
+      String conversion = getConversionToType(variable, type, false);
       if (conversion != null) {
         return conversion;
       }
@@ -96,19 +103,22 @@ public class AddReturnFix implements IntentionAction {
     return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
-  private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type) {
+  private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type, boolean preciseTypeReqired) {
     PsiType varType = variable.getType();
     if (type instanceof PsiArrayType) {
       PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
           !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
           InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
-        if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
-          if (arrayComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            return variable.getName() + ".toArray()";
+        PsiType erasedComponentType = TypeConversionUtil.erasure(arrayComponentType);
+        if (!preciseTypeReqired || arrayComponentType.equals(erasedComponentType)) {
+          PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
+          if (collectionItemType != null && erasedComponentType.isAssignableFrom(collectionItemType)) {
+            if (erasedComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+              return variable.getName() + ".toArray()";
+            }
+            return variable.getName() + ".toArray(new " + erasedComponentType.getCanonicalText() + "[0])";
           }
-          return variable.getName() + ".toArray(new " + arrayComponentType.getCanonicalText() + "[0])";
         }
       }
     }

@@ -19,9 +19,9 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
+import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -40,7 +40,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.*;
  */
 public class PurityInference {
 
-  public static boolean inferPurity(@NotNull final PsiMethod method) {
+  public static boolean inferPurity(@NotNull PsiMethodImpl method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method) ||
         PsiType.VOID.equals(method.getReturnType()) ||
         method.isConstructor()) {

@@ -128,7 +128,13 @@
   </target>
 
   <!-- The build task creates an updater.jar in ${out.dir}/artifacts. This task bundles the updater and its dependencies into a single jar -->
-  <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.0.jar"/>
+  <!-- Android Studio: Replaced com.tonicsystems.jarjar.JarJarTask in build/lib/jarjar-1.0.jar with
+       org.pantsbuild.jarjar.JarJarTask in build/lib/jarjar-1.5.jar because jarjar-1.0 cannot handle
+       Java 1.8 bytecode (it's using an old ASM version) and we have a couple of instances of Java 8
+       bytecode in the updater (in the Runner and the ConsoleUpdaterUI. The pantsbuild update
+       (from http://search.maven.org/remotecontent?filepath=org/pantsbuild/jarjar/jarjar/1.5/jarjar-1.5.jar)
+       was a just a convenient updated version since there isn't a newer official version. -->
+  <taskdef name="jarjar" classname="org.pantsbuild.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.5.jar"/>
   <target name="fullupdater" depends="build">
     <jarjar jarfile="${out.dir}/updater-full.jar">
       <zipfileset src="${out.dir}/artifacts/updater.jar" />

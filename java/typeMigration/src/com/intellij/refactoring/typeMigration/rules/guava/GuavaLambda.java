@@ -69,6 +69,9 @@ public enum GuavaLambda {
     if (aClass == null) return null;
     for (GuavaLambda lambda : values()) {
       if (InheritanceUtil.isInheritor(aClass, lambda.getClassQName())) {
+        if (PREDICATE != lambda && InheritanceUtil.isInheritor(aClass, lambda.getJavaAnalogueClassQName())) {
+          return null;
+        }
         return lambda;
       }
     }

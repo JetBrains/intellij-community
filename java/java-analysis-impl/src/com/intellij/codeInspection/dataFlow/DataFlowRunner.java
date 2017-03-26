@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,6 +49,9 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
+  // Closures which were registered for previous instruction and can be queried by visitor
+  // to adjust them somehow
+  private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
   private final boolean myShouldCheckLimitTime;
@@ -75,8 +77,7 @@ public class DataFlowRunner {
   private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
-      final PsiElement parent = container.getParent();
-      final PsiCodeBlock block = DfaPsiUtil.getTopmostBlockInSameClass(parent);
+      PsiElement block = DfaPsiUtil.getTopmostBlockInSameClass(container.getParent());
       if (block != null) {
         final RunnerResult result = analyzeMethod(block, visitor);
         if (result == RunnerResult.OK) {
@@ -90,6 +91,10 @@ public class DataFlowRunner {
     }
 
     return Collections.singletonList(createMemoryState());
+  }
+
+  List<DfaMemoryState> getStackTopClosures() {
+    return new ArrayList<>(myStackTopClosures);
   }
 
   @NotNull
@@ -111,6 +116,7 @@ public class DataFlowRunner {
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myNestedClosures.clear();
+      myStackTopClosures.clear();
       
       Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
       for (int index = 0; index < myInstructions.length; index++) {
@@ -272,6 +278,9 @@ public class DataFlowRunner {
   @NotNull
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
+    DfaInstructionState[] states = instruction.accept(this, instructionState.getMemoryState(), visitor);
+
+    myStackTopClosures.clear();
     PsiElement closure = DfaUtil.getClosureInside(instruction);
     if (closure instanceof PsiClass) {
       registerNestedClosures(instructionState, (PsiClass)closure);
@@ -279,7 +288,7 @@ public class DataFlowRunner {
       registerNestedClosures(instructionState, (PsiLambdaExpression)closure);
     }
 
-    return instruction.accept(this, instructionState.getMemoryState(), visitor);
+    return states;
   }
 
   private void registerNestedClosures(@NotNull DfaInstructionState instructionState, @NotNull PsiClass nestedClass) {
@@ -304,6 +313,13 @@ public class DataFlowRunner {
     if (body != null) {
       myNestedClosures.putValue(body, createClosureState(state));
     }
+  }
+
+  @NotNull
+  private DfaMemoryState createClosureState(DfaMemoryState state) {
+    DfaMemoryState closureState = state.createClosureState();
+    myStackTopClosures.add(closureState);
+    return closureState;
   }
 
   @NotNull
@@ -359,17 +375,5 @@ public class DataFlowRunner {
     }
 
     return Pair.create(trueSet, falseSet);
-  }
-
-  @NotNull
-  private static DfaMemoryStateImpl createClosureState(@NotNull DfaMemoryState memState) {
-    DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-    copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
-    for (DfaVariableValue value : vars) {
-      copy.flushDependencies(value);
-    }
-    copy.emptyStack();
-    return copy;
   }
 }

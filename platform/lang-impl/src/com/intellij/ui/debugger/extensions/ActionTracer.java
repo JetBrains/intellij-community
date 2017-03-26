@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
 
   @Override
   public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    StringBuilder out = new StringBuilder();
+    StringBuilder out = new StringBuilder(String.format("%1$tF %1$tT,%1$tL ", System.currentTimeMillis()));
     final ActionManager actionManager = ActionManager.getInstance();
     final String id = actionManager.getId(action);
     out.append("id=").append(id);

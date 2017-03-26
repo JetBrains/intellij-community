@@ -38,6 +38,7 @@ public class GroovyBracePostFormatProcessor implements PostFormatProcessor {
     }
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (source instanceof GroovyFile) {

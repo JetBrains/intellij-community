@@ -18,8 +18,8 @@ package com.intellij.usageView;
 
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +32,7 @@ public class UsageViewLongNameLocation extends ElementDescriptionLocation {
 
   public static final UsageViewLongNameLocation INSTANCE = new UsageViewLongNameLocation();
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;

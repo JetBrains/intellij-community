@@ -31,7 +31,7 @@ public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends O
   private final CollectionFactory<V> myCollectionFactory;
 
   public ObjectObjectTransientMultiMaplet(TObjectHashingStrategy<K> hashingStrategy, CollectionFactory<V> collectionFactory) {
-    myMap = new THashMap<K, Collection<V>>(hashingStrategy);
+    myMap = new THashMap<>(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }
 

@@ -179,7 +179,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
 
     for (PsiClass aClass : classes) {
-      if (getClassCoverageInfo(aClass) == null) continue;
       topLevelNodes.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
     }
     return topLevelNodes;

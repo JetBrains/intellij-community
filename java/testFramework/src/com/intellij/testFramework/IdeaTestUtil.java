@@ -72,6 +72,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
     modifiable.commit();
   }
 
+  public static void setModuleLanguageLevel(Module module, final LanguageLevel level, Disposable parentDisposable) {
+    LanguageLevel prev = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    setModuleLanguageLevel(module, level);
+    Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
+  }
+
   @TestOnly
   public static Sdk getMockJdk17() {
     return getMockJdk17("java 1.7");

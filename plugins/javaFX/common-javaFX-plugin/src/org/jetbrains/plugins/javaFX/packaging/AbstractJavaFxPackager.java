@@ -175,7 +175,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private void sign(String binPath, boolean selfSigning, final String jar2Sign) {
-    final List<String> signCommandLine = new ArrayList<String>();
+    final List<String> signCommandLine = new ArrayList<>();
     addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
 
     collectStoreParams(selfSigning, signCommandLine);
@@ -196,7 +196,7 @@ public abstract class AbstractJavaFxPackager {
       FileUtil.delete(keyStoreFile);
     }
 
-    final List<String> genCommandLine = new ArrayList<String>();
+    final List<String> genCommandLine = new ArrayList<>();
     addParameter(genCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "keytool"));
 
     addParameter(genCommandLine, "-genkeypair");
@@ -276,7 +276,7 @@ public abstract class AbstractJavaFxPackager {
       registerJavaFxPackagerError("Bundled ant not found.");
       return -1;
     }
-    final ArrayList<String> commands = new ArrayList<String>();
+    final ArrayList<String> commands = new ArrayList<>();
     commands.add(javaHome + File.separator + "bin" + File.separator + "java");
 
     commands.add("-Dant.home=" + antHome);

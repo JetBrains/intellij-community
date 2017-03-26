@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocToken;
 
 /**
  * @author yole
@@ -32,6 +33,7 @@ public class JavaBasicWordSelectionFilter implements Condition<PsiElement> {
            !(e instanceof PsiBlockStatement) &&
            !(e instanceof PsiJavaCodeReferenceElement) &&
            !(e instanceof PsiJavaToken) &&
-           !(e instanceof PsiDocTag);
+           !(e instanceof PsiDocTag) &&
+           !(e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA);
   }
 }

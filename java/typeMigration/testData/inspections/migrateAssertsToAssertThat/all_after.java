@@ -13,8 +13,8 @@ public class TestCase {
     Assert.assertThat(2, org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo(3));
     Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThanOrEqualTo(3));
 
-    Assert.assertThat(2 != 3, not(is(false)));
-    Assert.assertThat(2 == 3, not(is(false)));
+    Assert.assertThat(2 != 3, is(false));
+    Assert.assertThat(2 == 3, is(false));
     Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThanOrEqualTo(3));
     Assert.assertThat(2, org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo(3));
     Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThan(3));

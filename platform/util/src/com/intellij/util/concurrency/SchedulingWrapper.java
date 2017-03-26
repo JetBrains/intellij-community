@@ -314,9 +314,9 @@ class SchedulingWrapper implements ScheduledExecutorService {
       throw new RejectedExecutionException("Already shutdown");
     }
     delayQueue.add(t);
-    if (t.getDelay(TimeUnit.HOURS) > 24 && !t.isPeriodic()) {
+    if (t.getDelay(TimeUnit.DAYS) > 31 && !t.isPeriodic()) {
       // guard against inadvertent queue overflow
-      throw new IllegalArgumentException("Unsupported crazy delay " + t.getDelay(TimeUnit.MINUTES) + " minutes: " + BoundedTaskExecutor.info(t));
+      throw new IllegalArgumentException("Unsupported crazy delay " + t.getDelay(TimeUnit.DAYS) + " days: " + BoundedTaskExecutor.info(t));
     }
     return t;
   }

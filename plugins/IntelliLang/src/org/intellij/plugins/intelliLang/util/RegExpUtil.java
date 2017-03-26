@@ -54,7 +54,7 @@ public class RegExpUtil {
   private static boolean analyzeBranch(RegExpBranch branch) {
     final RegExpAtom[] atoms = branch.getAtoms();
     for (RegExpAtom atom : atoms) {
-      if (!(atom instanceof RegExpChar) || ((RegExpChar)atom).getValue() == null) {
+      if (!(atom instanceof RegExpChar) || ((RegExpChar)atom).getValue() == -1) {
         return false;
       }
       else if (((RegExpChar)atom).getType() != RegExpChar.Type.CHAR) {

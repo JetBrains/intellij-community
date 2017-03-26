@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +58,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
       return;
     }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     doAction(editor, file);
   }
 
@@ -108,9 +111,9 @@ public class UnSelectWordHandler extends EditorActionHandler {
     SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {
       @Override
       public boolean process(TextRange range) {
+        range = expandToFoldingBoundaries(range);
         if (selectionRange.contains(range) && !range.equals(selectionRange) &&
-            (range.contains(finalCursorOffset) || finalCursorOffset == range.getEndOffset()) &&
-            !isOffsetCollapsed(range.getStartOffset()) && !isOffsetCollapsed(range.getEndOffset())) {
+            (range.contains(finalCursorOffset) || finalCursorOffset == range.getEndOffset())) {
           if (maximumRange.get() == null || range.contains(maximumRange.get())) {
             maximumRange.set(range);
           }
@@ -119,9 +122,14 @@ public class UnSelectWordHandler extends EditorActionHandler {
         return false;
       }
 
-      private boolean isOffsetCollapsed(int offset) {
-        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
-        return region != null && region.getStartOffset() != offset && region.getEndOffset() != offset;
+      private TextRange expandToFoldingBoundaries(TextRange range) {
+        int startOffset = range.getStartOffset();
+        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+        if (region != null) startOffset = region.getStartOffset();
+        int endOffset = range.getEndOffset();
+        region = editor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
+        if (region != null && endOffset > region.getStartOffset()) endOffset = region.getEndOffset();
+        return new TextRange(startOffset, endOffset);
       }
     });
 

@@ -76,7 +76,12 @@ public class MacFileSaverDialog implements FileSaverDialog {
 
     myFileDialog.setVisible(true);
 
-    return new VirtualFileWrapper(new File(myFileDialog.getDirectory() + File.pathSeparator + myFileDialog.getFile()));
+    String file = myFileDialog.getFile();
+    if (file == null) {
+      return null;
+    }
+
+    return new VirtualFileWrapper(new File(myFileDialog.getDirectory() + File.separator + file));
   }
 
   private static VirtualFile fileToVirtualFile(File file) {

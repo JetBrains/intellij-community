@@ -32,7 +32,7 @@ import java.util.Collections;
 public class FileGeneratedEvent extends BuildMessage {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.messages.FileGeneratedEvent");
 
-  private final Collection<Pair<String, String>> myPaths = new ArrayList<Pair<String, String>>();
+  private final Collection<Pair<String, String>> myPaths = new ArrayList<>();
   private final BuildTarget<?> mySourceTarget;
 
   public FileGeneratedEvent(@NotNull BuildTarget<?> sourceTarget) {

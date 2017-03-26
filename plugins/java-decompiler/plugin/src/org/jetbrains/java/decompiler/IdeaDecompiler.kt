@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
@@ -197,9 +196,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
   }
 
-  @TestOnly
-  fun getProgress(file: VirtualFile): ProgressIndicator? = myProgress[file]
-
   private class MyBytecodeProvider(private val files: Map<String, VirtualFile>) : IBytecodeProvider {
     override fun getBytecode(externalPath: String, internalPath: String?): ByteArray {
       val path = FileUtil.toSystemIndependentName(externalPath)
@@ -235,6 +231,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   }
 
   private class ExactMatchLineNumbersMapping(private val mapping: IntArray) : LineNumbersMapping {
+    @Suppress("LoopToCallChain")
     override fun bytecodeToSource(line: Int): Int {
       for (i in mapping.indices step 2) {
         if (mapping[i] == line) {
@@ -244,6 +241,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       return -1
     }
 
+    @Suppress("LoopToCallChain")
     override fun sourceToBytecode(line: Int): Int {
       for (i in mapping.indices step 2) {
         if (mapping[i + 1] == line) {

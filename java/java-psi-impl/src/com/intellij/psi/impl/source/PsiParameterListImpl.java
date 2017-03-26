@@ -46,7 +46,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
   }
 
   @Override
-  public int getParameterIndex(PsiParameter parameter) {
+  public int getParameterIndex(@NotNull PsiParameter parameter) {
     LOG.assertTrue(parameter.getParent() == this);
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
@@ -61,7 +61,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
   public int getParametersCount() {
     final PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenStubs().size();
+      return (int)stub.getChildrenStubs().stream().filter(child -> child.getStubType() == JavaStubElementTypes.PARAMETER).count();
     }
 
     return getNode().countChildren(Constants.PARAMETER_BIT_SET);

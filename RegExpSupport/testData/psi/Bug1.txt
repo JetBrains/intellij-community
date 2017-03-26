@@ -9,11 +9,10 @@ REGEXP_FILE
       RegExpClosureImpl: <[\w\.]*>
         RegExpClassImpl: <[\w\.]>
           PsiElement(CLASS_BEGIN)('[')
-          RegExpUnionImpl: <\w\.>
-            RegExpSimpleClassImpl: <\w>
-              PsiElement(CHAR_CLASS)('\w')
-            RegExpCharImpl: <\.>
-              PsiElement(REDUNDANT_ESCAPE)('\.')
+          RegExpSimpleClassImpl: <\w>
+            PsiElement(CHAR_CLASS)('\w')
+          RegExpCharImpl: <\.>
+            PsiElement(REDUNDANT_ESCAPE)('\.')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <*>
           PsiElement(STAR)('*')

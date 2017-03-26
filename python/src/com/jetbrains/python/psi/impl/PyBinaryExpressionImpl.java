@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -119,7 +122,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(PyResolveContext context) {
+  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
   }
 
@@ -140,7 +143,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       final List<PyType> matchedTypes = new ArrayList<>();
       for (PyTypeChecker.AnalyzeCallResults result : results) {
         boolean matched = true;
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getArguments().entrySet()) {
+        for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getMapping().getMappedParameters().entrySet()) {
           final PyExpression argument = entry.getKey();
           final PyNamedParameter parameter = entry.getValue();
           if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {

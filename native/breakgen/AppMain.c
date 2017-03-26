@@ -17,6 +17,6 @@
 #include <jni.h>
 #include <windows.h>
 
-JNIEXPORT void JNICALL Java_com_intellij_rt_execution_application_AppMain_triggerControlBreak(JNIEnv *env, jclass clazz) {
+JNIEXPORT void JNICALL Java_com_intellij_rt_execution_application_AppMainV2_triggerControlBreak(JNIEnv *env, jclass clazz) {
   GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, 0);
 }

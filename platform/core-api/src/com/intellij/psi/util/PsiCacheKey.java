@@ -51,7 +51,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
 
     result = myFunction.fun(h);
     final long count = getModificationCount(h);
-    h.putUserData(this, new SoftReference<Pair<Long, T>>(new Pair<Long, T>(count, result)));
+    h.putUserData(this, new SoftReference<>(new Pair<>(count, result)));
     return result;
   }
 
@@ -105,7 +105,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
   public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name,
                                                                    @NotNull Function<H, T> function,
                                                                    @NotNull Key<?> modifyCause) {
-    return new PsiCacheKey<T, H>(name, function, modifyCause);
+    return new PsiCacheKey<>(name, function, modifyCause);
   }
 
   /**

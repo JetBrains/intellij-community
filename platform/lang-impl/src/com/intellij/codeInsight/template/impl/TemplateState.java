@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -203,12 +204,15 @@ public class TemplateState implements Disposable {
   private boolean isCaretOutsideCurrentSegment(String commandName) {
     if (myEditor != null && myCurrentSegmentNumber >= 0) {
       final int offset = myEditor.getCaretModel().getOffset();
+      boolean hasSelection = myEditor.getSelectionModel().hasSelection();
 
       final int segmentStart = mySegments.getSegmentStart(myCurrentSegmentNumber);
-      if (offset < segmentStart || offset == segmentStart && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_BACKSPACE).equals(commandName)) return true;
+      if (offset < segmentStart ||
+          !hasSelection && offset == segmentStart && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_BACKSPACE).equals(commandName)) return true;
 
       final int segmentEnd = mySegments.getSegmentEnd(myCurrentSegmentNumber);
-      if (offset > segmentEnd || offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
+      if (offset > segmentEnd ||
+          !hasSelection && offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
     }
     return false;
   }
@@ -584,13 +588,7 @@ public class TemplateState implements Disposable {
 
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       Expression expressionNode = getCurrentExpression();
-      List<TemplateExpressionLookupElement> lookupItems;
-      try {
-        lookupItems = getCurrentExpressionLookupItems();
-      }
-      catch (IndexNotReadyException e) {
-        lookupItems = Collections.emptyList();
-      }
+      List<TemplateExpressionLookupElement> lookupItems = getCurrentExpressionLookupItems();
       final PsiFile psiFile = getPsiFile();
       if (!lookupItems.isEmpty()) {
         if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
@@ -601,7 +599,7 @@ public class TemplateState implements Disposable {
             assert lookupItem != null : expressionNode;
           }
 
-          runLookup(lookupItems, expressionNode.getAdvertisingText());
+          AsyncEditorLoader.performWhenLoaded(myEditor, () -> runLookup(lookupItems, expressionNode.getAdvertisingText()));
         }
       }
       else {
@@ -632,7 +630,11 @@ public class TemplateState implements Disposable {
 
   @NotNull
   List<TemplateExpressionLookupElement> getCurrentExpressionLookupItems() {
-    LookupElement[] elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
+    LookupElement[] elements = null;
+    try {
+      elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
+    }
+    catch (IndexNotReadyException ignored) { }
     if (elements == null) return Collections.emptyList();
 
     List<TemplateExpressionLookupElement> result = ContainerUtil.newArrayList();
@@ -783,7 +785,7 @@ public class TemplateState implements Disposable {
     if (changes.size() > 1) {
       ContainerUtil.sort(changes, (o1, o2) -> {
         int startDiff = o2.startOffset - o1.startOffset;
-        return startDiff != 0 ? startDiff : o2.endOffset - o1.endOffset;
+        return startDiff != 0 ? startDiff : o2.segmentNumber - o1.segmentNumber;
       });
     }
     DocumentUtil.executeInBulk(myDocument, true, () -> {
@@ -794,7 +796,7 @@ public class TemplateState implements Disposable {
   }
 
   /**
-   * Must be invoked on every segment change in order to avoid ovelapping editing segment with its neibours
+   * Must be invoked on every segment change in order to avoid overlapping editing segment with its neighbours
    */
   private void fixOverlappedSegments(int currentSegment) {
     if (currentSegment >= 0) {
@@ -1086,7 +1088,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  boolean isDisposed() {
+  public boolean isDisposed() {
     return myDocument == null;
   }
 
@@ -1251,11 +1253,15 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
-        for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-          optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
+      DumbService dumbService = DumbService.getInstance(myProject);
+      for (TemplateOptionalProcessor processor : dumbService.filterByDumbAwareness(Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME))) {
+        try {
+          processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }
-      });
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
       // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
       // and reformat wouldn't be able to fix them

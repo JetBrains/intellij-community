@@ -32,7 +32,7 @@ import static org.junit.Assert.fail;
 public class LoadingOrderTest {
   @Test
   public void testSimpleSorting() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.ANY, null, "Any"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, null, "2"));
@@ -43,7 +43,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testStability() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.ANY, null, "1"));
     target.add(createElement(LoadingOrder.ANY, null, "2"));
     target.add(createElement(LoadingOrder.ANY, null, "3"));
@@ -54,7 +54,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testComplexSorting() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     String idOne = "idOne";
     String idTwo = "idTwo";
     target.add(createElement(LoadingOrder.before(idTwo), idOne, "2"));
@@ -69,7 +69,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testComplexSorting2() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     String idOne = "idOne";
     target.add(createElement(LoadingOrder.before(idOne), null, "2"));
     target.add(createElement(LoadingOrder.after(idOne), null, "4"));
@@ -97,7 +97,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testFailingSortingBeforeFirst() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.ANY, null, "good"));
     target.add(createElement(LoadingOrder.FIRST, "first", "bad"));
     target.add(createElement(LoadingOrder.LAST, null, "good"));
@@ -108,7 +108,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testFailingSortingFirst() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.ANY, null, "2"));
     target.add(createElement(LoadingOrder.FIRST, "first", "1"));
     target.add(createElement(LoadingOrder.LAST, null, "3"));
@@ -132,7 +132,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testFailingSortingAfterLast() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.after("last"), null, "bad"));
     target.add(createElement(LoadingOrder.FIRST, null, "good"));
     target.add(createElement(LoadingOrder.LAST, "last", "bad"));
@@ -143,7 +143,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testFailingSortingLast() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.LAST, null, "3"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, "last", "3"));
@@ -154,7 +154,7 @@ public class LoadingOrderTest {
 
   @Test
   public void testFailingSortingComplex() {
-    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
     target.add(createElement(LoadingOrder.after("2"), "1", "bad"));
     target.add(createElement(LoadingOrder.after("3"), "2", "bad"));
     target.add(createElement(LoadingOrder.after("1"), "3", "bad"));

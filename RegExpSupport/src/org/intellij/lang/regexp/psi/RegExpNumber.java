@@ -15,11 +15,14 @@
  */
 package org.intellij.lang.regexp.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Number consisting only of one or more decimal digits. No negation or decimal points.
  * @author Bas Leijdekkers
  */
 public interface RegExpNumber extends RegExpElement {
 
-
+  @Nullable
+  Number getValue();
 }

@@ -33,9 +33,8 @@ public class FullyQualifiedNamesInJavadocOptionProvider {
   private JPanel myPanel;
   private ComboBox myComboBox;
 
-  public FullyQualifiedNamesInJavadocOptionProvider(@NotNull CodeStyleSettings settings) {
+  public FullyQualifiedNamesInJavadocOptionProvider() {
     composePanel();
-    reset(settings);
   }
 
   public void reset(@NotNull CodeStyleSettings settings) {

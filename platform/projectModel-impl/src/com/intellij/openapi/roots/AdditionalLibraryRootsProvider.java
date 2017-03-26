@@ -38,16 +38,28 @@ public abstract class AdditionalLibraryRootsProvider {
   public static final ExtensionPointName<AdditionalLibraryRootsProvider> EP_NAME = ExtensionPointName.create("com.intellij.additionalLibraryRootsProvider");
 
   /**
-   * Returns library source roots (analogous to {@code library.getFiles(OrderRootType.SOURCES)} for a given project.
+   * Returns a collection of {@link SyntheticLibrary}.
    * This method is suitable when it's easier to collect all additional library roots associated with {@code Project},
    * instead of {@code Module}. E.g. JavaScript libraries can be associated with files or folders allowing more
    * fine-grained control.
-   * Files contained in the returned roots are considered as library source files:
-   * {@link ProjectFileIndex#isInLibrarySource(VirtualFile)} should return {@code true} for them.
    *
    * @param project  Project instance
-   * @return a collection of library source roots
+   * @return a collection of {@link SyntheticLibrary}
    */
+  @NotNull
+  public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+    //noinspection deprecation
+    Collection<VirtualFile> roots = getAdditionalProjectLibrarySourceRoots(project);
+    if (roots.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(roots));
+  }
+
+  /**
+   * @deprecated use {@link #getAdditionalProjectLibraries(Project)} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
     return Collections.emptyList();

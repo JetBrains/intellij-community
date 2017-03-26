@@ -31,12 +31,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultPicoContainer implements AreaPicoContainer {
   private final PicoContainer parent;
-  private final Set<PicoContainer> children = new THashSet<PicoContainer>();
+  private final Set<PicoContainer> children = new THashSet<>();
 
   private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ContainerUtil.newConcurrentMap();
-  private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<ComponentAdapter>();
+  private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<>();
   private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
-  private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<FList<ComponentAdapter>>(FList.<ComponentAdapter>emptyList());
+  private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters =
+    new AtomicReference<>(FList.<ComponentAdapter>emptyList());
 
   public DefaultPicoContainer(@Nullable PicoContainer parent) {
     this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
@@ -52,7 +53,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
   }
 
   private void appendNonAssignableAdaptersOfType(@NotNull Class componentType, @NotNull List<ComponentAdapter> result) {
-    List<ComponentAdapter> comp = new ArrayList<ComponentAdapter>();
+    List<ComponentAdapter> comp = new ArrayList<>();
     for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         comp.add(componentAdapter);
@@ -117,7 +118,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
       return Collections.emptyList();
     }
 
-    List<ComponentAdapter> result = new SmartList<ComponentAdapter>();
+    List<ComponentAdapter> result = new SmartList<>();
 
     final ComponentAdapter cacheHit = classNameToAdapter.get(componentType.getName());
     if (cacheHit != null) {
@@ -187,7 +188,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
       return Collections.emptyList();
     }
 
-    List<Object> result = new ArrayList<Object>();
+    List<Object> result = new ArrayList<>();
     for (ComponentAdapter componentAdapter : getComponentAdapters()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         // may be null in the case of the "implicit" adapter representing "this".
@@ -311,7 +312,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
     for (ComponentAdapter adapter : getComponentAdapters()) {
       adapter.accept(visitor);
     }
-    for (PicoContainer child : new SmartList<PicoContainer>(children)) {
+    for (PicoContainer child : new SmartList<>(children)) {
       child.accept(visitor);
     }
   }
@@ -354,7 +355,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
   private static class LinkedHashSetWrapper<T> {
     private final Object lock = new Object();
     private volatile Set<T> immutableSet;
-    private LinkedHashSet<T> synchronizedSet = new LinkedHashSet<T>();
+    private LinkedHashSet<T> synchronizedSet = new LinkedHashSet<>();
 
     public void add(@NotNull T element) {
       synchronized (lock) {
@@ -367,7 +368,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
     private LinkedHashSet<T> copySyncSetIfExposedAsImmutable() {
       if (immutableSet != null) {
         immutableSet = null;
-        synchronizedSet = new LinkedHashSet<T>(synchronizedSet);
+        synchronizedSet = new LinkedHashSet<>(synchronizedSet);
       }
       return synchronizedSet;
     }

@@ -29,8 +29,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.branch.GitNewBranchOptions;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +42,7 @@ import java.util.List;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.*;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
+import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
 import static java.util.stream.Collectors.toList;
@@ -55,10 +58,10 @@ class GitBranchPopupActions {
   }
 
   ActionGroup createActions() {
-    return createActions(null, "");
+    return createActions(null, "", false);
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo) {
+  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
@@ -77,8 +80,9 @@ class GitBranchPopupActions {
         .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
         .collect(toList());
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
-    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                              getNumOfTopShownBranches(localBranchActions));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
+                               firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<BranchActionGroup> remoteBranchActions =
@@ -86,8 +90,8 @@ class GitBranchPopupActions {
         .sorted()
         .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
         .collect(toList());
-    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfFavorites(remoteBranchActions));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfFavorites(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
     return popupGroup;
   }
 
@@ -99,11 +103,17 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
-      if (name != null) {
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.checkoutNewBranch(name, myRepositories);
-        reportUsage("git.branch.create.new");
+      GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
+      if (options != null) {
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
+        if (options.shouldCheckout()) {
+          reportUsage("git.branch.create.new");
+          brancher.checkoutNewBranch(options.getName(), myRepositories);
+        }
+        else {
+          reportUsage("git.branch.create.new.nocheckout");
+          brancher.createBranch(options.getName(), StreamEx.of(myRepositories).toMap(position -> HEAD));
+        }
       }
     }
   }
@@ -128,7 +138,7 @@ class GitBranchPopupActions {
       String reference = Messages
         .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash:", "Checkout", null);
       if (reference != null) {
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(reference, true, myRepositories, null);
         reportUsage("git.branch.checkout.revision");
       }
@@ -222,7 +232,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(myBranchName, false, myRepositories, null);
         reportUsage("git.branch.checkout.local");
       }
@@ -246,7 +256,7 @@ class GitBranchPopupActions {
           .showInputDialog(myProject, "New branch name:", "Checkout New Branch From " + myBranchName,
                            null, "", GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+          GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
         reportUsage("git.checkout.as.new.branch");
@@ -271,7 +281,7 @@ class GitBranchPopupActions {
                                                   "Rename Branch " + myCurrentBranchName, null,
                                                   myCurrentBranchName, GitNewBranchNameValidator.newInstance(myRepositories));
         if (newName != null) {
-          GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+          GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.renameBranch(myCurrentBranchName, newName, myRepositories);
           reportUsage("git.branch.rename");
         }
@@ -292,7 +302,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteBranch(myBranchName, myRepositories);
         reportUsage("git.branch.delete.local");
       }
@@ -358,7 +368,7 @@ class GitBranchPopupActions {
         final String name = Messages.showInputDialog(myProject, "New branch name:", "Checkout Remote Branch", null,
                                                      guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
-          GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+          GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
           reportUsage("git.branch.checkout.remote");
         }
@@ -386,7 +396,7 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteRemoteBranch(myBranchName, myRepositories);
         reportUsage("git.branch.delete.remote");
       }
@@ -411,7 +421,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage("git.branch.compare");
     }
@@ -435,7 +445,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
       reportUsage("git.branch.merge");
     }
@@ -462,7 +472,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebase(myRepositories, myBranchName);
       reportUsage("git.branch.rebase");
     }
@@ -483,7 +493,7 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
       reportUsage("git.branch.checkout.with.rebase");
     }

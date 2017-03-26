@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -76,8 +77,7 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
       final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)arg;
       final PsiTypeElement operand = classObjectAccessExpression.getOperand();
 
-      final PsiClassType annotationClassType = (PsiClassType)operand.getType();
-      final PsiClass annotationClass = annotationClassType.resolve();
+      final PsiClass annotationClass = PsiTypesUtil.getPsiClass(operand.getType());
       if (annotationClass == null) {
         return;
       }

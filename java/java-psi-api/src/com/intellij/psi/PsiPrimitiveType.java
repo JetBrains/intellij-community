@@ -30,8 +30,8 @@ import java.util.Map;
  * Represents primitive types of Java language.
  */
 public class PsiPrimitiveType extends PsiType.Stub {
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<>();
+  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<>();
 
   private final String myName;
 

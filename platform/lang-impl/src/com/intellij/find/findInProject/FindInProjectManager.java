@@ -16,7 +16,9 @@
 
 package com.intellij.find.findInProject;
 
-import com.intellij.find.*;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -24,7 +26,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
@@ -73,19 +74,14 @@ public class FindInProjectManager {
       FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
 
-    if (Registry.is("ide.find.as.popup")) {
-      findManager.showFindPopup(findModel, dataContext);
-      return;
-    }
     findManager.showFindDialog(findModel, () -> {
       findModel.setOpenInNewTabVisible(false);
       if (isOpenInNewTabEnabled) {
         FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
       }
-
       startFindInProject(findModel);
+      findModel.setOpenInNewTabVisible(false);//todo check it in both cases: dialog & popup
     });
-    findModel.setOpenInNewTabVisible(false);
   }
 
   public void startFindInProject(@NotNull FindModel findModel) {
@@ -108,22 +104,19 @@ public class FindInProjectManager {
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);
 
     manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
-                                () -> new UsageSearcher() {
-                                  @Override
-                                  public void generate(@NotNull final Processor<Usage> processor) {
-                                    myIsFindInProgress = true;
+                                () -> processor -> {
+                                  myIsFindInProgress = true;
 
-                                    try {
-                                      Processor<UsageInfo> consumer = info -> {
-                                        Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-                                        usage.getPresentation().getIcon(); // cache icon
-                                        return processor.process(usage);
-                                      };
-                                      FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
-                                    }
-                                    finally {
-                                      myIsFindInProgress = false;
-                                    }
+                                  try {
+                                    Processor<UsageInfo> consumer = info -> {
+                                      Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+                                      usage.getPresentation().getIcon(); // cache icon
+                                      return processor.process(usage);
+                                    };
+                                    FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
+                                  }
+                                  finally {
+                                    myIsFindInProgress = false;
                                   }
                                 },
       processPresentation,

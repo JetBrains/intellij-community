@@ -17,9 +17,6 @@ package com.intellij.diff.fragments;
 
 import com.intellij.diff.util.ThreeSide;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class MergeLineFragmentImpl implements MergeLineFragment {
   private final int myStartLine1;
@@ -29,38 +26,24 @@ public class MergeLineFragmentImpl implements MergeLineFragment {
   private final int myStartLine3;
   private final int myEndLine3;
 
-  @Nullable private final List<MergeWordFragment> myInnerFragments;
-
   public MergeLineFragmentImpl(int startLine1,
                                int endLine1,
                                int startLine2,
                                int endLine2,
                                int startLine3,
                                int endLine3) {
-    this(startLine1, endLine1, startLine2, endLine2, startLine3, endLine3, null);
-  }
-
-  public MergeLineFragmentImpl(int startLine1,
-                               int endLine1,
-                               int startLine2,
-                               int endLine2,
-                               int startLine3,
-                               int endLine3,
-                               @Nullable List<MergeWordFragment> innerFragments) {
     myStartLine1 = startLine1;
     myEndLine1 = endLine1;
     myStartLine2 = startLine2;
     myEndLine2 = endLine2;
     myStartLine3 = startLine3;
     myEndLine3 = endLine3;
-    myInnerFragments = innerFragments;
   }
 
-  public MergeLineFragmentImpl(@NotNull MergeLineFragment fragment, @Nullable List<MergeWordFragment> fragments) {
+  public MergeLineFragmentImpl(@NotNull MergeLineFragment fragment) {
     this(fragment.getStartLine(ThreeSide.LEFT), fragment.getEndLine(ThreeSide.LEFT),
          fragment.getStartLine(ThreeSide.BASE), fragment.getEndLine(ThreeSide.BASE),
-         fragment.getStartLine(ThreeSide.RIGHT), fragment.getEndLine(ThreeSide.RIGHT),
-         fragments);
+         fragment.getStartLine(ThreeSide.RIGHT), fragment.getEndLine(ThreeSide.RIGHT));
   }
 
   @Override
@@ -71,11 +54,5 @@ public class MergeLineFragmentImpl implements MergeLineFragment {
   @Override
   public int getEndLine(@NotNull ThreeSide side) {
     return side.select(myEndLine1, myEndLine2, myEndLine3);
-  }
-
-  @Nullable
-  @Override
-  public List<MergeWordFragment> getInnerFragments() {
-    return myInnerFragments;
   }
 }

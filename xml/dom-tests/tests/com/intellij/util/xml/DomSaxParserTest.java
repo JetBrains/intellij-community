@@ -16,15 +16,11 @@
 package com.intellij.util.xml;
 
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.Nullable;
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
 
 /**
  * @author peter
@@ -79,8 +75,9 @@ public class DomSaxParserTest extends LightPlatformCodeInsightFixtureTestCase {
     assertData("?xmlmas8v6708986><OKHD POH:&*$%*&*I8yo9", null, null, null, null);
   }
 
-  private static PsiElement ensureParsed(PsiFile file) {
-    return file.findElementAt(2);
+  private static void ensureParsed(PsiFile file) {
+    //noinspection ResultOfMethodCallIgnored
+    file.getNode().getFirstChildNode();
   }
 
   public void testInvalidContent3() throws Throwable {

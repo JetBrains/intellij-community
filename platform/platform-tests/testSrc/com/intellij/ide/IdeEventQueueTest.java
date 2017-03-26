@@ -17,11 +17,15 @@ package com.intellij.ide;
 
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends PlatformTestCase {
@@ -42,14 +46,13 @@ public class IdeEventQueueTest extends PlatformTestCase {
     assertTrue(EventQueue.isDispatchThread());
 
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    assertSame(ideEventQueue, eventQueue);
+    assertSame(ideEventQueue, Toolkit.getDefaultToolkit().getSystemEventQueue());
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
 
     int posted = ideEventQueue.myKeyboardEventsPosted.get();
     int dispatched = ideEventQueue.myKeyboardEventsDispatched.get();
     KeyEvent pressX = new KeyEvent(new JLabel(), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
-    eventQueue.postEvent(pressX);
+    postCarefully(pressX);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
     assertEquals(pressX, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
@@ -59,7 +62,8 @@ public class IdeEventQueueTest extends PlatformTestCase {
 
     // do not react to other events
     AWTEvent ev2 = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "Command");
-    eventQueue.postEvent(ev2);
+    postCarefully(ev2);
+
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
     assertEquals(ev2, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
@@ -68,13 +72,23 @@ public class IdeEventQueueTest extends PlatformTestCase {
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
 
     KeyEvent keyRelease = new KeyEvent(new JLabel(), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
-    eventQueue.postEvent(keyRelease);
+    postCarefully(keyRelease);
+
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
     assertEquals(keyRelease, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
 
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+2, ideEventQueue.myKeyboardEventsDispatched.get());
+  }
+
+  private static void postCarefully(AWTEvent event) {
+    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
+    boolean didPosted = ideEventQueue.doPostEvent(event);
+    assertTrue("Was not posted: "+event, didPosted);
+    boolean mustBeConsumed = event.getID() == ActionEvent.ACTION_PERFORMED;
+    assertEquals(mustBeConsumed, ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "consumed").booleanValue());
+    assertTrue(ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "isPosted"));
   }
 
   // need this because everybody can post some crazy stuff to IdeEventQueue, so we have to filter InvocationEvents out

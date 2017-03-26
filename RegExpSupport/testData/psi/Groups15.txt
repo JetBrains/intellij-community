@@ -8,13 +8,12 @@ REGEXP_FILE
             RegExpBranchImpl: <[abc]>
               RegExpClassImpl: <[abc]>
                 PsiElement(CLASS_BEGIN)('[')
-                RegExpUnionImpl: <abc>
-                  RegExpCharImpl: <a>
-                    PsiElement(CHARACTER)('a')
-                  RegExpCharImpl: <b>
-                    PsiElement(CHARACTER)('b')
-                  RegExpCharImpl: <c>
-                    PsiElement(CHARACTER)('c')
+                RegExpCharImpl: <a>
+                  PsiElement(CHARACTER)('a')
+                RegExpCharImpl: <b>
+                  PsiElement(CHARACTER)('b')
+                RegExpCharImpl: <c>
+                  PsiElement(CHARACTER)('c')
                 PsiElement(CLASS_END)(']')
           PsiElement(GROUP_END)(')')
         RegExpQuantifierImpl: <*>

@@ -12,8 +12,8 @@ PyFile:ErrorInParameterList.py
       PyNamedParameter('filds')
         PsiElement(Py:IDENTIFIER)('filds')
         PsiElement(Py:EQ)('=')
-        PyReferenceExpression: None
-          PsiElement(Py:IDENTIFIER)('None')
+        PyNoneLiteralExpression
+          PsiElement(Py:NONE_KEYWORD)('None')
       PsiElement(Py:COMMA)(',')
       PsiWhiteSpace(' ')
       PsiErrorElement:formal parameter name expected

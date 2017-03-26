@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ class Foo<T> {
   void testCategoryWhenMethodRenamed() {
     PsiClass category = myFixture.addClass("""
 public class MyCategory {
-  public void foo(String s) {}
+  public static void foo(String s) {}
 }""")
     def foo = category.getMethods()[0]
     addGdsl("""

@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.CutProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 
 public class CutAction extends AnAction implements DumbAware {
@@ -26,18 +27,26 @@ public class CutAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(dataContext);
+    CutProvider provider = getAvailableCutProvider(e);
     if (provider == null) {
       return;
     }
-    provider.performCut(dataContext);
+    provider.performCut(e.getDataContext());
+  }
+
+  private static CutProvider getAvailableCutProvider(AnActionEvent e) {
+    CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(e.getDataContext());
+    Project project = e.getProject();
+    if (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+      return null;
+    }
+    return provider;
   }
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(dataContext);
+    CutProvider provider = getAvailableCutProvider(event);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(project != null && project.isOpen() && provider != null && provider.isCutEnabled(dataContext));
     if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {

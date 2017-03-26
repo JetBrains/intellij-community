@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ public abstract class PyPackageManager {
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
   public static final String USE_USER_SITE = "--user";
+  public static final Topic<Listener> PACKAGE_MANAGER_TOPIC = Topic.create("Python package manager", Listener.class);
 
   @NotNull
   public static PyPackageManager getInstance(@NotNull Sdk sdk) {
@@ -64,4 +66,8 @@ public abstract class PyPackageManager {
 
   @NotNull
   public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException;
+
+  public interface Listener {
+    void packagesRefreshed(@NotNull Sdk sdk);
+  }
 }

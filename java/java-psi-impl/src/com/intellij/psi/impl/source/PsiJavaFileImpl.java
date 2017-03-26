@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   @Override
   public PsiJavaModule getModuleDeclaration() {
     PsiJavaFileStub stub = (PsiJavaFileStub)getGreenStub();
-    if (stub != null) {
-      return stub.getModule();
-    }
-
-    PsiElement element = getFirstChild();
-    if (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
-      element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
-    }
-    return element instanceof PsiJavaModule ? (PsiJavaModule)element : null;
+    return stub != null ? stub.getModule() : PsiTreeUtil.getChildOfType(this, PsiJavaModule.class);
   }
 
   @Override

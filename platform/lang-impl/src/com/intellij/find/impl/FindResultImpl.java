@@ -19,13 +19,14 @@ package com.intellij.find.impl;
 import com.intellij.find.FindResult;
 
 public class FindResultImpl extends FindResult {
-  private boolean isStringFound = true;
+  private final boolean isStringFound;
 
   public FindResultImpl(int startOffset, int endOffset) {
     super(startOffset, endOffset);
+    isStringFound = true;
   }
 
-  public FindResultImpl() {
+  FindResultImpl() {
     super(0, 0);
     isStringFound = false;
   }

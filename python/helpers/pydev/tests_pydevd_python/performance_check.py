@@ -82,6 +82,30 @@ class WriterThreadPerformance4(PerformanceWriterThread):
         self.write_make_initial_run()
         self.finished_ok = True
 
+class WriterThreadPerformance5(PerformanceWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_2.py')
+    BENCHMARK_NAME = 'global_scope_1_with_breakpoint'
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(23, None)
+
+        self.write_make_initial_run()
+        self.finished_ok = True
+
+class WriterThreadPerformance6(PerformanceWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_3.py')
+    BENCHMARK_NAME = 'global_scope_2_with_breakpoint'
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(17, None)
+
+        self.write_make_initial_run()
+        self.finished_ok = True
+
 
 class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
@@ -95,13 +119,19 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
         return float(time_taken)
 
     def obtain_results(self, writer_thread_class):
-        time_when_debugged = self._get_time_from_result(self.check_case(writer_thread_class))
+        runs = 5
+        all_times = []
+        for _ in range(runs):
+            all_times.append(self._get_time_from_result(self.check_case(writer_thread_class)))
+            print('partial for: %s: %.3fs' % (writer_thread_class.BENCHMARK_NAME, all_times[-1]))
+        all_times.remove(min(all_times))
+        all_times.remove(max(all_times))
+        time_when_debugged = sum(all_times) / float(len(all_times))
 
         args = self.get_command_line()
         args.append(writer_thread_class.TEST_FILE)
-        regular_time = self._get_time_from_result(self.run_process(args, writer_thread=None))
-        simple_trace_time = self._get_time_from_result(self.run_process(args+['--regular-trace'], writer_thread=None))
-        print(writer_thread_class.BENCHMARK_NAME, time_when_debugged, regular_time, simple_trace_time)
+        # regular_time = self._get_time_from_result(self.run_process(args, writer_thread=None))
+        # simple_trace_time = self._get_time_from_result(self.run_process(args+['--regular-trace'], writer_thread=None))
 
         if 'SPEEDTIN_AUTHORIZATION_KEY' in os.environ:
 
@@ -133,43 +163,62 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
                 commit_id, branch, commit_date = api.git_commit_id_branch_and_date_from_path(pydevd.__file__)
                 api.add_benchmark(benchmark_name)
                 api.add_measurement(
-                        benchmark_name,
-                        value=time_when_debugged,
-                        version=version,
-                        released=False,
-                        branch=branch,
-                        commit_id=commit_id,
-                        commit_date=commit_date,
+                    benchmark_name,
+                    value=time_when_debugged,
+                    version=version,
+                    released=False,
+                    branch=branch,
+                    commit_id=commit_id,
+                    commit_date=commit_date,
                 )
                 api.commit()
 
+        return '%s: %.3fs ' % (writer_thread_class.BENCHMARK_NAME, time_when_debugged)
+
 
     def check_performance1(self):
-        self.obtain_results(WriterThreadPerformance1)
+        return self.obtain_results(WriterThreadPerformance1)
 
     def check_performance2(self):
-        self.obtain_results(WriterThreadPerformance2)
+        return self.obtain_results(WriterThreadPerformance2)
 
     def check_performance3(self):
-        self.obtain_results(WriterThreadPerformance3)
+        return self.obtain_results(WriterThreadPerformance3)
 
     def check_performance4(self):
-        self.obtain_results(WriterThreadPerformance4)
+        return self.obtain_results(WriterThreadPerformance4)
+
+    def check_performance5(self):
+        return self.obtain_results(WriterThreadPerformance5)
+
+    def check_performance6(self):
+        return self.obtain_results(WriterThreadPerformance6)
 
 if __name__ == '__main__':
     debugger_unittest.SHOW_WRITES_AND_READS = False
     debugger_unittest.SHOW_OTHER_DEBUG_INFO = False
     debugger_unittest.SHOW_STDOUT = False
 
+    import time
+    start_time = time.time()
+
+    msgs = []
     for check in (
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
             CHECK_REGULAR,
             CHECK_CYTHON
     ):
         PerformanceWriterThread.CHECK = check
-        print('Checking: %s' % (check,))
+        msgs.append('Checking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance()
-        check_debugger_performance.check_performance1()
-        check_debugger_performance.check_performance2()
-        check_debugger_performance.check_performance3()
-        check_debugger_performance.check_performance4()
+        msgs.append(check_debugger_performance.check_performance1())
+        msgs.append(check_debugger_performance.check_performance2())
+        msgs.append(check_debugger_performance.check_performance3())
+        msgs.append(check_debugger_performance.check_performance4())
+        msgs.append(check_debugger_performance.check_performance5())
+        msgs.append(check_debugger_performance.check_performance6())
+
+    for msg in msgs:
+        print(msg)
+
+    print('TotalTime for profile: %.2fs' % (time.time()-start_time,))

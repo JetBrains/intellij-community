@@ -31,7 +31,7 @@ import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.GCUtil
+import com.intellij.util.ref.GCUtil
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future

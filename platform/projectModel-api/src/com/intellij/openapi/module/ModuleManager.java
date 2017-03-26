@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
   @NotNull
-  public abstract Module loadModule(@NotNull String filePath)
-    throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
+  public abstract Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.
@@ -159,12 +158,16 @@ public abstract class ModuleManager extends SimpleModificationTracker {
 
 
   /**
-   * Returns the path to the group to which the specified module belongs, as an
-   * array of group names starting from the project root.
-   *
+   * Returns the path to the group to which the specified module belongs, as an array of group names starting from the project root.
+   * <p>
+   * <strong>Use {@link com.intellij.openapi.module.ModuleGrouper#getGroupPath()} instead.</strong> Exlicit module groups will be replaced
+   * by automatical module grouping accordingly to qualified names of modules, see https://youtrack.jetbrains.com/issue/IDEA-166061 for details.
+   * </p>
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
   @Nullable
   public abstract String[] getModuleGroupPath(@NotNull Module module);
+
+  public abstract boolean hasModuleGroups();
 }

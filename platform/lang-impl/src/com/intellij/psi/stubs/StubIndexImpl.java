@@ -19,16 +19,11 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -37,13 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.LanguageSubstitutors;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -598,57 +587,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
     public IndexExtension<K, StubIdList, Void> getExtension() {
       return myExtension;
     }
-  }
-
-  @Override
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file, Class<Psi> requiredClass) {
-    if (file == null) {
-      super.reportStubPsiMismatch(psi, file, requiredClass);
-      return;
-    }
-
-    StringWriter writer = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    PrintWriter out = new PrintWriter(writer);
-
-    out.print("Invalid stub element type in index:");
-    out.printf("\nfile: %s\npsiElement: %s\nrequiredClass: %s\nactualClass: %s",
-               file, psi, requiredClass, psi.getClass());
-
-    FileType fileType = file.getFileType();
-    Language language = fileType instanceof LanguageFileType ?
-                        LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, psi.getProject()) :
-                        Language.ANY;
-    out.printf("\nvirtualFile: size:%s; stamp:%s; modCount:%s; fileType:%s; language:%s",
-               file.getLength(), file.getModificationStamp(), file.getModificationCount(),
-               fileType.getName(), language.getID());
-
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null) {
-      boolean committed = PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
-      boolean saved = !FileDocumentManager.getInstance().isDocumentUnsaved(document);
-      out.printf("\ndocument: size:%s; stamp:%s; committed:%s; saved:%s",
-                 document.getTextLength(), document.getModificationStamp(), committed, saved);
-    }
-
-    PsiFile psiFile = psi.getManager().findFile(file);
-    if (psiFile != null) {
-      out.printf("\npsiFile: size:%s; stamp:%s; class:%s; language:%s",
-                 psiFile.getTextLength(), psiFile.getViewProvider().getModificationStamp(), psiFile.getClass().getName(),
-                 psiFile.getLanguage().getID());
-    }
-
-    StubTree stub = psiFile instanceof PsiFileWithStubSupport ? ((PsiFileWithStubSupport)psiFile).getStubTree() : null;
-    FileElement treeElement = stub == null && psiFile instanceof PsiFileImpl? ((PsiFileImpl)psiFile).getTreeElement() : null;
-    if (stub != null) {
-      out.printf("\nstubInfo: " + stub.getDebugInfo());
-    }
-    else if (treeElement != null) {
-      out.printf("\nfileAST: size:%s; parsed:%s", treeElement.getTextLength(), treeElement.isParsed());
-    }
-
-    out.printf("\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file));
-    LOG.error(writer.toString());
   }
 
   private abstract static class StubIdListContainerAction implements ValueContainer.ContainerAction<StubIdList> {

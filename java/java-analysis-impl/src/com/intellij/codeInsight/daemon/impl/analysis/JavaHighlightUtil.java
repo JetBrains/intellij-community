@@ -15,8 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -176,6 +179,33 @@ public class JavaHighlightUtil {
       info.visitedConstructors.add(method);
       constructor = method;
     }
+  }
+
+  @Nullable
+  public static String checkPsiTypeUseInContext(@Nullable PsiType type, @NotNull PsiElement context) {
+    if (type instanceof PsiPrimitiveType) return null;
+    if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
+    if (PsiUtil.resolveClassInType(type) != null) return null;
+    if (type instanceof PsiClassType) return checkClassType((PsiClassType)type, context);
+    return "Invalid Java type";
+  }
+
+  private static String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
+    String className = PsiNameHelper.getQualifiedClassName(type.getCanonicalText(false), true);
+    if (classExists(context, className)) {
+      return getClassInaccessibleMessage(context, className);
+    }
+    return "Invalid Java type";
+  }
+
+  private static boolean classExists(@NotNull PsiElement context, String className) {
+    return JavaPsiFacade.getInstance(context.getProject()).findClass(className, GlobalSearchScope.allScope(context.getProject())) != null;
+  }
+
+  @NotNull
+  private static String getClassInaccessibleMessage(@NotNull PsiElement context, String className) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(context);
+    return "Class '" + className + "' is not accessible " + (module == null ? "here" : "from module '" + module.getName() + "'");
   }
 
   static class ConstructorVisitorInfo {

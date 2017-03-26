@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -42,7 +43,6 @@ class InstancesWithStackFrameView {
   private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
   private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
   private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
-  private static final List<StackFrameItem> EMPTY_FRAME = Collections.emptyList();
 
   private float myHidedProportion;
 
@@ -50,9 +50,10 @@ class InstancesWithStackFrameView {
   private boolean myIsHided = false;
 
   InstancesWithStackFrameView(@NotNull XDebugSession debugSession, @NotNull InstancesTree tree,
-                              @NotNull StackFrameList list, String className) {
+                              @NotNull StackFrameList list, @NotNull String className) {
     mySplitter.setFirstComponent(new JBScrollPane(tree));
 
+    final Project project = debugSession.getProject();
     list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
     JLabel stackTraceLabel;
     if (isArrayType(className)) {
@@ -64,8 +65,10 @@ class InstancesWithStackFrameView {
                                              new AnAction() {
                                                @Override
                                                public void actionPerformed(AnActionEvent e) {
-                                                 InstancesTracker.getInstance(debugSession.getProject())
-                                                   .add(className, TrackingType.CREATION);
+                                                 final Project project = e.getProject();
+                                                 if (project != null && !project.isDisposed()) {
+                                                   InstancesTracker.getInstance(project).add(className, TrackingType.CREATION);
+                                                 }
                                                }
                                              });
 
@@ -78,37 +81,39 @@ class InstancesWithStackFrameView {
 
     JComponent stackComponent = new JBScrollPane(list);
 
-    InstancesTracker instancesTracker = InstancesTracker.getInstance(debugSession.getProject());
-    instancesTracker.addTrackerListener(new InstancesTrackerListener() {
-      @Override
-      public void classChanged(@NotNull String name, @NotNull TrackingType type) {
-        if (Objects.equals(className, name) && type == TrackingType.CREATION) {
-          mySplitter.setSecondComponent(stackComponent);
+    if (!project.isDisposed()) {
+      final InstancesTracker tracker = InstancesTracker.getInstance(project);
+      tracker.addTrackerListener(new InstancesTrackerListener() {
+        @Override
+        public void classChanged(@NotNull String name, @NotNull TrackingType type) {
+          if (Objects.equals(className, name) && type == TrackingType.CREATION) {
+            mySplitter.setSecondComponent(stackComponent);
+          }
         }
-      }
 
-      @Override
-      public void classRemoved(@NotNull String name) {
-        if (Objects.equals(name, className)) {
-          mySplitter.setSecondComponent(stackTraceLabel);
+        @Override
+        public void classRemoved(@NotNull String name) {
+          if (Objects.equals(name, className)) {
+            mySplitter.setSecondComponent(stackTraceLabel);
+          }
         }
-      }
-    }, tree);
+      }, tree);
 
-    mySplitter.setSecondComponent(instancesTracker.isTracked(className) ? stackComponent : stackTraceLabel);
+      mySplitter.setSecondComponent(tracker.isTracked(className) ? stackComponent : stackTraceLabel);
+    }
 
     mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
 
     final MemoryViewDebugProcessData data =
-      DebuggerManager.getInstance(debugSession.getProject()).getDebugProcess(debugSession.getDebugProcess().getProcessHandler())
+      DebuggerManager.getInstance(project).getDebugProcess(debugSession.getDebugProcess().getProcessHandler())
         .getUserData(MemoryViewDebugProcessData.KEY);
     tree.addTreeSelectionListener(e -> {
       ObjectReference ref = tree.getSelectedReference();
       if (ref != null && data != null) {
         List<StackFrameItem> stack = data.getTrackedStacks().getStack(ref);
         if (stack != null) {
-          list.setFrame(stack);
+          list.setFrameItems(stack);
           if (mySplitter.getProportion() == 1.f) {
             mySplitter.setProportion(DEFAULT_SPLITTER_PROPORTION);
           }
@@ -120,7 +125,7 @@ class InstancesWithStackFrameView {
         list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
       }
 
-      list.setFrame(EMPTY_FRAME);
+      list.setFrameItems(Collections.emptyList());
     });
   }
 

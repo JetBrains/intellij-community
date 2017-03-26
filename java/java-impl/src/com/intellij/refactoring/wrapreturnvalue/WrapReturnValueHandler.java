@@ -18,8 +18,6 @@ package com.intellij.refactoring.wrapreturnvalue;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -61,7 +59,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
         }
         if(selectedMethod == null){
           CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
-              "the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"), null, this.getHelpID());
+              "the.caret.should.be.positioned.at.the.name.of.the.method.to.be.refactored"), REFACTORING_NAME, this.getHelpID());
           return;
         }
       invoke(project, selectedMethod, editor);
@@ -92,13 +90,13 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
 
   private void invoke(final Project project, PsiMethod method, Editor editor) {
     if(method.isConstructor()){
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), null,
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("constructor.returns.can.not.be.wrapped"), REFACTORING_NAME,
                                           this.getHelpID());
       return;
     }
     final PsiType returnType = method.getReturnType();
     if(PsiType.VOID.equals(returnType)){
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("method.selected.returns.void"), null, this.getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("method.selected.returns.void"), REFACTORING_NAME, this.getHelpID());
       return;
     }
     method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));

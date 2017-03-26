@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,11 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
-    SourcePosition res = mySourcePositionCache.get(location);
+    SourcePosition res = null;
+    try {
+      res = mySourcePositionCache.get(location);
+    } catch (IllegalArgumentException ignored) { // Invalid method id
+    }
     if (checkCacheEntry(res, location)) return res;
 
     return DebuggerUtilsImpl.runInReadActionWithWriteActionPriorityWithRetries(
@@ -111,7 +115,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       }, null, null, false));
   }
 
-  private static boolean checkCacheEntry(SourcePosition position, Location location) {
+  private static boolean checkCacheEntry(@Nullable SourcePosition position, @NotNull Location location) {
     if (position == null) return false;
     PsiFile psiFile = position.getFile();
     if (!psiFile.isValid()) return false;

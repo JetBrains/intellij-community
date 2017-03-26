@@ -31,8 +31,7 @@ public class ValidateAction extends PatchAction {
   }
 
   @Override
-  protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-  }
+  protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) { }
 
   @Override
   public ValidationResult validate(File toDir) throws IOException {
@@ -40,14 +39,11 @@ public class ValidateAction extends PatchAction {
   }
 
   @Override
-  protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-  }
+  protected void doApply(ZipFile patchFile, File backupDir, File toFile) { }
 
   @Override
-  protected void doBackup(File toFile, File backupFile) throws IOException {
-  }
+  protected void doBackup(File toFile, File backupFile) { }
 
   @Override
-  protected void doRevert(File toFile, File backupFile) throws IOException {
-  }
+  protected void doRevert(File toFile, File backupFile) { }
 }

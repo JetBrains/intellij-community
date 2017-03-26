@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -106,13 +107,14 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   @Override
   public boolean isModified() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    boolean isModified = !Arrays.asList(myNegativePanel.getListItems()).equals(mySettings.getNegativePatterns());
-    isModified |= !Arrays.asList(myPositivePanel.getListItems()).equals(mySettings.getPositivePatterns());
+    boolean isModified = !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getNegativePatterns()));
+    isModified |= !ContainerUtil.newHashSet(myPositivePanel.getListItems()).equals(ContainerUtil.newHashSet(mySettings.getPositivePatterns()));
     isModified |= isModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
-    isModified |= isModified(myCommandsHistoryLimitField, UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT);
+    UISettings uiSettings = UISettings.getInstance();
+    isModified |= isModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit());
     if (ConsoleBuffer.useCycleBuffer()) {
-      isModified |= isModified(myCbOverrideConsoleCycleBufferSize, UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE);
-      isModified |= isModified(myConsoleCycleBufferSizeField, UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB);
+      isModified |= isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize());
+      isModified |= isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb());
     }
 
     return isModified;
@@ -135,17 +137,17 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtConsole.isSelected(), SoftWrapAppliancePlaces.CONSOLE);
     boolean uiSettingsChanged = false;
-    if (isModified(myCommandsHistoryLimitField, uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT)) {
-      uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT = Math.max(0, Math.min(1000, Integer.parseInt(myCommandsHistoryLimitField.getText().trim())));
+    if (isModified(myCommandsHistoryLimitField, uiSettings.getConsoleCommandHistoryLimit())) {
+      uiSettings.setConsoleCommandHistoryLimit(Math.max(0, Math.min(1000, Integer.parseInt(myCommandsHistoryLimitField.getText().trim()))));
       uiSettingsChanged = true;
     }
     if (ConsoleBuffer.useCycleBuffer()) {
-      if (isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE)) {
-        uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = myCbOverrideConsoleCycleBufferSize.isSelected();
+      if (isModified(myCbOverrideConsoleCycleBufferSize, uiSettings.getOverrideConsoleCycleBufferSize())) {
+        uiSettings.setOverrideConsoleCycleBufferSize(myCbOverrideConsoleCycleBufferSize.isSelected());
         uiSettingsChanged = true;
       }
-      if (isModified(myConsoleCycleBufferSizeField, uiSettings.CONSOLE_CYCLE_BUFFER_SIZE_KB)) {
-        uiSettings.CONSOLE_CYCLE_BUFFER_SIZE_KB = Math.max(0, Math.min(1024*100, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim())));
+      if (isModified(myConsoleCycleBufferSizeField, uiSettings.getConsoleCycleBufferSizeKb())) {
+        uiSettings.setConsoleCycleBufferSizeKb(Math.max(0, Math.min(1024*100, Integer.parseInt(myConsoleCycleBufferSizeField.getText().trim()))));
         uiSettingsChanged = true;
       }
     }
@@ -164,12 +166,12 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     UISettings uiSettings = UISettings.getInstance();
 
     myCbUseSoftWrapsAtConsole.setSelected(editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
-    myCommandsHistoryLimitField.setText(Integer.toString(uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT));
+    myCommandsHistoryLimitField.setText(Integer.toString(uiSettings.getConsoleCommandHistoryLimit()));
 
     myCbOverrideConsoleCycleBufferSize.setEnabled(ConsoleBuffer.useCycleBuffer());
-    myCbOverrideConsoleCycleBufferSize.setSelected(uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE);
-    myConsoleCycleBufferSizeField.setEnabled(ConsoleBuffer.useCycleBuffer() && uiSettings.OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE);
-    myConsoleCycleBufferSizeField.setText(Integer.toString(uiSettings.CONSOLE_CYCLE_BUFFER_SIZE_KB));
+    myCbOverrideConsoleCycleBufferSize.setSelected(uiSettings.getOverrideConsoleCycleBufferSize());
+    myConsoleCycleBufferSizeField.setEnabled(ConsoleBuffer.useCycleBuffer() && uiSettings.getOverrideConsoleCycleBufferSize());
+    myConsoleCycleBufferSizeField.setText(Integer.toString(uiSettings.getConsoleCycleBufferSizeKb()));
 
 
     myNegativePanel.resetFrom(mySettings.getNegativePatterns());
@@ -206,6 +208,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     MyAddDeleteListPanel(String title, String query) {
       super(title, new ArrayList<>());
       myQuery = query;
+      new ListSpeedSearch(myList);
     }
 
     @Override
@@ -240,9 +243,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     void resetFrom(List<String> patterns) {
       myListModel.clear();
-      for (String pattern : patterns) {
-        myListModel.addElement(pattern);
-      }
+      patterns.stream().sorted(String.CASE_INSENSITIVE_ORDER).forEach(myListModel::addElement);
     }
 
     void applyTo(List<String> patterns) {

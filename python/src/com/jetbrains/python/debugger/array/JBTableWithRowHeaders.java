@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger.array;
 
-import com.google.common.base.Strings;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -35,7 +32,6 @@ import java.beans.PropertyChangeListener;
  * @author amarch
  */
 public class JBTableWithRowHeaders extends JBTable {
-  private final JBScrollPane myScrollPane;
   private RowHeaderTable myRowHeaderTable;
 
   public JBTableWithRowHeaders() {
@@ -46,15 +42,12 @@ public class JBTableWithRowHeaders extends JBTable {
     getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
     getTableHeader().setReorderingAllowed(false);
 
-    myScrollPane = new JBScrollPane(this);
+    JBScrollPane scrollPane = new JBScrollPane(this);
     myRowHeaderTable = new JBTableWithRowHeaders.RowHeaderTable(this);
-    myScrollPane.setRowHeaderView(myRowHeaderTable);
-    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                           myRowHeaderTable.getTableHeader());
-  }
-
-  public JBScrollPane getScrollPane() {
-    return myScrollPane;
+    myRowHeaderTable.getEmptyText().setText("");
+    scrollPane.setRowHeaderView(myRowHeaderTable);
+    scrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
+                         myRowHeaderTable.getTableHeader());
   }
 
   public boolean getScrollableTracksViewportWidth() {
@@ -84,14 +77,7 @@ public class JBTableWithRowHeaders extends JBTable {
       for (MouseListener l : listeners) {
         removeMouseListener(l);
       }
-    }
-
-    @Override
-    protected void paintComponent(@NotNull Graphics g) {
-      if (!Strings.isNullOrEmpty(getEmptyText().getText())) {
-        getEmptyText().setText("");
-      }
-      super.paintComponent(g);
+      setModel(new DefaultTableModel(0, 1));
     }
 
 
@@ -213,5 +199,10 @@ public class JBTableWithRowHeaders extends JBTable {
       setBorder(UIManager.getBorder("TableHeader.cellBorder"));
       return this;
     }
+  }
+
+  public void setEmpty() {
+    setModel(new DefaultTableModel());
+    myRowHeaderTable.setModel(new DefaultTableModel());
   }
 }

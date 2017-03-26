@@ -33,7 +33,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ComboBoxTableCellRenderer;
+import com.intellij.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;

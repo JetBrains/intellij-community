@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -25,6 +28,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -35,6 +39,7 @@ public class GradleExecutionWorkspace implements Serializable {
 
   @NotNull
   private final List<GradleBuildParticipant> myBuildParticipants = ContainerUtil.newArrayList();
+  private Map<String, Pair<DataNode<ModuleData>, IdeaModule>> myModuleMap;
 
   public void addBuildParticipant(GradleBuildParticipant participant) {
     myBuildParticipants.add(participant);
@@ -57,10 +62,23 @@ public class GradleExecutionWorkspace implements Serializable {
 
   public ModuleData findModuleDataByName(String moduleName) {
     ModuleData result = null;
+
+    Pair<DataNode<ModuleData>, IdeaModule> modulePair = myModuleMap.get(moduleName);
+    if(modulePair == null) {
+      modulePair = myModuleMap.get(":" + moduleName);
+    }
+    if (modulePair != null) {
+      return modulePair.first.getData();
+    }
+
     for (GradleBuildParticipant buildParticipant : myBuildParticipants) {
       result = buildParticipant.findModuleDataByName(moduleName);
       if (result != null) break;
     }
     return result;
+  }
+
+  public void addModuleMap(Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap) {
+    myModuleMap = moduleMap;
   }
 }

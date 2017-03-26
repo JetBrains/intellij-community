@@ -15,14 +15,20 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.hints.HintInfo.MethodInfo
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 
 class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
-
-  override fun getMethodInfo(element: PsiElement): MethodInfo? {
+  
+  companion object {
+    fun getInstance() = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
+  }
+  
+  override fun getHintInfo(element: PsiElement): MethodInfo? {
     if (element is PsiCallExpression) {
       val resolvedElement = element.resolveMethodGenerics().element
       if (resolvedElement is PsiMethod) {
@@ -47,7 +53,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return MethodInfo(fullMethodName, paramNames)
   }
 
-  override val defaultBlackList = setOf(
+  override fun getDefaultBlackList() = defaultBlackList
+
+  private val defaultBlackList = setOf(
       "(begin*, end*)",
       "(start*, end*)",
       "(first*, last*)",
@@ -61,6 +69,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       
       "*Exception",
 
+      "*.set*(*)",
       "*.add(*)",
       "*.set(*,*)",
       "*.get(*)",
@@ -79,7 +88,35 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.equal(*)",
 
       "java.lang.Math.*",
-      "org.slf4j.Logger.*"
+      "org.slf4j.Logger.*",
+      
+      "*.singleton(*)",
+      "*.singletonList(*)",
+      
+      "*.Set.of",
+      "*.ImmutableList.of",
+      "*.ImmutableMultiset.of",
+      "*.ImmutableSortedMultiset.of",
+      "*.ImmutableSortedSet.of"
   )
   
+  val isDoNotShowIfMethodNameContainsParameterName = Option("java.method.name.contains.parameter.name", 
+                                                            "Do not show if method name contains parameter name", 
+                                                            true)
+  
+  val isShowForParamsWithSameType = Option("java.multiple.params.same.type", 
+                                           "Show for non-literals in case of multiple params with the same type", 
+                                           false)
+  
+  val isDoNotShowForBuilderLikeMethods = Option("java.build.like.method",
+                                                "Do not show for builder-like methods",
+                                                true)
+  
+  override fun getSupportedOptions(): List<Option> {
+    return listOf(
+      isDoNotShowIfMethodNameContainsParameterName, 
+      isShowForParamsWithSameType,
+      isDoNotShowForBuilderLikeMethods
+    )
+  }
 }

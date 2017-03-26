@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 /**
  * @author Vladislav.Soroka
@@ -29,9 +29,9 @@ public class AfterSuiteEvent extends AbstractTestEvent {
   }
 
   @Override
-  public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testId = getTestId(eventXml);
-    final TestEventResult result = getTestEventResultType(eventXml);
+  public void process(@NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+    final String testId = eventXml.getTestId();
+    final TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
 
     addToInvokeLater(() -> {
       final SMTestProxy testProxy = findTestProxy(testId);

@@ -1,8 +1,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.assertj.core.api.Assertions.assertThat
@@ -29,8 +29,8 @@ class TemplateSchemeTest {
     <templateSet group="Groovy">
       <template name="serr" value="System.err.println(&quot;$\END$&quot;)dwed" description="Prints a string to System.errwefwe" toReformat="true" toShortenFQNames="true" deactivated="true">
         <context>
-          <option name="__DO_NOT_DELETE_ME__" value="true" />
           <option name="GROOVY_STATEMENT" value="false" />
+          <option name="__DO_NOT_DELETE_ME__" value="true" />
         </context>
       </template>
     </templateSet>""".trimIndent()

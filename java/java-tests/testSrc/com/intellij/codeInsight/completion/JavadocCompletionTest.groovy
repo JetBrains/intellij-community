@@ -472,7 +472,7 @@ class Test {
 import java.util.*;
 
 /**
- * {@link Ma<caret>}
+ * {@link ArraLi<caret>}
  */
 class Test {
 }
@@ -484,7 +484,7 @@ class Test {
 import java.util.*;
 
 /**
- * {@link Map}
+ * {@link ArrayList}
  */
 class Test {
 }
@@ -663,6 +663,12 @@ class Foo {
     myFixture.configureByText 'a.java', "/** nul<caret> */"
     myFixture.completeBasic()
     myFixture.checkResult "/** {@code null}<caret> */"
+  }
+
+  void "test null inside code tag"() {
+    myFixture.configureByText 'a.java', "/** {@code nul<caret>} */"
+    myFixture.completeBasic()
+    myFixture.checkResult "/** {@code null<caret>} */"
   }
 
   void "test completing inside qualified name"() {

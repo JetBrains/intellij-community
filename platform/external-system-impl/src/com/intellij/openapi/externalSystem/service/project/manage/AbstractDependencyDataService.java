@@ -95,7 +95,17 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       MultiMap<String /*module name*/, String /*dep name*/> byModuleName = MultiMap.create();
       for (DataNode<E> node : toImport) {
         final AbstractDependencyData data = node.getData();
-        byModuleName.putValue(data.getOwnerModule().getInternalName(), getInternalName(data));
+        Module ownerModule = modelsProvider.findIdeModule(data.getOwnerModule());
+        assert ownerModule != null;
+        String depName;
+        if(data instanceof ModuleDependencyData) {
+          Module targetModule = modelsProvider.findIdeModule(((ModuleDependencyData)data).getTarget());
+          assert targetModule != null;
+          depName = targetModule.getName();
+        } else {
+          depName = getInternalName(data);
+        }
+        byModuleName.putValue(ownerModule.getName(), depName);
       }
 
       final ModifiableModuleModel modifiableModuleModel = modelsProvider.getModifiableModuleModel();

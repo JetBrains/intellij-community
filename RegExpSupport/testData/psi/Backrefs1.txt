@@ -23,11 +23,10 @@ REGEXP_FILE
       RegExpClosureImpl: <[ac]*>
         RegExpClassImpl: <[ac]>
           PsiElement(CLASS_BEGIN)('[')
-          RegExpUnionImpl: <ac>
-            RegExpCharImpl: <a>
-              PsiElement(CHARACTER)('a')
-            RegExpCharImpl: <c>
-              PsiElement(CHARACTER)('c')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <c>
+            PsiElement(CHARACTER)('c')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <*>
           PsiElement(STAR)('*')

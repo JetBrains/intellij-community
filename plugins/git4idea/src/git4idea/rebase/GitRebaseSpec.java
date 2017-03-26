@@ -16,7 +16,6 @@
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -167,7 +166,7 @@ public class GitRebaseSpec {
 
   @NotNull
   private static GitStashChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
-    Git git = ServiceManager.getService(Git.class);
+    Git git = Git.getInstance();
     return new GitStashChangesSaver(project, git, indicator, "Uncommitted changes before rebase");
   }
 

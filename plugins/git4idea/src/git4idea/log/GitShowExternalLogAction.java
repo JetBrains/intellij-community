@@ -42,9 +42,9 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogTabsProperties;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVersion;
@@ -114,7 +114,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                             @NotNull final GitVcs vcs,
                                                             @NotNull final List<VirtualFile> roots,
                                                             @Nullable String tabName) {
-    final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }

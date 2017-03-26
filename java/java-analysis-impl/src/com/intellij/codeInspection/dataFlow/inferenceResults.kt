@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValueProvider
@@ -122,8 +123,8 @@ data class MethodData(
     internal val bodyStart: Int,
     internal val bodyEnd: Int
 ) {
-  fun methodBody(method: PsiMethod): () -> PsiCodeBlock = {
-    if ((method as StubBasedPsiElement<*>?)?.stub != null)
+  fun methodBody(method: PsiMethodImpl): () -> PsiCodeBlock = {
+    if (method.stub != null)
       CachedValuesManager.getCachedValue(method) { CachedValueProvider.Result(getDetachedBody(method), method) }
     else
       method.body!!

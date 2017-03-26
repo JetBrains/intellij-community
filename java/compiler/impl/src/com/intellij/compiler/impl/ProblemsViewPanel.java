@@ -23,6 +23,7 @@ public class ProblemsViewPanel extends NewErrorTreeViewPanel {
   public ProblemsViewPanel(Project project) {
     super(project, "reference.problems.tool.window", false, true, null);
     myTree.getEmptyText().setText("No compilation problems found");
+    setProgress("", 0.0f); // hack: this will pre-initialize progress UI
   }
 
   @Override

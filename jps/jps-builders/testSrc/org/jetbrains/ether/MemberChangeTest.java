@@ -28,6 +28,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddPrivateMethodToAbstractClass() {
+    doTest();
+  }
+
   public void testAddConstructorParameter() {
     doTest();
   }

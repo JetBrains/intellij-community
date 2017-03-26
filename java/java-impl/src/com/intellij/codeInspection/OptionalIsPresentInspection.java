@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
 
     void registerProblem(ProblemsHolder holder, PsiExpression condition, OptionalIsPresentCase scenario) {
       if(this != NONE) {
-        holder.registerProblem(condition, "Can be replaced with single expression in functional style",
-                               this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               new OptionalIsPresentFix(scenario));
+        holder.registerProblem(holder.getManager().createProblemDescriptor(condition,
+                                                                           "Can be replaced with single expression in functional style",
+                                                                           this != INFO,
+                                                                           this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                           true,
+                                                                           new OptionalIsPresentFix(scenario)));
       }
     }
   }
@@ -378,6 +381,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     @Override
     public ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return ProblemType.NONE;
+      if (!(trueElement instanceof PsiStatement)) return ProblemType.NONE;
       if (trueElement instanceof PsiExpressionStatement) {
         PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
         if(isOptionalGetCall(expression, optionalVariable)) return ProblemType.NONE;

@@ -58,11 +58,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
   private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
-    mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(map, PSI_EQUIVALENCE);
+    mySubstitutionMap = new THashMap<>(map, PSI_EQUIVALENCE);
   }
 
   PsiSubstitutorImpl() {
-    mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(2, PSI_EQUIVALENCE);
+    mySubstitutionMap = new THashMap<>(2, PSI_EQUIVALENCE);
   }
 
   PsiSubstitutorImpl(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
@@ -149,12 +149,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
       // First bound
-      return ourGuard.doPreventingRecursion(extendsTypes[0], true, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          return substitute(extendsTypes[0]);
-        }
-      });
+      return ourGuard.doPreventingRecursion(extendsTypes[0], true, () -> substitute(extendsTypes[0]));
     }
     // Object
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
@@ -237,7 +232,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         }
         return classType;
       }
-      final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>(2);
+      final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<>(2);
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
         return null;
       }

@@ -35,10 +35,6 @@ public class AutoIndentLinesAction extends BaseCodeInsightAction implements Dumb
     return new AutoIndentLinesHandler();
   }
 
-  public boolean startInWriteAction() {
-    return false;
-  }
-
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     final FileType fileType = file.getFileType();

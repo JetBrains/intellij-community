@@ -61,6 +61,14 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
                                       @Nullable final RunProfileStarter starter) {
     ExecutionManager.getInstance(environment.getProject()).startRunProfile(new RunProfileStarter() {
       @Override
+      public Promise<RunContentDescriptor> executeAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
+        if (starter == null) {
+          return Promise.resolve(postProcess(environment, null, callback));
+        }
+        return starter.executeAsync(state, environment).then(descriptor -> postProcess(environment, descriptor, callback));
+      }
+
+      @Override
       public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
         return postProcess(environment, starter == null ? null : starter.execute(state, environment), callback);
       }

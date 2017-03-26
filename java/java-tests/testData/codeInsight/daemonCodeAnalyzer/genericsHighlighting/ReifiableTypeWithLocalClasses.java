@@ -21,4 +21,36 @@ class B<T> {
 
     return new C();
   }
+  
+  static interface I<T> {}
+  void anonymousClassWithLocal() {
+    I<Object> i = new I<Object>() {
+      class InsideAnno {}
+      {
+        InsideAnno[] array = <error descr="Generic array creation">new InsideAnno[1]</error>;
+      }
+    };
+  }
+  
+  static void staticAnonymousClassWithLocal() {
+    I<Object> i = new I<Object>() {
+      class InsideAnno {}
+      {
+        InsideAnno[] array = new InsideAnno[1];
+      }
+    };
+  }
+
+  static void staticAnonymousClassWithGenericLocal() {
+    I<Object> i = new I<Object>() {
+
+      class InsideAnno<J> {
+        class O {}
+
+        {
+          O[] array = <error descr="Generic array creation">new O[1]</error>;
+        }
+      }
+    };
+  }
 }

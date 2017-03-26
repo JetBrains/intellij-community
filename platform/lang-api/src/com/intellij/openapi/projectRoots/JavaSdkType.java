@@ -31,4 +31,6 @@ public interface JavaSdkType {
 
   @NonNls
   String getVMExecutablePath(Sdk sdk);
+
+  default boolean isDependent() { return false; }
 }

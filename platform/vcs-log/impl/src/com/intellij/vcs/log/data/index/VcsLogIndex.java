@@ -38,7 +38,15 @@ public interface VcsLogIndex {
   Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters);
 
   @Nullable
-  String getFullMessage(int index);
+  IndexDataGetter getDataGetter();
 
   void markCorrupted();
+
+  void addListener(@NotNull IndexingFinishedListener l);
+
+  void removeListener(@NotNull IndexingFinishedListener l);
+
+  interface IndexingFinishedListener {
+    void indexingFinished(@NotNull VirtualFile root);
+  }
 }

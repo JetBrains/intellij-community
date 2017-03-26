@@ -35,7 +35,7 @@ public class CoreJarHandler extends ZipHandler {
     super(path);
     myFileSystem = fileSystem;
 
-    Map<EntryInfo, CoreJarVirtualFile> entries = new HashMap<EntryInfo, CoreJarVirtualFile>();
+    Map<EntryInfo, CoreJarVirtualFile> entries = new HashMap<>();
 
     final Map<String, EntryInfo> entriesMap = getEntriesMap();
     for (EntryInfo info : entriesMap.values()) {

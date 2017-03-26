@@ -87,7 +87,7 @@ public class CoreLocalVirtualFile extends VirtualFile {
   public VirtualFile[] getChildren() {
     VirtualFile[] answer = myChildren;
     if (answer == null) {
-      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      List<VirtualFile> result = new ArrayList<>();
       final File[] files = myIoFile.listFiles();
       if (files == null) {
         answer = EMPTY_ARRAY;

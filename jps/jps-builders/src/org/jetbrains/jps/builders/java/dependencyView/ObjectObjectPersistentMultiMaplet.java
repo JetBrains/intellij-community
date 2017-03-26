@@ -44,7 +44,8 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer,
+                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
       @NotNull
       @Override
@@ -217,15 +218,12 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   @Override
   public void forEachEntry(final TObjectObjectProcedure<K, Collection<V>> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(new Processor<K>() {
-        @Override
-        public boolean process(K key) {
-          try {
-            return procedure.execute(key, myMap.get(key));
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
+      myMap.processKeysWithExistingMapping(key -> {
+        try {
+          return procedure.execute(key, myMap.get(key));
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }

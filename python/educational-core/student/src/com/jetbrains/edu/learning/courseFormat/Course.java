@@ -234,9 +234,6 @@ public class Course {
   public Course copy() {
     Element element = XmlSerializer.serialize(this);
     Course copy = XmlSerializer.deserialize(element, Course.class);
-    if (copy == null) {
-      return null;
-    }
     copy.initCourse(true);
     return copy;
   }

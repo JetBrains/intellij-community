@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,9 +165,7 @@ public class DefaultJDOMExternalizer {
   public static void readExternal(@NotNull Object data, Element parentNode) throws InvalidDataException{
     if (parentNode == null) return;
 
-    for (final Object o : parentNode.getChildren("option")) {
-      Element e = (Element)o;
-
+    for (Element e : parentNode.getChildren("option")) {
       String fieldName = e.getAttributeValue("name");
       if (fieldName == null) {
         throw new InvalidDataException();

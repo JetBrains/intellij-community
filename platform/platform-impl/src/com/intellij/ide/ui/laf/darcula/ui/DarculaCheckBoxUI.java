@@ -107,7 +107,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
         g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected), w/2, h, getFocusedBackgroundColor2(armed, selected)));
         g.fillRoundRect(0, 0, w, h, R, R);
 
-        DarculaUIUtil.paintFocusRing(g, 1, 1, w - 2, h - 2);
+        DarculaUIUtil.paintFocusRing(g, new Rectangle(1, 1, w - 2, h - 2));
       } else {
         g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected), w / 2, h, getBackgroundColor2(enabled,
                                                                                                                            selected)));

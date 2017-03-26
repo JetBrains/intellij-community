@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,19 +112,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myExcludesConfiguration = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
-    Disposer.register(project, myExcludesConfiguration);
-    project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
-      @Override
-      public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
-        BuildManager.getInstance().clearState(myProject);
-      }
-
-      @Override
-      public void onEntryRemoved(@NotNull ExcludeEntryDescription description) {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    });
+    myExcludesConfiguration = createExcludedEntriesConfiguration(project);
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
@@ -137,6 +125,31 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         myProcessorsProfilesMap = null; // clear cache
       }
     });
+  }
+
+  // Overridden in Upsource
+  @NotNull
+  protected ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+    final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
+    Disposer.register(project, cfg);
+    project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
+      @Override
+      public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
+        clearState();
+      }
+
+      @Override
+      public void onEntryRemoved(@NotNull ExcludeEntryDescription description) {
+        clearState();
+      }
+
+      private void clearState() {
+        if (project.isOpen()) {
+          BuildManager.getInstance().clearState(project);
+        }
+      }
+    });
+    return cfg;
   }
 
   private static class State {
@@ -542,14 +555,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final CompiledPattern pattern = convertToRegexp(wildcardPattern);
-    if (pattern != null) {
-      myWildcardPatterns.add(wildcardPattern);
-      if (isPatternNegated(wildcardPattern)) {
-        myNegatedCompiledPatterns.add(pattern);
-      }
-      else {
-        myCompiledPatterns.add(pattern);
-      }
+    myWildcardPatterns.add(wildcardPattern);
+    if (isPatternNegated(wildcardPattern)) {
+      myNegatedCompiledPatterns.add(pattern);
+    }
+    else {
+      myCompiledPatterns.add(pattern);
     }
   }
 

@@ -39,7 +39,11 @@ public interface Computable <T> {
     }
   }
 
-  abstract class NotNullCachedComputable<T> implements Computable<T> {
+  /**
+   * @deprecated Use {@link NotNullLazyValue}::getValue instead
+   */
+  @Deprecated
+  abstract class NotNullCachedComputable<T> implements NotNullComputable<T> {
     private T myValue;
 
     @NotNull
@@ -55,7 +59,11 @@ public interface Computable <T> {
     }
   }
 
-  abstract class NullableCachedComputable<T> implements Computable<T> {
+  /**
+   * @deprecated Use {@link NullableLazyValue}::getValue instead
+   */
+  @Deprecated
+  abstract class NullableCachedComputable<T> implements NullableComputable<T> {
     private static final Object NULL_VALUE = new Object();
     private Object myValue;
 
@@ -69,6 +77,7 @@ public interface Computable <T> {
         final T value = internalCompute();
         myValue = value != null ? value : NULL_VALUE;
       }
+      //noinspection unchecked
       return myValue != NULL_VALUE ? (T)myValue : null;
     }
   }

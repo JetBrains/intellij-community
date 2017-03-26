@@ -71,7 +71,7 @@ public class HgMergeCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
   }
 

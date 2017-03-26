@@ -942,6 +942,14 @@ class AppTest {
     assert !make().find { it.category == CompilerMessageCategory.ERROR }
   }
 
+  void "test report real compilation errors"() {
+    addModule('another', true)
+
+    myFixture.addClass('class Foo {}');
+    myFixture.addFileToProject('a.groovy', 'import goo.Goo; class Bar { }')
+    shouldFail { compileModule(myModule) }
+  }
+
   static class GroovycTest extends GroovyCompilerTest {
     void "test navigate from stub to source"() {
       GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")

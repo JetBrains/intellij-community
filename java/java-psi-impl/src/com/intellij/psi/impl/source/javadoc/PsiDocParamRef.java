@@ -115,7 +115,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       public PsiElement[] getVariants() {
         final PsiElement firstChild = getFirstChild();
 
-        Set<String> usedNames = new HashSet<String>();
+        Set<String> usedNames = new HashSet<>();
         for (PsiDocTag tag : comment.getTags()) {
           if (tag.getName().equals("param")) {
             PsiDocTagValue valueElement = tag.getValueElement();
@@ -131,7 +131,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         } else if (owner instanceof PsiMethod) {
           result = ((PsiMethod)owner).getParameterList().getParameters();
         }
-        List<PsiElement> filtered = new ArrayList<PsiElement>();
+        List<PsiElement> filtered = new ArrayList<>();
         for (PsiNamedElement namedElement : result) {
           if (!usedNames.contains(namedElement.getName())) {
             filtered.add(namedElement);

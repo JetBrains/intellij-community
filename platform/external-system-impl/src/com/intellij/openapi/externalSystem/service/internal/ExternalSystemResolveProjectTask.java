@@ -1,22 +1,32 @@
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -48,12 +58,35 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
     ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
 
-    DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myIsPreviewMode, settings);
+    ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
+      (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemTaskId id = getId();
+    progressNotificationManager.onQueued(id, myProjectPath);
+    try {
+      DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings);
+      if (project != null) {
+        myExternalProject.set(project);
 
-    if (project == null) {
-      return;
+        ExternalSystemManager<?, ?, ?, ?, ?> systemManager = ExternalSystemApiUtil.getManager(getExternalSystemId());
+        assert systemManager != null;
+
+        Set<String> externalModulePaths = ContainerUtil.newHashSet();
+        Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(project, ProjectKeys.MODULE);
+        for (DataNode<ModuleData> node : moduleNodes) {
+          externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+        }
+        String projectPath = project.getData().getLinkedExternalProjectPath();
+        ExternalProjectSettings linkedProjectSettings =
+          systemManager.getSettingsProvider().fun(ideProject).getLinkedProjectSettings(projectPath);
+        if (linkedProjectSettings != null) {
+          linkedProjectSettings.setModules(externalModulePaths);
+        }
+      }
+      progressNotificationManager.onSuccess(id);
     }
-    myExternalProject.set(project);
+    finally {
+      progressNotificationManager.onEnd(id);
+    }
   }
 
   protected boolean doCancel() throws Exception {

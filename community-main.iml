@@ -119,12 +119,13 @@
     <orderEntry type="module" module-name="json-tests" scope="TEST" />
     <orderEntry type="module" module-name="typeMigration" />
     <orderEntry type="module" module-name="platform-tests" />
-    <orderEntry type="module" module-name="configuration-store-tests" scope="TEST" />
     <orderEntry type="module" module-name="sdk-updates" />
     <orderEntry type="module" module-name="android-ndk" />
     <orderEntry type="module" module-name="android-apk" />
     <orderEntry type="module" module-name="games" />
     <orderEntry type="module" module-name="firebase" />
+    <orderEntry type="module" module-name="android-plugin" />
+    <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="devkit-tests" scope="TEST" />
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
@@ -136,9 +137,8 @@
     <orderEntry type="module" module-name="remote-servers-git-java" />
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="javac-ref-scanner-8" scope="RUNTIME" />
-    <orderEntry type="module" module-name="android-plugin" />
-    <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="smali" />
+    <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
   </component>
 </module>

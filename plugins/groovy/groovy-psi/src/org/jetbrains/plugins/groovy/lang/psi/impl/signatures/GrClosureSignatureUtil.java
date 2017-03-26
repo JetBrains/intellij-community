@@ -97,8 +97,7 @@ public class GrClosureSignatureUtil {
 
   public static GrClosureSignature createSignature(MethodSignature signature) {
     final PsiType[] types = signature.getParameterTypes();
-    GrClosureParameter[] parameters = new GrClosureParameter[types.length];
-    ContainerUtil.map(types, type -> new GrImmediateClosureParameterImpl(type, null, false, null), parameters);
+    GrClosureParameter[] parameters = ContainerUtil.map(types, type -> new GrImmediateClosureParameterImpl(type, null, false, null), new GrClosureParameter[types.length]);
     return new GrImmediateClosureSignatureImpl(parameters, null, false, false);
   }
 

@@ -30,6 +30,7 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testForThisClass() { doTest(); }
   public void testForOuterClass() { doTest(); }
   public void testForOuterClassIterator() { doTest(); }
+  public void testForQualifiedArray() { doTest(); }
 
   @Override
   public void setUp() throws Exception {

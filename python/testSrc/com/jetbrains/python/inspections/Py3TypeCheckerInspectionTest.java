@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,11 +75,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-16855
   public void testTypingTypeVarWithUnresolvedBound() {
-    doTest();
-  }
-
-  // PY-16303
-  public void testTypingTupleInDocstring() {
     doTest();
   }
 
@@ -201,6 +196,31 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-21350
   public void testBuiltinInputPy3() {
+    doTest();
+  }
+
+  // PY-200057
+  public void testClassObjectType() {
+    doTest();
+  }
+
+  // PY-20057
+  public void testTypeAndClassObjectTypesCompatibility() {
+    doTest();
+  }
+
+  // PY-20057
+  public void testClassObjectTypeWithUnion() {
+    doTest();
+  }
+
+  // PY-22730
+  public void testOptionalOfBoundTypeVarInWarnings() {
+    doTest();
+  }
+
+  // PY-22769
+  public void testReplaceCalledOnUnionOfStrAndBytesWithStrArguments() {
     doTest();
   }
 }

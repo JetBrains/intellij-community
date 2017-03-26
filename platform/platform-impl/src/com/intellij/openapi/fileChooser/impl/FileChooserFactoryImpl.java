@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
+           !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") &&
            SystemInfo.isJetbrainsJvm;

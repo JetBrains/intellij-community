@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
+import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -58,6 +59,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
   private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
+  private static final File PLATFORM_NOT_SUPPORTED = new File("(platform not supported)");
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
@@ -86,6 +88,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
     else if (myExecutable == null) {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
+    }
+    else if (myExecutable == PLATFORM_NOT_SUPPORTED) {
+      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exists"), null);
     }
     else if (!myExecutable.canExecute()) {
       String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
@@ -140,27 +145,28 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (execPath != null) return new File(execPath);
 
     String[] names = null;
-    String prefix = null;
+    String subdir = null;
     if (SystemInfo.isWindows) {
-      names = SystemInfo.is64Bit ? new String[]{"fsnotifier64.exe", "fsnotifier.exe"} : new String[]{"fsnotifier.exe"};
-      prefix = "win";
+      if ("win32-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier.exe"};
+      else if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
+      subdir = "win";
     }
     else if (SystemInfo.isMac) {
       names = new String[]{"fsnotifier"};
-      prefix = "mac";
+      subdir = "mac";
     }
     else if (SystemInfo.isLinux) {
-      String arch = "arm".equals(SystemInfo.OS_ARCH) ? "-arm" : "ppc".equals(SystemInfo.OS_ARCH) ? "-ppc" : "";
-      String bits = SystemInfo.is64Bit ? "64" : "";
-      names = new String[]{"fsnotifier" + arch + bits};
-      prefix = "linux";
+      if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier"};
+      else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64"};
+      else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier-arm"};
+      subdir = "linux";
     }
-    if (names == null) return null;
+    if (names == null) return PLATFORM_NOT_SUPPORTED;
 
     String[] dirs = {PathManager.getBinPath(),
-                     PathManager.getHomePath() + "/ultimate/community/bin/" + prefix,
-                     PathManager.getHomePath() + "/community/bin/" + prefix,
-                     PathManager.getBinPath() + '/' + prefix};
+                     PathManager.getHomePath() + "/ultimate/community/bin/" + subdir,
+                     PathManager.getHomePath() + "/community/bin/" + subdir,
+                     PathManager.getBinPath() + '/' + subdir};
     for (String dir : dirs) {
       for (String name : names) {
         File candidate = new File(dir, name);

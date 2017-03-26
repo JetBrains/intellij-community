@@ -26,7 +26,7 @@ import java.util.ArrayList;
  * @author nik
 */
 public class FacetManagerState {
-  private List<FacetState> myFacets = new ArrayList<FacetState>();
+  private List<FacetState> myFacets = new ArrayList<>();
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)

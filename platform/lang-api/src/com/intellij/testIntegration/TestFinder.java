@@ -29,15 +29,23 @@ public interface TestFinder {
   @Nullable
   PsiElement findSourceElement(@NotNull PsiElement from);
 
+  /**
+   * Finds tests for given class.
+   *
+   * @param element may by of any language but not specific to a current test finder domain language
+   * @return founded tests for class
+   */
   @NotNull
   Collection<PsiElement> findTestsForClass(@NotNull PsiElement element);
+
+  /**
+   * Finds classes for given test.
+   *
+   * @param element may by of any language but not specific to a current test finder domain language
+   * @return founded classes for test
+   */
   @NotNull
   Collection<PsiElement> findClassesForTest(@NotNull PsiElement element);
 
   boolean isTest(@NotNull PsiElement element);
-
-  @Nullable
-  default PsiElement findSelectedElement(@NotNull final PsiElement element) {
-    return element;
-  }
 }

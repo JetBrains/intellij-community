@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,20 @@ public class ForLoopWithMissingComponentInspectionTest extends LightInspectionTe
                  "}");
   }
 
+  public void testListIterator() {
+    doMemberTest("void m(java.util.List l) {" +
+                 "  for (java.util.ListIterator it = l.listIterator(); it.hasPrevious();) {" +
+                 "    System.out.println(it.previous());" +
+                 "  }" +
+                 "}");
+  }
+
   public void testEnumeration() {
     doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements(); );");
+  }
+
+  public void testEnumeration2() {
+    doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements() && true && true; );");
   }
 
   @Override

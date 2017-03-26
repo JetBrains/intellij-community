@@ -117,6 +117,8 @@ public class ReadJsonSchemaFromPsi {
     myMap.put("anyOf", createContainer((object, members) -> object.setAnyOf(members)));
     myMap.put("oneOf", createContainer((object, members) -> object.setOneOf(members)));
     myMap.put("not", createNot());
+    myMap.put("instanceof", ((element, object) -> object.shouldValidateAgainstJSType()));
+    myMap.put("typeof", ((element, object) -> object.shouldValidateAgainstJSType()));
   }
 
   private PairConsumer<JsonElement, JsonSchemaObject> createNot() {
@@ -177,19 +179,27 @@ public class ReadJsonSchemaFromPsi {
           if (value instanceof JsonStringLiteral) {
             objects.add("\"" + StringUtil.unquoteString(((JsonStringLiteral)value).getValue()) + "\"");
           } else if (value instanceof JsonNumberLiteral) {
-            try {
-              final int i = Integer.parseInt(value.getText());
-              objects.add(i);
-            } catch (NumberFormatException e) {
-              objects.add(((JsonNumberLiteral)value).getValue());
-            }
+            objects.add(getNumber((JsonNumberLiteral)value));
           } else if (value instanceof JsonBooleanLiteral) {
             objects.add(((JsonBooleanLiteral)value).getValue());
+          } else if (value instanceof JsonNullLiteral) {
+            objects.add("null");
           }
         }
         object.setEnum(objects);
       }
     };
+  }
+
+  @NotNull
+  private static Number getNumber(@NotNull JsonNumberLiteral value) {
+    Number numberValue;
+    try {
+      numberValue = Integer.parseInt(value.getText());
+    } catch (NumberFormatException e) {
+      numberValue = value.getValue();
+    }
+    return numberValue;
   }
 
   private PairConsumer<JsonElement, JsonSchemaObject> createDependencies() {
@@ -326,17 +336,10 @@ public class ReadJsonSchemaFromPsi {
       } else if (element instanceof JsonStringLiteral) {
         object.setDefault(StringUtil.unquoteString(((JsonStringLiteral)element).getValue()));
       } else if (element instanceof JsonNumberLiteral) {
-        object.setDefault(((JsonNumberLiteral)element).getValue());
+        object.setDefault(getNumber((JsonNumberLiteral) element));
       } else if (element instanceof JsonBooleanLiteral) {
         object.setDefault(((JsonBooleanLiteral)element).getValue());
       }
     };
-  }
-
-  private class MyStringReader implements PairConsumer<JsonElement,JsonSchemaObject> {
-    @Override
-    public void consume(JsonElement element, JsonSchemaObject object) {
-
-    }
   }
 }

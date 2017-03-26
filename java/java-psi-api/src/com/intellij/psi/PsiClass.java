@@ -38,13 +38,7 @@ public interface PsiClass
    */
   @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
 
-  ArrayFactory<PsiClass> ARRAY_FACTORY = new ArrayFactory<PsiClass>() {
-    @NotNull
-    @Override
-    public PsiClass[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiClass[count];
-    }
-  };
+  ArrayFactory<PsiClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiClass[count];
 
   /**
    * Returns the fully qualified name of the class.

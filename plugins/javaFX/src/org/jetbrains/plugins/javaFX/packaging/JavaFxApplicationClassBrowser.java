@@ -18,10 +18,9 @@ package org.jetbrains.plugins.javaFX.packaging;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.ide.util.ClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.psi.PsiClass;
@@ -71,8 +70,7 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser {
 
   @Override
   protected PsiClass findClass(String className) {
-    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(
-      (Computable<Set<Module>>)() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject()));
+    final Set<Module> modules = ReadAction.compute(() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject()));
     for (Module module : modules) {
       final PsiClass aClass = JavaExecutionUtil.findMainClass(getProject(), className, GlobalSearchScope.moduleScope(module));
       if (aClass != null) {

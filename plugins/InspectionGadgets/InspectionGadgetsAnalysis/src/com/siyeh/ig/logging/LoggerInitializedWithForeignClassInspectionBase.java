@@ -21,6 +21,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilterBase;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,12 +42,17 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
   @NonNls private static final String DEFAULT_LOGGER_CLASS_NAMES =
     "org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger";
   @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES = "getLogger,getLogger,getLog,getLogger";
-  protected final List<String> loggerFactoryClassNames = new ArrayList();
-  protected final List<String> loggerFactoryMethodNames = new ArrayList();
+  protected final List<String> loggerFactoryClassNames = new ArrayList<>();
+  protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
   @SuppressWarnings({"PublicField"})
   public String loggerClassName = DEFAULT_LOGGER_CLASS_NAMES;
   @SuppressWarnings({"PublicField"})
   public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
+
+  {
+    parseString(loggerClassName, loggerFactoryClassNames);
+    parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
+  }
 
   @Override
   @NotNull
@@ -84,7 +92,18 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
   public void writeSettings(@NotNull Element element) throws WriteExternalException {
     loggerClassName = formatString(loggerFactoryClassNames);
     loggerFactoryMethodName = formatString(loggerFactoryMethodNames);
-    super.writeSettings(element);
+    XmlSerializer.serializeInto(this, element, new SerializationFilterBase() {
+      @Override
+      protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
+        if ("loggerClassName".equals(accessor.getName()) && DEFAULT_LOGGER_CLASS_NAMES.equals(beanValue)) {
+          return false;
+        }
+        if ("loggerFactoryMethodNames".equals(accessor.getName()) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
+          return false;
+        }
+        return true;
+      }
+    });
   }
 
   private static class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {

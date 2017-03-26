@@ -73,7 +73,7 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
   private static void rememberStubSources(CompileContext context, MultiMap<ModuleBuildTarget, GroovycOutputParser.OutputItem> compiled) {
     Map<String, String> stubToSrc = GroovyBuilder.STUB_TO_SRC.get(context);
     if (stubToSrc == null) {
-      GroovyBuilder.STUB_TO_SRC.set(context, stubToSrc = new HashMap<String, String>());
+      GroovyBuilder.STUB_TO_SRC.set(context, stubToSrc = new HashMap<>());
     }
     for (GroovycOutputParser.OutputItem item : compiled.values()) {
       stubToSrc.put(FileUtil.toSystemIndependentName(item.outputPath), item.sourcePath);
@@ -86,7 +86,7 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
                                                                 Map<ModuleBuildTarget, String> finalOutputs) throws IOException {
     if (!myForStubs) return super.getGenerationOutputs(context, chunk, finalOutputs);
 
-    Map<ModuleBuildTarget, String> generationOutputs = new HashMap<ModuleBuildTarget, String>();
+    Map<ModuleBuildTarget, String> generationOutputs = new HashMap<>();
     File commonRoot = GroovyBuilder.getStubRoot(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());

@@ -212,7 +212,7 @@ public class XPathAppComponent implements ApplicationComponentAdapter, Persisten
       BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Gray._128),
       BorderFactory.createEmptyBorder(3, 5, 3, 5)));
     label.setForeground(JBColor.foreground());
-    label.setBackground(HintUtil.INFORMATION_COLOR);
+    label.setBackground(HintUtil.getInformationColor());
     label.setOpaque(true);
     label.setFont(label.getFont().deriveFont(Font.BOLD));
 

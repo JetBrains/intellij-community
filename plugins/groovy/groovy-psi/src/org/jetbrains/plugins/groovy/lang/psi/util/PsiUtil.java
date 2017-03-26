@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,6 +159,13 @@ public class PsiUtil {
     return false;
   }
 
+  public static boolean isLValueOfOperatorAssignment(@NotNull GrReferenceExpression element) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
+    return parent instanceof GrAssignmentExpression
+           && ((GrAssignmentExpression)parent).getOperationTokenType() != GroovyTokenTypes.mASSIGN
+           && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
+  }
+
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
                                      PsiMethod method,
                                      PsiSubstitutor substitutor,
@@ -280,11 +287,12 @@ public class PsiUtil {
         );
       }
     }
-    else if (parent instanceof GrBinaryExpression || parent instanceof GrAssignmentExpression) {
-      GrExpression right = parent instanceof GrBinaryExpression
-                           ? ((GrBinaryExpression)parent).getRightOperand()
-                           : ((GrAssignmentExpression)parent).getRValue();
+    else if (parent instanceof GrBinaryExpression) {
+      GrExpression right = ((GrBinaryExpression)parent).getRightOperand();
       PsiType type = right != null ? right.getType() : null;
+      return new PsiType[]{notNullizeType(type, nullAsBottom, parent)};
+    } else if (parent instanceof GrAssignmentExpression) {
+      PsiType type = ((GrAssignmentExpression)parent).getType();
       return new PsiType[]{notNullizeType(type, nullAsBottom, parent)};
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
+import com.intellij.util.JdomKt;
 import com.intellij.util.text.DateFormatUtil;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
@@ -205,7 +206,7 @@ public class TaskUtil {
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xml)));
+        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JdomKt.loadElement(xml)));
       }
       catch (Exception e) {
         logger.debug(e);

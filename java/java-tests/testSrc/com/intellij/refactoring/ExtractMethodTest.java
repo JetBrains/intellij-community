@@ -894,6 +894,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTypeUseAnnotationsOnParameter() throws Exception {
+    doTest();
+  }
+
   public void testSameAnnotations() throws Exception {
     doTest();
   }

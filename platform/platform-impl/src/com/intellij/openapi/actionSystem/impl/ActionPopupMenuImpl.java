@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
     myApp = ApplicationManager.getApplication();
   }
 
+  @Override
   public JPopupMenu getComponent() {
     return myMenu;
   }
@@ -79,6 +80,7 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
       addPopupMenuListener(new MyPopupMenuListener());
     }
 
+    @Override
     public void show(final Component component, int x, int y) {
       if (!component.isShowing()) {
         //noinspection HardCodedStringLiteral
@@ -118,10 +120,12 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
+      @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
         disposeMenu();
       }
 
+      @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
         disposeMenu();
       }
@@ -134,9 +138,10 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
         }
       }
 
+      @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         MyMenu.this.removeAll();
-        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().DISABLE_MNEMONICS, myPresentationFactory, myContext, myPlace, false,
+        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
                        false, LaterInvocator.isInModalContext());
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
@@ -153,5 +158,4 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
       myMenu.setVisible(false);
     }
   }
-
 }

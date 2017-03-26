@@ -284,7 +284,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
               PsiVariable psiVariable = info.getVariable();
 
               if (parent instanceof PsiDeclarationStatement || parent instanceof PsiResourceVariable) {
-                if (!info.isRead()) {
+                if (!info.isRead() && !SuppressionUtil.inspectionResultSuppressed(psiVariable, UnusedDeclarationInspection.this)) {
                   descriptors.add(createProblemDescriptor(psiVariable));
                 }
               }
@@ -300,7 +300,8 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
 
             @Override
             public void visitLocalVariable(PsiLocalVariable variable) {
-              if (!usedVariables.contains(variable) && variable.getInitializer() == null) {
+              if (!usedVariables.contains(variable) && variable.getInitializer() == null &&
+                  !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
                 descriptors.add(createProblemDescriptor(variable));
               }
             }

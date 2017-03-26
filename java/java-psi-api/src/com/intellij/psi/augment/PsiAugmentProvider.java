@@ -89,12 +89,9 @@ public abstract class PsiAugmentProvider {
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
     final List<Psi> result = ContainerUtil.newSmartList();
 
-    forEach(element.getProject(), new Processor<PsiAugmentProvider>() {
-      @Override
-      public boolean process(PsiAugmentProvider provider) {
-        result.addAll(provider.getAugments(element, type));
-        return true;
-      }
+    forEach(element.getProject(), provider -> {
+      result.addAll(provider.getAugments(element, type));
+      return true;
     });
 
     return result;
@@ -104,17 +101,14 @@ public abstract class PsiAugmentProvider {
   public static PsiType getInferredType(@NotNull final PsiTypeElement typeElement) {
     final Ref<PsiType> result = Ref.create();
 
-    forEach(typeElement.getProject(), new Processor<PsiAugmentProvider>() {
-      @Override
-      public boolean process(PsiAugmentProvider provider) {
-        PsiType type = provider.inferType(typeElement);
-        if (type != null) {
-          result.set(type);
-          return false;
-        }
-        else {
-          return true;
-        }
+    forEach(typeElement.getProject(), provider -> {
+      PsiType type = provider.inferType(typeElement);
+      if (type != null) {
+        result.set(type);
+        return false;
+      }
+      else {
+        return true;
       }
     });
 
@@ -127,12 +121,9 @@ public abstract class PsiAugmentProvider {
                                                         @NotNull final Set<String> modifiers) {
     final Ref<Set<String>> result = Ref.create(modifiers);
 
-    forEach(project, new Processor<PsiAugmentProvider>() {
-      @Override
-      public boolean process(PsiAugmentProvider provider) {
-        result.set(provider.transformModifiers(modifierList, Collections.unmodifiableSet(result.get())));
-        return true;
-      }
+    forEach(project, provider -> {
+      result.set(provider.transformModifiers(modifierList, Collections.unmodifiableSet(result.get())));
+      return true;
     });
 
     return result.get();

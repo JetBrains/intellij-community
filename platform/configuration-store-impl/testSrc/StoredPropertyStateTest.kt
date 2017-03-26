@@ -3,21 +3,22 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.BaseState
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Test
 
-private class AState : BaseState() {
+internal class AState : BaseState() {
   @get:Attribute("customName")
-  var languageLevel: String? by storedProperty()
+  var languageLevel by storedProperty<String?>()
 
   var property2 by storedProperty(0)
 
-  var nestedComplex: NestedState? by storedProperty()
+  var floatProperty by storedProperty(0.3)
+
+  var nestedComplex by storedProperty<NestedState?>()
 }
 
-private class NestedState : BaseState() {
-  var childProperty: String? by storedProperty()
+internal class NestedState : BaseState() {
+  var childProperty by storedProperty<String?>()
 }
 
 class StoredPropertyStateTest {
@@ -36,8 +37,8 @@ class StoredPropertyStateTest {
 
     assertThat(state).isNotEqualTo(AState())
 
-    assertThat(XmlSerializer.serialize(state)).isEqualTo("""<AState customName="foo" />""")
-    assertThat(XmlSerializer.deserialize(loadElement("""<AState customName="foo" />"""), AState::class.java)!!.languageLevel).isEqualTo("foo")
+    assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
+    assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
   }
 
   @Test
@@ -50,5 +51,11 @@ class StoredPropertyStateTest {
 
     nestedState.childProperty = "test"
     assertThat(state.modificationCount).isEqualTo(2)
+
+    state.languageLevel = "11"
+    assertThat(state.modificationCount).isEqualTo(3)
+
+    state.languageLevel = null
+    assertThat(state.modificationCount).isEqualTo(4)
   }
 }

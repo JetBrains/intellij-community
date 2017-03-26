@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,20 @@ public class MetaAnnotationUtil {
   public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull final Module module,
                                                                     final String annotationName,
                                                                     final boolean includeTests) {
-    Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+    final Project project = module.getProject();
+
+    Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(project).getCachedValue(module, () -> {
       Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createConcurrentMap(key -> {
-        GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
+        GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
+
+        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(key.getFirst(), moduleScope);
+        if (annotationClass == null || !annotationClass.isAnnotationType()) {
+          return Collections.emptyList();
+        }
 
         // limit search to files containing annotations
-        GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(module.getProject()).intersectWith(scope);
-        return getAnnotationTypesWithChildren(key.getFirst(), module.getProject(), effectiveSearchScope);
+        GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(project).intersectWith(moduleScope);
+        return getAnnotationTypesWithChildren(annotationClass, effectiveSearchScope);
       });
       return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
@@ -106,16 +113,10 @@ public class MetaAnnotationUtil {
   }
 
   @NotNull
-  private static Collection<PsiClass> getAnnotationTypesWithChildren(final String annotationName,
-                                                                     Project project,
-                                                                     GlobalSearchScope scope) {
-    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(annotationName, scope);
-
-    if (psiClass == null || !psiClass.isAnnotationType()) return Collections.emptyList();
-
+  private static Collection<PsiClass> getAnnotationTypesWithChildren(PsiClass annotationClass, GlobalSearchScope scope) {
     final Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
 
-    collectClassWithChildren(psiClass, classes, scope);
+    collectClassWithChildren(annotationClass, classes, scope);
 
     return classes;
   }

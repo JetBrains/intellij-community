@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.io.IOException;
 public class IntentionDump implements ApplicationStarter {
   @Override
   public String getCommandName() {
-    return "intention-dump";
+    return "intentions";
   }
 
   @Override
@@ -97,7 +97,9 @@ public class IntentionDump implements ApplicationStarter {
       System.exit(0);
     }
     catch (ParserConfigurationException | IOException | TransformerException e) {
+      // noinspection CallToPrintStackTrace
       e.printStackTrace();
+      System.exit(1);
     }
   }
 

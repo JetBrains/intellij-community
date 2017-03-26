@@ -614,7 +614,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
+  public static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!project.isInitialized()) return;
     final Document document = editor.getDocument();

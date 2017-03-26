@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class NavBarModel {
       updateModel(psiElement);
     }
     else {
-      if (UISettings.getInstance().SHOW_NAVIGATION_BAR && !myModel.isEmpty()) return;
+      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return;
 
       Object root = calculateRoot(dataContext);
 
@@ -268,14 +268,7 @@ public class NavBarModel {
       return !((Module)object).isDisposed();
     }
     if (object instanceof PsiElement) {
-      return ApplicationManager.getApplication().runReadAction(
-          new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              return ((PsiElement)object).isValid();
-            }
-          }
-      ).booleanValue();
+      return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> ((PsiElement)object).isValid()).booleanValue();
     }
     return object != null;
   }

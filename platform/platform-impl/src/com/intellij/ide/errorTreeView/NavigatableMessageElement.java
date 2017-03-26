@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
  */
-public class NavigatableMessageElement extends ErrorTreeElement {
+public class NavigatableMessageElement extends ErrorTreeElement implements NavigatableErrorTreeElement {
   private final GroupingElement myParent;
   private final String[] myMessage;
   @NotNull

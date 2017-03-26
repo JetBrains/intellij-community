@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -28,17 +29,26 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
 public class InstanceOfInstruction extends InstructionImpl implements MixinTypeInstruction {
   private final ConditionInstruction myCondition;
 
-  public InstanceOfInstruction(GrExpression assertion, ConditionInstruction cond) {
+  public InstanceOfInstruction(@NotNull GrExpression assertion, ConditionInstruction cond) {
     super(assertion);
     myCondition = cond;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElement() {
+    return Objects.requireNonNull(super.getElement());
+  }
+
+  @NotNull
   @Override
   protected String getElementPresentation() {
     return "instanceof: " + getElement().getText();
@@ -57,6 +67,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     else if (element instanceof GrBinaryExpression && ControlFlowBuilderUtil.isInstanceOfBinary((GrBinaryExpression)element)) {
       GrExpression left = ((GrBinaryExpression)element).getLeftOperand();
       GrExpression right = ((GrBinaryExpression)element).getRightOperand();
+      if (right == null) return null;
       GroovyResolveResult result = ((GrReferenceExpression)right).advancedResolve();
       final PsiElement resolved = result.getElement();
       if (resolved instanceof PsiClass) {
@@ -76,6 +87,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     return instanceOf.getSecond();
   }
 
+  @Nullable
   @Override
   public ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow) {
     Pair<GrExpression, PsiType> instanceOf = getInstanceof();
@@ -97,6 +109,7 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     return instanceOf.getFirst().getText();
   }
 
+  @Nullable
   @Override
   public ConditionInstruction getConditionInstruction() {
     return myCondition;

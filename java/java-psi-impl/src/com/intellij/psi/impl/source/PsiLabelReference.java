@@ -98,7 +98,7 @@ public class PsiLabelReference implements PsiReference{
   @Override
   @NotNull
   public String[] getVariants() {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     PsiElement context = myStatement;
     while(context != null){
       if(context instanceof PsiLabeledStatement){

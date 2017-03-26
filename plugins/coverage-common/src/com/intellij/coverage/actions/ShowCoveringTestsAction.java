@@ -122,7 +122,7 @@ public class ShowCoveringTestsAction extends AnAction {
           });
       } else {
         component = null;
-        final JPanel panel = new PanelWithText("Following test" + (testNames.length > 1 ? "s" : "") + " could not be found: " + StringUtil.join(testNames, ",").replace("_", "."));
+        final JPanel panel = new PanelWithText("Following test" + (testNames.length > 1 ? "s" : "") + " could not be found: " + StringUtil.join(testNames, "<br/>").replace("_", "."));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);
       }
       final JBPopup popup = popupBuilder.setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)

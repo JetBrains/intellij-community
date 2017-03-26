@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.configurationStore.SerializationUtilKt;
+import com.intellij.configurationStore.Scheme_implKt;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -37,7 +38,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myDisposed = false;
   private final Set<ModuleExtension> myExtensions = new TreeSet<>((o1, o2) -> Comparing.compare(o1.getClass().getName(), 
                                                                                                 o2.getClass().getName()));
+  @Nullable
+  private final Map<ModuleExtension, byte[]> myExtensionToStateDigest;
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -88,6 +91,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       myExtensions.add(model);
     }
     myConfigurationAccessor = new RootConfigurationAccessor();
+    myExtensionToStateDigest = null;
   }
 
   private void addSourceOrderEntries() {
@@ -129,7 +133,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       ModuleExtension model = extension.getModifiableModel(false);
 
       if (model instanceof PersistentStateComponent) {
-        SerializationUtilKt.deserializeAndLoadState((PersistentStateComponent)model, element);
+        XmlSerializer.deserializeAndLoadState((PersistentStateComponent)model, element);
       }
       else {
         //noinspection deprecation
@@ -140,6 +144,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       myExtensions.add(model);
     }
     myConfigurationAccessor = new RootConfigurationAccessor();
+    myExtensionToStateDigest = null;
   }
 
   @Override
@@ -176,10 +181,24 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
     setOrderEntriesFrom(rootModel);
 
+    myExtensionToStateDigest = writable ? new THashMap<>() : null;
+
     for (ModuleExtension extension : rootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(writable);
       registerOnDispose(model);
       myExtensions.add(model);
+
+      if (myExtensionToStateDigest != null && !(extension instanceof PersistentStateComponentWithModificationTracker)) {
+        Element state = new Element("state");
+        try {
+          //noinspection deprecation
+          extension.writeExternal(state);
+          myExtensionToStateDigest.put(extension, Scheme_implKt.digest(state));
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
     }
   }
 
@@ -432,6 +451,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   public void writeExternal(@NotNull Element element) {
     for (ModuleExtension extension : myExtensions) {
       if (extension instanceof PersistentStateComponent) {
+        //noinspection ConstantConditions
         XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
       }
       else {
@@ -654,6 +674,12 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     assert !myDisposed;
     Disposer.dispose(myDisposable);
     myExtensions.clear();
+
+    if (myExtensionToStateDigest != null) {
+      myExtensionToStateDigest.clear();
+
+    }
+
     myWritable = false;
     myDisposed = true;
   }
@@ -785,5 +811,28 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   void registerOnDispose(@NotNull Disposable disposable) {
     myDisposable.add(disposable);
+  }
+
+  void checkModuleExtensionModification() {
+    if (myExtensionToStateDigest == null || myExtensionToStateDigest.isEmpty()) {
+      return;
+    }
+
+    for (Map.Entry<ModuleExtension, byte[]> entry : myExtensionToStateDigest.entrySet()) {
+      Element state = new Element("state");
+      try {
+        ModuleExtension extension = entry.getKey();
+        //noinspection deprecation
+        extension.writeExternal(state);
+        byte[] newDigest = Scheme_implKt.digest(state);
+        if (!Arrays.equals(newDigest, entry.getValue())) {
+          myModuleRootManager.stateChanged();
+          return;
+        }
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    }
   }
 }

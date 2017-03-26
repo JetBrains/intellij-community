@@ -16,7 +16,9 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -269,6 +271,26 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.copyFileToProject("java3/p/" + name + ".java");
     myFixture.configureByFiles("java8/p/" + name + ".java");
     myFixture.checkHighlighting();
+  }
+
+  public void testInFileReferencesHighlighting() {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
+    myFixture.copyFileToProject("java7/p/Object7.java");
+    myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
+    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    final RangeHighlighter highlighter = assertOneElement(myFixture.getEditor().getMarkupModel().getAllHighlighters());
+    assertEquals(64, highlighter.getStartOffset());
+    assertEquals(72, highlighter.getEndOffset());
+  }
+
+  public void testInFileReferencesHighlighting2() {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
+    myFixture.copyFileToProject("java7/p/List7.java");
+    myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
+    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    final RangeHighlighter highlighter = assertOneElement(myFixture.getEditor().getMarkupModel().getAllHighlighters());
+    assertEquals(60, highlighter.getStartOffset());
+    assertEquals(66, highlighter.getEndOffset());
   }
 
   private void doTestWithoutLibrary() {

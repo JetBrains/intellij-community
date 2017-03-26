@@ -78,7 +78,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final JComponent content = createContent();
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(content);
+    JScrollPane scrollPane = createScrollPane(content);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.getHorizontalScrollBar().setBorder(null);
@@ -124,6 +124,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
 
 
+  }
+
+  @NotNull
+  protected JScrollPane createScrollPane(JComponent content) {
+    return ScrollPaneFactory.createScrollPane(content);
   }
 
   private void disposeAll() {

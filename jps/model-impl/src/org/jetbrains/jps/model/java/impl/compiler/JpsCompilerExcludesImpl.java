@@ -27,9 +27,9 @@ import java.util.Set;
  * @author nik
  */
 public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
-  private final Set<File> myFiles = new HashSet<File>();
-  private final Set<File> myDirectories = new HashSet<File>();
-  private final Set<File> myRecursivelyExcludedDirectories = new HashSet<File>();
+  private final Set<File> myFiles = new HashSet<>();
+  private final Set<File> myDirectories = new HashSet<>();
+  private final Set<File> myRecursivelyExcludedDirectories = new HashSet<>();
 
   @Override
   public void addExcludedFile(String url) {

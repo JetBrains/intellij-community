@@ -44,7 +44,9 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
       for (CodeStyleSettingPresentation setting: entry.getValue()) {
         initBooleanField(setting.getFieldName(), setting.getUiName(), groupName);
       }
-      initCustomOptions(groupName);
+    }
+    for (String customOptionsGroup : myCustomOptions.keySet()) {
+      initCustomOptions(customOptionsGroup);
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -25,11 +26,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends BaseInspection {
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -90,7 +93,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(field, !isSimpleArrayExpression(field.getInitializer()));
       containingClass.accept(visitor);
       final boolean written = visitor.isWritten();
-      if (!visitor.isReferenced() || written == visitor.isRead()) {
+      if (!visitor.isReferenced() || written == visitor.isRead() || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));

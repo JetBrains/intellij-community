@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -66,6 +67,7 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditor[] editors = myManager.getEditors(file);
     assertEquals(1, editors.length);
     Editor editor = ((TextEditor)editors[0]).getEditor();
+    EditorTestUtil.waitForLoading(editor);
     FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     assertEquals(2, regions.length);
     assertTrue(regions[0].isExpanded());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public class JpsAppEngineModelSerializerExtension extends JpsModelSerializerExte
                                                         String name,
                                                         JpsElement parent,
                                                         JpsModule module) {
-      AppEngineModuleExtensionProperties properties = XmlSerializer.deserialize(facetConfigurationElement, AppEngineModuleExtensionProperties.class);
-      return new JpsAppEngineModuleExtensionImpl(properties != null ? properties : new AppEngineModuleExtensionProperties());
+      return new JpsAppEngineModuleExtensionImpl(
+        XmlSerializer.deserialize(facetConfigurationElement, AppEngineModuleExtensionProperties.class));
     }
 
     @Override

@@ -92,11 +92,17 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
           checkMatches(PyTokenTypes.COMMA, "',' expected");
         }
         boolean parsed;
-        if (atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP)) {
-          final PsiBuilder.Marker starredExprMarker = myBuilder.mark();
+        if (atToken(PyTokenTypes.MULT)) {
+          final PsiBuilder.Marker starMarker = myBuilder.mark();
           myBuilder.advanceLexer();
           parsed = exprParser.parseSingleExpression(false);
-          starredExprMarker.done(PyElementTypes.STAR_EXPRESSION);
+          starMarker.done(PyElementTypes.STAR_EXPRESSION);
+        }
+        else if (atToken(PyTokenTypes.EXP)) {
+          final PsiBuilder.Marker doubleStarMarker = myBuilder.mark();
+          myBuilder.advanceLexer();
+          parsed = exprParser.parseSingleExpression(false);
+          doubleStarMarker.done(PyElementTypes.DOUBLE_STAR_EXPRESSION);
         }
         else {
           parsed = exprParser.parseSingleExpression(false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -139,7 +137,9 @@ public class TemplateContext {
     }
 
     Element element = new Element(TemplateSettings.CONTEXT);
-    for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
+    List<Map.Entry<String, Boolean>> entries = new ArrayList<>(myContextStates.entrySet());
+    entries.sort(Comparator.comparing(Map.Entry::getKey));
+    for (Map.Entry<String, Boolean> entry : entries) {
       Boolean ownValue = entry.getValue();
       if (ownValue == null) {
         continue;

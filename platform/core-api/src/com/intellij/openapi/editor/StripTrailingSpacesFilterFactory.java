@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class StripTrailingSpacesFilterFactory {
   public static final ExtensionPointName<StripTrailingSpacesFilterFactory> EXTENSION_POINT
-    = new ExtensionPointName<StripTrailingSpacesFilterFactory>("com.intellij.stripTrailingSpacesFilterFactory");
+    = new ExtensionPointName<>("com.intellij.stripTrailingSpacesFilterFactory");
 
   /**
    * Creates a filter which may restrict trailing spaces removal.

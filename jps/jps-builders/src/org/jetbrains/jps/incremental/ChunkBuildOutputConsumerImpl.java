@@ -34,9 +34,9 @@ import java.util.Map;
 */
 class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;
-  private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
-  private Map<String, CompiledClass> myClasses = new THashMap<String, CompiledClass>();
-  private Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<BuildTarget<?>, Collection<CompiledClass>>();
+  private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<>();
+  private Map<String, CompiledClass> myClasses = new THashMap<>();
+  private Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<>();
 
   public ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
@@ -71,7 +71,7 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
       if (target != null) {
         Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
         if (classes == null) {
-          classes = new ArrayList<CompiledClass>();
+          classes = new ArrayList<>();
           myTargetToClassesMap.put(target, classes);
         }
         classes.add(compiled);
