@@ -34,10 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -52,7 +50,7 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
   @NotNull private final Collection<CheckinHandler> myHandlers;
   @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = newHashMap();
   @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = newArrayList();
-  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = newHashMap();
+  @NotNull private final Set<CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = newHashSet();
   @NotNull private final PseudoMap<Object, Object> myAdditionalData = new PseudoMap<>();
   private final boolean myEmpty;
 
@@ -99,11 +97,11 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }
 
-    myCheckinChangeListSpecificComponents.values().forEach(component -> component.onChangeListSelected(changeList));
+    myCheckinChangeListSpecificComponents.forEach(component -> component.onChangeListSelected(changeList));
   }
 
   public void saveChangeListComponentsState() {
-    myCheckinChangeListSpecificComponents.values().forEach(CheckinChangeListSpecificComponent::saveState);
+    myCheckinChangeListSpecificComponents.forEach(CheckinChangeListSpecificComponent::saveState);
   }
 
   @Override
@@ -126,7 +124,7 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
           myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
           if (options instanceof CheckinChangeListSpecificComponent) {
-            myCheckinChangeListSpecificComponents.put(vcs.getName(), (CheckinChangeListSpecificComponent)options);
+            myCheckinChangeListSpecificComponents.add((CheckinChangeListSpecificComponent)options);
           }
           hasVcsOptions = true;
         }
