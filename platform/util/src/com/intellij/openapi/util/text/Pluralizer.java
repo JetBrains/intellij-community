@@ -68,21 +68,27 @@ class Pluralizer {
    */
   static String restoreCase(String word, String result) {
     if (word == null || result == null || word == result) return result;
+    int len = Math.min(result.length(), word.length());
+    if (len == 0) return result;
     char[] chars = result.toCharArray();
-    boolean prevUp = false;
-    int len = Math.min(chars.length, word.length());
     int i = 0;
     for (; i < len; i++) {
       char wc = word.charAt(i);
       if (chars[i] == wc && i != len - 1) continue;
-      prevUp = Character.isUpperCase(wc);
       char uc = Character.toUpperCase(chars[i]);
       char lc = Character.toLowerCase(chars[i]);
       if (wc != lc && wc != uc) break;
       chars[i] = wc;
     }
-    for (; i < chars.length; i++) {
-      chars[i] = prevUp ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
+    if (i < chars.length) {
+      char wc = word.charAt(i - 1);
+      char uc = Character.toUpperCase(wc);
+      char lc = Character.toLowerCase(wc);
+      if (uc != lc) {
+        for (; i < chars.length; i++) {
+          chars[i] = wc == uc ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
+        }
+      }
     }
     return new String(chars);
   }
