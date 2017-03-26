@@ -371,12 +371,11 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
             try:
                 # TODO: splitter may be return path to module
                 splitter.check_is_importable(parts, i, separator)
-                
+
                 module_to_import = separator.join(parts[:i + 1])
                 m = importlib.import_module(module_to_import)
                 fs_part = os.path.splitext(m.__file__)[0]
             except ImportError:
-                fs_part = fs_glue.join(parts[:i])
                 python_path = python_glue.join(parts[i:])
                 return fs_part + fs_to_python_glue + python_path if python_path else fs_part
         return target
