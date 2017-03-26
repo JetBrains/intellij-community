@@ -164,6 +164,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     context.ant.copy(todir: "$targetDirectory/lib/ant") {
       fileset(dir: "$context.paths.communityHome/lib/ant") {
         exclude(name: "**/src/**")
+        exclude(name: "BUILD")
       }
     }
 
