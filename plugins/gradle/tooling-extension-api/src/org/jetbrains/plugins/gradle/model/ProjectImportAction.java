@@ -177,11 +177,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     @NotNull
-    protected String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
-      return extractMapKey(modelClazz, module);
-    }
-
-    @NotNull
     @Override
     protected String extractMapKey(Class modelClazz, @Nullable GradleProject gradleProject) {
       if (gradleProject != null) {
