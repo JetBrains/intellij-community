@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -34,7 +35,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -60,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -332,24 +331,13 @@ public class GitCherryPicker extends VcsCherryPicker {
     }
   }
 
-  private void removeCherryPickHead(@NotNull GitRepository repository) {
+  private static void removeCherryPickHead(@NotNull GitRepository repository) {
     File cherryPickHeadFile = repository.getRepositoryFiles().getCherryPickHead();
-    final VirtualFile cherryPickHead = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(cherryPickHeadFile);
-
-    if (cherryPickHead != null && cherryPickHead.exists()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            cherryPickHead.delete(this);
-          }
-          catch (IOException e) {
-            // if CHERRY_PICK_HEAD is not deleted, the partial commit will fail, and the user will be notified anyway.
-            // So here we just log the fact. It is happens relatively often, maybe some additional solution will follow.
-            LOG.error(e);
-          }
-        }
-      });
+    if (cherryPickHeadFile.exists()) {
+      boolean deleted = FileUtil.delete(cherryPickHeadFile);
+      if (!deleted) {
+        LOG.warn("Couldn't delete " + cherryPickHeadFile);
+      }
     }
     else {
       LOG.info("Cancel cherry-pick in " + repository.getPresentableUrl() + ": no CHERRY_PICK_HEAD found");
