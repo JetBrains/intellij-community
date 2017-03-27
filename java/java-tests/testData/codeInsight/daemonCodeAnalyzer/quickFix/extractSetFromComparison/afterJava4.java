@@ -5,7 +5,7 @@ import java.util.Set;
 
 // "Extract Set from comparison chain" "true"
 public class Test {
-    private static final Set<String> S = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("foo", "bar", "baz")));
+    private static final Set S = Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[]{"foo", "bar", "baz"})));
 
     void testOr(String s) {
     if(S.contains(s)) {

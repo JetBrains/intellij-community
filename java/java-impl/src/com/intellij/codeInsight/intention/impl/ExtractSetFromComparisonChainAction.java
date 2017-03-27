@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,8 +36,8 @@ import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.IntStreamEx;
@@ -44,6 +45,7 @@ import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.LinkedHashSet;
@@ -53,41 +55,51 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntentionAction {
-  private static final String INITIALIZER_FORMAT_JAVA8 = "new " +
-                                                         CommonClassNames.JAVA_UTIL_HASH_SET +
-                                                         "<" +
-                                                         CommonClassNames.JAVA_LANG_STRING +
-                                                         ">(" +
-                                                         CommonClassNames.JAVA_UTIL_ARRAYS +
-                                                         ".asList({0}))";
+  private static final CallMatcher OBJECT_EQUALS = CallMatcher.anyOf(
+    CallMatcher.staticCall("java.util.Objects", "equals").parameterCount(2),
+    CallMatcher.staticCall("com.google.common.base.Objects", "equal").parameterCount(2));
+
+  private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
+  private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
+  private static final String INITIALIZER_FORMAT_JAVA2 =
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+    "new " + CommonClassNames.JAVA_UTIL_HASH_SET +
+    "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(new String[] '{'{0}'}')))";
+  private static final String INITIALIZER_FORMAT_JAVA5 =
+    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+    "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<" + CommonClassNames.JAVA_LANG_STRING + ">" +
+    "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList({0})))";
   private static final String INITIALIZER_FORMAT_JAVA9 = CommonClassNames.JAVA_UTIL_SET + ".of({0})";
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    List<PsiExpression> disjuncts = disjuncts(element).toList();
-    if (disjuncts.size() < 2) return;
-    PsiExpression disjunction = ObjectUtils.tryCast(disjuncts.get(0).getParent(), PsiPolyadicExpression.class);
+    List<StringToConstantComparison> comparisons = comparisons(element).toList();
+    if (comparisons.size() < 2) return;
+    PsiExpression firstComparison = comparisons.get(0).myComparison;
+    PsiExpression lastComparison = comparisons.get(comparisons.size() - 1).myComparison;
+    PsiExpression disjunction = ObjectUtils.tryCast(firstComparison.getParent(), PsiPolyadicExpression.class);
     if (disjunction == null) return;
-    PsiExpression stringExpression = getValueComparedToString(disjuncts.get(0));
-    if (stringExpression == null) return;
+    PsiExpression stringExpression = comparisons.get(0).myStringExpression;
     PsiClass containingClass = ClassUtils.getContainingStaticClass(disjunction);
     if (containingClass == null) return;
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    LinkedHashSet<String> suggestions = getSuggestions(disjuncts, stringExpression);
+    LinkedHashSet<String> suggestions = getSuggestions(comparisons);
     String name = manager.suggestUniqueVariableName(suggestions.iterator().next(), containingClass, false);
-    String fieldInitializer = qualifiers(disjuncts).map(PsiElement::getText).joining(",");
-    String pattern = PsiUtil.isLanguageLevel9OrHigher(containingClass) ? INITIALIZER_FORMAT_JAVA9 : INITIALIZER_FORMAT_JAVA8;
+    String fieldInitializer = StreamEx.of(comparisons).map(cmp -> cmp.myConstant.getText()).joining(",");
+    String pattern = getInitializer(containingClass);
     String initializer = MessageFormat.format(pattern, fieldInitializer);
-    PsiField field = factory.createFieldFromText("private static final " +
-                                                 CommonClassNames.JAVA_UTIL_SET + "<" + CommonClassNames.JAVA_LANG_STRING + "> " +
+    String modifiers = containingClass.isInterface() ? "" : "private static final ";
+    String type = CommonClassNames.JAVA_UTIL_SET +
+                  (PsiUtil.isLanguageLevel5OrHigher(containingClass) ? "<" + CommonClassNames.JAVA_LANG_STRING + ">" : "");
+    PsiField field = factory.createFieldFromText(modifiers + type + " " +
                                                  name + "=" + initializer + ";", containingClass);
     field = (PsiField)containingClass.add(field);
     PsiDiamondTypeUtil.removeRedundantTypeArguments(field);
     CodeStyleManager.getInstance(project).reformat(manager.shortenClassReferences(field));
 
-    int startOffset = disjuncts.get(0).getStartOffsetInParent();
-    int endOffset = disjuncts.get(disjuncts.size() - 1).getStartOffsetInParent() + disjuncts.get(disjuncts.size() - 1).getTextLength();
+    int startOffset = firstComparison.getStartOffsetInParent();
+    int endOffset = lastComparison.getStartOffsetInParent() + lastComparison.getTextLength();
     String origText = disjunction.getText();
     String fieldReference = PsiResolveHelper.SERVICE.getInstance(project).resolveReferencedVariable(name, disjunction) == field ?
                             name : containingClass.getQualifiedName() + "." + name;
@@ -110,9 +122,23 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     new MemberInplaceRenamer(field, field, editor).performInplaceRefactoring(suggestions);
   }
 
+  @NotNull
+  String getInitializer(PsiClass containingClass) {
+    if (PsiUtil.isLanguageLevel9OrHigher(containingClass)) {
+      return INITIALIZER_FORMAT_JAVA9;
+    }
+    if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
+      return INITIALIZER_FORMAT_GUAVA;
+    }
+    if (PsiUtil.isLanguageLevel5OrHigher(containingClass)) {
+      return INITIALIZER_FORMAT_JAVA5;
+    }
+    return INITIALIZER_FORMAT_JAVA2;
+  }
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return PsiUtil.isLanguageLevel5OrHigher(element) && disjuncts(element).count() > 1;
+    return comparisons(element).count() > 1;
   }
 
   @NotNull
@@ -129,7 +155,8 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   }
 
   @NotNull
-  private static LinkedHashSet<String> getSuggestions(List<PsiExpression> disjuncts, PsiExpression stringExpression) {
+  private static LinkedHashSet<String> getSuggestions(List<StringToConstantComparison> comparisons) {
+    PsiExpression stringExpression = comparisons.get(0).myStringExpression;
     Project project = stringExpression.getProject();
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -140,7 +167,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     // such names are rarely appropriate
     LinkedHashSet<String> suggestions =
       StreamEx.of(info.names).without("OBJECT", "AN_OBJECT").map(StringUtil::pluralize).nonNull().toCollection(LinkedHashSet::new);
-    Pair<String, String> prefixSuffix = qualifiers(disjuncts).map(ExpressionUtils::computeConstantExpression).select(String.class).collect(
+    Pair<String, String> prefixSuffix = comparisons.stream().map(cmp -> cmp.myComputedConstant).collect(
       MoreCollectors.pairing(MoreCollectors.commonPrefix(), MoreCollectors.commonSuffix(), Pair::create));
     StreamEx.of(prefixSuffix.first, prefixSuffix.second).flatMap(str -> StreamEx.split(str, "\\W+").limit(3))
       .filter(str -> str.length() >= 3 && StringUtil.isJavaIdentifier(str))
@@ -152,35 +179,76 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     return suggestions;
   }
 
-  private static StreamEx<PsiExpression> qualifiers(List<PsiExpression> expressions) {
-    return StreamEx.of(expressions).map(PsiUtil::skipParenthesizedExprDown).select(PsiMethodCallExpression.class)
-      .map(call -> call.getMethodExpression().getQualifierExpression()).nonNull();
-  }
-
-  private static StreamEx<PsiExpression> disjuncts(PsiElement element) {
+  private static StreamEx<StringToConstantComparison> comparisons(PsiElement element) {
     PsiPolyadicExpression disjunction = PsiTreeUtil.getParentOfType(element, PsiPolyadicExpression.class);
     if (disjunction == null || disjunction.getOperationTokenType() != JavaTokenType.OROR) return StreamEx.empty();
     PsiExpression[] operands = disjunction.getOperands();
     int offset = element.getTextOffset() - disjunction.getTextOffset();
     int index = IntStreamEx.ofIndices(operands, op -> op.getStartOffsetInParent() + op.getTextLength() > offset)
       .findFirst().orElse(operands.length - 1);
-    PsiExpression comparedValue = getValueComparedToString(operands[index]);
-    if (comparedValue == null) return StreamEx.empty();
-    EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
-    List<PsiExpression> prefix = IntStreamEx.rangeClosed(index - 1, 0, -1)
+    StringToConstantComparison anchorComparison = StringToConstantComparison.create(operands[index]);
+    if (anchorComparison == null) return StreamEx.empty();
+    List<StringToConstantComparison> prefix = IntStreamEx.rangeClosed(index - 1, 0, -1)
       .elements(operands)
-      .takeWhile(op -> checker.expressionsAreEquivalent(getValueComparedToString(op), comparedValue))
+      .map(StringToConstantComparison::create)
+      .takeWhile(anchorComparison::sameStringExpression)
       .toList();
-    List<PsiExpression> suffix = StreamEx.of(operands, index + 1, operands.length)
-      .takeWhile(op -> checker.expressionsAreEquivalent(getValueComparedToString(op), comparedValue))
+    List<StringToConstantComparison> suffix = StreamEx.of(operands, index + 1, operands.length)
+      .map(StringToConstantComparison::create)
+      .takeWhile(anchorComparison::sameStringExpression)
       .toList();
-    return StreamEx.ofReversed(prefix).append(operands[index]).append(suffix);
+    return StreamEx.ofReversed(prefix).append(anchorComparison).append(suffix);
   }
 
-  private static PsiExpression getValueComparedToString(PsiExpression expression) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
-    if (call == null || !MethodCallUtils.isEqualsCall(call)) return null;
-    if (!(ExpressionUtils.computeConstantExpression(call.getMethodExpression().getQualifierExpression()) instanceof String)) return null;
-    return ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
+  static final class StringToConstantComparison {
+    @NotNull PsiExpression myComparison;
+    @NotNull PsiExpression myStringExpression;
+    @NotNull PsiExpression myConstant;
+    @NotNull String myComputedConstant;
+
+    StringToConstantComparison(@NotNull PsiExpression comparison,
+                               @NotNull PsiExpression stringExpression,
+                               @NotNull PsiExpression constant,
+                               @NotNull String computedConstant) {
+      myComparison = comparison;
+      myStringExpression = stringExpression;
+      myConstant = constant;
+      myComputedConstant = computedConstant;
+    }
+
+    boolean sameStringExpression(@Nullable StringToConstantComparison other) {
+      return other != null && PsiEquivalenceUtil.areElementsEquivalent(myStringExpression, other.myStringExpression);
+    }
+
+    static StringToConstantComparison create(PsiExpression candidate) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(candidate), PsiMethodCallExpression.class);
+      if (call == null) return null;
+      if (MethodCallUtils.isEqualsCall(call)) {
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        PsiExpression argument = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
+        return fromComparison(candidate, qualifier, argument);
+      }
+      if (OBJECT_EQUALS.test(call)) {
+        PsiExpression[] arguments = call.getArgumentList().getExpressions();
+        return fromComparison(candidate, arguments[0], arguments[1]);
+      }
+      return null;
+    }
+
+    @Nullable
+    private static StringToConstantComparison fromComparison(PsiExpression candidate,
+                                                             PsiExpression left,
+                                                             PsiExpression right) {
+      if (left == null || right == null) return null;
+      String leftConstant = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(left), String.class);
+      if (leftConstant != null) {
+        return new StringToConstantComparison(candidate, right, left, leftConstant);
+      }
+      String rightConstant = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(right), String.class);
+      if (rightConstant != null) {
+        return new StringToConstantComparison(candidate, left, right, rightConstant);
+      }
+      return null;
+    }
   }
 }
