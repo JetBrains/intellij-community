@@ -20,6 +20,8 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class ProjectLocator {
+
+  static final Key<Project> PREFERRED_PROJECT_KEY = Key.create("PREFERRED_PROJECT_KEY");
 
   public static ProjectLocator getInstance() {
     return ServiceManager.getService(ProjectLocator.class);
@@ -50,4 +54,16 @@ public abstract class ProjectLocator {
   */
   @NotNull
   public abstract Collection<Project> getProjectsForFile(VirtualFile file);
+
+  public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
+                                                                       @NotNull Project preferredProject,
+                                                                       @NotNull ThrowableComputable<T, E> action) throws E {
+    file.putUserData(PREFERRED_PROJECT_KEY, preferredProject);
+    try {
+      return action.compute();
+    }
+    finally {
+      file.putUserData(PREFERRED_PROJECT_KEY, null);
+    }
+  }
 }

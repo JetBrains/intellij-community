@@ -36,8 +36,8 @@ import java.util.regex.Pattern;
 public class ResourcePatterns {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns");
 
-  private final List<CompiledPattern> myCompiledPatterns = new ArrayList<CompiledPattern>();
-  private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
+  private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
+  private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
 
   public ResourcePatterns(final JpsJavaCompilerConfiguration configuration) {
     final List<String> patterns = configuration.getResourcePatterns();

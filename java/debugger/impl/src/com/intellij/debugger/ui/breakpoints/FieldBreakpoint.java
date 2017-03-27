@@ -31,12 +31,11 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
@@ -110,7 +109,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   public PsiField getPsiField() {
     final SourcePosition sourcePosition = getSourcePosition();
     try {
-      PsiField field = ApplicationManager.getApplication().runReadAction((Computable<PsiField>)() -> {
+      PsiField field = ReadAction.compute(() -> {
         PsiClass psiClass = getPsiClassAt(sourcePosition);
         return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
       });

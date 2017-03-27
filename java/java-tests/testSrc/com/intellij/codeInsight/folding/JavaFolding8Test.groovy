@@ -97,6 +97,23 @@ class Test {
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction("))?.placeholderText == '() ' + JavaFoldingBuilder.rightArrow + ' { '
   }
 
+  void "test folding lambda with block body"() {
+    myFoldingSettings.collapseAnonymousClasses = true
+    def text = """\
+class Test {
+  void test() {
+    Runnable action = () -> {
+        System.out.println();
+        };
+    }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("System.out.println"))?.placeholderText == '{...}'
+  }
+
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor)

@@ -84,12 +84,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, sign, true);
   }
 
-  private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiBinaryExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(PsiBinaryExpressionImpl expression) {
-      return doGetType(expression);
-    }
-  };
+  private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = expression -> doGetType(expression);
   @Override
   public PsiType getType() {
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);

@@ -29,7 +29,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
@@ -128,7 +128,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   //
 
   @NotNull
-  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+  public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 

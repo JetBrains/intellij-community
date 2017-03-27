@@ -50,7 +50,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final AtomicLong myModificationStamp = new AtomicLong();
   private final DataIndexer<Key, Value, Input> myIndexer;
 
-  protected volatile ForwardIndex<Key, Value> myForwardIndex;
+  protected final ForwardIndex<Key, Value> myForwardIndex;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private volatile boolean myDisposed;
@@ -320,7 +320,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       for (Map.Entry<Key, Value> e : data.entrySet()) {
         final Value value = e.getValue();
         if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
-          LOG.error("Index " + indexId.toString() + " violates equals / hashCode contract for Value parameter");
+          LOG.error("Index " + indexId + " violates equals / hashCode contract for Value parameter");
         }
 
         try {
@@ -332,7 +332,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
             valueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
 
           if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-            LOG.error("Index " + indexId.toString() + " deserialization violates equals / hashCode contract for Value parameter");
+            LOG.error("Index " + indexId + " deserialization violates equals / hashCode contract for Value parameter");
           }
         }
         catch (IOException ex) {

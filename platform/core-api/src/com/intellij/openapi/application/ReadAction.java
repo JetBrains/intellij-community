@@ -24,13 +24,8 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @NotNull
   @Override
   public RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<T>(this);
-    return ApplicationManager.getApplication().runReadAction(new Computable<RunResult<T>>() {
-      @Override
-      public RunResult<T> compute() {
-        return result.run();
-      }
-    });
+    final RunResult<T> result = new RunResult<>(this);
+    return ApplicationManager.getApplication().runReadAction((Computable<RunResult<T>>)() -> result.run());
   }
 
   public static AccessToken start() {

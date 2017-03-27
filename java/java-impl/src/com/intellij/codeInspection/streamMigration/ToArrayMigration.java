@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CountingLoop;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CountingLoopSource;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -45,12 +46,12 @@ public class ToArrayMigration extends BaseStreamApiMigration {
     if(initializer == null) return null;
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if(dimension == null) return null;
-    CountingLoop loop = tb.getLastOperation(CountingLoop.class);
+    CountingLoopSource loop = tb.getLastOperation(CountingLoopSource.class);
     if(loop == null) return null;
     PsiArrayType arrayType = tryCast(initializer.getType(), PsiArrayType.class);
     if(arrayType == null) return null;
-    InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(arrayVariable, tb.getMainLoop());
-    if(status == InitializerUsageStatus.UNKNOWN) return null;
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(arrayVariable, tb.getMainLoop());
+    if(status == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
     PsiType componentType = arrayType.getComponentType();
     String supplier;
     if(componentType instanceof PsiPrimitiveType || componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {

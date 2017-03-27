@@ -16,13 +16,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.psi.PsiLiteral;
-import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiLiteral;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 
@@ -37,8 +39,38 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
                                                                          "getDeclaredMethod"))
                                                      .definedInClass(JAVA_LANG_CLASS));
 
+  public static final PsiJavaElementPattern.Capture<PsiLiteral> CLASS_PATTERN =
+    psiLiteral().methodCallParameter(or(
+      psiMethod().withName(string().equalTo("forName")).definedInClass(JAVA_LANG_CLASS),
+      psiMethod().withName(string().equalTo("loadClass")).definedInClass("java.lang.ClassLoader")));
+
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(PATTERN, new JavaReflectionReferenceProvider());
+    registrar.registerReferenceProvider(PATTERN, new JavaReflectionReferenceProvider() {
+      @Nullable
+      @Override
+      protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
+                                                     @NotNull PsiReferenceExpression methodReference,
+                                                     @NotNull ProcessingContext context) {
+
+        PsiExpression qualifier = methodReference.getQualifierExpression();
+        return qualifier != null ? new PsiReference[]{new JavaLangClassMemberReference(literalArgument, qualifier)} : null;
+      }
+    });
+
+    registrar.registerReferenceProvider(CLASS_PATTERN, new JavaReflectionReferenceProvider() {
+      @Nullable
+      @Override
+      protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
+                                                     @NotNull PsiReferenceExpression methodReference,
+                                                     @NotNull ProcessingContext context) {
+
+        String referenceName = methodReference.getReferenceName();
+        if ("forName".equals(referenceName) || "loadClass".equals(referenceName)) {
+          return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
+        }
+        return null;
+      }
+    });
   }
 }

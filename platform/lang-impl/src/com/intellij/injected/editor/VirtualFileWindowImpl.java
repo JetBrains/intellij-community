@@ -49,7 +49,7 @@ public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFi
 
   @Override
   public boolean isValid() {
-    return myDelegate.isValid();
+    return myDelegate.isValid() && myDocumentWindow.isValid();
   }
 
   @Override

@@ -35,6 +35,7 @@ import java.util.List;
 public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   private FileTypeManager myFileTypeManager;
   private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> mySchemas;
+  protected boolean myDoCompletion = true;
 
   @Override
   public void setUp() throws Exception {
@@ -42,6 +43,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     myFileTypeManager = FileTypeManager.getInstance();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     mySchemas = new ArrayList<>();
+    myDoCompletion = true;
   }
 
   @Override
@@ -72,7 +74,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     callback.registerSchemes();
     JsonSchemaService.Impl.get(getProject()).reset();
     doHighlighting();
-    complete();
+    if (myDoCompletion) complete();
     callback.doCheck();
   }
 

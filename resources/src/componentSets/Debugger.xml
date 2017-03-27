@@ -31,14 +31,6 @@
     </component>
   </project-components>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="Memory View"
-                anchor="right"
-                icon="AllIcons.Debugger.MemoryView.ToolWindowDisabled"
-                factoryClass="com.intellij.debugger.memory.toolwindow.MemoryViewToolWindowFactory"
-                conditionClass="com.intellij.debugger.memory.toolwindow.MemoryViewToolWindowFactory$Condition"/>
-  </extensions>
-
   <!--
   <actions>
     <group id="CommonViews">

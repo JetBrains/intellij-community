@@ -60,7 +60,7 @@ public class TodoAttributes implements Cloneable {
     myTextAttributes = myShouldUseCustomColors && element.getChild(ELEMENT_OPTION) != null ? new TextAttributes(element) : defaultTodoAttributes;
   }
 
-  TodoAttributes(@NotNull Icon icon, @NotNull TextAttributes textAttributes){
+  public TodoAttributes(@NotNull Icon icon, @NotNull TextAttributes textAttributes){
     myIcon = icon;
     myTextAttributes = textAttributes;
   }

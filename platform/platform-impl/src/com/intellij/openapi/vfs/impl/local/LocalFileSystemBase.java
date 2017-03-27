@@ -20,9 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -451,7 +449,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     try (InputStream stream = new FileInputStream(convertToIOFileAndCheck(file))) {
       long l = file.getLength();
-      if (l > Integer.MAX_VALUE) throw new IOException("File is too large: " + l + ", " + file);
+      if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
       final int length = (int)l;
       if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K

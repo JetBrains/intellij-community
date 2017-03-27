@@ -99,7 +99,7 @@ public abstract class PsiDiamondType extends PsiType {
       }
     };
 
-    private final List<PsiType> myInferredTypes = new ArrayList<PsiType>();
+    private final List<PsiType> myInferredTypes = new ArrayList<>();
     private String myErrorMessage;
     private String myNewExpressionPresentableText;
 

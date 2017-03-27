@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 /**
@@ -60,7 +60,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    PsiClass clazz = GroovyPsiManager.getInstance(getProject()).findClassWithCache(myClassName, myContext.getResolveScope());
+    PsiClass clazz = JavaPsiFacade.getInstance(getProject()).findClass(myClassName, myContext.getResolveScope());
     return clazz == null ? GroovyResolveResult.EMPTY_ARRAY : new GroovyResolveResult[]{new GroovyResolveResultImpl(clazz, true)};
   }
 

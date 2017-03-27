@@ -124,7 +124,7 @@ public class ResolveState {
   }
 
   private static class ManyElementResolveState extends ResolveState {
-    private final Map<Object, Object> myValues = new THashMap<Object, Object>();
+    private final Map<Object, Object> myValues = new THashMap<>();
 
     ManyElementResolveState(@NotNull ManyElementResolveState parent, @NotNull Key key, Object value) {
       myValues.putAll(parent.myValues);

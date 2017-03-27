@@ -21,8 +21,10 @@ import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -39,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +55,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.Messages.OK;
@@ -67,6 +71,7 @@ public class PushController implements Disposable {
   @NotNull private final PushSettings myPushSettings;
   @NotNull private final Set<String> myExcludedRepositoryRoots;
   @Nullable private final Repository myCurrentlyOpenedRepository;
+  private final List<PrePushHandler> myHandlers = ContainerUtil.newArrayList();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
@@ -78,6 +83,7 @@ public class PushController implements Disposable {
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
     myPushSettings = ServiceManager.getService(project, PushSettings.class);
+    ContainerUtil.addAll(myHandlers, PrePushHandler.EP_NAME.getExtensions(project));
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
@@ -479,6 +485,73 @@ public class PushController implements Disposable {
     return myPushLog;
   }
 
+  public static class HandlerException extends RuntimeException {
+
+    private final String myHandlerName;
+
+    public HandlerException(@NotNull String name, @NotNull Throwable cause) {
+      super(cause);
+      myHandlerName = name;
+    }
+
+    @NotNull
+    public String getHandlerName() {
+      return myHandlerName;
+    }
+  }
+
+  private static class StepsProgressIndicator extends DelegatingProgressIndicator {
+    private final int myTotalSteps;
+    private final AtomicInteger myFinishedTasks = new AtomicInteger();
+
+    public StepsProgressIndicator(@NotNull ProgressIndicator indicator, int totalSteps) {
+      super(indicator);
+      myTotalSteps = totalSteps;
+    }
+
+    public void nextStep() {
+      myFinishedTasks.incrementAndGet();
+      setFraction(0);
+    }
+
+    @Override
+    public void setFraction(double fraction) {
+      super.setFraction((myFinishedTasks.get() + fraction) / (double) myTotalSteps);
+    }
+  }
+
+  @NotNull
+  @CalledInAny
+  public PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
+    if (myHandlers.isEmpty()) return PrePushHandler.Result.OK;
+    List<PushInfo> pushDetails = preparePushDetails();
+    StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, myHandlers.size());
+    stepsIndicator.setIndeterminate(false);
+    stepsIndicator.setFraction(0);
+    for (PrePushHandler handler : myHandlers) {
+      stepsIndicator.checkCanceled();
+      stepsIndicator.setText(handler.getPresentableName());
+      PrePushHandler.Result prePushHandlerResult;
+      try {
+        prePushHandlerResult = handler.handle(pushDetails, stepsIndicator);
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Throwable e) {
+        throw new HandlerException(handler.getPresentableName(), e);
+      }
+
+      if (prePushHandlerResult != PrePushHandler.Result.OK) {
+        return prePushHandlerResult;
+      }
+      //the handler could change an indeterminate flag
+      stepsIndicator.setIndeterminate(false);
+      stepsIndicator.nextStep();
+    }
+    return PrePushHandler.Result.OK;
+  }
+
   public void push(final boolean force) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, "Pushing...", true) {
       @Override
@@ -500,6 +573,44 @@ public class PushController implements Disposable {
     if (!specs.isEmpty()) {
       pusher.push(specs, options, force);
     }
+  }
+
+  private static <R extends Repository, S extends PushSource, T extends PushTarget> List<? extends VcsFullCommitDetails> loadCommits(@NotNull MyRepoModel<R, S, T> model) {
+    PushSupport<R, S, T> support = model.getSupport();
+    R repository = model.getRepository();
+    S source = model.getSource();
+    T target = model.getTarget();
+    if (target == null) {
+      return ContainerUtil.emptyList();
+    }
+    OutgoingCommitsProvider<R, S, T> outgoingCommitsProvider = support.getOutgoingCommitsProvider();
+    return outgoingCommitsProvider.getOutgoingCommits(repository, new PushSpec<>(source, target), true).getCommits();
+  }
+
+  @NotNull
+  private List<PushInfo> preparePushDetails() {
+    List<PushInfo> allDetails = ContainerUtil.newArrayList();
+    Collection<MyRepoModel<?, ?, ?>> repoModels = getSelectedRepoNode();
+
+    for (MyRepoModel<?, ?, ?> model : repoModels) {
+      PushTarget target = model.getTarget();
+      if (target == null) {
+        continue;
+      }
+      PushSpec<PushSource, PushTarget> pushSpec = new PushSpec<>(model.getSource(), target);
+
+      List<VcsFullCommitDetails> loadedCommits = ContainerUtil.newArrayList();
+      loadedCommits.addAll(model.getLoadedCommits());
+      if (loadedCommits.isEmpty()) {
+        //Note: loadCommits is cancellable - it tracks current thread's progress indicator under the hood!
+        loadedCommits.addAll(loadCommits(model));
+      }
+
+      //sort commits in the time-ascending order
+      Collections.reverse(loadedCommits);
+      allDetails.add(new PushInfoImpl(model.getRepository(), pushSpec, loadedCommits));
+    }
+    return Collections.unmodifiableList(allDetails);
   }
 
   @NotNull
@@ -623,6 +734,39 @@ public class PushController implements Disposable {
         return !commonTarget.equals(model.getTarget());
       }
     }) ? commonTarget : null;
+  }
+
+  private static class PushInfoImpl implements PushInfo {
+
+    private final Repository myRepository;
+    private final PushSpec<PushSource, PushTarget> myPushSpec;
+    private final List<VcsFullCommitDetails> myCommits;
+
+    private PushInfoImpl(@NotNull Repository repository,
+                         @NotNull PushSpec<PushSource, PushTarget> spec,
+                         @NotNull List<VcsFullCommitDetails> commits) {
+      myRepository = repository;
+      myPushSpec = spec;
+      myCommits = commits;
+    }
+
+    @NotNull
+    @Override
+    public Repository getRepository() {
+      return myRepository;
+    }
+
+    @NotNull
+    @Override
+    public PushSpec<PushSource, PushTarget> getPushSpec() {
+      return myPushSpec;
+    }
+
+    @NotNull
+    @Override
+    public List<VcsFullCommitDetails> getCommits() {
+      return myCommits;
+    }
   }
 
   private static class MyRepoModel<Repo extends Repository, S extends PushSource, T extends PushTarget> {

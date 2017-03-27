@@ -47,14 +47,14 @@ import java.util.Map;
 /**
  * @author yole
  */
-public abstract class PythonTestCommandLineStateBase extends PythonCommandLineState {
-  protected final AbstractPythonRunConfiguration myConfiguration;
+public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRunConfiguration<?>> extends PythonCommandLineState {
+  protected final T myConfiguration;
 
-  public AbstractPythonRunConfiguration<?> getConfiguration() {
+  public T getConfiguration() {
     return myConfiguration;
   }
 
-  public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
+  public PythonTestCommandLineStateBase(T configuration, ExecutionEnvironment env) {
     super(configuration, env);
     myConfiguration = configuration;
     setRunWithPty(false);
@@ -85,7 +85,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
-    return new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
+    final PythonTRunnerConsoleProperties properties = new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
+    if (myConfiguration.isTestBased()) {
+      properties.makeIdTestBased();
+    }
+    return properties;
   }
 
   @Nullable
@@ -116,8 +120,8 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess(patchers);
+  public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
+    final ProcessHandler processHandler = startProcess(processStarter, patchers);
     final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler, executor);
 
     DefaultExecutionResult executionResult =

@@ -40,9 +40,9 @@ public class OverrideImplementExploreUtil {
 
   @NotNull
   public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement, boolean skipImplemented) {
-    Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<MethodSignature,PsiMethod>();
-    Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<MethodSignature,PsiMethod>();
-    Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<MethodSignature,PsiMethod>();
+    Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
+    Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
+    Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
 
     PsiUtilCore.ensureValid(aClass);
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
@@ -83,7 +83,7 @@ public class OverrideImplementExploreUtil {
       }
     }
 
-    final Map<MethodSignature, CandidateInfo> result = new TreeMap<MethodSignature,CandidateInfo>(new MethodSignatureComparator());
+    final Map<MethodSignature, CandidateInfo> result = new TreeMap<>(new MethodSignatureComparator());
     if (toImplement || aClass.isInterface()) {
       collectMethodsToImplement(aClass, abstracts, finals, concretes, result);
     }

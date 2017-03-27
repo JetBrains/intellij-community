@@ -27,6 +27,7 @@ public class ImportPostFormatProcessor implements PostFormatProcessor {
     return new ImportsFormatter(settings, source.getContainingFile()).process(source);
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     return new ImportsFormatter(settings, source.getContainingFile()).processText(source, rangeToReformat);

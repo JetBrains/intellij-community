@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -521,19 +521,12 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-
   @Nullable
-  static HighlightInfo checkPackageAnnotationContainingFile(final PsiPackageStatement statement) {
-    if (statement.getAnnotationList() == null) {
-      return null;
-    }
-    PsiFile file = statement.getContainingFile();
-    if (file != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
-      String description = JavaErrorMessages.message("invalid.package.annotation.containing.file");
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR);
-      builder.range(statement.getAnnotationList().getTextRange());
-      builder.descriptionAndTooltip(description);
-      return builder.create();
+  static HighlightInfo checkPackageAnnotationContainingFile(PsiPackageStatement statement, PsiFile file) {
+    PsiModifierList annotationList = statement.getAnnotationList();
+    if (annotationList != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+      String message = JavaErrorMessages.message("invalid.package.annotation.containing.file");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList.getTextRange()).descriptionAndTooltip(message).create();
     }
     return null;
   }

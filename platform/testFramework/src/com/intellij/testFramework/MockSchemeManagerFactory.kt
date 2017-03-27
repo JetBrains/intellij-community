@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.testFramework
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.*
+import java.nio.file.Path
 
 private val EMPTY = EmptySchemesManager()
 
@@ -27,7 +28,8 @@ class MockSchemeManagerFactory : SchemeManagerFactory() {
                                                                  presentableName: String?,
                                                                  roamingType: RoamingType,
                                                                  isUseOldFileNameSanitize: Boolean,
-                                                                 streamProvider: StreamProvider?): SchemeManager<SCHEME> {
+                                                                 streamProvider: StreamProvider?,
+                                                                 directoryPath: Path?): SchemeManager<SCHEME> {
     @Suppress("UNCHECKED_CAST")
     return EMPTY as SchemeManager<SCHEME>
   }

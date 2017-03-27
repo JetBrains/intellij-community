@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -65,8 +64,8 @@ public class MultilanguageDuplocatorSettings implements PersistentStateComponent
 
       SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
       for (String name : mySettingsMap.keySet()) {
-        Element child = XmlSerializer.serialize(mySettingsMap.get(name), filter);
-        if (!JDOMUtil.isEmpty(child)) {
+        Element child = XmlSerializer.serializeIfNotDefault(mySettingsMap.get(name), filter);
+        if (child != null) {
           child.setName("object");
           child.setAttribute("language", name);
           state.addContent(child);

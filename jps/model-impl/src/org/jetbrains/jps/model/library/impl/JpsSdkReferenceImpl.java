@@ -58,7 +58,7 @@ public class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementRe
   @NotNull
   @Override
   public JpsSdkReferenceImpl<P> createCopy() {
-    return new JpsSdkReferenceImpl<P>(this);
+    return new JpsSdkReferenceImpl<>(this);
   }
 
   @Nullable

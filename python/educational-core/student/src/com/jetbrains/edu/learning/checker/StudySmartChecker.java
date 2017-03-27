@@ -39,17 +39,17 @@ public class StudySmartChecker {
                                 @NotNull final StudyTestRunner testRunner,
                                 @NotNull final VirtualFile virtualFile,
                                 @NotNull final Document usersDocument) {
-
+    VirtualFile fileWindows = null;
+    File resourceFile = null;
+    VirtualFile windowCopy = null;
     try {
       final int index = placeholder.getIndex();
       String windowCopyName = answerFile.getNameWithoutExtension() + index + EduNames.WINDOW_POSTFIX + answerFile.getExtension();
-      final VirtualFile windowCopy =
-        answerFile.copy(project, answerFile.getParent(), windowCopyName);
+      windowCopy = answerFile.copy(project, answerFile.getParent(), windowCopyName);
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
       final Document windowDocument = documentManager.getDocument(windowCopy);
       if (windowDocument != null) {
-        final File resourceFile =
-          StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
+        resourceFile = StudyUtils.copyResourceFile(virtualFile.getName(), windowCopy.getName(), project, usersTaskFile.getTask());
         TaskFile windowTaskFile = answerTaskFile.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(virtualFile));
         if (windowTaskFile == null) {
           return;
@@ -58,13 +58,13 @@ public class StudySmartChecker {
         windowDocument.addDocumentListener(listener);
         int start = placeholder.getOffset();
         int end = start + placeholder.getRealLength();
-        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getActivePlaceholders().get(placeholder.getIndex());
+        final AnswerPlaceholder userAnswerPlaceholder = usersTaskFile.getAnswerPlaceholders().get(placeholder.getIndex());
         int userStart = userAnswerPlaceholder.getOffset();
         int userEnd = userStart + userAnswerPlaceholder.getRealLength();
         String text = usersDocument.getText(new TextRange(userStart, userEnd));
         windowDocument.replaceString(start, end, text);
         ApplicationManager.getApplication().runWriteAction(() -> documentManager.saveDocument(windowDocument));
-        VirtualFile fileWindows = EduUtils.flushWindows(windowTaskFile, windowCopy);
+        fileWindows = EduUtils.flushWindows(windowTaskFile, windowCopy);
         Process smartTestProcess = testRunner.createCheckProcess(project, windowCopy.getPath());
         final CapturingProcessHandler handler = new CapturingProcessHandler(smartTestProcess, null, windowCopy.getPath());
         final ProcessOutput output = handler.runProcess();
@@ -72,18 +72,18 @@ public class StudySmartChecker {
         if (course != null) {
           boolean res = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive()).isSuccess();
           StudyTaskManager.getInstance(project).setStatus(userAnswerPlaceholder, res ? StudyStatus.Solved : StudyStatus.Failed);
-          StudyUtils.deleteFile(windowCopy);
-          if (fileWindows != null) {
-            StudyUtils.deleteFile(fileWindows);
-          }
-          if (!resourceFile.delete()) {
-            LOG.error("failed to delete", resourceFile.getPath());
-          }
         }
       }
     }
     catch (ExecutionException | IOException e) {
       LOG.error(e);
+    }
+    finally {
+      StudyUtils.deleteFile(windowCopy);
+      StudyUtils.deleteFile(fileWindows);
+      if (resourceFile != null && resourceFile.exists() && !resourceFile.delete()) {
+        LOG.error("failed to delete", resourceFile.getPath());
+      }
     }
   }
 }

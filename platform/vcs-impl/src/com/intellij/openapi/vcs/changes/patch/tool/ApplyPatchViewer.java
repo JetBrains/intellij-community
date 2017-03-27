@@ -303,8 +303,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     Document patchDocument = myPatchEditor.getDocument();
     patchDocument.setText(builder.getPatchContent());
 
-    LineNumberConvertor convertor = builder.getLineConvertor();
-    myPatchEditor.getGutterComponentEx().setLineNumberConvertor(convertor.createConvertor1(), convertor.createConvertor2());
+    LineNumberConvertor convertor1 = builder.getLineConvertor1();
+    LineNumberConvertor convertor2 = builder.getLineConvertor2();
+    myPatchEditor.getGutterComponentEx().setLineNumberConvertor(convertor1.createConvertor(), convertor2.createConvertor());
 
     TIntArrayList lines = builder.getSeparatorLines();
     for (int i = 0; i < lines.size(); i++) {

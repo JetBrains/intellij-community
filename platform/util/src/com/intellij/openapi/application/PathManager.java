@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
@@ -35,6 +34,7 @@ import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.ElementTraversal;
 
 import java.io.*;
 import java.net.URL;
@@ -383,24 +383,6 @@ public class PathManager {
     }
   }
 
-  /**
-   * Provides a way to tweak system properties as early as possible.
-   */
-  public static void patchProperties() {
-    /* Setting swing.bufferPerWindow = false disables true double buffering (by definition),
-       by forcing BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF in RepaintManager's static initializer.
-
-       At the same time, https://youtrack.jetbrains.com/issue/IDEA-35883 seems to be now fixed.
-
-       This matters only if we use the default RepaintManager and don't invoke JComponent.getGraphics() directly.
-
-       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-       frame buffer content without the usual repainting, even when the EDT is blocked. */
-    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
-      System.setProperty("swing.bufferPerWindow", "true");
-    }
-  }
-
   private static String getCustomPropertiesFile() {
     String configPath = getCustomOptionsDirectory();
     return configPath != null ? configPath + File.separator + PROPERTIES_FILE_NAME : null;
@@ -473,7 +455,8 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      SecurityManager.class         // xercesImpl
+      SecurityManager.class,        // xercesImpl
+      ElementTraversal.class        // xml-apis (required by Xerces)
     };
 
     final Set<String> classPath = new HashSet<String>();

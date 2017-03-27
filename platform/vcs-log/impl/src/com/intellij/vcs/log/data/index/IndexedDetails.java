@@ -20,22 +20,22 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import org.jetbrains.annotations.NotNull;
 
 public class IndexedDetails extends LoadingDetails {
-  @NotNull private final VcsLogIndex myIndex;
+  @NotNull private final IndexDataGetter myDataGetter;
   private final int myCommitIndex;
 
-  public IndexedDetails(@NotNull VcsLogIndex index,
+  public IndexedDetails(@NotNull IndexDataGetter dataGetter,
                         @NotNull VcsLogStorage storage,
                         int commitIndex,
                         long loadingTaskIndex) {
     super(() -> storage.getCommitId(commitIndex), loadingTaskIndex);
-    myIndex = index;
+    myDataGetter = dataGetter;
     myCommitIndex = commitIndex;
   }
 
   @NotNull
   @Override
   public String getFullMessage() {
-    String message = myIndex.getFullMessage(myCommitIndex);
+    String message = myDataGetter.getFullMessage(myCommitIndex);
     if (message != null) return message;
     return super.getFullMessage();
   }
@@ -43,7 +43,7 @@ public class IndexedDetails extends LoadingDetails {
   @NotNull
   @Override
   public String getSubject() {
-    String message = myIndex.getFullMessage(myCommitIndex);
+    String message = myDataGetter.getFullMessage(myCommitIndex);
     if (message != null) {
       return getSubject(message);
     }

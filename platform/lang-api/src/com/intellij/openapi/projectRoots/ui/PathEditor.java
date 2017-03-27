@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -166,6 +169,9 @@ public class PathEditor {
   protected VirtualFile[] doAddItems() {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myPanel, project, myAddBaseDir);
+    if (files.length == 0) {
+      return VirtualFile.EMPTY_ARRAY;
+    }
     files = adjustAddedFileSet(myPanel, files);
     List<VirtualFile> added = new ArrayList<>(files.length);
     for (VirtualFile vFile : files) {

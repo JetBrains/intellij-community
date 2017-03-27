@@ -1,9 +1,7 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -11,11 +9,10 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +44,9 @@ import java.util.stream.Collectors;
  * we will be able to iterate variants, not collections of variants
  */
 public class JsonSchemaWalker {
+
+  public static final JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
+
   public interface CompletionSchemesConsumer {
     void consume(boolean isName,
                  @NotNull JsonSchemaObject schema,
@@ -54,29 +54,51 @@ public class JsonSchemaWalker {
                  @NotNull List<Step> steps);
   }
 
-  public static void findSchemasForAnnotation(@NotNull final PsiElement element, @NotNull final CompletionSchemesConsumer consumer,
-                                              @NotNull final JsonSchemaObject rootSchema, @NotNull VirtualFile schemaFile) {
-    final List<Step> position = findPosition(element, false, true);
+  public static void findSchemasForAnnotation(@NotNull final PsiElement element,
+                                              @NotNull JsonLikePsiWalker walker,
+                                              @NotNull final CompletionSchemesConsumer consumer,
+                                              @NotNull final JsonSchemaObject rootSchema,
+                                              @NotNull VirtualFile schemaFile) {
+    final List<Step> position = walker.findPosition(element, false, true);
     if (position == null || position.isEmpty()) return;
     // but this does not validate definitions section against general schema --> should be done separately
     if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
         position.get(0).getTransition() instanceof PropertyTransition &&
         "definitions".equals(((PropertyTransition)position.get(0).getTransition()).getName())) return;
-    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position);
+    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position, true);
   }
 
-  public static void findSchemasForCompletion(@NotNull final PsiElement element, @NotNull final CompletionSchemesConsumer consumer,
-                                              @NotNull final JsonSchemaObject rootSchema, @NotNull VirtualFile schemaFile) {
-    final PsiElement checkable = goUpToCheckable(element);
+  public static void findSchemasForCompletion(@NotNull final PsiElement element,
+                                              @NotNull JsonLikePsiWalker walker,
+                                              @NotNull final CompletionSchemesConsumer consumer,
+                                              @NotNull final JsonSchemaObject rootSchema,
+                                              @NotNull VirtualFile schemaFile) {
+    final PsiElement checkable = walker.goUpToCheckable(element);
     if (checkable == null) return;
-    final boolean isName = isName(checkable);
-    final List<Step> position = findPosition(checkable, isName, !isName);
+    final boolean isName = walker.isName(checkable);
+    final List<Step> position = walker.findPosition(checkable, isName, !isName);
     if (position == null || position.isEmpty()) {
       if (isName) consumer.consume(true, rootSchema, schemaFile, Collections.emptyList());
       return;
     }
 
-    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, isName, position);
+    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, isName, position, false);
+  }
+
+  public static void findSchemasForDocumentation(@NotNull final PsiElement element,
+                                              @NotNull JsonLikePsiWalker walker,
+                                              @NotNull final CompletionSchemesConsumer consumer,
+                                              @NotNull final JsonSchemaObject rootSchema,
+                                              @NotNull VirtualFile schemaFile) {
+    final PsiElement checkable = walker.goUpToCheckable(element);
+    if (checkable == null) return;
+    final List<Step> position = walker.findPosition(checkable, true, true);
+    if (position == null || position.isEmpty()) {
+      consumer.consume(true, rootSchema, schemaFile, Collections.emptyList());
+      return;
+    }
+
+    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, true, position, false);
   }
 
   public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
@@ -122,9 +144,13 @@ public class JsonSchemaWalker {
     }
   }
 
-  public static void extractSchemaVariants(@NotNull final Project project, @NotNull final CompletionSchemesConsumer consumer,
+  public static void extractSchemaVariants(@NotNull final Project project,
+                                           @NotNull final CompletionSchemesConsumer consumer,
                                            @NotNull VirtualFile rootSchemaFile,
-                                           @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
+                                           @NotNull JsonSchemaObject rootSchema,
+                                           boolean isName,
+                                           List<Step> position,
+                                           boolean acceptAdditionalPropertiesSchemas) {
     final Set<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> control = new HashSet<>();
     final JsonSchemaServiceEx serviceEx = JsonSchemaServiceEx.Impl.getEx(project);
     final ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue = new ArrayDeque<>();
@@ -141,7 +167,7 @@ public class JsonSchemaWalker {
         continue;
       }
       final DefinitionsResolver definitionsResolver = new DefinitionsResolver(path);
-      extractSchemaVariants(definitionsResolver, object, path);
+      extractSchemaVariants(definitionsResolver, object, path, acceptAdditionalPropertiesSchemas);
 
       if (definitionsResolver.isFound()) {
         final List<JsonSchemaObject> list = gatherSchemas(definitionsResolver.getSchemaObject());
@@ -182,7 +208,10 @@ public class JsonSchemaWalker {
                                 });
   }
 
-  private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer, @NotNull JsonSchemaObject rootSchema, @NotNull List<Step> position) {
+  private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer,
+                                            @NotNull JsonSchemaObject rootSchema,
+                                            @NotNull List<Step> position,
+                                            boolean acceptAdditionalPropertiesSchemas) {
     final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<>();
     queue.add(Pair.create(rootSchema, 0));
     while (!queue.isEmpty()) {
@@ -218,7 +247,7 @@ public class JsonSchemaWalker {
       TransitionResultConsumer transitionResultConsumer = new TransitionResultConsumer();
       for (JsonSchemaObject object : list) {
         if (schema.getAllOf() == null) transitionResultConsumer = new TransitionResultConsumer();
-        step.getTransition().step(object, transitionResultConsumer);
+        step.getTransition().step(object, transitionResultConsumer, acceptAdditionalPropertiesSchemas);
         if (transitionResultConsumer.isNothing()) continue;
         if (transitionResultConsumer.getSchema() != null) {
           reporter.consume(transitionResultConsumer.getSchema());
@@ -229,10 +258,10 @@ public class JsonSchemaWalker {
 
   private static List<JsonSchemaObject> gatherSchemas(JsonSchemaObject schema) {
     List<JsonSchemaObject> list = new ArrayList<>();
+    list.add(schema);
     if (schema.getAllOf() != null) {
-      list = schema.getAllOf();
+      list.addAll(schema.getAllOf());
     } else {
-      list.add(schema);
       if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
       if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
 
@@ -256,72 +285,21 @@ public class JsonSchemaWalker {
     return true;
   }
 
-  private static boolean isName(PsiElement checkable) {
-    final PsiElement parent = checkable.getParent();
-    if (parent instanceof JsonObject) {
-      return true;
-    } else if (parent instanceof JsonProperty) {
-      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), checkable, false);
-    }
-    return false;
+  public static JsonLikePsiWalker getWalker(@NotNull final PsiElement element) {
+    return getJsonLikeThing(element, walker -> walker);
   }
 
   @Nullable
-  private static PsiElement goUpToCheckable(@NotNull final PsiElement element) {
-    PsiElement current = element;
-    while (current != null && !(current instanceof PsiFile)) {
-      if (current instanceof JsonValue || current instanceof JsonProperty) {
-        return current;
-      }
-      current = current.getParent();
+  private static <T> T getJsonLikeThing(@NotNull final PsiElement element,
+                                        @NotNull Convertor<JsonLikePsiWalker, T> convertor) {
+    final List<JsonLikePsiWalker> list = new ArrayList<>();
+    list.add(JSON_ORIGINAL_PSI_WALKER);
+    final JsonLikePsiWalker[] extensions = Extensions.getExtensions(JsonLikePsiWalker.EXTENSION_POINT_NAME);
+    list.addAll(Arrays.asList(extensions));
+    for (JsonLikePsiWalker walker : list) {
+      if (walker.handles(element)) return convertor.convert(walker);
     }
     return null;
-  }
-
-  public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition) {
-    final List<Step> steps = new ArrayList<>();
-    if (!isName) {
-      steps.add(new Step(StateType._value, null));
-    }
-    PsiElement current = element;
-    //PsiElement current = element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element;
-    while (! (current instanceof PsiFile)) {
-      final PsiElement position = current;
-      current = current.getParent();
-      if (current instanceof JsonArray) {
-        JsonArray array = (JsonArray)current;
-        final List<JsonValue> list = array.getValueList();
-        int idx = -1;
-        for (int i = 0; i < list.size(); i++) {
-          final JsonValue value = list.get(i);
-          if (value.equals(position)) {
-            idx = i;
-            break;
-          }
-        }
-        steps.add(new Step(StateType._array, new ArrayTransition(idx)));
-      } else if (current instanceof JsonProperty) {
-        final String propertyName = ((JsonProperty)current).getName();
-        current = current.getParent();
-        if (!(current instanceof JsonObject)) return null;//incorrect syntax?
-        // if either value or not first in the chain - needed for completion variant
-        if (position != element || forceLastTransition) {
-          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
-        }
-      } else if (current instanceof JsonObject && position instanceof JsonProperty) {
-        // if either value or not first in the chain - needed for completion variant
-        if (position != element || forceLastTransition) {
-          final String propertyName = ((JsonProperty)position).getName();
-          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
-        }
-      } else if (current instanceof PsiFile) {
-        break;
-      } else {
-        return null;//something went wrong
-      }
-    }
-    Collections.reverse(steps);
-    return steps;
   }
 
   public static class Step {
@@ -347,7 +325,7 @@ public class JsonSchemaWalker {
   public static class PropertyTransition implements Transition {
     @NotNull private final String myName;
 
-    protected PropertyTransition(@NotNull String name) {
+    public PropertyTransition(@NotNull String name) {
       myName = name;
     }
 
@@ -357,7 +335,9 @@ public class JsonSchemaWalker {
     }
 
     @Override
-    public void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer) {
+    public void step(@NotNull JsonSchemaObject parent,
+                     @NotNull TransitionResultConsumer resultConsumer,
+                     boolean acceptAdditionalPropertiesSchemas) {
       if ("definitions".equals(myName)) {
         if (parent.getDefinitions() != null) {
           final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
@@ -377,7 +357,9 @@ public class JsonSchemaWalker {
           return;
         }
         if (parent.getAdditionalPropertiesSchema() != null) {
-          resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
+          if (acceptAdditionalPropertiesSchemas) {
+            resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
+          }
         } else {
           if (!Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
             resultConsumer.anything();
@@ -394,10 +376,10 @@ public class JsonSchemaWalker {
     }
   }
 
-  private static class ArrayTransition implements Transition {
+  public static class ArrayTransition implements Transition {
     private final int myIdx;
 
-    private ArrayTransition(int idx) {
+    public ArrayTransition(int idx) {
       myIdx = idx;
     }
 
@@ -407,7 +389,9 @@ public class JsonSchemaWalker {
     }
 
     @Override
-    public void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer) {
+    public void step(@NotNull JsonSchemaObject parent,
+                     @NotNull TransitionResultConsumer resultConsumer,
+                     boolean acceptAdditionalPropertiesSchemas) {
       if (parent.getItemsSchema() != null) {
         resultConsumer.setSchema(parent.getItemsSchema());
       } else if (parent.getItemsSchemaList() != null) {
@@ -427,7 +411,7 @@ public class JsonSchemaWalker {
 
   private interface Transition {
     boolean possibleFromState(@NotNull StateType stateType);
-    void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer);
+    void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer, boolean acceptAdditionalPropertiesSchemas);
   }
 
   public enum StateType {

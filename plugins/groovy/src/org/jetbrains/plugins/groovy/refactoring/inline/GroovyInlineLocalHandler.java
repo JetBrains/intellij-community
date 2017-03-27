@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.HelpID;
@@ -44,8 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
-import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -113,7 +112,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
           flow = controlFlowOwner.getControlFlow();
 
-          final ArrayList<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, variable);
+          final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, variable);
           final PsiElement finalCur = cur;
           Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow);
 

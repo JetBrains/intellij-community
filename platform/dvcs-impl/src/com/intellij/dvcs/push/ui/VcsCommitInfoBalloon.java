@@ -51,7 +51,7 @@ public class VcsCommitInfoBalloon {
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "");
     myEditorPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myEditorPane.setEditable(false);
-    myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
+    myEditorPane.setBackground(HintUtil.getInformationColor());
     myEditorPane.setFont(VcsHistoryUtil.getCommitDetailsFont());
     myEditorPane.setBorder(HintUtil.createHintBorder());
     Border margin = IdeBorderFactory.createEmptyBorder(3, 3, 3, 3);

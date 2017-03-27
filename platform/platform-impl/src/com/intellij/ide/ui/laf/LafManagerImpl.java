@@ -51,9 +51,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -213,14 +215,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
-        if (WelcomeWizardUtil.getWizardLAF() != null) {
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.install();
-          }
-          else if (needUninstall) {
-            DarculaInstaller.uninstall();
-          }
-        }
+        updateWizardLAF(needUninstall);
       }
     }
 
@@ -244,6 +239,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, themeChangeListener);
         }
       });
+    }
+  }
+
+  public void updateWizardLAF(boolean wasUnderDarcula) {
+    if (WelcomeWizardUtil.getWizardLAF() != null) {
+      if (UIUtil.isUnderDarcula()) {
+        DarculaInstaller.install();
+      }
+      else if (wasUnderDarcula) {
+        DarculaInstaller.uninstall();
+      }
+      WelcomeWizardUtil.setWizardLAF(null);
     }
   }
 
@@ -497,6 +504,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     initInputMapDefaults(uiDefaults);
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
+    uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
 
     patchFileChooserStrings(uiDefaults);
 
@@ -595,6 +603,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       uiDefaults.put("Menu.opaque", true);
       uiDefaults.put("MenuItem.opaque", true);
     }
+
+    if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+      uiDefaults.put("Menu.arrowIcon", new MenuArrowIcon(AllIcons.Actions.Right));
+    }
+
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
   }
 
@@ -731,10 +744,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     //  }
     //} else
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
+    if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setUserScaleFactor(uiSettings.FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE);
-      initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
+      JBUI.setUserScaleFactor(uiSettings.getFontSize() / UIUtil.DEF_SYSTEM_FONT_SIZE);
+      initFontDefaults(uiDefaults, uiSettings.getFontSize(), new FontUIResource(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -954,6 +967,41 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         catch (Exception ignored) {
         }
       }
+    }
+  }
+
+  private static class MenuArrowIcon implements Icon, UIResource {
+    private final Icon icon;
+    private final Icon selectedIcon;
+    private final Icon grayIcon;
+
+    private MenuArrowIcon(Icon icon) {
+      boolean invert = UIUtil.isUnderDarcula();
+      this.icon = invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2);
+      this.grayIcon = invert ? IconUtil.darker(icon, 2) : IconUtil.brighter(icon, 2);
+      this.selectedIcon = IconUtil.brighter(icon, 8);
+    }
+
+    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+      JMenuItem b = (JMenuItem) c;
+      ButtonModel model = b.getModel();
+
+      if (!model.isEnabled()) {
+        grayIcon.paintIcon(c, g, x, y);
+      } else if (model.isArmed() || ( c instanceof JMenu && model.isSelected())) {
+        selectedIcon.paintIcon(c, g, x, y);
+      }
+      else {
+        icon.paintIcon(c, g, x, y);
+      }
+    }
+
+    @Override public int getIconWidth() {
+      return icon.getIconWidth();
+    }
+
+    @Override public int getIconHeight() {
+      return icon.getIconHeight();
     }
   }
 }

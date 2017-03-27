@@ -20,6 +20,8 @@ import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.ui.GradleProjectCompositeSelectorDialog;
 
@@ -41,7 +43,19 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   protected boolean isVisible(AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return false;
-    return GradleSettings.getInstance(project).getLinkedProjectsSettings().size() > 1;
+    if (GradleSettings.getInstance(project).getLinkedProjectsSettings().size() > 1) {
+      final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
+      if (projectNode == null || projectNode.getData() == null) return false;
+
+      GradleProjectSettings projectSettings =
+        GradleSettings.getInstance(project).getLinkedProjectSettings(projectNode.getData().getLinkedExternalProjectPath());
+      GradleProjectSettings.CompositeBuild compositeBuild = null;
+      if (projectSettings != null) {
+        compositeBuild = projectSettings.getCompositeBuild();
+      }
+      if (compositeBuild == null || compositeBuild.getCompositeDefinitionSource() == CompositeDefinitionSource.IDE) return true;
+    }
+    return false;
   }
 
   @Override

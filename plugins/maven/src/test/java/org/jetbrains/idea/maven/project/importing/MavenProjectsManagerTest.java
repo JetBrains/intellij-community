@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -864,7 +864,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
   public void testDoNotScheduleResolveOfInvalidProjectsDeleted() throws Exception {
     final boolean[] called = new boolean[1];
-    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   NativeMavenProjectHolder nativeMavenProject) {
@@ -1086,14 +1086,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     final StringBuilder log = new StringBuilder();
     myProjectsManager.performScheduledImportInTests();
-    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
       public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         for (Pair<MavenProject, MavenProjectChanges> each : updated) {
-          log.append("updated: " + each.first.getDisplayName() + " ");
+          log.append("updated: ").append(each.first.getDisplayName()).append(" ");
         }
         for (MavenProject each : deleted) {
-          log.append("deleted: " + each.getDisplayName() + " ");
+          log.append("deleted: ").append(each.getDisplayName()).append(" ");
         }
       }
     });

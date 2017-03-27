@@ -77,7 +77,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
       if (catchSections.length == 0) return PsiParameter.EMPTY_ARRAY;
       boolean lastIncomplete = catchSections[catchSections.length - 1].getCatchBlock() == null;
       int limit = lastIncomplete ? catchSections.length - 1 : catchSections.length;
-      ArrayList<PsiParameter> parameters = new ArrayList<PsiParameter>();
+      ArrayList<PsiParameter> parameters = new ArrayList<>();
       for (int i = 0; i < limit; i++) {
         PsiParameter parameter = catchSections[i].getParameter();
         if (parameter != null) parameters.add(parameter);

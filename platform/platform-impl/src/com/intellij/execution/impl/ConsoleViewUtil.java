@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,8 +88,8 @@ public class ConsoleViewUtil {
       editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
       final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
-      if (UISettings.getInstance().PRESENTATION_MODE) {
-        scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+      if (UISettings.getInstance().getPresentationMode()) {
+        scheme.setEditorFontSize(UISettings.getInstance().getPresentationModeFontSize());
       }
       editor.setColorsScheme(scheme);
     });

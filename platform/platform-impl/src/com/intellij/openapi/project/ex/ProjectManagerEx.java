@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
 
+  @Nullable
+  public abstract Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException;
+
   public abstract boolean openProject(@NotNull Project project);
 
   public abstract boolean isProjectOpened(Project project);
@@ -73,4 +76,10 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull String filePath) throws IOException;
+
+  /**
+   * Internal use only. Force reload changed project files. Must be called before save otherwise saving maybe not performed (because storage saving is disabled).
+   */
+  public void flushChangedProjectFileAlarm() {
+  }
 }

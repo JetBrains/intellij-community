@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.fileTemplate;
 
+import com.intellij.ide.actions.SaveFileAsTemplateHandler;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiFile;
@@ -22,16 +23,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.ide.actions.SaveFileAsTemplateHandler;
+import com.intellij.util.JdomKt;
 import org.jdom.Attribute;
-import org.jdom.Document;
-
-import java.io.CharArrayWriter;
+import org.jdom.Element;
 
 /**
  * @author yole
  */
 public class SaveFormAsTemplateHandler implements SaveFileAsTemplateHandler {
+  @Override
   public String getTemplateText(final PsiFile file, final String fileText, final String nameWithoutExtension) {
     if (StdFileTypes.GUI_DESIGNER_FORM.equals(file.getFileType())) {
       LwRootContainer rootContainer = null;
@@ -42,15 +42,11 @@ public class SaveFormAsTemplateHandler implements SaveFileAsTemplateHandler {
       }
       if (rootContainer != null && rootContainer.getClassToBind() != null) {
         try {
-          Document document = JDOMUtil.loadDocument(fileText);
+          Element document = JdomKt.loadElement(fileText);
 
-          Attribute attribute = document.getRootElement().getAttribute(UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS);
+          Attribute attribute = document.getAttribute(UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS);
           attribute.detach();
-
-          CharArrayWriter writer = new CharArrayWriter();
-          JDOMUtil.writeDocument(document, writer, CodeStyleSettingsManager.getSettings(file.getProject()).getLineSeparator());
-
-          return writer.toString();
+          return JDOMUtil.write(document, CodeStyleSettingsManager.getSettings(file.getProject()).getLineSeparator());
         }
         catch (Exception ignored) {
         }

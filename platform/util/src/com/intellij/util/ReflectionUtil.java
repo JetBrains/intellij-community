@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -415,41 +419,77 @@ public class ReflectionUtil {
       return constructor.newInstance();
     }
     catch (Exception e) {
-      // support Kotlin data classes - pass null as default value
-      for (Annotation annotation : aClass.getAnnotations()) {
-        String name = annotation.annotationType().getName();
-        if (name.equals("kotlin.Metadata") || name.equals("kotlin.jvm.internal.KotlinClass")) {
-          Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-          Exception exception = e;
-          ctorLoop:
-          for (Constructor<?> constructor1 : constructors) {
-            try {
-              try {
-                constructor1.setAccessible(true);
-              }
-              catch (Throwable ignored) { }
+      T t = createAsDataClass(aClass);
+      if (t != null) {
+        return t;
+      }
 
-              Class<?>[] parameterTypes = constructor1.getParameterTypes();
-              for (Class<?> type : parameterTypes) {
-                if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
-                  continue ctorLoop;
-                }
-              }
+      ExceptionUtil.rethrow(e);
+    }
 
-              @SuppressWarnings("unchecked")
-              T t = (T)constructor1.newInstance(new Object[parameterTypes.length]);
-              return t;
-            }
-            catch (Exception e1) {
-              exception = e1;
+    // error will be thrown
+    //noinspection ConstantConditions
+    return null;
+  }
+
+  @Nullable
+  private static <T> T createAsDataClass(@NotNull Class<T> aClass) {
+    // support Kotlin data classes - pass null as default value
+    for (Annotation annotation : aClass.getAnnotations()) {
+      String name = annotation.annotationType().getName();
+      if (!name.equals("kotlin.Metadata") && !name.equals("kotlin.jvm.internal.KotlinClass")) {
+        continue;
+      }
+
+      Constructor<?>[] constructors = aClass.getDeclaredConstructors();
+      Exception exception = null;
+      List<Constructor<?>> defaultCtors = new SmartList<Constructor<?>>();
+      ctorLoop:
+      for (Constructor<?> constructor : constructors) {
+        try {
+          try {
+            constructor.setAccessible(true);
+          }
+          catch (Throwable ignored) {
+          }
+
+          Class<?>[] parameterTypes = constructor.getParameterTypes();
+          for (Class<?> type : parameterTypes) {
+            if (type.getName().equals("kotlin.jvm.internal.DefaultConstructorMarker")) {
+              defaultCtors.add(constructor);
+              continue ctorLoop;
             }
           }
-          throw new RuntimeException(exception);
+
+          //noinspection unchecked
+          return (T)constructor.newInstance(new Object[parameterTypes.length]);
+        }
+        catch (Exception e) {
+          exception = e;
         }
       }
 
-      throw new RuntimeException(e);
+      for (Constructor<?> constructor : defaultCtors) {
+        try {
+          try {
+            constructor.setAccessible(true);
+          }
+          catch (Throwable ignored) {
+          }
+
+          //noinspection unchecked
+          return (T)constructor.newInstance();
+        }
+        catch (Exception e) {
+          exception = e;
+        }
+      }
+
+      if (exception != null) {
+        ExceptionUtil.rethrow(exception);
+      }
     }
+    return null;
   }
 
   @NotNull
@@ -498,6 +538,26 @@ public class ReflectionUtil {
       }
     }
     return valuesChanged;
+  }
+
+  public static boolean comparePublicNonFinalFields(@NotNull Object first,
+                                                    @NotNull Object second) {
+    Set<Field> firstFields = ContainerUtil.newHashSet(first.getClass().getFields());
+    for (Field field : second.getClass().getFields()) {
+      if (firstFields.contains(field)) {
+        if (isPublic(field) && !isFinal(field)) {
+          try {
+            if (!Comparing.equal(field.get(first), field.get(second))) {
+              return false;
+            }
+          }
+          catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+    return true;
   }
 
   public static void copyFieldValue(@NotNull Object from, @NotNull Object to, @NotNull Field field)
@@ -573,5 +633,4 @@ public class ReflectionUtil {
       return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
     }
   };
-
 }

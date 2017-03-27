@@ -145,9 +145,7 @@ public class MoveClassesOrPackagesUtil {
     moveDirectoryRecursively(dir, destination, new HashSet<>());
   }
 
-  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths)
-    throws IncorrectOperationException {
-    final PsiManager manager = dir.getManager();
+  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths) throws IncorrectOperationException {
     final VirtualFile destVFile = destination.getVirtualFile();
     final VirtualFile sourceVFile = dir.getVirtualFile();
     if (movedPaths.contains(sourceVFile)) return;

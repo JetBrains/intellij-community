@@ -145,6 +145,10 @@ public class ExpectedHighlightingData {
     registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, false));
   }
 
+  public boolean hasLineMarkers() {
+    return !myLineMarkerInfos.isEmpty();
+  }
+
   public void init() {
     new WriteCommandAction(null) {
       @Override
@@ -374,7 +378,7 @@ public class ExpectedHighlightingData {
     }
 
     for (LineMarkerInfo expectedLineMarker : myLineMarkerInfos.values()) {
-      if (!markerInfos.isEmpty() && !containsLineMarker(expectedLineMarker, markerInfos)) {
+      if (markerInfos.isEmpty() || !containsLineMarker(expectedLineMarker, markerInfos)) {
         if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Line marker was not highlighted " +
                        rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset)

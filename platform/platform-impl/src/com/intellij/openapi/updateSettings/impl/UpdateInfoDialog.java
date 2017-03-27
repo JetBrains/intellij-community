@@ -56,6 +56,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -181,15 +182,19 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    boolean updatePlugins =
-      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet();
+    boolean updatePlugins = !ContainerUtil.isEmpty(myUpdatedPlugins);
+    if (updatePlugins && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
+      return;  // update cancelled
+    }
 
     new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          command = UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+          File file = doDownloadPatch(indicator);
+          indicator.setText(IdeBundle.message("update.preparing.patch.progress"));
+          command = UpdateInstaller.preparePatchCommand(file);
         }
         catch (ProcessCanceledException e) { throw e; }
         catch (Exception e) {
@@ -208,8 +213,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
 
         if (updatePlugins) {
-          indicator.setText(IdeBundle.message("update.downloading.plugins.progress"));
-          UpdateChecker.saveDisabledToUpdatePlugins();
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 
@@ -222,6 +225,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
       }
     }.queue();
+  }
+
+  @NotNull
+  File doDownloadPatch(@NotNull ProgressIndicator indicator) throws IOException {
+    return UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
   }
 
   private void openDownloadPage() {

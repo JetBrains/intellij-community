@@ -31,11 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -83,8 +79,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.projectRoots.JdkUtil.checkForJdk;
-import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
@@ -163,84 +157,6 @@ GuiTestUtil {
   @SuppressWarnings("unused")
   public static void setUpDefaultGeneralSettings() {
 
-
-  }
-
-  public static String getSystemJdk() {
-    String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
-    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      //than use bundled JDK
-      jdkHome = getBundledJdLocation();
-    }
-    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS);
-    }
-    return jdkHome;
-  }
-
-  public static void setUpSdks() {
-
-    String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
-    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      //than use bundled JDK
-      jdkHome = getBundledJdLocation();
-    }
-    final File jdkPath = new File(jdkHome);
-
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LOG.info(String.format("Setting JDK: '%1$s'", jdkPath.getPath()));
-            setJdkPath(jdkPath);
-          }
-        });
-      }
-    });
-  }
-
-  public static void setJdkPath(@NotNull File path) {
-    if (JavaSdk.checkForJdk(path)) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-      Sdk chosenJdk = null;
-
-      for (Sdk jdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-        if (pathsEqual(jdk.getHomePath(), path.getPath())) {
-          chosenJdk = jdk;
-          break;
-        }
-      }
-
-      if (chosenJdk == null) {
-        if (path.isDirectory()) {
-
-          JavaSdk javaSdk = JavaSdk.getInstance();
-
-          //in case of running different from IntelliJ or Android Studio IDE (PyCharm for example)
-          if (javaSdk == null) return;
-
-          String jdk_name = "JDK";
-          final Sdk newJdk = javaSdk.createJdk(jdk_name, path.toString(), false);
-          final Sdk foundJdk = ProjectJdkTable.getInstance().findJdk(newJdk.getName(), newJdk.getSdkType().getName());
-          if (foundJdk == null) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              ProjectJdkTable.getInstance().addJdk(newJdk);
-            });
-          }
-
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            SdkModificator modificator = newJdk.getSdkModificator();
-            JavaSdkImpl.attachJdkAnnotations(modificator);
-            modificator.commitChanges();
-          });
-        }
-        else {
-          throw new IllegalStateException("The resolved path '" + path.getPath() + "' was not found");
-        }
-      }
-    }
   }
 
   @Nullable
@@ -665,17 +581,27 @@ GuiTestUtil {
 
   @Nullable
   public static JLabel findBoundedLabel(@NotNull Container container, @NotNull JTextField textField, @NotNull Robot robot) {
-    Collection<JLabel> labels = robot.finder().findAll(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
-      @Override
-      protected boolean isMatching(@NotNull JLabel label) {
-        return (label.getLabelFor() != null && label.getLabelFor().equals(textField));
+    //in Case of parent component is TextFieldWithBrowseButton
+    if(textField.getParent() instanceof TextFieldWithBrowseButton) {
+      return robot.finder().find(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
+        @Override
+        protected boolean isMatching(@NotNull JLabel label) {
+          return (label.getLabelFor() != null && label.getLabelFor().equals(textField.getParent()));
+        }
+      });
+    } else {
+      Collection<JLabel> labels = robot.finder().findAll(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
+        @Override
+        protected boolean isMatching(@NotNull JLabel label) {
+          return (label.getLabelFor() != null && label.getLabelFor().equals(textField));
+        }
+      });
+      if (labels != null && !labels.isEmpty()) {
+        return labels.iterator().next();
       }
-    });
-    if (labels != null && !labels.isEmpty()) {
-      return labels.iterator().next();
-    }
-    else {
-      return null;
+      else {
+        return null;
+      }
     }
   }
 

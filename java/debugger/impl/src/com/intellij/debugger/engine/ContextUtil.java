@@ -21,10 +21,9 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +74,7 @@ public class ContextUtil {
       LOG.assertTrue(Comparing.equal(sourcePosition, position));
     }
 
-    return ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)() -> {
+    return ReadAction.compute(() -> {
       final PsiElement element = getContextElement(position);
 
       if (element == null) {

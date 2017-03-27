@@ -15,7 +15,6 @@
  */
 package git4idea.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -162,7 +161,7 @@ public class GitMergeUpdater extends GitUpdater {
         LOG.error("Repository is null for root " + myRoot);
         return true; // fail safe
       }
-      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(ServiceManager.getService(Git.class), repository,
+      final Collection<String> remotelyChanged = GitUtil.getPathsDiffBetweenRefs(Git.getInstance(), repository,
                                                                                  currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
       for (final File localPath : locallyChanged) {

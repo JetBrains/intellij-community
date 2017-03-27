@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -197,11 +196,7 @@ public class HgCommandExecutor {
     String str = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
     //remove password from path before log
     final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
-    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // log command
-    if (isUnitTestMode) {
-      System.out.print(cmdString + "\n");
-    }
     if (!myIsSilent) {
       LOG.info(cmdString);
       myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT);
@@ -213,14 +208,9 @@ public class HgCommandExecutor {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private void logResult(@NotNull HgCommandResult result) {
-    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-
     // log output if needed
     if (!result.getRawOutput().isEmpty()) {
-      if (unitTestMode) {
-        System.out.print(result.getRawOutput() + "\n");
-      }
-      else if (!myOutputAlwaysSuppressed) {
+      if (!myOutputAlwaysSuppressed) {
         if (!myIsSilent && myShowOutput) {
           LOG.info(result.getRawOutput());
           myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT);
@@ -233,9 +223,6 @@ public class HgCommandExecutor {
 
     // log error
     if (!result.getRawError().isEmpty()) {
-      if (unitTestMode) {
-        System.out.print(result.getRawError() + "\n");
-      }
       if (!myIsSilent) {
         LOG.info(result.getRawError());
         myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT);

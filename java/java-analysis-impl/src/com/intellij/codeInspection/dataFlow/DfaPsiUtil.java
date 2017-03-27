@@ -336,29 +336,21 @@ public class DfaPsiUtil {
   }
 
   @Nullable
-  public static PsiCodeBlock getTopmostBlockInSameClass(@NotNull PsiElement position) {
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class, PsiLambdaExpression.class);
-    if (block == null) {
-      return null;
-    }
-
-    PsiCodeBlock lastBlock = block;
-    while (true) {
-      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiMember.class, PsiFile.class, PsiLambdaExpression.class);
-      if (block == null) {
-        return lastBlock;
-      }
-      lastBlock = block;
-    }
+  public static PsiElement getTopmostBlockInSameClass(@NotNull PsiElement position) {
+    return JBIterable.
+      generate(position, PsiElement::getParent).
+      takeWhile(e -> !(e instanceof PsiMember || e instanceof PsiFile || e instanceof PsiLambdaExpression)).
+      filter(e -> e instanceof PsiCodeBlock || e instanceof PsiExpression && e.getParent() instanceof PsiLambdaExpression).
+      last();
   }
 
   @NotNull
   public static Collection<PsiExpression> getVariableAssignmentsInFile(@NotNull PsiVariable psiVariable,
                                                                        final boolean literalsOnly,
                                                                        final PsiElement place) {
-    final Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
-    final PsiCodeBlock codeBlock = place == null? null : getTopmostBlockInSameClass(place);
-    final int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
+    Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
+    PsiElement codeBlock = place == null? null : getTopmostBlockInSameClass(place);
+    int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
     PsiFile containingFile = psiVariable.getContainingFile();
     LocalSearchScope scope = new LocalSearchScope(new PsiElement[]{containingFile}, null, true);
     Collection<PsiReference> references = ReferencesSearch.search(psiVariable, scope).findAll();

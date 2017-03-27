@@ -59,12 +59,8 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
 
-  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new NullableFunction<PsiPolyadicExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(PsiPolyadicExpressionImpl expression) {
-      return doGetType(expression);
-    }
-  };
+  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR =
+    (NullableFunction<PsiPolyadicExpressionImpl, PsiType>)expression -> doGetType(expression);
 
   @Nullable
   private static PsiType doGetType(PsiPolyadicExpressionImpl param) {

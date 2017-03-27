@@ -44,13 +44,8 @@ class VariableUsedVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     super.visitReferenceExpression(referenceExpression);
-    final PsiElement target = referenceExpression.resolve();
-    if (target == null) {
-      return;
-    }
-    if (target.equals(variable)) {
+    if (referenceExpression.isReferenceTo(variable)) {
       used = true;
-      //stopWalking();
     }
   }
 

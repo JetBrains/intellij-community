@@ -280,20 +280,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        invokeAndWait(() -> {
-          if (isDisposed() || myProject.isDisposed()) return;
+        invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            if (isDisposed() || myProject.isDisposed()) return;
 
-          isUpdating = false;
-          if (finalApply != null) {
-            try {
-              finalApply.run();
+            isUpdating = false;
+            if (finalApply != null) {
+              try {
+                finalApply.run();
+              }
+              catch (Exception e) {
+                LocalHistoryLog.LOG.error(e);
+              }
             }
-            catch (Exception e) {
-              LocalHistoryLog.LOG.error(e);
-            }
+            updateActions();
+            myDiffView.finishUpdating();
           }
-          updateActions();
-          myDiffView.finishUpdating();
         });
       }
     });

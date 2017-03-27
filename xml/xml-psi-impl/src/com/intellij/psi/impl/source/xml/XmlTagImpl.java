@@ -599,7 +599,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         if (element instanceof XmlAttribute) {
           XmlAttribute attribute = (XmlAttribute)element;
           result.add(attribute);
-          myHasNamespaceDeclarations = myHasNamespaceDeclarations || attribute.isNamespaceDeclaration();
+          if (!myHasNamespaceDeclarations && attribute.isNamespaceDeclaration()) myHasNamespaceDeclarations = true;
         }
         else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
           return false;

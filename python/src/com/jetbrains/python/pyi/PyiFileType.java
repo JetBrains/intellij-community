@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyiFileType extends PythonFileType {
-  public static PythonFileType INSTANCE = new PyiFileType();
+  @NotNull
+  public static final PythonFileType INSTANCE = new PyiFileType();
 
   protected PyiFileType() {
     super(new PyiLanguageDialect());

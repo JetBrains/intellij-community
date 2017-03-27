@@ -30,16 +30,14 @@ public class JavaAnchorProvider extends SmartPointerAnchorProvider {
       return null;
     }
 
-    if (element instanceof PsiClass) {
-      if (element instanceof PsiAnonymousClass) {
-        return ((PsiAnonymousClass)element).getBaseClassReference().getReferenceNameElement();
-      } else {
-        return ((PsiClass)element).getNameIdentifier();
-      }
-    } else if (element instanceof PsiMethod) {
-      return ((PsiMethod)element).getNameIdentifier();
-    } else if (element instanceof PsiVariable) {
-      return ((PsiVariable)element).getNameIdentifier();
+    if (element instanceof PsiAnonymousClass) {
+      return ((PsiAnonymousClass)element).getBaseClassReference().getReferenceNameElement();
+    }
+    if (element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiVariable) {
+      return ((PsiNameIdentifierOwner)element).getNameIdentifier();
+    }
+    if (element instanceof PsiImportList) {
+      return element.getContainingFile();
     }
     return null;
   }
@@ -54,6 +52,9 @@ public class JavaAnchorProvider extends SmartPointerAnchorProvider {
       }
 
       return parent;
+    }
+    if (anchor instanceof PsiJavaFile) {
+      return ((PsiJavaFile)anchor).getImportList();
     }
     return null;
   }

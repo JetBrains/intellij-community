@@ -282,6 +282,18 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(1, impls.length);
   }
 
+  public void testPrivateClassInheritors() {
+    PsiFile file = myFixture.addFileToProject("Foo.java",
+                                                          "class C {\n" +
+                                                          "  private static class Pr<caret>ivate {}\n" +
+                                                          "  public static class Public extends Private {}" +
+                                                          "}");
+    myFixture.addClass("class Inheritor extends C.Public {}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    assertSize(2, getTargets(file));
+  }
+
   private PsiElement[] getTargets(PsiFile file) {
     GotoTargetHandler.GotoData gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.getEditor(), file);
     assertNotNull(gotoData);

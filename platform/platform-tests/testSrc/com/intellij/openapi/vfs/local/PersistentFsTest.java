@@ -87,14 +87,27 @@ public class PersistentFsTest extends PlatformTestCase {
   }
 
   public void testFindRootMustCreateFileWithCanonicalPath() throws Exception {
+    checkMustCreateRootWithCanonicalPath("x.jar");
+  }
+
+  private void checkMustCreateRootWithCanonicalPath(String jarName) throws IOException {
     File tmp = createTempDirectory();
-    File x = new File(tmp, "x.jar");
+    File x = new File(tmp, jarName);
     assertTrue(x.createNewFile());
 
     JarFileSystem jfs = JarFileSystem.getInstance();
     String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
     NewVirtualFile root = myFs.findRoot(path, jfs);
-    assertFalse(root.getPath().contains(".."));
+    assertFalse(root.getPath(), root.getPath().contains("../"));
+    assertFalse(root.getPath(), root.getPath().contains("/.."));
+  }
+
+  public void testFindRootMustCreateFileWithStillCanonicalPath() throws Exception {
+    checkMustCreateRootWithCanonicalPath("x..jar");
+  }
+
+  public void testFindRootMustCreateFileWithYetAnotherCanonicalPath() throws Exception {
+    checkMustCreateRootWithCanonicalPath("x...jar");
   }
 
   public void testDeleteSubstRoots() throws Exception {
@@ -195,12 +208,12 @@ public class PersistentFsTest extends PlatformTestCase {
     FSRecords.force();
     assertFalse(FSRecords.isDirty());
     ++globalModCount;
-    ++inSessionModCount;
 
     int finalGlobalModCount = globalModCount;
-    int finalInSessionModCount = inSessionModCount;
+    
     WriteAction.run(() -> {
       final long timestamp = vFile.getTimeStamp();
+      int finalInSessionModCount = managingFS.getModificationCount();
       vFile.setWritable(true);  // 1 change
       vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
 

@@ -157,7 +157,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     String distributionUri = wrapperConfiguration.getDistribution().toString();
     try {
       String host = new URI(distributionUri).getHost();
-      return host.endsWith("gradle.org") && !GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
+      return host != null && host.endsWith("gradle.org") && !GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
     }
     catch (URISyntaxException ignore) {
     }

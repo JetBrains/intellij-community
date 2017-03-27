@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,8 @@ public class ConfigFilesTreeBuilder {
             moduleNode.add(fileTypeNode);
             addChildrenFiles(psiFiles, fileTypeNode, new ArrayList<>(entry.getValue()));
           }
-        }  else {
+        }
+        else {
           addChildrenFiles(psiFiles, moduleNode, moduleFiles);
         }
       }
@@ -117,6 +118,7 @@ public class ConfigFilesTreeBuilder {
     List<VirtualFile> sortedJars = new ArrayList<>(jars.keySet());
     Collections.sort(sortedJars, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (VirtualFile file : sortedJars) {
+      if (!file.isValid()) continue;
       final List<PsiFile> list = new ArrayList<>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
       if (jar != null) {
@@ -133,7 +135,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static String getFileTypeNodeName(FileType fileType) {
-    return fileType.getName() + " context files" ;
+    return fileType.getName() + " context files";
   }
 
   private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {

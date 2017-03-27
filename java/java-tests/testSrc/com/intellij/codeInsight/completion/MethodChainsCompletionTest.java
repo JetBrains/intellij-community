@@ -125,7 +125,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   public void testBigrams3() {
     final List<WeightableChainLookupElement> elements = doCompletion();
     assertSize(2, elements);
-    assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 2, 8, 3, 0, elements.get(0));
+    assertAdvisorLookupElementEquals("getInstance().findFile", 2, 8, 2, 0, elements.get(0));
   }
 
   public void testMethodWithNoQualifiedVariableInContext() {

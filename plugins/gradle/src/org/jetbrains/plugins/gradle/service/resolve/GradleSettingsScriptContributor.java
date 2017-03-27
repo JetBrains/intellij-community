@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
@@ -44,7 +43,6 @@ public class GradleSettingsScriptContributor extends NonCodeMembersContributor {
       return;
     }
 
-    GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_INITIALIZATION_SETTINGS);
+    GradleResolverUtil.processDeclarations(processor, state, place, GradleCommonClassNames.GRADLE_API_INITIALIZATION_SETTINGS);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,6 +203,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       int offset = editor.getCaretModel().getOffset();
       editor.getSelectionModel().setSelection(targetOffset, offset);
       EditorModificationUtil.deleteSelectedText(editor);
+      editor.getCaretModel().moveToLogicalPosition(pos);
     }
     else if (pos.column > logicalPosition.column) {
       EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));

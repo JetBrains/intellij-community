@@ -33,7 +33,7 @@ public class FacetState {
   private String myFacetType;
   private String myName;
   private Element myConfiguration;
-  private List<FacetState> mySubFacets = new ArrayList<FacetState>();
+  private List<FacetState> mySubFacets = new ArrayList<>();
 
   @Attribute(JpsFacetSerializer.TYPE_ATTRIBUTE)
   public String getFacetType() {

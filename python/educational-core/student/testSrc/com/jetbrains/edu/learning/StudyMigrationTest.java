@@ -1,26 +1,27 @@
 package com.jetbrains.edu.learning;
 
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class StudyMigrationTest {
-
   @Test
   public void testFromThirdToForth() throws JDOMException, IOException, StudySerializationUtils.StudyUnrecognizedFormatException {
-    Element element = JDOMUtil.load(new File(FileUtil.join(getTestDataPath(), "3.xml")));
-    Element actual = StudySerializationUtils.Xml.convertToForthVersion(element);
-    Element expected = JDOMUtil.load(new File(FileUtil.join(getTestDataPath()), "4.xml"));
-    PlatformTestUtil.assertElementsEqual(expected, actual);
+    Element element = JdomKt.loadElement(getTestDataPath().resolve("3.xml"));
+    assertThat(StudySerializationUtils.Xml.convertToForthVersion(element)).isEqualTo(getTestDataPath().resolve("4.xml"));
   }
 
-  protected String getTestDataPath() {
-    return FileUtil.join(PlatformTestUtil.getCommunityPath(), "python/educational-core/student/testData/migration");
+  @NotNull
+  protected Path getTestDataPath() {
+    return Paths.get(PlatformTestUtil.getCommunityPath(), "python/educational-core/student/testData/migration");
   }
 }

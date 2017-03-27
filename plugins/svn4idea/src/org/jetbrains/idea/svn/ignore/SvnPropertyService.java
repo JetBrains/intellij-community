@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.ignore;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -36,21 +35,27 @@ public class SvnPropertyService {
   private SvnPropertyService() {
   }
 
-  public static void doAddToIgnoreProperty(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
-                                           final VirtualFile[] file, final IgnoreInfoGetter getter) throws VcsException {
-    final IgnorePropertyAdder adder = new IgnorePropertyAdder(activeVcs, project, useCommonExtension);
+  public static void doAddToIgnoreProperty(@NotNull SvnVcs vcs, boolean useCommonExtension, VirtualFile[] file, IgnoreInfoGetter getter)
+    throws VcsException {
+    final IgnorePropertyAdder adder = new IgnorePropertyAdder(vcs, useCommonExtension);
     adder.execute(file, getter);
   }
 
-  public static void doRemoveFromIgnoreProperty(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
-                                           final VirtualFile[] file, final IgnoreInfoGetter getter) throws VcsException{
-    final IgnorePropertyRemover remover = new IgnorePropertyRemover(activeVcs, project, useCommonExtension);
+  public static void doRemoveFromIgnoreProperty(@NotNull SvnVcs vcs,
+                                                boolean useCommonExtension,
+                                                VirtualFile[] file,
+                                                IgnoreInfoGetter getter) throws VcsException {
+    final IgnorePropertyRemover remover = new IgnorePropertyRemover(vcs, useCommonExtension);
     remover.execute(file, getter);
   }
 
-  public static void doCheckIgnoreProperty(final SvnVcs activeVcs, final Project project, final VirtualFile[] file,
-        final IgnoreInfoGetter getter, final String extensionPattern, final Ref<Boolean> filesOk, final Ref<Boolean> extensionOk) {
-    final IgnorePropertyChecker checker = new IgnorePropertyChecker(activeVcs, project, extensionPattern);
+  public static void doCheckIgnoreProperty(@NotNull SvnVcs vcs,
+                                           VirtualFile[] file,
+                                           IgnoreInfoGetter getter,
+                                           String extensionPattern,
+                                           Ref<Boolean> filesOk,
+                                           Ref<Boolean> extensionOk) {
+    final IgnorePropertyChecker checker = new IgnorePropertyChecker(vcs, extensionPattern);
     try {
       checker.execute(file, getter);
     } catch (VcsException e) {
@@ -61,8 +66,7 @@ public class SvnPropertyService {
   }
 
   private static abstract class IgnorePropertyWorkTemplate {
-    protected final SvnVcs myVcs;
-    protected final Project myProject;
+    @NotNull protected final SvnVcs myVcs;
     protected final boolean myUseCommonExtension;
     protected final boolean myCanUseCachedProperty;
     
@@ -75,11 +79,9 @@ public class SvnPropertyService {
 
     protected abstract boolean stopIteration();
 
-    private IgnorePropertyWorkTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
-                                       final boolean canUseCachedProperty) {
-      myVcs = activeVcs;
+    private IgnorePropertyWorkTemplate(@NotNull SvnVcs vcs, boolean useCommonExtension, boolean canUseCachedProperty) {
+      myVcs = vcs;
       myCanUseCachedProperty = canUseCachedProperty;
-      myProject = project;
       myUseCommonExtension = useCommonExtension;
     }
 
@@ -113,8 +115,8 @@ public class SvnPropertyService {
     private boolean myFilesOk;
     private boolean myExtensionOk;
 
-    private IgnorePropertyChecker(final SvnVcs activeVcs, final Project project, final String extensionPattern) {
-      super(activeVcs, project, false, true);
+    private IgnorePropertyChecker(@NotNull SvnVcs vcs, String extensionPattern) {
+      super(vcs, false, true);
       myExtensionPattern = extensionPattern;
       myExtensionOk = true;
       myFilesOk = true;
@@ -167,10 +169,10 @@ public class SvnPropertyService {
     private final Collection<String> exceptions;
     private final VcsDirtyScopeManager dirtyScopeManager;
 
-    private IgnorePropertyAddRemoveTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension, false);
+    private IgnorePropertyAddRemoveTemplate(@NotNull SvnVcs vcs, boolean useCommonExtension) {
+      super(vcs, useCommonExtension, false);
       exceptions = new ArrayList<>();
-      dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+      dirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
     }
 
     protected boolean stopIteration() {
@@ -194,7 +196,7 @@ public class SvnPropertyService {
     protected void onAfterProcessing(final VirtualFile[] file) throws VcsException {
       if (! myUseCommonExtension) {
         for (VirtualFile virtualFile : file) {
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
+          dirtyScopeManager.fileDirty(virtualFile);
         }
       }
 
@@ -209,8 +211,8 @@ public class SvnPropertyService {
   }
 
   private static class IgnorePropertyRemover extends IgnorePropertyAddRemoveTemplate {
-    private IgnorePropertyRemover(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension);
+    private IgnorePropertyRemover(@NotNull SvnVcs vcs, boolean useCommonExtension) {
+      super(vcs, useCommonExtension);
     }
 
     protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {
@@ -234,8 +236,8 @@ public class SvnPropertyService {
   }
 
   private static class IgnorePropertyAdder extends IgnorePropertyAddRemoveTemplate {
-    private IgnorePropertyAdder(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension) {
-      super(activeVcs, project, useCommonExtension);
+    private IgnorePropertyAdder(@NotNull SvnVcs vcs, boolean useCommonExtension) {
+      super(vcs, useCommonExtension);
     }
 
     protected String getNewPropertyValue(final Set<String> data, final PropertyValue propertyValue) {

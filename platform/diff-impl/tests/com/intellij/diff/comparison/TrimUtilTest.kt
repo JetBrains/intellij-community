@@ -28,6 +28,6 @@ class TrimUtilTest : DiffTestCase() {
   }
 
   private fun doCheckPunctuation(c: Char) {
-    assertEquals(StringUtil.containsChar(PUNCTUATION, c), TrimUtil.isPunctuation(c), "'" + c + "' - " + c.toInt())
+    assertEquals(StringUtil.containsChar(PUNCTUATION, c), isPunctuation(c), "'" + c + "' - " + c.toInt())
   }
 }

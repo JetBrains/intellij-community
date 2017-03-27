@@ -45,7 +45,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   private final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
 
-  private JProgressBar myProgress;
+  protected JProgressBar myProgress;
 
   private JPanel myComponent;
 

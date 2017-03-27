@@ -27,6 +27,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -80,7 +81,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  volatile RangeHighlighterEx highlighter; // modified in EDT only
+  private volatile RangeHighlighterEx highlighter;// modified in EDT only
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
@@ -158,6 +159,17 @@ public class HighlightInfo implements Segment {
   @NotNull
   public HighlightSeverity getSeverity() {
     return severity;
+  }
+
+  public RangeHighlighterEx getHighlighter() {
+    return highlighter;
+  }
+
+  /**
+   * modified in EDT only
+   */
+  public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
+    this.highlighter = highlighter;
   }
 
   public boolean isAfterEndOfLine() {
@@ -253,7 +265,7 @@ public class HighlightInfo implements Segment {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
-  HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                 @Nullable TextAttributesKey forcedTextAttributesKey,
                 @NotNull HighlightInfoType type,
                 int startOffset,
@@ -314,7 +326,7 @@ public class HighlightInfo implements Segment {
            Comparing.strEqual(info.getDescription(), getDescription());
   }
 
-  boolean equalsByActualOffset(@NotNull HighlightInfo info) {
+  protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
     return info.getSeverity() == getSeverity() &&

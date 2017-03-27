@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,21 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 
 public class ViewNavigationBarAction extends ToggleAction implements DumbAware {
   @Override
-  public boolean isSelected(AnActionEvent e){
-    return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+  public boolean isSelected(AnActionEvent e) {
+    return UISettings.getInstance().getShowNavigationBar();
   }
 
   @Override
-  public void setSelected(AnActionEvent e,boolean state){
+  public void setSelected(AnActionEvent e, boolean state) {
     UISettings uiSettings = UISettings.getInstance();
-    uiSettings.SHOW_NAVIGATION_BAR=state;
+    uiSettings.setShowNavigationBar(state);
     uiSettings.fireUISettingsChanged();
   }
 }

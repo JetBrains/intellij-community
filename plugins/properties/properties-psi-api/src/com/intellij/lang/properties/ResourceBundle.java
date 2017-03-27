@@ -53,4 +53,6 @@ public abstract class ResourceBundle {
   public Project getProject() {
     return getDefaultPropertiesFile().getProject();
   }
+
+  public abstract boolean isValid();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
-    final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
+    final Element classpathElement = JDOMUtil.load(fileText);
 
     final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> {
       String imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerImpl.IML_EXTENSION;
@@ -108,7 +108,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
 
-    Element classpathElement1 = JDOMUtil.loadDocument(fileText1).getRootElement();
+    Element classpathElement1 = JDOMUtil.load(fileText1);
     ModuleRootModel model = ModuleRootManager.getInstance(module);
     Element resultClasspathElement = new EclipseClasspathWriter().writeClasspath(classpathElement1, model);
 

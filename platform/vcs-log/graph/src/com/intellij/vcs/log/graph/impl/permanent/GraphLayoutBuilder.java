@@ -62,8 +62,6 @@ public class GraphLayoutBuilder {
   @NotNull private final List<Integer> myHeadNodeIndex;
   @NotNull private final int[] myStartLayoutIndexForHead;
 
-  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
-
   private int currentLayoutIndex = 1;
 
   private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull List<Integer> headNodeIndex) {
@@ -75,7 +73,7 @@ public class GraphLayoutBuilder {
   }
 
   private void dfs(int nodeIndex) {
-    myDfsUtil.nodeDfsIterator(nodeIndex, new DfsUtil.NextNode() {
+    DfsUtil.walk(nodeIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
         boolean firstVisit = myLayoutIndex[currentNode] == 0;

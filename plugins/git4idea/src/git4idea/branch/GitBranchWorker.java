@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Executes the logic of git branch operations.
@@ -73,6 +74,11 @@ public final class GitBranchWorker {
     else {
       LOG.error("Creating new branch the same as current in all repositories: " + name);
     }
+  }
+
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    updateInfo(startPoints.keySet());
+    new GitCreateBranchOperation(myProject, myGit, myUiHandler, name, startPoints).execute();
   }
 
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {

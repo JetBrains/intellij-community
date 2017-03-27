@@ -44,6 +44,8 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("javac-ref-scanner-8")
         module("jps-builders")
         module("jps-standalone-builder")
+      }
+      jar("idea_rt.jar") {
         module("java-runtime")
       }
       jar("jps-builders-6.jar") {

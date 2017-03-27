@@ -95,7 +95,7 @@ public class CoreApplicationEnvironment {
 
     myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
-                                      new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
+                                      new StaticGetter<>(myFileTypeRegistry),
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
@@ -103,12 +103,8 @@ public class CoreApplicationEnvironment {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
-      @Override
-      public Document fun(CharSequence charSequence) {
-        return new DocumentImpl(charSequence);
-      }
-    }, null));
+    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
+      charSequence -> new DocumentImpl(charSequence), null));
 
     VirtualFileSystem[] fs = {myLocalFileSystem, myJarFileSystem};
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs,  myApplication.getMessageBus());

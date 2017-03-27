@@ -17,14 +17,13 @@ package com.intellij.psi
 
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Condition
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.java.JavaFileElement
 import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.Processor
-
 /**
  * @author peter
  */
@@ -54,7 +53,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     def mainClass = ((PsiJavaFile)file).classes[0]
     LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
       superClass == node.psi.parent
-    } as Processor<MethodElement>)
+    } as Condition<MethodElement>)
   }
 
   void "test no hard refs to AST after highlighting"() {
@@ -62,7 +61,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     assert sup.findElementAt(0) // load AST
     assert !((PsiFileImpl)sup).stub
 
-    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Processor)
+    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Condition)
 
     def foo = myFixture.addFileToProject('a.java', 'class Foo extends Super { void bar() { bar(); } }')
     myFixture.configureFromExistingVirtualFile(foo.virtualFile)
@@ -71,8 +70,8 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     assert !((PsiFileImpl)foo).stub
     assert ((PsiFileImpl)foo).treeElement
 
-    LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo } as Processor)
-    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Processor)
+    LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo } as Condition)
+    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup } as Condition)
   }
 
   void "test no hard refs to Default File Template inspection internal AST"() {
@@ -85,7 +84,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     def mainClass = ((PsiJavaFile)file).classes[0]
     LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
       !node.psi.physical
-    } as Processor<MethodElement>)
+    } as Condition<MethodElement>)
   }
 
   void "test no hard refs to AST via class reference type"() {
@@ -96,7 +95,7 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
       node.psi == cls.methods[0]
-    } as Processor<MethodElement>)
+    } as Condition<MethodElement>)
   }
 
 }

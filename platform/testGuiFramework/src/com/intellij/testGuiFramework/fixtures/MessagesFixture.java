@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.messages.SheetController;
+import com.intellij.util.JdomKt;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.fixture.JPanelFixture;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.openapi.util.JDOMUtil.loadDocument;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.field;
 import static org.junit.Assert.assertNotNull;
@@ -212,8 +211,7 @@ public class MessagesFixture {
   @Nullable
   private static String getHtmlBody(@NotNull String html) {
     try {
-      Document document = loadDocument(html);
-      Element rootElement = document.getRootElement();
+      Element rootElement = JdomKt.loadElement(html);
       String sheetTitle = rootElement.getChild("body").getText();
       return sheetTitle.replace("\n", "").trim();
     }

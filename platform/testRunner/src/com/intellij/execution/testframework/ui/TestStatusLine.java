@@ -62,7 +62,7 @@ public class TestStatusLine extends JPanel {
       if (testsTotal == 0) return;
     }
     if (duration == null || endTime == 0) {
-      myState.append(finishedTestsCount + " of " + (testsTotal > 0 ? getTestsTotalMessage(testsTotal) : "<undefined>") + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
+      myState.append(finishedTestsCount + (testsTotal > 0 ? " of " + getTestsTotalMessage(testsTotal) : "") + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
       return;
     }

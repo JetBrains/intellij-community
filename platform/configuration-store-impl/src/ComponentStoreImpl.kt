@@ -19,7 +19,7 @@ import com.intellij.configurationStore.StateStorageManager.ExternalizationSessio
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -147,7 +147,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           val info = components.get(name)!!
           var currentModificationCount = -1L
 
-          if (info.lastModificationCount >= 0) {
+          if (info.isModificationTrackingSupported) {
             currentModificationCount = info.currentModificationCount
             if (currentModificationCount == info.lastModificationCount) {
               LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
@@ -211,7 +211,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val state = StoreUtil.getStateSpec(component.javaClass) ?: throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(state.storages).path)).toAbsolutePath().toString()
-    runWriteAction {
+    runUndoTransparentWriteAction {
       try {
         VfsRootAccess.allowRootAccess(absolutePath)
         CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
@@ -352,7 +352,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exists)
-    if (defaultState != null) {
+    if (defaultState == null) {
+      component.noStateLoaded()
+    }
+    else {
       component.loadState(defaultState)
     }
     return true
@@ -570,11 +573,15 @@ private interface ComponentInfo {
   val lastModificationCount: Long
   val currentModificationCount: Long
 
+  val isModificationTrackingSupported: Boolean
+
   fun updateModificationCount(newCount: Long = currentModificationCount) {
   }
 }
 
-private open class ComponentInfoImpl(override val component: Any) : ComponentInfo {
+private class ComponentInfoImpl(override val component: Any) : ComponentInfo {
+  override val isModificationTrackingSupported = false
+
   override val lastModificationCount: Long
     get() = -1
 
@@ -583,6 +590,8 @@ private open class ComponentInfoImpl(override val component: Any) : ComponentInf
 }
 
 private abstract class ModificationTrackerAwareComponentInfo : ComponentInfo {
+  override final val isModificationTrackingSupported = true
+
   override abstract var lastModificationCount: Long
 
   override final fun updateModificationCount(newCount: Long) {
@@ -591,15 +600,15 @@ private abstract class ModificationTrackerAwareComponentInfo : ComponentInfo {
 }
 
 private class ComponentWithStateModificationTrackerInfo(override val component: PersistentStateComponentWithModificationTracker<*>) : ModificationTrackerAwareComponentInfo() {
-  override var lastModificationCount = currentModificationCount
-
   override val currentModificationCount: Long
     get() = component.stateModificationCount
+
+  override var lastModificationCount = currentModificationCount
 }
 
 private class ComponentWithModificationTrackerInfo(override val component: ModificationTracker) : ModificationTrackerAwareComponentInfo() {
-  override var lastModificationCount = currentModificationCount
-
   override val currentModificationCount: Long
     get() = component.modificationCount
+
+  override var lastModificationCount = currentModificationCount
 }

@@ -109,7 +109,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
 
     @NotNull
     private List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
-      List<File> resourceOutputs = new ArrayList<File>();
+      List<File> resourceOutputs = new ArrayList<>();
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myTarget.getModule()).
         includedIn(JpsJavaClasspathKind.compile(tests)).
         recursively();

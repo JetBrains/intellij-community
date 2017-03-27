@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,11 @@ package com.intellij.openapi.module;
 import com.intellij.openapi.options.Configurable;
 
 public interface ModuleConfigurationEditor extends Configurable {
-  void saveData();
-  void moduleStateChanged();
+  default void saveData() {
+  }
+
+  default void moduleStateChanged() {
+  }
+
   ModuleConfigurationEditor[] EMPTY = new ModuleConfigurationEditor[0];
 }

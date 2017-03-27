@@ -188,7 +188,7 @@ public class JpsSdkTableSerializer {
   }
 
   private static List<JpsLibraryRootTypeSerializer> getRootTypeSerializers() {
-    List<JpsLibraryRootTypeSerializer> serializers = new ArrayList<JpsLibraryRootTypeSerializer>(Arrays.asList(PREDEFINED_ROOT_TYPE_SERIALIZERS));
+    List<JpsLibraryRootTypeSerializer> serializers = new ArrayList<>(Arrays.asList(PREDEFINED_ROOT_TYPE_SERIALIZERS));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       serializers.addAll(extension.getSdkRootTypeSerializers());
     }

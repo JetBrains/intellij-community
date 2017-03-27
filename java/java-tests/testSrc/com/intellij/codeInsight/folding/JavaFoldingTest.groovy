@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.folding
 
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
@@ -36,6 +38,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 
@@ -688,6 +691,8 @@ class Test {
  }""" == myFixture.editor.selectionModel.selectedText
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
+    assert ' {\n   return field;\n }' == myFixture.editor.selectionModel.selectedText
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)
     assert 'return field;' == myFixture.editor.selectionModel.selectedText
   }
 
@@ -989,6 +994,49 @@ class Foo {
 
     myFixture.doHighlighting()
     assertTopLevelFoldRegionsState "[FoldRegion +(49:92), placeholder='otherMethod() → { ', FoldRegion +(113:123), placeholder=' }']"
+  }
+
+  public void "test imports remain collapsed when new item is added at the end"() {
+    boolean oldValue = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // tests disable this by default
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true)
+    try {
+      configure """\
+import java.util.ArrayList;
+import java.util.List;
+
+class Foo {
+    public static void main(String[] args) {
+        Class a = ArrayList.class;
+        Class l = List.class;
+        <caret>
+    }
+}
+"""
+      assertTopLevelFoldRegionsState "[FoldRegion +(7:50), placeholder='...']"
+
+      myFixture.type("Class t = TreeMap.class;")
+      myFixture.doHighlighting() // let auto-import complete
+      myFixture.checkResult"""\
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+
+class Foo {
+    public static void main(String[] args) {
+        Class a = ArrayList.class;
+        Class l = List.class;
+        Class t = TreeMap.class;<caret>
+    }
+}
+"""
+      myFixture.doHighlighting() // update folding for the new text
+      assertTopLevelFoldRegionsState "[FoldRegion +(7:76), placeholder='...']"
+    }
+    finally {
+      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldValue
+    }
   }
 
   private void assertTopLevelFoldRegionsState(String expectedState) {

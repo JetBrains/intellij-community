@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,26 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
 import gnu.trove.THashSet;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,15 +43,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class ClassInheritorsTest extends DaemonAnalyzerTestCase {
-  @Override
-  protected Sdk getTestProjectJdk() {
-    // there must be src.zip
-    return IdeaTestUtil.getMockJdk17("1.7");
-  }
+public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
 
   public void testClsAndSourcesDoNotMixUp() {
-    PsiClass numberClass = getJavaFacade().findClass("java.lang.Number", GlobalSearchScope.allScope(getProject()));
+    PsiClass numberClass = myFixture.getJavaFacade().findClass("java.lang.Number", GlobalSearchScope.allScope(getProject()));
     assertTrue(String.valueOf(numberClass), numberClass instanceof ClsClassImpl);
     PsiClass n2 = (PsiClass)numberClass.getNavigationElement();
     assertTrue(String.valueOf(n2), n2 instanceof PsiClassImpl);
@@ -65,14 +61,11 @@ public class ClassInheritorsTest extends DaemonAnalyzerTestCase {
 
   public void testStressInPresenceOfPCEs() throws IOException {
     ApplicationManager.getApplication().assertIsDispatchThread(); // no write action can go through while we test
-    File tempDirectory = createTempDirectory();
-    VirtualFile dir = getVirtualFile(tempDirectory);
-    addSourceContentToRoots(getModule(), dir);
     int N = 1000;
-    PsiJavaFile file0 = (PsiJavaFile)createFile(myModule, dir, "C0.java", "class C0 { }");
+    PsiJavaFile file0 = (PsiJavaFile)myFixture.addFileToProject("C0.java", "class C0 { }");
     for (int i=1;i<N ;i++) {
       int extI = i - 1 - (i - 1) % 10; // 10 inheritors
-      createFile(myModule, dir, "C" + i + ".java", "class C" + i + " extends C" + extI + " { }");
+      myFixture.addClass("class C" + i + " extends C" + extI + " { }");
     }
     PsiClass class0 = file0.getClasses()[0];
 
@@ -91,7 +84,7 @@ public class ClassInheritorsTest extends DaemonAnalyzerTestCase {
             }
           }, progress);
         });
-        myPsiManager.dropResolveCaches();
+        myFixture.getPsiManager().dropResolveCaches();
         //System.out.println("Iterated all");
         delayToCancel--;
       }
@@ -101,4 +94,49 @@ public class ClassInheritorsTest extends DaemonAnalyzerTestCase {
       }
     }
   }
+
+  public void testPrivateClassCanHaveInheritorsInAnotherFile() throws IOException {
+    myFixture.addClass("public class Test {\n" +
+                "  public static class A { }\n" +
+                "  private static class B extends A { }\n" +
+                "  public static class C1 extends B { }\n" +
+                "  public static class C2 extends B { }\n" +
+                "}");
+    myFixture.addClass("public class Test2 {\n" +
+                "  private static class D1 extends Test.C1 { }\n" +
+                "  private static class D2 extends Test.C2 { }\n" +
+                "}");
+    assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("Test.A")).findAll());
+    assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("Test.B")).findAll());
+  }
+
+  public void testPackageLocalClassCanHaveInheritorsInAnotherPackage() throws IOException {
+    myFixture.addClass("package one; public class Test {\n" +
+                "  public static class A { }\n" +
+                "  static class B extends A { }\n" +
+                "  public static class C1 extends B { }\n" +
+                "  public static class C2 extends B { }\n" +
+                "}");
+    myFixture.addClass("package another; public class Test2 {\n" +
+                "  private static class D1 extends one.Test.C1 { }\n" +
+                "  private static class D2 extends one.Test.C2 { }\n" +
+                "}");
+    assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("one.Test.A")).findAll());
+    assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
+  }
+
+  public void testInheritorsInAnotherModuleWithNoDirectoDependency() throws IOException {
+    myFixture.addFileToProject("A.java", "class A {}");
+    myFixture.addFileToProject("mod1/B.java", "class B extends A {}");
+    myFixture.addFileToProject("mod1/C.java", "class C extends B {}");
+
+    Module mod1 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+
+    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
+
+    assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
+  }
+
 }

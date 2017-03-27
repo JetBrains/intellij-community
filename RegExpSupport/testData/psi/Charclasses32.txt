@@ -6,9 +6,8 @@ REGEXP_FILE
       RegExpClassImpl: <[^bc]>
         PsiElement(CLASS_BEGIN)('[')
         PsiElement(CARET)('^')
-        RegExpUnionImpl: <bc>
-          RegExpCharImpl: <b>
-            PsiElement(CHARACTER)('b')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
+        RegExpCharImpl: <b>
+          PsiElement(CHARACTER)('b')
+        RegExpCharImpl: <c>
+          PsiElement(CHARACTER)('c')
         PsiElement(CLASS_END)(']')

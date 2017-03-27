@@ -22,6 +22,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.common.InjectedLanguageBlockWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,14 +46,18 @@ public class FormatterTagHandler {
   public FormatterTag getFormatterTag(Block block) {
     if (mySettings.FORMATTER_TAGS_ENABLED &&
         !StringUtil.isEmpty(mySettings.FORMATTER_ON_TAG) &&
-        !StringUtil.isEmpty(mySettings.FORMATTER_OFF_TAG) &&
-        block instanceof ASTBlock) {
-      ASTNode node = ((ASTBlock)block).getNode();
-      if (node != null) {
-        PsiElement element = node.getPsi();
-        if (element != null && element instanceof PsiComment) {
-          return getFormatterTag((PsiComment)element);
+        !StringUtil.isEmpty(mySettings.FORMATTER_OFF_TAG)) {
+      if (block instanceof ASTBlock) {
+        ASTNode node = ((ASTBlock)block).getNode();
+        if (node != null) {
+          PsiElement element = node.getPsi();
+          if (element != null && element instanceof PsiComment) {
+            return getFormatterTag((PsiComment)element);
+          }
         }
+      }
+      else if (block instanceof InjectedLanguageBlockWrapper) {
+        return getFormatterTag(((InjectedLanguageBlockWrapper)block).getOriginal());
       }
     }
     return FormatterTag.NONE;

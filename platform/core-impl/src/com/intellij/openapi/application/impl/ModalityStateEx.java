@@ -37,7 +37,7 @@ public class ModalityStateEx extends ModalityState {
   }
 
   private List<Object> getModalEntities() {
-    ArrayList<Object> result = new ArrayList<Object>();
+    ArrayList<Object> result = new ArrayList<>();
     for (Object entity : myModalEntities) {
       result.add(entity);
     }
@@ -52,7 +52,7 @@ public class ModalityStateEx extends ModalityState {
   @NotNull
   ModalityStateEx appendEntity(@NotNull Object anEntity){
     List<Object> modalEntities = getModalEntities();
-    List<Object> list = new ArrayList<Object>(modalEntities.size() + 1);
+    List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
     list.add(anEntity);
     return new ModalityStateEx(list.toArray());

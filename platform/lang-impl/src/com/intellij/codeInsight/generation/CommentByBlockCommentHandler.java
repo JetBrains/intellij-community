@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -62,7 +61,6 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     myProject = project;
     myEditor = editor;
     myCaret = caret;

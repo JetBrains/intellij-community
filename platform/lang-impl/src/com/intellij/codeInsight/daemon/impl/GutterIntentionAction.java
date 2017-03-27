@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myText != null) return StringUtil.isNotEmpty(myText);
-
-    return isAvailable(createActionEvent((EditorEx)editor));
+    return myText != null ? StringUtil.isNotEmpty(myText) : isAvailable(createActionEvent((EditorEx)editor));
   }
 
   @NotNull
@@ -80,8 +78,13 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   private boolean isAvailable(@NotNull AnActionEvent event) {
     if (myText == null) {
       myAction.update(event);
-      String text = event.getPresentation().getText();
-      myText = text != null ? text : StringUtil.notNullize(myAction.getTemplatePresentation().getText());
+      if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
+        String text = event.getPresentation().getText();
+        myText = text != null ? text : StringUtil.notNullize(myAction.getTemplatePresentation().getText());
+      }
+      else {
+        myText = "";
+      }
     }
     return StringUtil.isNotEmpty(myText);
   }
@@ -143,7 +146,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order, icon);
     if (!gutterAction.isAvailable(event)) return;
     descriptors.add(new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.emptyList(), null, icon) {
-      @Nullable
+      @NotNull
       @Override
       public String getDisplayName() {
         return gutterAction.getText();

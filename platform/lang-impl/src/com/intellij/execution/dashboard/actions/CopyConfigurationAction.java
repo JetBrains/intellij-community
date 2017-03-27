@@ -16,13 +16,18 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
@@ -32,6 +37,20 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
     super(ExecutionBundle.message("copy.configuration.action.name"),
           ExecutionBundle.message("copy.configuration.action.name"),
           PlatformIcons.COPY_ICON);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setText(ExecutionBundle.message("copy.configuration.action.name") + "...");
+    }
+  }
+
+  @Override
+  protected boolean isEnabled4(DashboardRunConfigurationNode node) {
+    return RunManager.getInstance(node.getProject()).getAllConfigurationsList().contains(
+      node.getConfigurationSettings().getConfiguration());
   }
 
   @Override
@@ -49,7 +68,10 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
       ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
     }
 
-    runManager.addConfiguration(copiedSettings, runManager.isConfigurationShared(settings),
-                                runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+    if (RunDialog.editConfiguration(node.getProject(), copiedSettings,
+                                    ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
+      runManager.addConfiguration(copiedSettings, runManager.isConfigurationShared(settings),
+                                  runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+    }
   }
 }

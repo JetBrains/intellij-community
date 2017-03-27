@@ -107,7 +107,7 @@ public interface ToolWindow extends BusyObject {
   void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable);
 
   /**
-   * @return window icon. Returns <code>null</code> if window has no icon.
+   * @return window icon. Returns {@code null} if window has no icon.
    */
   Icon getIcon();
 
@@ -117,7 +117,7 @@ public interface ToolWindow extends BusyObject {
   void setIcon(Icon icon);
 
   /**
-   * @return window title. Returns <code>null</code> if window has no title.
+   * @return window title. Returns {@code null} if window has no title.
    */
   String getTitle();
 
@@ -175,7 +175,7 @@ public interface ToolWindow extends BusyObject {
 
   /**
    *
-   * @param show if <code>false</code> stripe button would be hidden
+   * @param show if {@code false} stripe button would be hidden
    */
   void setShowStripeButton(boolean show);
 

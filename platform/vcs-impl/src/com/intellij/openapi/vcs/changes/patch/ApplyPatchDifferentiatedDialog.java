@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
@@ -195,10 +196,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? this::reset : EmptyRunnable.getInstance();
 
-    myChangeListChooser = new ChangeListChooserPanel(project, errorMessage -> {
-      setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
-      setErrorText(errorMessage);
+    myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<String>() {
+      @Override public void consume(@Nullable String errorMessage) {
+        setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
+        setErrorText(errorMessage, myChangeListChooser);
+      }
     });
+
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
     if (defaultList != null) {

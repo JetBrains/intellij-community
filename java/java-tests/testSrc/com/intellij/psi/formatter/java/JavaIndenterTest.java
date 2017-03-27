@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.formatting.FormatterTestUtils;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
 
   @Override
   public void doTextTest(@NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
-    doTextTest(Action.INDENT, adjustTextIfNecessary(text), textAfter);
+    doTextTest(FormatterTestUtils.Action.INDENT, adjustTextIfNecessary(text), textAfter);
   }
 
   private String adjustTextIfNecessary(String text) {

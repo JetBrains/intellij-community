@@ -14,6 +14,5 @@
     <orderEntry type="module" module-name="jps-model-serialization" exported="" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="Xerces" level="project" />
   </component>
 </module>

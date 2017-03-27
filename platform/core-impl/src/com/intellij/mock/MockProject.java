@@ -56,12 +56,7 @@ public class MockProject extends MockComponentManager implements Project {
   @NotNull
   @Override
   public Condition<?> getDisposed() {
-    return new Condition() {
-      @Override
-      public boolean value(final Object o) {
-        return isDisposed();
-      }
-    };
+    return (Condition)o -> isDisposed();
   }
 
   @Override

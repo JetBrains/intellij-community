@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,4 @@ public abstract class DependencyValidationManager extends NamedScopesHolder {
 
   @NotNull
   public abstract Map<String, PackageSet> getUnnamedScopes();
-
-  public abstract void reloadRules();
 }

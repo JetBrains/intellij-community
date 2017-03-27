@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.ui.RowsDnDSupport;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -66,7 +66,7 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myConfigurable = new MockRunConfigurable(createRunManager(JDOMUtil.loadDocument(FOLDERS_CONFIGURATION).getRootElement()));
+    myConfigurable = new MockRunConfigurable(createRunManager(JdomKt.loadElement(FOLDERS_CONFIGURATION)));
     myTree = myConfigurable.myTree;
     myRoot = myConfigurable.myRoot;
     myModel = myConfigurable.myTreeModel;

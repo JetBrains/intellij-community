@@ -219,12 +219,12 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     String rawText = editor.getDocument().getText();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : settings.getAvailableProjects().entrySet()) {
       if (entry.getKey().getPath().equals(rawText)) {
-        collapse(editor, uiAware.getProjectRepresentationName(entry.getKey().getPath(), null));
+        collapse(editor, uiAware.getProjectRepresentationName(project, entry.getKey().getPath(), null));
         return;
       }
       for (ExternalProjectPojo pojo : entry.getValue()) {
         if (pojo.getPath().equals(rawText)) {
-          collapse(editor, uiAware.getProjectRepresentationName(pojo.getPath(), entry.getKey().getPath()));
+          collapse(editor, uiAware.getProjectRepresentationName(project, pojo.getPath(), entry.getKey().getPath()));
           return;
         }
       }

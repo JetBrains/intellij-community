@@ -1,4 +1,4 @@
-// "Convert variable to 'java.util.concurrent.atomic.LongAdder'" "true"
+// "Convert to LongAdder" "true"
 import java.util.concurrent.atomic.LongAdder;
 
 public class Main10 {

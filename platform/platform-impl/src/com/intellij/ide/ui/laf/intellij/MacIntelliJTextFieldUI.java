@@ -135,7 +135,26 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    return new Dimension(size.width, Math.max(26, size.height));
+    return new Dimension(size.width + getIconsWidth(c), Math.max(26, size.height));
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    Dimension minimumSize = super.getMinimumSize(c);
+    return new Dimension(minimumSize.width + getIconsWidth(c), minimumSize.height);
+  }
+
+  private int getIconsWidth(JComponent c) {
+    int width = 0;
+    if (isSearchField(c)) {
+      Icon label = getSearchIcon(c);
+      width += label.getIconWidth();
+      if (hasText()) {
+        Icon clearIcon = MacIntelliJIconCache.getIcon("searchFieldClear");
+        width += clearIcon.getIconWidth() + 3;
+      }
+    }
+    return width;
   }
 
   protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {

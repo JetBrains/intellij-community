@@ -243,7 +243,7 @@ public class ClassRepr extends Proto {
     this.myContext = context;
     myFileName = fileName;
     mySuperClass = TypeRepr.createClassType(context, superClass);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<TypeRepr.AbstractType>(1));
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
     myFields = fields;
     myMethods = methods;
     this.myAnnotationTargets = annotationTargets;
@@ -260,9 +260,9 @@ public class ClassRepr extends Proto {
       this.myContext = context;
       myFileName = DataInputOutputUtil.readINT(in);
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<TypeRepr.AbstractType>(1), in);
-      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<FieldRepr>(), in);
-      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<MethodRepr>(), in);
+      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
+      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
+      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
       myAnnotationTargets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
@@ -273,7 +273,7 @@ public class ClassRepr extends Proto {
       int flags = DataInputOutputUtil.readINT(in);
       myIsLocal = (flags & LOCAL_MASK) != 0;
       myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
-      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<UsageRepr.Usage>(), in);
+      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -371,7 +371,7 @@ public class ClassRepr extends Proto {
 
   @NotNull
   public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
-    final Collection<MethodRepr> result = new LinkedList<MethodRepr>();
+    final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
       if (p.satisfy(mm)) {
@@ -408,12 +408,7 @@ public class ClassRepr extends Proto {
 
     stream.print("      Interfaces : ");
     final TypeRepr.AbstractType[] is = myInterfaces.toArray(new TypeRepr.AbstractType[myInterfaces.size()]);
-    Arrays.sort(is, new Comparator<TypeRepr.AbstractType>() {
-      @Override
-      public int compare(final TypeRepr.AbstractType o1, final TypeRepr.AbstractType o2) {
-        return o1.getDescr(context).compareTo(o2.getDescr(context));
-      }
-    });
+    Arrays.sort(is, Comparator.comparing(o -> o.getDescr(context)));
     for (final TypeRepr.AbstractType t : is) {
       stream.print(t.getDescr(context));
       stream.print(" ");
@@ -442,15 +437,12 @@ public class ClassRepr extends Proto {
 
     stream.println("      Fields:");
     final FieldRepr[] fs = myFields.toArray(new FieldRepr[myFields.size()]);
-    Arrays.sort(fs, new Comparator<FieldRepr>() {
-      @Override
-      public int compare(final FieldRepr o1, final FieldRepr o2) {
-        if (o1.name == o2.name) {
-          return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
-        }
-
-        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+    Arrays.sort(fs, (o1, o2) -> {
+      if (o1.name == o2.name) {
+        return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
       }
+
+      return context.getValue(o1.name).compareTo(context.getValue(o2.name));
     });
     for (final FieldRepr f : fs) {
       f.toStream(context, stream);
@@ -459,42 +451,39 @@ public class ClassRepr extends Proto {
 
     stream.println("      Methods:");
     final MethodRepr[] ms = myMethods.toArray(new MethodRepr[myMethods.size()]);
-    Arrays.sort(ms, new Comparator<MethodRepr>() {
-      @Override
-      public int compare(final MethodRepr o1, final MethodRepr o2) {
-        if (o1.name == o2.name) {
-          final String d1 = o1.myType.getDescr(context);
-          final String d2 = o2.myType.getDescr(context);
+    Arrays.sort(ms, (o1, o2) -> {
+      if (o1.name == o2.name) {
+        final String d1 = o1.myType.getDescr(context);
+        final String d2 = o2.myType.getDescr(context);
 
-          final int c = d1.compareTo(d2);
+        final int c = d1.compareTo(d2);
 
-          if (c == 0) {
-            final int l1 = o1.myArgumentTypes.length;
-            final int l2 = o2.myArgumentTypes.length;
+        if (c == 0) {
+          final int l1 = o1.myArgumentTypes.length;
+          final int l2 = o2.myArgumentTypes.length;
 
-            if (l1 == l2) {
-              for (int i = 0; i<l1; i++) {
-                final String d11 = o1.myArgumentTypes[i].getDescr(context);
-                final String d22 = o2.myArgumentTypes[i].getDescr(context);
+          if (l1 == l2) {
+            for (int i = 0; i<l1; i++) {
+              final String d11 = o1.myArgumentTypes[i].getDescr(context);
+              final String d22 = o2.myArgumentTypes[i].getDescr(context);
 
-                final int cc = d11.compareTo(d22);
+              final int cc = d11.compareTo(d22);
 
-                if (cc != 0) {
-                  return cc;
-                }
+              if (cc != 0) {
+                return cc;
               }
-
-              return 0;
             }
 
-            return l1 -l2;
+            return 0;
           }
 
-          return c;
+          return l1 -l2;
         }
 
-        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+        return c;
       }
+
+      return context.getValue(o1.name).compareTo(context.getValue(o2.name));
     });
     for (final MethodRepr m : ms) {
       m.toStream(context, stream);
@@ -503,7 +492,7 @@ public class ClassRepr extends Proto {
 
     stream.println("      Usages:");
 
-    final List<String> usages = new LinkedList<String>();
+    final List<String> usages = new LinkedList<>();
 
     for (final UsageRepr.Usage u : myUsages) {
       final ByteArrayOutputStream bas = new ByteArrayOutputStream();

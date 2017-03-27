@@ -38,7 +38,7 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public final class CompletionServiceImpl extends CompletionService{
+public final class CompletionServiceImpl extends CompletionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
@@ -51,8 +51,7 @@ public final class CompletionServiceImpl extends CompletionService{
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
-        }
-        else if (indicator == null) {
+        } else if (indicator == null) {
           setCompletionPhase(CompletionPhase.NoCompletion);
         }
       }
@@ -61,7 +60,7 @@ public final class CompletionServiceImpl extends CompletionService{
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
-    return (CompletionServiceImpl)CompletionService.getCompletionService();
+    return (CompletionServiceImpl) CompletionService.getCompletionService();
   }
 
   @Override
@@ -89,13 +88,13 @@ public final class CompletionServiceImpl extends CompletionService{
     final String prefix = CompletionData.findPrefixStatic(position, offset);
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, offset, matcher, contributor,parameters, sorter, null);
+    return new CompletionResultSetImpl(consumer, offset, matcher, contributor, parameters, sorter, null);
   }
 
   @Override
   public CompletionProgressIndicator getCurrentCompletion() {
     if (isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.CommittingDocuments.class,
-                CompletionPhase.Synchronous.class)) {
+      CompletionPhase.Synchronous.class)) {
       return ourPhase.indicator;
     }
     return null;
@@ -105,7 +104,9 @@ public final class CompletionServiceImpl extends CompletionService{
     private final int myLengthOfTextBeforePosition;
     private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
-    @Nullable private final CompletionResultSetImpl myOriginal;
+    @Nullable
+    private final CompletionResultSetImpl myOriginal;
+
 
     public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
                                    final PrefixMatcher prefixMatcher,
@@ -121,10 +122,15 @@ public final class CompletionServiceImpl extends CompletionService{
     }
 
     @Override
+    public void addAllElements(@NotNull Iterable<? extends LookupElement> elements) {
+      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements));
+    }
+
+    @Override
     public void addElement(@NotNull final LookupElement element) {
       if (!element.isValid()) {
         LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
-                  " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
+          " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
         return;
       }
 
@@ -160,8 +166,8 @@ public final class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter,
-                                         this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl) sorter,
+        this);
     }
 
     @Override
@@ -241,16 +247,14 @@ public final class CompletionServiceImpl extends CompletionService{
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
         sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher()));
-      }
-      else if ("stats".equals(id)) {
+      } else if ("stats".equals(id)) {
         sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
           @Override
           public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
             return new StatisticsWeigher.LookupStatisticsWeigher(location, next);
           }
         });
-      }
-      else {
+      } else {
         sorter = sorter.weigh(new LookupElementWeigher(id, true, false) {
           @Override
           public Comparable weigh(@NotNull LookupElement element) {

@@ -45,7 +45,7 @@ public class PsiCachedValuesFactory implements CachedValuesFactory {
       protected Object[] getDependencies(CachedValueProvider.Result<T> result) {
         return getDependenciesPlusValue(result);
       }
-    } : new PsiCachedValueImpl<T>(myManager, provider);
+    } : new PsiCachedValueImpl<>(myManager, provider);
   }
 
   @Override

@@ -42,7 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 
 
@@ -193,14 +195,28 @@ class ProgressDialog implements Disposable {
   }
 
   void cancel() {
-    enableCancelButtonIfNeeded(false);
+    setCancelButtonEnabledASAP(false);
   }
 
-  void enableCancelButtonIfNeeded(final boolean enable) {
-    if (myProgressWindow.myShouldShowCancel) {
-      ApplicationManager.getApplication().invokeLater(() -> myCancelButton.setEnabled(enable), ModalityState.any());
+  private void setCancelButtonEnabledASAP(boolean enabled) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myCancelButton.setEnabled(enabled);
+      myDisableCancelAlarm.cancelAllRequests();
+    });
+  }
+
+  void enableCancelButtonIfNeeded(boolean enable) {
+    if (!myProgressWindow.myShouldShowCancel) return;
+    
+    if (enable && !myProgressWindow.isCanceled()) {
+      setCancelButtonEnabledASAP(true);
+    } else {
+      myDisableCancelAlarm.cancelAllRequests();
+      myDisableCancelAlarm.addRequest(() -> setCancelButtonEnabledASAP(false), 500);
     }
   }
+
+  private final Alarm myDisableCancelAlarm = new Alarm(this);
 
   private void createCenterPanel() {
     // Cancel button (if any)
@@ -302,7 +318,7 @@ class ProgressDialog implements Disposable {
           }
         }
 
-        myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
+        myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
       }
     });
 

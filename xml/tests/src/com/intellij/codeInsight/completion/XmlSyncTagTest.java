@@ -58,10 +58,10 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
                                   final String toType,
                                   final String result) {
     myFixture.configureByText(fileType, text);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       myFixture.completeBasic();
       if (toType != null) myFixture.type(toType);
-    }), "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
+    }, "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
     myFixture.checkResult(result);
   }
 }

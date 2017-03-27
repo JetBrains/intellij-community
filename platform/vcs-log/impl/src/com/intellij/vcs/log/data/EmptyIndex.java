@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +57,16 @@ public class EmptyIndex implements VcsLogIndex {
 
   @Nullable
   @Override
-  public String getFullMessage(int index) {
+  public IndexDataGetter getDataGetter() {
     return null;
+  }
+
+  @Override
+  public void addListener(@NotNull IndexingFinishedListener l) {
+  }
+
+  @Override
+  public void removeListener(@NotNull IndexingFinishedListener l) {
   }
 
   @Override

@@ -31,7 +31,6 @@ import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.JavaCompilerToolExtension;
 import org.jetbrains.jps.javac.OptimizedFileManagerUtil;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
@@ -39,9 +38,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 
@@ -102,7 +99,7 @@ public class ClasspathBootstrap {
   }
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
-    final Set<File> cp = new LinkedHashSet<File>();
+    final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     // util
     for (String path : PathManager.getUtilClassPath()) {
@@ -141,17 +138,22 @@ public class ClasspathBootstrap {
       else {
         // last resort
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+        Class compilerClass;
         if (systemCompiler != null) {
-          final String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(systemCompiler.getClass()).getPath());
-          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+          compilerClass = systemCompiler.getClass();
+        }
+        else {
+          compilerClass = Class.forName("com.sun.tools.javac.api.JavacTool", false, ClasspathBootstrap.class.getClassLoader());
+        }
+        String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(compilerClass).getPath());
+        String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+        if (relPath != null) {
+          if (relPath.contains("..")) {
+            relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+          }
           if (relPath != null) {
-            if (relPath.contains("..")) {
-              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-            }
-            if (relPath != null) {
-              final File targetFile = new File(sdkHome, relPath);
-              cp.add(targetFile);  // tools.jar
-            }
+            final File targetFile = new File(sdkHome, relPath);
+            cp.add(targetFile);  // tools.jar
           }
         }
       }
@@ -166,11 +168,7 @@ public class ClasspathBootstrap {
       cp.add(getResourceFile(t.getClass()));
     }
 
-    for (JavaCompilerToolExtension toolExtension : JavaCompilerToolExtension.getExtensions()) {
-      cp.add(getResourceFile(toolExtension.getClass()));
-    }
-
-    return new ArrayList<File>(cp);
+    return new ArrayList<>(cp);
   }
 
   public static String getResourcePath(Class aClass) {

@@ -94,7 +94,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
     }
     else if (attributes.getFgColor() == null) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), myForeground), isMainText);
+      super.append(fragment, attributes.derive(-1, myForeground, null, null), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);

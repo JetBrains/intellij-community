@@ -85,6 +85,12 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   }
 
   @Override
+  public void resetValue(RadComponent component) throws Exception {
+    super.resetValue(component);
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
+  }
+
+  @Override
   public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
     ListModel listModel;
     try {

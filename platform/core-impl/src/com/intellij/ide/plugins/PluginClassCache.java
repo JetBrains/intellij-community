@@ -25,7 +25,7 @@ import java.util.*;
  */
 class PluginClassCache {
   private static final Object ourLock = new Object();
-  private final TObjectIntHashMap<PluginId> myClassCounts = new TObjectIntHashMap<PluginId>();
+  private final TObjectIntHashMap<PluginId> myClassCounts = new TObjectIntHashMap<>();
 
   public void addPluginClass(PluginId pluginId) {
     synchronized(ourLock) {
@@ -42,11 +42,7 @@ class PluginClassCache {
       counters = new ArrayList(Arrays.asList(myClassCounts.keys()));
     }
 
-    Collections.sort(counters, new Comparator<PluginId>() {
-      public int compare(PluginId o1, PluginId o2) {
-        return myClassCounts.get(o2) - myClassCounts.get(o1);
-      }
-    });
+    counters.sort((o1, o2) -> myClassCounts.get(o2) - myClassCounts.get(o1));
     for (PluginId id : counters) {
       PluginManagerCore.getLogger().info(id + " loaded " + myClassCounts.get(id) + " classes");
     }

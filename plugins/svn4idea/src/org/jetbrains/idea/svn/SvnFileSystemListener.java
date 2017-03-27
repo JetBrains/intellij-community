@@ -161,12 +161,11 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
     File srcFile = new File(file.getPath());
     File destFile = new File(new File(toDir.getPath()), copyName);
-    final boolean dstDirUnderControl = SvnUtil.isSvnVersioned(vcs.getProject(), destFile.getParentFile());
-    if (! dstDirUnderControl && !isPendingAdd(vcs.getProject(), toDir)) {
+    if (!SvnUtil.isSvnVersioned(vcs, destFile.getParentFile()) && !isPendingAdd(vcs.getProject(), toDir)) {
       return null;
     }
 
-    if (! SvnUtil.isSvnVersioned(vcs.getProject(), srcFile.getParentFile())) {
+    if (!SvnUtil.isSvnVersioned(vcs, srcFile.getParentFile())) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(toDir, copyName, null, false));
       return null;
     }

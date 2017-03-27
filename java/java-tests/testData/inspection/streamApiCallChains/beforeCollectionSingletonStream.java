@@ -5,6 +5,6 @@ import java.util.stream.Stream;
 
 class CollectionSingletonStream {
   Stream<String> stream(String[] args) {
-    return Col<caret>lections.<String>singleton("xyz").stream();
+    return Collections.<String>singleton("xyz").st<caret>ream();
   }
 }

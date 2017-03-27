@@ -178,7 +178,7 @@ public class VcsHistoryUtil {
     return revision instanceof CurrentRevision;
   }
 
-  private static boolean isEmpty(VcsFileRevision revision) {
+  public static boolean isEmpty(VcsFileRevision revision) {
     return revision == null || VcsFileRevision.NULL.equals(revision);
   }
 

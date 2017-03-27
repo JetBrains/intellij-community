@@ -1,6 +1,6 @@
 class MyType1(type):
     @staticmethod
-    def __prepare__<warning descr="Signature of method 'MyType1.__prepare__()' does not match signature of base method in class 'type'">(metacls, name)</warning>:
+    def __prepare__(metacls, name):
         return {}
 
 

@@ -42,7 +42,7 @@ public class ReferenceRange {
   public static List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
     final PsiElement elt = ref.getElement();
     final List<TextRange> relativeRanges = getRanges(ref);
-    final List<TextRange> answer = new ArrayList<TextRange>(relativeRanges.size());
+    final List<TextRange> answer = new ArrayList<>(relativeRanges.size());
     final int parentOffset = elt.getTextRange().getStartOffset();
     for (TextRange relativeRange : relativeRanges) {
       answer.add(relativeRange.shiftRight(parentOffset));

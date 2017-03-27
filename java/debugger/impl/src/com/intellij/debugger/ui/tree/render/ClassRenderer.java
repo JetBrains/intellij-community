@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,8 +76,9 @@ public class ClassRenderer extends NodeRendererImpl{
     myProperties.setEnabled(true);
   }
 
-  public final String renderTypeName(final String typeName) {
-    if (SHOW_FQ_TYPE_NAMES) {
+  @Nullable
+  public final String renderTypeName(@Nullable final String typeName) {
+    if (SHOW_FQ_TYPE_NAMES || typeName == null) {
       return typeName;
     }
     String baseLambdaClassName = DebuggerUtilsEx.getLambdaBaseClassName(typeName);

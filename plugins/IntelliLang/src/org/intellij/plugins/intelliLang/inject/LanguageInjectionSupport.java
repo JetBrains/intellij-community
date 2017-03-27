@@ -42,9 +42,9 @@ public abstract class LanguageInjectionSupport {
   public static final ExtensionPointName<LanguageInjectionConfigBean> CONFIG_EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.injectionConfig");
 
 
-  public static Key<InjectedLanguage> TEMPORARY_INJECTED_LANGUAGE = Key.create("TEMPORARY_INJECTED_LANGUAGE");
-  public static Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
-  public static Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
+  public static final Key<InjectedLanguage> TEMPORARY_INJECTED_LANGUAGE = Key.create("TEMPORARY_INJECTED_LANGUAGE");
+  public static final Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
+  public static final Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
 
   @NonNls
   @NotNull
@@ -56,6 +56,8 @@ public abstract class LanguageInjectionSupport {
   public abstract boolean isApplicableTo(PsiLanguageInjectionHost host);
 
   public abstract boolean useDefaultInjector(PsiLanguageInjectionHost host);
+
+  public abstract boolean useDefaultCommentInjector();
 
   @Nullable
   public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef);

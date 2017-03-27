@@ -782,12 +782,7 @@ public class CompositeElement extends TreeElement {
   @Nullable
   private PsiElement obtainStubBasedPsi() {
     AstPath path = getElementType() instanceof IStubElementType ? AstPath.getNodePath(this) : null;
-    return path == null ? null : path.getContainingFile().obtainPsi(path, new Factory<StubBasedPsiElementBase<?>>() {
-      @Override
-      public StubBasedPsiElementBase<?> create() {
-        return (StubBasedPsiElementBase<?>)createPsiNoLock();
-      }
-    });
+    return path == null ? null : path.getContainingFile().obtainPsi(path, () -> (StubBasedPsiElementBase<?>)createPsiNoLock());
   }
 
   @Override

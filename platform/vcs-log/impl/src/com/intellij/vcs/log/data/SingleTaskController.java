@@ -78,7 +78,7 @@ public abstract class SingleTaskController<Request, Result> {
    * I.e. the second call to this method will return an empty list (unless new requests came via {@link #request(Object)}.
    */
   @NotNull
-  protected final List<Request> popRequests() {
+  public final List<Request> popRequests() {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
       myAwaitingRequests = ContainerUtil.newArrayList();
@@ -92,7 +92,7 @@ public abstract class SingleTaskController<Request, Result> {
    * If the result is not null, it is immediately passed to the result handler specified in the constructor.
    * Otherwise result handler is not called, the task just completes.
    */
-  protected final void taskCompleted(@Nullable Result result) {
+  public final void taskCompleted(@Nullable Result result) {
     if (result != null) {
       myResultHandler.consume(result);
       LOG.debug("Handled result: " + result);

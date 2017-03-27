@@ -59,6 +59,7 @@ public class DfaValueFactory {
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
+    myOptionalFactory = new DfaOptionalValue.Factory(this);
   }
 
   public boolean isHonorFieldInitializers() {
@@ -135,6 +136,7 @@ public class DfaValueFactory {
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
+  private final DfaOptionalValue.Factory myOptionalFactory;
 
   @NotNull
   public DfaVariableValue.Factory getVarFactory() {
@@ -158,5 +160,10 @@ public class DfaValueFactory {
   @NotNull
   public DfaRelationValue.Factory getRelationFactory() {
     return myRelationFactory;
+  }
+
+  @NotNull
+  public DfaOptionalValue.Factory getOptionalFactory() {
+    return myOptionalFactory;
   }
 }

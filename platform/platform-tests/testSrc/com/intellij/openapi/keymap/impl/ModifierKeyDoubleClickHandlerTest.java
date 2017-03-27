@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,6 +150,21 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     assertInvocationCounts(1, 0, 0, 1);
   }
 
+  public void testShiftShiftOtherModifierNoAction() {
+    press();
+    release();
+    press();
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED);
+
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK, KeyEvent.VK_BACK_SPACE, '\b');
+    dispatchEvent(KeyEvent.KEY_TYPED, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK, 0, '\b');
+    dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK, KeyEvent.VK_BACK_SPACE, '\b');
+
+    dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.SHIFT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED);
+    release();
+    assertInvocationCounts(0, 0, 0, 0);
+  }
+
   public void assertInvocationCounts(int shiftKeyCount, int shiftShiftCount, int shiftShiftKeyCount, int shiftOtherKeyCount) {
     assertEquals(shiftKeyCount, myShiftKeyActionInvocationCount);
     assertEquals(shiftShiftCount, myShiftShiftActionInvocationCount);
@@ -158,21 +173,20 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   }
 
   private void press() {
-    IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                           KeyEvent.KEY_PRESSED,
-                                                           Clock.getTime(),
-                                                           InputEvent.SHIFT_MASK,
-                                                           KeyEvent.VK_SHIFT,
-                                                           KeyEvent.CHAR_UNDEFINED));
+    dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.SHIFT_MASK, KeyEvent.VK_SHIFT, KeyEvent.CHAR_UNDEFINED);
   }
 
   private void release() {
+    dispatchEvent(KeyEvent.KEY_RELEASED, 0, KeyEvent.VK_SHIFT, KeyEvent.CHAR_UNDEFINED);
+  }
+
+  private void dispatchEvent(int id, int modifiers, int keyCode, char keyChar) {
     IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                           KeyEvent.KEY_RELEASED,
+                                                           id,
                                                            Clock.getTime(),
-                                                           0,
-                                                           KeyEvent.VK_SHIFT,
-                                                           KeyEvent.CHAR_UNDEFINED));
+                                                           modifiers,
+                                                           keyCode,
+                                                           keyChar));
   }
 
   private void key() {
@@ -189,25 +203,16 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
 
   private void key(int repeat, boolean otherKey) {
     for (int i = 0; i < repeat; i++) {
-      IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                             KeyEvent.KEY_PRESSED,
-                                                             Clock.getTime(),
-                                                             InputEvent.SHIFT_MASK,
-                                                             otherKey ? KeyEvent.VK_ENTER : KeyEvent.VK_BACK_SPACE,
-                                                             otherKey ? '\n' : '\b'));
-      IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                             KeyEvent.KEY_TYPED,
-                                                             Clock.getTime(),
-                                                             InputEvent.SHIFT_MASK,
-                                                             0,
-                                                             otherKey ? '\n' : '\b'));
+      dispatchEvent(KeyEvent.KEY_PRESSED, InputEvent.SHIFT_MASK,
+                    otherKey ? KeyEvent.VK_ENTER : KeyEvent.VK_BACK_SPACE,
+                    otherKey ? '\n' : '\b');
+      dispatchEvent(KeyEvent.KEY_TYPED, InputEvent.SHIFT_MASK,
+                    0,
+                    otherKey ? '\n' : '\b');
     }
-    IdeEventQueue.getInstance().dispatchEvent(new KeyEvent(myComponent,
-                                                           KeyEvent.KEY_RELEASED,
-                                                           Clock.getTime(),
-                                                           InputEvent.SHIFT_MASK,
-                                                           otherKey ? KeyEvent.VK_ENTER : KeyEvent.VK_BACK_SPACE,
-                                                           otherKey ? '\n' : '\b'));
+    dispatchEvent(KeyEvent.KEY_RELEASED, InputEvent.SHIFT_MASK,
+                  otherKey ? KeyEvent.VK_ENTER : KeyEvent.VK_BACK_SPACE,
+                  otherKey ? '\n' : '\b');
   }
 
   private void timeStep(long step) {

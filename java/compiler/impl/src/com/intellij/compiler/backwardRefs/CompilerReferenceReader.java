@@ -45,9 +45,11 @@ class CompilerReferenceReader {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
 
   private final CompilerBackwardReferenceIndex myIndex;
+  private final File myBuildDir;
 
-  private CompilerReferenceReader(File buildDir) throws IOException {
-    myIndex = new CompilerBackwardReferenceIndex(buildDir);
+  private CompilerReferenceReader(File buildDir) {
+    myIndex = new CompilerBackwardReferenceIndex(buildDir, true);
+    myBuildDir = buildDir;
   }
 
   @Nullable
@@ -100,20 +102,29 @@ class CompilerReferenceReader {
     return myIndex.getByteSeqEum();
   }
 
-  void close() {
+  void close(boolean removeIndex) {
     myIndex.close();
+    if (removeIndex) {
+      CompilerBackwardReferenceIndex.removeIndexFiles(myBuildDir);
+    }
+  }
+
+  static boolean exists(Project project) {
+    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
+      return false;
+    }
+    return CompilerBackwardReferenceIndex.exist(buildDir);
   }
 
   static CompilerReferenceReader create(Project project) {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-      return null;
-    }
+    if (!exists(project)) return null;
     try {
-      return new CompilerReferenceReader(buildDir);
+      return new CompilerReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    catch (RuntimeException e) {
+      LOG.error("An exception while initialization of compiler reference index.", e);
+      return null;
     }
   }
 

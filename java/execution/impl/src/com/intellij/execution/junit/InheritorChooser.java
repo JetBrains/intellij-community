@@ -21,13 +21,12 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -82,7 +81,7 @@ public class InheritorChooser {
 
       final List<PsiClass> classes = new ArrayList<>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        final boolean isJUnit5 = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> JUnitUtil.isJUnit5(containingClass));
+        final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));
         ClassInheritorsSearch.search(containingClass).forEach(aClass -> {
           if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
             classes.add(aClass);

@@ -38,9 +38,9 @@ public class BuildTargetRegistryImpl implements BuildTargetRegistry {
   private Map<JpsModule, List<ModuleBasedTarget>> myModuleBasedTargets;
 
   public BuildTargetRegistryImpl(JpsModel model) {
-    myTargets = new THashMap<BuildTargetType<?>, List<? extends BuildTarget<?>>>();
-    myModuleBasedTargets = new THashMap<JpsModule, List<ModuleBasedTarget>>();
-    List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<List<? extends BuildTarget<?>>>();
+    myTargets = new THashMap<>();
+    myModuleBasedTargets = new THashMap<>();
+    List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<>();
     for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
       List<? extends BuildTarget<?>> targets = type.computeAllTargets(model);
       myTargets.put(type, targets);
@@ -51,7 +51,7 @@ public class BuildTargetRegistryImpl implements BuildTargetRegistry {
           final JpsModule module = t.getModule();
           List<ModuleBasedTarget> list = myModuleBasedTargets.get(module);
           if (list == null) {
-            list = new ArrayList<ModuleBasedTarget>();
+            list = new ArrayList<>();
             myModuleBasedTargets.put(module, list);
           }
           list.add(t);
@@ -68,7 +68,7 @@ public class BuildTargetRegistryImpl implements BuildTargetRegistry {
     if (targets == null || targets.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<ModuleBasedTarget<?>> result = new SmartList<ModuleBasedTarget<?>>();
+    final List<ModuleBasedTarget<?>> result = new SmartList<>();
     for (ModuleBasedTarget target : targets) {
       switch (selector) {
         case ALL:

@@ -118,22 +118,12 @@ public class FileLocalResolver {
 
   @NotNull
   private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<LighterASTNode> children) {
-    return children.flatMap(new Function<LighterASTNode, Iterable<? extends LighterASTNode>>() {
-      @Override
-      public Iterable<? extends LighterASTNode> fun(LighterASTNode child) {
-        return getDeclarations(child, null);
-      }
-    });
+    return children.flatMap(child -> getDeclarations(child, null));
   }
 
   @NotNull
   private static JBIterable<LighterASTNode> before(List<LighterASTNode> children, @Nullable final LighterASTNode lastParent) {
-    return JBIterable.from(children).filter(new Condition<LighterASTNode>() {
-      @Override
-      public boolean value(LighterASTNode node) {
-        return lastParent == null || node.getStartOffset() < lastParent.getStartOffset();
-      }
-    });
+    return JBIterable.from(children).filter(node -> lastParent == null || node.getStartOffset() < lastParent.getStartOffset());
   }
 
   /**

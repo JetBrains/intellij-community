@@ -24,6 +24,7 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,6 +149,23 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
       processStepicCheckOutput(indicator, result);
     }
+    else if (myTask.isTheoryTask()) {
+      final int lessonId = myTask.getLesson().getId();
+      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
+                                                                              String.valueOf(user.getId()),
+                                                                              EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+      if (reactionPosted) {
+        if (myStatusBeforeCheck != StudyStatus.Solved) {
+          myTask.setStatus(StudyStatus.Solved);
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+        }
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(() -> 
+                                                          StudyUtils.showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
+      }
+    }
     else {
       final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
       if (testOutput != null) {
@@ -169,7 +187,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (pair.getFirst()) {
         onTaskSolved("Congratulations! Remote tests passed.");
         if (myStatusBeforeCheck != StudyStatus.Solved) {
-          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, 2);
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
         }
       }
       else {

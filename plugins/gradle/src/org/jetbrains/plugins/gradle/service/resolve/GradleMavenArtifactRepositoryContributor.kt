@@ -23,7 +23,6 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -55,11 +54,9 @@ class GradleMavenArtifactRepositoryContributor : GradleMethodContextContributor 
                        processor: PsiScopeProcessor,
                        state: ResolveState,
                        place: PsiElement): Boolean {
-
-    val psiManager = GroovyPsiManager.getInstance(place.project)
     if (methodCallInfo.isNotEmpty() && psiElement().inside(repositoryClosure).accepts(place)) {
       if (!GradleResolverUtil.processDeclarations(
-        psiManager, processor, state, place, GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY)) return false
+        processor, state, place, GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY)) return false
     }
     return true
   }

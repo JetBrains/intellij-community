@@ -91,9 +91,6 @@ public class EditorConfigConfigurable extends CodeStyleSettingsProvider implemen
   public void apply() throws ConfigurationException {}
 
   @Override
-  public void reset() {}
-
-  @Override
   public boolean hasSettingsPage() {
     return false;
   }

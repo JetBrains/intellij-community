@@ -18,10 +18,10 @@ package com.intellij.xdebugger;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -75,7 +75,12 @@ public class XDebuggerTestUtil {
   }
 
   public static void toggleBreakpoint(Project project, VirtualFile file, int line) {
-    XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
+      }
+    }.execute();
   }
 
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
@@ -471,7 +476,7 @@ public class XDebuggerTestUtil {
   }
 
   public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
-    return ApplicationManager.getApplication().runReadAction((Computable<XBreakpoint<?>[]>)breakpointManager::getAllBreakpoints);
+    return ReadAction.compute(breakpointManager::getAllBreakpoints);
   }
 
   public static <B extends XBreakpoint<?>>

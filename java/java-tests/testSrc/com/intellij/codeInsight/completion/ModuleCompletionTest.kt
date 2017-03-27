@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,17 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M2 { }", M2)
   }
 
-  fun testFileHeader() = complete("<caret>", "module <caret>")
+  fun testFileHeader1() = variants("<caret>", "module", "open")
+  fun testFileHeader2() = complete("open <caret>", "open module <caret>")
   fun testModuleName() = variants("module M<caret>")
-  fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "uses", "provides")
+  fun testStatements1() = variants("module M { <caret> }", "requires", "exports", "opens", "uses", "provides")
   fun testStatements2() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
-  fun testModuleRef() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+
+  fun testRequires() {
+    variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named")
+    complete("module M { requires t<caret> }", "module M { requires transitive <caret> }")
+    complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+  }
 
   fun testExports() {
     addFile("pkg/empty/package-info.java", "package pkg.empty;")

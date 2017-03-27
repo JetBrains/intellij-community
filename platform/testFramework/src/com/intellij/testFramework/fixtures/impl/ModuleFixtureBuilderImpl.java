@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,14 +116,11 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected abstract T instantiateFixture();
 
   Module buildModule() {
-    final Module[] module = {null};
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      module[0] = createModule();
-      initModule(module[0]);
+    return ApplicationManager.getApplication().runWriteAction((Computable<Module>)() -> {
+      Module module = createModule();
+      initModule(module);
+      return module;
     });
-
-    return module[0];
   }
 
   protected void initModule(Module module) {

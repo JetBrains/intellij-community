@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +18,29 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -47,8 +48,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen",
-                                                                    "pathlib.Path.open");
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("open", "io.open", "os.fdopen",
+                                                                    "pathlib.Path.open", "_io.open", "_io.fdopen");
 
   private static final String PY2K_FILE_TYPE = "file";
   private static final String PY3K_BINARY_FILE_TYPE = "io.FileIO[bytes]";
@@ -85,8 +86,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static PyType getBaseStringType(@NotNull PsiElement referenceTarget) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
     if (referenceTarget instanceof PyElement && builtinCache.isBuiltin(referenceTarget) &&
-        "basestring".equals(((PyElement)referenceTarget).getName())) {
-      return builtinCache.getStringType(LanguageLevel.forElement(referenceTarget));
+        PyNames.BASESTRING.equals(((PyElement)referenceTarget).getName())) {
+      return builtinCache.getStrOrUnicodeType();
     }
     return null;
   }
@@ -144,78 +145,25 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (callSite != null && isListGetItem(function)) {
-      final PyExpression receiver = PyTypeChecker.getReceiver(callSite, function);
-      final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
-      if (substitutions != null) {
-        return analyzeListGetItemCallType(receiver, mapping, substitutions, context);
-      }
-    }
-
-    final String qname = getQualifiedName(function, callSite);
+    final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        final PyCallExpression callExpr = (PyCallExpression)callSite;
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
-        if (mapping.getMarkedCallee() != null) {
-          return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
-        }
+        return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context).getMappedParameters(), callSite);
       }
-      else if ("__builtin__.tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
+      else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
       }
-      else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
+      else if ("tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleConcatenationResultType((PyBinaryExpression)callSite, context);
       }
-      else if ("__builtin__.tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
+      else if ("tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
       }
-    }
-
-    return null;
-  }
-
-  private static boolean isListGetItem(@NotNull PyFunction function) {
-    return PyNames.GETITEM.equals(function.getName()) &&
-           Optional
-             .ofNullable(PyBuiltinCache.getInstance(function).getListType())
-             .map(PyClassType::getPyClass)
-             .map(cls -> cls.equals(function.getContainingClass()))
-             .orElse(false);
-  }
-
-  @Nullable
-  private static Ref<PyType> analyzeListGetItemCallType(@Nullable PyExpression receiver,
-                                                        @NotNull Map<PyExpression, PyNamedParameter> parameters,
-                                                        @NotNull Map<PyGenericType, PyType> substitutions,
-                                                        @NotNull TypeEvalContext context) {
-    if (parameters.size() != 1 || substitutions.size() > 1) {
-      return null;
-    }
-
-    final PyType firstArgumentType = Optional
-      .ofNullable(parameters.keySet().iterator().next())
-      .map(context::getType)
-      .orElse(null);
-
-    if (firstArgumentType == null) {
-      return null;
-    }
-
-    if (PyABCUtil.isSubtype(firstArgumentType, PyNames.ABC_INTEGRAL, context)) {
-      final PyType result = substitutions.isEmpty() ? null : substitutions.values().iterator().next();
-      return Ref.create(result);
-    }
-
-    if (PyNames.SLICE.equals(firstArgumentType.getName()) && firstArgumentType.isBuiltin()) {
-      return Ref.create(
-        Optional
-          .ofNullable(receiver)
-          .map(context::getType)
-          .orElseGet(() -> PyTypeChecker.substitute(PyBuiltinCache.getInstance(receiver).getListType(), substitutions, context))
-      );
+      else if ("object.__new__".equals(qname) && callSite instanceof PyCallExpression) {
+        final PyExpression firstArgument = ((PyCallExpression)callSite).getArgument(0, PyExpression.class);
+        final PyClassLikeType classLikeType = as(firstArgument != null ? context.getType(firstArgument) : null, PyClassLikeType.class);
+        return classLikeType != null ?  Ref.create(classLikeType.toInstance()) : null;
+      }
     }
 
     return null;
@@ -354,7 +302,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName)) {
+    if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName) || "_io.open".equals(callQName)) {
       if (mode.contains("b")) {
         return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE));
       }
@@ -367,29 +315,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static String getQualifiedName(@NotNull PyFunction f, @Nullable PsiElement callSite) {
-    PyPsiUtils.assertValid(f);
-    String result = f.getName();
-    final PyClass c = f.getContainingClass();
-    final VirtualFile vfile = f.getContainingFile().getVirtualFile();
-    if (vfile != null) {
-      String module = QualifiedNameFinder.findShortestImportableName(callSite != null ? callSite : f, vfile);
-      if ("builtins".equals(module)) {
-        module = "__builtin__";
-      }
-      result = String.format("%s.%s%s",
-                             module,
-                             c != null ? c.getName() + "." : "",
-                             result);
-      final QualifiedName qname = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(QualifiedName.fromDottedString(result));
-      if (qname != null) {
-        return qname.toString();
-      }
-    }
-    return result;
-  }
-
-  @Nullable
   private static PyType getNamedTupleTypeFromStub(@NotNull PsiElement referenceTarget,
                                                   @Nullable PyNamedTupleStub stub,
                                                   int definitionLevel) {
@@ -397,7 +322,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return null;
     }
 
-    final PyClass tupleClass = PyBuiltinCache.getInstance(referenceTarget).getClass(PyNames.FAKE_NAMEDTUPLE);
+    final PyClass tupleClass = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE),
+                                                                            PyResolveImportUtil.fromFoothold(referenceTarget)), PyClass.class);
     if (tupleClass == null) {
       return null;
     }

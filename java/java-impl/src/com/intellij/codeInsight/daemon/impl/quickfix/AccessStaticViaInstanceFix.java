@@ -30,10 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +60,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
     return QuickFixBundle.message("access.static.via.class.reference.text",
-                                  HighlightMessageUtil.getSymbolName(member, substitutor),
-                                  HighlightUtil.formatClass(aClass),
+                                  HighlightMessageUtil.getSymbolName(member, substitutor, PsiFormatUtilBase.SHOW_TYPE),
+                                  HighlightUtil.formatClass(aClass, false),
                                   HighlightUtil.formatClass(aClass, false));
   }
 

@@ -167,10 +167,11 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
 
       if (!ArrayUtil.isEmpty(files)) {
         callback.consume(virtualFileList);
+        return;
       }
-      else if (callback instanceof FileChooser.FileChooserConsumer) {
-        ((FileChooser.FileChooserConsumer)callback).cancelled();
-      }
+    }
+    if (callback instanceof FileChooser.FileChooserConsumer) {
+      ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class PyDocumentationBuilder {
     }
     else if (elementDefinition != null && outerElement instanceof PyReferenceExpression) {
       myBody.addItem(combUp("\nInferred type: "));
-      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
+      PythonDocumentationProvider.describeTypeWithLinks(context.getType((PyReferenceExpression)outerElement), context, outerElement, myBody);
     }
 
     if (elementDefinition != null) {
@@ -189,7 +189,7 @@ public class PyDocumentationBuilder {
         }
         if (typeString != null) {
           myBody.addItem(combUp(typeString));
-          PythonDocumentationProvider.describeTypeWithLinks(myBody, elementDefinition, type, context);
+          PythonDocumentationProvider.describeTypeWithLinks(type, context, elementDefinition, myBody);
         }
       }
     }

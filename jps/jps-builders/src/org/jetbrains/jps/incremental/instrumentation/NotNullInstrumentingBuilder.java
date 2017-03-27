@@ -90,12 +90,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     catch (Throwable e) {
       LOG.error(e);
       final Collection<File> sourceFiles = compiledClass.getSourceFiles();
-      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, new Function<File, String>() {
-        @Override
-        public String fun(File file) {
-          return file.getName();
-        }
-      }) + ": " + e.getMessage();
+      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, file -> file.getName()) + ": " + e.getMessage();
       context.processMessage(new CompilerMessage(getPresentableName(),
                                                  BuildMessage.Kind.ERROR,
                                                  msg,

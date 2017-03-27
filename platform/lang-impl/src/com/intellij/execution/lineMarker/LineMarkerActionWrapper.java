@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution.lineMarker;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends AnAction {
+public class LineMarkerActionWrapper extends ActionGroup {
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final PsiElement myElement;
@@ -44,20 +45,62 @@ public class LineMarkerActionWrapper extends AnAction {
     copyFrom(origin);
   }
 
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    if (myOrigin instanceof ActionGroup) {
+      return ((ActionGroup)myOrigin).getChildren(wrapEvent(e));
+    }
+    return AnAction.EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean canBePerformed(DataContext context) {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).canBePerformed(wrapContext(context));
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return myOrigin.isDumbAware();
+  }
+
+  @Override
+  public boolean isPopup() {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).isPopup();
+  }
+
+  @Override
+  public boolean hideIfNoVisibleChildren() {
+    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
+  }
+
+  @Override
+  public boolean disableIfNoVisibleChildren() {
+    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
+  }
+
   @Override
   public void update(AnActionEvent e) {
     myOrigin.update(wrapEvent(e));
   }
 
+  @Nullable
+  private AnActionEvent wrapEvent(@Nullable AnActionEvent e) {
+    if (e == null) {
+      return null;
+    }
+    DataContext dataContext = wrapContext(e.getDataContext());
+    return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+  }
+
   @NotNull
-  private AnActionEvent wrapEvent(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
+  private DataContext wrapContext(DataContext dataContext) {
     Pair<PsiElement, MyDataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
     if (pair == null || pair.first != myElement) {
       pair = Pair.pair(myElement, new MyDataContext(dataContext));
       DataManager.getInstance().saveInDataContext(dataContext, LOCATION_WRAPPER, pair);
     }
-    return new AnActionEvent(e.getInputEvent(), pair.second, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    return pair.second;
   }
 
   @Override

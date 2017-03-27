@@ -17,6 +17,7 @@ package com.intellij.openapi.progress;
 
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface Progressive {
 
   void run(@NotNull ProgressIndicator indicator);

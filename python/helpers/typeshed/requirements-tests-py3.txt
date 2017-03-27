@@ -1,0 +1,5 @@
+mypy-lang>=0.4.6
+typed-ast>=0.6.1
+flake8==3.2.1
+flake8-bugbear>=16.12.2
+flake8-pyi>=16.12.2

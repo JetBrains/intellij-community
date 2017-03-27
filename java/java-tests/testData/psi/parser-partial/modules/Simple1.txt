@@ -1,5 +1,9 @@
 PsiJavaFile:Simple1.java
+  PsiImportList
+    <empty list>
   PsiJavaModule:a.b.c
+    PsiModifierList:
+      <empty list>
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference

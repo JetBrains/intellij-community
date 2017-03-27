@@ -67,7 +67,7 @@ public class QuickFixPreviewPanelFactory {
       LOG.assertTrue(myWrapper != null);
       CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors(false, null, false, true);
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
-      myEmpty = fillPanel(fixes, descriptors);
+      myEmpty = fillPanel(fixes, descriptors, view);
     }
 
     public boolean isEmpty() {
@@ -75,7 +75,8 @@ public class QuickFixPreviewPanelFactory {
     }
 
     private boolean fillPanel(@Nullable QuickFixAction[] fixes,
-                              CommonProblemDescriptor[] descriptors) {
+                              CommonProblemDescriptor[] descriptors,
+                              @NotNull InspectionResultsView view) {
       boolean hasFixes = fixes != null && fixes.length != 0;
       int problemCount = descriptors.length;
       boolean multipleDescriptors = problemCount > 1;
@@ -99,7 +100,7 @@ public class QuickFixPreviewPanelFactory {
       if (actions.getChildrenCount() != 0) {
         final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
         final JComponent component = toolbar.getComponent();
-        toolbar.setTargetComponent(this);
+        toolbar.setTargetComponent(view);
         add(component);
         hasComponents = true;
       }

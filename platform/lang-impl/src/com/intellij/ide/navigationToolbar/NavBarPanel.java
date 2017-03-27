@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,8 +317,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     for (NavBarItem item : myList) {
       item.update();
     }
-    if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
-      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = (NavBarRootPaneExtension.NavBarWrapperPanel) 
+    if (UISettings.getInstance().getShowNavigationBar()) {
+      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = (NavBarRootPaneExtension.NavBarWrapperPanel)
         SwingUtilities.getAncestorOfClass(NavBarRootPaneExtension.NavBarWrapperPanel.class, this);
 
       if (wrapperPanel != null) {
@@ -845,28 +845,22 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.rebuildUi();
     if (editor == null) {
       myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
-        @Override
-        public void consume(RelativePoint relativePoint) {
-          final Component owner = focusManager.getFocusOwner();
-          final Component cmp = relativePoint.getComponent();
-          if (cmp instanceof JComponent && cmp.isShowing()) {
-            myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
-                        owner instanceof JComponent ? (JComponent)owner : null,
-                        new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
-          }
+      getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
+        final Component owner = focusManager.getFocusOwner();
+        final Component cmp = relativePoint.getComponent();
+        if (cmp instanceof JComponent && cmp.isShowing()) {
+          myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
+                      owner instanceof JComponent ? (JComponent)owner : null,
+                      new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
         }
       });
     }
     else {
       myHintContainer = editor.getContentComponent();
-      getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
-        @Override
-        public void consume(RelativePoint rp) {
-          Point p = rp.getPointOn(myHintContainer).getPoint();
-          final HintHint hintInfo = new HintHint(editor, p);
-          HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
-        }
+      getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)rp -> {
+        Point p = rp.getPointOn(myHintContainer).getPoint();
+        final HintHint hintInfo = new HintHint(editor, p);
+        HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
       });
     }
 
@@ -884,12 +878,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         if (myContextComponent != null) {
           myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
         } else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext dataContext) {
-              myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-              myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
-            }
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
+            myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+            myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
           });
         }
       }

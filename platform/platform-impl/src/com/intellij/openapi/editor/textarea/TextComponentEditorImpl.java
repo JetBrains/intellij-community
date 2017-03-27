@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 /**
  * @author yole
@@ -185,6 +186,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @NotNull
+  @Override
+  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
@@ -222,6 +229,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @Override
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull final Point p) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

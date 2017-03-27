@@ -37,7 +37,7 @@ import java.util.concurrent.Executor;
 */
 @ChannelHandler.Sharable
 final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {
-  private final ConcurrentMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>(16, 0.75f, 1);
+  private final ConcurrentMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<>(16, 0.75f, 1);
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
@@ -105,18 +105,13 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
         //invoke 'keySet()' method via 'Map' class because ConcurrentHashMap#keySet() has return type ('KeySetView') which doesn't exist in JDK 1.6/1.7
         Set<UUID> keys = ((Map<UUID, RequestFuture<T>>)myHandlers).keySet();
 
-        for (UUID uuid : new ArrayList<UUID>(keys)) {
+        for (UUID uuid : new ArrayList<>(keys)) {
           terminateSession(uuid);
         }
       }
       finally {
         // make sure the client is in disconnected state
-        myAsyncExec.execute(new Runnable() {
-          @Override
-          public void run() {
-            myClient.disconnect();
-          }
-        });
+        myAsyncExec.execute(() -> myClient.disconnect());
       }
     }
   }

@@ -176,6 +176,7 @@ class FTManager {
       _template.setReformatCode(template.isReformatCode());
       _template.setLiveTemplateEnabled(template.isLiveTemplateEnabled());
     }
+    saveTemplates(true);
   }
 
   private void restoreDefaults(Set<String> toDisable) {
@@ -257,6 +258,10 @@ class FTManager {
   }
 
   public void saveTemplates() {
+    saveTemplates(false);
+  }
+
+  private void saveTemplates(boolean removeDeleted) {
     final File configRoot = getConfigRoot(true);
 
     final File[] files = configRoot.listFiles();
@@ -300,7 +305,9 @@ class FTManager {
         }
         else if (templateToSave == null) {
           // template was removed
-          FileUtil.delete(customizedTemplateFile);
+          if (removeDeleted) {
+            FileUtil.delete(customizedTemplateFile);
+          }
         }
         else {
           // both customized content on disk and corresponding template are present

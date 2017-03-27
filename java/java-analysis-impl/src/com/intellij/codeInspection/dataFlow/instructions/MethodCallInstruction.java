@@ -105,7 +105,21 @@ public class MethodCallInstruction extends Instruction {
     for (int i = 0; i < checkedCount; i++) {
       map.put(myArgs[i], DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
     }
+
+    if (myVarArgCall) {
+      PsiType lastParamType = substitutor.substitute(parameters[parameters.length - 1].getType());
+      if (isEllipsisWithNotNullElements(lastParamType)) {
+        for (int i = parameters.length - 1; i < myArgs.length; i++) {
+          map.put(myArgs[i], Nullness.NOT_NULL);
+        }
+      }
+    }
     return map;
+  }
+
+  private static boolean isEllipsisWithNotNullElements(PsiType lastParamType) {
+    return lastParamType instanceof PsiEllipsisType &&
+           DfaPsiUtil.getElementNullability(((PsiEllipsisType)lastParamType).getComponentType(), null) == Nullness.NOT_NULL;
   }
 
   public static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {

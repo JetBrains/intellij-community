@@ -32,9 +32,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.formatting.FormatterTestUtils.Action;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +42,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
+
+import static com.intellij.formatting.FormatterTestUtils.ACTIONS;
+import static com.intellij.formatting.FormatterTestUtils.Action.*;
 
 /**
  * Base class for java formatter tests that holds utility methods.
@@ -82,46 +83,10 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return result.toString();
   }
 
-  protected enum Action {REFORMAT, INDENT, REFORMAT_WITH_CONTEXT, REFORMAT_WITH_INSERTED_LINE_CONTEXT}
-
   public static JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
-
-  private interface TestFormatAction {
-    void run(PsiFile psiFile, int startOffset, int endOffset);
-  }
-
-  private static final Map<Action, TestFormatAction> ACTIONS = new EnumMap<>(Action.class);
-  static {
-    ACTIONS.put(Action.REFORMAT, new TestFormatAction() {
-      @Override
-      public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        CodeStyleManager.getInstance(getProject()).reformatText(psiFile, startOffset, endOffset);
-      }
-    });
-    ACTIONS.put(Action.INDENT, new TestFormatAction() {
-      @Override
-      public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, startOffset);
-      }
-    });
-    ACTIONS.put(Action.REFORMAT_WITH_CONTEXT, new TestFormatAction() {
-      @Override
-      public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
-        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges);
-      }
-    });
-    ACTIONS.put(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, new TestFormatAction() {
-      @Override
-      public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
-        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, new ChangedRangesInfo(ranges, ranges));
-      }
-    });
-  }
-
+  
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
 
   public TextRange myTextRange;
@@ -147,7 +112,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   public void doTest(@NotNull String fileNameBefore, @NotNull String fileNameAfter) {
-    doTextTest(Action.REFORMAT, loadFile(fileNameBefore), loadFile(fileNameAfter));
+    doTextTest(REFORMAT, loadFile(fileNameBefore), loadFile(fileNameAfter));
   }
 
   public void doTestWithDetectableIndentOptions(@NotNull String text, @NotNull String textAfter) {
@@ -163,7 +128,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   public void doTextTest(@NotNull  String text, @NotNull String textAfter) throws IncorrectOperationException {
-    doTextTest(Action.REFORMAT, text, textAfter);
+    doTextTest(REFORMAT, text, textAfter);
   }
 
   public void doTextTest(@NotNull Action action, @NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
@@ -185,9 +150,9 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     final PsiFile file = createFile("A.java", "");
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     final Document document = manager.getDocument(file);
-    String afterFirst = replaceAndProcessDocument(Action.REFORMAT, before[0], file, document);
+    String afterFirst = replaceAndProcessDocument(REFORMAT, before[0], file, document);
     for (String nextBefore: before) {
-      assertEquals(afterFirst, replaceAndProcessDocument(Action.REFORMAT, nextBefore, file, document));
+      assertEquals(afterFirst, replaceAndProcessDocument(REFORMAT, nextBefore, file, document));
     }
   }
 
@@ -220,14 +185,14 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       catch (IncorrectOperationException e) {
         assertTrue(e.getLocalizedMessage(), false);
       }
-    }), action == Action.REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
+    }), action == REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
 
     return document.getText();
   }
 
   public void doMethodTest(@NotNull String before, @NotNull String after) {
     doTextTest(
-      Action.REFORMAT,
+      REFORMAT,
       "class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
       "class Foo {\n" + "    void foo() {\n" + shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}"
     );
@@ -235,7 +200,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   public void doClassTest(@NotNull String before, @NotNull String after) {
     doTextTest(
-      Action.REFORMAT,
+      REFORMAT,
       "class Foo{\n" + before + '\n' + "}",
       "class Foo {\n" + shiftIndentInside(after, 4, false) + '\n' + "}"
     );

@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
-import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemAutoImporter;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
 import com.intellij.openapi.externalSystem.service.vcs.ExternalSystemVcsRegistrar;
@@ -53,18 +52,10 @@ public class ExternalSystemStartupActivity implements StartupActivity {
         for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
           final boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
           if (isNewProject) {
-            ExternalSystemUtil.refreshProjects(
-              new ImportSpecBuilder(project, manager.getSystemId())
-            );
-          }
-          else {
-            ExternalSystemUtil.refreshProjects(
-              new ImportSpecBuilder(project, manager.getSystemId()).whenAutoImportEnabled()
-            );
+            ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, manager.getSystemId()));
           }
         }
       }
-      ExternalSystemAutoImporter.letTheMagicBegin(project);
       ExternalToolWindowManager.handle(project);
       ExternalSystemVcsRegistrar.handle(project);
       ProjectRenameAware.beAware(project);

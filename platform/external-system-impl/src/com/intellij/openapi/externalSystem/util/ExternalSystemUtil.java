@@ -54,7 +54,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
@@ -209,14 +208,16 @@ public class ExternalSystemUtil {
    * <p/>
    * 'Refresh' here means 'obtain the most up-to-date version and apply it to the ide'.
    *
-   * @param project           target ide project
-   * @param externalSystemId  target external system which projects should be refreshed
-   * @param force             flag which defines if external project refresh should be performed if it's config is up-to-date
-   *
+   * @param project          target ide project
+   * @param externalSystemId target external system which projects should be refreshed
+   * @param force            flag which defines if external project refresh should be performed if it's config is up-to-date
    * @deprecated use {@link  ExternalSystemUtil#refreshProjects(ImportSpecBuilder)}
    */
   @Deprecated
-  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force, @NotNull final ProgressExecutionMode progressExecutionMode) {
+  public static void refreshProjects(@NotNull final Project project,
+                                     @NotNull final ProjectSystemId externalSystemId,
+                                     boolean force,
+                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
     refreshProjects(
       new ImportSpecBuilder(project, externalSystemId)
         .forceWhenUptodate(force)
@@ -252,24 +253,11 @@ public class ExternalSystemUtil {
       callback = spec.getCallback();
     }
 
-    Map<String, Long> modificationStamps =
-      manager.getLocalSettingsProvider().fun(spec.getProject()).getExternalConfigModificationStamps();
     Set<String> toRefresh = ContainerUtilRt.newHashSet();
     for (ExternalProjectSettings setting : projectsSettings) {
-
       // don't refresh project when auto-import is disabled if such behavior needed (e.g. on project opening when auto-import is disabled)
       if (!setting.isUseAutoImport() && spec.isWhenAutoImportEnabled()) continue;
-
-      if (spec.isForceWhenUptodate()) {
-        toRefresh.add(setting.getExternalProjectPath());
-      }
-      else {
-        Long oldModificationStamp = modificationStamps.get(setting.getExternalProjectPath());
-        long currentModificationStamp = getTimeStamp(setting, spec.getExternalSystemId());
-        if (oldModificationStamp == null || oldModificationStamp < currentModificationStamp) {
-          toRefresh.add(setting.getExternalProjectPath());
-        }
-      }
+      toRefresh.add(setting.getExternalProjectPath());
     }
 
     if (!toRefresh.isEmpty()) {
@@ -281,19 +269,6 @@ public class ExternalSystemUtil {
           spec.getProject(), spec.getExternalSystemId(), path, callback, false, spec.getProgressExecutionMode());
       }
     }
-  }
-
-  private static long getTimeStamp(@NotNull ExternalProjectSettings externalProjectSettings, @NotNull ProjectSystemId externalSystemId) {
-    long timeStamp = 0;
-    for (ExternalSystemConfigLocator locator : ExternalSystemConfigLocator.EP_NAME.getExtensions()) {
-      if (!externalSystemId.equals(locator.getTargetExternalSystemId())) {
-        continue;
-      }
-      for (VirtualFile virtualFile : locator.findAll(externalProjectSettings)) {
-        timeStamp += virtualFile.getTimeStamp();
-      }
-    }
-    return timeStamp;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -329,13 +304,13 @@ public class ExternalSystemUtil {
 
   /**
    * TODO[Vlad]: refactor the method to use {@link ImportSpecBuilder}
-   *
+   * <p>
    * Queries slave gradle process to refresh target gradle project.
    *
-   * @param project               target intellij project to use
-   * @param externalProjectPath   path of the target gradle project's file
-   * @param callback              callback to be notified on refresh result
-   * @param isPreviewMode         flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param project             target intellij project to use
+   * @param externalProjectPath path of the target gradle project's file
+   * @param callback            callback to be notified on refresh result
+   * @param isPreviewMode       flag that identifies whether gradle libraries should be resolved during the refresh
    * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
@@ -349,14 +324,14 @@ public class ExternalSystemUtil {
 
   /**
    * TODO[Vlad]: refactor the method to use {@link ImportSpecBuilder}
-   *
+   * <p>
    * Queries slave gradle process to refresh target gradle project.
    *
-   * @param project               target intellij project to use
-   * @param externalProjectPath   path of the target gradle project's file
-   * @param callback              callback to be notified on refresh result
-   * @param isPreviewMode         flag that identifies whether gradle libraries should be resolved during the refresh
-   * @param reportRefreshError    prevent to show annoying error notification, e.g. if auto-import mode used
+   * @param project             target intellij project to use
+   * @param externalProjectPath path of the target gradle project's file
+   * @param callback            callback to be notified on refresh result
+   * @param isPreviewMode       flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used
    */
   public static void refreshProject(@NotNull final Project project,
                                     @NotNull final ProjectSystemId externalSystemId,
@@ -364,8 +339,7 @@ public class ExternalSystemUtil {
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode,
-                                    final boolean reportRefreshError)
-  {
+                                    final boolean reportRefreshError) {
     File projectFile = new File(externalProjectPath);
     final String projectName;
     if (projectFile.isFile()) {
@@ -381,7 +355,7 @@ public class ExternalSystemUtil {
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        if(project.isDisposed()) return;
+        if (project.isDisposed()) return;
 
         if (indicator instanceof ProgressIndicatorEx) {
           ((ProgressIndicatorEx)indicator).addStateDelegate(new AbstractProgressIndicatorExBase() {
@@ -412,41 +386,17 @@ public class ExternalSystemUtil {
         }
 
         myTask.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
-        if(project.isDisposed()) return;
+        if (project.isDisposed()) return;
 
         final Throwable error = myTask.getError();
         if (error == null) {
-          ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-          assert manager != null;
-          DataNode<ProjectData> externalProject = myTask.getExternalProject();
-
-          if(externalProject != null) {
-            Set<String> externalModulePaths = ContainerUtil.newHashSet();
-            Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
-            for (DataNode<ModuleData> node : moduleNodes) {
-              externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
-            }
-
-            String projectPath = externalProject.getData().getLinkedExternalProjectPath();
-            ExternalProjectSettings linkedProjectSettings = manager.getSettingsProvider().fun(project).getLinkedProjectSettings(projectPath);
-            if (linkedProjectSettings != null) {
-              linkedProjectSettings.setModules(externalModulePaths);
-
-              long stamp = getTimeStamp(linkedProjectSettings, externalSystemId);
-              if (stamp > 0) {
-                manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps().put(externalProjectPath, stamp);
-              }
-            }
-          }
-
-          callback.onSuccess(externalProject);
-
-          if(!isPreviewMode) {
+          callback.onSuccess(myTask.getExternalProject());
+          if (!isPreviewMode) {
             externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
           }
           return;
         }
-        if(error instanceof ImportCanceledException) {
+        if (error instanceof ImportCanceledException) {
           // stop refresh task
           return;
         }
@@ -460,7 +410,7 @@ public class ExternalSystemUtil {
         callback.onFailure(message, extractDetails(error));
 
         ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-        if(manager == null) {
+        if (manager == null) {
           return;
         }
         AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
@@ -709,18 +659,18 @@ public class ExternalSystemUtil {
   }
 
   /**
-   * Tries to obtain external project info implied by the given settings and link that external project to the given ide project. 
-   * 
-   * @param externalSystemId         target external system
-   * @param projectSettings          settings of the external project to link
-   * @param project                  target ide project to link external project to
-   * @param executionResultCallback  it might take a while to resolve external project info, that's why it's possible to provide
-   *                                 a callback to be notified on processing result. It receives <code>true</code> if an external
-   *                                 project has been successfully linked to the given ide project;
-   *                                 <code>false</code> otherwise (note that corresponding notification with error details is expected
-   *                                 to be shown to the end-user then)
-   * @param isPreviewMode            flag which identifies if missing external project binaries should be downloaded
-   * @param progressExecutionMode         identifies how progress bar will be represented for the current processing
+   * Tries to obtain external project info implied by the given settings and link that external project to the given ide project.
+   *
+   * @param externalSystemId        target external system
+   * @param projectSettings         settings of the external project to link
+   * @param project                 target ide project to link external project to
+   * @param executionResultCallback it might take a while to resolve external project info, that's why it's possible to provide
+   *                                a callback to be notified on processing result. It receives <code>true</code> if an external
+   *                                project has been successfully linked to the given ide project;
+   *                                <code>false</code> otherwise (note that corresponding notification with error details is expected
+   *                                to be shown to the end-user then)
+   * @param isPreviewMode           flag which identifies if missing external project binaries should be downloaded
+   * @param progressExecutionMode   identifies how progress bar will be represented for the current processing
    */
   @SuppressWarnings("UnusedDeclaration")
   public static void linkExternalProject(@NotNull final ProjectSystemId externalSystemId,
@@ -728,8 +678,7 @@ public class ExternalSystemUtil {
                                          @NotNull final Project project,
                                          @Nullable final Consumer<Boolean> executionResultCallback,
                                          boolean isPreviewMode,
-                                         @NotNull final ProgressExecutionMode progressExecutionMode)
-  {
+                                         @NotNull final ProgressExecutionMode progressExecutionMode) {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @SuppressWarnings("unchecked")
       @Override
@@ -764,9 +713,10 @@ public class ExternalSystemUtil {
   @Nullable
   public static VirtualFile refreshAndFindFileByIoFile(@NotNull final File file) {
     final Application app = ApplicationManager.getApplication();
-    if(app.isDispatchThread()) {
+    if (app.isDispatchThread()) {
       return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    } else {
+    }
+    else {
       assert !((ApplicationEx)app).holdsReadLock();
       return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }

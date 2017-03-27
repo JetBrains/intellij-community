@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -42,7 +43,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
   public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
-    super(project, vcsRoot, command);
+    super(project, vcsRoot, command, Collections.emptyList());
   }
 
   @Override

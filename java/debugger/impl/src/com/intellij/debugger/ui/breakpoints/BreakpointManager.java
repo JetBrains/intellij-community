@@ -31,6 +31,7 @@ import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -493,7 +494,7 @@ public class BreakpointManager {
 
   @NotNull
   public List<Breakpoint> getBreakpoints() {
-    return ApplicationManager.getApplication().runReadAction((Computable<List<Breakpoint>>)() ->
+    return ReadAction.compute(() ->
       ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), BreakpointManager::getJavaBreakpoint));
   }
 

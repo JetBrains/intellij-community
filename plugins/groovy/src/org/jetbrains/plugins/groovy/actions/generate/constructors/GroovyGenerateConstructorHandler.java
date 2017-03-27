@@ -133,9 +133,4 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
 
     return grConstructors;
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

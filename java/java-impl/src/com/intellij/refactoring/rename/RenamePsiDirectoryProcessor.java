@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringSettings;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,29 +48,6 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
         RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
       }
     };
-  }
-
-  public void renameElement(final PsiElement element,
-                            final String newName,
-                            final UsageInfo[] usages,
-                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
-    PsiDirectory aDirectory = (PsiDirectory) element;
-    // rename all non-package statement references
-    for (UsageInfo usage : usages) {
-      if (PsiTreeUtil.getParentOfType(usage.getElement(), PsiPackageStatement.class) != null) continue;
-      RenameUtil.rename(usage, newName);
-    }
-
-    //rename package statement
-    for (UsageInfo usage : usages) {
-      if (PsiTreeUtil.getParentOfType(usage.getElement(), PsiPackageStatement.class) == null) continue;
-      RenameUtil.rename(usage, newName);
-    }
-
-    aDirectory.setName(newName);
-    if (listener != null) {
-      listener.elementRenamed(aDirectory);
-    }
   }
 
   public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {

@@ -21,7 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -199,7 +198,7 @@ public class CheckRegExpForm {
     final Language regexpFileLanguage = regexpFile.getLanguage();
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regexpFileLanguage);
     if (matcherProvider != null) {
-      final RegExpMatchResult result = ApplicationManager.getApplication().runReadAction((Computable<RegExpMatchResult>)() -> {
+      final RegExpMatchResult result = ReadAction.compute(() -> {
         final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
         if (host != null) {
           return matcherProvider.matches(regExp, regexpFile, host, sampleText, 1000L);
@@ -211,7 +210,7 @@ public class CheckRegExpForm {
       }
     }
 
-    final Integer patternFlags = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
+    final Integer patternFlags = ReadAction.compute(() -> {
       final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
       int flags = 0;
       if (host != null) {

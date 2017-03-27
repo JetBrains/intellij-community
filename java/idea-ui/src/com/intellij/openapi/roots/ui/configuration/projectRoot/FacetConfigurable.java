@@ -51,7 +51,6 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
 
   @Override
   public void setDisplayName(String name) {
-    name = name.trim();
     if (!name.equals(myFacetName)) {
       getFacetsConfigurator().getOrCreateModifiableModel(myFacet.getModule()).rename(myFacet, name);
       myFacetName = name;

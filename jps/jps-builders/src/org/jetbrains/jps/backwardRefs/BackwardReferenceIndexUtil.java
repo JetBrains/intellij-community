@@ -32,8 +32,8 @@ public class BackwardReferenceIndexUtil {
     final int fileId = writer.enumeratePath(filePath);
     int funExprId = 0;
 
-    final Map<LightRef, Void> definitions = new HashMap<LightRef, Void>(defs.size());
-    final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<LightRef, Collection<LightRef>>();
+    final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
+    final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
 
     for (JavacDef def : defs) {
       if (def instanceof JavacDef.JavacClassDef) {
@@ -47,7 +47,7 @@ public class BackwardReferenceIndexUtil {
 
           Collection<LightRef> children = backwardHierarchyMap.get(superClassRef);
           if (children == null) {
-            backwardHierarchyMap.put(superClassRef, children = new SmartList<LightRef>());
+            backwardHierarchyMap.put(superClassRef, children = new SmartList<>());
           }
           children.add(aClass);
         }
@@ -58,16 +58,12 @@ public class BackwardReferenceIndexUtil {
         LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
         definitions.put(result, null);
 
-        ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType, new Factory<Collection<LightRef>>() {
-          @Override
-          public Collection<LightRef> create() {
-            return new SmartList<LightRef>();
-          }
-        }).add(result);
+        ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
+                                  (Factory<Collection<LightRef>>)() -> new SmartList<>()).add(result);
       }
     }
 
-    Map<LightRef, Void> convertedRefs = new HashMap<LightRef, Void>(refs.size());
+    Map<LightRef, Void> convertedRefs = new HashMap<>(refs.size());
     for (JavacRef ref : refs) {
       LightRef key = writer.enumerateNames(ref);
       if (key != null) {

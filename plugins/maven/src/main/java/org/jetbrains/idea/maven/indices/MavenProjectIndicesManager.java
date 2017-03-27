@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,19 +70,13 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
     }
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
+      @Override
       public void activated() {
         scheduleUpdateIndicesList();
       }
-
-      public void projectsScheduled() {
-      }
-
-      @Override
-      public void importAndResolveScheduled() {
-      }
     });
 
-    getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
+    getMavenProjectManager().addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
       public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         scheduleUpdateIndicesList();
@@ -102,6 +96,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
 
   public void scheduleUpdateIndicesList(@Nullable final Consumer<List<MavenIndex>> consumer) {
     myUpdateQueue.queue(new Update(MavenProjectIndicesManager.this) {
+      @Override
       public void run() {
         Set<Pair<String, String>> remoteRepositoriesIdsAndUrls;
         File localRepository;

@@ -3,10 +3,6 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "jps-builders",
     srcs = ["src"],
-    exclude = [
-        "src/org/jetbrains/jps/javac/OptimizedFileManager.java",
-        "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
-    ],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

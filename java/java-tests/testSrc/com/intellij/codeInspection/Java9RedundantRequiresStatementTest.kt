@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
 
     addFile("module-info.java", "module M2 { exports org.example.m2; }", ModuleDescriptor.M2)
     addFile("module-info.java", "module M4 { exports org.example.m4; }", ModuleDescriptor.M4)
-    addFile("module-info.java", "module M6 { exports org.example.m6; requires public M7; }", ModuleDescriptor.M6)
+    addFile("module-info.java", "module M6 { exports org.example.m6; requires transitive M7; }", ModuleDescriptor.M6)
     addFile("module-info.java", "module M7 { exports org.example.m7; }", ModuleDescriptor.M7)
 
     add("org.example.m2", "C2", ModuleDescriptor.M2, "public static void foo() {}")

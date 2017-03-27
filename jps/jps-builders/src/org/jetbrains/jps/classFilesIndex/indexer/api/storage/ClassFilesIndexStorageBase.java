@@ -58,9 +58,9 @@ public class ClassFilesIndexStorageBase<K, V> {
   }
 
   private void initialize() throws IOException {
-    myMap = new PersistentHashMap<K, CompiledDataValueContainer<V>>(myIndexFile, myKeyDescriptor,
-                                                                    createValueContainerExternalizer(myValueExternalizer),
-                                                                    INITIAL_INDEX_SIZE);
+    myMap = new PersistentHashMap<>(myIndexFile, myKeyDescriptor,
+                                    createValueContainerExternalizer(myValueExternalizer),
+                                    INITIAL_INDEX_SIZE);
     myCache = new SLRUCache<K, CompiledDataValueContainer<V>>(CACHE_QUEUES_SIZE, CACHE_QUEUES_SIZE) {
       @NotNull
       @Override
@@ -74,7 +74,7 @@ public class ClassFilesIndexStorageBase<K, V> {
         catch (final IOException e) {
           throw new RuntimeException(e);
         }
-        return new CompiledDataValueContainer<V>();
+        return new CompiledDataValueContainer<>();
       }
 
       @Override
@@ -139,7 +139,7 @@ public class ClassFilesIndexStorageBase<K, V> {
     }
 
     private CompiledDataValueContainer() {
-      this(new TIntObjectHashMap<V>());
+      this(new TIntObjectHashMap<>());
     }
 
     public void putValue(final Integer inputId, final V value) {
@@ -188,12 +188,12 @@ public class ClassFilesIndexStorageBase<K, V> {
 
       @Override
       public CompiledDataValueContainer<V> read(@NotNull final DataInput in) throws IOException {
-        final TIntObjectHashMap<V> map = new TIntObjectHashMap<V>();
+        final TIntObjectHashMap<V> map = new TIntObjectHashMap<>();
         final int size = in.readInt();
         for (int i = 0; i < size; i++) {
           map.put(EnumeratorIntegerDescriptor.INSTANCE.read(in), valueExternalizer.read(in));
         }
-        return new CompiledDataValueContainer<V>(map);
+        return new CompiledDataValueContainer<>(map);
       }
     };
   }

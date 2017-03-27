@@ -15,13 +15,14 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PythonLanguage;
 
 /**
  * @author vlan
  */
-public class PyiLanguageDialect extends Language {
+public class PyiLanguageDialect extends Language implements DependentLanguage {
   public static final String ID = "PythonStub";
 
   protected PyiLanguageDialect() {

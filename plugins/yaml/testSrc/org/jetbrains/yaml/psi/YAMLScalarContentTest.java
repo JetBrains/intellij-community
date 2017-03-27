@@ -30,6 +30,10 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  public void testPlainScalar3Tag() {
+    doTest();
+  }
+
   public void testLiteralStyle1() {
     doTest();
   }
@@ -57,7 +61,11 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   public void testFoldedStyle4() {
     doTest();
   }
-  
+
+  public void testFoldedStyle4Tag() {
+    doTest();
+  }
+
   public void testFoldedStyle5() {
     doTest();
   }
@@ -70,6 +78,10 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  public void testSingleQuote1Tag() {
+    doTest();
+  }
+
   public void testSingleQuote2() {
     doTest();
   }
@@ -77,12 +89,16 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   public void testDoubleQuote1() {
     doTest();
   }
-  
+
   public void testDoubleQuote2() {
     doTest();
   }
-  
+
   public void testDoubleQuote4() {
+    doTest();
+  }
+
+  public void testDoubleQuoteTag() {
     doTest();
   }
 

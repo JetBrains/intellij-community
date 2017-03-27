@@ -39,17 +39,11 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 
-import java.util.concurrent.ConcurrentHashMap
-
 /**
  * @author Vladislav.Soroka
  * @since 12/20/13
  */
 class ExternalProjectBuilderImpl implements ModelBuilderService {
-
-  private final cache = new ConcurrentHashMap<String, ExternalProject>()
-  private final myTasksFactory = new TasksFactory()
-  private SourceSetCachedFinder mySourceSetFinder
 
   @Override
   boolean canBuild(String modelName) {
@@ -59,25 +53,52 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   @Nullable
   @Override
   Object buildAll(final String modelName, final Project project) {
-    ExternalProject externalProject = cache[project.path]
-    if (externalProject != null) return externalProject
+    def cache = getOrSetExt(project, 'projects cache: ' + ExternalProject.name, { new HashMap<Project, ExternalProject>()}) as Map<Project, ExternalProject>
+    def tasksFactory = getOrSetExt(project , 'tasks cache: ' + ExternalProject.name,  { new TasksFactory()}) as TasksFactory
+    def sourceSetFinder = getOrSetExt(project , 'sourceSets finder: ' + ExternalProject.name,  { new SourceSetCachedFinder(project)}) as SourceSetCachedFinder
+    return doBuild(modelName, project, cache, tasksFactory, sourceSetFinder)
+  }
 
-    if(!mySourceSetFinder) mySourceSetFinder = new SourceSetCachedFinder(project)
+  private static getOrSetExt(final Project project, String name, Closure<Object> valueProvider) {
+    def rootProject = project.getRootProject()
+    def extraProperties = rootProject.extensions.extraProperties
+    if(!extraProperties.has(name)) {
+      extraProperties.set(name, valueProvider())
+    }
+    return extraProperties.get(name)
+  }
+
+  @Nullable
+  private static Object doBuild(final String modelName,
+                                final Project project,
+                                Map<Project, ExternalProject> cache,
+                                TasksFactory tasksFactory,
+                                SourceSetCachedFinder sourceSetFinder) {
+    ExternalProject externalProject = cache[project]
+    if (externalProject != null) return externalProject
 
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
     def isPreview = ExternalProjectPreview.name == modelName
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
     defaultExternalProject.name = project.name
-    defaultExternalProject.QName = ":" == project.path ? project.name : project.path
+    def qName = ":" == project.path ? project.name : project.path
+    defaultExternalProject.QName = qName
+    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
+    def ideaPluginModule = ideaPlugin?.model?.module
+    def parentBuildRootProject = project.gradle.parent?.rootProject
+    def compositePrefix = parentBuildRootProject && !project.rootProject.is(parentBuildRootProject) && ":" != project.path ?
+                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : "";
+    def ideaModuleName = ideaPluginModule?.name ?: project.name
+    defaultExternalProject.id = compositePrefix + (":" == project.path ? ideaModuleName : qName)
     defaultExternalProject.version = wrap(project.version)
     defaultExternalProject.description = project.description
     defaultExternalProject.buildDir = project.buildDir
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, isPreview, resolveSourceSetDependencies)
-    defaultExternalProject.tasks = getTasks(project)
+    defaultExternalProject.sourceSets = getSourceSets(project, isPreview, resolveSourceSetDependencies, sourceSetFinder)
+    defaultExternalProject.tasks = getTasks(project, tasksFactory)
 
     defaultExternalProject.plugins = getPlugins(project)
     //defaultExternalProject.setProperties(project.getProperties())
@@ -86,13 +107,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
     final Map<String, ExternalProject> childProjects = new HashMap<String, ExternalProject>(project.getChildProjects().size())
     for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
-      final Object externalProjectChild = buildAll(modelName, projectEntry.getValue())
+      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), cache, tasksFactory, sourceSetFinder)
       if (externalProjectChild instanceof ExternalProject) {
         childProjects.put(projectEntry.getKey(), (ExternalProject)externalProjectChild)
       }
     }
     defaultExternalProject.setChildProjects(childProjects)
-    cache.put(project.getPath(), defaultExternalProject)
+    cache.put(project, defaultExternalProject)
 
     defaultExternalProject
   }
@@ -127,10 +148,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  Map<String, ExternalTask> getTasks(Project project) {
+  static Map<String, ExternalTask> getTasks(Project project, TasksFactory tasksFactory) {
     def result = [:] as Map<String, DefaultExternalTask>
 
-    myTasksFactory.getTasks(project).each { Task task ->
+    tasksFactory.getTasks(project).each { Task task ->
       DefaultExternalTask externalTask = result.get(task.name)
       if (externalTask == null) {
         externalTask = new DefaultExternalTask()
@@ -150,7 +171,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  private Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies) {
+  private static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies, SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
@@ -341,7 +362,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       }
 
       if(resolveSourceSetDependencies) {
-        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(sourceSet)
+        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources, sourceSetFinder).resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
 

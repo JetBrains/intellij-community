@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,20 +224,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       candidates.add(kwArg.getKeyword());
     }
 
-    final PyArgumentList argList = PsiTreeUtil.getParentOfType(expression, PyArgumentList.class);
-    if (argList != null) {
-      final PyCallExpression callExpr = argList.getCallExpression();
-      if (callExpr != null) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits();
-        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
-        if (mapping.getMarkedCallee() != null) {
-          final PyNamedParameter namedParameter = mapping.getMappedParameters().get(expression);
-          if (namedParameter != null) {
-            candidates.add(namedParameter.getName());
-          }
-        }
-      }
-    }
+    Optional
+      .ofNullable(PsiTreeUtil.getParentOfType(expression, PyArgumentList.class))
+      .map(PyArgumentList::getCallExpression)
+      .ifPresent(
+        call -> StreamEx
+          .of(call.multiMapArguments(PyResolveContext.noImplicits()))
+          .map(mapping -> mapping.getMappedParameters().get(expression))
+          .nonNull()
+          .map(PyNamedParameter::getName)
+          .forEach(candidates::add)
+      );
+
     return candidates;
   }
 

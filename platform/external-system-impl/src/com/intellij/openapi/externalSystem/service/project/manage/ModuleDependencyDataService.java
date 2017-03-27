@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.OrderAware;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -31,7 +32,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -98,8 +98,8 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       processed.add(dependencyData);
 
       toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
-      final String moduleName = dependencyData.getInternalName();
-      Module ideDependencyModule = modelsProvider.findIdeModule(moduleName);
+      final ModuleData moduleData = dependencyData.getTarget();
+      Module ideDependencyModule = modelsProvider.findIdeModule(moduleData);
 
       ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {
@@ -115,9 +115,9 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         }
         orderEntry = modelsProvider.findIdeModuleDependency(dependencyData, module);
         if (orderEntry == null) {
-          orderEntry = ApplicationManager.getApplication().runReadAction((Computable<ModuleOrderEntry>)() ->
+          orderEntry = ReadAction.compute(() ->
             ideDependencyModule == null
-            ? modifiableRootModel.addInvalidModuleEntry(moduleName)
+            ? modifiableRootModel.addInvalidModuleEntry(moduleData.getInternalName())
             : modifiableRootModel.addModuleOrderEntry(ideDependencyModule));
         }
       }

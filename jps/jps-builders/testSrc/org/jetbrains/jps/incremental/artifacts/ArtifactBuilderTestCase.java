@@ -85,7 +85,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   private Set<String> getArtifactNames() {
-    Set<String> usedNames = new HashSet<String>();
+    Set<String> usedNames = new HashSet<>();
     for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
       usedNames.add(artifact.getName());
     }

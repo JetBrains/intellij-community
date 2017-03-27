@@ -91,10 +91,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
 
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Collections.singletonList(
+  private static final Set<String> FILTERED_OPTIONS = new HashSet<>(Collections.singletonList(
     "-target"
   ));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<>(Arrays.asList(
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
@@ -102,12 +102,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
 
   private final Executor myTaskRunner;
-  private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes;
   @Nullable
   private static final File ourDefaultRtJar;
   static {
-    ourCompilableModuleTypes = new HashSet<JpsModuleType<?>>();
+    ourCompilableModuleTypes = new HashSet<>();
     for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
       ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
     }
@@ -154,7 +154,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
-    COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<String, Collection<String>>());
+    COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
   }
 
   @Override
@@ -179,14 +179,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (stats.size() == 1) {
       final Map.Entry<String, Collection<String>> entry = stats.entrySet().iterator().next();
       final String compilerName = entry.getKey();
-      context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, compilerName + " was used to compile java sources"));
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO, compilerName + " was used to compile java sources"));
       LOG.info(compilerName + " was used to compile " + entry.getValue());
     }
     else {
       for (Map.Entry<String, Collection<String>> entry : stats.entrySet()) {
         final String compilerName = entry.getKey();
         final Collection<String> moduleNames = entry.getValue();
-        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO,
           moduleNames.size() == 1 ?
           compilerName + " was used to compile [" + moduleNames.iterator().next() + "]" :
           compilerName + " was used to compile " + moduleNames.size() + " modules"
@@ -219,7 +219,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                           @NotNull OutputConsumer outputConsumer,
                           @NotNull JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
-      final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> filesToCompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         @Override
@@ -248,13 +248,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool);
     }
-    catch (BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch (ProjectBuildException e) {
-      throw e;
-    }
-    catch (PersistentEnumeratorBase.CorruptedException e) {
+    catch (BuildDataCorruptedException | PersistentEnumeratorBase.CorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {
@@ -304,7 +298,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
 
-        final Set<File> srcPath = new HashSet<File>();
+        final Set<File> srcPath = new HashSet<>();
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
           for (JavaSourceRootDescriptor rd : index.getTempTargetRoots(target, context)) {
@@ -354,7 +348,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           if (!compiledOk) {
-            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
+            diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
           }
           throw new StopBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
@@ -460,7 +454,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           platformCp = Collections.emptyList();
         }
         else if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
-          final Collection<File> joined = new ArrayList<File>(classPath.size() + 1);
+          final Collection<File> joined = new ArrayList<>(classPath.size() + 1);
           for (File file : platformCp) {
             // platform runtime classes will be handled by -release option
             // include only additional jars from sdk distribution, e.g. tools.jar
@@ -654,18 +648,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     assert counter != null;
 
     counter.incTaskCount();
-    myTaskRunner.execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          taskRunnable.run();
-        }
-        catch (Throwable e) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, e));
-        }
-        finally {
-          counter.decTaskCounter();
-        }
+    myTaskRunner.execute(() -> {
+      try {
+        taskRunnable.run();
+      }
+      catch (Throwable e) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+      }
+      finally {
+        counter.decTaskCounter();
       }
     });
   }
@@ -743,7 +734,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       assert cached != null : context;
     }
 
-    List<String> options = new ArrayList<String>();
+    List<String> options = new ArrayList<>();
     JpsModule module = chunk.representativeTarget().getModule();
     File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
     if (baseDirectory != null) {
@@ -1011,8 +1002,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
-    final List<String> options = new ArrayList<String>();
-    final List<String> vmOptions = new ArrayList<String>();
+    final List<String> options = new ArrayList<>();
+    final List<String> vmOptions = new ArrayList<>();
 
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
@@ -1087,13 +1078,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
-    final Map<File, Set<File>> map = new THashMap<File, Set<File>>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Set<File>> map = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }
-      final Set<File> roots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> roots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
@@ -1112,7 +1103,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     private final CompileContext myContext;
     private volatile int myErrorCount;
     private volatile int myWarningCount;
-    private final Set<File> myFilesWithErrors = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
     private DiagnosticSink(CompileContext context) {
       myContext = context;
@@ -1194,8 +1185,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
           myWarningCount++;
           break;
         case NOTE:
-        default:
           kind = BuildMessage.Kind.INFO;
+          break;
+        case OTHER:
+          kind = diagnostic instanceof JpsInfoDiagnostic? BuildMessage.Kind.JPS_INFO : BuildMessage.Kind.OTHER;
+          break;
+        default:
+          kind = BuildMessage.Kind.OTHER;
       }
       File sourceFile = null;
       try {
@@ -1278,17 +1274,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
         myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
       }
 
-      submitAsyncTask(myContext, new Runnable() {
-        @Override
-        public void run() {
-          try {
-            for (ClassPostProcessor processor : ourClassProcessors) {
-              processor.process(myContext, fileObject);
-            }
+      submitAsyncTask(myContext, () -> {
+        try {
+          for (ClassPostProcessor processor : ourClassProcessors) {
+            processor.process(myContext, fileObject);
           }
-          finally {
-            myDelegateOutputFileSink.save(fileObject);
-          }
+        }
+        finally {
+          myDelegateOutputFileSink.save(fileObject);
         }
       });
     }

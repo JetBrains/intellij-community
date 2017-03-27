@@ -129,6 +129,9 @@ public abstract class ClassFilesIndexReaderBase<K, V> {
         throw new RuntimeException(e);
       }
     }
+    if (myMappings != null) {
+      myMappings.close();
+    }
   }
 
   public final void delete() {

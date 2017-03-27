@@ -40,22 +40,22 @@ public class MavenProjectConfiguration {
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)=(.+)");
   public static final Set<String> DEFAULT_FILTERING_EXCLUDED_EXTENSIONS;
   static {
-    final THashSet<String> set = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final THashSet<String> set = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     set.addAll(Arrays.asList("jpg", "jpeg", "gif", "bmp", "png"));
     DEFAULT_FILTERING_EXCLUDED_EXTENSIONS = Collections.unmodifiableSet(set);
   }
 
   @Tag("resource-processing")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "maven-module", keyAttributeName = "name")
-  public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new THashMap<String, MavenModuleResourceConfiguration>();
+  public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new THashMap<>();
 
   @Tag("web-artifact-cfg")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
-  public Map<String, MavenWebArtifactConfiguration> webArtifactConfigs = new THashMap<String, MavenWebArtifactConfiguration>();
+  public Map<String, MavenWebArtifactConfiguration> webArtifactConfigs = new THashMap<>();
 
   @Tag("ejb-client-artifact-cfg")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
-  public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new THashMap<String, MavenEjbClientConfiguration>();
+  public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new THashMap<>();
 
   @Nullable
   public MavenModuleResourceConfiguration findProject(MavenIdBean id) {
@@ -69,7 +69,7 @@ public class MavenProjectConfiguration {
   private Map<MavenIdBean, MavenModuleResourceConfiguration> getModuleConfigurationMap() {
     Map<MavenIdBean, MavenModuleResourceConfiguration> map = myIdToModuleMap;
     if (map == null) {
-      map = new THashMap<MavenIdBean, MavenModuleResourceConfiguration>();
+      map = new THashMap<>();
       for (MavenModuleResourceConfiguration configuration : moduleConfigurations.values()) {
         if (configuration != null) {
           map.put(configuration.id, configuration);
@@ -154,7 +154,7 @@ public class MavenProjectConfiguration {
     if (res == null) {
       String mavenOpts = System.getenv("MAVEN_OPTS");
       if (mavenOpts != null) {
-        res = new HashMap<String, String>();
+        res = new HashMap<>();
         final String[] split = ParametersListUtil.parseToArray(mavenOpts);
         for (String parameter : split) {
           final Matcher matcher = PROPERTY_PATTERN.matcher(parameter);

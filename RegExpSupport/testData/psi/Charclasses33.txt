@@ -5,10 +5,9 @@ REGEXP_FILE
         PsiElement(CHARACTER)('a')
       RegExpClassImpl: <[]b>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <]b>
-          RegExpCharImpl: <]>
-            PsiElement(CHARACTER)(']')
-          RegExpCharImpl: <b>
-            PsiElement(CHARACTER)('b')
+        RegExpCharImpl: <]>
+          PsiElement(CHARACTER)(']')
+        RegExpCharImpl: <b>
+          PsiElement(CHARACTER)('b')
         PsiErrorElement:Unclosed character class
           <empty list>

@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
@@ -44,7 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
-    extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
+    extends BaseRCSettingsConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
   private final PlainDocument myNameDocument = new PlainDocument();
   @Nullable private Executor myExecutor;
@@ -100,13 +99,28 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     configurable.reset();
     return configurable;
   }
+  
+  @Override
+  void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {
+    snapshot.setTemporary(original.isTemporary());
+    snapshot.setName(getNameText());
+    snapshot.setSingleton(mySingleton);
+    snapshot.setFolderName(myFolderName);
+  }
+
+  @Override
+  boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
+                                         RunnerAndConfigurationSettings original,
+                                         RunnerAndConfigurationSettings snapshot) {
+    return runManager.isConfigurationShared(original) != myStoreProjectConfiguration;
+  }
 
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
+    if (settings == null) return;
     RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.shareConfiguration(settings, myStoreProjectConfiguration);
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
@@ -117,6 +131,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   public void reset() {
     RunnerAndConfigurationSettings configuration = getSettings();
+    if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
+      configuration = ((RunnerAndConfigurationSettingsImpl)configuration).clone();
+    }
     setNameText(configuration.getName());
     super.reset();
     if (myComponent == null) {

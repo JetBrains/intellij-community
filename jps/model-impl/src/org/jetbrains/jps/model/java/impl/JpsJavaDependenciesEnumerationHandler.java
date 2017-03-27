@@ -35,7 +35,7 @@ public abstract class JpsJavaDependenciesEnumerationHandler {
       JpsJavaDependenciesEnumerationHandler handler = factory.createHandler(rootModules);
       if (handler != null) {
         if (handlers == null) {
-          handlers = new SmartList<JpsJavaDependenciesEnumerationHandler>();
+          handlers = new SmartList<>();
         }
         handlers.add(handler);
       }

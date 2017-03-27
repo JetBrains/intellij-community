@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,11 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     });
 
     getEmptyText().setText(XDebuggerBundle.message("debugger.frames.not.available"));
+  }
+
+  @Override
+  public void setModel(ListModel model) {
+    // do not allow to change model (e.g. to FilteringListModel)
   }
 
   @Override

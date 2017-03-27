@@ -107,7 +107,7 @@ public class ArtifactRepositoryManager {
     );
 
     final DependencyResult result = ourSystem.resolveDependencies(mySession, dependencyRequest);
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     for (ArtifactResult artifactResult : result.getArtifactResults()) {
       files.add(artifactResult.getArtifact().getFile());
     }
@@ -133,7 +133,7 @@ public class ArtifactRepositoryManager {
     if (versions.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<Artifact> result = new ArrayList<Artifact>(versions.size());
+    final List<Artifact> result = new ArrayList<>(versions.size());
     for (Version version : versions) {
       result.add(new DefaultArtifact(groupId, artifactId, ARTIFACT_EXTENSION, version.toString()));
     }

@@ -89,7 +89,7 @@ class ExecutionCallback {
       }
       else {
         if (myRunnables == null) {
-          myRunnables = new SmartList<Runnable>();
+          myRunnables = new SmartList<>();
         }
 
         myRunnables.add(runnable);

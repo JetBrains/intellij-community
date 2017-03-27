@@ -29,7 +29,7 @@ public class TargetTypeRegistry {
   private static class Holder {
     static final TargetTypeRegistry ourInstance = new TargetTypeRegistry();
   }
-  private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<String, BuildTargetType<?>>();
+  private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<>();
 
   public static TargetTypeRegistry getInstance() {
     return Holder.ourInstance;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -291,7 +291,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         result.addFirst(new BreadcrumbsPsiItem(element, provider));
       }
 
-      element = (provider != null) ? provider.getParent(element) : element.getParent();
+      element = getParent(element, provider);
     }
     return result;
   }
@@ -320,10 +320,15 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         return element;
       }
       if (!(element instanceof PsiFile)) {
-        ContainerUtil.addIfNotNull(leafs, element.getParent());
+        ContainerUtil.addIfNotNull(leafs, getParent(element, provider));
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiElement getParent(@NotNull PsiElement element, @Nullable BreadcrumbsInfoProvider provider) {
+    return provider != null ? provider.getParent(element) : element.getParent();
   }
 
   @Nullable
@@ -453,7 +458,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   private static Font getEditorFont(Editor editor) {
-    Font font = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
-    return Font.PLAIN == font.getStyle() ? font : font.deriveFont(Font.PLAIN, font.getSize2D());
+    return ComplementaryFontsRegistry.getFontAbleToDisplay('a', Font.PLAIN, editor.getColorsScheme().getFontPreferences(),
+                                                           null).getFont();
   }
 }

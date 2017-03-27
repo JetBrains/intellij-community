@@ -37,7 +37,7 @@ public class BuildTargetStorages extends CompositeStorageOwner {
   private final BuildTarget<?> myTarget;
   private final BuildDataPaths myPaths;
   private final ConcurrentMap<StorageProvider<?>, AtomicNotNullLazyValue<? extends StorageOwner>> myStorages 
-    = new ConcurrentHashMap<StorageProvider<?>, AtomicNotNullLazyValue<? extends StorageOwner>>(16, 0.75f, 1);
+    = new ConcurrentHashMap<>(16, 0.75f, 1);
 
   public BuildTargetStorages(BuildTarget<?> target, BuildDataPaths paths) {
     myTarget = target;

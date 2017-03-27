@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
@@ -75,6 +76,17 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFiles("deprecation/deprecatedImport.py", "deprecation/deprecatedModule.py");
     myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testAbsAbstractProperty() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON33,
+      () -> {
+        myFixture.enableInspections(PyDeprecationInspection.class);
+        myFixture.configureByFile("deprecation/abcAbstractProperty.py");
+        myFixture.checkHighlighting(true, false, false);
+      }
+    );
   }
 
   public void testFileStub() {

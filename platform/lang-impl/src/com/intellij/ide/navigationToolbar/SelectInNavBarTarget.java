@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
 
   @Override
   protected boolean canSelect(final PsiFileSystemItem file) {
-    return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+    return UISettings.getInstance().getShowNavigationBar();
   }
 
   @Override
@@ -67,17 +67,14 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
 
   private static void selectInNavBar() {
     DataManager.getInstance().getDataContextFromFocus()
-      .doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext context) {
-          final IdeFrame frame = IdeFrame.KEY.getData(context);
-          if (frame != null) {
-            final IdeRootPaneNorthExtension navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
-            if (navBarExt != null) {
-              final JComponent c = navBarExt.getComponent();
-              final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
-              panel.rebuildAndSelectTail(true);
-            }
+      .doWhenDone((Consumer<DataContext>)context -> {
+        final IdeFrame frame = IdeFrame.KEY.getData(context);
+        if (frame != null) {
+          final IdeRootPaneNorthExtension navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
+          if (navBarExt != null) {
+            final JComponent c = navBarExt.getComponent();
+            final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
+            panel.rebuildAndSelectTail(true);
           }
         }
       });

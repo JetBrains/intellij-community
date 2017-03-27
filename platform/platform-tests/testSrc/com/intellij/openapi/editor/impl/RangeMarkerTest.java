@@ -69,26 +69,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       return;
     }
     boolean oldVerify = RedBlackTree.VERIFY;
-    RedBlackTree.VERIFY = !isPerformanceTest();
-    final Throwable[] ex = {null};
+    RedBlackTree.VERIFY = !isStressTest();
     try {
       if (getTestName(false).contains("NoCommand")) {
         super.runTest();
         return;
       }
-      WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Void, Throwable>() {
-        @Override
-        public Void compute() throws Throwable {
-          RangeMarkerTest.super.runTest();
-          return null;
-        }
+      WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
+        super.runTest();
+        return null;
       });
     }
     finally {
       RedBlackTree.VERIFY = oldVerify;
     }
-
-    if (ex[0] != null) throw ex[0];
   }
 
   @Override
@@ -699,7 +693,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
             y = document.getTextLength();
           }
           RangeMarkerEx r = (RangeMarkerEx)document.createRangeMarker(x, y);
-          adds.add(Pair.create((RangeMarker)r, TextRange.create(r)));
+          adds.add(Pair.create(r, TextRange.create(r)));
         }
         List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
         while (!candidates.isEmpty()) {

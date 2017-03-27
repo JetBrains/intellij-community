@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,18 @@ import org.jetbrains.annotations.NotNull;
  *
  * @since 2016.3
  */
-public interface PsiJavaModule extends NavigatablePsiElement, PsiNamedElement, PsiJavaDocumentedElement {
+public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierOwner, PsiModifierListOwner, PsiJavaDocumentedElement {
   String MODULE_INFO_CLASS = "module-info";
   String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
   String MODULE_INFO_CLS_FILE = MODULE_INFO_CLASS + ".class";
   String JAVA_BASE = "java.base";
 
-  @NotNull PsiJavaModuleReferenceElement getNameElement();
-  @NotNull String getModuleName();
+  @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
+  @Override @NotNull String getName();
 
   @NotNull Iterable<PsiRequiresStatement> getRequires();
-  @NotNull Iterable<PsiExportsStatement> getExports();
+  @NotNull Iterable<PsiPackageAccessibilityStatement> getExports();
+  @NotNull Iterable<PsiPackageAccessibilityStatement> getOpens();
+  @NotNull Iterable<PsiUsesStatement> getUses();
+  @NotNull Iterable<PsiProvidesStatement> getProvides();
 }

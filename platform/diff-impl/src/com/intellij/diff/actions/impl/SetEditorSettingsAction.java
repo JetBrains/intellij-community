@@ -17,7 +17,7 @@ package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.HighlightingLevel;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -34,13 +34,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
-  @NotNull private final TextDiffSettingsHolder.TextDiffSettings myTextSettings;
+  @NotNull private final TextDiffSettings myTextSettings;
   @NotNull private final List<? extends Editor> myEditors;
   @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
   @NotNull private final AnAction[] myActions;
 
-  public SetEditorSettingsAction(@NotNull TextDiffSettingsHolder.TextDiffSettings settings,
+  public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
                                  @NotNull List<? extends Editor> editors) {
     super("Editor Settings", null, AllIcons.General.SecondaryGroup);
     setPopup(true);

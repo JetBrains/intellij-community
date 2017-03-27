@@ -58,7 +58,7 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
 
   val logChangedComponents = SystemProperties.getBooleanProperty("idea.log.changed.components", false)
   if (ApplicationManager.getApplication().isUnitTestMode || logChangedComponents ) {
-    fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
+    fun stateToString(state: Any) = JDOMUtil.write(state as? Element ?: unarchiveState(state as ByteArray), "\n")
 
     val before = stateToString(oldState)
     val after = stateToString(newState)

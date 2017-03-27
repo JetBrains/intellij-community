@@ -92,7 +92,7 @@ public class ExternalProcessUtil {
                                                   List<String> classpath,
                                                   List<String> vmParams,
                                                   List<String> programParams, final boolean useCommandLineWrapper, boolean useClasspathJar) {
-    final List<String> cmdLine = new ArrayList<String>();
+    final List<String> cmdLine = new ArrayList<>();
 
     cmdLine.add(javaExecutable);
 

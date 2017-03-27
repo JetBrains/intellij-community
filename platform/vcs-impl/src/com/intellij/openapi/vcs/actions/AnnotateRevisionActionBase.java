@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -28,6 +29,8 @@ import javax.swing.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class AnnotateRevisionActionBase extends AnAction {
   public AnnotateRevisionActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
@@ -60,18 +63,16 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   public boolean isEnabled(@NotNull AnActionEvent e) {
     if (e.getProject() == null) return false;
 
-    VcsFileRevision fileRevision = getFileRevision(e);
-    if (fileRevision == null) return false;
+    return isEnabled(getVcs(e), getFile(e), getFileRevision(e));
+  }
 
-    VirtualFile file = getFile(e);
-    if (file == null) return false;
-
-    AbstractVcs vcs = getVcs(e);
-    if (vcs == null) return false;
+  public static boolean isEnabled(@Nullable AbstractVcs vcs,
+                                  @Nullable VirtualFile file,
+                                  @Nullable VcsFileRevision fileRevision) {
+    if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
 
     AnnotationProvider provider = vcs.getAnnotationProvider();
     if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
-
     if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
 
     return true;
@@ -82,13 +83,16 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     final VcsFileRevision fileRevision = getFileRevision(e);
     final VirtualFile file = getFile(e);
     final AbstractVcs vcs = getVcs(e);
-    assert vcs != null;
-    assert file != null;
-    assert fileRevision != null;
 
-    final Editor editor = getEditor(e);
+    annotate(notNull(file), notNull(fileRevision), notNull(vcs), getEditor(e), getAnnotatedLine(e));
+  }
+
+  public static void annotate(@NotNull VirtualFile file,
+                              @NotNull VcsFileRevision fileRevision,
+                              @NotNull AbstractVcs vcs,
+                              @Nullable Editor editor,
+                              int annotatedLine) {
     final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
-    final int oldLine = getAnnotatedLine(e);
 
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     assert annotationProvider != null;
@@ -107,7 +111,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
 
-          int newLine = translateLine(oldContent, fileAnnotation.getAnnotatedContent(), oldLine);
+          int newLine = translateLine(oldContent, fileAnnotation.getAnnotatedContent(), annotatedLine);
 
           fileAnnotationRef.set(fileAnnotation);
           newLineRef.set(newLine);
@@ -143,7 +147,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
       // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).
       if (shouldOpenEditorInSync.get()) {
         CharSequence content = LoadTextUtil.loadText(file);
-        int newLine = translateLine(oldContent, content, oldLine);
+        int newLine = translateLine(oldContent, content, annotatedLine);
 
         OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(vcs.getProject(), file, newLine, 0);
         FileEditorManager.getInstance(vcs.getProject()).openTextEditor(openFileDescriptor, true);

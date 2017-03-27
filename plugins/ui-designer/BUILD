@@ -28,5 +28,6 @@ iml_module(
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/jps/jps-builders[module]",
         "//tools/idea/plugins/properties/properties-psi-api[module]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

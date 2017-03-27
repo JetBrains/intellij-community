@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
     ArchiveHandler handler = myHandlers.get(homePath);
     if (handler == null) {
-      handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
+      handler = new JrtHandler(homePath);
       myHandlers.put(homePath, handler);
       ApplicationManager.getApplication().invokeLater(
         () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/release"),
@@ -110,7 +110,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
             VirtualFile file = event.getFile();
             if (file != null && "release".equals(file.getName())) {
               String homePath = file.getParent().getPath();
-              if (myHandlers.remove(homePath) != null) {
+              ArchiveHandler handler = myHandlers.remove(homePath);
+              if (handler != null) {
+                handler.dispose();
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();

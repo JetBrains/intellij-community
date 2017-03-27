@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -64,7 +64,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     if (myReplacement == null) {
       return;
     }
-    int tabSize = getTabSize(codeStyleFacade, document);
+    int tabSize = codeStyleFacade.getTabSize(file.getFileType());
     int targetColumn = getWidth(myReplacement, tabSize);
     int endOffset = CharArrayUtil.shiftForward(charSequence, caretOffset, " \t");
     LogicalPosition logicalPosition = caretOffset < endOffset ? editor.offsetToLogicalPosition(endOffset) : pos;
@@ -110,12 +110,6 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     FormattingModel model = builder.createModel(file, settings);
     int spacing = FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
     return StringUtil.repeatSymbol(' ', spacing);
-  }
-
-  private static int getTabSize(@NotNull CodeStyleFacade codeStyleFacade, @NotNull Document document) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    FileType fileType = file == null ? null : file.getFileType();
-    return codeStyleFacade.getTabSize(fileType);
   }
 
   private static int getWidth(@NotNull String indent, int tabSize) {

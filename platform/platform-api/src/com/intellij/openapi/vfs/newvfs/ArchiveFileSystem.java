@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -215,7 +214,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   @NotNull
   @Override
   public InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    return new BufferExposingByteArrayInputStream(contentsToByteArray(file));
+    return getHandler(file).getInputStream(getRelativePath(file));
   }
 
   @Override

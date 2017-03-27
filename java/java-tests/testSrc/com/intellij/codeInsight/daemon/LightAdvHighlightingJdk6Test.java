@@ -98,4 +98,8 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testReachableWhileBodyDueToConstantStringComparison() throws Exception {
     doTest(false, false);
   }
+
+  public void testPrivateClassReferencedInAnnotationOnSibling() throws Exception {
+    doTest(false, false);
+  }
 }

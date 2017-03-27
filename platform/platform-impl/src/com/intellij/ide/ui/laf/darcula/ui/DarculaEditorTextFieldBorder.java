@@ -55,7 +55,7 @@ public class DarculaEditorTextFieldBorder implements Border {
     }
 
     if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
-      DarculaUIUtil.paintFocusRing(g, r.x + 1, r.y + 1, r.width - 2, r.height - 2);
+      DarculaUIUtil.paintFocusRing(g, new Rectangle(r.x + 1, r.y + 1, r.width - 2, r.height - 2));
     } else {
       g.setColor(new JBColor(Gray._150, Gray._100));
       g.drawRect(r.x, r.y, r.width, r.height);

@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -203,6 +204,7 @@ public class ImportFromExistingAction implements QuestionAction {
       // add another import element right after the one we got
       PsiElement newImportElement = gen.createImportElement(LanguageLevel.getDefault(), myName, null);
       parent.add(newImportElement);
+      CodeStyleManager.getInstance(myTarget.getProject()).reformat(parent);
     }
     else { // just 'import'
       // all we need is to qualify our target

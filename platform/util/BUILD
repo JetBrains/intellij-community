@@ -27,10 +27,10 @@ iml_module(
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/.idea/libraries:Snappy-Java",
         "//tools/idea/.idea/libraries:imgscalr",
-        "//tools/idea/.idea/libraries:batik",
         "//tools/idea/.idea/libraries:xmlgraphics-commons",
-        "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:Xerces",
+        "//tools/idea/.idea/libraries:xml-apis-ext",
+        "//tools/idea/.idea/libraries:batik",
     ],
 )
 

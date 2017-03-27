@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -35,15 +34,9 @@ public interface PerFileMappings<T> {
 
   void setMapping(@Nullable VirtualFile file, T value);
 
-  Collection<T> getAvailableValues(VirtualFile file);
-
   @Nullable
-  T getMapping(VirtualFile file);
+  T getMapping(@Nullable VirtualFile file);
 
   @Nullable
   T getDefaultMapping(@Nullable VirtualFile file);
-
-  T chosenToStored(VirtualFile file, T value);
-
-  boolean isSelectable(T value);
 }

@@ -98,11 +98,14 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
                   final PsiElement lBrace = aClass.getLBrace();
                   LOG.assertTrue(lBrace != null);
                   final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-                  ProblemHighlightType highlightType = LambdaCanBeMethodReferenceInspection.checkQualifier(lambdaBodyCandidate) ? ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                  ProblemHighlightType type = LambdaCanBeMethodReferenceInspection.checkQualifier(lambdaBodyCandidate) ? ProblemHighlightType.LIKE_UNUSED_SYMBOL
                                                                                                                                 : ProblemHighlightType.INFORMATION;
-                  holder.registerProblem(parent,
-                                         "Anonymous #ref #loc can be replaced with method reference",
-                                         highlightType, rangeInElement, new ReplaceWithMethodRefFix());
+                  ProblemDescriptorBase descriptor = new ProblemDescriptorBase(parent, parent,
+                          "Anonymous #ref #loc can be replaced with method reference",
+                                            new LocalQuickFix[]{new ReplaceWithMethodRefFix()},
+                                            type, false, rangeInElement,
+                                            type != ProblemHighlightType.INFORMATION, true);
+                  holder.registerProblem(descriptor);
                 }
               }
             }

@@ -27,8 +27,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -239,8 +237,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    */
   private void updateHighlighters(){
     if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
-      ((EditorEx)myEditor).setHighlighter(highlighter);
+      AsyncHighlighterUpdater.updateHighlighters(myProject, myEditor, myFile);
     }
   }
 

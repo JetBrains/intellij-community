@@ -38,7 +38,7 @@ public class Queue<T> {
   public void addLast(T object) {
     int currentSize = size();
     if (currentSize == myArray.length) {
-      myArray = normalize(Math.max(currentSize * 2, 5));
+      myArray = normalize(Math.max(currentSize * 3/2, 10));
       myFirst = 0;
       myLast = currentSize;
       isWrapped = false;

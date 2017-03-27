@@ -81,22 +81,23 @@ public class PyStructureViewTest extends PyTestCase {
            "  f(self, x)\n" +
            "  __str__(self)\n" +
            "  x\n" +
-           "  __delattr__(self, name)\n" +
-           "  __format__(self, *args, **kwargs)\n" +
-           "  __getattribute__(self, name)\n" +
-           "  __hash__(self)\n" +
            "  __init__(self)\n" +
-           "  __new__(cls, *more)\n" +
-           "  __reduce_ex__(self, *args, **kwargs)\n" +
-           "  __reduce__(self, *args, **kwargs)\n" +
-           "  __repr__(self)\n" +
+           "  __new__(cls)\n" +
            "  __setattr__(self, name, value)\n" +
+           "  __eq__(self, o)\n" +
+           "  __ne__(self, o)\n" +
+           "  __repr__(self)\n" +
+           "  __hash__(self)\n" +
+           "  __format__(self, format_spec)\n" +
+           "  __getattribute__(self, name)\n" +
+           "  __delattr__(self, name)\n" +
            "  __sizeof__(self)\n" +
-           "  __subclasshook__(cls, subclass)\n" +
+           "  __reduce__(self)\n" +
+           "  __reduce_ex__(self, protocol)\n" +
            "  __class__\n" +
-           "  __dict__\n" +
            "  __doc__\n" +
-           "  __module__\n",
+           "  __module__\n" +
+           "  __slots__\n",
            true);
   }
 

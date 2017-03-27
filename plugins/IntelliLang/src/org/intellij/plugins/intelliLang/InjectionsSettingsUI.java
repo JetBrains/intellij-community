@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,7 +58,6 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
-import org.jdom.Document;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,9 +289,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         if (wrapper == null) return;
         final Configuration configuration = new Configuration();
         configuration.setInjections(injections);
-        final Document document = new Document(configuration.getState());
         try {
-          JDOMUtil.writeDocument(document, wrapper.getFile(), "\n");
+          JdomKt.write(configuration.getState(), wrapper.getFile().toPath());
         }
         catch (IOException ex) {
           final String msg = ex.getLocalizedMessage();

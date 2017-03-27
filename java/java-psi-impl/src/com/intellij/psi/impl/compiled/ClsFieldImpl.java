@@ -111,7 +111,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new THashSet<PsiVariable>());
+    return computeConstantValue(new THashSet<>());
   }
 
   @Override

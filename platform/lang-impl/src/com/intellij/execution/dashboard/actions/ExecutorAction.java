@@ -28,7 +28,7 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public abstract class ExecutorAction extends RuntimeDashboardTreeLeafAction<DashboardRunConfigurationNode> {
+public abstract class ExecutorAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
   protected ExecutorAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }

@@ -44,7 +44,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
     updateProjectFolders();
 
-    assertExcludes("project", "target/foo");
+    assertExcludes("project", "target");
     assertGeneratedSources("project", "target/generated-sources/xxx");
     
     assertNull(myProjectRoot.findChild("target"));
@@ -100,10 +100,10 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     updateProjectFolders();
 
-    assertExcludes("m1", "target/foo");
+    assertExcludes("m1", "target");
     assertGeneratedSources("m1", "target/generated-sources/xxx");
 
-    assertExcludes("m2", "target/bar");
+    assertExcludes("m2", "target");
     assertGeneratedSources("m2", "target/generated-sources/yyy");
   }
 
@@ -147,7 +147,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     updateProjectFolders();
 
     assertSources("project", "target/src");
-    assertExcludes("project", "target/foo");
+    assertExcludes("project", "target");
   }
 
   public void testDoesNothingWithNonMavenModules() throws Exception {

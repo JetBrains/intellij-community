@@ -18,8 +18,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 

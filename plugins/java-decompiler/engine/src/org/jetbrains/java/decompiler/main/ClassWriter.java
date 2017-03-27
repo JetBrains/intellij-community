@@ -651,15 +651,10 @@ public class ClassWriter {
         if (attr != null) {
           descriptor = GenericMain.parseMethodSignature(attr.getSignature());
           if (descriptor != null) {
-            int actualParams = md.params.length;
+            long actualParams = md.params.length;
             List<VarVersionPair> sigFields = methodWrapper.signatureFields;
             if (sigFields != null) {
-              actualParams = 0;
-              for (VarVersionPair field : methodWrapper.signatureFields) {
-                if (field == null) {
-                  actualParams++;
-                }
-              }
+              actualParams = sigFields.stream().filter(Objects::isNull).count();
             }
             else if (isEnum && init) actualParams -= 2;
             if (actualParams != descriptor.params.size()) {

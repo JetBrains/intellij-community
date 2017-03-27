@@ -260,6 +260,10 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
    return tokenOrForbidden(TEXT);
 }
 
+}
+
+<YYINITIAL, BRACES, VALUE_OR_KEY> {
+
 "-" / ({WHITE_SPACE} | {EOL})   {   yyBegin(VALUE_OR_KEY);
                                     return SEQUENCE_MARKER; }
 

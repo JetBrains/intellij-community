@@ -29,11 +29,6 @@ public class TimingLog {
       return EmptyRunnable.INSTANCE;
     }
     final long start = System.currentTimeMillis();
-    return new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug(name + " in " + (System.currentTimeMillis() - start) + "ms");
-      }
-    };
+    return () -> LOG.debug(name + " in " + (System.currentTimeMillis() - start) + "ms");
   }
 }

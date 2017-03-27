@@ -144,7 +144,12 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     timeColumn.setMinWidth(TIME_COLUMN_MIN_WIDTH);
 
     TreeTableTree tree = myTreeTable.getTree();
-    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot);
+    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot) {
+      @Override
+      public boolean isToBuildChildrenInBackground(Object element) {
+        return true;
+      }
+    };
 
     myBuilder = new SimpleTreeBuilder(tree, model, treeStructure, null);
     Disposer.register(this, myBuilder);

@@ -16,14 +16,20 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import org.jdom.Element;
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerNotNullableSerializer;
 
+import java.util.Collections;
 import java.util.List;
 
 @State(name = "NullableNotNullManager")
-public class NullableNotNullManagerImpl extends NullableNotNullManager {
+public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element> {
 
   public NullableNotNullManagerImpl() {
     myNotNulls.addAll(getPredefinedNotNulls());
@@ -34,8 +40,44 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager {
     return JpsJavaCompilerNotNullableSerializer.DEFAULT_NOT_NULLS;
   }
 
+  @Override
   protected boolean hasHardcodedContracts(PsiElement element) {
     return HardcodedContracts.hasHardcodedContracts(element);
   }
 
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public Element getState() {
+    final Element component = new Element("component");
+
+    if (hasDefaultValues()) {
+      return component;
+    }
+
+    try {
+      DefaultJDOMExternalizer.writeExternal(this, component);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return component;
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public void loadState(Element state) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, state);
+      if (myNullables.isEmpty()) {
+        Collections.addAll(myNullables, DEFAULT_NULLABLES);
+      }
+      if (myNotNulls.isEmpty()) {
+        myNotNulls.addAll(getPredefinedNotNulls());
+      }
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
 }

@@ -21,7 +21,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+// IMPL class hardcoding logic to react to errors/warnings found during highlighting
+// DO NOT USE directly
 public abstract class HighlightInfoProcessor {
+  // HInfos for visible part of file/block are produced.
+  // Will remove all range-highlighters from there and replace them with passed infos
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                      @NotNull List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
@@ -31,11 +35,16 @@ public abstract class HighlightInfoProcessor {
                                                       @NotNull TextRange priorityRange,
                                                       @NotNull TextRange restrictedRange, int groupId) {}
 
+  // new HInfo became available during highlighting.
+  // Incrementally add this HInfo in EDT iff there were nothing there before.
   public void infoIsAvailable(@NotNull HighlightingSession session,
                               @NotNull HighlightInfo info,
                               @NotNull TextRange priorityRange,
                               @NotNull TextRange restrictedRange,
                               int groupId) {}
+
+  // this range is over.
+  // Can queue to EDT to remove abandoned bijective highlighters from this range. All the rest abandoned highlighters have to wait until *AreProduced().
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
                                                @Nullable List<HighlightInfo> infos){}

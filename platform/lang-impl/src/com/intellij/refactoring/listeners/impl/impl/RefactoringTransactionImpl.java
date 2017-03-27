@@ -16,13 +16,15 @@
 
 package com.intellij.refactoring.listeners.impl.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.util.containers.HashMap;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,11 +42,14 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
    */
   private final ArrayList<Runnable> myRunnables = new ArrayList<>();
   private final List<RefactoringElementListenerProvider> myListenerProviders;
+  private final Project myProject;
   private final Map<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<>();
   private final Map<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new HashMap<>();
 
-  public RefactoringTransactionImpl(List<RefactoringElementListenerProvider> listenerProviders) {
+  public RefactoringTransactionImpl(Project project,
+                                    List<RefactoringElementListenerProvider> listenerProviders) {
     myListenerProviders = listenerProviders;
+    myProject = project;
   }
 
   private void addAffectedElement(PsiElement oldElement) {
@@ -123,8 +128,9 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
   @Override
   public void commit() {
+    DumbService dumbService = DumbService.getInstance(myProject);
     for (Runnable runnable : myRunnables) {
-      runnable.run();
+      dumbService.withAlternativeResolveEnabled(runnable);
     }
   }
 

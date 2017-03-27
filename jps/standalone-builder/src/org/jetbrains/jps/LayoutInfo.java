@@ -23,7 +23,7 @@ import java.util.Set;
  */
 //todo[nik] inline this class later
 public class LayoutInfo {
-  private Set<String> myUsedModules = new HashSet<String>();
+  private Set<String> myUsedModules = new HashSet<>();
 
   public Set<String> getUsedModules() {
     return myUsedModules;

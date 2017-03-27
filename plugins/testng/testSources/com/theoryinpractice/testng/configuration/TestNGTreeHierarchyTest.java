@@ -21,7 +21,6 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.testng.IDEATestNGRemoteListener;
-import org.testng.IDEATestNGInvokedMethodListener;
 import org.testng.ISuite;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
@@ -152,7 +151,7 @@ public class TestNGTreeHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testName' locationHint='java:test://ATest.testName|[0|]']\n" +
                                           "\n" +
-                                          "##teamcity[testFailed name='ATest.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testFailed name='ATest.testName' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.testName']\n" +
                                           "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
@@ -272,7 +271,7 @@ public class TestNGTreeHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
                                           "\n" +
-                                          "##teamcity[testFailed name='ATest.setUp' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testFailed name='ATest.setUp' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
                                           "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));

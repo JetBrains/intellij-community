@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,12 +150,16 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   }
 
   private String getDocumentationText(String sourceEditorText) throws Exception {
+    return getDocumentationText(myProject, sourceEditorText);
+  }
+
+  public static String getDocumentationText(Project project, String sourceEditorText) throws Exception {
     int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
     if (caretPosition >= 0) {
       sourceEditorText = sourceEditorText.substring(0, caretPosition) +
                          sourceEditorText.substring(caretPosition + EditorTestUtil.CARET_TAG.length());
     }
-    PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
     return getDocumentationText(psiFile, caretPosition);
   }
 

@@ -15,11 +15,9 @@
  */
 package com.intellij.execution.testDiscovery;
 
-import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
@@ -227,7 +225,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
       if (holder == null) {
         synchronized (myLock) {
           holder = myHolder;
-          if (holder == null && myBasePath != null) holder = myHolder = new TestInfoHolder(myBasePath, myReadOnly, myLock);
+          if (holder == null && myBasePath != null) myHolder = holder = new TestInfoHolder(myBasePath, myReadOnly, myLock);
         }
       }
       return holder;

@@ -22,7 +22,6 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
@@ -152,8 +151,5 @@ public abstract class StubIndex {
                                                      @NotNull Project project,
                                                      @NotNull final GlobalSearchScope scope);
 
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file, Class<Psi> requiredClass) {
-    LOG.error("Invalid stub element type in index: " + file + ". found: " + psi + ". expected: " + requiredClass);
-  }
   public abstract void forceRebuild(@NotNull Throwable e);
 }

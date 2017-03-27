@@ -192,14 +192,13 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       Collection<String> cleanRootTasks = cleanTasksMap.getModifiable(rootProjectPath);
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);
       final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
-      final String gradlePath;
+      String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
+      if(gradlePath == null) continue;
+      if(gradlePath.equals(":")) {
+        gradlePath = "";
+      }
 
       if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
-        int lastColonIndex = projectId.lastIndexOf(':');
-        assert lastColonIndex != -1;
-        int firstColonIndex = projectId.indexOf(':');
-
-        gradlePath = projectId.substring(firstColonIndex, lastColonIndex);
         String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
         String gradleTask = StringUtil.isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
         if (gradleTasks.contains(gradleTask)) {
@@ -216,7 +215,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         }
       }
       else {
-        gradlePath = projectId.charAt(0) == ':' ? projectId : "";
         if (!moduleBuildTask.isIncrementalBuild()) {
           if (gradleTasks.contains("classes")) {
             cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanClasses" : gradlePath + ":cleanClasses"));

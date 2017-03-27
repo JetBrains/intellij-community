@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.*;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -49,7 +48,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +55,10 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.Collection;
+
+import static com.intellij.CommonBundle.getCancelButtonText;
+import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.util.ui.UIUtil.getWarningIcon;
 
 /**
  * @author irengrig
@@ -175,24 +177,29 @@ public class TodoCheckinHandler extends CheckinHandler {
     commitButtonText = StringUtil.trimEnd(commitButtonText, "...");
 
     String text = createMessage(worker);
-    String[] buttons;
     boolean thereAreTodoFound = worker.getAddedOrEditedTodos().size() + worker.getInChangedTodos().size() > 0;
-    int commitOption;
+    String title = "TODO";
     if (thereAreTodoFound) {
-      buttons = new String[]{VcsBundle.message("todo.in.new.review.button"), commitButtonText, CommonBundle.getCancelButtonText()};
-      commitOption = 1;
+      return askReviewOrCommit(worker, commitButtonText, text, title);
     }
-    else {
-      buttons = new String[]{commitButtonText, CommonBundle.getCancelButtonText()};
-      commitOption = 0;
-    }
-    int answer = Messages.showDialog(myProject, text, "TODO", null, buttons, 0, 1, UIUtil.getWarningIcon());
-    if (thereAreTodoFound && answer == Messages.OK) {
-      showTodo(worker);
-      return ReturnResult.CLOSE_WINDOW;
-    }
-    if (answer == commitOption) {
+    else if (YES == showYesNoDialog(myProject, text, title, commitButtonText, getCancelButtonText(), getWarningIcon())) {
       return ReturnResult.COMMIT;
+    }
+    return ReturnResult.CANCEL;
+  }
+
+  @NotNull
+  private ReturnResult askReviewOrCommit(@NotNull TodoCheckinHandlerWorker worker,
+                                         @NotNull String commitButton,
+                                         @NotNull String text,
+                                         @NotNull String title) {
+    String yesButton = VcsBundle.message("todo.in.new.review.button");
+    switch (showYesNoCancelDialog(myProject, text, title, yesButton, commitButton, getCancelButtonText(), getWarningIcon())) {
+      case YES:
+        showTodo(worker);
+        return ReturnResult.CLOSE_WINDOW;
+      case NO:
+        return ReturnResult.COMMIT;
     }
     return ReturnResult.CANCEL;
   }

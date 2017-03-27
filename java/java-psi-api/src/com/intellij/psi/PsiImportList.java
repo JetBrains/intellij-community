@@ -27,13 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiImportList extends PsiElement {
   PsiImportList[] EMPTY_ARRAY = new PsiImportList[0];
-  ArrayFactory<PsiImportList> ARRAY_FACTORY = new ArrayFactory<PsiImportList>() {
-    @NotNull
-    @Override
-    public PsiImportList[] create(int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportList[count];
-    }
-  };
+  ArrayFactory<PsiImportList> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiImportList[count];
 
   /**
    * Returns the non-static import statements contained in the list.

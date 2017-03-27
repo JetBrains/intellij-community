@@ -121,7 +121,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
 
     if (!fatalErrorHappened) {

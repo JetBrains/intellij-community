@@ -140,6 +140,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void tearDown() throws Exception {
     ThreadTracker.awaitThreadTerminationWithParentParentGroup("JDI main", 100, TimeUnit.SECONDS);
     try {
+      myDebugProcess = null;
+      myPauseScriptListener = null;
+      myRatherLaterRequests.clear();
       super.tearDown();
     }
     finally {
@@ -150,6 +153,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void throwExceptionsIfAny() {
     synchronized (myException) {
       CompoundRuntimeException.throwIfNotEmpty(myException);
+      myException.clear();
     }
   }
 

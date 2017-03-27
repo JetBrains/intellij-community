@@ -79,6 +79,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -362,6 +364,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         updateEditor();
       }
     });
+    new ComboboxSpeedSearch(myDialectComboBox) {
+      @Override
+      protected String getElementText(Object element) {
+        return element instanceof Language ? ((Language)element).getDisplayName() : "<default>";
+      }
+    };
     myFileTypeComboBox.addFocusListener(new AutoExpandFocusListener(myFileTypeComboBox));
     if (!myExternalDocument && lastUsed == null && mySourceWrappers.size() > 0) {
       myFileTypeComboBox.setSelectedIndex(0);
@@ -769,30 +777,30 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   private void initMap(BlockTreeNode rootBlockNode, PsiElement psiEl) {
-    PsiElement currentElem = null;
-    if (rootBlockNode.getBlock() instanceof ASTBlock) {
-      ASTNode node = ((ASTBlock)rootBlockNode.getBlock()).getNode();
-      if (node != null) {
-        currentElem = node.getPsi();
+    JBTreeTraverser<BlockTreeNode> traverser = new JBTreeTraverser<>(o -> JBIterable.of(o.getChildren()));
+    for (BlockTreeNode block : traverser.withRoot(rootBlockNode)) {
+      PsiElement currentElem = null;
+      if (block.getBlock() instanceof ASTBlock) {
+        ASTNode node = ((ASTBlock)block.getBlock()).getNode();
+        if (node != null) {
+          currentElem = node.getPsi();
+        }
       }
-    }
-    if (currentElem == null) {
-      currentElem =
-        InjectedLanguageUtil
-          .findElementAtNoCommit(psiEl.getContainingFile(), rootBlockNode.getBlock().getTextRange().getStartOffset());
-    }
-    myPsiToBlockMap.put(currentElem, rootBlockNode);
+      if (currentElem == null) {
+        currentElem =
+          InjectedLanguageUtil
+            .findElementAtNoCommit(psiEl.getContainingFile(), block.getBlock().getTextRange().getStartOffset());
+      }
+      myPsiToBlockMap.put(currentElem, block);
 
-//nested PSI elements with same ranges will be mapped to one blockNode
-//    assert currentElem != null;      //for Scala-language plugin etc it can be null, because formatterBlocks is not instance of ASTBlock
-    TextRange curTextRange = currentElem.getTextRange();
-    PsiElement parentElem = currentElem.getParent();
-    while (parentElem != null && parentElem.getTextRange().equals(curTextRange)) {
-      myPsiToBlockMap.put(parentElem, rootBlockNode);
-      parentElem = parentElem.getParent();
-    }
-    for (BlockTreeNode block : rootBlockNode.getChildren()) {
-      initMap(block, psiEl);
+  //nested PSI elements with same ranges will be mapped to one blockNode
+  //    assert currentElem != null;      //for Scala-language plugin etc it can be null, because formatterBlocks is not instance of ASTBlock
+      TextRange curTextRange = currentElem.getTextRange();
+      PsiElement parentElem = currentElem.getParent();
+      while (parentElem != null && parentElem.getTextRange().equals(curTextRange)) {
+        myPsiToBlockMap.put(parentElem, block);
+        parentElem = parentElem.getParent();
+      }
     }
   }
 

@@ -39,16 +39,10 @@ public class JpsJavaFxArtifactPropertiesSerializer extends JpsArtifactProperties
   @Override
   public void saveProperties(JpsJavaFxArtifactProperties properties, List<ArtifactPropertiesState> stateList) {
     final ArtifactPropertiesState state = findApplicationProperties(stateList);
-
     if (state == null) {
       return;
     }
-    final Element element = XmlSerializer.serialize(properties);
-
-    if (element == null) {
-      return;
-    }
-    state.setOptions(element);
+    state.setOptions(XmlSerializer.serialize(properties));
   }
 
   private static ArtifactPropertiesState findApplicationProperties(List<ArtifactPropertiesState> stateList) {

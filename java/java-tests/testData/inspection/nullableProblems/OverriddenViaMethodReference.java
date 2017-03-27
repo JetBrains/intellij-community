@@ -3,7 +3,7 @@ import org.jetbrains.annotations.Nullable;
 
 interface NonnullInterface {
   @NotNull
-  String nonNullMethod();
+  Object nonNullMethod();
 }
 
 class P2 {
@@ -17,13 +17,15 @@ class P2 {
       }
     });
     test(this::<warning descr="Method annotated with @Nullable must not override @NotNull method">getNull</warning>);
-    test(this::<warning descr="Not annotated method is used as an override for a method annotated with NotNull">getNonAnnotated</warning>);
+    test(this::getPrimitive);
   }
 
   @Nullable
   String getNull() { return null; }
 
   String getNonAnnotated() { return null; }
+
+  boolean getPrimitive() { return true; }
 
   private void test(final NonnullInterface function) { }
 }

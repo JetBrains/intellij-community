@@ -26,6 +26,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -185,6 +186,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   @Override
   public IdeFrame getLastFocusedFrame() {
     return myLastFocusedFrame;
+  }
+
+  public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
+    return requestFocus(new FocusCommand.ByComponent(c, c, project, new Exception()), false);
   }
 
   @Override

@@ -26,12 +26,8 @@ public class SortingException extends RuntimeException {
   private final Element[] myConflictingElements;
 
   public SortingException(String message, Element... conflictingElements) {
-    super(message + ": " + StringUtil.join(conflictingElements, new Function<Element, String>() {
-      @Override
-      public String fun(Element element) {
-        return element.getAttributeValue("id") + "(" + element.getAttributeValue("order") + ")";
-      }
-    }, "; "));
+    super(message + ": " + StringUtil.join(conflictingElements,
+                                           element -> element.getAttributeValue("id") + "(" + element.getAttributeValue("order") + ")", "; "));
     myConflictingElements = conflictingElements;
   }
 

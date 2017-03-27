@@ -17,9 +17,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -150,8 +150,8 @@ public class PluginDescriptorChooser {
 
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
                                                                   List<DomFileElement<IdeaPlugin>> elements) {
-    ModuleManager moduleManager = ModuleManager.getInstance(currentModule.getProject());
-    final String[] groupPath = moduleManager.getModuleGroupPath(currentModule);
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(currentModule.getProject());
+    final List<String> groupPath = grouper.getGroupPath(currentModule);
 
     elements.sort((o1, o2) -> {
       // current module = first group
@@ -162,8 +162,8 @@ public class PluginDescriptorChooser {
       if (currentModule.equals(module2)) return 1;
 
       if (module1 != null && module2 != null) {
-        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module2)),
-                                                groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module1)));
+        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
+                                                groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
         if (groupComparison != 0) {
           return groupComparison;
         }
@@ -196,16 +196,13 @@ public class PluginDescriptorChooser {
     });
   }
 
-  private static int groupMatchLevel(@Nullable String[] targetGroupPath, @Nullable String[] groupPath) {
-    if (targetGroupPath != null && groupPath != null) {
-      for (int i = 0; i < Math.min(targetGroupPath.length, groupPath.length); i++) {
-        if (!targetGroupPath[i].equals(groupPath[i])) {
-          return i;
-        }
+  private static int groupMatchLevel(@NotNull List<String> targetGroupPath, @NotNull List<String> groupPath) {
+    for (int i = 0; i < Math.min(targetGroupPath.size(), groupPath.size()); i++) {
+      if (!targetGroupPath.get(i).equals(groupPath.get(i))) {
+        return i;
       }
-      return Math.min(targetGroupPath.length, groupPath.length);
     }
-    return 0;
+    return Math.min(targetGroupPath.size(), groupPath.size());
   }
 
   public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,

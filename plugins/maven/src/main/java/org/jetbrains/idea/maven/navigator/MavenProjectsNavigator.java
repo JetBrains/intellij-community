@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,18 +379,10 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     scheduleStructureRequest(() -> myStructure.update());
   }
 
-  private class MyProjectsListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
+  private class MyProjectsListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     @Override
     public void activated() {
       scheduleStructureUpdate();
-    }
-
-    @Override
-    public void projectsScheduled() {
-    }
-
-    @Override
-    public void importAndResolveScheduled() {
     }
 
     @Override

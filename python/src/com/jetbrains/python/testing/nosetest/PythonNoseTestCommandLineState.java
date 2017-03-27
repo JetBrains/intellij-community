@@ -42,7 +42,7 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
 
   @Override
   protected PythonHelper getRunner() {
-    return PythonHelper.NOSE;
+    return PythonHelper.NOSE_OLD;
   }
 
   @NotNull

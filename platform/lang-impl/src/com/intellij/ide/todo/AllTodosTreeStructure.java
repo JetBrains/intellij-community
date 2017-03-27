@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile;
 /**
  * @author Vladimir Kondratyev
  */
-public final class AllTodosTreeStructure extends TodoTreeStructure {
+public class AllTodosTreeStructure extends TodoTreeStructure {
   public AllTodosTreeStructure(final Project project) {
     super(project);
   }

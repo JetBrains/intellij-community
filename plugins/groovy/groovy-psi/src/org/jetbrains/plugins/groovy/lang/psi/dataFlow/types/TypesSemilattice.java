@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +40,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
   @NotNull
   @Override
-  public TypeDfaState join(@NotNull ArrayList<TypeDfaState> ins) {
+  public TypeDfaState join(@NotNull List<TypeDfaState> ins) {
     if (ins.isEmpty()) return new TypeDfaState();
 
     TypeDfaState result = new TypeDfaState(ins.get(0));
@@ -51,7 +51,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
   }
 
   @Override
-  public boolean eq(TypeDfaState e1, TypeDfaState e2) {
+  public boolean eq(@NotNull TypeDfaState e1, @NotNull TypeDfaState e2) {
     return e1.contentsEqual(e2);
   }
 }

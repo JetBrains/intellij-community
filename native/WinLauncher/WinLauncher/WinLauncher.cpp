@@ -1,5 +1,5 @@
 /*
-* Copyright 2000-2013 JetBrains s.r.o.
+* Copyright 2000-2017 JetBrains s.r.o.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -344,11 +344,24 @@ bool LoadVMOptionsFile(const TCHAR* path, std::vector<std::string>& vmOptionLine
 
 std::string FindToolsJar()
 {
-  std::string toolsJarPath = jvmPath;
-  size_t lastSlash = toolsJarPath.rfind('\\');
+  std::string baseToolsJarPath = jvmPath;
+  // remove trailing slash if any
+  size_t lastSlash = baseToolsJarPath.rfind('\\');
+  if (lastSlash == baseToolsJarPath.length() - 1)
+  {
+      baseToolsJarPath = baseToolsJarPath.substr(0, lastSlash);
+  }
+  // 1) look in the base dir
+  std::string toolsJarPath = baseToolsJarPath + "\\lib\\tools.jar";
+  if (FileExists(toolsJarPath))
+  {
+    return toolsJarPath;
+  }
+  // 2) look in the up dir
+  lastSlash = baseToolsJarPath.rfind('\\');
   if (lastSlash != std::string::npos)
   {
-    toolsJarPath = toolsJarPath.substr(0, lastSlash + 1) + "lib\\tools.jar";
+    toolsJarPath = baseToolsJarPath.substr(0, lastSlash + 1) + "lib\\tools.jar";
     if (FileExists(toolsJarPath))
     {
       return toolsJarPath;
@@ -520,6 +533,7 @@ bool LoadJVMLibrary()
 {
   std::string dllName(jvmPath);
   std::string binDir = dllName + "\\bin";
+  TCHAR currentDir[MAX_PATH];
   std::string serverDllName = binDir + "\\server\\jvm.dll";
   std::string clientDllName = binDir + "\\client\\jvm.dll";
   if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
@@ -532,12 +546,14 @@ bool LoadJVMLibrary()
   }
 
   // ensure we can find msvcr100.dll which is located in jre/bin directory; jvm.dll depends on it.
+  GetCurrentDirectory(sizeof(currentDir),currentDir);
   SetCurrentDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
     pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
   }
+  SetCurrentDirectory(currentDir);
   if (!pCreateJavaVM)
   {
     std::string jvmError = "Failed to load JVM DLL ";

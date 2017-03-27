@@ -25,7 +25,8 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 public interface PsiDocumentTransactionListener {
-  Topic<PsiDocumentTransactionListener> TOPIC = new Topic<PsiDocumentTransactionListener>("psi.DocumentTransactionListener", PsiDocumentTransactionListener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<PsiDocumentTransactionListener> TOPIC =
+    new Topic<>("psi.DocumentTransactionListener", PsiDocumentTransactionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   void transactionStarted(@NotNull Document document, @NotNull PsiFile file);
   void transactionCompleted(@NotNull Document document, @NotNull PsiFile file);

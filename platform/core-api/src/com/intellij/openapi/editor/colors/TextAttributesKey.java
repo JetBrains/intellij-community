@@ -196,7 +196,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   public void setFallbackAttributeKey(@Nullable TextAttributesKey fallbackAttributeKey) {
     myFallbackAttributeKey = fallbackAttributeKey;
     if (fallbackAttributeKey != null) {
-      checkDependencies(fallbackAttributeKey, new THashSet<TextAttributesKey>());
+      checkDependencies(fallbackAttributeKey, new THashSet<>());
     }
   }
   

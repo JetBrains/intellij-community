@@ -15,58 +15,107 @@
  */
 package com.intellij.updater;
 
-import junit.framework.TestCase;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.rules.TempDirectory;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class UtilsTest extends TestCase {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
-  public static boolean mIsWindows = System.getProperty("os.name").startsWith("Windows");
+public class UtilsTest {
+  public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @Rule public TempDirectory tempDir = new TempDirectory();
+
+  @BeforeClass
+  public static void initLogger() {
+    Runner.initTestLogger();
   }
 
+  @Test
   public void testDelete() throws Exception {
-    File f = File.createTempFile("test", "tmp");
+    File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
-    try {
-      Utils.delete(f);
-      assertFalse(f.exists());
-    } finally {
-      f.delete();
-    }
+    Utils.delete(f);
+    assertFalse(f.exists());
   }
 
-  public void testDelete_LockedFile() throws Exception {
-    File f = File.createTempFile("test", "tmp");
+  @Test
+  public void testDeleteLockedFileOnWindows() throws Exception {
+    assumeTrue(IS_WINDOWS);
+
+    File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
     long millis = 0;
-    FileWriter fw = new FileWriter(f);
-    try {
+    try (FileWriter fw = new FileWriter(f)) {
       // This locks the file on Windows, preventing it from being deleted.
       // Utils.delete() will retry for about 100 ms.
       fw.write("test");
       millis = System.currentTimeMillis();
 
       Utils.delete(f);
-
-    } catch (IOException e) {
+      fail("Utils.delete did not fail with the expected IOException on Windows");
+    }
+    catch (IOException e) {
       millis = System.currentTimeMillis() - millis;
-      assertEquals("Cannot delete file " + f.getAbsolutePath(), e.getMessage());
-      assertTrue("Utils.delete took " + millis + " ms, which is less than the expected 100 ms.", millis >= 100);
-      return;
+      assertEquals("Cannot delete: " + f.getAbsolutePath(), e.getMessage());
+      assertThat(millis).as("Utils.delete took " + millis + " ms, which is less than expected").isGreaterThanOrEqualTo(100);
+    }
+  }
 
-    } finally {
-      fw.close();
-      f.delete();
+  @Test
+  public void testDeleteLockedFileOnUnix() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File f = tempDir.newFile("temp_file");
+    assertTrue(f.exists());
+
+    try (FileWriter fw = new FileWriter(f)) {
+      fw.write("test");
+      Utils.delete(f);
+    }
+  }
+
+  @Test
+  public void testRecursiveDelete() throws Exception {
+    File topDir = tempDir.newFolder("temp_dir");
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        File file = new File(topDir, "dir" + i + "/file" + j);
+        FileUtil.writeToFile(file, "test");
+        assertTrue(file.exists());
+      }
     }
 
-    assertFalse("Utils.delete did not fail with the expected IOException on Windows.", mIsWindows);
+    Utils.delete(topDir);
+    assertFalse(topDir.exists());
+  }
+
+  @Test
+  public void testNonRecursiveSymlinkDelete() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File dir = tempDir.newFolder("temp_dir");
+    File file = new File(dir, "file");
+    FileUtil.writeToFile(file, "test");
+    assertThat(dir.listFiles()).containsExactly(file);
+
+    File link = new File(tempDir.getRoot(), "link");
+    Utils.createLink(dir.getName(), link);
+    assertTrue(Utils.isLink(link));
+    assertThat(link.listFiles()).hasSize(1);
+
+    Utils.delete(link);
+    assertFalse(link.exists());
+    assertThat(dir.listFiles()).containsExactly(file);
   }
 }

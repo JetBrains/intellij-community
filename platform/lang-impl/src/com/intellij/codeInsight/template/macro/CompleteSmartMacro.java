@@ -28,6 +28,6 @@ public class CompleteSmartMacro extends BaseCompleteMacro {
 
   @Override
   protected void invokeCompletionHandler(Project project, Editor editor) {
-    new CodeCompletionHandlerBase(CompletionType.SMART).invokeCompletion(project, editor, 1);
+    CodeCompletionHandlerBase.createHandler(CompletionType.SMART).invokeCompletion(project, editor, 1);
   }
 }

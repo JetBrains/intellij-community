@@ -43,7 +43,7 @@ public class CompileScopeImpl extends CompileScope {
                           Collection<BuildTarget<?>> targets,
                           @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
-    myTypesToForceBuild = new HashSet<BuildTargetType<?>>();
+    myTypesToForceBuild = new HashSet<>();
     boolean forceBuildAllModuleBasedTargets = false;
     for (BuildTargetType<?> type : typesToForceBuild) {
       myTypesToForceBuild.add(type);

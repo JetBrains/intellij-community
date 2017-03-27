@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,25 +26,32 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyiInspectionsTest extends PyTestCase {
-  private void doTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
+  private void doTestByExtension(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
+    doTestByFileName(inspectionClass, getTestName(false) + extension);
+  }
+
+  private void doTestByFileName(@NotNull Class<? extends LocalInspectionTool> inspectionClass, String fileName) {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
     myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    final String fileName = getTestName(false) + extension;
     myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, true);
   }
 
   private void doPyTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
-    doTest(inspectionClass, ".py");
+    doTestByExtension(inspectionClass, ".py");
   }
 
   private void doPyiTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
-    doTest(inspectionClass, ".pyi");
+    doTestByExtension(inspectionClass, ".pyi");
   }
 
   public void testUnresolvedModuleAttributes() {
+    doPyTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testHiddenPyiImports() {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
@@ -53,6 +60,14 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testOverloads() {
+    doPyTest(PyTypeCheckerInspection.class);
+  }
+
+  public void testOverloadsWithDifferentNumberOfParameters() {
+    doPyTest(PyTypeCheckerInspection.class);
+  }
+
+  public void testOverloadedGenerics() {
     doPyTest(PyTypeCheckerInspection.class);
   }
 
@@ -72,5 +87,23 @@ public class PyiInspectionsTest extends PyTestCase {
   // PY-19375
   public void testPyiMissingOrEmptyDocstring() {
     doPyiTest(PyMissingOrEmptyDocstringInspection.class);
+  }
+
+  // PY-19374
+  public void testPyiClassForwardReferences() {
+    doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testPyiTopLevelForwardReferencesInAnnotations() {
+    doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testPyiUnusedImports() {
+    doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testPyiRelativeImports() {
+    PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
 }

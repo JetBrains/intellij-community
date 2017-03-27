@@ -30,7 +30,7 @@ import java.util.Collections;
 public class GenerateToStringTest extends LightCodeInsightTestCase {
 
   public void testAnnotationOnMethod() throws Exception {
-    doTest(new TemplateResource("a.java", "@NotNull public String toString() {return null;}", false));
+    doTest(new TemplateResource("a.java", "@NotNull() public String toString() {return null;}", false));
   }
 
   public void testJavadocOnMethod() throws Exception {

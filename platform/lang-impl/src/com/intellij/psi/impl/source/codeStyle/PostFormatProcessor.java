@@ -26,5 +26,7 @@ public interface PostFormatProcessor {
   ExtensionPointName<PostFormatProcessor> EP_NAME = ExtensionPointName.create("com.intellij.postFormatProcessor");
 
   PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings);
+
+  @NotNull
   TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings);
 }

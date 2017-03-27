@@ -40,7 +40,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -58,24 +57,19 @@ public class FindClassTest extends PsiTestCase {
 
     final File root = createTempDirectory();
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      try {
-        VirtualFile rootVFile =
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+      VirtualFile rootVFile =
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
-        myPrjDir1 = createChildDirectory(rootVFile, "prj1");
-        mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
+      myPrjDir1 = createChildDirectory(rootVFile, "prj1");
+      mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
 
-        myPackDir = createChildDirectory(mySrcDir1, "p");
-        VirtualFile file1 = createChildData(myPackDir, "A.java");
-        setFileText(file1, "package p; public class A{ public void foo(); }");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      myPackDir = createChildDirectory(mySrcDir1, "p");
+      VirtualFile file1 = createChildData(myPackDir, "A.java");
+      setFileText(file1, "package p; public class A{ public void foo(); }");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-        PsiTestUtil.addContentRoot(myModule, myPrjDir1);
-        PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      PsiTestUtil.addContentRoot(myModule, myPrjDir1);
+      PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
     });
   }
 

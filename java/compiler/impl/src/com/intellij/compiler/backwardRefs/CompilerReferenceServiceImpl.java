@@ -50,6 +50,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -94,8 +96,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
-          myDirtyScopeHolder.compilerActivityStarted();
-          closeReaderIfNeed();
+          if (project == myProject) {
+            myDirtyScopeHolder.compilerActivityStarted();
+            closeReaderIfNeed(false);
+          }
         }
       });
 
@@ -112,17 +116,19 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         }
 
         private void compilationFinished(CompileContext context) {
-          Runnable compilationFinished = () -> {
-            final Module[] compilationModules = ReadAction.compute(() -> {
-              if (myProject.isDisposed()) return null;
-              return context.getCompileScope().getAffectedModules();
-            });
-            if (compilationModules == null) return;
-            myDirtyScopeHolder.compilerActivityFinished();
-            myCompilationCount.increment();
-            openReaderIfNeed();
-          };
-          executeOnBuildThread(compilationFinished);
+          if (context.getProject() == myProject) {
+            Runnable compilationFinished = () -> {
+              final Module[] compilationModules = ReadAction.compute(() -> {
+                if (myProject.isDisposed()) return null;
+                return context.getCompileScope().getAffectedModules();
+              });
+              if (compilationModules == null) return;
+              myDirtyScopeHolder.compilerActivityFinished();
+              myCompilationCount.increment();
+              openReaderIfNeed();
+            };
+            executeOnBuildThread(compilationFinished);
+          }
         }
       });
 
@@ -130,8 +136,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-          boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          boolean isUpToDate;
+          if (CompilerReferenceReader.exists(myProject)) {
+            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+            isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          } else {
+            isUpToDate = false;
+          }
           executeOnBuildThread(() -> {
             myDirtyScopeHolder.upToDateChecked(isUpToDate);
             if (isUpToDate) {
@@ -146,7 +157,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Override
   public void projectClosed() {
-    closeReaderIfNeed();
+    closeReaderIfNeed(false);
   }
 
   @Nullable
@@ -163,9 +174,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Exception e) {
-      LOG.error("an exception during scope without code references calculation", e);
-      return null;
+    catch (RuntimeException e) {
+      return onException(e, "scope without code references");
     }
   }
 
@@ -221,9 +231,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Exception e) {
-      LOG.error("an exception during hierarchy calculation", e);
-      return null;
+    catch (RuntimeException e) {
+      return onException(e, "hierarchy");
     }
   }
 
@@ -314,7 +323,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         final List<LightRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
                                                                                      psiElement,
                                                                                      myReader.getNameEnumerator(),
-                                                                                     LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+                                                                                     LibraryScopeCache.getInstance(myProject)
+                                                                                       .getLibrariesOnlyScope());
         final LightRef[] fullHierarchy = new LightRef[elements.size() + 1];
         fullHierarchy[0] = ref;
         int i = 1;
@@ -326,16 +336,19 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       else {
         return new CompilerElementInfo(place, ref);
       }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     } finally {
       myReadDataLock.unlock();
     }
   }
 
-  private void closeReaderIfNeed() {
+  private void closeReaderIfNeed(boolean removeIndex) {
     myOpenCloseLock.lock();
     try {
       if (myReader != null) {
-        myReader.close();
+        myReader.close(removeIndex);
         myReader = null;
       }
     } finally {
@@ -478,7 +491,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return fileSet;
   }
 
-  @TestOnly
+  // should not be used in production code
   @NotNull
   public DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
@@ -518,5 +531,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     } finally {
       myReadDataLock.unlock();
     }
+  }
+
+  @Nullable
+  private <T> T onException(@NotNull RuntimeException e, @NotNull String actionName) {
+    final Throwable cause = e.getCause();
+    if (cause instanceof PersistentEnumeratorBase.CorruptedException || cause instanceof StorageException) {
+      closeReaderIfNeed(true);
+    }
+    LOG.error("an exception during " + actionName + " calculation", e);
+    return null;
   }
 }

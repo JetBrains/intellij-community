@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +37,11 @@ public abstract class PyPsiFacade {
     return ServiceManager.getService(project, PyPsiFacade.class);
   }
 
-  public abstract QualifiedNameResolver qualifiedNameResolver(String qNameString);
-  public abstract QualifiedNameResolver qualifiedNameResolver(QualifiedName qualifiedName);
+  @NotNull
+  public abstract List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context);
 
+  @NotNull
+  public abstract PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
   /**
    * @deprecated use {@link #createClassByQName(String, PsiElement)} or skeleton may be found
    */

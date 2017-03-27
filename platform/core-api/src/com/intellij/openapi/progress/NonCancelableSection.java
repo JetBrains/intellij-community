@@ -21,14 +21,12 @@ package com.intellij.openapi.progress;
 
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface NonCancelableSection {
   void done();
 
   @NotNull
-  NonCancelableSection EMPTY = new NonCancelableSection() {
-    @Override
-    public void done() {
-      // do nothing
-    }
+  NonCancelableSection EMPTY = () -> {
+    // do nothing
   };
 }

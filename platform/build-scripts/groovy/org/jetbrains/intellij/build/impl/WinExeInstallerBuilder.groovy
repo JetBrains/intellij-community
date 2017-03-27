@@ -98,9 +98,17 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
-      ant.exec(command: "makensis" +
-                        " '-X!AddPluginDir \"${box}/NSIS/Plugins\"'" +
-                        " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+      buildContext.ant.fixcrlf(file: "$communityHome/build/conf/install_nsis3.sh", eol: "unix")
+      ant.exec(executable: "chmod") {
+        arg(line: " u+x \"${communityHome}/build/conf/install_nsis3.sh\"")
+      }
+      ant.exec(command: "\"$communityHome/build/conf/install_nsis3.sh\"" +
+                        " \"${buildContext.paths.communityHome}\"")
+
+      ant.exec(command: "\"${buildContext.paths.communityHome}/nsis/nsis-3.01/bin/makensis\"" +
+      " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
+      " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+                 " -DNSIS_DIR=\"${box}/NSIS\"" +
                         " -DCOMMUNITY_DIR=\"$communityHome\"" +
                         " -DIPR=\"${customizer.associateIpr}\"" +
                         " -DOUT_FILE=\"${outFileName}\"" +

@@ -69,11 +69,6 @@
                                           <value>
                                             <AnswerPlaceholderSubtaskInfo>
                                               <option name="hint" value="hint 1"/>
-                                              <option name="additionalHints">
-                                                <list>
-                                                  <option value="hint 2"/>
-                                                </list>
-                                              </option>
                                               <option name="possibleAnswer" value="Liana"/>
                                               <option name="selected" value="false"/>
                                               <option name="status" value="Solved"/>

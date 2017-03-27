@@ -293,7 +293,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, 
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
-                       myTotalTestCount - myFinishedTestCount, 
+                       myTotalTestCount - (myFinishedTestCount - myIgnoredTestCount),
                        myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);

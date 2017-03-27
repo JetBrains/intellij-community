@@ -150,13 +150,22 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VirtualFileSystemEntry found = doFindChildInArray(name, ignoreCase);
     if (found != null) return found;
 
+    if (ensureCanonicalName) {
+      String trimmedName = UriUtil.trimTrailingSlashes(UriUtil.trimLeadingSlashes(FileUtilRt.toSystemIndependentName(name)));
+      if (trimmedName.indexOf('/') != -1) return null; // name must not contain slashes in the middle
+      if (trimmedName.isEmpty()) return null;
+      if (!trimmedName.equals(name)) {
+        found = doFindChildInArray(trimmedName, ignoreCase);
+        if (found != null) return found;
+        name = trimmedName;
+      }
+    }
+
     if (allChildrenLoaded()) {
       return NULL_VIRTUAL_FILE;
     }
 
     if (ensureCanonicalName) {
-      name = UriUtil.trimTrailingSlashes(UriUtil.trimLeadingSlashes(FileUtilRt.toSystemIndependentName(name)));
-      if (name.indexOf('/') != -1) return null; // name must not contain slashes in the middle
       VirtualFile fake = new FakeVirtualFile(this, name);
       name = delegate.getCanonicallyCasedName(fake);
       if (name.isEmpty()) return null;
@@ -357,7 +366,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private void assertConsistency(boolean ignoreCase, @NotNull Object details) {
-    if (!CHECK || ApplicationInfoImpl.isInPerformanceTest()) return;
+    if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;
     for (int i = 1; i < childrenIds.length; i++) {
       int id = childrenIds[i];

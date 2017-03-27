@@ -7,24 +7,24 @@ import sys
 
 if use_cython == 'YES':
     # We must import the cython version if forcing cython
-    from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch
+    from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
     def trace_dispatch(py_db, frame, event, arg):
         return _trace_dispatch(py_db, frame, event, arg)
 
 elif use_cython == 'NO':
     # Use the regular version if not forcing cython
-    from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch  # @UnusedImport
+    from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
 
 elif use_cython is None:
     # Regular: use fallback if not found and give message to user
     try:
-        from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch
+        from _pydevd_bundle.pydevd_cython_wrapper import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
         def trace_dispatch(py_db, frame, event, arg):
             return _trace_dispatch(py_db, frame, event, arg)
 
     except ImportError:
         from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
-        from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch  # @UnusedImport
+        from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
         from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
 
         dirname = os.path.dirname(os.path.dirname(__file__))
@@ -39,5 +39,3 @@ elif use_cython is None:
 
 else:
     raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
-
-

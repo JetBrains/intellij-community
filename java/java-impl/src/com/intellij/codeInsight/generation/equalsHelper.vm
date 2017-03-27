@@ -1,5 +1,6 @@
 #set($classInstanceName = $helper.getUniqueLocalVarName($instanceBaseName, $fields, $settings))
 #set($paramName = $helper.getUniqueLocalVarName($baseParamName, $fields, $settings))
+#set($superParamName = $helper.getUniqueLocalVarName($superParamName, $fields, $settings))
 #macro(addClassInstance)
   #if ($settings.generateFinalLocals)
   final ##

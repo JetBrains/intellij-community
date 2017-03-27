@@ -67,12 +67,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
         "PyCharm Community Edition"
       }
-
-      @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        super.copyAdditionalFiles(context, targetDirectory)
-        context.ant.copy(file: "$context.paths.projectHome/python/help/pycharmhelp.jar", todir: "$targetDirectory/help", failonerror: false)
-      }
     }
   }
 
@@ -86,11 +80,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         "pycharm-community-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
       }
-
-      @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        context.ant.copy(file: "$context.paths.projectHome/python/help/pycharmhelp.jar", todir: "$targetDirectory/help", failonerror: false)
-      }
     }
   }
 
@@ -100,7 +89,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        helpId = "PY"
         dmgImagePath = "$projectHome/python/build/DMG_background.png"
       }
 

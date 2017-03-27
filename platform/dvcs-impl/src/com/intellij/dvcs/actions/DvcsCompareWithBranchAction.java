@@ -101,7 +101,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     VirtualFile file = getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
 
     presentation.setVisible(project != null);
-    presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFile(file)));
+    presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFileQuick(file)));
   }
 
   private boolean isEnabled(@Nullable T repository) {

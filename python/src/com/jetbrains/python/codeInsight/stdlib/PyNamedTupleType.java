@@ -103,9 +103,16 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return null;
   }
 
+  @NotNull
   @Override
   public PyClassType toInstance() {
     return myDefinitionLevel == 1 ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, 0) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myDefinitionLevel == 0 ? this : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, 1);
   }
 
   @Override

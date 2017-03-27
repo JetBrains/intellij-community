@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public class PsiSuperMethodUtil {
   private PsiSuperMethodUtil() {}
 
   public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
-    return findConstructorInSuper(constructor, new HashSet<PsiMethod>());
+    return findConstructorInSuper(constructor, new HashSet<>());
   }
 
   public static PsiMethod findConstructorInSuper(PsiMethod constructor, Set<PsiMethod> visited) {
@@ -103,7 +104,7 @@ public class PsiSuperMethodUtil {
       PsiType type = superSubstitutor.substitute(typeParameter);
       final PsiType t = derivedSubstitutor.substitute(type);
       if (map == null) {
-        map = new THashMap<PsiTypeParameter, PsiType>();
+        map = new THashMap<>();
       }
       map.put(typeParameter, t);
     }
@@ -114,7 +115,7 @@ public class PsiSuperMethodUtil {
   @NotNull
   public static Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
-      new THashMap<MethodSignature, Set<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     final GlobalSearchScope resolveScope = aClass.getResolveScope();
     PsiClass[] supers = aClass.getSupers();
     for (int i = 0; i < supers.length; i++) {
@@ -140,7 +141,7 @@ public class PsiSuperMethodUtil {
         final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
         Set<PsiMethod> methods = overrideEquivalent.get(signature);
         if (methods == null) {
-          methods = new LinkedHashSet<PsiMethod>();
+          methods = new LinkedHashSet<>();
           overrideEquivalent.put(signature, methods);
         }
         methods.add(method);
@@ -173,5 +174,16 @@ public class PsiSuperMethodUtil {
     }
 
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
+  }
+
+  @Contract("null, _ -> null")
+  public static PsiMethod correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
+    if (method == null) return null;
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return method;
+    final PsiClass correctedClass = correctClassByScope(aClass, resolveScope);
+    if (correctedClass == null || correctedClass == aClass) return method;
+    final PsiMethod correctedClassMethodBySignature = correctedClass.findMethodBySignature(method, false);
+    return correctedClassMethodBySignature == null ? method : correctedClassMethodBySignature;
   }
 }

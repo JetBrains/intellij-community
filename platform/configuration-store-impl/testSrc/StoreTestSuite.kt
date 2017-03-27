@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.xml.XmlElementStorageTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 

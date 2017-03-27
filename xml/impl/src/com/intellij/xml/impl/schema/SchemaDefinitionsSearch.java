@@ -16,6 +16,7 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -53,7 +54,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<PsiElement> consumer) {
     if (queryParameters instanceof XmlTagImpl) {
       final XmlTagImpl xml = (XmlTagImpl) queryParameters;
-      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> isTypeElement(xml))) {
+      if (ReadAction.compute(() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<Collection<SchemaTypeInfo>>() {
 
           @Override

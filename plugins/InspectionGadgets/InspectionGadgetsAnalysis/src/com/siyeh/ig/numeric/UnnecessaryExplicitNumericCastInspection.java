@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,17 +192,8 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       final PsiType lhsType = variable.getType();
       return !castType.equals(lhsType) || !isLegalAssignmentConversion(operand, lhsType);
     }
-    else if (parent instanceof PsiExpressionList) {
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      final PsiElement grandParent = expressionList.getParent();
-      if (!(grandParent instanceof PsiCallExpression)) {
-        return true;
-      }
-      final PsiCallExpression callExpression = (PsiCallExpression)grandParent;
-      final PsiMethod targetMethod = callExpression.resolveMethod();
-      if (targetMethod == null || targetMethod != MethodCallUtils.findMethodWithReplacedArgument(callExpression, expression, operand)) {
-        return true;
-      }
+    else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expression, operand)) {
+      return true;
     }
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
     return !castType.equals(expectedType) || !isLegalWideningConversion(operand, castType);

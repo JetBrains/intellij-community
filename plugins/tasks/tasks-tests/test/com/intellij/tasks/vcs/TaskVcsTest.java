@@ -338,6 +338,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myChangeListManager.waitUntilRefreshed();
 
     myChangeListManager.moveChangesTo(list, change);
+    myChangeListManager.waitUntilRefreshed();
+
     return changes;
   }
 

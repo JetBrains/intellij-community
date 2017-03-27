@@ -42,7 +42,6 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement container = null;
     WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);

@@ -28,6 +28,6 @@ public class ClassNameCompleteMacro extends BaseCompleteMacro {
 
   @Override
   protected void invokeCompletionHandler(Project project, Editor editor) {
-    new CodeCompletionHandlerBase(CompletionType.CLASS_NAME, false, false, true).invokeCompletion(project, editor);
+    CodeCompletionHandlerBase.createHandler(CompletionType.CLASS_NAME, false, false, true).invokeCompletion(project, editor);
   }
 }

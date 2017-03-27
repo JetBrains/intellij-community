@@ -48,7 +48,7 @@ public interface Queryable {
     public static String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
       PrintInfo print = printInfo != null ? printInfo : new PrintInfo();
 
-      LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+      LinkedHashMap<String, String> map = new LinkedHashMap<>();
       ui.putInfo(map);
 
       if (contributor != null) {

@@ -55,6 +55,6 @@ public class HgActionUtil {
     }
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
-    return file != null ? repositoryManager.getRepositoryForFile(file) : HgUtil.getCurrentRepository(project);
-  }
+    return file != null ? repositoryManager.getRepositoryForFileQuick(file) : HgUtil.getCurrentRepository(project);
+  }                                                                                                         
 }

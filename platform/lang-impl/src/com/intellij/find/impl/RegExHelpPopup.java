@@ -53,7 +53,7 @@ public class RegExHelpPopup extends JPanel {
     myEditorPane.setEditable(false);
     myEditorPane.setEditorKit(new HTMLEditorKit());
     myEditorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
+    myEditorPane.setBackground(HintUtil.getInformationColor());
 
     myEditorPane.setText("<html><h2> Summary of regular-expression constructs</h2> \n" +
                          " \n" +

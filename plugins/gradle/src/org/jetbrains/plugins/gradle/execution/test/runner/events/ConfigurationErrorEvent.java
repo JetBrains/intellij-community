@@ -29,7 +29,6 @@ import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.service.project.GradleNotification;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import javax.swing.event.HyperlinkEvent;
 
@@ -44,12 +43,10 @@ public class ConfigurationErrorEvent extends AbstractTestEvent {
   }
 
   @Override
-  public void process(XmlXpathHelper xml) throws XmlXpathHelper.XmlParserException {
-    final String errorTitle = xml.queryXml("/ijLog/event/title");
-    assert errorTitle != null;
-    final String configurationErrorMsg = xml.queryXml("/ijLog/event/message");
-    assert configurationErrorMsg != null;
-    final boolean openSettings = Boolean.valueOf(xml.queryXml("/ijLog/event/@openSettings"));
+  public void process(@NotNull final TestEventXmlView xml) throws TestEventXmlView.XmlParserException {
+    final String errorTitle = xml.getEventTitle();
+    final String configurationErrorMsg = xml.getEventMessage();
+    final boolean openSettings = xml.isEventOpenSettings();
     final Project project = getProject();
     assert project != null;
     final String message =

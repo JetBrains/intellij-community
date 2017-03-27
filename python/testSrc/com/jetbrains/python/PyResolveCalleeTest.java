@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,49 +22,54 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Tests callee resolution in PyCallExpressionImpl.
- * User: dcheryasov
- * Date: Aug 21, 2008
- */
+import java.util.List;
+
 public class PyResolveCalleeTest extends PyTestCase {
 
+  @NotNull
   private PyCallExpression.PyMarkedCallee resolveCallee() {
-    PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/callee/" + getTestName(false) + ".py");
-    PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
+    final PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/callee/" + getTestName(false) + ".py");
+    final PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
+
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-    return call.resolveCallee(PyResolveContext.noImplicits().withTypeEvalContext(context));
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+    final List<PyCallExpression.PyMarkedCallee> callees = call.multiResolveCallee(resolveContext);
+    assertEquals(1, callees.size());
+
+    return callees.get(0);
   }
 
   public void testInstanceCall() {
-    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testClassCall() {
-    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(null, resolved.getModifier());
   }
 
   public void testDecoCall() {
-    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testDecoParamCall() {
-    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertNull(resolved.getModifier());
   }
   
   public void testWrappedStaticMethod() {
-    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(0, resolved.getImplicitOffset());
-    assertEquals(resolved.getModifier(), PyFunction.Modifier.STATICMETHOD);
+    assertEquals(PyFunction.Modifier.STATICMETHOD, resolved.getModifier());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,21 +105,32 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   /**
    * Get class properties.
    *
-   * @return Map [property_name] = [{@link com.jetbrains.python.psi.Property}]
+   * @return Map [property_name] = [{@link Property}]
    */
   @NotNull
   Map<String, Property> getProperties();
 
   /**
-   * Finds a method with given name.
+   * Finds a method with the given name.
    *
    * @param name      what to look for
-   * @param inherited true: search in superclasses; false: only look for methods defined in this class.
-   * @param context
-   * @return
+   * @param inherited true: search in superclasses; false: only look for methods defined in this class
+   * @param context   context to be used to resolve ancestors
+   * @return method with given name or null.
    */
   @Nullable
   PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited, TypeEvalContext context);
+
+  /**
+   * Finds a method with the given name and all its overloads.
+   *
+   * @param name      what to look for
+   * @param inherited true: search in superclasses; false: only look for methods defined in this class
+   * @param context   context to be used to resolve ancestors
+   * @return all methods with the given name or empty list.
+   */
+  @NotNull
+  List<PyFunction> multiFindMethodByName(@NotNull String name, boolean inherited, @Nullable TypeEvalContext context);
 
   /**
    * Finds either __init__ or __new__, whichever is defined for given class.
@@ -283,7 +294,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
 
   /**
    * @param context eval context
-   * @return {@link com.jetbrains.python.psi.types.PyType} casted if it has right type
+   * @return {@link PyType} casted if it has right type
    */
   @Nullable
   PyClassLikeType getType(@NotNull TypeEvalContext context);

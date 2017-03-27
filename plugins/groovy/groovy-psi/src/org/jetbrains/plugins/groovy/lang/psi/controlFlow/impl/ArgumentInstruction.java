@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,17 +81,19 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
     return false;
   }
 
-  private static GrCall findCall(PsiElement element) {
-    PsiElement parent = element.getParent().getParent();
-    if (!(parent instanceof GrCall)) {
+  private static GrCall findCall(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    PsiElement pParent = parent == null ? null : parent.getParent();
+    if (!(pParent instanceof GrCall)) {
       LOG.error("elemText: " + element.getText() +
                 "\nisValid = " + element.isValid() +
-                "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
-                "\nPParent = " + (parent == null ? "null" : parent.getClass()));
+                "\nParent = " + (parent == null ? "null" : parent.getClass()) +
+                "\nPParent = " + (pParent == null ? "null" : pParent.getClass()));
     }
-    return (GrCall)parent;
+    return (GrCall)pParent;
   }
 
+  @Nullable
   @Override
   public ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow) {
     Instruction instruction = ControlFlowUtils.findInstruction(getElement(), flow);
@@ -103,17 +105,20 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
     }
   }
 
+  @Nullable
   @Override
   public String getVariableName() {
     //noinspection ConstantConditions
     return ((GrReferenceExpression)getElement()).getReferenceName();
   }
 
+  @Nullable
   @Override
   public ConditionInstruction getConditionInstruction() {
     return null;
   }
 
+  @NotNull
   @Override
   protected String getElementPresentation() {
     return "ARGUMENT " + super.getElementPresentation();

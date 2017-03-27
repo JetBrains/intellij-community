@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.Consumer;
@@ -70,8 +71,13 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public void addAllElements(@NotNull final Iterable<? extends LookupElement> elements) {
+    int seldomCounter = 0;
     for (LookupElement element : elements) {
+      seldomCounter++;
       addElement(element);
+      if (seldomCounter % 1000 == 0) {
+        ProgressManager.checkCanceled();
+      }
     }
   }
 
@@ -132,11 +138,27 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myCompletionService.getVariantsFromContributors(parameters, myContributor, consumer);
   }
 
+  /**
+   * Request that the completion contributors be run again when the user changes the prefix so that it becomes equal to the one given.
+   */
   public void restartCompletionOnPrefixChange(String prefix) {
     restartCompletionOnPrefixChange(StandardPatterns.string().equalTo(prefix));
   }
 
+  /**
+   * Request that the completion contributors be run again when the user changes the prefix in a way satisfied by the given condition.
+   */
   public abstract void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition);
 
+  /**
+   * Request that the completion contributors be run again when the user changes the prefix in any way.
+   */
+  public void restartCompletionOnAnyPrefixChange() {
+    restartCompletionOnPrefixChange(StandardPatterns.string());
+  }
+
+  /**
+   * Request that the completion contributors be run again when the user types something into the editor so that no existing lookup elements match that prefix anymore.
+   */
   public abstract void restartCompletionWhenNothingMatches();
 }

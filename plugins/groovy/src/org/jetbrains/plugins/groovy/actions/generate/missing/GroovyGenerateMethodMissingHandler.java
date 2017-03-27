@@ -103,11 +103,6 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
     return GenerationInfo.EMPTY_ARRAY;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Nullable
   @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {

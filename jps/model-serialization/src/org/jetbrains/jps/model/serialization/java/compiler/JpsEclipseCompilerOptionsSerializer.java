@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,6 @@ public class JpsEclipseCompilerOptionsSerializer extends JpsProjectExtensionSeri
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     EclipseCompilerOptions options = XmlSerializer.deserialize(componentTag, EclipseCompilerOptions.class);
-    if (options == null) {
-      options = new EclipseCompilerOptions();
-    }
     configuration.setCompilerOptions(myCompilerId, options);
   }
 

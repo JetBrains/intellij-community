@@ -45,7 +45,7 @@ public class ChangeListChooser extends DialogWrapper {
     myPanel = new ChangeListChooserPanel(myProject, new NullableConsumer<String>() {
       public void consume(final @Nullable String errorMessage) {
         setOKActionEnabled(errorMessage == null);
-        setErrorText(errorMessage);
+        setErrorText(errorMessage, myPanel);
       }
     });
 

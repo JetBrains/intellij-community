@@ -16,7 +16,6 @@
 package git4idea.checkout;
 
 import com.intellij.dvcs.ui.DvcsBundle;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -48,7 +47,7 @@ public class GitCheckoutProcessor extends VcsCheckoutProcessor {
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     Project project = frame == null || frame.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
     return GitCheckoutProvider.doClone(project,
-                                       ServiceManager.getService(Git.class),
+                                       Git.getInstance(),
                                        directoryName, parentDirectory.getPath(), parameters.get("url"));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,18 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.sun.jdi.TypeComponent;
 import com.sun.jdi.VirtualMachine;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Nikolay.Tropin
  */
 public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider {
   @Override
-  public boolean isSynthetic(TypeComponent typeComponent) {
+  public boolean isSynthetic(@NotNull TypeComponent typeComponent) {
+    return checkIsSynthetic(typeComponent);
+  }
+
+  public static boolean checkIsSynthetic(@NotNull TypeComponent typeComponent) {
     String name = typeComponent.name();
     if (DebuggerUtilsEx.isLambdaName(name)) {
       return false;

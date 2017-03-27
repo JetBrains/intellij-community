@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -683,7 +683,6 @@ public class PsiImplUtil {
   public static <T extends PsiJavaCodeReferenceElement> JavaResolveResult[] multiResolveImpl(@NotNull T element,
                                                                                              boolean incompleteCode,
                                                                                              @NotNull ResolveCache.PolyVariantContextResolver<? super T> resolver) {
-
     FileASTNode fileElement = SharedImplUtil.findFileElement(element.getNode());
     if (fileElement == null) {
       PsiUtilCore.ensureValid(element);
@@ -719,9 +718,7 @@ public class PsiImplUtil {
                                                                                              @NotNull T element,
                                                                                              boolean incompleteCode,
                                                                                              @NotNull ResolveCache.PolyVariantContextResolver<? super T> resolver) {
-
-    ResolveResult[] results =
-      ResolveCache.getInstance(project).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);
+    ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(element, resolver, true, incompleteCode, psiFile);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 

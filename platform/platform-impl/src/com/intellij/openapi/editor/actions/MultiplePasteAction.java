@@ -86,9 +86,9 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     }
 
     if (chooser.isOK()) {
-      final int[] selectedIndices = chooser.getSelectedIndices();
-      if (selectedIndices.length == 1) {
-        copyPasteManager.moveContentToStackTop(chooser.getAllContents().get(selectedIndices[0]));
+      List<Transferable> selectedContents = chooser.getSelectedContents();
+      if (selectedContents.size() == 1) {
+        copyPasteManager.moveContentToStackTop(selectedContents.get(0));
       }
       else {
         copyPasteManager.setContents(new StringSelection(chooser.getSelectedText()));

@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="java-psi-api" />
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="python-community-plugin-core" />
   </component>
 </module>

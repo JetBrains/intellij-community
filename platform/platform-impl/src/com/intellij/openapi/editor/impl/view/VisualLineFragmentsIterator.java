@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
       myInlays = myView.getEditor().getInlayModel().getInlineElementsInRange(
         mySegmentStartOffset,
-        mySegmentEndOffset - ((normalLineEnd && mySegmentEndOffset > mySegmentStartOffset) ? 0 : 1)); // including inlays at line end
+        mySegmentEndOffset - (normalLineEnd ? 0 : 1)); // including inlays at line end
       if (!myInlays.isEmpty() && myInlays.get(0).getOffset() == mySegmentStartOffset) {
         myCurrentInlayIndex = 0;
         myFragmentIterator = null;

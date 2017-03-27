@@ -282,7 +282,7 @@ public class HighlightControlFlowUtil {
         if (topBlock == null) return null;
         final PsiElement parent = topBlock.getParent();
         // access to final fields from inner classes always allowed
-        if (inInnerClass(expression, ((PsiField)variable).getContainingClass(),containingFile)) return null;
+        if (inInnerClass(expression, ((PsiField)variable).getContainingClass())) return null;
         final PsiCodeBlock block;
         final PsiClass aClass;
         if (parent instanceof PsiMethod) {
@@ -401,14 +401,18 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass, @NotNull PsiFile containingFile) {
+  private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass) {
     PsiElement element = psiElement;
     while (element != null) {
       if (element instanceof PsiClass) {
-        final boolean innerClass = !containingFile.getManager().areElementsEquivalent(element, containingClass);
+        final boolean innerClass = !psiElement.getManager().areElementsEquivalent(element, containingClass);
         if (innerClass) {
+          if (element instanceof PsiAnonymousClass) {
+            return !(PsiTreeUtil.isAncestor(((PsiAnonymousClass)element).getArgumentList(), psiElement, false) ||
+                     insideClassInitialization(containingClass, (PsiClass)element));
+          }
           final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiElement, PsiLambdaExpression.class);
-          return lambdaExpression == null || !inLambdaInsideClassInitialization(containingClass, (PsiClass)element);
+          return lambdaExpression == null || !insideClassInitialization(containingClass, (PsiClass)element);
         }
         return false;
       }
@@ -417,7 +421,7 @@ public class HighlightControlFlowUtil {
     return false;
   }
 
-  private static boolean inLambdaInsideClassInitialization(@Nullable PsiClass containingClass, PsiClass aClass) {
+  private static boolean insideClassInitialization(@Nullable PsiClass containingClass, PsiClass aClass) {
     PsiMember member = aClass;
     while (member != null) {
       if (member.getContainingClass() == containingClass) {

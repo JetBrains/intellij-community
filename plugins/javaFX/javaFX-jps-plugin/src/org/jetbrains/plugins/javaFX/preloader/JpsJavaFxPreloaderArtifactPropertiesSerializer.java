@@ -58,12 +58,7 @@ public class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactP
     if (state == null) {
       return;
     }
-    final Element element = XmlSerializer.serialize(properties);
-
-    if (element == null) {
-      return;
-    }
-    state.setOptions(element);
+    state.setOptions(XmlSerializer.serialize(properties));
   }
 
   private static ArtifactPropertiesState findApplicationProperties(List<ArtifactPropertiesState> stateList) {

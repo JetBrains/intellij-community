@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class SymbolCollectingProcessor extends BaseScopeProcessor implements ElementClassHint {
-  private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<String, ResultWithContext>();
+  private final MostlySingularMultiMap<String, ResultWithContext> myResult = new MostlySingularMultiMap<>();
   private PsiElement myCurrentFileContext;
 
   @Override

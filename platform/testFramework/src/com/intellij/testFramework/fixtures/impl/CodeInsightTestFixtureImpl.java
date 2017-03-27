@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,7 @@ import com.intellij.refactoring.rename.*;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -201,9 +202,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+
     ProcessCanceledException exception = null;
     for (int i = 0; i < 1000; i++) {
+      int oldDelay = settings.AUTOREPARSE_DELAY;
       try {
+        settings.AUTOREPARSE_DELAY = 0;
         List<HighlightInfo> infos = codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
         return infos;
@@ -212,6 +217,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         UIUtil.dispatchAllInvocationEvents();
         exception = e;
+      }
+      finally {
+        settings.AUTOREPARSE_DELAY = oldDelay;
       }
     }
     // unable to highlight after 100 retries
@@ -536,6 +544,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getAvailableIntentions().stream().filter(action -> action.getText().startsWith(hint)).collect(Collectors.toList());
   }
 
+  @NotNull
   @Override
   public IntentionAction findSingleIntention(@NotNull String hint) {
     final List<IntentionAction> list = filterAvailableIntentions(hint);
@@ -1432,6 +1441,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final long elapsed = System.currentTimeMillis() - start;
 
     data.checkResult(infos, file.getText());
+    if (data.hasLineMarkers()) {
+      Document document = getDocument(getFile());
+      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
+    }
     //noinspection ResultOfMethodCallIgnored
     hardRefToFileElement.hashCode(); // use it so gc won't collect it
     return elapsed;
@@ -1684,6 +1697,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
+    }
+  }
+
+  @Override
+  public void testInlays() {
+    InlayHintsChecker checker = new InlayHintsChecker(this);
+    try {
+      checker.setUp();
+      checker.checkInlays();
+    }
+    finally {
+      checker.tearDown();
     }
   }
 

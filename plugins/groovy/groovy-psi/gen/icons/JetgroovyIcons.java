@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class JetgroovyIcons {
     public static final Icon AnnotationType = load("/icons/groovy/annotationType.png"); // 16x16
     public static final Icon Ant_task = load("/icons/groovy/ant_task.png"); // 16x16
     public static final Icon Class = load("/icons/groovy/class.png"); // 16x16
+    public static final Icon ClassInitializer = load("/icons/groovy/classInitializer.png"); // 16x16
     public static final Icon DynamicProperty = load("/icons/groovy/dynamicProperty.png"); // 16x16
     public static final Icon DynamicProperty_13 = load("/icons/groovy/dynamicProperty_13.png"); // 13x13
     public static final Icon Enum = load("/icons/groovy/enum.png"); // 16x16
@@ -56,6 +57,7 @@ public class JetgroovyIcons {
     public static final Icon Groovy_32x32 = load("/icons/groovy/groovy_32x32.png"); // 32x32
     public static final Icon Groovy_outsideSources = load("/icons/groovy/groovy_outsideSources.png"); // 16x16
     public static final Icon GroovyDoc = load("/icons/groovy/GroovyDoc.png"); // 16x16
+    public static final Icon GroovyFile = load("/icons/groovy/groovyFile.png"); // 16x16
     public static final Icon GroovyModule = load("/icons/groovy/groovyModule.png"); // 24x24
     public static final Icon Interface = load("/icons/groovy/interface.png"); // 16x16
     public static final Icon Method = load("/icons/groovy/method.png"); // 16x16

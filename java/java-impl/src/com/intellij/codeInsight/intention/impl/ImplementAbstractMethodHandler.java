@@ -178,9 +178,10 @@ public class ImplementAbstractMethodHandler {
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
+    private final PsiClassListCellRenderer myRenderer = new PsiClassListCellRenderer();
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = PsiClassListCellRenderer.INSTANCE.getComparator();
+      final Comparator<PsiClass> comparator = myRenderer.getComparator();
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());
@@ -193,7 +194,7 @@ public class ImplementAbstractMethodHandler {
 
     @Override
     public String getElementText(PsiElement element) {
-      return element instanceof PsiClass ? PsiClassListCellRenderer.INSTANCE.getElementText((PsiClass)element)
+      return element instanceof PsiClass ? myRenderer.getElementText((PsiClass)element)
                                          : ((PsiEnumConstant)element).getName();
     }
 

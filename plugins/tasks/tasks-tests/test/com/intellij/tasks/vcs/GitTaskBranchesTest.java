@@ -36,7 +36,7 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+    GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.gitExecutable());
   }
 
   @Override

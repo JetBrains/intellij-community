@@ -87,7 +87,7 @@ public class HgBookmarkDialog extends DialogWrapper {
     String name = getName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);
-      setErrorText(message == null ? "You have to specify bookmark name." : message);
+      setErrorText(message == null ? "You have to specify bookmark name." : message, myBookmarkName);
       setOKActionEnabled(false);
       return;
     }

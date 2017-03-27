@@ -1,7 +1,0 @@
-void f(boolean b) {
-  if (b) {
-    System.out.println("When true");
-  } <spot>else</spot> {
-    System.out.println("Otherwise");
-  }
-}

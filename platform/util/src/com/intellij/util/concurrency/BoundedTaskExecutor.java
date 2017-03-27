@@ -213,7 +213,11 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
             }
             catch (Throwable e) {
               // do not lose queued tasks because of this exception
-              LOG.error(e);
+              try {
+                LOG.error(e);
+              }
+              catch (Throwable ignored) {
+              }
             }
             task = pollOrGiveUp(status);
           }

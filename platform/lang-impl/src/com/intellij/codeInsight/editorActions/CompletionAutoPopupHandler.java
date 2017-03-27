@@ -90,7 +90,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
-      new CodeCompletionHandlerBase(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false, restart);
+      CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false, restart);
     }
     catch (IndexNotReadyException ignored) {
     }

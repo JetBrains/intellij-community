@@ -103,12 +103,9 @@ public class ExceptionUtil {
       if (expr == null) return Collections.emptyList();
       final List<PsiType> types = getPreciseThrowTypes(expr);
       List<PsiClassType> classTypes =
-        new ArrayList<PsiClassType>(ContainerUtil.mapNotNull(types, new NullableFunction<PsiType, PsiClassType>() {
-          @Override
-          public PsiClassType fun(PsiType type) {
-            return type instanceof PsiClassType ? (PsiClassType)type : null;
-          }
-        }));
+        new ArrayList<>(ContainerUtil.mapNotNull(types, (NullableFunction<PsiType, PsiClassType>)type -> type instanceof PsiClassType
+                                                                                                         ? (PsiClassType)type
+                                                                                                         : null));
       addExceptions(classTypes, getThrownExceptions(expr));
       return classTypes;
     }
@@ -280,7 +277,7 @@ public class ExceptionUtil {
       final PsiClass aClass = constructor.getContainingClass();
       final PsiClass superClass = aClass == null ? null : aClass.getSuperClass();
       final PsiMethod[] superConstructors = superClass == null ? PsiMethod.EMPTY_ARRAY : superClass.getConstructors();
-      Set<PsiClassType> unhandled = new HashSet<PsiClassType>();
+      Set<PsiClassType> unhandled = new HashSet<>();
       for (PsiMethod superConstructor : superConstructors) {
         if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) && superConstructor.getParameterList().getParametersCount() == 0) {
           final PsiClassType[] exceptionTypes = superConstructor.getThrowsList().getReferencedTypes();
@@ -296,7 +293,7 @@ public class ExceptionUtil {
       // plus all exceptions thrown in instance class initializers
       if (aClass != null) {
         final PsiClassInitializer[] initializers = aClass.getInitializers();
-        final Set<PsiClassType> thrownByInitializer = new THashSet<PsiClassType>();
+        final Set<PsiClassType> thrownByInitializer = new THashSet<>();
         for (PsiClassInitializer initializer : initializers) {
           if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
           thrownByInitializer.clear();
@@ -319,7 +316,7 @@ public class ExceptionUtil {
 
     if (unhandledExceptions != null) {
       if (foundExceptions == null) {
-        foundExceptions = new THashSet<PsiClassType>();
+        foundExceptions = new THashSet<>();
       }
       foundExceptions.addAll(unhandledExceptions);
     }
@@ -470,18 +467,15 @@ public class ExceptionUtil {
       try {
         PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
         final List<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.mapNotNull(
-          processor.getResults(), new Function<CandidateInfo, Pair<PsiMethod, PsiSubstitutor>>() {
-          @Override
-          public Pair<PsiMethod, PsiSubstitutor> fun(CandidateInfo info) {
-            PsiElement element = info.getElement();
+          processor.getResults(), info -> {
+            PsiElement element1 = info.getElement();
             if (info instanceof MethodCandidateInfo &&
-                MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element) &&
-                !MethodSignatureUtil.isSuperMethod((PsiMethod)element, method)) {
-              return Pair.create((PsiMethod)element, ((MethodCandidateInfo)info).getSubstitutor(false));
+                MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)element1) &&
+                !MethodSignatureUtil.isSuperMethod((PsiMethod)element1, method)) {
+              return Pair.create((PsiMethod)element1, ((MethodCandidateInfo)info).getSubstitutor(false));
             }
             return null;
-          }
-        });
+          });
         if (candidates.size() > 1) {
           GlobalSearchScope scope = methodCall.getResolveScope();
           final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions, scope);
@@ -504,7 +498,7 @@ public class ExceptionUtil {
   }
 
   public static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
-    final List<PsiClassType> replacement = new ArrayList<PsiClassType>();
+    final List<PsiClassType> replacement = new ArrayList<>();
     for (Iterator<PsiClassType> iterator = ex.iterator(); iterator.hasNext(); ) {
       PsiClassType classType = iterator.next();
       boolean found = false;
@@ -515,21 +509,19 @@ public class ExceptionUtil {
         } else if (classType.isAssignableFrom(psiClassType)) {
           if (isUncheckedException(classType) == isUncheckedException(psiClassType)) {
             replacement.add(psiClassType);
-            iterator.remove();
           }
-          found = true;
-          break;
         }
       }
       if (!found) {
         iterator.remove();
       }
     }
+    ex.removeAll(replacement);
     ex.addAll(replacement);
   }
 
   public static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions, GlobalSearchScope scope) {
-    final List<PsiClassType> ex = new ArrayList<PsiClassType>();
+    final List<PsiClassType> ex = new ArrayList<>();
     for (PsiClassType thrownException : thrownExceptions) {
       final PsiType psiType = PsiClassImplUtil.correctType(substitutor.substitute(thrownException), scope);
       if (psiType instanceof PsiClassType) {
@@ -602,7 +594,7 @@ public class ExceptionUtil {
 
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiThrowStatement throwStatement, @Nullable PsiElement topElement) {
-    List<PsiClassType> unhandled = new SmartList<PsiClassType>();
+    List<PsiClassType> unhandled = new SmartList<>();
     for (PsiType type : getPreciseThrowTypes(throwStatement.getException())) {
       List<PsiType> types = type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
       for (PsiType subType : types) {

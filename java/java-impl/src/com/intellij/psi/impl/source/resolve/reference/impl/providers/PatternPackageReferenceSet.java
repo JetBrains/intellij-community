@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@ import java.util.regex.Pattern;
 
 public class PatternPackageReferenceSet extends PackageReferenceSet {
 
-  public PatternPackageReferenceSet(String packageName, PsiElement element, int startInElement, @NotNull GlobalSearchScope scope ) {
+  public PatternPackageReferenceSet(@NotNull String packageName,
+                                    @NotNull PsiElement element,
+                                    int startInElement,
+                                    @NotNull GlobalSearchScope scope) {
     super(packageName, element, startInElement, scope);
   }
 
@@ -43,15 +46,15 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
       final Set<PsiPackage> packages = new LinkedHashSet<>();
       int indexOf = packageName.indexOf("*");
       if (indexOf == 0 || context.getQualifiedName().startsWith(packageName.substring(0, indexOf))) {
-          final Pattern pattern = PatternUtil.fromMask(packageName);
-          processSubPackages(context, psiPackage -> {
-            String name = psiPackage.getName();
-            if (name != null && pattern.matcher(name).matches()) {
-              packages.add(psiPackage);
-            }
-            return true;
-          });
-        }
+        final Pattern pattern = PatternUtil.fromMask(packageName);
+        processSubPackages(context, psiPackage -> {
+          String name = psiPackage.getName();
+          if (name != null && pattern.matcher(name).matches()) {
+            packages.add(psiPackage);
+          }
+          return true;
+        });
+      }
 
       return packages;
     }

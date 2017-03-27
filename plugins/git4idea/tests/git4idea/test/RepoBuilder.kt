@@ -15,8 +15,9 @@
  */
 package git4idea.test
 
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.touch
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.*
 import java.io.File
 import java.util.*
 

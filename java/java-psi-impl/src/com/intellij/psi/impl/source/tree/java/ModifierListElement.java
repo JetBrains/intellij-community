@@ -52,7 +52,7 @@ public class ModifierListElement extends CompositeElement {
     return ChildRoleBase.NONE;
   }
 
-  private static final HashMap<String, Integer> ourModifierToOrderMap = new HashMap<String, Integer>();
+  private static final HashMap<String, Integer> ourModifierToOrderMap = new HashMap<>();
 
   static { //TODO : options?
     ourModifierToOrderMap.put(PsiModifier.PUBLIC, 1);

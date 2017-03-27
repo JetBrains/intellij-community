@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,6 +234,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySelectionTouched = selectionTouched;
   }
 
+  @TestOnly
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
+  }
+
+  protected void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
+    myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
+  }
+
   public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 
@@ -420,7 +429,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 
-  private boolean isSelectionVisible() {
+  protected boolean isSelectionVisible() {
     return ScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
@@ -439,7 +448,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void updateListHeight(ListModel model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
 
-    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT));
+    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().getMaxLookupListHeight()));
   }
 
   private void addEmptyItem(CollectionListModel<LookupElement> model) {
@@ -477,6 +486,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(char completionChar, @Nullable final LookupElement item) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "finishLookup should be called without a write action");
+    final PsiFile file = getPsiFile();
+    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
+    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
+      return;
+    }
+
+    if (!writableOk) {
+      doHide(false, true);
+      fireItemSelected(null, completionChar);
+      return;
+    }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookupInWritableFile(completionChar, item), null, null);
+  }
+
+  void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
     //noinspection deprecation,unchecked
     if (item == null ||
         !item.isValid() ||
@@ -490,18 +515,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     if (myDisposed) { // DeferredUserLookupValue could close us in any way
-      return;
-    }
-
-    final PsiFile file = getPsiFile();
-    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
-    if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
-      return;
-    }
-
-    if (!writableOk) {
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
       return;
     }
 
@@ -535,7 +548,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myOffsets.getPrefixLength(item, this);
   }
 
-  private void insertLookupString(LookupElement item, final int prefix) {
+  protected void insertLookupString(LookupElement item, final int prefix) {
     final String lookupString = getCaseCorrectedLookupString(item);
 
     final Editor hostEditor = getTopLevelEditor();
@@ -605,7 +618,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       if (!isLower && !isUpper) continue;
       isAllLower = isAllLower && isLower;
       isAllUpper = isAllUpper && isUpper;
-      sameCase = sameCase && isLower == Character.isLowerCase(lookupString.charAt(i));
+      sameCase = sameCase && i < lookupString.length() && isLower == Character.isLowerCase(lookupString.charAt(i));
     }
     if (sameCase) return lookupString;
     if (isAllLower) return lookupString.toLowerCase();

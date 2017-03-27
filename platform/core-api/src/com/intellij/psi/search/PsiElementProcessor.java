@@ -42,7 +42,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
     private final Collection<T> myCollection;
 
     public CollectElements() {
-      this(new ArrayList<T>());
+      this(new ArrayList<>());
     }
 
     public CollectElements(@NotNull Collection<T> collection) {

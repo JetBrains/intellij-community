@@ -35,6 +35,9 @@ public interface ExternalProject extends Model, Serializable {
   String getExternalSystemId();
 
   @NotNull
+  String getId();
+
+  @NotNull
   String getName();
 
   @NotNull

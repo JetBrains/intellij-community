@@ -28,53 +28,23 @@ public class ProjectScope {
 
   private static final NotNullLazyKey<GlobalSearchScope, Project> ALL_SCOPE_KEY = NotNullLazyKey.create(
     "ALL_SCOPE_KEY",
-    new NotNullFunction<Project, GlobalSearchScope>() {
-      @NotNull
-      @Override
-      public GlobalSearchScope fun(Project project) {
-        return ProjectScopeBuilder.getInstance(project).buildAllScope();
-      }
-    });
+    project -> ProjectScopeBuilder.getInstance(project).buildAllScope());
   private static final NotNullLazyKey<GlobalSearchScope, Project> PROJECT_SCOPE_KEY = NotNullLazyKey.create(
     "PROJECT_SCOPE_KEY",
-    new NotNullFunction<Project, GlobalSearchScope>() {
-      @NotNull
-      @Override
-      public GlobalSearchScope fun(Project project) {
-        return ProjectScopeBuilder.getInstance(project).buildProjectScope();
-      }
-    });
+    project -> ProjectScopeBuilder.getInstance(project).buildProjectScope());
   private static final NotNullLazyKey<GlobalSearchScope, Project> LIBRARIES_SCOPE_KEY = NotNullLazyKey.create(
     "LIBRARIES_SCOPE_KEY",
-    new NotNullFunction<Project, GlobalSearchScope>() {
-      @NotNull
-      @Override
-      public GlobalSearchScope fun(Project project) {
-        return ProjectScopeBuilder.getInstance(project).buildLibrariesScope();
-      }
-    });
+    project -> ProjectScopeBuilder.getInstance(project).buildLibrariesScope());
   private static final NotNullLazyKey<GlobalSearchScope, Project> CONTENT_SCOPE_KEY = NotNullLazyKey.create(
     "CONTENT_SCOPE_KEY",
-    new NotNullFunction<Project, GlobalSearchScope>() {
-      @NotNull
-      @Override
-      public GlobalSearchScope fun(Project project) {
-        return ProjectScopeBuilder.getInstance(project).buildContentScope();
-      }
-    });
+    project -> ProjectScopeBuilder.getInstance(project).buildContentScope());
   private static final NotNullLazyKey<EverythingGlobalScope, Project> EVERYTHING_SCOPE_KEY = NotNullLazyKey.create(
     "EVERYTHING_SCOPE_KEY",
-    new NotNullFunction<Project, EverythingGlobalScope>() {
+    project -> new EverythingGlobalScope(project) {
       @NotNull
       @Override
-      public EverythingGlobalScope fun(Project project) {
-        return new EverythingGlobalScope(project) {
-          @NotNull
-          @Override
-          public String getDisplayName() {
-            return "All Places";
-          }
-        };
+      public String getDisplayName() {
+        return "All Places";
       }
     });
 

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -94,7 +95,7 @@ public abstract class LocalToFieldHandler {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE, "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass aClass) {
           AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
@@ -158,9 +159,11 @@ public abstract class LocalToFieldHandler {
         field.getInitializer().replace(initializer);
       }
 
-      for (PsiAnnotation annotation : local.getModifierList().getAnnotations()) {
-        field.getModifierList().add(annotation.copy());
-      }
+      PsiModifierList sourceModifierList = local.getModifierList();
+      LOG.assertTrue(sourceModifierList != null);
+      PsiModifierList fieldModifierList = field.getModifierList();
+      LOG.assertTrue(fieldModifierList != null);
+      GenerateMembersUtil.copyAnnotations(sourceModifierList, fieldModifierList);
       return field;
     }
     catch (IncorrectOperationException e) {

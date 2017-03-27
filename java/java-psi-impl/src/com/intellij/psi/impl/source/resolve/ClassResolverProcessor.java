@@ -220,7 +220,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
     boolean accessible = myPlace == null || checkAccessibility(aClass);
     if (myCandidates == null) {
-      myCandidates = new SmartList<ClassCandidateInfo>();
+      myCandidates = new SmartList<>();
     }
     else {
       String fqName = aClass.getQualifiedName();

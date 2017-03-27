@@ -15,6 +15,7 @@
  */
 package com.intellij.psi
 
+import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -142,4 +143,31 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     attr.node
     assert attr.name == null
   }
+
+  void "test determine annotation target without AST"() {
+    def cls = myFixture.addClass('''
+import java.lang.annotation.*;
+@Anno class Some {} 
+@Target(ElementType.METHOD) @interface Anno {}''')
+    assert 'Some' == cls.name
+    assert !AnnotationTargetUtil.isTypeAnnotation(cls.modifierList.annotations[0])
+    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+  }
+
+  void "test parameter list count"() {
+    def list = myFixture.addClass('class Cls { void foo(a) {} }').methods[0].parameterList
+    assert list.parametersCount == list.parameters.size()
+  }
+
+  void "test deprecated enum constant"() {
+    def cls = myFixture.addClass("enum Foo { c1, @Deprecated c2, /** @deprecated */ c3 }")
+    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+
+    assert !cls.fields[0].deprecated
+    assert cls.fields[1].deprecated
+    assert cls.fields[2].deprecated
+
+    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+  }
+
 }

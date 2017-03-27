@@ -35,7 +35,7 @@ import java.util.List;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.LightStubBuilder");
-  public static final ThreadLocal<LighterAST> FORCED_AST = new ThreadLocal<LighterAST>();
+  public static final ThreadLocal<LighterAST> FORCED_AST = new ThreadLocal<>();
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
@@ -77,11 +77,11 @@ public class LightStubBuilder implements StubBuilder {
   }
 
   protected void buildStubTree(@NotNull LighterAST tree, @NotNull LighterASTNode root, @NotNull StubElement rootStub) {
-    final Stack<LighterASTNode> parents = new Stack<LighterASTNode>();
+    final Stack<LighterASTNode> parents = new Stack<>();
     final TIntStack childNumbers = new TIntStack();
     final BooleanStack parentsStubbed = new BooleanStack();
-    final Stack<List<LighterASTNode>> kinderGarden = new Stack<List<LighterASTNode>>();
-    final Stack<StubElement> parentStubs = new Stack<StubElement>();
+    final Stack<List<LighterASTNode>> kinderGarden = new Stack<>();
+    final Stack<StubElement> parentStubs = new Stack<>();
 
     LighterASTNode parent = null;
     LighterASTNode element = root;

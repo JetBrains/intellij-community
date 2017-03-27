@@ -132,7 +132,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     GroovyTokenTypes.mRBRACK
   );
 
-  static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGN_OP_SET);
+  static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGNMENTS);
 
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, LINE_COMMENT);

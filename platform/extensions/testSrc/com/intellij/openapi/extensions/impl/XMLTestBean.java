@@ -30,7 +30,7 @@ public class XMLTestBean implements PluginAware {
   private boolean otherProperty;
   private int prop1;
   private Object prop2;
-  private Collection<String> collectionProperty = new ArrayList<String>();
+  private Collection<String> collectionProperty = new ArrayList<>();
   private PluginId pluginId;
 
   public XMLTestBean() {

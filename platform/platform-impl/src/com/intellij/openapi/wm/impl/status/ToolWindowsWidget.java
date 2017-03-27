@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,6 +180,8 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           })
           .createPopup();
 
+        list.setVisibleRowCount(30); // override default of 15 set when createPopup() is called
+
         popup.show(point);
       }, 300);
     }
@@ -214,7 +216,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
   private void performAction() {
     if (isActive()) {
-      UISettings.getInstance().HIDE_TOOL_STRIPES = !UISettings.getInstance().HIDE_TOOL_STRIPES;
+      UISettings.getInstance().setHideToolStripes(!UISettings.getInstance().getHideToolStripes());
       UISettings.getInstance().fireUISettingsChanged();
     }
   }
@@ -229,7 +231,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         changes = true;
       }
 
-      Icon icon = UISettings.getInstance().HIDE_TOOL_STRIPES ? AllIcons.General.TbShown : AllIcons.General.TbHidden;
+      Icon icon = UISettings.getInstance().getHideToolStripes() ? AllIcons.General.TbShown : AllIcons.General.TbHidden;
       if (icon != getIcon()) {
         setIcon(icon);
         changes = true;

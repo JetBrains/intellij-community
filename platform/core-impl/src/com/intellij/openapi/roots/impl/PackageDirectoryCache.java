@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,16 +34,13 @@ public class PackageDirectoryCache {
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix;
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      myNonExistentPackages.clear();
-    }
-  });
 
-  public PackageDirectoryCache(MultiMap<String, VirtualFile> rootsByPackagePrefix) {
+  public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
     myRootsByPackagePrefix = rootsByPackagePrefix;
+  }
+
+  public void onLowMemory() {
+    myNonExistentPackages.clear();
   }
 
   @NotNull
@@ -120,8 +116,8 @@ public class PackageDirectoryCache {
     };
 
     PackageInfo(String qname, List<VirtualFile> packageDirectories) {
-      this.myQname = qname;
-      this.myPackageDirectories = packageDirectories;
+      myQname = qname;
+      myPackageDirectories = packageDirectories;
     }
 
     @NotNull

@@ -87,7 +87,7 @@ public class TemplateResource implements Serializable {
             return null;
         }
 
-        int i = s.indexOf(token);
+        int i = s.lastIndexOf(token);
         if (i == -1) {
             return s;
         }

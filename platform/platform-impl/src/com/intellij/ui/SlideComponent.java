@@ -24,7 +24,10 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
@@ -138,7 +141,7 @@ class SlideComponent extends JComponent {
         .setBorderColor(Color.BLACK)
         .setAwtTooltip(true)
         .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
-        .setTextBg(HintUtil.INFORMATION_COLOR)
+        .setTextBg(HintUtil.getInformationColor())
         .setShowImmediately(true);
 
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
   private JCheckBox focusApplicationOnBreakpointCheckBox;
   private JCheckBox myShowDebugWindowOnCheckBox;
   private JCheckBox myScrollExecutionPointToCheckBox;
+  private JRadioButton myClickRadioButton;
+  private JRadioButton myDragToTheEditorRadioButton;
 
   @Override
   public void reset(@NotNull XDebuggerGeneralSettings settings) {
@@ -34,6 +36,8 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     hideDebugWindowCheckBox.setSelected(settings.isHideDebuggerOnProcessTermination());
     myShowDebugWindowOnCheckBox.setSelected(settings.isShowDebuggerOnBreakpoint());
     myScrollExecutionPointToCheckBox.setSelected(settings.isScrollToCenter());
+    myClickRadioButton.setSelected(!Registry.is("debugger.click.disable.breakpoints"));
+    myDragToTheEditorRadioButton.setSelected(Registry.is("debugger.click.disable.breakpoints"));
   }
 
   @Override
@@ -41,7 +45,8 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     return focusApplicationOnBreakpointCheckBox.isSelected() != Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") ||
            hideDebugWindowCheckBox.isSelected() != settings.isHideDebuggerOnProcessTermination() ||
            myShowDebugWindowOnCheckBox.isSelected() != settings.isShowDebuggerOnBreakpoint() ||
-           myScrollExecutionPointToCheckBox.isSelected() != settings.isScrollToCenter();
+           myScrollExecutionPointToCheckBox.isSelected() != settings.isScrollToCenter() ||
+           myDragToTheEditorRadioButton.isSelected() != Registry.is("debugger.click.disable.breakpoints");
   }
 
   @Override
@@ -50,6 +55,7 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     settings.setHideDebuggerOnProcessTermination(hideDebugWindowCheckBox.isSelected());
     settings.setShowDebuggerOnBreakpoint(myShowDebugWindowOnCheckBox.isSelected());
     settings.setScrollToCenter(myScrollExecutionPointToCheckBox.isSelected());
+    Registry.get("debugger.click.disable.breakpoints").setValue(myDragToTheEditorRadioButton.isSelected());
   }
 
   @NotNull

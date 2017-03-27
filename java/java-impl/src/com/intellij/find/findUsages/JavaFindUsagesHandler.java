@@ -27,10 +27,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
@@ -240,7 +243,15 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
       }
       final Collection<PsiReference> result = new ArrayList<>();
+      GlobalSearchScope resolveScope = null;
+      if (searchScope instanceof LocalSearchScope) {
+        final PsiElement[] scopeElements = ((LocalSearchScope)searchScope).getScope();
+        resolveScope = GlobalSearchScope.union(ContainerUtil.map2Array(scopeElements, GlobalSearchScope.class, PsiElement::getResolveScope));
+      }
       for (PsiMethod superMethod : superMethods) {
+        if (resolveScope != null) {
+          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope);
+        }
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }
       return result;

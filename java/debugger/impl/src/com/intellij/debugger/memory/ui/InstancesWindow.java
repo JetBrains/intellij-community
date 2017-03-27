@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -70,7 +69,6 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -221,9 +219,7 @@ public class InstancesWindow extends DialogWrapper {
       });
 
 
-      final StackFrameList list = new StackFrameList(myProject,
-                                               Collections.emptyList(),
-                                               GlobalSearchScope.allScope(myProject));
+      final StackFrameList list = new StackFrameList(myDebugProcess);
 
       list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
       new DoubleClickListener() {
@@ -235,7 +231,7 @@ public class InstancesWindow extends DialogWrapper {
       }.installOn(list);
 
       final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(session,
-                                                                                            myInstancesTree, list, myClassName);
+                                                                                                  myInstancesTree, list, myClassName);
 
       add(filteringPane, BorderLayout.NORTH);
       add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
@@ -486,21 +482,13 @@ public class InstancesWindow extends DialogWrapper {
       MyFilteringWorker(@NotNull List<ObjectReference> refs,
                         @NotNull XExpression expression,
                         @NotNull EvaluationContextImpl evaluationContext) {
-        if (refs.size() != 0) {
-          myTask = new FilteringTask(refs.get(0).referenceType(), myDebugProcess, expression, refs,
-                                     new MyFilteringCallback(evaluationContext));
-        }
-        else {
-          myTask = null;
-        }
+        myTask = new FilteringTask(myClassName, myDebugProcess, expression, refs,
+                                   new MyFilteringCallback(evaluationContext));
       }
 
       @Override
       protected Void doInBackground() throws Exception {
-        if (myTask != null) {
-          myTask.run();
-        }
-
+        myTask.run();
         return null;
       }
 

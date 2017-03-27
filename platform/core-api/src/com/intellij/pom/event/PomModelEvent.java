@@ -41,7 +41,7 @@ public class PomModelEvent extends EventObject {
 
   public void registerChangeSet(PomModelAspect aspect, PomChangeSet set) {
     if (myChangeSets == null) {
-      myChangeSets = new HashMap<PomModelAspect, PomChangeSet>();
+      myChangeSets = new HashMap<>();
     }
     if (set == null) {
       myChangeSets.remove(aspect);
@@ -69,7 +69,7 @@ public class PomModelEvent extends EventObject {
   public void merge(@NotNull PomModelEvent event) {
     if(event.myChangeSets == null) return;
     if(myChangeSets == null){
-      myChangeSets = new HashMap<PomModelAspect, PomChangeSet>(event.myChangeSets);
+      myChangeSets = new HashMap<>(event.myChangeSets);
       return;
     }
     for (final Map.Entry<PomModelAspect, PomChangeSet> entry : event.myChangeSets.entrySet()) {

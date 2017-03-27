@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -38,30 +39,28 @@ import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
-  public ExternalLibrariesNode(Project project, ViewSettings viewSettings) {
+  public ExternalLibrariesNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, "External Libraries", viewSettings);
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    Project project = Objects.requireNonNull(getProject());
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
-
     return someChildContainsFile(file, false);
   }
 
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
-    final List<AbstractTreeNode> children = new ArrayList<>();
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    Project project = Objects.requireNonNull(getProject());
+    List<AbstractTreeNode> children = new ArrayList<>();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    Module[] modules = ModuleManager.getInstance(project).getModules();
     Set<Library> processedLibraries = new THashSet<>();
     Set<Sdk> processedSdk = new THashSet<>();
 
@@ -80,10 +79,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
 
           final String libraryName = library.getName();
           if (libraryName == null || libraryName.length() == 0) {
-            addLibraryChildren(libraryOrderEntry, children, getProject(), this);
+            addLibraryChildren(libraryOrderEntry, children, project, this);
           }
           else {
-            children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(null, libraryOrderEntry), getSettings()));
+            children.add(new NamedLibraryElementNode(project, new NamedLibraryElement(null, libraryOrderEntry), getSettings()));
           }
         }
         else if (orderEntry instanceof JdkOrderEntry) {
@@ -92,8 +91,17 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
           if (jdk != null) {
             if (processedSdk.contains(jdk)) continue;
             processedSdk.add(jdk);
-            children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(null, jdkOrderEntry), getSettings()));
+            children.add(new NamedLibraryElementNode(project, new NamedLibraryElement(null, jdkOrderEntry), getSettings()));
           }
+        }
+      }
+    }
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+      Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
+      for (SyntheticLibrary library : libraries) {
+        //noinspection InstanceofIncompatibleInterface
+        if (library instanceof ItemPresentation) {
+          children.add(new SyntheticLibraryElementNode(project, library, getSettings()));
         }
       }
     }

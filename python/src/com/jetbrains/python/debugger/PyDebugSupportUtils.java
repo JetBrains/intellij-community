@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDebugSupportUtils {
 
+  public static final String DEBUGGER_WARNING_MESSAGE = "This option may slow down the debugger";
+
   private PyDebugSupportUtils() {
   }
 

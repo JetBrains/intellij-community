@@ -19,7 +19,6 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.PublicMethodBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -50,7 +49,7 @@ public final class GitOptionsTopHitProvider extends OptionsTopHitProvider {
           ArrayList<BooleanOptionDescription> options = new ArrayList<>();
           options.add(option(project, "Git: Commit automatically on cherry-pick", "isAutoCommitOnCherryPick", "setAutoCommitOnCherryPick"));
           options.add(option(project, "Git: Auto-update if push of the current branch was rejected", "autoUpdateIfPushRejected", "setAutoUpdateIfPushRejected"));
-          GitRepositoryManager manager = ServiceManager.getService(project, GitRepositoryManager.class);
+          GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
           if (manager != null && manager.moreThanOneRoot()) {
             options.add(new BooleanOptionDescription("Git: Control repositories synchronously", "vcs.Git") {
               @Override

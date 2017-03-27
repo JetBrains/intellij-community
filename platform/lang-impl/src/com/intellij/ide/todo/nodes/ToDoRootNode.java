@@ -27,12 +27,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public final class ToDoRootNode extends BaseToDoNode{
+public class ToDoRootNode extends BaseToDoNode{
   private final SummaryNode mySummaryNode;
 
   public ToDoRootNode(Project project, Object value, TodoTreeBuilder builder, ToDoSummary summary) {
     super(project, value, builder);
-    mySummaryNode = new SummaryNode(getProject(), summary, myBuilder);
+    mySummaryNode = createSummaryNode(summary);
+  }
+
+  protected SummaryNode createSummaryNode(ToDoSummary summary) {
+    return new SummaryNode(getProject(), summary, myBuilder);
   }
 
   @Override

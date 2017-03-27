@@ -37,16 +37,16 @@ import java.util.*;
  *         Date: 1/11/12
  */
 public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
-  private final Set<File> myExcludedRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-  private final Set<File> myTopLevelContentRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-  private final Map<JpsModule, ArrayList<File>> myModuleToExcludesMap = new THashMap<JpsModule, ArrayList<File>>();
-  private final Map<JpsModule, List<File>> myModuleToContentMap = new THashMap<JpsModule, List<File>>();
+  private final Set<File> myExcludedRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> myTopLevelContentRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Map<JpsModule, ArrayList<File>> myModuleToExcludesMap = new THashMap<>();
+  private final Map<JpsModule, List<File>> myModuleToContentMap = new THashMap<>();
 
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
-    Map<File, JpsModule> contentToModule = new THashMap<File, JpsModule>(FileUtil.FILE_HASHING_STRATEGY);
+    Map<File, JpsModule> contentToModule = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     for (final JpsModule module : allModules) {
-      final ArrayList<File> moduleExcludes = new ArrayList<File>();
+      final ArrayList<File> moduleExcludes = new ArrayList<>();
       for (String url : module.getExcludeRootsList().getUrls()) {
         moduleExcludes.add(JpsPathUtil.urlToFile(url));
       }
@@ -62,7 +62,7 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         }
       }
       List<String> contentUrls = module.getContentRootsList().getUrls();
-      final List<File> moduleContent = new ArrayList<File>(contentUrls.size());
+      final List<File> moduleContent = new ArrayList<>(contentUrls.size());
       for (String contentUrl : contentUrls) {
         File contentRoot = JpsPathUtil.urlToFile(contentUrl);
         moduleContent.add(contentRoot);
@@ -95,8 +95,8 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       }
     }
 
-    List<File> parents = new ArrayList<File>();
-    Set<File> notUnderExcludedCache = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    List<File> parents = new ArrayList<>();
+    Set<File> notUnderExcludedCache = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (JpsModule module : allModules) {
       for (File contentRoot : myModuleToContentMap.get(module)) {
         File parent = contentRoot.getParentFile();
@@ -136,7 +136,7 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
 
   private static boolean isUnderExcluded(File root, Set<File> excluded, Set<File> notUnderExcludedCache) {
     File parent = root;
-    List<File> parents = new ArrayList<File>();
+    List<File> parents = new ArrayList<>();
     while (parent != null) {
       if (notUnderExcludedCache.contains(parent)) {
         return false;

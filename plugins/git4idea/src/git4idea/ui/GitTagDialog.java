@@ -15,7 +15,6 @@
  */
 package git4idea.ui;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -123,7 +122,7 @@ public class GitTagDialog extends DialogWrapper {
     setOKButtonText(GitBundle.getString("tag.button"));
     myProject = project;
     myNotifier = VcsNotifier.getInstance(myProject);
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
 
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myGitRootComboBox.addActionListener(new ActionListener() {

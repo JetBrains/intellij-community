@@ -130,6 +130,17 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]");
   }
 
+  public void testIllegalCharacterRange4() {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
+    doTest("[<error descr=\"Illegal character range (to < from)\">\\N{LATIN SMALL LETTER Z}-\\N{LATIN SMALL LETTER A}</error>]");
+  }
+
+  public void testLegalCharacterRange() {
+    // Cyrillic Capital Letter Zemlya - Unicode Han Character 'to peel, pare' (Unicode Supplementary Character)
+    // without code point support 0x20731 wraps to 0x731 which would produce a "Illegal character range (to < from)" error
+    doTest("[\\x{A640}-\\x{20731}]");
+  }
+
   public void testQuoted() {
     doTest("[\\Qabc?*+.)<warning descr=\"Duplicate character ')' inside character class\">)</warning>]<warning descr=\"Duplicate character ']' inside character class\">]</warning>[<warning descr=\"Duplicate character ']' inside character class\">]</warning>\\E]");
   }
@@ -210,6 +221,14 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("(?i)<error descr=\"Dangling metacharacter\">+</error>");
     doTest("(?i)<error descr=\"Dangling metacharacter\">*</error>");
     doTest("(?i)<error descr=\"Dangling metacharacter\">{5,6}</error>");
+  }
+
+  public void testLookbehind() {
+    doTest("(?<!(aa)<error descr=\"* repetition not allowed inside lookbehind\">*</error>)");
+    doTest("(?<!(aa)<error descr=\"+ repetition not allowed inside lookbehind\">+</error>)");
+    doTest("(?<!(aa)?)");
+    doTest("(?<!(aa){2,6})");
+    doTest("(one)(?<!<error descr=\"Group reference not allowed inside lookbehind\">\\1</error>)");
   }
 
   private void doTest(@Language("RegExp") String code) {

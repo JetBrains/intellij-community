@@ -17,7 +17,6 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -64,7 +63,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     if (commits.size() != 1) return AnAction.EMPTY_ARRAY;
 
     CommitId commit = commits.get(0);
-    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     final GitRepository root = repositoryManager.getRepositoryForRoot(commit.getRoot());
     if (root == null) return AnAction.EMPTY_ARRAY;
 

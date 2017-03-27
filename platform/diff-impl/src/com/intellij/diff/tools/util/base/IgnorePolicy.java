@@ -22,7 +22,8 @@ public enum IgnorePolicy {
   DEFAULT("Do not ignore"),
   TRIM_WHITESPACES("Trim whitespaces"),
   IGNORE_WHITESPACES("Ignore whitespaces"),
-  IGNORE_WHITESPACES_CHUNKS("Ignore whitespaces and empty lines");
+  IGNORE_WHITESPACES_CHUNKS("Ignore whitespaces and empty lines"),
+  FORMATTING("Ignore formatting");
 
   @NotNull private final String myText;
 
@@ -46,6 +47,8 @@ public enum IgnorePolicy {
         return ComparisonPolicy.IGNORE_WHITESPACES;
       case IGNORE_WHITESPACES_CHUNKS:
         return ComparisonPolicy.IGNORE_WHITESPACES;
+      case FORMATTING:
+        return ComparisonPolicy.DEFAULT;
       default:
         throw new IllegalArgumentException(this.name());
     }

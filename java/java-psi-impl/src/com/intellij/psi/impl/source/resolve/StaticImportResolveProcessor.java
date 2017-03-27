@@ -29,9 +29,9 @@ import java.util.ListIterator;
 public class StaticImportResolveProcessor extends BaseScopeProcessor implements NameHint {
   private final PsiImportStaticReferenceElement myReference;
   private final String myName;
-  private final List<JavaResolveResult> myFieldResults = new SmartList<JavaResolveResult>();
-  private final List<JavaResolveResult> myClassResult = new SmartList<JavaResolveResult>();
-  private final List<JavaResolveResult> myResults = new SmartList<JavaResolveResult>();
+  private final List<JavaResolveResult> myFieldResults = new SmartList<>();
+  private final List<JavaResolveResult> myClassResult = new SmartList<>();
+  private final List<JavaResolveResult> myResults = new SmartList<>();
 
   public StaticImportResolveProcessor(@NotNull PsiImportStaticReferenceElement reference) {
     myReference = reference;

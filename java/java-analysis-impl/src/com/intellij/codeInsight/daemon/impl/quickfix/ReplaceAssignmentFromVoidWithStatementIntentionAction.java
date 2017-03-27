@@ -29,7 +29,7 @@ public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements In
   private final PsiElement myParent;
   private final PsiExpression myLExpr;
 
-  public ReplaceAssignmentFromVoidWithStatementIntentionAction(PsiElement parent, PsiExpression lExpr) {
+  public ReplaceAssignmentFromVoidWithStatementIntentionAction(@NotNull PsiElement parent, @NotNull PsiExpression lExpr) {
     myParent = parent;
     myLExpr = lExpr;
   }
@@ -50,7 +50,7 @@ public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements In
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return myParent.isValid() && myLExpr.isValid();
   }
 
   @Override

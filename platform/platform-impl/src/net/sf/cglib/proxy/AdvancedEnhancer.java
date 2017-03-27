@@ -18,10 +18,12 @@ package net.sf.cglib.proxy;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.asm.$ClassVisitor;
 import net.sf.cglib.asm.$Label;
 import net.sf.cglib.asm.$Type;
 import net.sf.cglib.core.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -72,8 +74,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   };
 
   private static final Source SOURCE = new Source(Enhancer.class.getName());
-  private static final EnhancerKey KEY_FACTORY =
-    (EnhancerKey)KeyFactory.create(EnhancerKey.class);
 
   private static final String BOUND_FIELD = "CGLIB$BOUND";
   private static final String THREAD_CALLBACKS_FIELD = "CGLIB$THREAD_CALLBACKS";
@@ -131,17 +131,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
   };
 
-  /** Internal interface, only public due to ClassLoader issues. */
-  public interface EnhancerKey {
-    Object newInstance(String type,
-                              String[] interfaces,
-                              CallbackFilter filter,
-                              $Type[] callbackTypes,
-                              boolean useFactory,
-                              boolean interceptDuringConstruction,
-                              Long serialVersionUID);
-  }
-
   private Class[] interfaces;
   private CallbackFilter filter;
   private Callback[] callbacks;
@@ -151,7 +140,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private Class[] argumentTypes;
   private Object[] arguments;
   private boolean useFactory = true;
-  private Long serialVersionUID;
   private boolean interceptDuringConstruction = true;
 
   /**
@@ -362,13 +350,17 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     } else if (interfaces != null) {
       setNamePrefix(interfaces[ReflectUtils.findPackageProtected(interfaces)].getName());
     }
-    return super.create(KEY_FACTORY.newInstance((superclass != null) ? superclass.getName() : null,
-                                                ReflectUtils.getNames(interfaces),
-                                                filter,
-                                                callbackTypes,
-                                                useFactory,
-                                                interceptDuringConstruction,
-                                                serialVersionUID));
+    return super.create(createKey());
+  }
+
+  @NotNull
+  private List<Object> createKey() {
+    List<Object> tuple = ContainerUtil.newArrayList(Arrays.asList(callbackTypes), (useFactory ? 1 : 0) + (interceptDuringConstruction ? 2 : 0));
+    if (superclass != null) tuple.add(superclass.getName());
+    if (interfaces != null) {
+      tuple.addAll(ContainerUtil.map(interfaces, Class::getName));
+    }
+    return tuple;
   }
 
   protected ClassLoader getDefaultClassLoader() {
@@ -474,9 +466,6 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
     e.declare_field(Constants.PRIVATE_FINAL_STATIC, THREAD_CALLBACKS_FIELD, THREAD_LOCAL, null);
     e.declare_field(Constants.PRIVATE_FINAL_STATIC, STATIC_CALLBACKS_FIELD, CALLBACK_ARRAY, null);
-    if (serialVersionUID != null) {
-      e.declare_field(Constants.PRIVATE_FINAL_STATIC, Constants.SUID_FIELD_NAME, $Type.LONG_TYPE, serialVersionUID);
-    }
 
     for (int i = 0; i < callbackTypes.length; i++) {
       e.declare_field(Constants.ACC_PRIVATE, getCallbackField(i), callbackTypes[i], null);

@@ -114,11 +114,6 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
   @NotNull
   private static PsiMethod[] getSupers(PsiMethod method) {
     if (method.isConstructor()) {

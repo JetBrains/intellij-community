@@ -155,6 +155,14 @@ abstract class MergeTestBase : DiffTestCase() {
       command(change) { viewer.replaceChange(change, side, modifier) }
     }
 
+    fun Int.resolve() {
+      val change = change(this)
+      command(change) {
+        assertTrue(viewer.canResolveConflictedChange(change))
+        viewer.resolveConflictedChange(change)
+      }
+    }
+
     //
     // Text modification
     //

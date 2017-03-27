@@ -60,7 +60,7 @@ public class TObjectIntHashMapExternalizer<K> implements DataExternalizer<TObjec
   @Override
   public TObjectIntHashMap<K> read(@NotNull final DataInput in) throws IOException {
     final int size = in.readInt();
-    final TObjectIntHashMap<K> map = new TObjectIntHashMap<K>(size);
+    final TObjectIntHashMap<K> map = new TObjectIntHashMap<>(size);
     for (int i = 0; i < size; i++) {
       map.put(myKeyDataExternalizer.read(in), in.readInt());
     }

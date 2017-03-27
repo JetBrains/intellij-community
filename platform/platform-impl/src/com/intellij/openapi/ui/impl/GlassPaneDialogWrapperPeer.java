@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RemoteDesktopDetector;
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -566,7 +566,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       }
       super.setBounds(x, y, width, height);
 
-      if (RemoteDesktopDetector.isRemoteSession()) {
+      if (RemoteDesktopService.isRemoteSession()) {
         shadow = null;
       }
       else if (shadow == null || shadowWidth != width || shadowHeight != height) {

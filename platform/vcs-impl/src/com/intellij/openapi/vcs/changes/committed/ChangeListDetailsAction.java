@@ -72,7 +72,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
       format("<html><head>%s</head><body>%s</body></html>", getCssFontDeclaration(getLabelFont()), getDetails(project, changeList));
     JEditorPane editorPane = new JEditorPane(HTML_MIME, details);
     editorPane.setEditable(false);
-    editorPane.setBackground(HintUtil.INFORMATION_COLOR);
+    editorPane.setBackground(HintUtil.getInformationColor());
     editorPane.select(0, 0);
     editorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 

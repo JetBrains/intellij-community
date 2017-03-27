@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,8 +127,8 @@ public class GradleResourceCompilerConfigurationGenerator {
     // update with newly generated configuration
     projectConfig.moduleConfigurations.putAll(affectedGradleModuleConfigurations);
 
-    final Document document = new Document(new Element("gradle-project-configuration"));
-    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
+    final Element element = new Element("gradle-project-configuration");
+    XmlSerializer.serializeInto(projectConfig, element);
     final boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
     buildManager.runCommand(() -> {
       if (finalConfigurationUpdateRequired) {
@@ -136,7 +136,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       }
       FileUtil.createIfDoesntExist(gradleConfigFile);
       try {
-        JDOMUtil.writeDocument(document, gradleConfigFile, "\n");
+        JdomKt.write(element, gradleConfigFile.toPath());
         myModulesConfigurationHash.putAll(affectedConfigurationHash);
       }
       catch (IOException e) {

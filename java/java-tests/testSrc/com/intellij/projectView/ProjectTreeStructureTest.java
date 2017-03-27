@@ -15,14 +15,21 @@
  */
 package com.intellij.projectView;
 
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import org.junit.Assert;
+
+import java.util.List;
+import java.util.function.Function;
 
 public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
@@ -181,5 +188,49 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          "  gen\n" +
                          "   A.java\n" +
                          " testContentRootUnderExcluded.iml\n");
+  }
+
+  public void testQualifiedModuleNames() throws Exception {
+    VirtualFile testDataRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+    Module a = createModule("a");
+    PsiTestUtil.addContentRoot(a, testDataRoot.findFileByRelativePath("a"));
+
+    Module main = createModule("a.main");
+    PsiTestUtil.addContentRoot(main, testDataRoot.findFileByRelativePath("a/main"));
+
+    Module util = createModule("util");
+    PsiTestUtil.addContentRoot(util, testDataRoot.findFileByRelativePath("a/util"));
+
+    Module b = createModule("x.b");
+    PsiTestUtil.addContentRoot(b, testDataRoot.findFileByRelativePath("a/b"));
+    myStructure.setShowLibraryContents(false);
+
+    //todo[nik] this function is generic enough, it can be moved to testFramework
+    Function<Object, String> nodePresenter = o -> {
+      AbstractTreeNode node = (AbstractTreeNode)o;
+      node.update();
+      PresentationData presentation = node.getPresentation();
+      List<PresentableNodeDescriptor.ColoredFragment> fragments = presentation.getColoredText();
+      if (fragments.isEmpty()) {
+        return presentation.getPresentableText();
+      }
+      return StringUtil.join(fragments, PresentableNodeDescriptor.ColoredFragment::getText, "");
+    };
+    String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> PlatformTestUtil.print(myStructure, myStructure.getRootElement(), nodePresenter));
+    assertEquals("testQualifiedModuleNames\n" +
+                 " a.iml\n" +
+                 " a.main.iml\n" +
+                 " qualifiedModuleNames [testQualifiedModuleNames]\n" +
+                 "  a\n" +
+                 "   b [x.b]\n" +
+                 "    b.txt\n" +
+                 "   main\n" +
+                 "    main.txt\n" +
+                 "   util\n" +
+                 "    util.txt\n" +
+                 " testQualifiedModuleNames.iml\n" +
+                 " util.iml\n" +
+                 " x.b.iml\n",
+                 treeStructure);
   }
 }

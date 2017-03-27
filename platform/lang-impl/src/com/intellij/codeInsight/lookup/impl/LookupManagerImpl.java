@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,14 +133,14 @@ public class LookupManagerImpl extends LookupManager {
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
+    final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
     final Alarm alarm = new Alarm();
     final Runnable request = () -> {
       if (myActiveLookup != lookup) return;
 
       LookupElement currentItem = lookup.getCurrentItem();
-      if (currentItem != null && currentItem.isValid()) {
+      if (currentItem != null && currentItem.isValid() && isAutoPopupJavadocSupportedBy(currentItem)) {
         final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
         if (completion != null && !completion.isAutopopupCompletion()) {
           try {
@@ -173,7 +173,7 @@ public class LookupManagerImpl extends LookupManager {
       @Override
       public void currentItemChanged(LookupEvent event) {
         alarm.cancelAllRequests();
-        if (settings.AUTO_POPUP_JAVADOC_INFO) {
+        if (settings.AUTO_POPUP_JAVADOC_INFO && DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
           alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
         }
       }
@@ -206,6 +206,15 @@ public class LookupManagerImpl extends LookupManager {
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return lookup;
+  }
+
+  protected boolean isAutoPopupJavadocSupportedBy(LookupElement lookupItem) {
+    return true;
+  }
+
+  @NotNull
+  protected LookupImpl createLookup(@NotNull Editor editor, @NotNull LookupArranger arranger, Project project) {
+    return new LookupImpl(project, editor, arranger);
   }
 
   @Override

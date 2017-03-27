@@ -42,14 +42,10 @@ public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement imple
 
   @Override
   public PsiPolyVariantReference getReference() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiJavaModuleReference>() {
-      @Nullable
-      @Override
-      public Result<PsiJavaModuleReference> compute() {
-        PsiJavaModuleReferenceElementImpl refElement = PsiJavaModuleReferenceElementImpl.this;
-        PsiJavaModuleReference ref = refElement.getParent() instanceof PsiJavaModule ? null : new PsiJavaModuleReference(refElement);
-        return Result.create(ref, refElement);
-      }
+    return CachedValuesManager.getCachedValue(this, () -> {
+      PsiJavaModuleReferenceElementImpl refElement = PsiJavaModuleReferenceElementImpl.this;
+      PsiJavaModuleReference ref = refElement.getParent() instanceof PsiJavaModule ? null : new PsiJavaModuleReference(refElement);
+      return CachedValueProvider.Result.create(ref, refElement);
     });
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public abstract class InspectionManager {
   public abstract Project getProject();
 
   @NotNull
+  @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, QuickFix... fixes);
 
   /**
@@ -49,6 +51,7 @@ public abstract class InspectionManager {
    * @param onTheFly for local tools on batch run
    */
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             LocalQuickFix fix,
@@ -56,6 +59,7 @@ public abstract class InspectionManager {
                                                             boolean onTheFly);
 
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             boolean onTheFly,
@@ -63,6 +67,7 @@ public abstract class InspectionManager {
                                                             @NotNull ProblemHighlightType highlightType);
 
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
@@ -71,6 +76,7 @@ public abstract class InspectionManager {
                                                             boolean isAfterEndOfLine);
 
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                             @NotNull PsiElement endElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
@@ -79,6 +85,7 @@ public abstract class InspectionManager {
                                                             LocalQuickFix... fixes);
 
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @Nullable("null means the text range of the element") TextRange rangeInElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
@@ -87,6 +94,7 @@ public abstract class InspectionManager {
                                                             LocalQuickFix... fixes);
 
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             final boolean showTooltip,
@@ -98,6 +106,7 @@ public abstract class InspectionManager {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
                                                             LocalQuickFix fix,
@@ -108,6 +117,7 @@ public abstract class InspectionManager {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
@@ -118,6 +128,7 @@ public abstract class InspectionManager {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
@@ -129,6 +140,7 @@ public abstract class InspectionManager {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                             @NotNull PsiElement endElement,
                                                             @NotNull String descriptionTemplate,
@@ -141,6 +153,7 @@ public abstract class InspectionManager {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             final TextRange rangeInElement,
                                                             @NotNull final String descriptionTemplate,
@@ -152,6 +165,7 @@ public abstract class InspectionManager {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @NotNull final String descriptionTemplate,
                                                             final boolean showTooltip,
@@ -159,5 +173,6 @@ public abstract class InspectionManager {
                                                             final LocalQuickFix... fixes);
 
   @NotNull
+  @Contract(pure = true)
   public abstract GlobalInspectionContext createNewGlobalContext(boolean reuse);
 }

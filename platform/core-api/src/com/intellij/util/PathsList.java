@@ -31,36 +31,24 @@ import java.io.File;
 import java.util.*;
 
 public class PathsList  {
-  private final List<String> myPath = new ArrayList<String>();
-  private final List<String> myPathTail = new ArrayList<String>();
-  private final Set<String> myPathSet = new HashSet<String>();
+  private final List<String> myPath = new ArrayList<>();
+  private final List<String> myPathTail = new ArrayList<>();
+  private final Set<String> myPathSet = new HashSet<>();
 
-  private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new NullableFunction<String, VirtualFile>() {
-    @Override
-    public VirtualFile fun(String path) {
-      return StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
+  private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE =
+    (NullableFunction<String, VirtualFile>)path -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
+
+  private static final Function<VirtualFile, String> LOCAL_PATH = file -> PathUtil.getLocalPath(file);
+
+  private static final Function<String, VirtualFile> PATH_TO_DIR = (NullableFunction<String, VirtualFile>)s -> {
+    final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(s);
+    final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
+    if (localFile == null) return null;
+
+    if (ArchiveFileType.INSTANCE.equals(fileType) && !localFile.isDirectory()) {
+      return StandardFileSystems.getJarRootForLocalFile(localFile);
     }
-  };
-
-  private static final Function<VirtualFile, String> LOCAL_PATH = new Function<VirtualFile, String>() {
-    @Override
-    public String fun(VirtualFile file) {
-      return PathUtil.getLocalPath(file);
-    }
-  };
-
-  private static final Function<String, VirtualFile> PATH_TO_DIR = new NullableFunction<String, VirtualFile>() {
-    @Override
-    public VirtualFile fun(String s) {
-      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(s);
-      final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
-      if (localFile == null) return null;
-
-      if (ArchiveFileType.INSTANCE.equals(fileType) && !localFile.isDirectory()) {
-        return StandardFileSystems.getJarRootForLocalFile(localFile);
-      }
-      return localFile;
-    }
+    return localFile;
   };
 
   public boolean isEmpty() {
@@ -105,12 +93,9 @@ public class PathsList  {
       return Collections.emptyList();
     }
     else {
-      return JBIterable.from(StringUtil.tokenize(path, File.pathSeparator)).filter(new Condition<String>() {
-        @Override
-        public boolean value(String element) {
-          element = element.trim();
-          return !element.isEmpty() && !myPathSet.contains(element);
-        }
+      return JBIterable.from(StringUtil.tokenize(path, File.pathSeparator)).filter(element -> {
+        element = element.trim();
+        return !element.isEmpty() && !myPathSet.contains(element);
       });
     }
   }
@@ -129,7 +114,7 @@ public class PathsList  {
 
   @NotNull
   public List<String> getPathList() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     result.addAll(myPath);
     result.addAll(myPathTail);
     return result;

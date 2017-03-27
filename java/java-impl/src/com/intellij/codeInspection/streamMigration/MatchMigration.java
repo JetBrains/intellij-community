@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -85,8 +85,8 @@ class MatchMigration extends BaseStreamApiMigration {
           // for(....) if(...) {flag = true; break;}
           PsiVariable var = (PsiVariable)maybeVar;
           PsiExpression initializer = var.getInitializer();
-          InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
-          if (initializer != null && status != InitializerUsageStatus.UNKNOWN) {
+          InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
+          if (initializer != null && status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
             String replacement;
             if (ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
                 ExpressionUtils.isLiteral(rValue, Boolean.TRUE)) {

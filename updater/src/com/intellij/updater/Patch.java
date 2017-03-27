@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class Patch {
   private final String myRoot;
   private final boolean myIsBinary;
   private final boolean myIsStrict;
+  private final boolean myIsNormalized;
   private long myLargeFileCutoff;
   private final String myHashAlgorithm;
   private Digester myDigester;
@@ -46,11 +47,12 @@ public class Patch {
     myRoot = spec.getRoot();
     myIsBinary = spec.isBinary();
     myIsStrict = spec.isStrict();
+    myIsNormalized = spec.isNormalized();
     myHashAlgorithm = spec.getHashAlgorithm();
     myDigester = new Digester(myHashAlgorithm);
+    myLargeFileCutoff = spec.getLargeFileCutoff();
     myWarnings = spec.getWarnings();
     myDeleteFiles = spec.getDeleteFiles();
-    myLargeFileCutoff = spec.getLargeFileCutoff();
     myActions = calculateActions(spec, ui);
   }
 
@@ -61,11 +63,13 @@ public class Patch {
     myRoot = in.readUTF();
     myIsBinary = in.readBoolean();
     myIsStrict = in.readBoolean();
+    myIsNormalized = in.readBoolean();
     myHashAlgorithm = readString(in);
     if (!Digester.isValidAlgorithm(myHashAlgorithm)) {
       throw new IOException("Failed to find hash algorithm!");
     }
     myDigester = new Digester(myHashAlgorithm);
+    myLargeFileCutoff = in.readLong();
     myWarnings = readMap(in);
     myDeleteFiles = readList(in);
     myActions = readActions(in);
@@ -85,10 +89,9 @@ public class Patch {
 
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
-    DiffCalculator.Result diff;
-    diff = DiffCalculator.calculate(digestFiles(olderDir, spec.getIgnoredFiles(), ui),
-                                    digestFiles(newerDir, spec.getIgnoredFiles(), ui),
-                                    spec.getCriticalFiles(), true);
+    Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui);
+    Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false, ui);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -147,7 +150,9 @@ public class Patch {
       dataOut.writeUTF(myRoot);
       dataOut.writeBoolean(myIsBinary);
       dataOut.writeBoolean(myIsStrict);
+      dataOut.writeBoolean(myIsNormalized);
       writeString(dataOut, myHashAlgorithm);
+      dataOut.writeLong(myLargeFileCutoff);
       writeMap(dataOut, myWarnings);
       writeList(dataOut, myDeleteFiles);
       writeActions(dataOut, myActions);
@@ -274,7 +279,7 @@ public class Patch {
     boolean checkWarnings = true;
     while (checkWarnings) {
       //always collect files and folders to avoid cases such as IDEA-152249
-      files = Utils.collectRelativePaths(toDir, true);
+      files = Utils.collectRelativePaths(toDir);
       checkWarnings = false;
       for (String file : files) {
         String warning = myWarnings.get(file);
@@ -347,6 +352,10 @@ public class Patch {
         if ((action instanceof CreateAction) &&
             !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
+        }
+        else if ((action instanceof UpdateAction) &&
+              !new File(toDir, action.getPath()).getParentFile().exists()) {
+            Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
         } else {
           appliedActions.add(action);
           action.apply(patchFile, backupDir, toDir);
@@ -405,7 +414,7 @@ public class Patch {
     }
   }
 
-  public long digestFile(File toFile) throws IOException {
+  public long digestFile(File toFile, boolean normalize) throws IOException {
     if (Utils.isSymlink(toFile)) {
       // If it's a symlink, just digest the path to the target itself.
       return myDigester.digestStream(new ByteArrayInputStream(Utils.getSymlinkTarget(toFile).getBytes(StandardCharsets.UTF_8)));
@@ -415,19 +424,19 @@ public class Patch {
       return myDigester.digestZipFile(toFile);
     }
     else {
-      return myDigester.digestRegularFile(toFile);
+      return myDigester.digestRegularFile(toFile, normalize);
     }
   }
 
-  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, UpdaterUI ui) throws IOException, OperationCancelledException {
+  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize, UpdaterUI ui) throws IOException, OperationCancelledException {
     Map<String, Long> result = new LinkedHashMap<>();
     //always collect files and folders to avoid cases such as IDEA-152249
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir, true);
+    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
     for (String each : paths) {
       if (ignoredFiles.contains(each)) continue;
       ui.setStatus(each);
       ui.checkCancelled();
-      result.put(each, digestFile(new File(dir, each)));
+      result.put(each, digestFile(new File(dir, each), normalize));
     }
     return result;
   }
@@ -442,6 +451,10 @@ public class Patch {
 
   public boolean isStrict() {
     return myIsStrict;
+  }
+
+  public boolean isNormalized() {
+    return myIsNormalized;
   }
 
   public boolean validateDeletion(String path) {

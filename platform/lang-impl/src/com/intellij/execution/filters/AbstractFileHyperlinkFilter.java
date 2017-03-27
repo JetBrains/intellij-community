@@ -46,7 +46,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   public AbstractFileHyperlinkFilter(@NotNull Project project, @Nullable VirtualFile baseDir) {
     myProject = project;
-    myFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    myFileIndex = ProjectFileIndex.getInstance(project);
     myBaseDir = baseDir;
   }
 

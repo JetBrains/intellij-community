@@ -50,7 +50,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
         return AllIcons.General.InspectionsTypos;
       }
     }
-    return Collections.<HighlightInfoType>singletonList(new T(TYPO, TYPO_KEY));
+    return Collections.singletonList(new T(TYPO, TYPO_KEY));
   }
 
   @Override

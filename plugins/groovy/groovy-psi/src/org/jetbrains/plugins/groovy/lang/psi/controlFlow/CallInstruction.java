@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Collections;
@@ -34,17 +35,20 @@ public class CallInstruction extends InstructionImpl {
     return super.toString() + " CALL " + myCallee.num();
   }
 
+  @NotNull
   @Override
-  public Iterable<? extends Instruction> successors(CallEnvironment environment) {
+  public Iterable<Instruction> successors(@NotNull CallEnvironment environment) {
     environment.callStack(myCallee).push(this);
     return Collections.singletonList(myCallee);
   }
 
+  @NotNull
   @Override
-  public Iterable<? extends Instruction> allSuccessors() {
+  public Iterable<Instruction> allSuccessors() {
     return Collections.singletonList(myCallee);
   }
 
+  @NotNull
   @Override
   protected String getElementPresentation() {
     return "";

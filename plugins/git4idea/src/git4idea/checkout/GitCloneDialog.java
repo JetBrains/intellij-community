@@ -17,7 +17,6 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -39,7 +38,7 @@ public class GitCloneDialog extends CloneDvcsDialog {
 
   public GitCloneDialog(@NotNull Project project, @Nullable String defaultUrl) {
     super(project, GitVcs.NAME, GitUtil.DOT_GIT, defaultUrl);
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
   }
 
   @NotNull

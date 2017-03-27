@@ -62,7 +62,7 @@ public class VfsRootAccess {
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
         ((ApplicationImpl)application).isComponentsCreated() &&
-        !ApplicationInfoImpl.isInPerformanceTest()) {
+        !ApplicationInfoImpl.isInStressTest()) {
 
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;

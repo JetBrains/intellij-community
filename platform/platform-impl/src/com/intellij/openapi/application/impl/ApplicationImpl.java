@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -95,7 +96,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
-  private final ReadMostlyRWLock myLock;
+  final ReadMostlyRWLock myLock;
 
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
@@ -109,7 +110,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final String myName;
 
   private final Stack<Class> myWriteActionsStack = new Stack<>(); // accessed from EDT only, no need to sync
-  private int myWriteStackBase = 0;
+  private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
+  private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
   private int myInEditorPaintCounter; // EDT only
@@ -157,13 +159,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
 
     getPicoContainer().registerComponentInstance(Application.class, this);
+    getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
-    String debugDisposer = System.getProperty("idea.disposer.debug");
-    Disposer.setDebugMode((isInternal || isUnitTestMode || "on".equals(debugDisposer)) && !"off".equals(debugDisposer));
+    Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
     myStartTime = System.currentTimeMillis();
     mySplash = splash;
@@ -188,8 +190,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
                        (JFrame)WindowManager.getInstance().getIdeFrame(project);
         if (frame != null) {
-          frame.toFront();
-          if (!(frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen())) {
+          if (frame instanceof IdeFrame) {
+            AppIcon.getInstance().requestFocus((IdeFrame)frame);
+          } else {
+            frame.toFront();
             DialogEarthquakeShaker.shake(frame);
           }
         }
@@ -399,11 +403,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
-    TransactionGuard guard = TransactionGuard.getInstance();
-    if (guard != null) {
-      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, state);
-    }
-    myInvokator.invokeLater(runnable, state, expired);
+    myInvokator.invokeLater(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired);
   }
 
   @Override
@@ -485,7 +485,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     float start = PluginManagerCore.PLUGINS_PROGRESS_PART + PluginManagerCore.LOADERS_PROGRESS_PART;
-    indicator.setFraction(start + (getPercentageOfComponentsLoaded() * (1 - start)));
+    indicator.setFraction(start + getPercentageOfComponentsLoaded() * (1 - start));
   }
 
   private static void createLocatorFile() {
@@ -677,11 +677,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    TransactionGuard guard = TransactionGuard.getInstance();
-    if (guard != null) {
-      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, modalityState);
-    }
-    LaterInvocator.invokeAndWait(runnable, modalityState);
+    LaterInvocator.invokeAndWait(myTransactionGuard.wrapLaterInvocation(runnable, modalityState), modalityState);
   }
 
   @Override
@@ -864,12 +860,40 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     };
 
     if (hasUnsafeBgTasks || option.isToBeShown()) {
+      AtomicBoolean alreadyGone = new AtomicBoolean(false);
+      if (hasUnsafeBgTasks) {
+        Runnable dialogRemover = Messages.createMessageDialogRemover(null);
+        Runnable task = new Runnable() {
+          @Override
+          public void run() {
+            if (alreadyGone.get()) return;
+            if (!ProgressManager.getInstance().hasUnsafeProgressIndicator()) {
+              alreadyGone.set(true);
+              dialogRemover.run();
+            }
+            else {
+              JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+            }
+          }
+        };
+        JobScheduler.getScheduler().schedule(task, 1, TimeUnit.SECONDS);
+      }
       String name = ApplicationNamesInfo.getInstance().getFullProductName();
       String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
       int result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
         .yesText(ApplicationBundle.message("command.exit"))
         .noText(CommonBundle.message("button.cancel"))
         .doNotAsk(option).show();
+      if (alreadyGone.getAndSet(true)) {
+        if (!option.isToBeShown()) {
+          return true;
+        }
+        result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
+                                            ApplicationBundle.message("exit.confirm.prompt", name))
+          .yesText(ApplicationBundle.message("command.exit"))
+          .noText(CommonBundle.message("button.cancel"))
+          .doNotAsk(option).show();
+      }
       if (result != Messages.YES) {
         return false;
       }
@@ -1188,11 +1212,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       if (!myLock.isWriteLocked()) {
         assertNoPsiLock();
         if (!myLock.tryWriteLock()) {
-          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting > 0 ?
-                                      JobScheduler.getScheduler()
-                                        .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-                                                                ourDumpThreadsOnLongWriteActionWaiting,
-                                                                ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
+          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
+              JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+                                                                 ourDumpThreadsOnLongWriteActionWaiting,
+                                                                 ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
           myLock.writeLock();
           if (reportSlowWrite != null) {
             reportSlowWrite.cancel(false);
@@ -1332,7 +1355,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return;
     }
 
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    myTransactionGuard.submitTransactionAndWait(() -> {
       int prevBase = myWriteStackBase;
       myWriteStackBase = myWriteActionsStack.size();
       try (AccessToken ignored = myLock.writeSuspend()) {
@@ -1421,7 +1444,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    ProjectManager projectManager = ProjectManager.getInstance();
+    if (projectManager instanceof ProjectManagerEx) {
+      ((ProjectManagerEx)projectManager).flushChangedProjectFileAlarm();
+    }
+
+    Project[] openProjects = projectManager.getOpenProjects();
     for (Project openProject : openProjects) {
       openProject.save();
     }

@@ -34,16 +34,14 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
@@ -116,14 +114,17 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
       @Override
       public void dispose() {
         super.dispose();
+        Throwable created = null;
         if (Disposer.isDebugMode()) {
           synchronized (myModelCreations) {
-            myModelCreations.remove(this);
+            created = myModelCreations.remove(this);
           }
         }
 
         for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed() : String.format("%s is not disposed!", entry.getPresentableName());
+          assert !((RootModelComponentBase)entry).isDisposed() :
+            entry + "(" + entry.getClass() + ") in " + myRootModel + " is already disposed."
+            + (created == null ? "" : "\nThis modifiable model was created at:\n" + ExceptionUtil.getThrowableText(created));
         }
       }
     };
@@ -175,7 +176,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
 
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+    ModifiableModelCommitter.multiCommit(Collections.singletonList(rootModel), moduleModel);
 
     if (changed) {
       stateChanged();
@@ -367,7 +368,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     }
   }
 
-  private void stateChanged() {
+  void stateChanged() {
     if (Registry.is("store.track.module.root.manager.changes", false)) {
       LOG.error("ModelRootManager state changed");
     }

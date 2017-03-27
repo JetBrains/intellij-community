@@ -23,10 +23,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +82,6 @@ public class PsiDiamondTypeUtil {
                   return areTypeArgumentsRedundant(typeArguments, expression, true, method, typeParameters);
                 }
               }
-              return true;
             }
           }
         }
@@ -115,12 +114,7 @@ public class PsiDiamondTypeUtil {
     text.append('<');
     final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression);
-    text.append(StringUtil.join(result.getInferredTypes(), new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getCanonicalText();
-      }
-    }, ","));
+    text.append(StringUtil.join(result.getInferredTypes(), psiType -> psiType.getCanonicalText(), ","));
     text.append('>');
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiJavaCodeReferenceElement newReference = elementFactory.createReferenceFromText(text.toString(), element);
@@ -243,7 +237,8 @@ public class PsiDiamondTypeUtil {
         return false;
       }
     }
-    return true;
+
+    return checkParentApplicability(exprCopy);
   }
 
   private static boolean isInferenceEquivalent(PsiType[] typeArguments, 
@@ -282,6 +277,18 @@ public class PsiDiamondTypeUtil {
       if (!typeArgument.equals(inferredArgs[i])) {
         return false;
       }
+    }
+    
+    return checkParentApplicability(exprCopy);
+  }
+
+  private static boolean checkParentApplicability(PsiCallExpression exprCopy) {
+    while (exprCopy != null){
+      final JavaResolveResult resolveResult = exprCopy.resolveMethodGenerics();
+      if (resolveResult instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolveResult).isApplicable()) {
+        return false;
+      }
+      exprCopy = PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class, true);
     }
     return true;
   }

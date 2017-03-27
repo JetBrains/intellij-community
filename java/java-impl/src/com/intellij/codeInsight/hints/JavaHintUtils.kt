@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -25,7 +24,6 @@ import com.intellij.psi.util.TypeConversionUtil
 
 object JavaInlayHintsProvider {
 
-  
   fun createHints(callExpression: PsiCallExpression): Set<InlayInfo> {
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = createHintsForResolvedMethod(callExpression, resolveResult)
@@ -68,7 +66,8 @@ object JavaInlayHintsProvider {
     with(resultSet) {
       getVarArgInlay(info)?.let { add(it) }
 
-      if (ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType) {
+      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      if (hintsProvider.isShowForParamsWithSameType.get()) {
         addAll(createSameTypeInlays(args))
       }
 
@@ -82,9 +81,17 @@ object JavaInlayHintsProvider {
     val params = method.parameterList.parameters
     if (params.isEmpty()) return false
     if (params.size == 1) {
-      if (isBuilderLike(callExpression, method) || isSetterNamed(method)) return false
-      if (ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName
-          && isParamNameContainedInMethodName(params[0], method)) return false
+      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      
+      if (hintsProvider.isDoNotShowForBuilderLikeMethods.get() 
+          && isBuilderLike(callExpression, method)) {
+        return false
+      }
+      
+      if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
+          && isParamNameContainedInMethodName(params[0], method)) {
+        return false
+      }
     }
     return true
   }
@@ -112,16 +119,7 @@ object JavaInlayHintsProvider {
 
     return returnType.equalsToText(calledMethodClassFqn)
   }
-
-  private fun isSetterNamed(method: PsiMethod): Boolean {
-    val methodName = method.name
-    if (methodName.startsWith("set")
-        && (methodName.length == 3 || methodName.length > 3 && methodName[3].isUpperCase())) {
-      return true
-    }
-    return false
-  }
-
+  
   private fun isParamNameContainedInMethodName(parameter: PsiParameter, method: PsiMethod): Boolean {
     val parameterName = parameter.name ?: return false
     if (parameterName.length > 1) {
@@ -165,9 +163,9 @@ object JavaInlayHintsProvider {
     val varargExpressions = arguments.drop(regularParamsCount)
     return CallInfo(regularArgInfos, varargParam, varargExpressions)
   }
-
+  
   private fun isUnclearExpression(callArgument: PsiElement): Boolean {
-    return when (callArgument) {
+    val isShowHint = when (callArgument) {
       is PsiLiteralExpression -> true
       is PsiThisExpression -> true
       is PsiBinaryExpression -> true
@@ -179,6 +177,8 @@ object JavaInlayHintsProvider {
       }
       else -> false
     }
+
+    return isShowHint
   }
 }
 

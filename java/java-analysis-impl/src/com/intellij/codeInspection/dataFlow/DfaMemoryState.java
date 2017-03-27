@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,9 @@ public interface DfaMemoryState {
   @NotNull
   DfaMemoryState createCopy();
 
+  @NotNull
+  DfaMemoryState createClosureState();
+
   DfaValue pop();
   DfaValue peek();
   void push(@NotNull DfaValue value);
@@ -43,7 +47,11 @@ public interface DfaMemoryState {
 
   boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
 
+  void applyIsPresentCheck(boolean present, DfaValue qualifier);
+
   boolean applyCondition(DfaValue dfaCond);
+
+  ThreeState checkOptional(DfaValue value);
 
   void flushFields();
 

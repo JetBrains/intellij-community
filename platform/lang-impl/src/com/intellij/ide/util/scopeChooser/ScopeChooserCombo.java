@@ -53,6 +53,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private boolean myUsageView = true;
   private Condition<ScopeDescriptor> myScopeFilter;
   private boolean myShowEmptyScopes;
+  private BrowseListener myBrowseListener = null;
 
   public ScopeChooserCombo() {
     super(new IgnoringComboBox(){
@@ -116,6 +117,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     };
   }
 
+  public void setBrowseListener(BrowseListener browseListener) {
+    myBrowseListener = browseListener;
+  }
+
   public void setCurrentSelection(boolean currentSelection) {
     myCurrentSelection = currentSelection;
   }
@@ -155,6 +160,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private ActionListener createScopeChooserListener() {
     return e -> {
       final String selection = getSelectedScopeName();
+      if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
       final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
       if (dlg.isOK()){
         rebuildModel();
@@ -163,6 +169,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
           selectScope(namedScope.getName());
         }
       }
+      if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
     };
   }
 
@@ -284,5 +291,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         setSeparator();
       }
     }
+  }
+
+  public interface BrowseListener {
+    void onBeforeBrowseStarted();
+    void onAfterBrowseFinished();
   }
 }

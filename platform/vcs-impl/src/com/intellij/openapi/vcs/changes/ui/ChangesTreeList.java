@@ -172,6 +172,13 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
         return !myShowCheckboxes ? x : x - myCheckboxWidth;
       }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        if (!isEmpty()) { // apply only if tree is not empty - otherwise "getEmptyText()" should handle the case
+          super.mouseMoved(e);
+        }
+      }
     }.installOn(this);
     SmartExpander.installOn(this);
 

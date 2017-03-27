@@ -40,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
+import static java.lang.Math.max;
+
 /**
  * @author yole
  */
@@ -117,18 +119,17 @@ public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disp
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         // Android Studio: always check for update at startup
-        myCheckRunnable.run();
+        myCheckRunnable.run();  /*
+        BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
+        long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
 
-        //BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        //BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
-        //long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
-        //
-        //if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeToNextCheck <= 0) {
-        //  myCheckRunnable.run();
-        //}
-        //else {
-        //  queueNextCheck(timeToNextCheck);
-        //}
+        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
+          myCheckRunnable.run();
+        }
+        else {
+          queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
+        } */
       }
     });
   }

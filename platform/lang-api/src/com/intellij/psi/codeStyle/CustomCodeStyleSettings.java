@@ -19,6 +19,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,5 +86,12 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
    * For compatibility with old code style settings stored in CodeStyleSettings.
    */
   protected void importLegacySettings() {
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof CustomCodeStyleSettings)) return false;
+    if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    return true;
   }
 }

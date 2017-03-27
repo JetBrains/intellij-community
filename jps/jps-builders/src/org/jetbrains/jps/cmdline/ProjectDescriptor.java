@@ -76,7 +76,7 @@ public final class ProjectDescriptor {
     myBuildRootIndex = buildRootIndex;
     myLoggingManager = loggingManager;
     myModuleExcludeIndex = moduleExcludeIndex;
-    myProjectJavaSdks = new HashSet<JpsSdk<?>>();
+    myProjectJavaSdks = new HashSet<>();
     myEncodingConfiguration = new CompilerEncodingConfiguration(model, buildRootIndex);
     for (JpsModule module : myProject.getModules()) {
       final JpsSdk<?> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);

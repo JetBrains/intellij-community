@@ -334,7 +334,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public void apply(GradleProjectSettings settings) {
-    settings.setCompositeParticipants(myInitialSettings.getCompositeParticipants());
+    settings.setCompositeBuild(myInitialSettings.getCompositeBuild());
     if (myGradleHomePathField != null) {
       String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
       if (StringUtil.isEmpty(gradleHomePath)) {

@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,8 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration implements PyTestRunConfigurationParams {
+public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration>
+  implements PyTestRunConfigurationParams {
   private String myTestToRun = "";
   private String myKeywords = "";
   private String myParams = "";
@@ -64,7 +65,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     super(project, factory);
   }
 
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PyTestRunConfiguration> createConfigurationEditor() {
     return new PyTestConfigurationEditor(getProject(), this);
   }
 

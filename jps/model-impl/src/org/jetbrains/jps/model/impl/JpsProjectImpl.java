@@ -87,7 +87,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   <P extends JpsElement, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModule addModule(@NotNull final String name, @NotNull ModuleType moduleType) {
     final JpsElementCollection<JpsModule> collection = myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
-    return collection.addChild(new JpsModuleImpl<P>(moduleType, name, moduleType.createDefaultProperties()));
+    return collection.addChild(new JpsModuleImpl<>(moduleType, name, moduleType.createDefaultProperties()));
   }
 
   @NotNull
@@ -143,7 +143,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   public <P extends JpsElement> JpsTypedRunConfiguration<P> addRunConfiguration(@NotNull String name,
                                                                                 @NotNull JpsRunConfigurationType<P> type,
                                                                                 @NotNull P properties) {
-    return getRunConfigurationsCollection().addChild(new JpsRunConfigurationImpl<P>(name, type, properties));
+    return getRunConfigurationsCollection().addChild(new JpsRunConfigurationImpl<>(name, type, properties));
   }
 
   private JpsElementCollection<JpsRunConfiguration> getRunConfigurationsCollection() {

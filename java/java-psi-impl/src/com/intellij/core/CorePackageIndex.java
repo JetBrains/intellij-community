@@ -28,7 +28,7 @@ import java.util.List;
 public class CorePackageIndex extends PackageIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CorePackageIndex");
 
-  private final List<VirtualFile> myClasspath = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myClasspath = new ArrayList<>();
 
   public CorePackageIndex() {
   }
@@ -38,7 +38,7 @@ public class CorePackageIndex extends PackageIndex {
   }
 
   private List<VirtualFile> findDirectoriesByPackageName(String packageName) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     String dirName = packageName.replace(".", "/");
     for (VirtualFile root : roots()) {
       VirtualFile classDir = root.findFileByRelativePath(dirName);
@@ -56,7 +56,7 @@ public class CorePackageIndex extends PackageIndex {
 
   @Override
   public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return new CollectionQuery<VirtualFile>(findDirectoriesByPackageName(packageName));
+    return new CollectionQuery<>(findDirectoriesByPackageName(packageName));
   }
 
   public void addToClasspath(VirtualFile root) {

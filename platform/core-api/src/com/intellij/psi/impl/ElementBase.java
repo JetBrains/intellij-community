@@ -52,17 +52,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
   public static final int FLAGS_LOCKED = 0x800;
-  private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = new NullableFunction<ElementIconRequest, Icon>() {
-    @Override
-    public Icon fun(ElementIconRequest request) {
-      final PsiElement element = request.getElement();
-      if (element == null || !element.isValid() || element.getProject().isDisposed()) return null;
+  private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
+    final PsiElement element = request.getElement();
+    if (element == null || !element.isValid() || element.getProject().isDisposed()) return null;
 
-      int flags = request.getFlags();
-      Icon icon = computeIconNow(element, flags);
-      LastComputedIcon.put(element, icon, flags);
-      return icon;
-    }
+    int flags = request.getFlags();
+    Icon icon = computeIconNow(element, flags);
+    LastComputedIcon.put(element, icon, flags);
+    return icon;
   };
 
   private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = new NotNullLazyValue<Icon>() {
@@ -255,7 +252,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @NotNull
   public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    List<Icon> layersFromProviders = new SmartList<Icon>();
+    List<Icon> layersFromProviders = new SmartList<>();
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
       final Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
       if (layerIcon != null) {
@@ -263,7 +260,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
     }
     if (flags != 0 || !layersFromProviders.isEmpty()) {
-      List<Icon> iconLayers = new SmartList<Icon>();
+      List<Icon> iconLayers = new SmartList<>();
       for(IconLayer l: ourIconLayers) {
         if (BitUtil.isSet(flags, l.flagMask)) {
           iconLayers.add(l.icon);

@@ -42,7 +42,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   }
 
   protected ExtensibleQueryFactory(@NonNls final String epNamespace) {
-    myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>(new SmartList<QueryExecutor<Result, Parameters>>()){
+    myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>(new SmartList<>()){
       @Override
       @NotNull
       protected ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {

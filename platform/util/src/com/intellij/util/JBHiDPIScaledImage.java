@@ -43,11 +43,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param type the type
    */
   public JBHiDPIScaledImage(int width, int height, int type) {
-    super((int)(width * JBUI.sysScale()), (int)(height * JBUI.sysScale()), type);
-    myImage = null;
-    myUserWidth = width;
-    myUserHeight = height;
-    myScale = JBUI.sysScale();
+    this((GraphicsConfiguration)null, width, height, type);
   }
 
   /**
@@ -58,12 +54,28 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(@NotNull Graphics2D g, int width, int height, int type) {
+  public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
     super((int)(width * JBUI.sysScale(g)), (int)(height * JBUI.sysScale(g)), type);
     myImage = null;
     myUserWidth = width;
     myUserHeight = height;
     myScale = JBUI.sysScale(g);
+  }
+
+  /**
+   * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
+   *
+   * @param gc the graphics config which provides the target scale
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type
+   */
+  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
+    super((int)(width * JBUI.sysScale(gc)), (int)(height * JBUI.sysScale(gc)), type);
+    myImage = null;
+    myUserWidth = width;
+    myUserHeight = height;
+    myScale = JBUI.sysScale(gc);
   }
 
   /**

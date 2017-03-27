@@ -215,7 +215,10 @@ public class StudyUtils {
     return null;
   }
 
-  public static void deleteFile(@NotNull final VirtualFile file) {
+  public static void deleteFile(@Nullable final VirtualFile file) {
+    if (file == null) {
+      return;
+    }
     try {
       file.delete(StudyUtils.class);
     }
@@ -497,7 +500,8 @@ public class StudyUtils {
     String text = task.getText() != null ? task.getText() : getTaskTextByTaskName(task, taskDirectory);
 
     if (text == null) return null;
-    if (course.isAdaptive() && !task.isChoiceTask()) text = wrapAdaptiveCourseText(text);
+    text = convertToHtml(text);
+    if (course.isAdaptive()) text = wrapAdaptiveCourseText(task, text);
 
     return wrapTextToDisplayLatex(text);
   }
@@ -512,8 +516,15 @@ public class StudyUtils {
     return addExtension(fileNameWithoutExtension, defaultName);
   }
 
-  private static String wrapAdaptiveCourseText(@NotNull String text) {
-    return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+  private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
+    if (task.isTheoryTask()) {
+      return text + "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
+             "Please, read it and press \"Check\" to go further.";
+    }
+    else if (!task.isChoiceTask()) {
+      return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+    }
+    return text;
   }
 
   @NotNull
@@ -776,9 +787,9 @@ public class StudyUtils {
     return FileDocumentManager.getInstance().getDocument(taskFile);
   }
 
-  public static void showErrorPopupOnToolbar(@NotNull Project project) {
+  public static void showErrorPopupOnToolbar(@NotNull Project project, String content) {
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't post your reaction", MessageType.ERROR, null).createBalloon();
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(content, MessageType.ERROR, null).createBalloon();
     showCheckPopUp(project, balloon);
   }
 
@@ -789,9 +800,9 @@ public class StudyUtils {
     final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getActivePlaceholders();
     if (placeholders.isEmpty()) return;
     final AnswerPlaceholder placeholder = placeholders.get(0);
-    int startOffset = placeholder.getOffset();
-    editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
-    editor.getCaretModel().moveToOffset(startOffset);
+    Pair<Integer, Integer> offsets = getPlaceholderOffsets(placeholder, editor.getDocument());
+    editor.getSelectionModel().setSelection(offsets.first, offsets.second);
+    editor.getCaretModel().moveToOffset(offsets.first);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 

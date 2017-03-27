@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 
 /**
  * @author Maxim.Medvedev
@@ -66,9 +67,9 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @NotNull
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpressionImpl)) return GroovyResolveResult.EMPTY_ARRAY;
+    if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    return ((GrReferenceExpressionImpl)invoked).getCallVariants(upToArgument);
+    return GrReferenceResolveRunnerKt.getCallVariants(((GrReferenceExpression)invoked), upToArgument);
   }
 
   @Override

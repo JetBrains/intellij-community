@@ -26,27 +26,34 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.debugger.memory.ui.InstancesWindow;
 
+import java.util.Collections;
+import java.util.List;
+
 public class ShowInstancesByClassAction extends DebuggerTreeAction {
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
-    ObjectReference ref = getObjectReference(node);
-    if(ref != null) {
-      String text = String.format("Show %s Objects...", StringUtil.getShortName(ref.referenceType().name()));
+    final ObjectReference ref = getObjectReference(node);
+    final boolean enabled = ref != null && ref.virtualMachine().canGetInstanceInfo();
+    if (enabled) {
+      final String text = String.format("Show %s Objects...", StringUtil.getShortName(ref.referenceType().name()));
       e.getPresentation().setText(text);
     }
 
-    return ref != null;
+    return enabled;
   }
 
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    Project project = e.getProject();
+    final Project project = e.getProject();
     if (project != null) {
-      XDebugSession debugSession = XDebuggerManager.getInstance(project).getCurrentSession();
-      ObjectReference ref = getObjectReference(node);
-      if(debugSession != null && ref != null){
-        ReferenceType referenceType = ref.referenceType();
-        new InstancesWindow(debugSession, referenceType::instances, referenceType.name()).show();
+      final XDebugSession debugSession = XDebuggerManager.getInstance(project).getCurrentSession();
+      final ObjectReference ref = getObjectReference(node);
+      if (debugSession != null && ref != null) {
+        final ReferenceType referenceType = ref.referenceType();
+        new InstancesWindow(debugSession, l -> {
+          final List<ObjectReference> instances = referenceType.instances(l);
+          return instances == null ? Collections.emptyList() : instances;
+        }, referenceType.name()).show();
       }
     }
   }

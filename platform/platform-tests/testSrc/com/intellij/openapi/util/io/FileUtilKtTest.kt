@@ -32,7 +32,7 @@ class FileUtilKtTest {
   }
 
   @Test
-  fun `readCharSequence — length not provided`() {
+  fun `readCharSequence without length parameter`() {
     fun String.read() = byteInputStream().reader().readCharSequence().toString()
 
     assertThat("foo").isEqualTo("foo".read())

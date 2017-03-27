@@ -39,7 +39,7 @@ public class NumpyClassMembersProvider extends PyClassMembersProviderBase {
   @NotNull
   @Override
   public Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, TypeEvalContext typeEvalContext) {
-    if (location != null && clazz.getPyClass().isSubclass(PyNames.FAKE_FUNCTION, typeEvalContext)) {
+    if (location != null && clazz.getPyClass().isSubclass(PyNames.TYPES_FUNCTION_TYPE, typeEvalContext)) {
       final PsiElement element = location.getOriginalElement();
       final PsiReference reference = element.getReference();
       if (reference != null) {

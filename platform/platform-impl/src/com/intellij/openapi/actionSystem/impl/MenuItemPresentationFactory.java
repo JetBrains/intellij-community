@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class MenuItemPresentationFactory extends PresentationFactory {
   }
 
   protected void processPresentation(Presentation presentation) {
-    if (!UISettings.getInstance().SHOW_ICONS_IN_MENUS || myForceHide) {
+    if (!UISettings.getInstance().getShowIconsInMenus() || myForceHide) {
       presentation.setIcon(null);
       presentation.setDisabledIcon(null);
       presentation.setHoveredIcon(null);

@@ -129,7 +129,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
-        myCachedType = new SoftReference<PsiType>(type);
+        myCachedType = new SoftReference<>(type);
       }
       return type;
     }
@@ -287,7 +287,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new HashSet<PsiVariable>(2));
+    return computeConstantValue(new HashSet<>(2));
   }
 
   @Override
@@ -299,12 +299,15 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean isDeprecated() {
-    final PsiFieldStub stub = getGreenStub();
+    return isFieldDeprecated(this, getGreenStub());
+  }
+
+  static boolean isFieldDeprecated(@NotNull PsiField field, @Nullable PsiFieldStub stub) {
     if (stub != null) {
-      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
+      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(field);
     }
 
-    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
+    return PsiImplUtil.isDeprecatedByDocTag(field) || PsiImplUtil.isDeprecatedByAnnotation(field);
   }
 
   @Override

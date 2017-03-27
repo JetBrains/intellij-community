@@ -288,7 +288,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
     addToInvokeLater(() -> {
       final String testName = testFinishedEvent.getName();
-      final long duration = testFinishedEvent.getDuration();
+      final Long duration = testFinishedEvent.getDuration();
       final String fullTestName = getFullTestName(testName);
       final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
 
@@ -298,7 +298,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         return;
       }
 
-      testProxy.setDuration(duration);
+      testProxy.setDuration(duration != null ? duration : 0);
       testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
       testProxy.setFinished();
       myRunningTestsFullNameToProxy.remove(fullTestName);

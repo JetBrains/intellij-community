@@ -47,12 +47,12 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
    */
   protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
 
-  protected DefaultListModel myListModel = new DefaultListModel();
-  protected JBList myList = new JBList(myListModel);
+  protected DefaultListModel<T> myListModel = new DefaultListModel<T>();
+  protected JBList<T> myList = new JBList<T>(myListModel);
 
   public AddDeleteListPanel(final String title, final List<T> initialList) {
     myTitle = title;
-    for (Object o : initialList) {
+    for (T o : initialList) {
       if (o != null) {
         myListModel.addElement(o);
       }

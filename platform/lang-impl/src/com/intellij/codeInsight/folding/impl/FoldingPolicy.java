@@ -19,13 +19,16 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FoldingPolicy {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingPolicy");
   
   private static final GenericElementSignatureProvider GENERIC_PROVIDER = new GenericElementSignatureProvider();
   
@@ -34,7 +37,13 @@ public class FoldingPolicy {
   public static boolean isCollapseByDefault(PsiElement element) {
     final Language lang = element.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
-    return foldingBuilder != null && foldingBuilder.isCollapsedByDefault(element.getNode());
+    try {
+      return foldingBuilder != null && foldingBuilder.isCollapsedByDefault(element.getNode());
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return false;
+    }
   }
 
   @Nullable

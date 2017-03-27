@@ -97,7 +97,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
       final String qname = ((PsiClass) element).getQualifiedName();
       if (qname != null) {
         List<String> importedNames = PLACE_IMPORTED_NAMES.getValue(location);
-        if (importedNames.contains(qname)) {
+        if (importedNames.contains(qname) || "java.lang".equals(StringUtil.getPackageName(qname))) {
           return 100;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.JdomKt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
@@ -111,6 +112,16 @@ class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   void testTemplateWithSegmentsAtTheSamePosition_3() {
     doTestTemplateWithThreeVariables("", "DefaultValue", "", "class A { void test() { for(TestValue1DefaultValueTestValue3) {} } }")
+  }
+
+  void testTemplateWithSegmentsAtTheSamePosition_4() {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("test_template", "user_group", '$A$$B$ then "$A$$B$"')
+    template.addVariable("A", "", "\"Def1\"", true)
+    template.addVariable("B", "", "\"Def2\"", true)
+    startTemplate(template)
+    checkResultByText("class A { void test() { Def1Def2 then \"Def1Def2\" } }")
   }
 
   private void doTestTemplateWithThreeVariables(String firstDefaultValue, String secondDefaultValue, String thirdDefaultValue, String expectedText) {
@@ -582,12 +593,13 @@ class Outer {
 
   void testJavaExpressionContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("toar", "other")
-    assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template))
-    assertTrue(isApplicable("class Foo {{ <caret>toar }}", template))
-    assertTrue(isApplicable("class Foo {{ return (<caret>toar) }}", template))
-    assertFalse(isApplicable("class Foo {{ return (aaa <caret>toar) }}", template))
-    assertTrue(isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template))
-    assertTrue(isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template))
+    assert !isApplicable("class Foo {{ if (a <caret>toar) }}", template)
+    assert isApplicable("class Foo {{ <caret>toar }}", template)
+    assert isApplicable("class Foo {{ return (<caret>toar) }}", template)
+    assert !isApplicable("class Foo {{ return (aaa <caret>toar) }}", template)
+    assert isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template)
+    assert isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template)
+    assert !isApplicable("class Foo extends <caret>t {}", template)
   }
 
   void testJavaDeclarationContext() {
@@ -648,11 +660,11 @@ class Outer {
   }
 
   void testDontSaveDefaultContexts() {
-    def defElement = JDOMUtil.loadDocument('''\
+    def defElement = JdomKt.loadElement('''\
 <context>
   <option name="JAVA_STATEMENT" value="false"/>
   <option name="JAVA_CODE" value="true"/>
-</context>''').rootElement
+</context>''')
     def defContext = new TemplateContext()
     defContext.readTemplateContext(defElement)
 
@@ -685,10 +697,10 @@ class Outer {
   }
 
   void "test adding new context to Other"() {
-    def defElement = JDOMUtil.loadDocument('''\
+    def defElement = JdomKt.loadElement('''\
 <context>
   <option name="OTHER" value="true"/>
-</context>''').rootElement
+</context>''')
     def context = new TemplateContext()
     context.readTemplateContext(defElement)
 
@@ -1245,6 +1257,20 @@ class Foo {{
     }
 }}
 """
+  }
+
+  void "test delete at the last template position with selection"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'iter\t'
+    def startOffset = myFixture.editor.caretModel.offset
+    myFixture.type "foo"
+    myFixture.editor.getSelectionModel().setSelection(startOffset, myFixture.editor.caretModel.offset)
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    assertNotNull(state)
   }
 
 

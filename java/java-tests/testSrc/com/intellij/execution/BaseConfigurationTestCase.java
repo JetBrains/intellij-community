@@ -23,7 +23,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationProducer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,7 +32,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -101,14 +100,9 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
   @NotNull
   public static Module createTempModule(TempFiles tempFiles, final Project project) {
     final String tempPath = tempFiles.createTempFile("xxx").getAbsolutePath();
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
-      @Override
-      public Module compute() {
-        Module result = ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId());
-        PlatformTestUtil.saveProject(project);
-        return result;
-      }
-    });
+    Module result = WriteAction.compute(() -> ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId()));
+    PlatformTestUtil.saveProject(project);
+    return result;
   }
 
   protected static VirtualFile findFile(String path) {

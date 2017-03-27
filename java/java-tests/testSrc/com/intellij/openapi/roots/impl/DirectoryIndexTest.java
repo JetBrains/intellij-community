@@ -158,8 +158,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
         @NotNull
         @Override
-        public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
-          return myProject == project ? Collections.singletonList(myLibAdditionalSrcDir) : Collections.emptyList();
+        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+          return myProject == project ? Collections.singletonList(
+            SyntheticLibrary.newImmutableLibrary(Collections.singletonList(myLibAdditionalSrcDir))
+          ) : Collections.emptyList();
         }
       }, getTestRootDisposable());
 
@@ -177,6 +179,15 @@ public class DirectoryIndexTest extends IdeaTestCase {
     myFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     // to not interfere with previous test firing vfs events
     VirtualFileManager.getInstance().syncRefresh();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myFileIndex = null;
+    myIndex = null;
+    myModule2 = null;
+    myModule3 = null;
+    super.tearDown();
   }
 
   private CompilerProjectExtension getCompilerProjectExtension() {

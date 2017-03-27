@@ -148,7 +148,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     public VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myRunner = runner;
-      myLines = new CopyOnWriteArrayList<String>();
+      myLines = new CopyOnWriteArrayList<>();
       start("java -version");
     }
 

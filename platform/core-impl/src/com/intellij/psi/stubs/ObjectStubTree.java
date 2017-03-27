@@ -35,7 +35,7 @@ public class ObjectStubTree<T extends Stub> {
   public static final Key<Integer> LAST_STUB_TREE_HASH = Key.create("LAST_STUB_TREE_HASH");
   protected final ObjectStubBase myRoot;
   private String myDebugInfo;
-  protected final List<T> myPlainList = new ArrayList<T>();
+  protected final List<T> myPlainList = new ArrayList<>();
 
   public ObjectStubTree(@NotNull final ObjectStubBase root, final boolean withBackReference) {
     myRoot = root;
@@ -108,7 +108,7 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   private static class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>, TObjectObjectProcedure<Object,int[]> {
-    private final THashMap<StubIndexKey, Map<Object, int[]>> myResult = new THashMap<StubIndexKey, Map<Object, int[]>>();
+    private final THashMap<StubIndexKey, Map<Object, int[]>> myResult = new THashMap<>();
     private int myStubIdx;
     private Map<Object, int[]> myProcessingMap;
 
@@ -116,7 +116,7 @@ public class ObjectStubTree<T extends Stub> {
     public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        map = new THashMap<Object, int[]>();
+        map = new THashMap<>();
         myResult.put(indexKey, map);
       }
 

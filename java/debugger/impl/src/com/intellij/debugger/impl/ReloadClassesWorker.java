@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaExecutionStack;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -165,7 +168,7 @@ class ReloadClassesWorker {
       processException(e);
     }
 
-    debugProcess.getPositionManager().clearCache();
+    debugProcess.onHotSwapFinished();
 
     DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
     SuspendContextImpl suspendContext = context.getSuspendContext();

@@ -142,9 +142,4 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
     myHashCodeFields = null;
     myNonNullFields = null;
   }
-
-  @Override
-  public boolean startInWriteAction() {
-      return true;
-    } 
 }

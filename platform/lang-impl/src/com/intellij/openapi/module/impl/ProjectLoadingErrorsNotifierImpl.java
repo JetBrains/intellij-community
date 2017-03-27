@@ -27,7 +27,6 @@ import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -96,11 +95,10 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
                                                                               @NotNull HyperlinkEvent event) {
                                                     final List<ConfigurationErrorDescription> validDescriptions =
                                                       ContainerUtil.findAll(descriptions, errorDescription -> errorDescription.isValid());
-                                                    RemoveInvalidElementsDialog
-                                                      .showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements,
-                                                                  validDescriptions);
-
-                                                    notification.expire();
+                                                    if (RemoveInvalidElementsDialog.showDialog(myProject, CommonBundle.getErrorTitle(), type,
+                                                                                               invalidElements, validDescriptions)) {
+                                                      notification.expire();
+                                                    }
                                                   }
                                                 }), myProject);
     }

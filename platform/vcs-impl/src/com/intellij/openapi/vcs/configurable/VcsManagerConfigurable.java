@@ -20,7 +20,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
@@ -33,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
@@ -133,6 +130,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     }
 
+    result.add(new ShelfProjectConfigurable(myProject));  
     for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
       final Configurable configurable = provider.getConfigurable(myProject);
       if (configurable != null) {

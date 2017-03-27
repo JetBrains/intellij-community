@@ -67,12 +67,12 @@ public class EqualsAndHashcodeBase extends BaseJavaBatchLocalInspectionTool {
       return CachedValueProvider.Result.create(Pair.create(myEquals, myHashCode), psiObjectClass);
     });
 
-    if (pair == null) return new PsiElementVisitor() {};
+    if (pair == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     //jdk wasn't configured for the project
     final PsiMethod myEquals = pair.first;
     final PsiMethod myHashCode = pair.second;
-    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {};
+    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new JavaElementVisitor() {
       @Override public void visitClass(PsiClass aClass) {

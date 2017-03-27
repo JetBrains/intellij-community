@@ -118,7 +118,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   private static class NoFakeSuperClasses extends NotNullPredicate<PyClass> {
     @Override
     protected boolean applyNotNull(@NotNull final PyClass input) {
-      return !PyNames.FAKE_OLD_BASE.equals(input.getName());
+      return !PyNames.TYPES_INSTANCE_TYPE.equals(input.getQualifiedName());
     }
   }
 }

@@ -135,6 +135,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), true);
+    childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
     String nodeType = startedNodeEvent.getNodeType();
     if (printerProvider != null && nodeType != null && nodeName != null) {
@@ -178,7 +179,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       Node node = findNodeToTerminate(testFinishedEvent);
       if (node != null) {
         SMTestProxy testProxy = node.getProxy();
-        testProxy.setDuration(testFinishedEvent.getDuration());
+        final Long duration = testFinishedEvent.getDuration();
+        if (duration != null) {
+          testProxy.setDuration(duration);
+        }
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
         if (node.getState() != State.FAILED) {
@@ -233,13 +237,26 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onError(@NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
+    onError(null, localizedMessage, stackTrace, isCritical);
+  }
+
+  public void onError(@Nullable final String nodeId,
+                      @NotNull final String localizedMessage,
+                      @Nullable final String stackTrace,
+                      final boolean isCritical) {
     addToInvokeLater(() -> {
-      Node activeNode = findActiveNode();
-      SMTestProxy activeProxy = activeNode.getProxy();
+      SMTestProxy activeProxy = null;
+      if (nodeId != null) {
+        activeProxy = findProxyById(nodeId);
+      }
+      if (activeProxy == null) {
+        Node activeNode = findActiveNode();
+        activeProxy = activeNode.getProxy();
+      }
       activeProxy.addError(localizedMessage, stackTrace, isCritical);
     });
   }
-
+  
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(() -> {
       Node node = findNodeToTerminate(testFailedEvent);

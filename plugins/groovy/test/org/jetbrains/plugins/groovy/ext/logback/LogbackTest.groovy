@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,91 +16,43 @@
 package org.jetbrains.plugins.groovy.ext.logback
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.pom.PomTargetPsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
+import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
+import static org.jetbrains.plugins.groovy.util.TestUtils.getAbsoluteTestDataPath
+
 @CompileStatic
 class LogbackTest extends LightGroovyTestCase {
 
-  LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor(bundledGroovyJar as String) {
 
-  @Override
-  void setUp() throws Exception {
-    super.setUp()
-    fixture.with {
-      addClass '''
-package ch.qos.logback.classic;
-public interface Level {
-  Level ERROR = null;
-  Level INFO = null;
-  Level WARN = null;
-}
-'''
-      addClass '''
-package ch.qos.logback.classic.gaffer;
-import ch.qos.logback.classic.Level;
-public class ConfigurationDelegate {
-  void scan(String scanPeriodStr) {}
-  void statusListener(Class listenerClass) {}
-  void conversionRule(String conversionWord, Class converterClass) {}
-  void root(Level level) {}
-  void root(Level level, List<String> appenderNames) {}
-  void logger(String name, Level level) {}
-  void logger(String name, Level level, List<String> appenderNames) {}
-  void logger(String name, Level level, List<String> appenderNames, Boolean b) {}
-  void appender(String name, Class clazz) {}
-  void appender(String name, Class clazz, Closure closure) {}
-  void receiver(String name, Class aClass) {}
-  void receiver(String name, Class aClass, Closure closure) {}
-  void turboFilter(Class clazz) {}
-  void turboFilter(Class clazz, Closure closure) {}
-  String timestamp(String datePattern, long timeReference) {}
-  void jmxConfigurator() {}
-  void jmxConfigurator(String name) {}
-}
-'''
-      addClass '''
-package ch.qos.logback.classic.gaffer;
-public class ComponentDelegate {}
-'''
-      addClass '''
-package ch.qos.logback.classic.gaffer;
-public class AppenderDelegate extends ComponentDelegate {}
-'''
-      addClass '''
-package ch.qos.logback.core.encoder;
-public interface Encoder {}
-'''
-      addClass '''
-package ch.qos.logback.classic.encoder;
-public interface PatternLayoutEncoder extends ch.qos.logback.core.encoder.Encoder {
-  String getPattern();
-  void setPattern(String s);
-}
-'''
-      addClass '''
-package ch.qos.logback.core;
-import ch.qos.logback.core.encoder.Encoder;
-public interface ConsoleAppender {
-  Encoder getEncoder();
-  void setEncoder(Encoder e);
-}
-'''
-      addClass '''
-package ch.qos.logback.core;
-import ch.qos.logback.core.encoder.Encoder;
-public interface FileAppender {
-  Encoder getEncoder();
-  void setEncoder(Encoder e);
-  boolean isAppend();
-  void setAppend(boolean a);
-  void setFile(String file);
-}
-'''
+    @NotNull
+    final JpsModuleSourceRootType sourceRootType = JavaResourceRootType.RESOURCE
+
+    @Override
+    void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry)
+      def library = model.moduleLibraryTable.createLibrary("Logback")
+      library.modifiableModel.with {
+        def root = JarFileSystem.instance.refreshAndFindFileByPath(absoluteTestDataPath + "mock/logback/logback-mock.jar!/")
+        addRoot(root, OrderRootType.CLASSES)
+        commit()
+      }
+      model.findLibraryOrderEntry(library).scope = DependencyScope.RUNTIME
     }
   }
 

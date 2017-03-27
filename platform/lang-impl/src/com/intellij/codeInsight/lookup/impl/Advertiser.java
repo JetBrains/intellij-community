@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -47,7 +46,7 @@ public class Advertiser {
     public Dimension getPreferredSize() {
       Dimension dimension = myCachedPrefSize;
       if (dimension == null) {
-        dimension = myCachedPrefSize = calcPreferredSize();
+        myCachedPrefSize = dimension = calcPreferredSize();
       }
       return dimension;
     }

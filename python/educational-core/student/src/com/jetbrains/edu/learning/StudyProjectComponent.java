@@ -107,11 +107,9 @@ public class StudyProjectComponent implements ProjectComponent {
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
         Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
         if (course1 != null) {
-          final UISettings instance = UISettings.getInstance();
-          if (instance != null) {
-            instance.HIDE_TOOL_STRIPES = false;
-            instance.fireUISettingsChanged();
-          }
+          UISettings instance = UISettings.getInstance();
+          instance.setHideToolStripes(false);
+          instance.fireUISettingsChanged();
           registerShortcuts();
           EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
         }
@@ -132,23 +130,18 @@ public class StudyProjectComponent implements ProjectComponent {
   private void registerShortcuts() {
     StudyToolWindow window = StudyUtils.getStudyToolWindow(myProject);
     if (window != null) {
-      List<AnAction> actionsOnToolbar = window.getActions();
-      if (actionsOnToolbar != null) {
-        for (AnAction action : actionsOnToolbar) {
-          if (action instanceof StudyActionWithShortcut) {
-            String id = ((StudyActionWithShortcut)action).getActionId();
-            String[] shortcuts = ((StudyActionWithShortcut)action).getShortcuts();
-            if (shortcuts != null) {
-              addShortcut(id, shortcuts);
-            }
+      List<AnAction> actionsOnToolbar = window.getActions(true);
+      for (AnAction action : actionsOnToolbar) {
+        if (action instanceof StudyActionWithShortcut) {
+          String id = ((StudyActionWithShortcut)action).getActionId();
+          String[] shortcuts = ((StudyActionWithShortcut)action).getShortcuts();
+          if (shortcuts != null) {
+            addShortcut(id, shortcuts);
           }
         }
-        addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
-        addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
       }
-      else {
-        LOG.warn("Actions on toolbar are nulls");
-      }
+      addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
+      addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
     }
   }
 

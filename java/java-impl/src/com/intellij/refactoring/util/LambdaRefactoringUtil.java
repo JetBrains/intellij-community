@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,12 +197,7 @@ public class LambdaRefactoringUtil {
               buf.append(referenceElement.getReferenceName()).append(".");
             }
           }
-          else if (qualifier != null &&
-
-                   !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass &&
-                     ((PsiReferenceExpression)qualifier).getQualifier() == null && PsiTreeUtil.isAncestor(containingClass, referenceExpression, false) ||
-
-                     qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
+          else if (qualifier != null && !isQualifierUnnecessary(qualifier, containingClass)) {
             buf.append(qualifier.getText()).append(".");
           }
         }
@@ -261,6 +256,21 @@ public class LambdaRefactoringUtil {
       buf.append(";}");
     }
     return buf.toString();
+  }
+
+  private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
+    if (qualifier instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)qualifier;
+      if (reference.resolve() instanceof PsiClass &&
+          reference.getQualifier() == null &&
+          PsiTreeUtil.isContextAncestor(containingClass, qualifier, false)) {
+        return true;
+      }
+    }
+    if (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean isInferredSameTypeAfterConversion(PsiLambdaExpression lambdaExpression,

@@ -118,6 +118,7 @@ public class VcsInitialization implements Disposable {
   private void cancelBackgroundInitialization() {
     // do not leave VCS initialization run in background when the project is closed
     Future<?> future = myFuture;
+    LOG.debug("cancelBackgroundInitialization() future=" + future +" from "+Thread.currentThread()+" with write access="+ApplicationManager.getApplication().isWriteAccessAllowed());
     if (future != null) {
       future.cancel(false);
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -133,6 +134,7 @@ public class VcsInitialization implements Disposable {
   }
 
   void waitForCompletion() {
+    LOG.debug("waitForCompletion() status=" + myStatus);
     // have to wait for task completion to avoid running it in background for closed project
     long start = System.currentTimeMillis();
     Status status = null;

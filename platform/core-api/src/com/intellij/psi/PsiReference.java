@@ -37,13 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
-  ArrayFactory<PsiReference> ARRAY_FACTORY = new ArrayFactory<PsiReference>() {
-    @NotNull
-    @Override
-    public PsiReference[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiReference[count];
-    }
-  };
+  ArrayFactory<PsiReference> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiReference[count];
 
   /**
    * Returns the underlying (referencing) element of the reference.

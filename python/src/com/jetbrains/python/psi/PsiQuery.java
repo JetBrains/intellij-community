@@ -57,6 +57,17 @@ public final class PsiQuery<T extends PsiElement> {
     myElements = Collections.unmodifiableList(elementsToStart);
   }
 
+  /**
+   * Adds elements to query
+   */
+  @NotNull
+  public PsiQuery<T> addElements(@NotNull final PsiQuery<? extends T> newElements) {
+    final List<T> newList = new ArrayList<>(myElements);
+    newList.addAll(newElements.myElements);
+    return new PsiQuery<>(newList);
+  }
+
+
   @NotNull
   public static <T extends PsiElement> PsiQuery<T> create(@NotNull final T elementToStart) {
     return new PsiQuery<>(elementToStart);
@@ -68,7 +79,6 @@ public final class PsiQuery<T extends PsiElement> {
     queriesWithElements.forEach(o -> result.addAll(o.getElements()));
     return new PsiQuery<>(new ArrayList<>(result));
   }
-
 
   @NotNull
   public <R extends T> PsiQuery<R> filter(@NotNull final PsiFilter<R> filter) {
@@ -91,7 +101,8 @@ public final class PsiQuery<T extends PsiElement> {
   }
 
   @NotNull
-  public <R extends PsiElement, F_R extends T> PsiQuery<R> map(@NotNull final PsiFilter<F_R> preFilter, @NotNull final Function<F_R, R> map) {
+  public <R extends PsiElement, F_R extends T> PsiQuery<R> map(@NotNull final PsiFilter<F_R> preFilter,
+                                                               @NotNull final Function<F_R, R> map) {
     return filter(preFilter).map(map);
   }
 
@@ -131,14 +142,10 @@ public final class PsiQuery<T extends PsiElement> {
     final Set<R> result = new LinkedHashSet<>(); // Set to get rid of duplicates but preserve order
     asStream()
       .map(o -> elementsProducer.apply(o)
-        .stream().filter(o2 -> !o2.equals(o)) // Filter out same element
+        .stream().filter(o2 -> !o2.equals(o)) // Filter out same element in case of siblings
         .collect(Collectors.toList()))
       .forEach(result::addAll);
-
-    if (filter.myPreserveCurrent) {
-      result.addAll(filter.filter(myElements));
-    }
-    return new PsiQuery<>(new ArrayList<>(result));
+    return new PsiQuery<>(new ArrayList<>(filter.filter(result)));
   }
 
 
@@ -174,31 +181,22 @@ public final class PsiQuery<T extends PsiElement> {
     private final Class<T> myClass;
     @NotNull
     private final Predicate<T> myPredicate;
+
     /**
      * Include current element in result set, or not (false by default)
      */
-    private final boolean myPreserveCurrent;
-
-    public PsiFilter(@NotNull final Class<T> aClass, @NotNull final Predicate<T> predicate, final boolean preserveCurrent) {
-      myClass = aClass;
-      myPredicate = predicate;
-      myPreserveCurrent = preserveCurrent;
-    }
 
     public PsiFilter(@NotNull final Class<T> aClass, @NotNull final Predicate<T> predicate) {
-      this(aClass, predicate, false);
-    }
-
-    public PsiFilter(@NotNull final Class<T> aClass, final boolean preserveCurrent) {
-      this(aClass, o -> true, preserveCurrent);
+      myClass = aClass;
+      myPredicate = predicate;
     }
 
     public PsiFilter(@NotNull final Class<T> aClass) {
-      this(aClass, false);
+      this(aClass, o -> true);
     }
 
     @NotNull
-    List<T> filter(@NotNull final List<?> list) {
+    List<T> filter(@NotNull final Collection<?> list) {
       // IDEA-165420
       //noinspection Guava
       return FluentIterable.from(list).filter(myClass).toList().stream().filter(myPredicate).collect(Collectors.toList());

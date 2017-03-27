@@ -36,6 +36,7 @@ public abstract class SpeedSearchSupply {
   public static final String SEARCH_QUERY_KEY = "SEARCH_QUERY";
   private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
   public static final DataKey<String> SPEED_SEARCH_CURRENT_QUERY = DataKey.create("SPEED_SEARCH_CURRENT_QUERY");
+  public static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
 
   @Nullable
   public static SpeedSearchSupply getSupply(@NotNull final JComponent component) {

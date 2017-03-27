@@ -291,7 +291,7 @@ public class JpsModuleRootModelSerializer {
   }
 
   private static List<String> getSortedList(final List<String> list) {
-    List<String> strings = new ArrayList<String>(list);
+    List<String> strings = new ArrayList<>(list);
     Collections.sort(strings);
     return strings;
   }

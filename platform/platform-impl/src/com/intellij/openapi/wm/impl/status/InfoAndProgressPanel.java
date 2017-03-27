@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -136,6 +138,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     setRefreshVisible(false);
 
     restoreEmptyStatus();
+
+    runOnPowerSaveChange(this, () -> updateProgressIcon());
+  }
+
+  private static void runOnPowerSaveChange(Disposable parentDisposable, Runnable runnable) {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
   }
 
   private void handle(MouseEvent e) {
@@ -191,7 +199,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
       List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<>(myOriginals.size());
       for (int i = 0; i < myOriginals.size(); i++) {
-        result.add(Pair.<TaskInfo, ProgressIndicator>create(myInfos.get(i), myOriginals.get(i)));
+        result.add(Pair.create(myInfos.get(i), myOriginals.get(i)));
       }
 
       return Collections.unmodifiableList(result);
@@ -209,7 +217,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       final InlineProgressIndicator compact = createInlineDelegate(info, original, true);
 
       myPopup.addIndicator(expanded);
-      myProgressIcon.resume();
+      updateProgressIcon();
 
       if (veryFirst && !myPopup.isShowing()) {
         buildInInlineIndicator(compact);
@@ -615,10 +623,18 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void restoreEmptyStatusInner() {
     removeAll();
-    myProgressIcon.suspend();
+    updateProgressIcon();
     Container iconParent = myProgressIcon.getParent();
     if (iconParent != null) {
       iconParent.remove(myProgressIcon); // to prevent leaks to this removed parent via progress icon
+    }
+  }
+
+  private void updateProgressIcon() {
+    if (myOriginals.isEmpty() || PowerSaveMode.isEnabled()) {
+      myProgressIcon.suspend();
+    } else {
+      myProgressIcon.resume();
     }
   }
 
@@ -653,7 +669,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
     private ProgressIndicatorEx myOriginal;
 
-    public MyInlineProgressIndicator(final boolean compact, @NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
+    MyInlineProgressIndicator(final boolean compact, @NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
       super(compact, task);
       myOriginal = original;
       original.addStateDelegate(this);
@@ -664,6 +680,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           updateProgress();
         }
       });
+      Runnable updatePowerSaveStatus = () -> myProgress.setVisible(!PowerSaveMode.isEnabled());
+      runOnPowerSaveChange(this, updatePowerSaveStatus);
+      updatePowerSaveStatus.run();
     }
 
     @Override

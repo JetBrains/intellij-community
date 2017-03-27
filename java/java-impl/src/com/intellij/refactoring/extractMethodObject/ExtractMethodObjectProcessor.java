@@ -23,6 +23,7 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -58,7 +59,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
@@ -203,12 +203,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   void moveUsedMethodsToInner() {
     if (!myUsages.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        for (MethodToMoveUsageInfo usage : myUsages) {
-          final PsiMember member = (PsiMember)usage.getElement();
-          LOG.assertTrue(member != null);
-          myInnerClass.add(member.copy());
-          member.delete();
-        }
+        WriteAction.run(() -> {
+          for (MethodToMoveUsageInfo usage : myUsages) {
+            final PsiMember member = (PsiMember)usage.getElement();
+            LOG.assertTrue(member != null);
+            myInnerClass.add(member.copy());
+            member.delete();
+          }
+        });
         return;
       }
       final List<MemberInfo> memberInfos = new ArrayList<>();
@@ -230,7 +232,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       };
       if (dlg.showAndGet()) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
+        WriteAction.run(() -> {
           for (MemberInfoBase<PsiMember> memberInfo : panel.getTable().getSelectedMemberInfos()) {
             if (memberInfo.isChecked()) {
               myInnerClass.add(memberInfo.getMember().copy());

@@ -126,7 +126,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     Sdk sdk = pyState.getSdk();
     PyDebugSessionFactory sessionCreator = PyDebugSessionFactory.findExtension(sdk);
     if (sessionCreator != null) {
-      return sessionCreator.createSession(this, pyState, environment);
+      return sessionCreator.createSession(pyState, environment);
     }
 
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();

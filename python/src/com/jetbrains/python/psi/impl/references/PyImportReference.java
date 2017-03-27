@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,10 +266,9 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     private void fillFromQName(QualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
-      QualifiedNameResolver visitor = new QualifiedNameResolverImpl(thisQName).fromElement(myCurrentFile);
-      for (PsiDirectory dir : visitor.resultsOfType(PsiDirectory.class)) {
-        fillFromDir(dir, insertHandler);
-      }
+      StreamEx.of(PyResolveImportUtil.resolveQualifiedName(thisQName, PyResolveImportUtil.fromFoothold(myCurrentFile)))
+        .select(PsiDirectory.class)
+        .forEach(directory -> fillFromDir(directory, insertHandler));
     }
 
     private void addImportedNames(@NotNull PyImportElement[] importElements) {

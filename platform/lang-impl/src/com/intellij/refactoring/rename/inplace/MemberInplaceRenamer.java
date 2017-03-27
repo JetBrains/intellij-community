@@ -255,7 +255,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   protected void restoreCaretOffsetAfterRename() {
     if (myBeforeRevert != null) {
-      myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      if (!myEditor.isDisposed()) {
+        myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      }
       myBeforeRevert.dispose();
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.pom.java.LanguageLevel;
 public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
 
-  public void testWrongPlace() { doTest(); }
+  public void testWrongPlace() { setLanguageLevel(LanguageLevel.JDK_1_7); doTest(); }
   public void testNotValueNameOmitted() { doTest(); }
   public void testCannotFindMethod() { doTest(); }
   public void testIncompatibleType1() { doTest(); }
@@ -32,7 +32,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncompatibleType4() { doTest(); }
   public void testIncompatibleType5() { doTest(); }
   public void testMissingAttribute() { doTest(); }
-  public void testDuplicateAnnotation() { doTest(); }
+  public void testDuplicateAnnotation() { setLanguageLevel(LanguageLevel.JDK_1_7); doTest(); }
   public void testNonConstantInitializer() { doTest(); }
   public void testInvalidType() { doTest(); }
   public void testInapplicable() { doTest(); }
@@ -44,20 +44,13 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPrivateInaccessibleConstant() { doTest(); }
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(); }
-
-  public void testTypeAnnotations() { doTest8(); }
-  public void testRepeatable() { doTest8(); }
-  public void testEnumValues() { doTest8(); }
-  public void testReceiverParameters() { doTest8(); }
+  public void testTypeAnnotations() { doTest(); }
+  public void testRepeatable() { doTest(); }
+  public void testEnumValues() { doTest(); }
+  public void testReceiverParameters() { doTest(); }
   public void testAnnotationOverIncompleteCode() { doTest(); }
+  public void testModuleAnnotation() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("module-info.java"); }
 
-  private void doTest() {
-    setLanguageLevel(LanguageLevel.JDK_1_7);
-    doTest(BASE_PATH + "/" + getTestName(true) + ".java", false, false);
-  }
-
-  private void doTest8() {
-    setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(BASE_PATH + "/" + getTestName(true) + ".java", false, false);
-  }
+  private void doTest() { doTest(getTestName(true) + ".java"); }
+  private void doTest(String name) { doTest(BASE_PATH + "/" + name, false, false); }
 }

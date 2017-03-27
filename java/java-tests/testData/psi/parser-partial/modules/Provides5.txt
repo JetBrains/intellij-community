@@ -1,5 +1,9 @@
 PsiJavaFile:Provides5.java
+  PsiImportList
+    <empty list>
   PsiJavaModule:M
+    PsiModifierList:
+      <empty list>
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
@@ -15,12 +19,13 @@ PsiJavaFile:Provides5.java
         PsiReferenceParameterList
           <empty list>
       PsiWhiteSpace(' ')
-      PsiKeyword:with('with')
-      PsiWhiteSpace(' ')
-      PsiJavaCodeReferenceElement:Impl
-        PsiIdentifier:Impl('Impl')
-        PsiReferenceParameterList
-          <empty list>
+      PsiReferenceList
+        PsiKeyword:with('with')
+        PsiWhiteSpace(' ')
+        PsiJavaCodeReferenceElement:Impl
+          PsiIdentifier:Impl('Impl')
+          PsiReferenceParameterList
+            <empty list>
       PsiErrorElement:';' expected
         <empty list>
     PsiWhiteSpace(' ')

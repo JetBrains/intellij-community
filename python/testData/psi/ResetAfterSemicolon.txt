@@ -3,8 +3,8 @@ PyFile:ResetAfterSemicolon.py
     PyIfPartIf
       PsiElement(Py:IF_KEYWORD)('if')
       PsiWhiteSpace(' ')
-      PyReferenceExpression: True
-        PsiElement(Py:IDENTIFIER)('True')
+      PyBoolLiteralExpression
+        PsiElement(Py:TRUE_KEYWORD)('True')
       PsiElement(Py:COLON)(':')
       PsiWhiteSpace('\n    ')
       PyStatementList

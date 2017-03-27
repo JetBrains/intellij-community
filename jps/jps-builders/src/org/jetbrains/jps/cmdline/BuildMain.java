@@ -229,21 +229,18 @@ public class BuildMain {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
               final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta, ourPreloadedData);
               mySession = session;
-              SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                  //noinspection finally
+              SharedThreadPool.getInstance().executeOnPooledThread(() -> {
+                //noinspection finally
+                try {
                   try {
-                    try {
-                      session.run();
-                    }
-                    finally {
-                      channel.close();
-                    }
+                    session.run();
                   }
                   finally {
-                    System.exit(0);
+                    channel.close();
                   }
+                }
+                finally {
+                  System.exit(0);
                 }
               });
             }

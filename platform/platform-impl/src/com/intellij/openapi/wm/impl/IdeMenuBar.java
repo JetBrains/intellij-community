@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return null;
     }
 
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;
+    return UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ? super.getBorder() : null;
   }
 
   @Override
@@ -292,7 +292,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   @Override
-  public boolean dispatch(AWTEvent e) {
+  public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
       MouseEvent mouseEvent = (MouseEvent)e;
       Component component = findActualComponent(mouseEvent);
@@ -347,7 +347,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myNewVisibleActions = temp;
 
       removeAll();
-      final boolean enableMnemonics = !UISettings.getInstance().DISABLE_MNEMONICS;
+      final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
       for (final AnAction action : myVisibleActions) {
         add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
       }
@@ -439,7 +439,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private void updateMnemonicsVisibility() {
-    final boolean enabled = !UISettings.getInstance().DISABLE_MNEMONICS;
+    final boolean enabled = !UISettings.getInstance().getDisableMnemonics();
     for (int i = 0; i < getMenuCount(); i++) {
       ((ActionMenu)getMenu(i)).setMnemonicEnabled(enabled);
     }

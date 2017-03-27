@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.tools.simple;
 
+import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;

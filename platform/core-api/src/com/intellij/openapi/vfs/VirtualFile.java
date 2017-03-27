@@ -680,7 +680,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * The same as {@link #refresh(boolean, boolean)} but also runs {@code postRunnable}
-   * after the operation is completed.
+   * after the operation is completed. The runnable is executed on event dispatch thread inside a write action.
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 

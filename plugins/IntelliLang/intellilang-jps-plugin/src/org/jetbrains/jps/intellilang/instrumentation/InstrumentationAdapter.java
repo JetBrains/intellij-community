@@ -35,7 +35,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
 
   private final PatternInstrumenter myInstrumenter;
 
-  private final List<PatternValue> myParameterPatterns = new ArrayList<PatternValue>();
+  private final List<PatternValue> myParameterPatterns = new ArrayList<>();
   private PatternValue myMethodPattern;
 
   private Label myAssertLabel;

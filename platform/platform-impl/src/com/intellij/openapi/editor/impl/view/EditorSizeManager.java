@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       CaretModelImpl caretModel = myEditor.getCaretModel();
       int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
         .filter(Caret::isUpToDate)
-        .mapToInt(c -> myView.visualPositionToXY(c.getVisualPosition()).x)
+        .mapToInt(c -> (int)myView.visualPositionToXY(c.getVisualPosition()).getX())
         .max().orElse(0);
       width = Math.max(width, caretMaxX);
     }
@@ -197,7 +197,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
         .filter(Caret::isUpToDate)
         .filter(caret -> caret.getVisualPosition().line >= beginLine && caret.getVisualPosition().line < endLine)
-        .mapToInt(c -> myView.visualPositionToXY(c.getVisualPosition()).x)
+        .mapToInt(c -> (int)myView.visualPositionToXY(c.getVisualPosition()).getX())
         .max().orElse(0);
       width = Math.max(width, caretMaxX);
     }

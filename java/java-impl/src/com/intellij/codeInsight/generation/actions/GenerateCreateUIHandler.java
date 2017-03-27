@@ -54,8 +54,4 @@ public class GenerateCreateUIHandler implements CodeInsightActionHandler {
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

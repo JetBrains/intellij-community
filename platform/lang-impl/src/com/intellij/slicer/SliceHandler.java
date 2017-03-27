@@ -43,7 +43,6 @@ public class SliceHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
     PsiElement expression = getExpressionAtCaret(editor, file);
     if (expression == null) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find what to analyze. Please stand on the expression or variable or method parameter and try again.");

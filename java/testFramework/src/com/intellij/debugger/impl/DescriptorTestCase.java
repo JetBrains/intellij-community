@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,14 +129,6 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     for (String text : pair.getSecond()) {
       print(text, ProcessOutputTypes.SYSTEM);
     }
-  }
-
-  protected void disableRenderer(NodeRenderer renderer) {
-    renderer.setEnabled(false);
-  }
-
-  protected void enableRenderer(NodeRenderer renderer) {
-    renderer.setEnabled(true);
   }
 
   protected LocalVariableDescriptorImpl localVar(DebuggerTree frameTree,

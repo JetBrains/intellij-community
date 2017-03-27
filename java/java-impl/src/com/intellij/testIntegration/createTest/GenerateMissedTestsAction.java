@@ -85,7 +85,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     }
 
     final JBList list = new JBList(testClasses);
-    list.setCellRenderer(PsiClassListCellRenderer.INSTANCE);
+    list.setCellRenderer(new PsiClassListCellRenderer());
     JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setItemChoosenCallback(() -> generateMissedTests((PsiClass)list.getSelectedValue(), srcClass, editor))
       .setTitle("Choose Test")

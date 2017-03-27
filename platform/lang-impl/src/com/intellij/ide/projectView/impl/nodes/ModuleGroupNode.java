@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -52,12 +53,13 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
+    final Collection<ModuleGroup> childGroups = getValue().childGroups(grouper);
     final List<AbstractTreeNode> result = new ArrayList<>();
     for (final ModuleGroup childGroup : childGroups) {
       result.add(createModuleGroupNode(childGroup));
     }
-    Collection<Module> modules = getValue().modulesInGroup(getProject(), false);
+    Collection<Module> modules = getValue().modulesInGroup(grouper, false);
     try {
       for (Module module : modules) {
         result.add(createModuleNode(module));

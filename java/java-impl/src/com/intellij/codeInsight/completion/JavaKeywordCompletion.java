@@ -260,6 +260,10 @@ public class JavaKeywordCompletion {
       return;
     }
 
+    if (addWildcardExtendsSuper(result, position)) {
+      return;
+    }
+
     PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);
     addFinal(result, position, prevLeaf);
 
@@ -292,7 +296,16 @@ public class JavaKeywordCompletion {
 
     addUnfinishedMethodTypeParameters(position, result);
 
-    addExtendsSuperImplements(result, position, prevLeaf);
+    addExtendsImplements(result, position, prevLeaf);
+  }
+
+  private static boolean addWildcardExtendsSuper(Consumer<LookupElement> result, PsiElement position) {
+    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.SUPER), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      return true;
+    }
+    return false;
   }
 
   private static void addMethodHeaderKeywords(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
@@ -315,7 +328,11 @@ public class JavaKeywordCompletion {
 
   private static PsiSwitchStatement getSwitchFromLabelPosition(PsiElement position) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiStatement.class, false, PsiMember.class);
-    if (statement != null && !(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock) {
+    if (statement == null || statement.getTextRange().getStartOffset() != position.getTextRange().getStartOffset()) {
+      return null;
+    }
+
+    if (!(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock) {
       return ObjectUtils.tryCast(statement.getParent().getParent(), PsiSwitchStatement.class);
     }
     return null;
@@ -499,12 +516,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  private static void addExtendsSuperImplements(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
-    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.SUPER), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    }
-
+  private static void addExtendsImplements(Consumer<LookupElement> result, PsiElement position, @Nullable PsiElement prevLeaf) {
     if (prevLeaf == null || !(prevLeaf instanceof PsiIdentifier || prevLeaf.textMatches(">"))) return;
 
     PsiClass psiClass = null;

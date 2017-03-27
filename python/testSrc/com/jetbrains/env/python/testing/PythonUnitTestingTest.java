@@ -16,6 +16,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,11 +24,14 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
+import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer;
+import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,8 +49,73 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   @Test
   public void testConfigurationProducer() throws Exception {
+    new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+  }
+
+  /**
+   * Checks tests are resolved when launched from subfolder
+   */
+  @Test
+  public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonUnitTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME));
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyUnitTestProcessRunner>("test_metheggs") {
+        @NotNull
+        @Override
+        protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+          return new PyUnitTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+  /**
+   * Ensures test output works
+   */
+  @Test
+  public void testOutput() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyUnitTestProcessRunner>("test_metheggs") {
+        @NotNull
+        @Override
+        protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+          return new PyUnitTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalUnitTestFactory createFactory() {
+          return PyUniversalUnitTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    final PyUniversalUnitTestConfiguration configuration = task.getConfiguration();
+    configuration.setPattern("foo");
+    configuration.getTarget().setTargetType(TestTargetType.PATH);
+    configuration.getTarget().setTarget("foo.py");
+    configuration.checkConfiguration();
+  }
+
+
+  @Test
+  public void testConfigurationProducerOnDirectory() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                                 PyUniversalUnitTestConfiguration.class));
+  }
+
+  @Test
+  public void testRenameClass() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+        PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+        PyUniversalUnitTestConfiguration.class));
   }
 
   @Test
@@ -59,8 +128,8 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(2, runner.getAllTestsCount());
-        assertEquals(2, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 2, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
     });
@@ -91,6 +160,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   /**
    * Ensure rerun test works even if test is declared in parent
+   * See https://github.com/JetBrains/teamcity-messages/issues/117
    */
   @Test
   public void testRerunDerivedClass() throws Exception {
@@ -100,9 +170,11 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertThat("Premature error", stderr, isEmptyString());
         Assert.assertThat("Wrong number of failed tests", runner.getFailedTestsCount(), equalTo(1));
+        final int expectedNumberOfTests = (runner.getCurrentRerunStep() == 0 ? 2 : 1);
+        Assert.assertThat("Wrong number tests", runner.getAllTestsCount(), equalTo(expectedNumberOfTests));
       }
+
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
@@ -149,24 +221,6 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   }
 
   /**
-   * Deletes all files in temp. folder
-   */
-  private static void deleteAllTestFiles(@NotNull final CodeInsightTestFixture fixture) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final VirtualFile testRoot = fixture.getTempDirFixture().getFile(".");
-      assert testRoot != null : "No temp path?";
-      try {
-        for (final VirtualFile child : testRoot.getChildren()) {
-          child.delete(null);
-        }
-      }
-      catch (final IOException e) {
-        throw new AssertionError(String.format("Failed to delete files in  %s : %s", testRoot, e));
-      }
-    });
-  }
-
-  /**
    * Ensures that skipped and erroneous tests do not lead to suite ignorance
    */
   @Test
@@ -201,9 +255,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(3, runner.getAllTestsCount());
-        assertEquals(1, runner.getPassedTestsCount());
-        assertEquals(2, runner.getFailedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 3, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 2, runner.getFailedTestsCount());
       }
     });
   }
@@ -213,19 +267,20 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testUTRunnerByPattern() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "./_args_separator_*pattern.py") {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "*pattern.py") {
 
 
-      @Override
-      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all) {
-        assertEquals(4, runner.getAllTestsCount());
-        assertEquals(2, runner.getPassedTestsCount());
-        assertEquals(2, runner.getFailedTestsCount());
-      }
-    });
+        @Override
+        protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 2, runner.getPassedTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 2, runner.getFailedTestsCount());
+        }
+      });
   }
 
   /**
@@ -246,12 +301,12 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         assertEquals(1, runner.getFailedTestsCount());
       }
     });
-
   }
 
   @Test
   public void testClass() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit",
+                                                           PyScriptTestProcessRunner.TEST_TARGET_PREFIX + "test_file.GoodTest") {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -266,7 +321,9 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   @Test
   public void testMethod() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest::test_passes") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit",
+                                                           PyScriptTestProcessRunner.TEST_TARGET_PREFIX +
+                                                           "test_file.GoodTest.test_passes") {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -313,7 +370,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                         runner.getAllConsoleText()),
                           fileNames.size() >= 3);
         // UnitTest highlights file name
-        Assert.assertThat("Bad line highlighted", fileNames, everyItem(endsWith(fileName)));
+        Assert.assertThat("Bad line highlighted", fileNames, hasItem(endsWith(fileName)));
       }
     });
   }
@@ -336,14 +393,33 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testRelativeImports() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports", "relative_imports/tests/test_imps.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports",
+                                                           PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "test_imps.py") {
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals(1, runner.getAllTestsCount());
-        assertEquals(1, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
+      }
+    });
+  }
+
+  /**
+   * Deletes all files in temp. folder
+   */
+  private static void deleteAllTestFiles(@NotNull final CodeInsightTestFixture fixture) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile testRoot = fixture.getTempDirFixture().getFile(".");
+      assert testRoot != null : "No temp path?";
+      try {
+        for (final VirtualFile child : testRoot.getChildren()) {
+          child.delete(null);
+        }
+      }
+      catch (final IOException e) {
+        throw new AssertionError(String.format("Failed to delete files in  %s : %s", testRoot, e));
       }
     });
   }

@@ -67,6 +67,7 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     myHeight = icon.myHeight;
   }
 
+  @NotNull
   @Override
   protected LayeredIcon copy() {
     return new LayeredIcon(this);

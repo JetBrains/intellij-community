@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,11 +74,14 @@ public interface PsiKeyword extends PsiJavaToken {
   String FALSE = "false";
   String NULL = "null";
 
+  String OPEN = "open";
   String MODULE = "module";
   String REQUIRES = "requires";
   String EXPORTS = "exports";
+  String OPENS = "opens";
   String USES = "uses";
   String PROVIDES = "provides";
+  String TRANSITIVE = "transitive";
   String TO = "to";
   String WITH = "with";
 }

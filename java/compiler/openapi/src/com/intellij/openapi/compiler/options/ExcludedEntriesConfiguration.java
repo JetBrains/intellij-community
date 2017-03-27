@@ -42,6 +42,11 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   @Nullable private final ExcludedEntriesListener myEventPublisher;
   private ExcludeEntryDescription[] myCachedDescriptions = null;
 
+  @SuppressWarnings("unused")
+  public ExcludedEntriesConfiguration() {
+    this(null);
+  }
+
   public ExcludedEntriesConfiguration(@Nullable ExcludedEntriesListener eventPublisher) {
     myEventPublisher = eventPublisher;
   }

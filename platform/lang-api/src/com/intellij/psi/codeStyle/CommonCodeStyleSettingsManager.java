@@ -231,4 +231,21 @@ public class CommonCodeStyleSettingsManager {
       }
     }
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof CommonCodeStyleSettingsManager) {
+      CommonCodeStyleSettingsManager other = (CommonCodeStyleSettingsManager)obj;
+      if (getCommonSettingsMap().size() != other.getCommonSettingsMap().size() ||
+          myUnknownSettingsMap.size() != other.myUnknownSettingsMap.size()) {
+        return false;
+      }
+      for (Language language : myCommonSettingsMap.keySet()) {
+        CommonCodeStyleSettings theseSettings = myCommonSettingsMap.get(language);
+        CommonCodeStyleSettings otherSettings = other.getCommonSettings(language);
+        if (!theseSettings.equals(otherSettings)) return false;
+      }
+    }
+    return true;
+  }
 }

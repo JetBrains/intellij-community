@@ -26,7 +26,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> implements JpsUrlList {
-  private List<String> myUrls = new ArrayList<String>();
+  private List<String> myUrls = new ArrayList<>();
 
   public JpsUrlListImpl() {
   }

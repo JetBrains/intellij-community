@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.JavaTestUtil
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 
@@ -28,7 +29,7 @@ class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST
+    return JAVA_1_7
   }
 
   void testOnlyExceptionsInMultiCatch1() { doTest() }
@@ -50,7 +51,7 @@ class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   void testMethodReferenceCallContext() { doTest() }
 
   void testResourceParentInResourceList() {
-    configureByFile(getTestName(false) + ".java")
+    configureByTestName()
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
     assert 'MyClass' in myFixture.lookupElementStrings
     myFixture.type('C\n')
@@ -58,14 +59,20 @@ class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private void doTest() {
-    configureByFile(getTestName(false) + ".java")
+    configureByTestName()
     myFixture.type('\n')
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void testAfterTryWithResources() {
-    configureByFile(getTestName(false) + ".java")
+    configureByTestName()
     def strings = myFixture.lookupElementStrings
     assert strings.containsAll(['final', 'finally', 'int', 'Util'])
+  }
+
+  void testNewObjectHashMapWithSmartEnter() {
+    configureByTestName()
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
+    checkResultByFile(getTestName(false) + "_after.java")
   }
 }

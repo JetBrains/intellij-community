@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import java.io.File;
 import java.util.*;
 
 public class DiffCalculator {
-  public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums, List<String> critical, boolean move) {
+  public static Result calculate(Map<String, Long> oldChecksums,
+                                 Map<String, Long> newChecksums,
+                                 List<String> critical,
+                                 boolean lookForMoved) {
     Result result = new Result();
     result.commonFiles = collect(oldChecksums, newChecksums, critical, true);
     result.filesToDelete = withAllRemoved(oldChecksums, newChecksums);
@@ -27,53 +30,60 @@ public class DiffCalculator {
     Map<String, Long> toUpdate = collect(oldChecksums, newChecksums, critical, false);
     Map<String, Long> toCreate = withAllRemoved(newChecksums, oldChecksums);
 
-    // Some creates become updates if found in different directories.
-    result.filesToCreate = new LinkedHashMap<>();
-    result.filesToUpdate = new LinkedHashMap<>();
+    result.filesToCreate = lookForMoved ? new LinkedHashMap<>() : toCreate;
 
+    result.filesToUpdate = new LinkedHashMap<>();
     for (Map.Entry<String, Long> update : toUpdate.entrySet()) {
-      result.filesToUpdate.put(update.getKey(), new Update(update.getKey(), update.getValue(), false));
+      if (Digester.isSymlink(update.getValue())) {
+        result.filesToDelete.put(update.getKey(), update.getValue());
+        result.filesToCreate.put(update.getKey(), Digester.INVALID);
+      }
+      else {
+        result.filesToUpdate.put(update.getKey(), new Update(update.getKey(), update.getValue(), false));
+      }
     }
 
-    if (move) {
+    if (lookForMoved) {
       Map<Long, String> byContent = inverse(result.filesToDelete);
       Map<String, List<String>> byName = groupFilesByName(result.filesToDelete);
 
-      // Find first by content
       for (Map.Entry<String, Long> create : toCreate.entrySet()) {
-        boolean isDir = create.getKey().endsWith("/");
-        boolean isLink = create.getKey().endsWith(".dylib");
-        String source = byContent.get(create.getValue());
-        boolean found = false;
-        if (source != null && !isDir && !isLink) {
-          // Found a file with the same content use it, unless it's critical
-          if (!critical.contains(source)) {
-            result.filesToUpdate.put(create.getKey(), new Update(source, result.filesToDelete.get(source), true));
-            found = true;
-          }
-        }
-        else {
-          File fileToCreate = new File(create.getKey());
-          List<String> sameName = byName.get(fileToCreate.getName());
-          if (sameName != null && !isDir && !isLink) {
-            String best = findBestCandidateForMove(sameName, create.getKey());
-            // Found a file with the same name, if it's not critical use it, worst case as big as a create.
-            if (!critical.contains(best)) {
-              result.filesToUpdate.put(create.getKey(), new Update(best, result.filesToDelete.get(best), false));
-              found = true;
+        if (Digester.isFile(create.getValue())) {
+          String source = byContent.get(create.getValue());
+          boolean move = true;
+
+          if (source == null) {
+            List<String> sameName = byName.get(new File(create.getKey()).getName());
+            if (sameName != null) {
+              source = findBestCandidateForMove(sameName, create.getKey());
+              move = false;
             }
           }
+
+          if (source != null && !critical.contains(source)) {
+            result.filesToUpdate.put(create.getKey(), new Update(source, result.filesToDelete.get(source), move));
+            continue;
+          }
         }
-        if (!found) {
-          // Fine, just create it.
-          result.filesToCreate.put(create.getKey(), create.getValue());
-        }
+
+        result.filesToCreate.put(create.getKey(), create.getValue());
       }
-    } else {
-      result.filesToCreate = toCreate;
     }
 
     return result;
+  }
+
+  private static int compareRootFolders(String[] dirs, String[] others){
+    int matches = 0;
+    for (int i = 0; i < dirs.length && i < others.length; i++) {
+      if (dirs[i].equals(others[i])) {
+        matches = i + 1;
+      }
+      else {
+        break;
+      }
+    }
+    return matches;
   }
 
   private static String findBestCandidateForMove(List<String> paths, String path) {
@@ -87,6 +97,11 @@ public class DiffCalculator {
           if (i + 1 > common) {
             best = other;
             common = i + 1;
+          // check root folders of candidates with the same matches
+          } else if (i + 1 == common) {
+            if (compareRootFolders(dirs, best.split("/")) < compareRootFolders (dirs, other.split("/"))){
+              best = other;
+            }
           }
         } else {
           break;
@@ -134,10 +149,8 @@ public class DiffCalculator {
       String file = each.getKey();
       Long oldChecksum = older.get(file);
       Long newChecksum = newer.get(file);
-      if (oldChecksum != null && newChecksum != null) {
-        if ((oldChecksum.equals(newChecksum) && !critical.contains(file)) == equal) {
-          result.put(file, oldChecksum);
-        }
+      if (oldChecksum != null && newChecksum != null && (oldChecksum.equals(newChecksum) && !critical.contains(file)) == equal) {
+        result.put(file, oldChecksum);
       }
     }
     return result;

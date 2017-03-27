@@ -36,7 +36,7 @@ public class ArtifactState {
   private String myArtifactType = "plain";
   private boolean myBuildOnMake;
   private Element myRootElement;
-  private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<ArtifactPropertiesState>();
+  private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<>();
 
   @Attribute(NAME_ATTRIBUTE)
   public String getName() {

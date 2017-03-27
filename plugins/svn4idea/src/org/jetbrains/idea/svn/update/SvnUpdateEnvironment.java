@@ -73,7 +73,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     protected long doUpdate(final File root) throws SvnBindException {
       final long rev;
 
-      final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
+      SvnConfiguration configuration = myVcs.getSvnConfiguration();
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
       final SVNURL sourceUrl = getSourceUrl(myVcs, root);

@@ -59,7 +59,7 @@ public class GotoRelatedSymbolAction extends AnAction {
       label.setBorder(IdeBorderFactory.createEmptyBorder(2, 7, 2, 7));
       JBPopupFactory.getInstance().createBalloonBuilder(label)
         .setFadeoutTime(3000)
-        .setFillColor(HintUtil.ERROR_COLOR)
+        .setFillColor(HintUtil.getErrorColor())
         .createBalloon()
         .show(JBPopupFactory.getInstance().guessBestPopupLocation(dataContext), Balloon.Position.above);
       return;

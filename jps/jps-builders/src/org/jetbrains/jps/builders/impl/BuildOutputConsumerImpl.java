@@ -41,7 +41,7 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
   private final CompileContext myContext;
   private FileGeneratedEvent myFileGeneratedEvent;
   private Collection<File> myOutputs;
-  private THashSet<String> myRegisteredSources = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+  private THashSet<String> myRegisteredSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
   public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
     myTarget = target;

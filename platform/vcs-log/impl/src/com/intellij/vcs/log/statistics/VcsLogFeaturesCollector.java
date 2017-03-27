@@ -24,17 +24,18 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
-import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.vcs.log.data.MainVcsLogUiProperties.*;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector {
@@ -50,7 +51,7 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
         MainVcsLogUiProperties properties = ui.getProperties();
 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", properties.get(SHOW_DETAILS)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", properties.get(CommonUiProperties.SHOW_DETAILS)));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", properties.get(SHOW_LONG_EDGES)));
 
         PermanentGraph.SortType sortType = properties.get(BEK_SORT_TYPE);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     }
   }
 
-  protected Module createModule(final File moduleFile) {
+  protected Module createModule(@NotNull File moduleFile) {
     return createModule(moduleFile, StdModuleTypes.JAVA);
   }
 
@@ -99,14 +99,16 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return module;
   }
 
-  protected Module loadModule(@NotNull String modulePath) {
-    final String normalizedPath = FileUtil.toSystemIndependentName(modulePath);
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(normalizedPath);
+  protected Module loadModule(@NotNull VirtualFile file) {
+    return loadModule(file.getPath());
+  }
 
+  protected Module loadModule(@NotNull String modulePath) {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     Module module;
     try {
-      module = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Module, Exception>)() -> moduleManager.loadModule(normalizedPath));
+      module = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Module, Exception>)() -> moduleManager.loadModule(
+        FileUtil.toSystemIndependentName(modulePath)));
     }
     catch (Exception e) {
       LOG.error(e);
@@ -130,7 +132,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-          ModuleImpl module = (ModuleImpl)loadModule(file.getPath());
+          ModuleImpl module = (ModuleImpl)loadModule(file);
           if (moduleConsumer != null) {
             moduleConsumer.consume(module);
           }

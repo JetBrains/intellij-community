@@ -139,7 +139,9 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
 
     private boolean isEqual(PyExpression key, PyExpression defaultValue) {
       if (isBothInstanceOf(key, defaultValue, PyNumericLiteralExpression.class) ||
-          isBothInstanceOf(key, defaultValue, PyPrefixExpression.class) || isBothInstanceOf(key, defaultValue, PyBinaryExpression.class)) {
+          isBothInstanceOf(key, defaultValue, PyPrefixExpression.class) ||
+          isBothInstanceOf(key, defaultValue, PyBinaryExpression.class) ||
+          isBothInstanceOf(key, defaultValue, PyNoneLiteralExpression.class)) {
         if (key.getText().equals(defaultValue.getText()))
           return true;
       }

@@ -68,7 +68,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
         final PyExpression typeElement = args[1];
 
-        pushAssertion(target, myPositive, context -> context.getType(typeElement));
+        // TODO support tuple of types as the second argument of isinstance()
+        pushAssertion(target, myPositive, context -> {
+          final PyType type = context.getType(typeElement);
+          return type instanceof PyClassType ? ((PyClassType)type).toInstance() : type;
+        });
       }
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
@@ -83,7 +87,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
-    if (isUnderIf(node) && !isRevertedIfReferenceStatement(node, myPositive)) {
+    if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
+      // we could not suggest `None` because it could be a reference to an empty collection
+      // so we could push only non-`None` assertions
       pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
@@ -181,7 +187,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyType initial = context.getType(target);
         final PyType suggested = suggestedType.apply(context);
 
-        if (!PyUnionType.class.isInstance(initial) &&
+        if (!(initial instanceof PyUnionType) &&
             !PyTypeChecker.isUnknown(initial) &&
             PyTypeChecker.match(suggested, initial, context)) {
           return initial;
@@ -195,17 +201,21 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     myStack.push(new Assertion(target, typeCallback));
   }
 
-  private static boolean isUnderIf(@NotNull PyReferenceExpression node) {
-    final PsiElement parent = node.getParent();
-    return parent instanceof PyIfPart ||
-           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition() ||
-           parent instanceof PyPrefixExpression &&
-           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
-           parent.getParent() instanceof PyIfPart;
+  private static boolean isIfReferenceStatement(@NotNull PyReferenceExpression node) {
+    return node.getParent() instanceof PyIfPart;
   }
 
-  private static boolean isRevertedIfReferenceStatement(@NotNull PyReferenceExpression node, boolean positive) {
-    return !positive && node.getParent() instanceof PyIfPart;
+  private static boolean isIfReferenceConditionalStatement(@NotNull PyReferenceExpression node) {
+    final PsiElement parent = node.getParent();
+    return parent instanceof PyConditionalExpression &&
+           node == ((PyConditionalExpression)parent).getCondition();
+  }
+
+  private static boolean isIfNotReferenceStatement(@NotNull PyReferenceExpression node) {
+    final PsiElement parent = node.getParent();
+    return parent instanceof PyPrefixExpression &&
+           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
+           parent.getParent() instanceof PyIfPart;
   }
 
   static class Assertion {

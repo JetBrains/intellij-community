@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class EnableFilterByRegexAction extends BooleanPropertyToggleAction {
 

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public abstract class ImportFilter {
-  public static final ExtensionPointName<ImportFilter> EP_NAME = new ExtensionPointName<ImportFilter>("com.intellij.importFilter");
+  public static final ExtensionPointName<ImportFilter> EP_NAME = new ExtensionPointName<>("com.intellij.importFilter");
 
   public abstract boolean shouldUseFullyQualifiedName(@NotNull PsiFile targetFile, @NotNull String classQualifiedName);
 

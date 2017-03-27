@@ -34,7 +34,7 @@ public class InstanceofQuery<T> implements Query<T> {
   @Override
   @NotNull
   public Collection<T> findAll() {
-    ArrayList<T> result = new ArrayList<T>();
+    ArrayList<T> result = new ArrayList<>();
     Collection all = myDelegate.findAll();
     for (Object o : all) {
       for (Class aClass : myClasses) {
@@ -48,7 +48,7 @@ public class InstanceofQuery<T> implements Query<T> {
 
   @Override
   public T findFirst() {
-    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
+    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<>();
     forEach(processor);
     return processor.getFoundValue();
   }
@@ -73,7 +73,7 @@ public class InstanceofQuery<T> implements Query<T> {
 
   @Override
   public Iterator<T> iterator() {
-    return new UnmodifiableIterator<T>(findAll().iterator());
+    return new UnmodifiableIterator<>(findAll().iterator());
   }
 
   private class MyProcessor<T> implements Processor<T> {

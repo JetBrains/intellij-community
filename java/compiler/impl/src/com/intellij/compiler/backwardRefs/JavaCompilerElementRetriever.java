@@ -15,10 +15,18 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
@@ -27,14 +35,15 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class JavaCompilerElementRetriever {
+  private static final Logger LOG = Logger.getInstance(JavaCompilerElementRetriever.class);
+
   private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
   @NotNull
@@ -54,6 +63,21 @@ public class JavaCompilerElementRetriever {
         result[resIdx++] = (PsiFunctionalExpression)element.getPsi();
       }
     }
+
+    if (result.length != resIdx) {
+      final CompilerReferenceServiceImpl compilerReferenceService =
+        (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
+      final Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
+      final VirtualFile file = psiFile.getVirtualFile();
+      final Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
+      LOG.error("Compiler functional expression index doesn't match to stub index.\n" +
+                "Functional expression indices: " + indices + "\n" +
+                "Does the file belong to dirty scope?: " + state.contains(moduleForFile),
+                new Attachment(psiFile.getName(), psiFile.getText()));
+
+      return ContainerUtil.filter(result, Objects::nonNull).toArray(PsiFunctionalExpression.EMPTY_ARRAY);
+    }
+
     return result;
   }
 

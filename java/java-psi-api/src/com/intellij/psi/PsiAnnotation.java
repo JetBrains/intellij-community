@@ -32,13 +32,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    */
   PsiAnnotation[] EMPTY_ARRAY = new PsiAnnotation[0];
 
-  ArrayFactory<PsiAnnotation> ARRAY_FACTORY = new ArrayFactory<PsiAnnotation>() {
-    @NotNull
-    @Override
-    public PsiAnnotation[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiAnnotation[count];
-    }
-  };
+  ArrayFactory<PsiAnnotation> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiAnnotation[count];
 
   @NonNls String DEFAULT_REFERENCED_METHOD_NAME = "value";
 

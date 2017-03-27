@@ -25,7 +25,9 @@ public interface CodeStyleSettingsListener extends EventListener {
 
   void schemeListChanged();
 
-  void currentSettingsChanged();
+  void beforeCurrentSettingsChanged();
+  
+  void afterCurrentSettingsChanged();
 
   void usePerProjectSettingsOptionChanged();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -29,6 +30,11 @@ public class StreamApiMigrationInspectionTest extends LightQuickFixParameterized
     return new LocalInspectionTool[]{
       inspection
     };
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return getTestName(false).contains("Java9") ? LanguageLevel.JDK_1_9 : LanguageLevel.JDK_1_8;
   }
 
   public void test() throws Exception { doAllTests(); }

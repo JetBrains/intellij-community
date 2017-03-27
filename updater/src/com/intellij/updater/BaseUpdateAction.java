@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,44 @@ package com.intellij.updater;
 import java.io.*;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * <p>
+ *   <i>In-place update (standard mode)</i><br/>
+ *   Backup: the file is copied to a temporary directory.<br/>
+ *   Apply: the file is patched in-place.<br/>
+ *   Revert: the file is copied from a temporary directory.<br/>
+ * </p>
+ * <p>
+ *   <i>Move without a change</i><br/>
+ *   Backup: - (the file does not exist; the source is backed by a companion DeleteAction).<br/>
+ *   Apply: the file is copied from the companion backup.<br/>
+ *   Revert: the file is removed (the source is restored by the companion action).<br/>
+ * </p>
+ * <p>
+ *   <i>Move with a change</i><br/>
+ *   Backup: - (the file does not exist; the source is backed by a companion DeleteAction).<br/>
+ *   Apply: the file is copied from the companion backup and patched.<br/>
+ *   Revert: the file is removed (the source is restored by the companion action).<br/>
+ * </p>
+ */
 public abstract class BaseUpdateAction extends PatchAction {
   private final String mySource;
-  protected final boolean myIsMove;
+  private final boolean myIsMove;
+  private final boolean myInPlace;
 
 
   public BaseUpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
     super(patch, path, checksum);
-    myIsMove = move;
     mySource = source;
+    myIsMove = move;
+    myInPlace = !myIsMove && mySource.equals(getPath());
   }
 
   public BaseUpdateAction(Patch patch, DataInputStream in) throws IOException {
     super(patch, in);
     mySource = in.readUTF();
     myIsMove = in.readBoolean();
+    myInPlace = !myIsMove && mySource.equals(getPath());
   }
 
   @Override
@@ -48,6 +71,10 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   public String getSourcePath() {
     return mySource;
+  }
+
+  public boolean isMove() {
+    return myIsMove;
   }
 
   @Override
@@ -75,32 +102,32 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
-    Utils.mirror(toFile, backupFile);
+    if (myInPlace) {
+      Utils.copy(toFile, backupFile);
+    }
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
     // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
-    if (dest.exists() && !dest.delete()) throw new IOException("Cannot delete file " + dest);
+    Utils.delete(dest);
     Utils.copy(from, dest);
   }
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
-    if (!toFile.exists() || isModified(toFile)) {
-      Utils.mirror(backupFile, toFile);
+    Utils.delete(toFile);
+    if (myInPlace) {
+      Utils.copy(backupFile, toFile);
     }
   }
 
   protected void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
-    Runner.logger().info("writing diff");
     DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(olderFile, newerFile, isCritical(), myPatch.getLargeFileCutoff());
     patchOutput.write(algorithm.getId());
     algorithm.writeDiff(olderFile, newerFile, patchOutput);
   }
 
-  protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput)
-    throws IOException {
-    Runner.logger().info("writing diff");
+  protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
     DiffAlgorithm algorithm = DiffAlgorithm.determineDiffAlgorithm(null, null, isCritical(), myPatch.getLargeFileCutoff());
     patchOutput.write(algorithm.getId());
     algorithm.writeDiff(olderFileIn, newerFileIn, patchOutput);
@@ -123,14 +150,10 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   @Override
   public String toString() {
-    String moveInfo = "";
-    if (!mySource.equals(myPath)) {
-      moveInfo = "[" + (myIsMove ? "= " : "~ ") + mySource + "]";
+    String text = super.toString();
+    if (!myInPlace) {
+      text = text.substring(0, text.length() - 1) + ", " + (myIsMove ? '=' : '~') + mySource + ')';
     }
-    return super.toString() + moveInfo;
-  }
-
-  public boolean isMove() {
-    return myIsMove;
+    return text;
   }
 }

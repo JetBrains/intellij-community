@@ -58,7 +58,7 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
     ASSERT_METHODS.put("assertNotNull", Pair.create("$obj$", "$obj$, org.hamcrest.CoreMatchers.notNullValue()"));
     ASSERT_METHODS.put("assertNull", Pair.create("$obj$", "$obj$, org.hamcrest.CoreMatchers.nullValue()"));
     ASSERT_METHODS.put("assertTrue", Pair.create("$cond$", "$cond$, org.hamcrest.CoreMatchers.is(true)"));
-    ASSERT_METHODS.put("assertFalse", Pair.create("$cond$", "$cond$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchers.is(false))"));
+    ASSERT_METHODS.put("assertFalse", Pair.create("$cond$", "$cond$, org.hamcrest.CoreMatchers.is(false)"));
   }
 
   public boolean myStaticallyImportMatchers = true;

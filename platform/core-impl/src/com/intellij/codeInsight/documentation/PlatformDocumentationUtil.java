@@ -33,7 +33,7 @@ public class PlatformDocumentationUtil {
 
   @Nullable
   public static List<String> getHttpRoots(@NotNull String[] roots, String relPath) {
-    List<String> result = new SmartList<String>();
+    List<String> result = new SmartList<>();
     for (String root : roots) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
       if (virtualFile != null) {

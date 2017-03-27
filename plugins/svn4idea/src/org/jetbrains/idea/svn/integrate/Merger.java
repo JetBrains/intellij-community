@@ -64,7 +64,7 @@ public class Merger implements IMerger {
     this(vcs, changeLists, target, handler, currentBranchUrl, branchName, false, false, false);
   }
 
-  public Merger(final SvnVcs vcs,
+  public Merger(@NotNull SvnVcs vcs,
                 final List<CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
@@ -76,7 +76,7 @@ public class Merger implements IMerger {
     myBranchName = branchName;
     myVcs = vcs;
     myProject = vcs.getProject();
-    mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
+    mySvnConfig = vcs.getSvnConfiguration();
     myCurrentBranchUrl = currentBranchUrl;
     myChangeLists = ContainerUtil.sorted(changeLists, ByNumberChangeListComparator.getInstance());
     myTarget = target;

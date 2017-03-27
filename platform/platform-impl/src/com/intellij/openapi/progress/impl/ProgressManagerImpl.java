@@ -181,8 +181,11 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   protected CheckCanceledHook createCheckCanceledHook() {
     boolean shouldSleep = HeavyProcessLatch.INSTANCE.hasPrioritizedThread() && Registry.is("ide.prioritize.ui.thread", false);
-    boolean hasEdtProgresses = myEdtProgresses.size() > 0;
-    if (shouldSleep && hasEdtProgresses) return () -> pingProgresses() | sleepIfNeeded();
+    boolean hasEdtProgresses = !myEdtProgresses.isEmpty();
+    if (shouldSleep && hasEdtProgresses) {
+      //noinspection NonShortCircuitBooleanExpression
+      return () -> pingProgresses() | sleepIfNeeded();
+    }
     if (shouldSleep) return ProgressManagerImpl::sleepIfNeeded;
     if (hasEdtProgresses) return this::pingProgresses;
     return null;

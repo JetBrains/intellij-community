@@ -36,12 +36,7 @@ class PluginXmlPathResolver implements JDOMXIncluder.PathResolver {
   private final List<File> myPluginJarFiles;
 
   public PluginXmlPathResolver(File[] filesInLib) {
-    myPluginJarFiles = ContainerUtil.filter(filesInLib, new Condition<File>() {
-      @Override
-      public boolean value(File file) {
-        return FileUtil.isJarOrZip(file);
-      }
-    });
+    myPluginJarFiles = ContainerUtil.filter(filesInLib, file -> FileUtil.isJarOrZip(file));
   }
 
   @NotNull

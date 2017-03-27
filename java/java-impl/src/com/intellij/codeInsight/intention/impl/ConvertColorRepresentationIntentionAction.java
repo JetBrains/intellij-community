@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,13 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
       return false;
     }
 
-    final PsiExpressionList newArguments = createNewArguments(JavaPsiFacade.getElementFactory(project), constructor.getParameterList().getParameters(), arguments.getExpressions());
+    final PsiExpressionList newArguments;
+    try {
+      newArguments = createNewArguments(JavaPsiFacade.getElementFactory(project), constructor.getParameterList().getParameters(), arguments.getExpressions());
+    }
+    catch (ConstantEvaluationOverflowException e) {
+      return false;
+    }
 
     if (newArguments == null) {
       return false;

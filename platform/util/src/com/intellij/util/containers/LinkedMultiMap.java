@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,12 +29,16 @@ public class LinkedMultiMap<K, V> extends MultiMap<K, V> {
   @NotNull
   @Override
   protected Map<K, Collection<V>> createMap() {
-    return new LinkedHashMap<K, Collection<V>>();
+    return new LinkedHashMap<K, Collection<V>>(getEqualityPolicy());
   }
 
   @NotNull
   @Override
   protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
-    return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor);
+    return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor, getEqualityPolicy());
+  }
+
+  protected EqualityPolicy<K> getEqualityPolicy() {
+    return (EqualityPolicy<K>)EqualityPolicy.CANONICAL;
   }
 }

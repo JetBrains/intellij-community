@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -30,7 +30,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
@@ -38,11 +37,23 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 abstract class ModifierIntention extends Intention implements LowPriorityAction {
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
+  }
 
   @NotNull
   @Override
@@ -51,7 +62,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
   }
 
   @Override
-  protected final void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected final void processIntention(@NotNull PsiElement element) {
     final PsiMember member = (PsiMember)element.getParent();
     final PsiModifierList modifierList = member.getModifierList();
     if (modifierList == null) {
@@ -63,21 +74,29 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
     } else {
-      final ConflictsDialog conflictsDialog =
-        new ConflictsDialog(project, conflicts,
-                            () -> ApplicationManager.getApplication().runWriteAction(() -> modifierList.setModifierProperty(getModifier(), true)));
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, () -> changeModifier(modifierList));
       conflictsDialogOK = conflictsDialog.showAndGet();
     }
     if (conflictsDialogOK) {
-      modifierList.setModifierProperty(getModifier(), true);
-      final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
-      final PsiElement sibling = modifierList.getNextSibling();
-      if (sibling instanceof PsiWhiteSpace) {
-        sibling.replace(whitespace);
-        CodeStyleManager.getInstance(project).reformatRange(member, modifierList.getTextOffset(),
-                                                            modifierList.getNextSibling().getTextOffset());
-      }
+      changeModifier(modifierList);
     }
+  }
+
+  private void changeModifier(PsiModifierList modifierList) {
+    WriteAction.run(() -> {
+      final String modifier = getModifier();
+      modifierList.setModifierProperty(modifier, true);
+      if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
+        final Project project = modifierList.getProject();
+        final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
+        final PsiElement sibling = modifierList.getNextSibling();
+        if (sibling instanceof PsiWhiteSpace) {
+          sibling.replace(whitespace);
+          CodeStyleManager.getInstance(project).reformatRange(modifierList.getParent(), modifierList.getTextOffset(),
+                                                              modifierList.getNextSibling().getTextOffset());
+        }
+      }
+    });
   }
 
   private MultiMap<PsiElement, String> checkForConflicts(@NotNull final PsiMember member) {

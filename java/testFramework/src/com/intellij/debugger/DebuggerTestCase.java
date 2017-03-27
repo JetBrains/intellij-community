@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -39,6 +40,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -55,22 +57,27 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
   public static final int DEFAULT_ADDRESS = 3456;
   protected DebuggerSession myDebuggerSession;
+  protected final AtomicInteger myRestart = new AtomicInteger();
+  private static final int MAX_RESTARTS = 3;
+  private volatile TestDisposable myTestRootDisposable;
+  private final List<Runnable> myTearDownRunnables = new ArrayList<>();
 
   @Override
   protected void initApplication() throws Exception {
@@ -93,8 +100,40 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       assertNull(DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(getDebugProcess().getProcessHandler()));
       myDebuggerSession = null;
     }
+
+    if (getChecker().contains("JVMTI_ERROR_WRONG_PHASE(112)")) {
+      myRestart.incrementAndGet();
+      if (needsRestart()) {
+        return;
+      }
+    } else {
+      myRestart.set(0);
+    }
+
     throwExceptionsIfAny();
     checkTestOutput();
+  }
+
+  private boolean needsRestart() {
+    int restart = myRestart.get();
+    return restart > 0 && restart <= MAX_RESTARTS;
+  }
+
+  @Override
+  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+    myTestRootDisposable = new TestDisposable();
+    super.runBareRunnable(runnable);
+    while (needsRestart()) {
+      assert (myTestRootDisposable.isDisposed());
+      myTestRootDisposable = new TestDisposable();
+      super.runBareRunnable(runnable);
+    }
+  }
+
+  @NotNull
+  @Override
+  public Disposable getTestRootDisposable() {
+    return myTestRootDisposable;
   }
 
   protected void checkTestOutput() throws Exception {
@@ -118,6 +157,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
       }
+      myTearDownRunnables.forEach(Runnable::run);
+      myTearDownRunnables.clear();
     }
     finally {
       super.tearDown();
@@ -551,5 +592,43 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException { }
+  }
+
+  protected void disableRenderer(NodeRenderer renderer) {
+    setRendererEnabled(renderer, false);
+  }
+
+  protected void enableRenderer(NodeRenderer renderer) {
+    setRendererEnabled(renderer, true);
+  }
+
+  private void setRendererEnabled(NodeRenderer renderer, boolean state) {
+    boolean oldValue = renderer.isEnabled();
+    if (oldValue != state) {
+      myTearDownRunnables.add(() -> renderer.setEnabled(oldValue));
+      renderer.setEnabled(state);
+    }
+  }
+
+  protected void doWhenXSessionPausedThenResume(ThrowableRunnable runnable) {
+    XDebugSession session = getDebuggerSession().getXDebugSession();
+    assertNotNull(session);
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            runnable.run();
+          }
+          catch (Throwable e) {
+            addException(e);
+          }
+          finally {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(session::resume);
+          }
+        });
+      }
+    });
   }
 }

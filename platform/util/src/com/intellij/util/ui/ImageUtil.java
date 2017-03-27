@@ -27,10 +27,18 @@ import java.awt.image.*;
  */
 public class ImageUtil {
   public static BufferedImage toBufferedImage(@NotNull Image image) {
+    return toBufferedImage(image, false);
+  }
+
+  public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
+      float scale = ((JBHiDPIScaledImage)image).getScale();
       if (img != null) {
         image = img;
+        if (inUserSize) {
+          image = scaleImage(image, 1 / scale);
+        }
       }
     }
     if (image instanceof BufferedImage) {

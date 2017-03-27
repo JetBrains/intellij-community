@@ -23,7 +23,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,17 +52,12 @@ public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
   }
 
   private void doTestSaveArtifact(JpsArtifact artifact, File expectedFile) {
-    try {
-      Element actual = new Element("component").setAttribute("name", "ArtifactManager");
-      JpsArtifactSerializer.saveArtifact(artifact, actual);
-      JpsMacroExpander
-        expander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH)));
-      Element expected = JpsLoaderBase.loadRootElement(expectedFile, expander);
-      PlatformTestUtil.assertElementsEqual(expected, actual);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    Element actual = new Element("component").setAttribute("name", "ArtifactManager");
+    JpsArtifactSerializer.saveArtifact(artifact, actual);
+    JpsMacroExpander
+      expander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH)));
+    Element expected = JpsLoaderBase.loadRootElement(expectedFile, expander);
+    PlatformTestUtil.assertElementsEqual(expected, actual);
   }
 
   private static JpsArtifactService getService() {

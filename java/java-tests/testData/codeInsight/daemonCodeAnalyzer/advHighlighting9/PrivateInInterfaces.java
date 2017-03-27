@@ -13,3 +13,11 @@ interface C {
 interface D {
     private static void m() {}
 }
+
+interface E {
+    <error descr="Illegal combination of modifiers: 'private' and 'public'">private</error> class E1 {}
+}
+
+interface F {
+    <error descr="Modifier 'private' not allowed here">private</error> int m = 0;
+}

@@ -82,7 +82,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
       @Override
       public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
-        holder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.identifier"), new AddDoubleQuotesFix());
+        holder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.bad.token"), new AddDoubleQuotesFix());
         // May be illegal property key as well
         super.visitReferenceExpression(reference);
       }

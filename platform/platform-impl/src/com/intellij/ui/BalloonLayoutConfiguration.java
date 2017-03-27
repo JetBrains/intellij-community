@@ -88,12 +88,12 @@ public class BalloonLayoutConfiguration {
   public static BalloonLayoutConfiguration create(@NotNull Notification notification,
                                                   @NotNull BalloonLayoutData layoutData,
                                                   boolean actions) {
-    boolean title = notification.isTitle();
-    boolean content = notification.isContent();
-    if (title && content && actions) {
+    boolean hasTitle = notification.hasTitle();
+    boolean hasContent = notification.hasContent();
+    if (hasTitle && hasContent && actions) {
       return treeLines();
     }
-    if (content && NotificationsManagerImpl.calculateContentHeight(title || actions ? 1 : 2) < layoutData.fullHeight) {
+    if (hasContent && NotificationsManagerImpl.calculateContentHeight(hasTitle || actions ? 1 : 2) < layoutData.fullHeight) {
       return treeLines();
     }
     return twoLines();

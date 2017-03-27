@@ -22,7 +22,6 @@ import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -33,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -53,6 +54,16 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
                                                @NotNull PsiDirectory dir,
                                                @Nullable String defaultTemplateProperty,
                                                boolean openFile) {
+    return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, Collections.emptyMap());
+  }
+
+  @Nullable
+  public static PsiFile createFileFromTemplate(@Nullable String name,
+                                               @NotNull FileTemplate template,
+                                               @NotNull PsiDirectory dir,
+                                               @Nullable String defaultTemplateProperty,
+                                               boolean openFile,
+                                               @NotNull Map<String, String> liveTemplateDefaultValues) {
     if (name != null) {
       CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
       name = mkdirs.newName;
@@ -69,7 +80,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       if (virtualFile != null) {
         if (openFile) {
           if (template.isLiveTemplateEnabled()) {
-            CreateFromTemplateActionBase.startLiveTemplate(psiFile);
+            CreateFromTemplateActionBase.startLiveTemplate(psiFile, liveTemplateDefaultValues);
           }
           else {
             FileEditorManager.getInstance(project).openFile(virtualFile, true);
@@ -82,8 +93,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       }
     }
     catch (ParseException e) {
-      Messages.showErrorDialog(project, "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
-      return null;
+      throw new IncorrectOperationException("Error parsing Velocity template: " + e.getMessage(), (Throwable)e);
     }
     catch (IncorrectOperationException e) {
       throw e;

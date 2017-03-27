@@ -37,8 +37,13 @@ public class PyRunLineMarkerTest extends PyTestCase {
   }
 
   private List<LineMarkerInfo> getInfos(String fileName) {
-    myFixture.configureByFile(getTestDataPath() + "/codeInsight/runLineMarker/" + fileName);
+    myFixture.configureByFile(fileName);
     myFixture.doHighlighting();
     return DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.getEditor().getDocument(), myFixture.getProject());
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/codeInsight/runLineMarker/";
   }
 }

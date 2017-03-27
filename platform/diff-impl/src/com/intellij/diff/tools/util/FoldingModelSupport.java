@@ -174,8 +174,8 @@ public class FoldingModelSupport {
         if (shift == -1) break;
 
         for (int i = 0; i < myCount; i++) {
-          rangeStarts[i] = bound(starts[i] + shift, i);
-          rangeEnds[i] = bound(ends[i] - shift, i);
+          rangeStarts[i] = DiffUtil.bound(starts[i] + shift, 0, myLineCount[i]);
+          rangeEnds[i] = DiffUtil.bound(ends[i] - shift, 0, myLineCount[i]);
         }
         ContainerUtil.addAllNotNull(result, createRange(rangeStarts, rangeEnds, myExpandSuggester.isExpanded(rangeStarts, rangeEnds)));
       }
@@ -207,10 +207,6 @@ public class FoldingModelSupport {
         }
       }
       return hasFolding ? new FoldedBlock(regions) : null;
-    }
-
-    private int bound(int value, int index) {
-      return Math.min(Math.max(value, 0), myLineCount[index]);
     }
   }
 

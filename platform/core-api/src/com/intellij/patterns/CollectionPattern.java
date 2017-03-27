@@ -62,7 +62,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   public CollectionPattern<T> filter(final ElementPattern<? extends T> elementPattern, final ElementPattern<Collection<T>> continuationPattern) {
     return with(new PatternCondition<Collection<T>>("filter") {
       public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
-        List<T> filtered = new ArrayList<T>();
+        List<T> filtered = new ArrayList<>();
         for (final T t : collection) {
           if (elementPattern.accepts(t, context)) {
             filtered.add(t);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,8 @@ class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
 
   void testUnassignedTryFinally() { doTest() }
 
-
   void testVarIsNotInitialized() {
-    testHighlighting('''\
+    testHighlighting '''\
 def xxx() {
   def category = null
   for (def update : updateIds) {
@@ -52,12 +51,28 @@ def xxx() {
     print p
   }
 }
+'''
+  }
 
+  void 'test simple'() {
+    testHighlighting '''\
 def bar() {
   def p
   print <warning descr="Variable 'p' might not be assigned">p</warning>
 }
-''')
+'''
+  }
+
+  void 'test assigned after read in loop'() {
+    testHighlighting '''\
+def xxx() {
+  def p
+  for (def update : updateIds) {
+    print <warning descr="Variable 'p' might not be assigned">p</warning>
+    p = 1 
+  }
+}
+'''
   }
 
   void testUnassignedAccessInCheck() {
@@ -83,4 +98,6 @@ if (<warning descr="Variable 'baz' might not be assigned">baz</warning> + 2) pri
   void testMultipleVarNotAssigned() { doTest() }
 
   void testForLoopWithNestedEndlessLoop() { doTest() }
+
+  void testVariableAssignedOutsideForLoop() { doTest() }
 }

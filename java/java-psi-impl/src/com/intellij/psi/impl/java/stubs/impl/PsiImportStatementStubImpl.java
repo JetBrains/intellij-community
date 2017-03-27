@@ -80,7 +80,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     PsiJavaCodeReferenceElement ref = SoftReference.dereference(myReference);
     if (ref == null) {
       ref = isStatic() ? getStaticReference() : getRegularReference();
-      myReference = new SoftReference<PsiJavaCodeReferenceElement>(ref);
+      myReference = new SoftReference<>(ref);
     }
     return ref;
   }

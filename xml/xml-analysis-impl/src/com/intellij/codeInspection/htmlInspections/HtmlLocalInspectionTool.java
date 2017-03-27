@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -61,7 +62,8 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlToken(final XmlToken token) {
-        if (token.getTokenType() == XmlTokenType.XML_NAME) {
+        IElementType tokenType = token.getTokenType();
+        if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
           PsiElement element = token.getPrevSibling();
           while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager imple
   private final Map<String, Object> myFacetTypeStates = new HashMap<>();
   private FacetEditorsStateBean myBean = new FacetEditorsStateBean();
 
+  @Override
   public <T> void saveState(@NotNull final FacetType<?, ?> type, final T state) {
     String id = type.getStringId();
     if (state != null) {
@@ -50,6 +51,7 @@ public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager imple
     }
   }
 
+  @Override
   @Nullable
   public <T> T getState(@NotNull final FacetType<?, ?> type, @NotNull final Class<T> aClass) {
     String id = type.getStringId();
@@ -67,6 +69,7 @@ public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager imple
     return state;
   }
 
+  @Override
   public FacetEditorsStateBean getState() {
     for (Map.Entry<String, Object> entry : myFacetTypeStates.entrySet()) {
       FacetTypeStateBean bean = new FacetTypeStateBean();
@@ -76,6 +79,7 @@ public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager imple
     return myBean;
   }
 
+  @Override
   public void loadState(final FacetEditorsStateBean state) {
     myBean = state;
   }

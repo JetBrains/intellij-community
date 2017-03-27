@@ -18,5 +18,5 @@ package com.intellij.psi;
 /**
  * @author peter
  */
-public interface PsiLargeFile extends PsiBinaryFile {
+public interface PsiLargeFile extends PsiFile {
 }

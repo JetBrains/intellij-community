@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  *
  * @see FileIndex#iterateContent(ContentIterator)
  */
+@FunctionalInterface
 public interface ContentIterator {
   /**
    * Processes the specified file or directory.

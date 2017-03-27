@@ -22,7 +22,7 @@ import java.util.Map;
  */
 public class XercesAccessor {
 
-  public static Map<String, String> getEntities(XMLEntityManager entityManager) {
+  public static Map<String, XMLEntityManager.Entity> getEntities(XMLEntityManager entityManager) {
     return entityManager.getDeclaredEntities();
   }
 }

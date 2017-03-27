@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.jrt;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -28,12 +27,6 @@ public abstract class JrtFileSystem extends ArchiveFileSystem {
   public static final String PROTOCOL = StandardFileSystems.JRT_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.JRT_PROTOCOL_PREFIX;
   public static final String SEPARATOR = URLUtil.JAR_SEPARATOR;
-
-  private static final boolean SUPPORTED = SystemInfo.isJavaVersionAtLeast("1.8");
-
-  public static boolean isSupported() {
-    return SUPPORTED;
-  }
 
   public static boolean isModularJdk(@NotNull String homePath) {
     return new File(homePath, "lib/jrt-fs.jar").isFile() || new File(homePath, "jrt-fs.jar").isFile();

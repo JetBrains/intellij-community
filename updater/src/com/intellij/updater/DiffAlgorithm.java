@@ -1,5 +1,21 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
+import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 import com.nothome.delta.Delta;
 import com.nothome.delta.GDiffPatcher;
 import ie.wombat.jbdiff.JBDiff;
@@ -8,6 +24,10 @@ import ie.wombat.jbdiff.JBPatch;
 import java.io.*;
 
 public abstract class DiffAlgorithm {
+  private static final byte RAW = 0;
+  private static final byte COMPRESSED = 1;
+  private static final byte X_DELTA = 2;
+
   public abstract void writeDiff(InputStream oldFileIn, InputStream newFileIn, OutputStream diffFileOut) throws IOException;
   public abstract void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException;
 
@@ -18,11 +38,11 @@ public abstract class DiffAlgorithm {
 
   public static DiffAlgorithm getAlgorithmForId(int type) {
     switch (type) {
-      case 0:
+      case RAW:
         return new DiffAlgorithm.NullDiffAlgorithm();
-      case 1:
+      case COMPRESSED:
         return new DiffAlgorithm.JBDiffAlgorithm();
-      case 2:
+      case X_DELTA:
         return new DiffAlgorithm.XDeltaAlgorithm();
       default:
         return null;
@@ -50,36 +70,25 @@ public abstract class DiffAlgorithm {
 
     @Override
     public void writeDiff(InputStream oldFileIn, InputStream newFileIn, OutputStream diffFileOut) throws IOException {
-      ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
+      ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
       byte[] newerFileBuffer = JBDiff.bsdiff(oldFileIn, newFileIn, diffOutput);
       diffOutput.close();
+
       if (diffOutput.size() < newerFileBuffer.length) {
-        diffFileOut.write(0);
-        Utils.copyBytesToStream(diffOutput, diffFileOut);
+        diffFileOut.write(COMPRESSED);
+        diffOutput.writeTo(diffFileOut);
       }
       else {
-        // Actually use null algorithm
-        diffFileOut.write(1);
-        new NullDiffAlgorithm().writeDiff(oldFileIn, new ByteArrayInputStream(newerFileBuffer), diffFileOut);
+        diffFileOut.write(RAW);
+        Utils.writeBytes(newerFileBuffer, newerFileBuffer.length, diffFileOut);
       }
     }
 
     @Override
     public void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
-      InputStream oldFileIn = null;
-      BufferedInputStream newFileIn = null;
-      try {
-        oldFileIn = new BufferedInputStream(new FileInputStream(olderFile));
-        newFileIn = new BufferedInputStream(new FileInputStream(newerFile));
+      try (InputStream oldFileIn = new BufferedInputStream(new FileInputStream(olderFile));
+           InputStream newFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
         writeDiff(oldFileIn, newFileIn, patchOutput);
-      }
-      finally {
-        if (oldFileIn != null) {
-          oldFileIn.close();
-        }
-        if (newFileIn != null) {
-          newFileIn.close();
-        }
       }
     }
 
@@ -99,18 +108,21 @@ public abstract class DiffAlgorithm {
 
     @Override
     public void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-      int isNull = patchInput.read();
-      if (isNull == 1) {
+      int type = patchInput.read();
+      if (type == COMPRESSED) {
+        JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
+      }
+      else if (type == RAW) {
         new NullDiffAlgorithm().applyDiff(patchInput, oldFileIn, toFileOut);
       }
       else {
-        JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
+        throw new IOException("Corrupted patch");
       }
     }
 
     @Override
     public int getId() {
-      return 1;
+      return COMPRESSED;
     }
   }
 
@@ -140,7 +152,7 @@ public abstract class DiffAlgorithm {
 
     @Override
     public int getId() {
-      return 2;
+      return X_DELTA;
     }
   }
 
@@ -176,7 +188,7 @@ public abstract class DiffAlgorithm {
 
     @Override
     public int getId() {
-      return 0;
+      return RAW;
     }
   }
 }

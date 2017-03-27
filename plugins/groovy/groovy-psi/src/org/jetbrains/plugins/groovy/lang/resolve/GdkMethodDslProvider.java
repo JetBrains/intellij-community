@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 /**
@@ -46,7 +46,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
   private static void processCategoryMethods(final String className, final GdslMembersHolderConsumer consumer, final boolean isStatic) {
     final GlobalSearchScope scope = consumer.getResolveScope();
-    final PsiClass categoryClass = GroovyPsiManager.getInstance(consumer.getProject()).findClassWithCache(className, scope);
+    final PsiClass categoryClass = JavaPsiFacade.getInstance(consumer.getProject()).findClass(className, scope);
     if (categoryClass == null) {
       return;
     }

@@ -66,7 +66,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   @NotNull
   @Override
   public JpsModuleImpl<P> createCopy() {
-    return new JpsModuleImpl<P>(this);
+    return new JpsModuleImpl<>(this);
   }
 
   @Override
@@ -119,7 +119,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   @Override
   public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType,
                                                                   @NotNull P properties) {
-    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<P>(url, rootType, properties);
+    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<>(url, rootType, properties);
     addSourceRoot(root);
     return root;
   }

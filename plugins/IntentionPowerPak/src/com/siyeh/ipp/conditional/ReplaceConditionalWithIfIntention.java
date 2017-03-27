@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
@@ -137,9 +138,9 @@ public class ReplaceConditionalWithIfIntention extends Intention {
     }
   }
 
-  private static void appendElementTextWithoutParentheses(@NotNull PsiElement element, @NotNull PsiExpression elementToReplace,
+  private static void appendElementTextWithoutParentheses(@NotNull PsiElement element, @NotNull PsiExpression expressionToReplace,
                                                           @Nullable PsiExpression replacementExpression, @NotNull StringBuilder out) {
-    final PsiElement expressionParent = elementToReplace.getParent();
+    final PsiElement expressionParent = expressionToReplace.getParent();
     if (expressionParent instanceof PsiParenthesizedExpression) {
       final PsiElement grandParent = expressionParent.getParent();
       if (replacementExpression == null || !(grandParent instanceof PsiExpression) ||
@@ -148,25 +149,18 @@ public class ReplaceConditionalWithIfIntention extends Intention {
         return;
       }
     }
-    if (expressionParent instanceof PsiExpressionList && replacementExpression != null) {
-      final PsiElement grandParent = expressionParent.getParent();
-      if (grandParent instanceof PsiCall) {
-        final PsiCall call = (PsiCall)grandParent;
-        if (call.resolveMethod() != MethodCallUtils.findMethodWithReplacedArgument((PsiCall)grandParent, elementToReplace, replacementExpression)) {
-          appendElementText(element, elementToReplace, replacementExpression, true, out);
-          return;
-        }
-      }
-    }
-    appendElementText(element, elementToReplace, replacementExpression, false, out);
+    final boolean needsCast =
+      replacementExpression != null && MethodCallUtils.isNecessaryForSurroundingMethodCall(expressionToReplace, replacementExpression);
+    appendElementText(element, expressionToReplace, replacementExpression, needsCast, out);
   }
 
   private static void appendElementText(@NotNull PsiElement element, @NotNull PsiExpression elementToReplace,
                                         @Nullable PsiExpression replacementExpression, boolean insertCast, @NotNull StringBuilder out) {
     if (element.equals(elementToReplace)) {
       final String replacementText = (replacementExpression == null) ? "" : replacementExpression.getText();
-      if (insertCast && elementToReplace.getType() != null) {
-        out.append('(').append(elementToReplace.getType().getCanonicalText()).append(')');
+      final PsiType type = GenericsUtil.getVariableTypeByExpressionType(ExpectedTypeUtils.findExpectedType(elementToReplace, true));
+      if (insertCast && type != null) {
+        out.append('(').append(type.getCanonicalText()).append(')');
       }
       out.append(replacementText);
       return;

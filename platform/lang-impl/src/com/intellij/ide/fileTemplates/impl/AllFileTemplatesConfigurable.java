@@ -62,7 +62,8 @@ import static com.intellij.ide.fileTemplates.FileTemplateManager.*;
  * Time: 12:44:56 PM
  */
 
-public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll {
+public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
+                                                     Configurable.VariableProjectAppLevel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
 
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
@@ -448,6 +449,11 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       myEditor.setShowInternalMessage(isInternal ? " " : null);
       myEditor.setShowAdjustCheckBox(myTemplatesList == myCurrentTab);
     }
+  }
+
+  @Override
+  public boolean isProjectLevel() {
+    return myScheme != null && !myScheme.getProject().isDefault();
   }
 
   // internal template could not be removed and should be rendered bold

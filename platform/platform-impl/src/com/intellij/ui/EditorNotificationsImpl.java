@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.listeners.RefactoringElementAdapter;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,7 +80,6 @@ public class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
-
   }
 
   @Override
@@ -195,5 +199,31 @@ public class EditorNotificationsImpl extends EditorNotifications {
         }
       }
     });
+  }
+
+  public static class RefactoringListenerProvider implements RefactoringElementListenerProvider {
+    @Nullable
+    @Override
+    public RefactoringElementListener getListener(@NotNull final PsiElement element) {
+      if (element instanceof PsiFile) {
+        return new RefactoringElementAdapter() {
+          @Override
+          protected void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
+            if (newElement instanceof PsiFile) {
+              final VirtualFile vFile = newElement.getContainingFile().getVirtualFile();
+              if (vFile != null) {
+                EditorNotifications.getInstance(element.getProject()).updateNotifications(vFile);
+              }
+            }
+          }
+
+          @Override
+          public void undoElementMovedOrRenamed(@NotNull final PsiElement newElement, @NotNull final String oldQualifiedName) {
+            elementRenamedOrMoved(newElement);
+          }
+        };
+      }
+      return null;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -111,7 +112,10 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     }
     try {
       final Location location = frame.location();
-      final Method method = location.method();
+      final Method method = DebuggerUtilsEx.getMethod(location);
+      if (method == null) {
+        return null;
+      }
       final ReferenceType referenceType = location.declaringType();
       final StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,20 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected void prepareImporter(MavenProject p) {
   }
 
+  /**
+   * Whether to disable auto detection for given module.
+   *
+   * @param module Current module.
+   * @return true.
+   * @since 171
+   */
+  protected boolean isDisableFacetAutodetection(Module module) {
+    return true;
+  }
+
   private void disableFacetAutodetection(Module module, IdeModifiableModelsProvider provider) {
+    if (!isDisableFacetAutodetection(module)) return;
+
     final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(module.getProject());
     final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
     if (frameworkType != null) {

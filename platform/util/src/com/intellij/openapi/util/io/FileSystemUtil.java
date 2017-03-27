@@ -25,6 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -425,31 +426,17 @@ public class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
 
     private JnaUnixMediatorImpl() throws Exception {
-      if (SystemInfo.isLinux) {
-        if ("arm".equals(SystemInfo.OS_ARCH)) {
-          if (SystemInfo.is32Bit) {
-            myOffsets = LNX_ARM32;
-          }
-          else {
-            throw new IllegalStateException("AArch64 architecture is not supported");
-          }
-        }
-        else if ("ppc".equals(SystemInfo.OS_ARCH)) {
-          myOffsets = SystemInfo.is32Bit ? LNX_PPC32 : LNX_PPC64;
-        }
-        else {
-          myOffsets = SystemInfo.is32Bit ? LINUX_32 : LINUX_64;
-        }
-      }
-      else if (SystemInfo.isMac | SystemInfo.isFreeBSD) {
-        myOffsets = SystemInfo.is32Bit ? BSD_32 : BSD_64;
-      }
-      else if (SystemInfo.isSolaris) {
-        myOffsets = SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64;
-      }
-      else {
-        throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
-      }
+           if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
+      else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
+      else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
+      else if ("linux-ppc".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC32;
+      else if ("linux-ppc64le".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC64;
+      else if ("freebsd-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_32;
+      else if ("darwin".equals(Platform.RESOURCE_PREFIX) ||
+               "freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      else if ("sunos-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_32;
+      else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
+      else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
 
       Native.register(LibC.class, "c");
       Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, "c");

@@ -54,7 +54,7 @@ public class SyntaxTable implements Cloneable {
     myKeywords4 = new THashSet<>();
   }
 
-  KeywordParser getKeywordParser() {
+  public KeywordParser getKeywordParser() {
     KeywordParser parser = myKeywordParser;
     if (parser == null) {
       synchronized (this) {

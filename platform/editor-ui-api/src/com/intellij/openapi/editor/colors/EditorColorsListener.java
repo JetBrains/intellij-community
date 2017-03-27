@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.EventListener;
 
 /**
@@ -29,6 +31,6 @@ import java.util.EventListener;
  */
 public interface EditorColorsListener extends EventListener {
 
-  void globalSchemeChange(EditorColorsScheme scheme);
+  void globalSchemeChange(@Nullable EditorColorsScheme scheme);
 
 }

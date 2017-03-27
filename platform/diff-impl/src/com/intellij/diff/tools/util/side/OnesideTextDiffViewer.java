@@ -25,7 +25,7 @@ import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
@@ -97,7 +97,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   //
 
   @NotNull
-  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+  public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 

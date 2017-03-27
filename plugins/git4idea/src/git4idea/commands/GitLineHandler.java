@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -48,8 +49,17 @@ public class GitLineHandler extends GitTextHandler {
     super(project, directory, command);
   }
 
-  public GitLineHandler(@NotNull final Project project, @NotNull final VirtualFile vcsRoot, @NotNull final GitCommand command) {
+  public GitLineHandler(@NotNull final Project project,
+                        @NotNull final VirtualFile vcsRoot,
+                        @NotNull final GitCommand command) {
     super(project, vcsRoot, command);
+  }
+
+  public GitLineHandler(@NotNull final Project project,
+                        @NotNull final VirtualFile vcsRoot,
+                        @NotNull final GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, vcsRoot, command, configParameters);
   }
 
   protected void processTerminated(final int exitCode) {

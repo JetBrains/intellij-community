@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
- * and source roots.<p>
- * <p/>
- * Use {@link #orderEntries(com.intellij.openapi.module.Module)} or {@link ModuleRootModel#orderEntries()} to process dependencies of a module
- * and use {@link #orderEntries(com.intellij.openapi.project.Project)} to process dependencies of all modules in a project.<p>
- * <p/>
- * Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.
+ * <p>Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s
+ * and collect classes and source roots.</p>
+ *
+ * <p>Use {@link #orderEntries(Module)} or {@link ModuleRootModel#orderEntries()} to process dependencies of a module
+ * and use {@link #orderEntries(Project)} to process dependencies of all modules in a project.</p>
+ *
+ * <p>Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.</p>
  *
  * @author nik
  * @since 10.0

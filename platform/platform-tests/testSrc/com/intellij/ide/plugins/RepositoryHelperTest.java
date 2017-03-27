@@ -16,12 +16,16 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.MultiMap;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -55,7 +59,7 @@ public class RepositoryHelperTest {
       "  <category name=\"J2EE\">\n" +
       "    <idea-plugin downloads=\"1\" size=\"1024\" date=\"1119060380000\" url=\"\">\n" +
       "      <name>AWS Manager</name>\n" +
-      "      <id>com.jetbrains.ec2manager</id>\n" +
+      "      <id>com.jetbrains.ec2manager2</id>\n" +
       "      <description>...</description>\n" +
       "      <version>1.0.5</version>\n" +
       "      <vendor email=\"michael.golubev@jetbrains.com\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
@@ -79,7 +83,51 @@ public class RepositoryHelperTest {
       "    </idea-plugin>" +
       "  </category>\n" +
       "</plugin-repository>");
-    assertEquals(2, list.size());
+    assertEquals("Loaded plugins: " + StringUtil.join(list, IdeaPluginDescriptor::getName, ", "), 2, list.size());
+  }
+
+  @Test
+  public void testBrokenNotInList() throws Exception {
+    Method versionsGetter = ReflectionUtil.getDeclaredMethod(PluginManagerCore.class, "getBrokenPluginVersions");
+    versionsGetter.setAccessible(true);
+    MultiMap<String, String> versions = (MultiMap<String, String>)versionsGetter.invoke(null);
+    try {
+      versions.putValue("a.broken.plugin", "1.0.5");
+      List<IdeaPluginDescriptor> list = loadPlugins(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        "<plugin-repository>\n" +
+        "  <ff>\"J2EE\"</ff>\n" +
+        "  <category name=\"J2EE\">\n" +
+        "    <idea-plugin downloads=\"1\" size=\"1024\" date=\"1119060380000\" url=\"\">\n" +
+        "      <name>AWS Manager</name>\n" +
+        "      <id>a.broken.plugin</id>\n" +
+        "      <description>...</description>\n" +
+        "      <version>1.0.5</version>\n" +
+        "      <vendor email=\"michael.golubev@jetbrains.com\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
+        "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
+        "      <change-notes>...</change-notes>\n" +
+        "      <depends>com.intellij.javaee</depends>\n" +
+        "      <rating>3.5</rating>\n" +
+        "      <download-url>plugin.zip</download-url>\n" +
+        "    </idea-plugin>\n" +
+        "    <idea-plugin downloads=\"6182\" size=\"131276\" date=\"1386612959000\" url=\"\">\n" +
+        "      <name>tc Server Support</name>\n" +
+        "      <id>com.intellij.tc.server</id>\n" +
+        "      <description>...</description>\n" +
+        "      <version>1.2</version>\n" +
+        "      <vendor email=\"\" url=\"http://www.jetbrains.com\">JetBrains</vendor>\n" +
+        "      <idea-version min=\"n/a\" max=\"n/a\" since-build=\"133.193\"/>\n" +
+        "      <change-notes>...</change-notes>\n" +
+        "      <depends>com.intellij.javaee</depends>\n" +
+        "      <rating>00</rating>\n" +
+        "      <downloadUrl>plugin.zip</downloadUrl>\n" +
+        "    </idea-plugin>" +
+        "  </category>\n" +
+        "</plugin-repository>");
+      assertEquals(1, list.size());
+    } finally {
+      versions.remove("a.broken.plugin", "1.0.5");
+    }
   }
 
   @Test

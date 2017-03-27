@@ -42,6 +42,12 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("JUnitTestClassNamingConvention")
 public class _LastInSuiteTest extends TestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Disposer.setDebugMode(true);
+  }
+
   public void testProjectLeak() throws Exception {
     boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
     if (guiTestMode) {

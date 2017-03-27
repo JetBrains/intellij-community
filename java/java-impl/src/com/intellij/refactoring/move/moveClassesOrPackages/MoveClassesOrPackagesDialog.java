@@ -292,7 +292,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
                                                                new Pass<String>() {
                                                                  @Override
                                                                  public void pass(String s) {
-                                                                   setErrorText(s);
+                                                                   setErrorText(s, myDestinationFolderCB);
                                                                  }
                                                                }, myHavePackages ? myWithBrowseButtonReference.getChildComponent() : myClassPackageChooser.getChildComponent());
     UIUtil.setEnabled(myTargetPanel, !getSourceRoots().isEmpty() && isMoveToPackage() && !isTargetDirectoryFixed, true);

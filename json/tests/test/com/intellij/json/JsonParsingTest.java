@@ -71,6 +71,10 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testExtendedIdentifierToken() {
+    doTest();
+  }
+
   // Moved from JavaScript
 
   public void testSimple1() {

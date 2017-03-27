@@ -135,7 +135,7 @@ public class DiffIterableUtil {
   }
 
   @NotNull
-  public static DiffIterable trim(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
+  public static DiffIterable subiterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
     return new SubiterableDiffIterable(iterable, start1, end1, start2, end2);
   }
 

@@ -39,12 +39,12 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   private boolean myClearOutputDirectoryOnRebuild = true;
   private final JpsCompilerExcludes myCompilerExcludes = new JpsCompilerExcludesImpl();
   private final JpsCompilerExcludes myValidationExcludes = new JpsCompilerExcludesImpl();
-  private final List<String> myResourcePatterns = new ArrayList<String>();
-  private final List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<ProcessorConfigProfile>();
+  private final List<String> myResourcePatterns = new ArrayList<>();
+  private final List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<>();
   private final ProcessorConfigProfileImpl myDefaultAnnotationProcessingProfile = new ProcessorConfigProfileImpl("Default");
   private String myProjectByteCodeTargetLevel;
-  private final Map<String, String> myModulesByteCodeTargetLevels = new HashMap<String, String>();
-  private final Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<String, JpsJavaCompilerOptions>();
+  private final Map<String, String> myModulesByteCodeTargetLevels = new HashMap<>();
+  private final Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<>();
   private String myJavaCompilerId = "Javac";
   private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
   private ResourcePatterns myCompiledPatterns;
@@ -200,8 +200,8 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
     Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
-      map = new HashMap<JpsModule, ProcessorConfigProfile>();
-      final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
+      map = new HashMap<>();
+      final Map<String, JpsModule> namesMap = new HashMap<>();
       for (JpsModule m : module.getProject().getModules()) {
         namesMap.put(m.getName(), m);
       }

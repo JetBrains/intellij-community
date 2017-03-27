@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
       UISettings settings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
-      if (settings != null && settings.MOVE_MOUSE_ON_DEFAULT_BUTTON) {
+      if (settings != null && settings.getMoveMouseOnDefaultButton()) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;

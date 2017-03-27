@@ -105,7 +105,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   @Override
   @Nullable
   public PsiAnnotationMemberValue getDetachedValue() {
-    GrNameValuePairStub stub = getGreenStub();
+    GrNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
       PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);

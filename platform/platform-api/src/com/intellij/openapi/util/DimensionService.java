@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleType;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
@@ -312,15 +311,15 @@ public class DimensionService implements PersistentStateComponent<Element> {
       screen = gd.getDefaultConfiguration().getBounds();
     }
     float scale = 1f;
-    if (UIUtil.isJDKManagedHiDPI()) {
-      scale = JBUI.sysScale(gd);
+    if (UIUtil.isJreHiDPIEnabled()) {
+      scale = JBUI.sysScale(gd.getDefaultConfiguration());
       // normalize screen bounds
       screen.setBounds((int)Math.floor(screen.x * scale), (int)Math.floor(screen.y * scale),
                        (int)Math.ceil(screen.width * scale), (int)Math.ceil(screen.height * scale));
     }
     String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
-    if (JBUI.isHiDPI(gd, ScaleType.PIX)) {
-      int dpi = ((int)(96 * JBUI.pixScale(gd)));
+    if (JBUI.isPixHiDPI(gd.getDefaultConfiguration())) {
+      int dpi = ((int)(96 * JBUI.pixScale(gd.getDefaultConfiguration())));
       realKey += "@" + dpi + "dpi";
     }
     return new Pair<>(realKey, scale);

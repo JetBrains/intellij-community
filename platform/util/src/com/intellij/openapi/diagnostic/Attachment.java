@@ -25,7 +25,7 @@ public class Attachment {
   public static final Attachment[] EMPTY_ARRAY = new Attachment[0];
   private final String myPath;
   private final byte[] myBytes;
-  private boolean myIncluded = true;
+  private boolean myIncluded;   // opt-out for traces, opt-in otherwise
   private final String myDisplayText;
 
   public Attachment(@NotNull String path, @NotNull String content) {
@@ -42,6 +42,7 @@ public class Attachment {
 
   public Attachment(@NotNull String name, @NotNull Throwable throwable) {
     this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
+    myIncluded = true;
   }
 
   @NotNull

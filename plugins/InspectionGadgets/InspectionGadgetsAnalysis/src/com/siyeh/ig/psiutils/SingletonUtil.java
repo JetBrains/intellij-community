@@ -21,6 +21,11 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public class SingletonUtil {
 
   private SingletonUtil() {
@@ -45,52 +50,29 @@ public class SingletonUtil {
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
-    final PsiField[] fields = aClass.getFields();
-    PsiField result = null;
-    for (final PsiField field : fields) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        continue;
-      }
-      final PsiType type = field.getType();
-      if (!(type instanceof PsiClassType)) {
-        continue;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass targetClass = classType.resolve();
-      if (!aClass.equals(targetClass)) {
-        continue;
-      }
-      if (result != null) {
-        return null;
-      }
-      result = field;
+    List<PsiField> fields = Stream.concat(Arrays.stream(aClass.getFields()),
+                                          Arrays.stream(aClass.getInnerClasses())
+                                            .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
+                                            .flatMap(innerClass -> Arrays.stream(innerClass.getFields())))
+      .filter(field -> resolveToSingletonField(aClass, field))
+      .limit(2).collect(Collectors.toList());
+    return fields.size() == 1 ? fields.get(0) : null;
+  }
+
+  private static boolean resolveToSingletonField(PsiClass aClass, PsiField field) {
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
     }
-    final PsiClass[] innerClasses = aClass.getInnerClasses();
-    for (PsiClass innerClass : innerClasses) {
-      if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
-        continue;
-      }
-      final PsiField[] fields1 = innerClass.getFields();
-      for (PsiField field : fields1) {
-        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        final PsiType type = field.getType();
-        if (!(type instanceof PsiClassType)) {
-          continue;
-        }
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass targetClass = classType.resolve();
-        if (!aClass.equals(targetClass)) {
-          continue;
-        }
-        if (result != null) {
-          return null;
-        }
-        result = field;
-      }
+    final PsiType type = field.getType();
+    if (!(type instanceof PsiClassType)) {
+      return false;
     }
-    return result;
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass targetClass = classType.resolve();
+    if (!aClass.equals(targetClass)) {
+      return false;
+    }
+    return true;
   }
 
   private static PsiMethod[] getIfOnlyInvisibleConstructors(PsiClass aClass) {

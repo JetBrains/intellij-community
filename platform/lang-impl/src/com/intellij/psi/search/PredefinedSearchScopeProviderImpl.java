@@ -24,12 +24,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -236,7 +236,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
           @Override
           public boolean contains(@NotNull final VirtualFile file) {
-            return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> favoritesManager.contains(favorite, file));
+            return ReadAction.compute(() -> favoritesManager.contains(favorite, file));
           }
 
           @Override

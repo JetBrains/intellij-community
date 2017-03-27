@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +93,8 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod == null) return null;
+      final PsiClass samClass = interfaceMethod.getContainingClass();
+      if (samClass == null) return null;
 
       PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
       if (typeParameters.length != parameters.length) {
@@ -103,11 +106,13 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
+      final PsiSubstitutor lambdaSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(samClass, psiClass, PsiSubstitutor.EMPTY);
+
       final InferenceSession session = new InferenceSession(typeParameters, PsiSubstitutor.EMPTY, expr.getManager(), expr);
 
       for (int i = 0; i < targetMethodParams.length; i++) {
-        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(),
-                                                         session.substituteWithInferenceVariables(targetMethodParams[i].getType())));
+        final PsiType qType = lambdaSubstitutor.substitute(targetMethodParams[i].getType());
+        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), session.substituteWithInferenceVariables(qType)));
       }
 
       if (!session.repeatInferencePhases()) {

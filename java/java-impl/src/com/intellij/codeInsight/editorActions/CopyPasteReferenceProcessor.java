@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,13 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     }
 
     final ArrayList<ReferenceData> array = new ArrayList<>();
+    int refOffset = 0; // this is an offset delta for conversion from absolute offset to an offset inside clipboard contents
     for (int j = 0; j < startOffsets.length; j++) {
-      final int startOffset = startOffsets[j];
-      for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffsets[j])) {
-        addReferenceData(file, startOffset, element, array);
+      refOffset += startOffsets[j];
+      for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffsets[j], endOffsets[j])) {
+        addReferenceData(file, refOffset, element, array);
       }
+      refOffset -= endOffsets[j] + 1; // 1 accounts for line break inserted between contents corresponding to different carets
     }
 
     if (array.isEmpty()) {

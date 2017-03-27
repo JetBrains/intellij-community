@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,18 +117,23 @@ public class ExpressionStatement {
                !ParserUtils.lookAhead(builder, GroovyTokenTypes.mLBRACK, GroovyTokenTypes.mNLS, GroovyTokenTypes.mCOLON)) {
         PathExpression.indexPropertyArgsParse(builder, parser);
         exprStatement.done(GroovyElementTypes.PATH_INDEX_PROPERTY);
+        boolean isCall = false;
         if (GroovyTokenTypes.mLPAREN.equals(builder.getTokenType())) {
           PrimaryExpression.methodCallArgsParse(builder, parser);
+          isCall = true;
         }
         else if (GroovyTokenTypes.mLCURLY.equals(builder.getTokenType())) {
           PsiBuilder.Marker argsMarker = builder.mark();
           argsMarker.done(GroovyElementTypes.ARGUMENTS);
+          isCall = true;
         }
         while (GroovyTokenTypes.mLCURLY.equals(builder.getTokenType())) {
           OpenOrClosableBlock.parseClosableBlock(builder, parser);
         }
-        exprStatement = exprStatement.precede();
-        exprStatement.done(GroovyElementTypes.PATH_METHOD_CALL);
+        if (isCall) {
+          exprStatement = exprStatement.precede();
+          exprStatement.done(GroovyElementTypes.PATH_METHOD_CALL);
+        }
       }
       else if (nameParsed && CommandArguments.parseCommandArguments(builder, parser)) {
         isExprStatement = true;

@@ -232,7 +232,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       process.execute();
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
   }
 

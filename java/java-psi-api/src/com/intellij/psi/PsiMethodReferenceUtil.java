@@ -310,15 +310,15 @@ public class PsiMethodReferenceUtil {
       }
     }
 
-    if (!receiverReferenced && isStaticSelector && !isMethodStatic && !isConstructor) {
-      return "Non-static method cannot be referenced from a static context";
+    if (!receiverReferenced) {
+      if (isStaticSelector && !isMethodStatic && !isConstructor) {
+        return "Non-static method cannot be referenced from a static context";
+      }
+      if (!isStaticSelector && isMethodStatic) {
+        return "Static method referenced through non-static qualifier";
+      }
     }
-
-    if (!receiverReferenced && !isStaticSelector && isMethodStatic) {
-      return "Static method referenced through non-static qualifier";
-    }
-
-    if (receiverReferenced && isStaticSelector && isMethodStatic && !isConstructor) {
+    else if (isStaticSelector && isMethodStatic) {
       return "Static method referenced through receiver";
     }
 

@@ -22,7 +22,9 @@ import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -126,7 +128,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
           return false;
         }
 
-        return scheme.isEqualToBundled(bundledScheme);
+        return scheme.settingsEqual(bundledScheme);
       }
 
       @Override
@@ -150,6 +152,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
+    resolveLinksToBundledSchemes();
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
   }
 
@@ -180,6 +183,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof BundledScheme) {
         createEditableCopy((BundledScheme)scheme, SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName());
+      }
+    }
+  }
+  
+  private void resolveLinksToBundledSchemes() {
+    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
+      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+        ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
       }
     }
   }
@@ -297,7 +308,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme);
+    Application application = ApplicationManager.getApplication();
+    boolean notify = (application instanceof ApplicationImpl && ((ApplicationImpl)application).isLoaded());
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify);
   }
 
   private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
@@ -373,7 +386,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
     EditorColorsScheme scheme = myDefaultColorSchemeManager.getScheme(schemeName);
-    assert scheme != null : "The default scheme '" + schemeName + "' not found";
+    assert scheme != null :
+      "The default scheme '" + schemeName + "' not found, " +
+      "available schemes: " + Arrays.toString(myDefaultColorSchemeManager.listNames());
     if (((DefaultColorsScheme)scheme).hasEditableCopy()) {
       EditorColorsScheme editableCopy = getScheme(((DefaultColorsScheme)scheme).getEditableCopyName());
       if (editableCopy != null) return editableCopy;

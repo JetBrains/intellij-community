@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,10 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -268,8 +267,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
       if (module.getModule() != null) {
-        final int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
-        JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+        DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
+          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
+          JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+        });
       }
       else {
         JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
@@ -295,20 +296,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     }
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
-      JavaSdkVersion version = null;
-      Sdk jdk = params.getJdk();
-      if (jdk != null) {
-        SdkTypeId type = jdk.getSdkType();
-        if (type instanceof JavaSdk) {
-          version = ((JavaSdk)type).getVersion(jdk);
-        }
-      }
-      if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+      if (JavaSdkUtil.isJdkAtLeast(params.getJdk(), JavaSdkVersion.JDK_1_9)) {
         PsiClass mainClass = module.findClass(params.getMainClass());
         if (mainClass != null) {
           PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
           if (mainModule != null) {
-            params.setModuleName(mainModule.getModuleName());
+            params.setModuleName(mainModule.getName());
             PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
             modulePath.addAll(classPath.getPathList());
             classPath.clear();

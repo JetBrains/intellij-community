@@ -66,7 +66,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
     try {
       holder.processDirtyFiles(new FileProcessor<ResourceRootDescriptor, ResourcesTarget>() {
-        private final Map<ResourceRootDescriptor, Boolean> mySkippedRoots = new HashMap<ResourceRootDescriptor, Boolean>();
+        private final Map<ResourceRootDescriptor, Boolean> mySkippedRoots = new HashMap<>();
         public boolean apply(ResourcesTarget target, final File file, final ResourceRootDescriptor sourceRoot) throws IOException {
           Boolean isSkipped = mySkippedRoots.get(sourceRoot);
           if (isSkipped == null) {
@@ -97,10 +97,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
       context.processMessage(new ProgressMessage(""));
     }
-    catch(BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch(ProjectBuildException e) {
+    catch(BuildDataCorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {

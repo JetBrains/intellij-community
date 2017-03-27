@@ -19,19 +19,60 @@ import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.Nullable;
 
 public interface RegExpGroup extends RegExpAtom, PsiNamedElement {
-  boolean isCapturing();
 
-  boolean isSimple();
+  boolean isCapturing();
 
   @Nullable
   RegExpPattern getPattern();
 
+  /** @deprecated use #getType() */
+  @Deprecated
   boolean isPythonNamedGroup();
 
+  /** @deprecated use #getType() */
+  @Deprecated
   boolean isRubyNamedGroup();
 
-  boolean isNamedGroup();
+  /** @return true, if this is a named group of any kind, false otherwise */
+  boolean isAnyNamedGroup();
 
   @Nullable
   String getGroupName();
+
+  Type getType();
+
+  enum Type {
+    /** (?<name>pattern) */
+    NAMED_GROUP,
+
+    /** (?'name'pattern) */
+    QUOTED_NAMED_GROUP,
+
+    /** (?P<name>pattern) */
+    PYTHON_NAMED_GROUP,
+
+    /** (pattern) */
+    CAPTURING_GROUP,
+
+    /** (?>pattern) */
+    ATOMIC,
+
+    /** (?:pattern) */
+    NON_CAPTURING,
+
+    /** (?=pattern) */
+    POSITIVE_LOOKAHEAD,
+
+    /** (?!pattern) */
+    NEGATIVE_LOOKAHEAD,
+
+    /** (?<=pattern) */
+    POSITIVE_LOOKBEHIND,
+
+    /** (?<!pattern) */
+    NEGATIVE_LOOKBEHIND,
+
+    /** (?i:pattern) */
+    OPTIONS
+  }
 }

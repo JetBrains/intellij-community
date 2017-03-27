@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,28 @@ import org.jetbrains.annotations.NotNull;
  * @author Tagir Valeev
  */
 public class OptionalUtil {
+  private static final String OPTIONAL_INT = "java.util.OptionalInt";
+  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
+  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
+
   @NotNull
   @Contract(pure = true)
   public static String getOptionalClass(String type) {
     switch (type) {
       case "int":
-        return "java.util.OptionalInt";
+        return OPTIONAL_INT;
       case "long":
-        return "java.util.OptionalLong";
+        return OPTIONAL_LONG;
       case "double":
-        return "java.util.OptionalDouble";
+        return OPTIONAL_DOUBLE;
       default:
         return CommonClassNames.JAVA_UTIL_OPTIONAL;
     }
+  }
+
+  public static boolean isOptionalClassName(String className) {
+    return CommonClassNames.JAVA_UTIL_OPTIONAL.equals(className) ||
+         OPTIONAL_INT.equals(className) || OPTIONAL_LONG.equals(className) || OPTIONAL_DOUBLE.equals(className);
   }
 
   /**

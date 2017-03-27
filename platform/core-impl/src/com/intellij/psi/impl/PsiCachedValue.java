@@ -46,17 +46,12 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   }
 
   private static boolean hasOnlyPhysicalPsiDependencies(@Nullable Object[] dependencies) {
-    return dependencies != null && dependencies.length > 0 && ContainerUtil.and(dependencies, new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return o instanceof PsiElement && ((PsiElement)o).isValid() && ((PsiElement)o).isPhysical() ||
-               o instanceof ProjectRootModificationTracker ||
-               o instanceof PsiModificationTracker ||
-               o == PsiModificationTracker.MODIFICATION_COUNT ||
-               o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
-               o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
-      }
-    });
+    return dependencies != null && dependencies.length > 0 && ContainerUtil.and(dependencies, o -> o instanceof PsiElement && ((PsiElement)o).isValid() && ((PsiElement)o).isPhysical() ||
+                                                                                               o instanceof ProjectRootModificationTracker ||
+                                                                                               o instanceof PsiModificationTracker ||
+           o == PsiModificationTracker.MODIFICATION_COUNT ||
+           o == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
+           o == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
   }
 
   @Nullable

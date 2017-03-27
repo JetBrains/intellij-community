@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED;
+
 /**
  * @author mike
  * Date: Jul 18, 2002
@@ -44,12 +47,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       private void doIncCounter() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            incCounter();
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> incCounter());
       }
 
       @Override
@@ -88,12 +86,17 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       return;
     }
 
+    PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
+    boolean outOfCodeBlock =
+      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI :
+      code == CHILD_MOVED ? event.getOldParent() instanceof PsiDirectory || event.getNewParent() instanceof PsiDirectory :
+      event.getParent() instanceof PsiDirectory;
+
     myModificationCount.getAndIncrement();
-    if (event.getParent() instanceof PsiDirectory 
-        || event.getOldParent() instanceof PsiDirectory /* move events */) {
+    if (outOfCodeBlock) {
+      myJavaStructureModificationCount.getAndIncrement();
       myOutOfCodeBlockModificationCount.getAndIncrement();
     }
-
     fireEvent();
   }
 

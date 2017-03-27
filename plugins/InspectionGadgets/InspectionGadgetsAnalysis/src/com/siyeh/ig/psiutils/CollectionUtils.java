@@ -238,7 +238,7 @@ public class CollectionUtils {
       final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
       return initializers.length == 0;
     }
-    return ExpressionUtils.isZeroLengthArrayConstruction(initializer);
+    return ConstructionUtils.isEmptyArrayInitializer(initializer);
   }
 
   public static boolean isArrayOrCollectionField(@NotNull PsiField field) {

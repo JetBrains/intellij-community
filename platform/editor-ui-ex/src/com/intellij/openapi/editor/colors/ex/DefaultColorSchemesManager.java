@@ -61,6 +61,7 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
         for (DefaultColorsScheme oldScheme : mySchemes) {
           if (StringUtil.equals(nameAttr.getValue(), oldScheme.getName())) {
             oldScheme.readExternal(schemeElement);
+            schemes.add(oldScheme);
             isUpdated = true;
           }
         }
@@ -78,6 +79,14 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
   @NotNull
   public List<DefaultColorsScheme> getAllSchemes() {
     return Collections.unmodifiableList(mySchemes);
+  }
+
+  public String[] listNames() {
+    String[] names = new String[mySchemes.size()];
+    for (int i = 0; i < names.length; i ++) {
+      names[i] = mySchemes.get(i).getName();
+    }
+    return names;
   }
 
   @NotNull

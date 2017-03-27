@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
@@ -53,9 +52,14 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         Task task = getTask(file);
         setTaskText(task, StudyUtils.getTaskDir(file));
-        if (task != null && task.isChoiceTask()) {
-          final StudyChoiceVariantsPanel choicePanel = new StudyChoiceVariantsPanel(task);
-          toolWindow.setBottomComponent(choicePanel);
+        if (task != null) {
+          if (task.isChoiceTask()) {
+            final StudyChoiceVariantsPanel choicePanel = new StudyChoiceVariantsPanel(task);
+            toolWindow.setBottomComponent(choicePanel);
+          }
+          else {
+            toolWindow.setBottomComponent(null);
+          }
         }
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myShowBreadcrumbsCheckBox.setSelected(editorSettings.isBreadcrumbsShown());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
-    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
+    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowToolWindowsNumbers());
 
     updateWhitespaceCheckboxesState();
 
@@ -173,8 +173,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //  uiSettingsModified = true;
     //}
 
-    if (uiSettings.SHOW_EDITOR_TOOLTIP != myShowCodeLensInEditorCheckBox.isSelected()) {
-      uiSettings.SHOW_EDITOR_TOOLTIP = myShowCodeLensInEditorCheckBox.isSelected();
+    if (uiSettings.getShowEditorToolTip() != myShowCodeLensInEditorCheckBox.isSelected()) {
+      uiSettings.setShowToolWindowsNumbers(myShowCodeLensInEditorCheckBox.isSelected());
       uiSettingsModified = true;
       lafSettingsModified = true;
     }
@@ -216,7 +216,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
-    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().SHOW_EDITOR_TOOLTIP;
+    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().getShowEditorToolTip();
     isModified |= myShowBreadcrumbsCheckBox.isSelected() != editorSettings.isBreadcrumbsShown();
     isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
     

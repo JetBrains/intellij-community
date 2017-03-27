@@ -19,7 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.Nullable;
 
-interface OptionsEditorColleague {
+public interface OptionsEditorColleague {
   ActionCallback onSelected(@Nullable Configurable configurable, final Configurable oldConfigurable);
 
   ActionCallback onModifiedAdded(final Configurable configurable);

@@ -19,13 +19,11 @@ import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
-import git4idea.test.GitExecutor.git
-import git4idea.test.GitExecutor.last
+import git4idea.test.*
 import git4idea.test.GitScenarios.commit
 import git4idea.test.GitScenarios.conflict
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.GitTestUtil.makeCommit
 import org.junit.Assume.assumeTrue
+import java.io.File
 import kotlin.test.assertNotEquals
 
 /**
@@ -151,6 +149,14 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     assertEquals(3, myRepo.branches.localBranches.size)
     assertNotEquals(myRepo.branches.findBranchByName("uppercase"), myRepo.branches.findBranchByName("UpperCase"))
     assertNotEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
+  }
+
+  fun `test non-branch files are ignored`() {
+    tac("f.txt")
+    assertTrue(File(myRepo.repositoryFiles.refsHeadsFile, "master.lock").createNewFile())
+
+    myRepo.update()
+    assertSameElements(listOf("master"), myRepo.branches.localBranches.map { it.name })
   }
 
   private fun moveToDetachedHead(): String {

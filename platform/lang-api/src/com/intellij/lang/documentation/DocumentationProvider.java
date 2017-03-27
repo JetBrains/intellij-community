@@ -72,7 +72,7 @@ public interface DocumentationProvider {
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
    * @param originalElement the element under the mouse cursor
-   * @return                target element's documentation, or {@code null} if provider is unable to generage documentation
+   * @return                target element's documentation, or {@code null} if provider is unable to generate documentation
    *                        for the given element
    */
   @Nullable

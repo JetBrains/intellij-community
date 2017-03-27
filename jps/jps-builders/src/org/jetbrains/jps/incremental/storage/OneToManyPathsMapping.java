@@ -89,7 +89,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
     }
 
     public Collection<String> read(@NotNull DataInput in) throws IOException {
-      final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         final String str = IOUtil.readUTF(stream);
@@ -100,7 +100,7 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   private static Collection<String> normalizePaths(Collection<String> outputs) {
-    Collection<String> normalized = new ArrayList<String>(outputs.size());
+    Collection<String> normalized = new ArrayList<>(outputs.size());
     for (String out : outputs) {
       normalized.add(FileUtil.toSystemIndependentName(out));
     }

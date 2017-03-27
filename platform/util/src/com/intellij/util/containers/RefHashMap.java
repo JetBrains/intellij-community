@@ -18,7 +18,6 @@ package com.intellij.util.containers;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
@@ -386,10 +385,5 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   public Set<Entry<K, V>> entrySet() {
     if (entrySet == null) entrySet = new EntrySet();
     return entrySet;
-  }
-
-  @TestOnly
-  int underlyingMapSize() {
-    return myMap.size();
   }
 }

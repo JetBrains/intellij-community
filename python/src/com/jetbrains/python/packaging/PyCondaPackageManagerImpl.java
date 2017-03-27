@@ -171,8 +171,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final String condaExecutable = PyCondaPackageService.getSystemCondaExecutable();
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
-    final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir,
-                                                            "python=" + version, "-y");
+    final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir, "-y",
+                                                            "python=" + version);
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);

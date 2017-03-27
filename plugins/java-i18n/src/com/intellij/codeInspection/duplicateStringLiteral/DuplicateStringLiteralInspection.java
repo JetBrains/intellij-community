@@ -43,6 +43,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.StringSearcher;
+import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntProcedure;
@@ -239,11 +240,9 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  private static PsiReferenceExpression createReferenceTo(final PsiField constant, final PsiLiteralExpression context) throws IncorrectOperationException {
+  private static PsiReferenceExpression createReferenceTo(final PsiField constant) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(constant.getProject()).getElementFactory();
-    PsiReferenceExpression reference = (PsiReferenceExpression)factory.createExpressionFromText(constant.getName(), context);
-    if (reference.isReferenceTo(constant)) return reference;
-    reference = (PsiReferenceExpression)factory.createExpressionFromText("XXX." + constant.getName(), null);
+    PsiReferenceExpression reference = (PsiReferenceExpression)factory.createExpressionFromText("XXX." + constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
     PsiClass containingClass = constant.getContainingClass();
     if (containingClass.getQualifiedName() == null) return null;
@@ -380,9 +379,13 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         return;
       }
       try {
-        final PsiReferenceExpression reference = createReferenceTo(myConstant, myOriginalExpression);
+        final PsiReferenceExpression reference = createReferenceTo(myConstant);
         if (reference != null) {
-          myOriginalExpression.replace(reference);
+          final PsiReferenceExpression newReference = (PsiReferenceExpression)myOriginalExpression.replace(reference);
+          if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newReference, false, false, true)) {
+            //remove qualifier
+            newReference.getChildren()[0].delete();
+          }
         }
       }
       catch (IncorrectOperationException e) {

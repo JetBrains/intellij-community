@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection {
     return new BaseInspectionVisitor() {
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
-        if (ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
+        if (ConstructionUtils.isEmptyArrayInitializer(expression)) {
           PsiType type = expression.getType();
           if (type instanceof PsiArrayType) {
             PsiType arrayType = ((PsiArrayType)type).getComponentType();
@@ -67,7 +67,7 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection {
                     && !typeClass.isEquivalentTo(PsiTreeUtil.findFirstParent(expression, (e) -> e instanceof PsiClass))
                     && modifiers.hasModifierProperty(PsiModifier.FINAL)
                     && modifiers.hasModifierProperty(PsiModifier.PUBLIC)
-                    && ExpressionUtils.isZeroLengthArrayConstruction(field.getInitializer())) {
+                    && ConstructionUtils.isEmptyArrayInitializer(field.getInitializer())) {
                   registerError(expression, typeClass, field);
                   return;
                 }

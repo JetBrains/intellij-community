@@ -354,6 +354,40 @@ class MergeTest : MergeTestBase() {
     }
   }
 
+  fun testResolve() {
+    test1("y z", "x y z", "x y") {
+      0.resolve()
+      0.assertResolved(BOTH)
+      0.assertContent("y")
+
+      assertContent("y")
+    }
+
+    test2("y z_Y_x y", "x y z_Y_x y z", "x y_Y_y z") {
+      0.resolve()
+      0.assertResolved(BOTH)
+      0.assertContent("y")
+
+      1.resolve()
+      1.assertResolved(BOTH)
+      1.assertContent("y")
+
+      assertContent("y_Y_y")
+    }
+
+    test2("y z_Y_x y", "x y z_Y_x y z", "x y_Y_y z") {
+      0.apply(Side.LEFT, true)
+      0.assertResolved(BOTH)
+      0.assertContent("y z")
+
+      1.resolve()
+      1.assertResolved(BOTH)
+      1.assertContent("y")
+
+      assertContent("y z_Y_y")
+    }
+  }
+
   fun testUndoSimple() {
     test1("x", "y", "z") {
       checkUndo(1) {

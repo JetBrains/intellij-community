@@ -130,40 +130,37 @@ public class IconUtil {
     };
   }
 
-  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
-    @Override
-    public Icon fun(final FileIconKey key) {
-      final VirtualFile file = key.getFile();
-      final int flags = key.getFlags();
-      final Project project = key.getProject();
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
+    final VirtualFile file = key.getFile();
+    final int flags = key.getFlags();
+    final Project project = key.getProject();
 
-      if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-      final Icon providersIcon = getProvidersIcon(file, flags, project);
-      Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
+    final Icon providersIcon = getProvidersIcon(file, flags, project);
+    Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
 
-      final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-      for (FileIconPatcher patcher : getPatchers()) {
-        if (dumb && !DumbService.isDumbAware(patcher)) {
-          continue;
-        }
-
-        // render without locked icon patch since we are going to apply it later anyway
-        icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
+    final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+    for (FileIconPatcher patcher : getPatchers()) {
+      if (dumb && !DumbService.isDumbAware(patcher)) {
+        continue;
       }
 
-      if (file.is(VFileProperty.SYMLINK)) {
-        icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-      }
-      if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
-          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-      }
-
-      Iconable.LastComputedIcon.put(file, icon, flags);
-
-      return icon;
+      // render without locked icon patch since we are going to apply it later anyway
+      icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
     }
+
+    if (file.is(VFileProperty.SYMLINK)) {
+      icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+    }
+    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+        (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+      icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+    }
+
+    Iconable.LastComputedIcon.put(file, icon, flags);
+
+    return icon;
   };
 
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
@@ -218,19 +215,7 @@ public class IconUtil {
   }
 
   public static Image toImage(@NotNull Icon icon) {
-    if (icon instanceof ImageIcon) {
-      return ((ImageIcon)icon).getImage();
-    }
-    else {
-      final int w = icon.getIconWidth();
-      final int h = icon.getIconHeight();
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
-      final Graphics2D g = image.createGraphics();
-      icon.paintIcon(null, g, 0, 0);
-      g.dispose();
-      return image;
-    }
+    return IconLoader.toImage(icon);
   }
 
   @NotNull
@@ -482,6 +467,16 @@ public class IconUtil {
   }
 
   @NotNull
+  public static Icon brighter(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new BrighterFilter(tones));
+  }
+
+  @NotNull
+  public static Icon darker(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new DarkerFilter(tones));
+  }
+
+  @NotNull
   private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull Filter filter) {
     BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
                                     UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
@@ -534,6 +529,48 @@ public class IconUtil {
       int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
       int grey = (max + min) / 2;
       return new int[]{grey, grey, grey, rgba[3]};
+    }
+  }
+
+  private static class BrighterFilter extends Filter {
+    private final int myTones;
+
+    public BrighterFilter(int tones) {
+      myTones = tones;
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
+      float brightness = hsb[2];
+      for (int i = 0; i < myTones; i++) {
+        brightness = Math.min(1, brightness * 1.1F);
+        if (brightness == 1) break;
+      }
+      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    }
+  }
+
+  private static class DarkerFilter extends Filter {
+    private final int myTones;
+
+    public DarkerFilter(int tones) {
+      myTones = tones;
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
+      float brightness = hsb[2];
+      for (int i = 0; i < myTones; i++) {
+        brightness = Math.max(0, brightness / 1.1F);
+        if (brightness == 0) break;
+      }
+      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
     }
   }
 

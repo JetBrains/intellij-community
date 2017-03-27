@@ -115,4 +115,15 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     }
     return count;
   }
+
+
+  /**
+   * Returns if td items should be highlighted in editor
+   *
+   * @param file    the file to return the to do count for.
+   * @return if td items should be highlighted in editor. True by default
+   */
+  public boolean shouldHighlightInEditor(@NotNull PsiFile file) {
+    return true;
+  }
 }

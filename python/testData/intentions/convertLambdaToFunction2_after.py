@@ -1,5 +1,5 @@
 def transform():
-  def function(x):
+  def function1(x):
       return x + 5
 
-  return function
+  return function1

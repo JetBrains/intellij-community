@@ -55,7 +55,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
 
   public void toStream(final DependencyContext context, final PrintStream stream) {
 
-    final List<Pair<K, String>> keys = new ArrayList<Pair<K, String>>();
+    final List<Pair<K, String>> keys = new ArrayList<>();
     forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
       @Override
       public boolean execute(final K a, final Collection<V> b) {
@@ -68,12 +68,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
       }
     });
 
-    Collections.sort(keys, new Comparator<Pair<K, String>>() {
-      @Override
-      public int compare(Pair<K, String> o1, Pair<K, String> o2) {
-        return o1.second.compareTo(o2.second);
-      }
-    });
+    keys.sort(Comparator.comparing(o -> o.second));
 
     for (final Pair<K, String> a: keys) {
       final Collection<V> b = get(a.first);
@@ -82,7 +77,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
       stream.println(a.second);
       stream.println("  Values:");
 
-      final List<String> list = new LinkedList<String>();
+      final List<String> list = new LinkedList<>();
 
       for (final V value : b) {
         if (value instanceof Streamable) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,4 +43,18 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
     }
     return value;
   }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static <T> VolatileNullableLazyValue<T> createValue(@NotNull final Factory<T> value) {
+    return new VolatileNullableLazyValue<T>() {
+
+      @Nullable
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
+  }
+
 }

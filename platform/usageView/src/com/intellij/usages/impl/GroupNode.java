@@ -74,10 +74,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Node> edtInsertedUnderQueue) {
+  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Node> edtInsertedUnderQueue) {
     GroupNode newNode = new GroupNode(this, group, ruleIndex);
     synchronized (this) {
-      int insertionIndex = findGroupInsertionIndex(newNode);
+      int insertionIndex = getNodeIndex(newNode, myChildren);
       if (insertionIndex >= 0) return (GroupNode)myChildren.get(insertionIndex);
       int i = -insertionIndex - 1;
       myChildren.add(i, newNode);
@@ -87,29 +87,38 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   // >= 0 if found, < 0 if not found
-  private int findGroupInsertionIndex(@NotNull GroupNode newNode) {
-    List<Node> childrenNodes = myChildren;
-    int i;
-    for (i = 0; i < childrenNodes.size(); i++) {
-      Node child = childrenNodes.get(i);
-
-      if (!(child instanceof GroupNode)) continue;
-
-      int compare = ((GroupNode)child).compareTo(newNode);
-      if (compare == 0) {
-        return i;
+  private static int getNodeIndex(@NotNull Node newNode, @NotNull List<Node> children) {
+    int low = 0;
+    int high = children.size() - 1;
+    while (low <= high) {
+      int mid = (low + high) / 2;
+      Node child = children.get(mid);
+      int cmp = COMPARATOR.compare(child, newNode);
+      if (cmp < 0) {
+        low = mid + 1;
       }
-      if (compare > 0) break;
+      else if (cmp > 0) {
+        high = mid - 1;
+      }
+      else {
+        return mid;
+      }
     }
 
-    return -i-1;
+    return -(low + 1);
+  }
+
+  // always >= 0
+  private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<Node> children) {
+    int i = getNodeIndex(node, children);
+    return i >= 0 ? i : -i-1;
   }
 
   void addTargetsNode(@NotNull Node node, @NotNull DefaultTreeModel treeModel) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index;
     synchronized (this) {
-      index = getNodeInsertionIndex(node);
+      index = getNodeInsertionIndex(node, getSwingChildren());
       myChildren.add(index, node);
     }
     treeModel.insertNodeInto(node, this, index);
@@ -191,33 +200,11 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
         }
       }
       newNode = new UsageNode(this, usage);
-      int index = getUsageNodeInsertionIndex(newNode);
+      int index = getNodeInsertionIndex(newNode, myChildren);
       myChildren.add(index, newNode);
     }
     edtInsertedUnderQueue.consume(this);
     return newNode;
-  }
-
-  private int getUsageNodeInsertionIndex(@NotNull UsageNode node) {
-    int index = indexedBinarySearch(node, myChildren);
-    return index >= 0 ? index : -index-1;
-  }
-
-  @SuppressWarnings("Duplicates")
-  private static int indexedBinarySearch(@NotNull UsageNode key, @NotNull List<Node> children) {
-    int low = 0;
-    int high = children.size() - 1;
-
-    while (low <= high) {
-      int mid = (low + high) / 2;
-      TreeNode treeNode = children.get(mid);
-      int cmp = treeNode instanceof UsageNode ? ((UsageNode)treeNode).compareTo(key) : -1;
-      if (cmp < 0) low = mid + 1;
-      else if (cmp > 0) high = mid - 1;
-      else return mid;
-    }
-
-    return -(low + 1);
   }
 
   void incrementUsageCount() {
@@ -265,17 +252,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       if (element instanceof Node && ((Node)element).isReadOnly()) return true;
     }
     return false;
-  }
-
-  private int getNodeInsertionIndex(@NotNull DefaultMutableTreeNode node) {
-    Enumeration children = children();
-    int idx = 0;
-    while (children.hasMoreElements()) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)children.nextElement();
-      if (COMPARATOR.compare(child, node) >= 0) break;
-      idx++;
-    }
-    return idx;
   }
 
   private static class NodeComparator implements Comparator<DefaultMutableTreeNode> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,6 +208,45 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myFrameCount;
   }
 
+  /**
+   * Same as frames(), but always force full frames refresh if not cached,
+   * this is useful when you need all frames but do not plan to invoke anything
+   * as only one request is sent
+   */
+  @NotNull
+  public List<StackFrameProxyImpl> forceFrames() throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    final ThreadReference threadRef = getThreadReference();
+    try {
+      //LOG.assertTrue(threadRef.isSuspended());
+      checkValid();
+
+      if (myFrames == null) {
+        try {
+          List<StackFrame> frames = threadRef.frames();
+          myFrameCount = frames.size();
+          myFrames = new ArrayList<>(myFrameCount);
+          myFramesFromBottom.clear();
+          int idx = 0;
+          for (StackFrame frame : frames) {
+            StackFrameProxyImpl frameProxy = new StackFrameProxyImpl(this, frame, myFrameCount - idx);
+            myFrames.add(frameProxy);
+            myFramesFromBottom.addFirst(frameProxy);
+            idx++;
+          }
+        }
+        catch (IncompatibleThreadStateException | InternalException e) {
+          throw EvaluateExceptionUtil.createEvaluateException(e);
+        }
+      }
+    }
+    catch (ObjectCollectedException ignored) {
+      return Collections.emptyList();
+    }
+    return myFrames;
+  }
+
+  @NotNull
   public List<StackFrameProxyImpl> frames() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadRef = getThreadReference();
@@ -320,8 +359,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (IllegalThreadStateException e) {
       // must be zombie thread
       LOG.info(e);
-      return false;
+    } catch (ObjectCollectedException ignored) {
     }
+
+    return false;
   }
 
   public boolean isAtBreakpoint() {
@@ -329,6 +370,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       return getThreadReference().isAtBreakpoint();
     } catch (InternalException e) {
       LOG.info(e);
+    } catch (ObjectCollectedException ignored) {
     }
     return false;
   }

@@ -52,6 +52,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessControl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
@@ -117,6 +118,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
+  private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -211,6 +213,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (threadInfo != null) {
             getSession().positionReached(createSuspendContext(threadInfo));
           }
+        }
+        for (PyFrameListener listener : myFrameListeners) {
+          listener.frameChanged();
         }
       }
     });
@@ -1147,6 +1152,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void showNumericContainer(PyDebugValue value) {
     PyViewNumericContainerAction.showNumericViewer(getProject(), value);
+  }
+
+  @Override
+  public void addFrameListener(@NotNull PyFrameListener listener) {
+    myFrameListeners.add(listener);
   }
 
   @Nullable

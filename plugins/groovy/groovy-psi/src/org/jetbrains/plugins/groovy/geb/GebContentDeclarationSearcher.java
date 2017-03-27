@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.Map;
 
@@ -49,8 +49,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     if (!"content".equals(field.getName()) || !field.hasModifierProperty(PsiModifier.STATIC)) return;
 
     PsiClass containingClass = field.getContainingClass();
-    if (!GroovyPsiManager.isInheritorCached(containingClass, "geb.Page")
-        && !GroovyPsiManager.isInheritorCached(containingClass, "geb.Module")) return;
+    if (!InheritanceUtil.isInheritor(containingClass, "geb.Page")
+        && !InheritanceUtil.isInheritor(containingClass, "geb.Module")) return;
 
     Map<String, PsiField> elements = GebUtil.getContentElements(containingClass);
 

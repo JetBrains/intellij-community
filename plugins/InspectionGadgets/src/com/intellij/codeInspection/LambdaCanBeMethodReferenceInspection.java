@@ -95,11 +95,20 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                                         ? ((PsiNewExpression)methodRefCandidate).getQualifier()
                                                                         : null;
               boolean safeQualifier = checkQualifier(qualifier);
-              ProblemHighlightType errorOrWarning = safeQualifier ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                                                                  : ProblemHighlightType.INFORMATION;
-              holder.registerProblem(InspectionProjectProfileManager.isInformationLevel(getShortName(), expression) ? expression : candidate,
-                                     "Can be replaced with method reference",
-                                     errorOrWarning, new ReplaceWithMethodRefFix(safeQualifier ? "" : " (may change semantics)"));
+              ProblemHighlightType type;
+              if (safeQualifier) {
+                type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+              }
+              else {
+                if (!isOnTheFly) return;
+                type = ProblemHighlightType.INFORMATION;
+              }
+              PsiElement element = InspectionProjectProfileManager.isInformationLevel(getShortName(), expression) ? expression : candidate;
+              holder.registerProblem(holder.getManager().createProblemDescriptor(
+                element,
+                "Can be replaced with method reference",
+                type != ProblemHighlightType.INFORMATION,
+                type, true, new ReplaceWithMethodRefFix(safeQualifier ? "" : " (may change semantics)")));
             }
           }
         }
@@ -314,7 +323,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (qualifier == null) {
       return true;
     }
-    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class);
+    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
       if (expression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();

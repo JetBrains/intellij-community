@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 /**
  * @author Vladislav.Soroka
@@ -31,10 +31,10 @@ public class OnOutputEvent extends AbstractTestEvent {
   }
 
   @Override
-  public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testId = getTestId(eventXml);
-    final String destination = eventXml.queryXml("/ijLog/event/test/event/@destination");
-    final String output = decode(eventXml.queryXml("/ijLog/event/test/event"));
+  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+    final String testId = eventXml.getTestId();
+    final String destination = eventXml.getTestEventTestDescription();
+    final String output = decode(eventXml.getTestEventTest());
 
     SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;

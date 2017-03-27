@@ -31,7 +31,7 @@ import java.util.Set;
 public class JpsArtifactUtil {
   public static boolean processPackagingElements(@NotNull JpsPackagingElement element,
                                                  @NotNull Processor<JpsPackagingElement> processor) {
-    return processPackagingElements(element, processor, new HashSet<JpsPackagingElement>());
+    return processPackagingElements(element, processor, new HashSet<>());
   }
 
   private static boolean processPackagingElements(@NotNull JpsPackagingElement element,

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * @see {@link com.intellij.openapi.editor.EditorFactory#addEditorFactoryListener(EditorFactoryListener, com.intellij.openapi.Disposable)}
+ * see {@link com.intellij.openapi.editor.EditorFactory#addEditorFactoryListener(EditorFactoryListener, com.intellij.openapi.Disposable)}
  */
 public interface EditorFactoryListener extends EventListener {
   /**

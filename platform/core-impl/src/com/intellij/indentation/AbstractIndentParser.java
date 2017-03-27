@@ -40,8 +40,8 @@ public abstract class AbstractIndentParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
-    myNewLines = new HashMap<PsiBuilder.Marker, Boolean>();
-    myIndents = new HashMap<PsiBuilder.Marker, Integer>();
+    myNewLines = new HashMap<>();
+    myIndents = new HashMap<>();
     myBuilder = builder;
     parseRoot(root);
     return myBuilder.getTreeBuilt();

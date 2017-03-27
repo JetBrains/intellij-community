@@ -92,7 +92,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       protected void textChanged(DocumentEvent e) {
         String error = getErrorMessage(contractText.getText(), method);
         builder.setOkActionEnabled(error == null);
-        builder.setErrorText(error);
+        builder.setErrorText(error, contractText);
       }
     });
     if (builder.showAndGet()) {

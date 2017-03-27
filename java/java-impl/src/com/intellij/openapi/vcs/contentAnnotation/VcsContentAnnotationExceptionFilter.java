@@ -20,6 +20,7 @@ import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -107,7 +108,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionWorker worker = new ExceptionWorker(myCache);
       final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-      if (ApplicationManager.getApplication().runReadAction((Computable<Result>)() -> worker.execute(lineText, lineEndOffset)) != null) {
+      if (ReadAction.compute(() -> worker.execute(lineText, lineEndOffset)) != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 

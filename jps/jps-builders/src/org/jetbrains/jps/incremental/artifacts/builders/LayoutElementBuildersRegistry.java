@@ -56,7 +56,7 @@ public class LayoutElementBuildersRegistry {
   private ClassMap<LayoutElementBuilderService> myBuilders;
 
   private LayoutElementBuildersRegistry() {
-    myBuilders = new ClassMap<LayoutElementBuilderService>();
+    myBuilders = new ClassMap<>();
     LayoutElementBuilderService<?>[] standardBuilders = {
       new RootElementBuilder(), new DirectoryElementBuilder(), new ArchiveElementBuilder(), new DirectoryCopyElementBuilder(),
       new FileCopyElementBuilder(), new ExtractedDirectoryElementBuilder(), new ModuleOutputElementBuilder(),

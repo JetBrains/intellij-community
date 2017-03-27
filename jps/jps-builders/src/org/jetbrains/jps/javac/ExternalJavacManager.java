@@ -70,7 +70,7 @@ public class ExternalJavacManager {
   private final File myWorkingDir;
   @NotNull
   private final ChannelRegistrar myChannelRegistrar;
-  private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<UUID, JavacProcessDescriptor>();
+  private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<>();
   private int myListenPort = DEFAULT_SERVER_PORT;
 
   public ExternalJavacManager(@NotNull final File workingDir) {
@@ -206,7 +206,7 @@ public class ExternalJavacManager {
                                                                         File workingDir,
                                                                         List<String> vmOptions,
                                                                         JavaCompilingTool compilingTool) throws Exception {
-    final List<String> cmdLine = new ArrayList<String>();
+    final List<String> cmdLine = new ArrayList<>();
     appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
     //appendParam(cmdLine, "-XX:MaxPermSize=150m");
     //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");

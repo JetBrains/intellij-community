@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -72,9 +75,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     if (SystemInfo.isMac) {
       smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
     } else {
-      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UISettings.getInstance().FONT_SIZE - JBUI.scale(3), JBUI.scaleFontSize(10)));
+      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UISettings.getInstance().getFontSize() - JBUI.scale(3), JBUI.scaleFontSize(10)));
     }
-    myName.setFont(UIUtil.getLabelFont().deriveFont(UISettings.getInstance().FONT_SIZE));
+    myName.setFont(UIUtil.getLabelFont().deriveFont(UISettings.getInstance().getFontSize()));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);
@@ -88,7 +91,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myInfoPanel.remove(myBottomPanel);
     }
 
-    myPanel.setBorder(UIUtil.isJDKManagedHiDPIScreen((Graphics2D)myPanel.getGraphics()) ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
+    myPanel.setBorder(UIUtil.isJreHiDPI(myPanel) ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
   }
 
   private void createUIComponents() {

@@ -73,7 +73,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
-    List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+    List<BuildTarget<?>> result = new ArrayList<>();
 
     ModuleBuildTarget compileTarget = new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.getInstance(isTests()));
     result.add(compileTarget);
@@ -94,12 +94,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
                                                              BuildDataPaths dataPaths) {
     ResourcesTarget target = new ResourcesTarget(myModule, ResourcesTargetType.getInstance(isTests()));
     List<ResourceRootDescriptor> resources = target.computeRootDescriptors(model, index, ignoredFileIndex, dataPaths);
-    return ContainerUtil.map(resources, new Function<ResourceRootDescriptor, GroovyResourceRootDescriptor>() {
-      @Override
-      public GroovyResourceRootDescriptor fun(ResourceRootDescriptor descriptor) {
-        return new GroovyResourceRootDescriptor(descriptor, CheckResourcesTarget.this);
-      }
-    });
+    return ContainerUtil.map(resources, descriptor -> new GroovyResourceRootDescriptor(descriptor, CheckResourcesTarget.this));
   }
 
   @NotNull
@@ -152,18 +147,13 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
     @NotNull
     @Override
     public List<CheckResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
-      return ContainerUtil.map(model.getProject().getModules(), new Function<JpsModule, CheckResourcesTarget>() {
-        @Override
-        public CheckResourcesTarget fun(JpsModule module) {
-          return new CheckResourcesTarget(module, Type.this);
-        }
-      });
+      return ContainerUtil.map(model.getProject().getModules(), module -> new CheckResourcesTarget(module, Type.this));
     }
 
     @NotNull
     @Override
     public BuildTargetLoader<CheckResourcesTarget> createLoader(@NotNull JpsModel model) {
-      final Map<String, JpsModule> modules = new HashMap<String, JpsModule>();
+      final Map<String, JpsModule> modules = new HashMap<>();
       for (JpsModule module : model.getProject().getModules()) {
         modules.put(module.getName(), module);
       }

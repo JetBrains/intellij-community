@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.List;
+
 
 public class ModuleGroupUrl extends AbstractUrl {
   @NonNls private static final String ELEMENT_TYPE = "module_group";
@@ -30,7 +32,7 @@ public class ModuleGroupUrl extends AbstractUrl {
 
   @Override
   public Object[] createPath(Project project) {
-    final String[] groupPath = url.split(";");
+    List<String> groupPath = StringUtil.split(url, ";");
     return new Object[]{new ModuleGroup(groupPath)};
   }
 

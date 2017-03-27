@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -117,18 +116,18 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
       }
       if (anyChange) {
         modelsToCommit.add(rootModel);
-      } else {
+      }
+      else {
         rootModel.dispose();
       }
     }
 
     if (!modelsToCommit.isEmpty()) {
-      ModifiableRootModel[] rootModels = modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]);
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableModelCommitter
+        .multiCommit(modelsToCommit, ModuleManager.getInstance(modelsToCommit.get(0).getProject()).getModifiableModel());
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }

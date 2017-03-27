@@ -23,11 +23,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
@@ -35,36 +35,42 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final LafManager lafMan = LafManager.getInstance();
-    final UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
-    final UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
-    for (final UIManager.LookAndFeelInfo lf : lfs) {
+    LafManager lafMan = LafManager.getInstance();
+    UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
+    UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
+    for (UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
         public void actionPerformed(AnActionEvent e) {
-          UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
-          if (cur == lf) return;
-          boolean wasDarcula = UIUtil.isUnderDarcula();
-          lafMan.setCurrentLookAndFeel(lf);
-          // hack not to updateUI twice: here and in DarculaInstaller
-          final AtomicBoolean updated = new AtomicBoolean(false);
-          LafManagerListener listener = (s) -> updated.set(true);
-          lafMan.addLafManagerListener(listener);
-          try {
-            if (UIUtil.isUnderDarcula()) {
-              DarculaInstaller.install();
-            }
-            else if (wasDarcula) {
-              DarculaInstaller.uninstall();
-            }
-          }
-          finally {
-            lafMan.removeLafManagerListener(listener);
-            if (!updated.get()) {
-              lafMan.updateUI();
-            }
-          }
+          switchLafAndUpdateUI(lafMan, lf);
         }
       });
+    }
+  }
+
+  public static void switchLafAndUpdateUI(@NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf) {
+    UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
+    if (cur == lf) return;
+
+    boolean wasDarcula = UIUtil.isUnderDarcula();
+    lafMan.setCurrentLookAndFeel(lf);
+    // a twist not to updateUI twice: here and in DarculaInstaller
+    // double updateUI shall be avoided and causes NPE in some components (HelpView)
+    Ref<Boolean> updated = Ref.create(false);
+    LafManagerListener listener = (s) -> updated.set(true);
+    lafMan.addLafManagerListener(listener);
+    try {
+      if (UIUtil.isUnderDarcula()) {
+        DarculaInstaller.install();
+      }
+      else if (wasDarcula) {
+        DarculaInstaller.uninstall();
+      }
+    }
+    finally {
+      lafMan.removeLafManagerListener(listener);
+      if (!updated.get()) {
+        lafMan.updateUI();
+      }
     }
   }
 

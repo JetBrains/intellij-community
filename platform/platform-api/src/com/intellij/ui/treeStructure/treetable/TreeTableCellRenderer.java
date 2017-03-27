@@ -61,6 +61,8 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
       myTree.setForeground(table.getForeground());
     }
 
+    myCellRendererComponent.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+
     //TableModel model = myTreeTable.getModel();
     //myTree.setTreeTableTreeBorder(hasFocus && model.getColumnClass(column).equals(TreeTableModel.class) ? myDefaultBorder : null);
     myTree.setVisibleRow(modelRow);

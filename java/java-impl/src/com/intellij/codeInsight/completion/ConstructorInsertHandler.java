@@ -24,6 +24,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -243,7 +244,16 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     assert place != null;
     boolean hasParams = constructor != null ? constructor.getParameterList().getParametersCount() > 0 : hasConstructorParameters(psiClass, place);
 
+    RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
+    
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
+
+    if (constructor != null) {
+      PsiCallExpression call = JavaMethodCallElement.findCallAtOffset(context, refEnd.getStartOffset());
+      if (call != null) {
+        CompletionMemory.registerChosenMethod(constructor, call);
+      }
+    }
 
     return true;
   }

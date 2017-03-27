@@ -22,7 +22,7 @@ import java.lang.ref.SoftReference;
 import java.util.Map;
 
 final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
-  public WeakKeySoftValueHashMap() {
+  WeakKeySoftValueHashMap() {
     super(new WeakHashMap<K, ValueReference<K, V>>());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,13 +158,13 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   public static final Runnable TOOLBAR_SETTER = () -> {
     final UISettings settings = UISettings.getInstance();
-    settings.SHOW_MAIN_TOOLBAR = SHOWN;
+    settings.setShowMainToolbar(SHOWN);
     settings.fireUISettingsChanged();
   };
 
   public static final Runnable NAVBAR_SETTER = () -> {
     final UISettings settings = UISettings.getInstance();
-    settings.SHOW_NAVIGATION_BAR = SHOWN;
+    settings.setShowNavigationBar(SHOWN);
     settings.fireUISettingsChanged();
   };
 
@@ -172,7 +172,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
-      return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+      return UISettings.getInstance().getShowNavigationBar();
     }
   };
 
@@ -180,7 +180,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
-      return UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+      return UISettings.getInstance().getShowMainToolbar();
     }
   };
 

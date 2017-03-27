@@ -70,7 +70,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -675,40 +674,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
         position.translate(0, oldHistoryHeight - newHistoryHeight);
         viewport.setViewPosition(position);
       }
-    }
-  }
-
-  private static class EmptyScrollBar extends JBScrollBar {
-
-    final JScrollBar original;
-
-    public EmptyScrollBar(JScrollBar original) {
-      this.original = original;
-      setModel(original.getModel());
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return JBUI.emptySize();
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return JBUI.emptySize();
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return JBUI.emptySize();
-    }
-
-    @Override
-    public Border getBorder() {
-      return null;
-    }
-
-    @Override
-    public void paint(Graphics g) {
     }
   }
 

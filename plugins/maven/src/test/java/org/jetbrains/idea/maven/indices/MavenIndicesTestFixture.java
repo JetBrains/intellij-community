@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class MavenIndicesTestFixture {
-  private File myDir;
+  private Path myDir;
   private Project myProject;
   private String myLocalRepoDir;
   private String[] myExtraRepoDirs;
@@ -33,11 +34,15 @@ public class MavenIndicesTestFixture {
   private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenProjectIndicesManager myIndicesManager;
 
-  public MavenIndicesTestFixture(File dir, Project project) {
+  public MavenIndicesTestFixture(Path dir, Project project) {
     this(dir, project, "local1", "local2");
   }
 
-  public MavenIndicesTestFixture(File dir, Project project, String localRepoDir, String... extraRepoDirs) {
+  public MavenIndicesTestFixture(File dir, Project project) {
+    this(dir.toPath(), project);
+  }
+
+  public MavenIndicesTestFixture(Path dir, Project project, String localRepoDir, String... extraRepoDirs) {
     myDir = dir;
     myProject = project;
     myLocalRepoDir = localRepoDir;
@@ -45,7 +50,7 @@ public class MavenIndicesTestFixture {
   }
 
   public void setUp() throws Exception {
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
       addToRepository(each);
@@ -54,7 +59,7 @@ public class MavenIndicesTestFixture {
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
 
-    getIndicesManager().setTestIndexDir(new File(myDir, "MavenIndices"));
+    getIndicesManager().setTestIndexDir(myDir.resolve("MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
     myIndicesManager.doInit();
   }

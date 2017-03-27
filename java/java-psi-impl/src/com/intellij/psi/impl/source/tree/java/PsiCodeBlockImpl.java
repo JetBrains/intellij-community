@@ -97,9 +97,9 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
     if (set1 == null || set2 == null) {
-      final Set<String> localsSet = new THashSet<String>();
-      final Set<String> classesSet = new THashSet<String>();
-      final Ref<Boolean> conflict = new Ref<Boolean>(Boolean.FALSE);
+      final Set<String> localsSet = new THashSet<>();
+      final Set<String> classesSet = new THashSet<>();
+      final Ref<Boolean> conflict = new Ref<>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {

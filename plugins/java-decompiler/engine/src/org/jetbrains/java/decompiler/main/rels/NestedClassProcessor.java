@@ -405,8 +405,10 @@ public class NestedClassProcessor {
         MethodWrapper method = nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey());
         method.signatureFields = new ArrayList<>();
 
+        boolean firstSignField = nestedNode.type != ClassNode.CLASS_ANONYMOUS;
         for (VarFieldPair pair : entry.getValue()) {
-          method.signatureFields.add(pair == null || pair.fieldKey.isEmpty() ? null : pair.varPair);
+          method.signatureFields.add(pair == null || (!firstSignField && pair.fieldKey.isEmpty()) ? null : pair.varPair);
+          firstSignField = false;
         }
       }
     }

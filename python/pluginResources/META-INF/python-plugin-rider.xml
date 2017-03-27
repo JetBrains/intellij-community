@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
-  <xi:include href="/META-INF/python-plugin-minor-ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-community-plugin-minor.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="Python" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"

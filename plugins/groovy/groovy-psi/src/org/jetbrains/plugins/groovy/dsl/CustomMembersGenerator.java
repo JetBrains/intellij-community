@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import groovy.lang.Closure;
@@ -196,8 +195,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, false);
       if (argTypes == null) return;
 
-      String[] types = new String[argTypes.length];
-      ContainerUtil.map(argTypes, (Function<PsiType, Object>)type -> type.getCanonicalText(), types);
+      String[] types =
+      ContainerUtil.map(argTypes, PsiType::getCanonicalText, new String[argTypes.length]);
 
       generator.setDelegate(this);
 

@@ -39,11 +39,10 @@ REGEXP_FILE
               RegExpClassImpl: <[^:/]>
                 PsiElement(CLASS_BEGIN)('[')
                 PsiElement(CARET)('^')
-                RegExpUnionImpl: <:/>
-                  RegExpCharImpl: <:>
-                    PsiElement(CHARACTER)(':')
-                  RegExpCharImpl: </>
-                    PsiElement(CHARACTER)('/')
+                RegExpCharImpl: <:>
+                  PsiElement(CHARACTER)(':')
+                RegExpCharImpl: </>
+                  PsiElement(CHARACTER)('/')
                 PsiElement(CLASS_END)(']')
               RegExpQuantifierImpl: <+>
                 PsiElement(PLUS)('+')

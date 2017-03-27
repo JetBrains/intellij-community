@@ -1,4 +1,4 @@
-// "Access static 'AClass.R.rr' via class 'R' reference" "true"
+// "Access static 'R.rr' via class 'R' reference" "true"
 
 class AClass
 {

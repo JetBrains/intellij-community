@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ReturnNullInspection extends ReturnNullInspectionBase {
 
@@ -39,16 +32,7 @@ public class ReturnNullInspection extends ReturnNullInspectionBase {
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.arrays.option"), "m_reportArrayMethods");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.collections.option"), "m_reportCollectionMethods");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("return.of.null.objects.option"), "m_reportObjectMethods");
-    final JButton configureAnnotations = new JButton(InspectionsBundle.message("configure.annotations.option"));
-    configureAnnotations.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(optionsPanel));
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-        new NullableNotNullDialog(project).show();
-      }
-    });
-    optionsPanel.addComponent(configureAnnotations);
+    optionsPanel.addComponent(NullableNotNullDialog.createConfigureAnnotationsButton(optionsPanel));
     return optionsPanel;
   }
 

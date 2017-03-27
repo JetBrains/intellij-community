@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.run;
 
+import com.google.common.collect.Lists;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
@@ -48,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author yole
@@ -72,6 +74,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JComponent labelAnchor;
   private final HideableDecorator myDecorator;
 
+  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
+
   public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
     myProject = data.getProject();
@@ -84,7 +88,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myInterpreterComboBox.setMinimumAndPreferredWidth(100);
     myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
-                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
+                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -111,6 +115,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
         super.off();
         storeState();
       }
+
       private void storeState() {
         PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
       }
@@ -119,6 +124,15 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myDecorator.setContentComponent(myMainPanel);
     myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());
     updateControls();
+
+    addInterpreterComboBoxActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        for (Consumer<Boolean> f : myRemoteInterpreterModeListeners) {
+          f.accept(PySdkUtil.isRemote(getSelectedSdk()));
+        }
+      }
+    });
   }
 
   private void updateControls() {
@@ -143,6 +157,11 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void removeInterpreterComboBoxActionListener(ActionListener listener) {
     myInterpreterComboBox.removeActionListener(listener);
+  }
+
+  @Override
+  public void addInterpreterModeListener(Consumer<Boolean> listener) {
+    myRemoteInterpreterModeListeners.add(listener);
   }
 
   public String getInterpreterOptions() {
@@ -189,7 +208,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public String getModuleName() {
     Module module = getModule();
-    return module != null? module.getName() : null;
+    return module != null ? module.getName() : null;
   }
 
   public void setModule(Module module) {

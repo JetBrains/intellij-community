@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -23,6 +24,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class SideEffectChecker {
   private static final Set<String> ourSideEffectFreeClasses = new THashSet<>(Arrays.asList(
@@ -61,6 +63,12 @@ public class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
+  public static boolean mayHaveSideEffects(@NotNull PsiStatement statement, Predicate<PsiMethodCallExpression> shouldIgnoreCall) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(shouldIgnoreCall);
+    statement.accept(visitor);
+    return visitor.mayHaveSideEffects();
+  }
+
   public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor();
     element.accept(visitor);
@@ -73,6 +81,15 @@ public class SideEffectChecker {
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
     PsiElement sideEffect;
+    final Predicate<PsiMethodCallExpression> myIgnoredCallPredicate;
+
+    SideEffectsVisitor() {
+      this(call -> false);
+    }
+
+    SideEffectsVisitor(Predicate<PsiMethodCallExpression> predicate) {
+      myIgnoredCallPredicate = predicate;
+    }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
@@ -98,12 +115,25 @@ public class SideEffectChecker {
         return;
       }
       super.visitMethodCallExpression(expression);
+      if (myIgnoredCallPredicate.test(expression)) {
+        return;
+      }
       final PsiMethod method = expression.resolveMethod();
-      if (method != null && (PropertyUtil.isSimpleGetter(method) || ControlFlowAnalyzer.isPure(method))) {
+      if (isPure(method)) {
         return;
       }
       
       sideEffect = expression;
+    }
+
+    protected boolean isPure(PsiMethod method) {
+      if (method == null) return false;
+      if (PropertyUtil.isSimpleGetter(method)) return true;
+      if (ControlFlowAnalyzer.isPure(method)) {
+        return ControlFlowAnalyzer.getMethodContracts(method).stream()
+          .noneMatch(mc -> mc.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION);
+      }
+      return false;
     }
 
     @Override
@@ -141,6 +171,46 @@ public class SideEffectChecker {
           tokenType.equals(JavaTokenType.MINUSMINUS)) {
         sideEffect = expression;
       }
+    }
+
+    @Override
+    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+      sideEffect = statement;
+      super.visitDeclarationStatement(statement);
+    }
+
+    @Override
+    public void visitBreakStatement(PsiBreakStatement statement) {
+      sideEffect = statement;
+      super.visitBreakStatement(statement);
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      // local or anonymous class declaration is not side effect per se (unless it's instantiated)
+    }
+
+    @Override
+    public void visitContinueStatement(PsiContinueStatement statement) {
+      sideEffect = statement;
+      super.visitContinueStatement(statement);
+    }
+
+    @Override
+    public void visitReturnStatement(PsiReturnStatement statement) {
+      sideEffect = statement;
+      super.visitReturnStatement(statement);
+    }
+
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      sideEffect = statement;
+      super.visitThrowStatement(statement);
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      // lambda is not side effect per se (unless it's called)
     }
 
     public boolean mayHaveSideEffects() {

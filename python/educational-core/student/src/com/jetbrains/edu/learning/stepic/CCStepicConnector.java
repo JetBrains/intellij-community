@@ -48,7 +48,7 @@ public class CCStepicConnector {
     try {
       final StepicWrappers.CoursesContainer coursesContainer =
         EduStepicAuthorizedClient.getFromStepic(url, StepicWrappers.CoursesContainer.class);
-      return coursesContainer.courses.get(0);
+      return coursesContainer == null ? null : coursesContainer.courses.get(0);
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
@@ -69,7 +69,12 @@ public class CCStepicConnector {
     indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
 
-    final StepicUser currentUser = EduStepicAuthorizedClient.getCurrentUser(EduStepicAuthorizedClient.getHttpClient());
+    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+    if (client == null) {
+      LOG.warn("Http client is null");
+      return;
+    }
+    final StepicUser currentUser = EduStepicAuthorizedClient.getCurrentUser(client);
     if (currentUser != null) {
       final List<StepicUser> courseAuthors = course.getAuthors();
       for (int i = 0; i < courseAuthors.size(); i++) {
@@ -86,7 +91,6 @@ public class CCStepicConnector {
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
     try {
-      final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
       final CloseableHttpResponse response = client.execute(request);
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -168,6 +172,7 @@ public class CCStepicConnector {
 
     try {
       final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      if (client == null) return;
       final CloseableHttpResponse response = client.execute(request);
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -195,6 +200,7 @@ public class CCStepicConnector {
 
     try {
       final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      if (client == null) return -1;
       final CloseableHttpResponse response = client.execute(request);
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -227,6 +233,7 @@ public class CCStepicConnector {
 
       try {
         final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+        if (client == null) return;
         final CloseableHttpResponse response = client.execute(request);
         final HttpEntity responseEntity = response.getEntity();
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -251,6 +258,7 @@ public class CCStepicConnector {
 
     try {
       final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      if (client == null) return -1;
       final CloseableHttpResponse response = client.execute(request);
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -285,6 +293,7 @@ public class CCStepicConnector {
 
     try {
       final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      if (client == null) return -1;
       final CloseableHttpResponse response = client.execute(request);
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -313,6 +322,7 @@ public class CCStepicConnector {
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
         final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+        if (client == null) return;
         final CloseableHttpResponse response = client.execute(request);
         final HttpEntity responseEntity = response.getEntity();
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -338,6 +348,7 @@ public class CCStepicConnector {
 
       try {
         final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+        if (client == null) return;
         final CloseableHttpResponse response = client.execute(request);
         final StatusLine line = response.getStatusLine();
         final HttpEntity responseEntity = response.getEntity();

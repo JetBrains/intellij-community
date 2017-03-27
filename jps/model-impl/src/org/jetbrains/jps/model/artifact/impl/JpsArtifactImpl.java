@@ -55,7 +55,7 @@ public class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElem
   @NotNull
   @Override
   public JpsArtifactImpl<P> createCopy() {
-    return new JpsArtifactImpl<P>(this);
+    return new JpsArtifactImpl<>(this);
   }
 
   public String getOutputPath() {

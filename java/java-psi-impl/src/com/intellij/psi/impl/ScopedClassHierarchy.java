@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,20 +64,14 @@ class ScopedClassHierarchy {
   private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
   private volatile List<PsiClassType.ClassResolveResult> myImmediateSupersWithCapturing;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<LanguageLevel, Map<PsiClass, PsiSubstitutor>> myAllSupersWithCapturing = new ConcurrentFactoryMap<LanguageLevel, Map<PsiClass, PsiSubstitutor>>() {
-    @Nullable
-    @Override
-    protected Map<PsiClass, PsiSubstitutor> create(LanguageLevel key) {
-      return calcAllMemberSupers(key);
-    }
-  };
+  private final Map<LanguageLevel, Map<PsiClass, PsiSubstitutor>> myAllSupersWithCapturing = ConcurrentFactoryMap.createConcurrentMap(this::calcAllMemberSupers);
 
-  private ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {
+  ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {
     myPlaceClass = psiClass;
     myResolveScope = resolveScope;
   }
 
-  private void visitType(@NotNull PsiClassType type, Map<PsiClass, PsiClassType.ClassResolveResult> map) {
+  void visitType(@NotNull PsiClassType type, Map<PsiClass, PsiClassType.ClassResolveResult> map) {
     PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null || InheritanceImplUtil.hasObjectQualifiedName(psiClass) || map.containsKey(psiClass)) {
@@ -109,19 +102,9 @@ class ScopedClassHierarchy {
 
   @NotNull
   static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
-    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<Map<GlobalSearchScope, ScopedClassHierarchy>>() {
-      @Nullable
-      @Override
-      public Result<Map<GlobalSearchScope, ScopedClassHierarchy>> compute() {
-        Map<GlobalSearchScope, ScopedClassHierarchy> result = new ConcurrentFactoryMap<GlobalSearchScope, ScopedClassHierarchy>() {
-          @Nullable
-          @Override
-          protected ScopedClassHierarchy create(GlobalSearchScope resolveScope) {
-            return new ScopedClassHierarchy(psiClass, resolveScope);
-          }
-        };
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createConcurrentMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     }).get(resolveScope);
   }
 
@@ -165,12 +148,7 @@ class ScopedClassHierarchy {
     List<PsiClassType.ClassResolveResult> list = myImmediateSupersWithCapturing;
     if (list == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      list = ourGuard.doPreventingRecursion(this, true, new Computable<List<PsiClassType.ClassResolveResult>>() {
-        @Override
-        public List<PsiClassType.ClassResolveResult> compute() {
-          return calcImmediateSupersWithCapturing();
-        }
-      });
+      list = ourGuard.doPreventingRecursion(this, true, () -> calcImmediateSupersWithCapturing());
       if (list == null) {
         return Collections.emptyList();
       }

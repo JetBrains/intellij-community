@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,46 +37,43 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
 import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations.TRANSFORMATIONS;
 
 public class ChangeToOperatorInspection extends BaseInspection {
   public boolean useDoubleNegation = true;
   public boolean shouldChangeCompareToEqualityToEquals = true;
+  public boolean withoutAdditionalParentheses = false;
 
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-        visitMethodCall(applicationStatement);
-      }
+      public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCall) {
+        final String methodName = getMethodName(methodCall);
+        if (methodName == null) return;
 
-      @Override
-      public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-        visitMethodCall(methodCallExpression);
-      }
-
-      public void visitMethodCall(@NotNull GrMethodCall methodCall) {
-
-        Transformation transformation = getTransformation(methodCall);
+        Transformation transformation = TRANSFORMATIONS.get(methodName);
         if (transformation == null) return;
 
+        PsiElement highlightElement = getHighlightElement(methodCall);
+        if (highlightElement == null) return;
         if (transformation.couldApply(methodCall, getOptions())) {
-          registerError(methodCall);
+          registerError(
+            highlightElement,
+            message("replace.with.operator.message", methodName),
+            new LocalQuickFix[]{getFix(transformation, methodName)},
+            GENERIC_ERROR_OR_WARNING
+          );
         }
       }
     };
   }
 
   @Nullable
-  @Override
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
-    if (!(location instanceof GrMethodCall)) return null;
-    final Transformation transformation = getTransformation((GrMethodCall)location);
-    final String methodName = getMethodName((GrMethodCall)location);
-    if (transformation == null) return null;
+  protected GroovyFix getFix(@NotNull Transformation transformation, @NotNull String methodName) {
     return new GroovyFix() {
       @Nls
       @NotNull
@@ -87,34 +84,32 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
       @Override
       protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-        PsiElement call = descriptor.getPsiElement();
+        PsiElement call = descriptor.getPsiElement().getParent();
+        if (call == null) return;
+        call = call.getParent();
         if (!(call instanceof GrMethodCall)) return;
-
-        GrExpression invokedExpression = ((GrMethodCall)call).getInvokedExpression();
+        GrMethodCall methodCall = (GrMethodCall) call;
+        GrExpression invokedExpression = methodCall.getInvokedExpression();
         if (!(invokedExpression instanceof GrReferenceExpression)) return;
 
-        transformation.apply((GrMethodCall)call, getOptions());
+        Options options = getOptions();
+        if(!transformation.couldApply(methodCall, options)) return;
+        transformation.apply(methodCall, options);
       }
     };
   }
 
   @Nullable
-  public Transformation getTransformation(@NotNull GrMethodCall methodCall) {
-    String methodName = getMethodName(methodCall);
-    return methodName == null ? null : TRANSFORMATIONS.get(methodName);
+  public PsiElement getHighlightElement(@NotNull GrMethodCall methodCall) {
+    GrExpression invokedExpression = methodCall.getInvokedExpression();
+    if (!(invokedExpression instanceof GrReferenceExpression)) return null;
+    return  ((GrReferenceExpression)invokedExpression).getReferenceNameElement();
   }
 
   @Nullable
   public String getMethodName(@NotNull GrMethodCall methodCall) {
-    GrExpression invokedExpression = methodCall.getInvokedExpression();
-    if (!(invokedExpression instanceof GrReferenceExpression)) return null;
-
-    PsiElement element = ((GrReferenceExpression)invokedExpression).getReferenceNameElement();
-    if (element == null) return null;
-
     PsiMethod method = methodCall.resolveMethod();
     if (method == null || method.hasModifierProperty(PsiModifier.STATIC)) return null;
-
     return method.getName();
   }
 
@@ -124,20 +119,23 @@ public class ChangeToOperatorInspection extends BaseInspection {
     MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(message("replace.with.operator.double.negation.option"), "useDoubleNegation");
     optionsPanel.addCheckbox(message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
+    optionsPanel.addCheckbox(message("replace.with.operator.parentheses"), "withoutAdditionalParentheses");
     return optionsPanel;
   }
 
   private Options getOptions() {
-    return new Options(useDoubleNegation, shouldChangeCompareToEqualityToEquals);
+    return new Options(useDoubleNegation, shouldChangeCompareToEqualityToEquals, withoutAdditionalParentheses);
   }
 
   public static final class Options {
     private final boolean useDoubleNegation;
     private final boolean shouldChangeCompareToEqualityToEquals;
+    private final boolean withoutAdditionalParentheses;
 
-    public Options(boolean useDoubleNegation, boolean shouldChangeCompareToEqualityToEquals) {
+    public Options(boolean useDoubleNegation, boolean shouldChangeCompareToEqualityToEquals, boolean withoutAdditionalParentheses) {
       this.useDoubleNegation = useDoubleNegation;
       this.shouldChangeCompareToEqualityToEquals = shouldChangeCompareToEqualityToEquals;
+      this.withoutAdditionalParentheses = withoutAdditionalParentheses;
     }
 
     public boolean useDoubleNegation() {
@@ -146,6 +144,10 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
     public boolean shouldChangeCompareToEqualityToEquals() {
       return shouldChangeCompareToEqualityToEquals;
+    }
+
+    public boolean withoutAdditionalParentheses() {
+      return withoutAdditionalParentheses;
     }
   }
 }

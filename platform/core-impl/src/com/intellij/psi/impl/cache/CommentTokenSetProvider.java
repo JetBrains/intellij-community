@@ -25,8 +25,8 @@ import com.intellij.psi.tree.IElementType;
  * @see ParserDefinition#getCommentTokens()
  */
 public interface CommentTokenSetProvider {
-  LanguageExtension<CommentTokenSetProvider> EXTENSION = 
-    new LanguageExtension<CommentTokenSetProvider>("com.intellij.commentTokenSetProvider");
+  LanguageExtension<CommentTokenSetProvider> EXTENSION =
+    new LanguageExtension<>("com.intellij.commentTokenSetProvider");
   
   boolean isInComments(IElementType elementType);
 }

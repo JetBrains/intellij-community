@@ -15,7 +15,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.GCUtil;
+import com.intellij.util.ref.GCUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;

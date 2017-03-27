@@ -20,25 +20,31 @@ import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOper
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
-import java.util.Objects;
-
 import static com.siyeh.ig.psiutils.ParenthesesUtils.ASSIGNMENT_PRECEDENCE;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
 class PutAtTransformation extends Transformation {
   @Override
-  public void apply(@NotNull GrMethodCall call, @NotNull Options options) {
-    GrExpression[] arguments = call.getExpressionArguments();
-    GrExpression base = requireNonNull(getBase(call));
-    String result = format("%s[%s] = %s", base.getText(), arguments[0].getText(), parenthesize(arguments[1], ASSIGNMENT_PRECEDENCE).getText());
-    replaceExpression(call, result);
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression base = requireNonNull(getBase(methodCall));
+    GrExpression key = getArgument(methodCall, 0);
+    GrExpression rhs = getArgument(methodCall, 1);
+    rhs = checkPrecedenceForNonBinaryOps(rhs, ASSIGNMENT_PRECEDENCE) ? parenthesize(rhs) : rhs;
+    String result = format("%s[%s] = %s", base.getText(), key.getText(), rhs.getText());
+    replaceExpression(methodCall, result);
   }
 
   @Override
-  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    GrExpression[] arguments = methodCall.getExpressionArguments();
-    return getBase(methodCall) != null && arguments.length == 2 && arguments[0] != null && arguments[1] != null;
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return getBase(methodCall) != null & checkArgumentsCount(methodCall, 2);
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhs = methodCall.getExpressionArguments()[1];
+    return checkPrecedenceForNonBinaryOps(rhs, ASSIGNMENT_PRECEDENCE) || checkPrecedence(ASSIGNMENT_PRECEDENCE, methodCall);
   }
 }

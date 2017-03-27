@@ -16,7 +16,7 @@ REGEXP_FILE
       RegExpCharImpl: <,>
         PsiElement(CHARACTER)(',')
       RegExpCharImpl: < >
-        PsiElement(CTRL_CHARACTER)(' ')
+        PsiElement(CHARACTER)(' ')
       RegExpGroupImpl: <(.*)>
         PsiElement(GROUP_BEGIN)('(')
         RegExpPatternImpl: <.*>

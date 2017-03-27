@@ -41,11 +41,11 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull PsiAnnotation[] annotations) {
     super(level, annotations);
-    myReference = new Computable.PredefinedValueComputable<PsiJavaCodeReferenceElement>(reference);
+    myReference = new Computable.PredefinedValueComputable<>(reference);
   }
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
-    this(new Computable.PredefinedValueComputable<PsiJavaCodeReferenceElement>(reference), level, provider);
+    this(new Computable.PredefinedValueComputable<>(reference), level, provider);
   }
 
   public PsiClassReferenceType(@NotNull Computable<PsiJavaCodeReferenceElement> reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
@@ -57,7 +57,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     List<PsiAnnotation> result = null;
     for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiAnnotation) {
-        if (result == null) result = new SmartList<PsiAnnotation>();
+        if (result == null) result = new SmartList<>();
         result.add((PsiAnnotation)child);
       }
     }

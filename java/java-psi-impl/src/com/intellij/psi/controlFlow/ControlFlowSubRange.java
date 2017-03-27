@@ -39,7 +39,7 @@ public class ControlFlowSubRange implements ControlFlow {
   @NotNull
   public List<Instruction> getInstructions() {
     if (myInstructions == null) {
-      final List<Instruction> list = new ArrayList<Instruction>(myEnd - myStart);
+      final List<Instruction> list = new ArrayList<>(myEnd - myStart);
       final List<Instruction> oldList = myControlFlow.getInstructions();
       for (int i = myStart; i < myEnd; i++) {
         Instruction instruction = oldList.get(i).clone();

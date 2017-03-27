@@ -20,6 +20,7 @@ import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -208,6 +209,7 @@ public class StudySerializationUtils {
       return state;
     }
 
+    @NotNull
     public static Element convertToForthVersion(Element state) throws StudyUnrecognizedFormatException {
       Element taskManagerElement = state.getChild(MAIN_ELEMENT);
       Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
@@ -219,17 +221,19 @@ public class StudySerializationUtils {
             for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
               Element valueElement = new Element(SUBTASK_INFO);
               addChildMap(placeholder, SUBTASK_INFOS, Collections.singletonMap(String.valueOf(0), valueElement));
-              for (String childName : ContainerUtil.list(HINT, ADDITIONAL_HINTS, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
-                Element child = getChildWithName(placeholder, childName);
+              for (String childName : ContainerUtil.list(HINT, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
+                Element child = getChildWithName(placeholder, childName, true);
+                if (child == null) {
+                  continue;
+                }
                 valueElement.addContent(child.clone());
               }
               renameElement(getChildWithName(valueElement, TASK_TEXT), PLACEHOLDER_TEXT);
-              List<Element> additionalHints = ContainerUtil.map(getChildList(valueElement, ADDITIONAL_HINTS), Element::clone);
               Element hint = getChildWithName(valueElement, HINT);
               Element firstHint = new Element(OPTION).setAttribute(VALUE, hint.getAttributeValue(VALUE));
               List<Element> newHints = new ArrayList<>();
               newHints.add(firstHint);
-              newHints.addAll(additionalHints);
+              newHints.addAll(ContainerUtil.map(getChildList(placeholder, ADDITIONAL_HINTS, true), Element::clone));
               addChildList(valueElement, "hints", newHints);
             }
           }

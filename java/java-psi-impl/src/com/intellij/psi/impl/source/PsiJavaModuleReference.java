@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       throw new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", element.getContainingFile()));
     }
     PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(element.getProject());
-    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameElement();
+    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameIdentifier();
     return element.replace(newElement);
   }
 
@@ -116,12 +116,9 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     if (StringUtil.isEmpty(refText)) return Collections.emptyList();
     CachedValuesManager manager = CachedValuesManager.getManager(refOwner.getProject());
     Key<CachedValue<Collection<PsiJavaModule>>> key = incompleteCode ? K_INCOMPLETE : K_COMPLETE;
-    return manager.getCachedValue(refOwner, key, new CachedValueProvider<Collection<PsiJavaModule>>() {
-      @Override
-      public Result<Collection<PsiJavaModule>> compute() {
-        Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
-        return Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
+    return manager.getCachedValue(refOwner, key, () -> {
+      Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
+      return CachedValueProvider.Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }, false);
   }
 }

@@ -147,7 +147,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myOwner.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
-    if (myLoadedAdapters == null) myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
+    if (myLoadedAdapters == null) myLoadedAdapters = new ArrayList<>();
     myLoadedAdapters.add(index, adapter);
 
     if (runNotifications) {
@@ -234,7 +234,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         adapters.addAll(myLoadedAdapters);
       }
       LoadingOrder.sort(adapters);
-      myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>(adapters);
+      myExtensionAdapters = new LinkedHashSet<>(adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
 
@@ -466,7 +466,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     if (myExtensionAdapters == null) {
-      myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
+      myExtensionAdapters = new LinkedHashSet<>();
     }
     myExtensionAdapters.add(adapter);
     clearCache();

@@ -71,7 +71,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     String className = aClass.getName();
     if (!myPseudoImports.containsKey(className)) {
       if (myPseudoImports == EMPTY) {
-        myPseudoImports = new LinkedHashMap<String, PsiClass>();
+        myPseudoImports = new LinkedHashMap<>();
       }
 
       myPseudoImports.put(className, aClass);

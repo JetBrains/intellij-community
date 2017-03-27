@@ -27,13 +27,10 @@ import org.jetbrains.annotations.Nullable;
 public class PsiMethodUtil {
   private static final JavaMainMethodProvider[] myProviders = Extensions.getExtensions(JavaMainMethodProvider.EP_NAME);
 
-  public static final Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
-    @Override
-    public boolean value(final PsiClass psiClass) {
-      if (psiClass instanceof PsiAnonymousClass) return false;
-      if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
-      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
-    }
+  public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
+    if (psiClass instanceof PsiAnonymousClass) return false;
+    if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
+    return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
   };
 
   private PsiMethodUtil() { }

@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    @types/3d-bin.packing: 42
+  }
+}

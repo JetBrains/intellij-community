@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -24,56 +23,39 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ResolveClassUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveClassUtil");
-
   @Nullable
   public static PsiClass resolveClass(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     if (ref instanceof PsiJavaCodeReferenceElementImpl &&
         ((PsiJavaCodeReferenceElementImpl)ref).getKind(containingFile) == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
       PsiElement parent = ref.getParent();
-      if (parent instanceof PsiAnonymousClass){
+      if (parent instanceof PsiAnonymousClass) {
         parent = parent.getParent();
       }
-      PsiExpression qualifier;
-      if (parent instanceof PsiNewExpression){
-        qualifier = ((PsiNewExpression)parent).getQualifier();
-        LOG.assertTrue(qualifier != null);
+      if (parent instanceof PsiNewExpression) {
+        PsiExpression qualifier = ((PsiNewExpression)parent).getQualifier();
+        if (qualifier != null) {
+          PsiType qualifierType = qualifier.getType();
+          if (qualifierType instanceof PsiClassType) {
+            PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
+            if (qualifierClass != null) {
+              return qualifierClass.findInnerClassByName(ref.getText(), true);
+            }
+          }
+        }
       }
-      else if (parent instanceof PsiJavaCodeReferenceElement){
-        return null;
+    }
+    else {
+      PsiElement classNameElement = ref.getReferenceNameElement();
+      if (classNameElement instanceof PsiIdentifier) {
+        String className = classNameElement.getText();
+        ClassResolverProcessor processor = new ClassResolverProcessor(className, ref, containingFile);
+        PsiScopesUtil.resolveAndWalk(processor, ref, null);
+        if (processor.getResult().length == 1) {
+          return (PsiClass)processor.getResult()[0].getElement();
+        }
       }
-      else{
-        LOG.assertTrue(false);
-        return null;
-      }
-
-      PsiType qualifierType = qualifier.getType();
-      if (qualifierType == null) return null;
-      if (!(qualifierType instanceof PsiClassType)) return null;
-      PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
-      if (qualifierClass == null) return null;
-      String name = ref.getText();
-      return qualifierClass.findInnerClassByName(name, true);
     }
 
-    final PsiElement classNameElement = ref.getReferenceNameElement();
-    if (!(classNameElement instanceof PsiIdentifier)) return null;
-    String className = classNameElement.getText();
-
-    /*
-    long time1 = System.currentTimeMillis();
-    */
-
-    ClassResolverProcessor processor = new ClassResolverProcessor(className, ref, containingFile);
-    PsiScopesUtil.resolveAndWalk(processor, ref, null);
-
-
-    /*
-    long time2 = System.currentTimeMillis();
-    Statistics.resolveClassTime += (time2 - time1);
-    Statistics.resolveClassCount++;
-    */
-
-    return processor.getResult().length == 1 ? (PsiClass)processor.getResult()[0].getElement() : null;
+    return null;
   }
 }

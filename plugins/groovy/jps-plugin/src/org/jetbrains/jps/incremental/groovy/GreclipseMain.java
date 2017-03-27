@@ -43,7 +43,7 @@ public class GreclipseMain extends Main {
       return;
     }
 
-    List<String> classFiles = new ArrayList<String>();
+    List<String> classFiles = new ArrayList<>();
     for (ClassFile file : result.getClassFiles()) {
       classFiles.add(new String(file.fileName()) + ".class");
     }

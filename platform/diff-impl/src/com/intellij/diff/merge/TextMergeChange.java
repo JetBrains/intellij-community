@@ -16,8 +16,8 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.fragments.MergeLineFragment;
-import com.intellij.diff.tools.simple.MergeInnerDifferences;
 import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
+import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -324,7 +324,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
-    if (myViewer.resolveConflictUsingInnerDifferences(this) == null) return null;
+    if (!myViewer.canResolveConflictedChange(this)) return null;
 
     return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> {
       myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {

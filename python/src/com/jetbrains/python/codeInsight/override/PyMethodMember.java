@@ -21,13 +21,14 @@ import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import javax.swing.*;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Alexey.Ivanov
@@ -40,7 +41,8 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
       final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
       return element.getName() + "(" + StringUtil.join(parameters, parameter -> PyUtil.getReadableRepr(parameter, false), ", ") + ")";
     }
-    if (element instanceof PyClass && PyNames.FAKE_OLD_BASE.equals(element.getName())) {
+    final PyClass cls = as(element, PyClass.class);
+    if (cls != null && PyNames.TYPES_INSTANCE_TYPE.equals(cls.getQualifiedName())) {
       return "<old-style class>";
     }
     return element.getName();

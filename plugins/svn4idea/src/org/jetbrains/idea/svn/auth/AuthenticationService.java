@@ -74,13 +74,13 @@ public class AuthenticationService {
   private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
-  private SvnConfiguration myConfiguration;
+  @NotNull private final SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
   public AuthenticationService(@NotNull SvnVcs vcs, boolean isActive) {
     myVcs = vcs;
     myIsActive = isActive;
-    myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
+    myConfiguration = myVcs.getSvnConfiguration();
     myRequestedCredentials = ContainerUtil.newHashSet();
   }
 
@@ -108,7 +108,7 @@ public class AuthenticationService {
       authentication = requestCredentials(realm, type, new Getter<SVNAuthentication>() {
         @Override
         public SVNAuthentication get() {
-          return myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
+          return myConfiguration.getInteractiveManager(myVcs).getInnerProvider()
             .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
         }
       });
@@ -142,7 +142,7 @@ public class AuthenticationService {
       result = fromUserProvider.get();
       if (result != null) {
         // save user credentials to memory cache
-        myVcs.getSvnConfiguration().acknowledge(type, realm, result);
+        myConfiguration.acknowledge(type, realm, result);
         myRequestedCredentials.add(key);
       }
     }
@@ -197,7 +197,7 @@ public class AuthenticationService {
         AcceptResult.from(getAuthenticationManager().getInnerProvider().acceptServerAuthentication(url, realm, certificateInfo, true));
 
       if (!AcceptResult.REJECTED.equals(result)) {
-        myVcs.getSvnConfiguration().acknowledge(kind, realm, result);
+        myConfiguration.acknowledge(kind, realm, result);
       }
     }
 
@@ -309,7 +309,7 @@ public class AuthenticationService {
 
   @NotNull
   public SvnAuthenticationManager getAuthenticationManager() {
-    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs.getProject());
+    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs);
   }
 
   public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
@@ -317,19 +317,15 @@ public class AuthenticationService {
       return;
     }
 
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    final List<String> kinds = getKinds(repositoryUrl, password);
-
-    for (String kind : kinds) {
-      configuration.clearCredentials(kind, realm);
+    for (String kind : getKinds(repositoryUrl, password)) {
+      myConfiguration.clearCredentials(kind, realm);
     }
   }
 
   // TODO: rename
   public boolean haveDataForTmpConfig() {
     final HttpConfigurable instance = HttpConfigurable.getInstance();
-    return SvnConfiguration.getInstance(myVcs.getProject()).isIsUseDefaultProxy() &&
-           (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
+    return myConfiguration.isIsUseDefaultProxy() && (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
   }
 
   @Nullable
@@ -427,10 +423,10 @@ public class AuthenticationService {
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }
 
-  public void initTmpDir(SvnConfiguration configuration) throws IOException {
+  public void initTmpDir() throws IOException {
     if (myTempDirectory == null) {
       myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
-      FileUtil.copyDir(new File(configuration.getConfigurationDirectory()), myTempDirectory);
+      FileUtil.copyDir(new File(myConfiguration.getConfigurationDirectory()), myTempDirectory);
     }
   }
 }

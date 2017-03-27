@@ -50,6 +50,6 @@ public class JpsElementCollectionRole<E extends JpsElement> extends JpsElementCh
   }
 
   public static <E extends JpsElement> JpsElementCollectionRole<E> create(@NotNull JpsElementChildRole<E> role) {
-    return new JpsElementCollectionRole<E>(role);
+    return new JpsElementCollectionRole<>(role);
   }
 }

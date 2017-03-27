@@ -150,7 +150,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
-      setErrorText(PyBundle.message("sdk.create.venv.conda.dialog.error.no.python.version"));
+      setErrorText(PyBundle.message("sdk.create.venv.conda.dialog.error.no.python.version"), mySdkCombo);
     }
   }
 

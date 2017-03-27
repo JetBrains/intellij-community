@@ -24,7 +24,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class StatisticsManager implements SettingsSavingComponent {
+  /**
+   * The number of last entries stored for each context in {@link #getUseCount(StatisticsInfo)}.
+   * If more entries are used over time, use count will be 0 for the most ancient entries.
+   */
   public static final int OBLIVION_THRESHOLD = 7;
+
+  /**
+   * The number of last entries stored for each context in {@link #getLastUseRecency(StatisticsInfo)}.
+   * If more entries are used over time, recency will be {@code Integer.MAX_INT} for the most ancient entries.
+   */
+  public static final int RECENCY_OBLIVION_THRESHOLD = 10000;
+
   private static final KeyedExtensionCollector<Statistician,Key> COLLECTOR = new KeyedExtensionCollector<Statistician, Key>("com.intellij.statistician") {
     @Override
     @NotNull
@@ -47,8 +58,21 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
     return ServiceManager.getService(StatisticsManager.class);
   }
 
+  /**
+   * @return how many times {@code info.getValue()} was used among all recently registered entries with the same {@code info.getContext()}.
+   * @see #incUseCount(StatisticsInfo)
+   * @see #OBLIVION_THRESHOLD
+   */
   public abstract int getUseCount(@NotNull StatisticsInfo info);
+
+  /**
+   * @return the position of {@code info.getValue()} in all recently registered entries with the same {@code info.getContext()}. 0 if it it's the most recent entry, {@code Integer.MAX_INT} if it was never used, or was used too long ago (more than {@link #RECENCY_OBLIVION_THRESHOLD} other entries with the same context have been registered with {@link #incUseCount(StatisticsInfo)} since.
+   */
   public abstract int getLastUseRecency(@NotNull StatisticsInfo info);
+
+  /**
+   * Register a usage of an <context, value> entry represented by info parameter. This will affect subsequent {@link #getUseCount(StatisticsInfo)} and {@link #getLastUseRecency(StatisticsInfo)} results.
+   */
   public abstract void incUseCount(@NotNull StatisticsInfo info);
 
   public <T,Loc> int getUseCount(final Key<? extends Statistician<T, Loc>> key, final T element, final Loc location) {
@@ -66,7 +90,6 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
   }
 
   /**
-   * @param context
    * @return infos by this context ordered by usage time: recent first
    */
   public abstract StatisticsInfo[] getAllValues(@NonNls String context);

@@ -60,11 +60,17 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    chooseColor(editor.getComponent(), element, getText(), false);
+  public boolean startInWriteAction() {
+    return false;
   }
 
-  public static void chooseColor(JComponent editorComponent, PsiElement element, String caption, boolean startInWriteAction) {
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    chooseColor(editor.getComponent(), element);
+  }
+
+  public static void chooseColor(JComponent editorComponent, PsiElement element) {
+    String caption = CodeInsightBundle.message("intention.color.chooser.dialog");
     final XmlAttributeValue literal = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class, false);
     if (literal == null) return;
     final String text = StringUtil.unquoteString(literal.getValue());
@@ -88,16 +94,12 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
         assert valueElement != null;
         literal.replace(valueElement);
       };
-      if (startInWriteAction) {
-        new WriteCommandAction(element.getProject(), caption) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            replaceRunnable.run();
-          }
-        }.execute();
-      } else {
-        replaceRunnable.run();
-      }
+      new WriteCommandAction(element.getProject(), caption) {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          replaceRunnable.run();
+        }
+      }.execute();
     }
   }
 }

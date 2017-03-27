@@ -161,6 +161,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
         psiIdentifier = ((PsiMethod)psiMember).getNameIdentifier();
       }
       else if (refElement instanceof RefField) {
+        if (!((RefField)refElement).isUsedForWriting()) return null;
         if (!isReportFields()) return null;
         psiIdentifier = ((PsiField)psiMember).getNameIdentifier();
       }

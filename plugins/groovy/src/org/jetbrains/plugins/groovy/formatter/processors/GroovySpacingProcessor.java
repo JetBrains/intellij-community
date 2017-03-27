@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -759,7 +759,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
-    if (TokenSets.ASSIGN_OP_SET.contains(myType1) || TokenSets.ASSIGN_OP_SET.contains(myType2)) {
+    if (TokenSets.ASSIGNMENTS.contains(myType1) || TokenSets.ASSIGNMENTS.contains(myType2)) {
       createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     }
   }

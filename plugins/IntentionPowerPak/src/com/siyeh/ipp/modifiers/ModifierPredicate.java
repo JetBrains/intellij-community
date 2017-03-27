@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,15 @@ class ModifierPredicate implements PsiElementPredicate {
     if (element instanceof PsiDocComment || element instanceof PsiCodeBlock) {
       return false;
     }
+    final PsiNameIdentifierOwner named = (PsiNameIdentifierOwner)parent;
+    final PsiElement identifier = named.getNameIdentifier();
+    if (identifier == null || (identifier.getTextOffset() + identifier.getTextLength()) <= element.getTextOffset()) {
+      return false;
+    }
     if (parent instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)parent;
-      final PsiElement brace = aClass.getLBrace();
-      if (brace != null && brace.getTextOffset() < element.getTextOffset()) {
+      if (aClass.getParent() instanceof PsiDeclarationStatement) {
+        // local classes are not allowed a modifier
         return false;
       }
       if (aClass.getContainingClass() == null &&

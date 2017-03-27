@@ -44,25 +44,38 @@ public class EduStepicAuthorizedClient {
   private EduStepicAuthorizedClient() {
   }
 
-  @NotNull
+  @Nullable
   public static CloseableHttpClient getHttpClient() {
     if (ourClient != null) {
       return ourClient;
     }
-    final StepicUser stepicUser = StepicUpdateSettings.getInstance().getUser();
-    ourClient = initializeClient(stepicUser);
-    if (ourClient == null) {
-      final StepicUser user = login(stepicUser);
-      if (user != null) {
-        StepicUpdateSettings.getInstance().setUser(user);
-        ourClient = initializeClient(stepicUser);
+    else {
+      final StepicUser stepicUser = StepicUpdateSettings.getInstance().getUser();
+      ourClient = initializeClient(stepicUser);
+      if (ourClient == null || !isTokenUpToDate(ourClient, stepicUser.getId())) {
+        ourClient = loginAndInitializeClient(stepicUser);
       }
     }
     return ourClient;
   }
 
-  public static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
-    return EduStepicClient.getFromStepic(link, container, getHttpClient());
+  @Nullable
+  private static CloseableHttpClient loginAndInitializeClient(@NotNull StepicUser stepicUser) {
+    final StepicUser user = login(stepicUser);
+    if (user != null) {
+      StepicUpdateSettings.getInstance().setUser(user);
+      return initializeClient(stepicUser);
+    }
+    else {
+      LOG.warn("Couldn't initialize client: user is null");
+      return null;
+    }
+  }
+
+  @Nullable
+  public static <T> T getFromStepic(@NotNull String link, @NotNull final Class<T> container) throws IOException {
+    final CloseableHttpClient client = getHttpClient();
+    return client == null ? null : EduStepicClient.getFromStepic(link, container, client);
   }
 
   /*
@@ -75,13 +88,12 @@ public class EduStepicAuthorizedClient {
       return ourClient;
     }
     ourClient = initializeClient(stepicUser);
-    if (ourClient == null) {
+    if (ourClient == null || !isTokenUpToDate(ourClient, stepicUser.getId())) {
       final StepicUser user = login(stepicUser);
       if (user != null) {
         StepicUpdateSettings.getInstance().setUser(user);
         ourClient = initializeClient(stepicUser);
       }
-
     }
     if (ourClient == null) {
       ourClient = EduStepicClient.getHttpClient();
@@ -158,6 +170,11 @@ public class EduStepicAuthorizedClient {
       final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
       if (tokenInfo != null) {
         user.setupTokenInfo(tokenInfo);
+        final StepicUser currentUser = getCurrentUser(getHttpClient());
+        if (currentUser != null) {
+          user.setId(currentUser.getId());
+        }
+        return user;
       }
     }
     return null;
@@ -175,6 +192,7 @@ public class EduStepicAuthorizedClient {
 
   @Nullable
   public static StepicUser login(@NotNull final String email, @NotNull final String password) {
+    invalidateClient();
     final List<NameValuePair> parameters = new ArrayList<>();
     if (password.isEmpty()) return null;
     parameters.add(new BasicNameValuePair("client_id", ourClientId));
@@ -186,7 +204,8 @@ public class EduStepicAuthorizedClient {
     final StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
     if (tokenInfo != null) {
       user.setupTokenInfo(tokenInfo);
-      final StepicUser currentUser = getCurrentUser(getHttpClient(user));
+      final CloseableHttpClient client = getHttpClient(user);
+      final StepicUser currentUser = getCurrentUser(client);
       if (currentUser != null) {
         user.setId(currentUser.getId());
       }
@@ -252,5 +271,10 @@ public class EduStepicAuthorizedClient {
       LOG.warn(e.getMessage());
     }
     return null;
+  }
+  
+  private static boolean isTokenUpToDate(@NotNull CloseableHttpClient client, int userId) {
+    final StepicUser user = getCurrentUser(client);
+    return user != null && userId == user.getId() && userId != -1;
   }
 }

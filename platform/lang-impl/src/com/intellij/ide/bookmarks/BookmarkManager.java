@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,14 +115,11 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
       public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
       }
     });
-    mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        if (mySortedState != uiSettings.SORT_BOOKMARKS) {
-          mySortedState = uiSettings.SORT_BOOKMARKS;
-          EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
-        }
+    mySortedState = UISettings.getInstance().getSortBookmarks();
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      if (mySortedState != uiSettings.getSortBookmarks()) {
+        mySortedState = uiSettings.getSortBookmarks();
+        EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
       }
     });
   }
@@ -218,7 +215,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
     }
-    if (UISettings.getInstance().SORT_BOOKMARKS) {
+    if (UISettings.getInstance().getSortBookmarks()) {
       Collections.sort(answer);
     }
     return answer;

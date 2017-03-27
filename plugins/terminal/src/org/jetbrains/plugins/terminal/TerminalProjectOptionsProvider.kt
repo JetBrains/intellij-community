@@ -56,7 +56,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         try {
 
           if (directory == null) {
-            directory = customizer.defaultFolder
+            directory = customizer.getDefaultFolder(project)
           }
         }
         catch (e: Exception) {

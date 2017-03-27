@@ -73,7 +73,7 @@ public class HgTagDialog extends DialogWrapper {
     String name = getTagName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);
-      setErrorText(message == null ? "You have to specify tag name." : message);
+      setErrorText(message == null ? "You have to specify tag name." : message, tagTxt);
       setOKActionEnabled(false);
       return;
     }

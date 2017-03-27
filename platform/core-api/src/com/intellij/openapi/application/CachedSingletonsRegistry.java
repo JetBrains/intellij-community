@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,8 @@ import java.util.List;
 
 public class CachedSingletonsRegistry {
   private static final Object LOCK = new CachedSingletonsRegistry();
-  private static final List<Class<?>> ourRegisteredClasses = new ArrayList<Class<?>>();
+  private static final List<Class<?>> ourRegisteredClasses = new ArrayList<>();
+  private static final List<ClearableLazyValue<?>> ourRegisteredLazyValues = new ArrayList<>();
 
   private CachedSingletonsRegistry() {}
 
@@ -40,6 +42,14 @@ public class CachedSingletonsRegistry {
     return null;
   }
 
+  @NotNull
+  public static <T> ClearableLazyValue<T> markLazyValue(@NotNull ClearableLazyValue<T> lazyValue) {
+    synchronized (LOCK) {
+      ourRegisteredLazyValues.add(lazyValue);
+    }
+    return lazyValue;
+  }
+
   public static void cleanupCachedFields() {
     synchronized (LOCK) {
       for (Class<?> aClass : ourRegisteredClasses) {
@@ -49,6 +59,9 @@ public class CachedSingletonsRegistry {
         catch (Exception e) {
           // Ignore cleanup failed. In some cases we cannot find ourInstance field if idea.jar is scrambled and names of the private fields changed
         }
+      }
+      for (ClearableLazyValue<?> value : ourRegisteredLazyValues) {
+        value.drop();
       }
     }
   }

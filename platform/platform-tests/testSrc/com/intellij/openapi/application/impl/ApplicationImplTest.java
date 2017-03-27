@@ -693,8 +693,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     );
     while (!readAcquired.get());
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
-      // wait for write action attempt to start
-      while (!app.isWriteActionPending());
+      // wait for write action attempt to start - i.e. app.myLock.writeLock() started to execute
+      while (!app.myLock.writeRequested);
       app.executeByImpatientReader(() -> {
         try {
           app.runReadAction(EmptyRunnable.getInstance());

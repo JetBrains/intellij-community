@@ -95,7 +95,13 @@ public class RefactoringChangeUtil {
         ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier().replace(factory.createClassReferenceElement(parentClass));
       }
       else {
-        expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
+        final PsiModifierListOwner staticElement = PsiUtil.getEnclosingStaticElement(referenceExpression, null);
+        if (staticElement != null && containingClass != null && !PsiTreeUtil.isAncestor(staticElement, containingClass, false)) {
+          return referenceExpression;
+        }
+        else {
+          expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
+        }
       }
     }
     else {

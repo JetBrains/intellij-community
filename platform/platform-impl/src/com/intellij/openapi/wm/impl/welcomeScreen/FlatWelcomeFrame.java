@@ -80,6 +80,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -111,22 +113,24 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setContentPane(screen.getWelcomePanel());
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
-    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAUL_WIDTH;
     // Android Studio: Changed default frame height to accommodate extra action.
-    JBDimension size = JBUI.size(width, Math.max(DEFAULT_HEIGHT, getMinimumSize().height));
-    size.setSize(Math.min(size.getWidth(), screenBounds.getWidth()), Math.min(size.getHeight(), screenBounds.getHeight()));
-    setSize(size);
+    getRootPane().setPreferredSize(JBUI.size(width, Math.max(DEFAULT_HEIGHT, getMinimumSize().height)));
     setResizable(false);
-    //int x = bounds.x + (bounds.width - getWidth()) / 2;
-    //int y = bounds.y + (bounds.height - getHeight()) / 2;
-    setLocation(new Point(
-      screenBounds.x + (screenBounds.width - getWidth()) / 2,
-      screenBounds.y + (screenBounds.height - getHeight()) / 3
-    ));
 
-    //setLocation(x, y);
+    Dimension size = getPreferredSize();
+    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
+    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+    setBounds(
+      screenBounds.x + (screenBounds.width - size.width) / 2,
+      screenBounds.y + (screenBounds.height - size.height) / 3,
+      size.width,
+      size.height
+    );
+    // at this point a window insets may be unavailable,
+    // so we need resize window when it is shown
+    doWhenFirstShown(this, this::pack);
+
     myListener = new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
@@ -884,7 +888,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
     int width = (int)Math.min(Math.round(list.getPreferredSize().getWidth()), 200);
-    pane.setPreferredSize(JBUI.size(width, -1));
+    pane.setPreferredSize(JBUI.size(width + 14, -1));
 
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
@@ -959,7 +963,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return button;
     }
     JLabel back = new JLabel(AllIcons.Actions.Back);
-    back.setBorder(JBUI.Borders.empty(3, 7, 10, 7));
+    back.setBorder(JBUI.Borders.empty(3, 7, 3, 7));
     back.setHorizontalAlignment(SwingConstants.LEFT);
     new ClickListener() {
       @Override

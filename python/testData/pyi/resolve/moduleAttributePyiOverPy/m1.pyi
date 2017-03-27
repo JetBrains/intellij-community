@@ -1,0 +1,1 @@
+foo = ...  # type: int

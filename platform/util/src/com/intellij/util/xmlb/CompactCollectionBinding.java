@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @see com.intellij.util.xmlb.annotations.CollectionBean
  */
-class CompactCollectionBinding extends Binding {
+class CompactCollectionBinding extends NotNullDeserializeBinding {
   private final String name;
 
   protected CompactCollectionBinding(@NotNull MutableAccessor accessor) {
@@ -36,7 +36,7 @@ class CompactCollectionBinding extends Binding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element result = new Element(name);
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)o;
@@ -50,7 +50,7 @@ class CompactCollectionBinding extends Binding {
     return result;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Object deserialize(Object context, @NotNull Element element) {
     @SuppressWarnings("unchecked")

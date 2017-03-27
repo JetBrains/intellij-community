@@ -38,5 +38,5 @@ public class AntArtifactExtensionProperties {
 
   @Tag("build-properties")
   @AbstractCollection(surroundWithTag = false)
-  public List<BuildFileProperty> myUserProperties = new ArrayList<BuildFileProperty>();
+  public List<BuildFileProperty> myUserProperties = new ArrayList<>();
 }

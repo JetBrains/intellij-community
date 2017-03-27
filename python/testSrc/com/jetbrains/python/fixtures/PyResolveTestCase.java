@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
 import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -146,5 +147,10 @@ public abstract class PyResolveTestCase extends PyTestCase {
     final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile));
     assertNotNull("No reference found at <ref> position", ref);
     return ref;
+  }
+
+  protected static void assertIsBuiltin(@Nullable PsiElement element) {
+    assertNotNull(element);
+    assertTrue(PyBuiltinCache.getInstance(element).isBuiltin(element));
   }
 }

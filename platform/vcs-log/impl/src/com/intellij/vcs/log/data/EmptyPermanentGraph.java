@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.visible.EmptyVisibleGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

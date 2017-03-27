@@ -656,6 +656,104 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testAssumptionFailures() throws Exception {
+    Description root = Description.createSuiteDescription("root");
+    for (int i = 0; i< 5; i++) {
+      Description testClassDescription = Description.createSuiteDescription("Test" + i);
+      root.addChild(testClassDescription);
+      testClassDescription.addChild(Description.createTestDescription("Test" + i, "testName"));
+    }
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = createListener(buf);
+    sender.sendTree(root);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[suiteTreeStarted name='Test0' locationHint='java:suite://Test0']\n" +
+                                          "##teamcity[suiteTreeNode name='Test0.testName' locationHint='java:test://Test0.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='Test0']\n" +
+                                          "##teamcity[suiteTreeStarted name='Test1' locationHint='java:suite://Test1']\n" +
+                                          "##teamcity[suiteTreeNode name='Test1.testName' locationHint='java:test://Test1.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='Test1']\n" +
+                                          "##teamcity[suiteTreeStarted name='Test2' locationHint='java:suite://Test2']\n" +
+                                          "##teamcity[suiteTreeNode name='Test2.testName' locationHint='java:test://Test2.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='Test2']\n" +
+                                          "##teamcity[suiteTreeStarted name='Test3' locationHint='java:suite://Test3']\n" +
+                                          "##teamcity[suiteTreeNode name='Test3.testName' locationHint='java:test://Test3.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='Test3']\n" +
+                                          "##teamcity[suiteTreeStarted name='Test4' locationHint='java:suite://Test4']\n" +
+                                          "##teamcity[suiteTreeNode name='Test4.testName' locationHint='java:test://Test4.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='Test4']\n" +
+                                          "##teamcity[treeEnded]\n", StringUtil.convertLineSeparators(buf.toString()));
+
+    buf.setLength(0);
+
+    sender.testRunStarted(root);
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    int idx = 0;
+    for (Description description : root.getChildren()) {
+      if (idx++ % 2 != 0) {
+        sender.testAssumptionFailure(new Failure(description, exception));
+      }
+      else {
+        for (Description testDescription : description.getChildren()) {
+          sender.testStarted(testDescription);
+          sender.testFinished(testDescription);
+        }
+      }
+    }
+
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name='Test0']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='Test0.testName' locationHint='java:test://Test0.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='Test0.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='Test0']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name='Test1']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='Test1.testName' locationHint='java:test://Test1.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testIgnored name='Test1.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='Test1.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='Test1']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name='Test2']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='Test2.testName' locationHint='java:test://Test2.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='Test2.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='Test2']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name='Test3']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='Test3.testName' locationHint='java:test://Test3.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testIgnored name='Test3.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='Test3.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='Test3']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name='Test4']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='Test4.testName' locationHint='java:test://Test4.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='Test4.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='Test4']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
   public void testSingleMethod() throws Exception {
     final Description rootDescription = Description.createTestDescription("TestA", "testName");
     doTest(rootDescription, Collections.singletonList(rootDescription),

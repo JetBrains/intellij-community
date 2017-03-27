@@ -31,6 +31,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -49,7 +50,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -262,15 +262,12 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         final Ref<Throwable> exceptionRef = new Ref<>();
         final Ref<MergeData> mergeDataRef = new Ref<>();
         final VirtualFile finalFile = file;
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              mergeDataRef.set(vcs.getMergeProvider().loadRevisions(finalFile));
-            }
-            catch (VcsException e) {
-              exceptionRef.set(e);
-            }
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          try {
+            mergeDataRef.set(vcs.getMergeProvider().loadRevisions(finalFile));
+          }
+          catch (VcsException e) {
+            exceptionRef.set(e);
           }
         });
         if (!exceptionRef.isNull()) {

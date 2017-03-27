@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="plain">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.st"
-            name="St" toReformat="false" toShortenFQNames="true" value="String ">
+            name="St" toReformat="false" toShortenFQNames="false" value="String ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
@@ -14,7 +14,16 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psf"
-            name="psf" toReformat="false" toShortenFQNames="true" value="public static final ">
+            name="psf" toReformat="false" toShortenFQNames="false" value="public static final ">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="GROOVY" value="false" />
+      <option name="GROOVY_DECLARATION" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.prsf"
+            name="prsf" toReformat="false" toShortenFQNames="false" value="private static final ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
@@ -23,7 +32,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psfi"
-            name="psfi" toReformat="false" toShortenFQNames="true" value="public static final int ">
+            name="psfi" toReformat="false" toShortenFQNames="false" value="public static final int ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
@@ -32,7 +41,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psfs"
-            name="psfs" toReformat="false" toShortenFQNames="true" value="public static final String ">
+            name="psfs" toReformat="false" toShortenFQNames="false" value="public static final String ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
@@ -41,7 +50,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.thr"
-            name="thr" toReformat="false" toShortenFQNames="true" value="throw new ">
+            name="thr" toReformat="false" toShortenFQNames="false" value="throw new ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

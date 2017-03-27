@@ -132,7 +132,9 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   protected void tearDown() throws Exception {
     if (myCompilerTester != null) {
       myCompilerTester.tearDown();
+      myCompilerTester = null;
     }
+    myChecker = null;
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
     //myChecker.checkValid(getTestProjectJdk());
     //probably some thread is destroyed right now because of log exception

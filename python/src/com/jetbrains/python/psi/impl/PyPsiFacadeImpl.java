@@ -22,9 +22,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -43,14 +41,16 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public QualifiedNameResolver qualifiedNameResolver(String qNameString) {
-    return new QualifiedNameResolverImpl(qNameString);
+  public List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context) {
+    return PyResolveImportUtil.resolveQualifiedName(name, context);
   }
 
+  @NotNull
   @Override
-  public QualifiedNameResolver qualifiedNameResolver(QualifiedName qualifiedName) {
-    return new QualifiedNameResolverImpl(qualifiedName);
+  public PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
+    return PyResolveImportUtil.fromFoothold(foothold);
   }
 
   @Nullable

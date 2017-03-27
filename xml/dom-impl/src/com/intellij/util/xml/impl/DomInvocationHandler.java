@@ -448,7 +448,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   protected final Converter getScalarConverter() {
     Converter converter = myScalarConverter;
     if (converter == null) {
-      converter = myScalarConverter = createConverter(ourGetValue);
+      myScalarConverter = converter = createConverter(ourGetValue);
     }
     return converter;
   }

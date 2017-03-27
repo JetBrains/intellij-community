@@ -38,6 +38,7 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -108,9 +109,7 @@ public class ViewOfflineResultsAction extends AnAction {
           final String shortName = inspectionFile.getNameWithoutExtension();
           final String extension = inspectionFile.getExtension();
           if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-            profileName[0] = ApplicationManager.getApplication().runReadAction(
-              (Computable<String>)() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString())
-            );
+            profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString()));
           }
           else if (XML_EXTENSION.equals(extension)) {
             resMap.put(shortName, ApplicationManager.getApplication().runReadAction(

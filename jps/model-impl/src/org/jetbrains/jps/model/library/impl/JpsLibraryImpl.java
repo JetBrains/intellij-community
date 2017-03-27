@@ -127,7 +127,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   @NotNull
   @Override
   public JpsLibraryImpl<P> createCopy() {
-    return new JpsLibraryImpl<P>(this);
+    return new JpsLibraryImpl<>(this);
   }
 
   @NotNull
@@ -144,7 +144,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   @Override
   public List<File> getFiles(final JpsOrderRootType rootType) {
     List<String> urls = getRootUrls(rootType);
-    List<File> files = new ArrayList<File>(urls.size());
+    List<File> files = new ArrayList<>(urls.size());
     for (String url : urls) {
       if (!url.startsWith("jrt://")) {
         files.add(JpsPathUtil.urlToFile(url));
@@ -155,7 +155,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
 
   @Override
   public List<String> getRootUrls(JpsOrderRootType rootType) {
-    List<String> urls = new ArrayList<String>();
+    List<String> urls = new ArrayList<>();
     for (JpsLibraryRoot root : getRoots(rootType)) {
       switch (root.getInclusionOptions()) {
         case ROOT_ITSELF:

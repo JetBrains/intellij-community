@@ -18,9 +18,11 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
   private final LocalQuickFix myFix;
@@ -53,9 +55,15 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
     myFix.applyFix(project, myProblemDescriptor);
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myFix.getElementToMakeWritable(currentFile);
+  }
+
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return myFix.startInWriteAction();
   }
 }
 

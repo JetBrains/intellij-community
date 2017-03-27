@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 
 public class JUnitConfigurationTest extends LightPlatformTestCase {
@@ -27,11 +27,11 @@ public class JUnitConfigurationTest extends LightPlatformTestCase {
     JUnitConfiguration foo =
       new JUnitConfiguration("foo", getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
     Element element =
-      JDOMUtil.loadDocument("<configuration default=\"false\" name=\"DjangoTests (1.6)\" type=\"JUnit\" factoryName=\"JUnit\">\n" +
-                            "    <option name=\"TEST_SEARCH_SCOPE\">\n" +
-                            "      <value defaultName=\"moduleWithDependencies\" />\n" +
-                            "    </option>\n" +
-                            "  </configuration>").getRootElement();
+      JdomKt.loadElement("<configuration default=\"false\" name=\"DjangoTests (1.6)\" type=\"JUnit\" factoryName=\"JUnit\">\n" +
+                         "    <option name=\"TEST_SEARCH_SCOPE\">\n" +
+                         "      <value defaultName=\"moduleWithDependencies\" />\n" +
+                         "    </option>\n" +
+                         "  </configuration>");
     foo.readExternal(element);
     assertEquals(TestSearchScope.MODULE_WITH_DEPENDENCIES, foo.getPersistentData().getScope());
   }

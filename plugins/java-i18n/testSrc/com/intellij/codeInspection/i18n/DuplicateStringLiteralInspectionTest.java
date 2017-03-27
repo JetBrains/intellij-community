@@ -34,8 +34,24 @@ public class DuplicateStringLiteralInspectionTest extends JavaCodeInsightFixture
     myFixture.checkResultByFile("ApplyRenameForWholeFileAfter.java");
   }
 
+  public void testInvalidForwardReference() {
+    doTestFix();
+  }
+
+  public void testRemoveRedundantQualifier() {
+    doTestFix();
+  }
+
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections/duplicateStringLiteral/";
+  }
+
+  private void doTestFix() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    final IntentionAction fix = myFixture.findSingleIntention("Replace");
+    assertNotNull(fix);
+    myFixture.launchAction(fix);
+    myFixture.checkResultByFile(getTestName(false) + "After.java");
   }
 }

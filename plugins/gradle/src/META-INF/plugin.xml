@@ -44,6 +44,12 @@
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
 
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.GradleCleanupService</implementation-class>
+    </component>
+  </application-components>
+
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
@@ -128,6 +134,7 @@
     <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleSourceSetDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.CompositeBuildDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getQualifierText;
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 
 /**
  * @author peter
@@ -55,7 +54,7 @@ public class ToArrayConversion {
       for (final PsiField field : psiClass.getAllFields()) {
         if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) &&
             JavaPsiFacade.getInstance(field.getProject()).getResolveHelper().isAccessible(field, element, null) &&
-            type.isAssignableFrom(field.getType()) && isEmptyArrayInitializer(field.getInitializer())) {
+            type.isAssignableFrom(field.getType()) && ConstructionUtils.isEmptyArrayInitializer(field.getInitializer())) {
           boolean needQualify;
           try {
             needQualify = !field.isEquivalentTo(((PsiReferenceExpression)createExpression(field.getName(), element)).resolve());
@@ -105,22 +104,5 @@ public class ToArrayConversion {
           JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(context.getFile(), context.getStartOffset(), context.getTailOffset());
         }
       });
-  }
-
-  private static boolean isEmptyArrayInitializer(@Nullable PsiElement element) {
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression expression = (PsiNewExpression)element;
-      final PsiExpression[] dimensions = expression.getArrayDimensions();
-      for (final PsiExpression dimension : dimensions) {
-        if (!(dimension instanceof PsiLiteralExpression) || !"0".equals(dimension.getText())) {
-          return false;
-        }
-      }
-      final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
-      if (initializer != null && initializer.getInitializers().length > 0) return false;
-
-      return true;
-    }
-    return false;
   }
 }

@@ -81,6 +81,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     addContent((UsageViewImpl)usageView, presentation);
     showToolWindow(true);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (!((UsageViewImpl)usageView).isDisposed()) {
+        ((UsageViewImpl)usageView).expandRoot();
+      }
+    });
     return usageView;
   }
 
@@ -133,8 +138,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener).run();
       }
 
+      @NotNull
       @Override
-      @Nullable
       public NotificationInfo getNotificationInfo() {
         UsageViewImpl usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
@@ -197,7 +202,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
+  protected static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
     ApplicationManager.getApplication().runReadAction(() -> {
       for (Usage foundUsage : foundUsages) {
         usageView.appendUsage(foundUsage);
@@ -214,7 +219,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                               @Nullable final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
-      String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount, StringUtil.pluralize(presentation.getUsagesWord()));
+      int shownUsageCount = usageView == null ? usageCount : usageView.getRoot().getRecursiveUsageCount();
+      String message = UsageViewBundle.message("find.excessive.usage.count.prompt", shownUsageCount, StringUtil.pluralize(presentation.getUsagesWord()));
       UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
       if (ret == UsageLimitUtil.Result.ABORT) {
         if (usageView != null) {
@@ -244,16 +250,16 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
     PsiElement element = null;
     VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() :
-                       usage instanceof PsiElementUsage ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement()) : null;
+                       usage instanceof PsiElementUsage
+                       ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement())
+                       : null;
     if (file != null) {
       return isFileInScope(file, searchScope);
     }
-    if (element != null) {
-      return searchScope instanceof EverythingGlobalScope ||
-             searchScope instanceof ProjectScopeImpl ||
-             searchScope instanceof ProjectAndLibrariesScope;
-    }
-    return false;
+    return element != null &&
+           (searchScope instanceof EverythingGlobalScope ||
+            searchScope instanceof ProjectScopeImpl ||
+            searchScope instanceof ProjectAndLibrariesScope);
   }
 
   private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {

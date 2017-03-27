@@ -40,7 +40,7 @@ public class PsiCompositeModifierList extends LightModifierList {
   @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    List<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
+    List<PsiAnnotation> annotations = new ArrayList<>();
     for (PsiModifierList list : mySublists) {
       ContainerUtil.addAll(annotations, list.getAnnotations());
     }

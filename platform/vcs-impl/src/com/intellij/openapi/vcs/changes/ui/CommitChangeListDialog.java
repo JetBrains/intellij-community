@@ -195,9 +195,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
     if (cancelIfNoChanges && changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                               VcsBundle.message("commit.dialog.no.changes.detected.title"));
-      return false;
+      boolean hasUnversioned = !ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles().isEmpty();
+      if (!showVcsCommit || !hasUnversioned) {
+        Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
+                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
+        return false;
+      }
     }
 
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
@@ -291,7 +294,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
     } else {
       myCommitMessageArea.setChangeLists(createMaybeSingletonList(initialSelection));
-      boolean unversionedFilesEnabled = myShowVcsCommit && Registry.is("vcs.unversioned.files.in.commit");
       //noinspection unchecked
       MultipleChangeListBrowser browser = new MultipleChangeListBrowser(project, changeLists, (List)changes, initialSelection, true, true,
                                                                         new Runnable() {
@@ -307,7 +309,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                               handler.includedChangesChanged();
                                                                             }
                                                                           }
-                                                                        }, unversionedFilesEnabled);
+                                                                        }, myShowVcsCommit);
       browser.addSelectedListChangeListener(new SelectedListChangeListener() {
         @Override
         public void selectedListChanged() {

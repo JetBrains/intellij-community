@@ -20,6 +20,7 @@ import com.intellij.codeInspection.bulkOperation.BulkMethodInfo;
 import com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider;
 import com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
@@ -48,17 +49,7 @@ public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Extensions.getArea(null).getExtensionPoint(BulkMethodInfoProvider.KEY.getName()).registerExtension(TEST_PROVIDER);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Extensions.getArea(null).getExtensionPoint(BulkMethodInfoProvider.KEY.getName()).unregisterExtension(TEST_PROVIDER);
-    }
-    finally {
-      super.tearDown();
-    }
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), BulkMethodInfoProvider.KEY, TEST_PROVIDER, getTestRootDisposable());
   }
 
   public void test() throws Exception { doAllTests(); }

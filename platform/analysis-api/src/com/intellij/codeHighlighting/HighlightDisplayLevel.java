@@ -170,7 +170,18 @@ public class HighlightDisplayLevel {
         TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);
         Color stripe = attributes == null ? null : attributes.getErrorStripeColor();
         if (stripe != null) return stripe;
-        return attributes != null ? attributes.getEffectColor() : null;
+        if (attributes != null) {
+          Color effectColor = attributes.getEffectColor();
+          if (effectColor != null) {
+            return effectColor;
+          }
+          Color foregroundColor = attributes.getForegroundColor();
+          if (foregroundColor != null) {
+            return foregroundColor;
+          }
+          return attributes.getBackgroundColor();
+        }
+        return null;
       }
       TextAttributes defaultAttributes = myKey.getDefaultAttributes();
       if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;

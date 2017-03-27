@@ -48,7 +48,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final HashSet<InferenceVariable> dependencies = new HashSet<>();
     final boolean reduceResult = doReduce(session, dependencies, constraints);
     if (!reduceResult) {
       session.registerIncompatibleErrorMessage(dependencies, session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));

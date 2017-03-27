@@ -22,6 +22,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.Utils;
@@ -78,8 +79,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.actionSystem.Presentation.PROP_HOVERED_ICON;
-import static com.intellij.openapi.actionSystem.Presentation.PROP_ICON;
+import static com.intellij.openapi.actionSystem.Presentation.*;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -751,7 +751,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public static class ActionItem implements ShortcutProvider {
     private final AnAction myAction;
-    private final String myText;
+    private String myText;
     private final boolean myIsEnabled;
     @Nullable private ActionStepBuilder.IconWrapper myIcon;
     private final boolean myPrependWithSeparator;
@@ -777,6 +777,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
         public void propertyChange(PropertyChangeEvent evt) {
           if (evt.getPropertyName() == PROP_ICON || evt.getPropertyName() == PROP_HOVERED_ICON) {
             updateIcons();
+          }
+          else if (evt.getPropertyName() == PROP_TEXT) {
+            myText = myAction.getTemplatePresentation().getText();
           }
         }
       });

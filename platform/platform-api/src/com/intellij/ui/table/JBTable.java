@@ -16,7 +16,7 @@
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -654,7 +654,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
             c = c.getParent();
           }
         }
-      });
+      }, ModalityState.current());
     }
 
     private void removeCellEditor() {

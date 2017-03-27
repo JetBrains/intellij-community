@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.MergeConflictType;
 import com.intellij.diff.util.ThreeSide;

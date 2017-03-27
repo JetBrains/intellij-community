@@ -28,13 +28,7 @@ import java.util.Set;
  * @author max
  */
 public class ModuleChunk {
-  private static final NotNullFunction<JpsModule,String> GET_NAME = new NotNullFunction<JpsModule, String>() {
-    @NotNull
-    @Override
-    public String fun(JpsModule dom) {
-      return dom.getName();
-    }
-  };
+  private static final NotNullFunction<JpsModule,String> GET_NAME = dom -> dom.getName();
   private Set<JpsModule> myModules;
   private final boolean myContainsTests;
   private Set<ModuleBuildTarget> myTargets;
@@ -42,7 +36,7 @@ public class ModuleChunk {
   public ModuleChunk(Set<ModuleBuildTarget> targets) {
     boolean containsTests = false;
     myTargets = targets;
-    myModules = new LinkedHashSet<JpsModule>();
+    myModules = new LinkedHashSet<>();
     for (ModuleBuildTarget target : targets) {
       myModules.add(target.getModule());
       containsTests |= target.isTests();

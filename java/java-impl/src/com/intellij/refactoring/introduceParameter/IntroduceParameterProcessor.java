@@ -584,11 +584,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     final PsiExpression[] exprs = argList.getExpressions();
     myParametersToRemove.forEachDescending(new TIntProcedure() {
       public boolean execute(final int paramNum) {
-        try {
-          exprs[paramNum].delete();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        if (paramNum < exprs.length) {
+          try {
+            exprs[paramNum].delete();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
         return true;
       }

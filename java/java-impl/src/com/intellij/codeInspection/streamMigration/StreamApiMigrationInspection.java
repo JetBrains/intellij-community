@@ -29,10 +29,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -46,10 +44,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus.*;
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
 
 /**
  * User: anna
@@ -243,7 +243,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   static boolean isAddAllCall(TerminalBlock tb) {
     PsiMethodCallExpression call = tb.getSingleMethodCall();
-    LOG.assertTrue(call != null);
+    if (call == null || tb.getVariable().getType() instanceof PsiPrimitiveType) return false;
     if (!ExpressionUtils.isReferenceTo(call.getArgumentList().getExpressions()[0], tb.getVariable())) return false;
     if (!"add".equals(call.getMethodExpression().getReferenceName())) return false;
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
@@ -286,7 +286,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     return variable != null &&
            ExpressionUtils.isZero(variable.getInitializer()) &&
-           getInitializerUsageStatus(variable, tb.getMainLoop()) != UNKNOWN;
+           ControlFlowUtils.getInitializerUsageStatus(variable, tb.getMainLoop()) != UNKNOWN;
   }
 
   private static boolean isTrivial(TerminalBlock tb) {
@@ -302,7 +302,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   @Nullable
   private static PsiClassType createDefaultConsumerType(Project project, PsiVariable variable) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
+    final PsiClass consumerClass = psiFacade.findClass(CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER, variable.getResolveScope());
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
   }
 
@@ -316,108 +316,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return true;
     }
     return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
-  }
-
-  /**
-   * Checks whether variable can be referenced between start and loop entry. Back-edges are also considered, so the actual place
-   * where it referenced might be outside of (start, loop entry) interval.
-   *
-   * @param flow ControlFlow to analyze
-   * @param start start point
-   * @param loop loop to check
-   * @param variable variable to analyze
-   * @return true if variable can be referenced between start and stop points
-   */
-  private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
-                                                             final int start,
-                                                             final PsiLoopStatement loop,
-                                                             final PsiVariable variable) {
-    final int loopStart = flow.getStartOffset(loop);
-    final int loopEnd = flow.getEndOffset(loop);
-    if(start == loopStart) return false;
-
-    List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, start);
-    // DFS visits instructions mainly in backward direction while here visiting in forward direction
-    // greatly reduces number of iterations.
-    Collections.reverse(edges);
-
-    BitSet referenced = new BitSet();
-    boolean changed = true;
-    while(changed) {
-      changed = false;
-      for(ControlFlowUtil.ControlFlowEdge edge: edges) {
-        int from = edge.myFrom;
-        int to = edge.myTo;
-        if(referenced.get(from)) {
-          // jump to the loop start from within the loop is not considered as loop entry
-          if(to == loopStart && (from < loopStart || from >= loopEnd)) {
-            return true;
-          }
-          if(!referenced.get(to)) {
-            referenced.set(to);
-            changed = true;
-          }
-          continue;
-        }
-        if(ControlFlowUtil.isVariableAccess(flow, from, variable)) {
-          referenced.set(from);
-          referenced.set(to);
-          if(to == loopStart) return true;
-          changed = true;
-        }
-      }
-    }
-    return false;
-  }
-
-  enum InitializerUsageStatus {
-    // Variable is declared just before the wanted place
-    DECLARED_JUST_BEFORE,
-    // All initial value usages go through wanted place and at wanted place the variable value is guaranteed to be the initial value
-    AT_WANTED_PLACE_ONLY,
-    // At wanted place the variable value is guaranteed to be the initial value, but this initial value might be used somewhere else
-    AT_WANTED_PLACE,
-    // It's not guaranteed that the variable value at wanted place is initial value
-    UNKNOWN
-  }
-
-  static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiLoopStatement nextStatement) {
-    if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
-    if(isDeclarationJustBefore(var, nextStatement)) return DECLARED_JUST_BEFORE;
-    // Check that variable is declared in the same method or the same lambda expression
-    if(PsiTreeUtil.getParentOfType(var, PsiLambdaExpression.class, PsiMethod.class) !=
-       PsiTreeUtil.getParentOfType(nextStatement, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
-    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-    if(block == null) return UNKNOWN;
-    final ControlFlow controlFlow;
-    try {
-      controlFlow = ControlFlowFactory.getInstance(nextStatement.getProject())
-        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-    }
-    catch (AnalysisCanceledException ignored) {
-      return UNKNOWN;
-    }
-    int start = controlFlow.getEndOffset(var.getInitializer())+1;
-    int stop = controlFlow.getStartOffset(nextStatement);
-    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, nextStatement, var)) return UNKNOWN;
-    if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
-    return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
-  }
-
-  static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
-    PsiElement declaration = var.getParent();
-    PsiElement nextStatementParent = nextStatement.getParent();
-    if(nextStatementParent instanceof PsiLabeledStatement) {
-      nextStatement = (PsiStatement)nextStatementParent;
-    }
-    if(declaration instanceof PsiDeclarationStatement) {
-      PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
-      if (ArrayUtil.getLastElement(elements) == var && nextStatement.equals(
-        PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
-        return true;
-      }
-    }
-    return false;
   }
 
   static String tryUnbox(PsiVariable variable) {
@@ -543,7 +441,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       if (nonFinalVariables.isEmpty()) {
         CollectMigration.CollectTerminal terminal = CollectMigration.extractCollectTerminal(tb);
-        if(terminal != null && getInitializerUsageStatus(terminal.getTargetVariable(), loop) != UNKNOWN) {
+        if(terminal != null) {
           boolean addAll = loop instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
           // Don't suggest to convert the loop which can be trivially replaced via addAll:
           // this is covered by UseBulkOperationInspection and ManualArrayToCollectionCopyInspection
@@ -688,7 +586,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   @Nullable
   static PsiLocalVariable extractArray(TerminalBlock tb) {
-    CountingLoop loop = tb.getLastOperation(CountingLoop.class);
+    CountingLoopSource loop = tb.getLastOperation(CountingLoopSource.class);
     if(loop == null || loop.myIncluding) return null;
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if(assignment == null || !assignment.getOperationTokenType().equals(JavaTokenType.EQ)) return null;
@@ -698,7 +596,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiReferenceExpression arrayReference = tryCast(arrayAccess.getArrayExpression(), PsiReferenceExpression.class);
     if(arrayReference == null) return null;
     PsiLocalVariable arrayVariable = tryCast(arrayReference.resolve(), PsiLocalVariable.class);
-    if(arrayVariable == null || getInitializerUsageStatus(arrayVariable, tb.getMainLoop()) == UNKNOWN) return null;
+    if(arrayVariable == null || ControlFlowUtils.getInitializerUsageStatus(arrayVariable, tb.getMainLoop()) == UNKNOWN) return null;
     PsiNewExpression initializer = tryCast(arrayVariable.getInitializer(), PsiNewExpression.class);
     if(initializer == null) return null;
     PsiArrayType arrayType = tryCast(initializer.getType(), PsiArrayType.class);
@@ -745,6 +643,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return false;
     }
+
+    boolean canReassignVariable(PsiVariable variable) {
+      return true;
+    }
   }
 
   static class FilterOp extends Operation {
@@ -765,11 +667,28 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiExpression intermediate = makeIntermediateExpression(factory);
       PsiExpression expression =
         myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(intermediate), myExpression) : intermediate;
-      return ".filter(" + LambdaUtil.createLambda(myVariable, expression) + ")";
+      return "." + getOpName() + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
+    }
+
+    @NotNull
+    String getOpName() {
+      return "filter";
     }
 
     PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
       return myExpression;
+    }
+  }
+
+  static class TakeWhileOp extends FilterOp {
+    TakeWhileOp(PsiExpression condition, PsiVariable variable, boolean negated) {
+      super(condition, variable, negated);
+    }
+
+    @NotNull
+    @Override
+    String getOpName() {
+      return "takeWhile";
     }
   }
 
@@ -856,6 +775,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return mySource.isWriteAllowed(variable, reference);
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return mySource.canReassignVariable(variable);
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
@@ -945,7 +869,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Contract("null -> null")
     static StreamSource tryCreate(PsiLoopStatement statement) {
       if(statement instanceof PsiForStatement) {
-        return CountingLoop.from((PsiForStatement)statement);
+        return CountingLoopSource.from((PsiForStatement)statement);
       }
       if(statement instanceof PsiForeachStatement) {
         ArrayStream source = ArrayStream.from((PsiForeachStatement)statement);
@@ -1017,7 +941,32 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     String createReplacement() {
-      return "java.util.Arrays.stream("+myExpression.getText() + ")";
+      if (myExpression instanceof PsiNewExpression) {
+        PsiArrayInitializerExpression initializer = ((PsiNewExpression)myExpression).getArrayInitializer();
+        if (initializer != null) {
+          PsiElement[] children = initializer.getChildren();
+          if (children.length > 2) {
+            String initializerText = StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining();
+            PsiType type = myExpression.getType();
+            if (type instanceof PsiArrayType) {
+              PsiType componentType = ((PsiArrayType)type).getComponentType();
+              if (componentType.equals(PsiType.INT)) {
+                return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM + ".of(" + initializerText + ")";
+              }
+              else if (componentType.equals(PsiType.LONG)) {
+                return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM + ".of(" + initializerText + ")";
+              }
+              else if (componentType.equals(PsiType.DOUBLE)) {
+                return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM + ".of(" + initializerText + ")";
+              }
+              else if (componentType instanceof PsiClassType) {
+                return CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".<" + componentType.getCanonicalText() + ">of(" + initializerText + ")";
+              }
+            }
+          }
+        }
+      }
+      return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + myExpression.getText() + ")";
     }
 
     @Nullable
@@ -1073,15 +1022,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
-  static class CountingLoop extends StreamSource {
+  static class CountingLoopSource extends StreamSource {
     final PsiExpression myBound;
     final boolean myIncluding;
 
-    private CountingLoop(PsiLoopStatement loop,
-                         PsiVariable counter,
-                         PsiExpression initializer,
-                         PsiExpression bound,
-                         boolean including) {
+    private CountingLoopSource(PsiLoopStatement loop,
+                               PsiVariable counter,
+                               PsiExpression initializer,
+                               PsiExpression bound,
+                               boolean including) {
       super(loop, counter, initializer);
       myBound = bound;
       myIncluding = including;
@@ -1099,8 +1048,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return className+"."+methodName+"("+myExpression.getText()+", "+myBound.getText()+")";
     }
 
-    CountingLoop withBound(PsiExpression bound) {
-      return new CountingLoop(getLoop(), getVariable(), getExpression(), bound, myIncluding);
+    CountingLoopSource withBound(PsiExpression bound) {
+      return new CountingLoopSource(getLoop(), getVariable(), getExpression(), bound, myIncluding);
     }
 
     @Override
@@ -1114,46 +1063,16 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return false;
     }
 
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return variable != myVariable;
+    }
+
     @Nullable
-    public static CountingLoop from(PsiForStatement forStatement) {
-      // check that initialization is for(int/long i = <initial_value>;...;...)
-      PsiDeclarationStatement initialization = tryCast(forStatement.getInitialization(), PsiDeclarationStatement.class);
-      if (initialization == null || initialization.getDeclaredElements().length != 1) return null;
-      PsiLocalVariable counter = tryCast(initialization.getDeclaredElements()[0], PsiLocalVariable.class);
-      if(counter == null) return null;
-      if(!counter.getType().equals(PsiType.INT) && !counter.getType().equals(PsiType.LONG)) return null;
-
-      PsiExpression initializer = counter.getInitializer();
-      if(initializer == null) return null;
-
-      // check that increment is like for(...;...;i++)
-      if(!VariableAccessUtils.variableIsIncremented(counter, forStatement.getUpdate())) return null;
-
-      // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
-      PsiBinaryExpression condition = tryCast(forStatement.getCondition(), PsiBinaryExpression.class);
-      if(condition == null) return null;
-      IElementType type = condition.getOperationTokenType();
-      boolean closed = false;
-      PsiExpression bound;
-      PsiExpression ref;
-      if(type.equals(JavaTokenType.LE)) {
-        bound = condition.getROperand();
-        ref = condition.getLOperand();
-        closed = true;
-      } else if(type.equals(JavaTokenType.LT)) {
-        bound = condition.getROperand();
-        ref = condition.getLOperand();
-      } else if(type.equals(JavaTokenType.GE)) {
-        bound = condition.getLOperand();
-        ref = condition.getROperand();
-        closed = true;
-      } else if(type.equals(JavaTokenType.GT)) {
-        bound = condition.getLOperand();
-        ref = condition.getROperand();
-      } else return null;
-      if(bound == null || !ExpressionUtils.isReferenceTo(ref, counter)) return null;
-      if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
-      return new CountingLoop(forStatement, counter, initializer, bound, closed);
+    public static CountingLoopSource from(PsiForStatement forStatement) {
+      CountingLoop loop = CountingLoop.from(forStatement);
+      if (loop == null) return null;
+      return new CountingLoopSource(forStatement, loop.getCounter(), loop.getInitializer(), loop.getBound(), loop.isIncluding());
     }
   }
 }

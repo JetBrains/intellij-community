@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -62,11 +61,10 @@ public class GradleResolverUtil {
   public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name,
                                                              @Nullable String returnType,
                                                              @Nullable String closureTypeParameter,
-                                                             @NotNull PsiElement place,
-                                                             @NotNull GroovyPsiManager psiManager) {
+                                                             @NotNull PsiElement place) {
     PsiClassType closureType;
     PsiClass closureClass =
-      psiManager.findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
+      JavaPsiFacade.getInstance(place.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
     if (closureClass == null) return null;
 
     if (closureClass.getTypeParameters().length != 1) {
@@ -98,14 +96,14 @@ public class GradleResolverUtil {
     return methodWithClosure;
   }
 
-  public static boolean processDeclarations(@NotNull GroovyPsiManager psiManager,
-                                            @NotNull PsiScopeProcessor processor,
+  public static boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                             @NotNull ResolveState state,
                                             @NotNull PsiElement place,
                                             @NotNull String... fqNames) {
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(place.getProject());
     for (String fqName : fqNames) {
       if(fqName == null) continue;
-      PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
+      PsiClass psiClass = javaPsiFacade.findClass(fqName, place.getResolveScope());
       if (psiClass != null) {
         if (!UtilKt.processDeclarations(psiClass, processor, state, place)) return false;
       }

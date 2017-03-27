@@ -134,7 +134,13 @@ public class GitMergeProvider implements MergeProvider2 {
           catch (Exception ex) {
             /// unable to load original revision, use the current instead
             /// This could happen in case if rebasing.
-            mergeData.ORIGINAL = file.contentsToByteArray();
+            try {
+              mergeData.ORIGINAL = file.contentsToByteArray();
+            }
+            catch (IOException e) {
+              LOG.error(e);
+              mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
+            }
           }
           mergeData.CURRENT = loadRevisionCatchingErrors(current);
           mergeData.LAST = loadRevisionCatchingErrors(last);
@@ -303,14 +309,14 @@ public class GitMergeProvider implements MergeProvider2 {
       return GitRevisionNumber.resolve(myProject, root, MERGE_HEAD);
     }
     catch (VcsException e) {
-      LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
+      LOG.info("Couldn't resolve the MERGE_HEAD in " + root + ": " + e.getMessage()); // this may be not a bug, just cherry-pick
     }
 
     try {
       return GitRevisionNumber.resolve(myProject, root, CHERRY_PICK_HEAD);
     }
     catch (VcsException e) {
-      LOG.info("Couldn't resolve the CHERRY_PICK_HEAD in " + root, e);
+      LOG.info("Couldn't resolve the CHERRY_PICK_HEAD in " + root + ": " + e.getMessage());
     }
 
     GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
@@ -464,8 +470,11 @@ public class GitMergeProvider implements MergeProvider2 {
           for (VirtualFile f : files) {
             String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
-            LOG.assertTrue(c != null, String.format("The conflict not found for file: %s(%s)%nFull ls-files output: %n%s%nAll files: %n%s",
-                                                    f.getPath(), path, output, files));
+            if (c == null) {
+              LOG.error(String.format("The conflict not found for file: %s(%s)%nFull ls-files output: %n%s%nAll files: %n%s",
+                                      f.getPath(), path, output, files));
+              continue;
+            }
             c.myFile = f;
             if (c.myStatusTheirs == null) {
               c.myStatusTheirs = Conflict.Status.DELETED;
@@ -491,13 +500,16 @@ public class GitMergeProvider implements MergeProvider2 {
     @Override
     public boolean canMerge(@NotNull VirtualFile file) {
       Conflict c = myConflicts.get(file);
-      return c != null;
+      return c != null && !file.isDirectory();
     }
 
     @Override
-    public void conflictResolvedForFile(VirtualFile file, @NotNull Resolution resolution) {
+    public void conflictResolvedForFile(@NotNull VirtualFile file, @NotNull Resolution resolution) {
       Conflict c = myConflicts.get(file);
-      assert c != null : "Conflict was not loaded for the file: " + file.getPath();
+      if (c == null) {
+        LOG.error("Conflict was not loaded for the file: " + file.getPath());
+        return;
+      }
       try {
         Conflict.Status status;
         switch (resolution) {
@@ -546,7 +558,10 @@ public class GitMergeProvider implements MergeProvider2 {
       @Override
       public String valueOf(VirtualFile file) {
         Conflict c = myConflicts.get(file);
-        assert c != null : "No conflict for the file " + file;
+        if (c == null) {
+          LOG.error("No conflict for the file " + file);
+          return "";
+        }
         Conflict.Status s = myIsTheirs ? c.myStatusTheirs : c.myStatusYours;
         switch (s) {
           case MODIFIED:

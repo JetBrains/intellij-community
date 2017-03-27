@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,7 @@ public class AddRequiredModuleFix implements IntentionAction {
     if (module == null) return;
 
     PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
-    PsiJavaModule tempModule =
-      parserFacade.createModuleFromText("module " + module.getModuleName() + " { requires " + myRequiredName + "; }");
+    PsiJavaModule tempModule = parserFacade.createModuleFromText("module " + module.getName() + " { requires " + myRequiredName + "; }");
     Iterable<PsiRequiresStatement> tempModuleRequires = tempModule.getRequires();
     PsiRequiresStatement requiresStatement = tempModuleRequires.iterator().next();
 
@@ -90,7 +89,7 @@ public class AddRequiredModuleFix implements IntentionAction {
 
   @Nullable
   private static PsiElement getLBrace(@NotNull PsiJavaModule module) {
-    PsiJavaModuleReferenceElement nameElement = module.getNameElement();
+    PsiJavaModuleReferenceElement nameElement = module.getNameIdentifier();
     for (PsiElement element = nameElement.getNextSibling(); element != null; element = element.getNextSibling()) {
       if (PsiUtil.isJavaToken(element, JavaTokenType.LBRACE)) {
         return element;

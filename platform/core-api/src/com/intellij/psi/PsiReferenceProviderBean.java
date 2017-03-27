@@ -42,7 +42,7 @@ import java.util.List;
 public class PsiReferenceProviderBean extends AbstractExtensionPointBean implements KeyedLazyInstance<PsiReferenceProviderBean> {
 
   public static final ExtensionPointName<PsiReferenceProviderBean> EP_NAME =
-    new ExtensionPointName<PsiReferenceProviderBean>("com.intellij.psi.referenceProvider");
+    new ExtensionPointName<>("com.intellij.psi.referenceProvider");
 
   @Attribute("language")
   public String language = Language.ANY.getID();
@@ -73,12 +73,8 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
     return null;
   }
 
-  private static final NullableFunction<ElementPatternBean,ElementPattern<? extends PsiElement>> PATTERN_NULLABLE_FUNCTION = new NullableFunction<ElementPatternBean, ElementPattern<? extends PsiElement>>() {
-    @Override
-    public ElementPattern<? extends PsiElement> fun(ElementPatternBean elementPatternBean) {
-      return elementPatternBean.compilePattern();
-    }
-  };
+  private static final NullableFunction<ElementPatternBean,ElementPattern<? extends PsiElement>> PATTERN_NULLABLE_FUNCTION =
+    elementPatternBean -> elementPatternBean.compilePattern();
 
   @Nullable
   public ElementPattern<PsiElement> createElementPattern() {

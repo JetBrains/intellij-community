@@ -17,14 +17,11 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -35,13 +32,7 @@ import java.util.Set;
  * Time: 12:37:26
  * To change this template use Options | File Templates.
  */
-public class ExpectedTypesGetter implements ContextGetter{
-
-  @Override
-  @NotNull
-  public PsiType[] get(PsiElement context, CompletionContext completionContext){
-    return getExpectedTypes(context, false);
-  }
+public class ExpectedTypesGetter {
 
   public static PsiType[] getExpectedTypes(final PsiElement context, boolean defaultTypes) {
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);

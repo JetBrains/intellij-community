@@ -112,7 +112,7 @@ public class GrHighlightUtil {
    * @return
    */
   @Nullable
-  static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
+  public static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
     if (refElement != null && isReferenceWithLiteralName(refElement)) return null; //don't highlight literal references
 
     if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {

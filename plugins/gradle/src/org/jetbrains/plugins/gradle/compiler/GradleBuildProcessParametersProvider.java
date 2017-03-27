@@ -17,9 +17,6 @@ package org.jetbrains.plugins.gradle.compiler;
 
 import com.google.gson.Gson;
 import com.intellij.compiler.server.BuildProcessParametersProvider;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +26,7 @@ import groovy.lang.GroovyObject;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
@@ -45,7 +42,7 @@ import java.util.List;
 public class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
   @NotNull private final Project myProject;
 
-  private List<String> myClasspath;
+  private List<String> myGradleClasspath;
 
   public GradleBuildProcessParametersProvider(@NotNull Project project) {
     myProject = project;
@@ -54,38 +51,36 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
   @Override
   @NotNull
   public List<String> getClassPath() {
-    if (myClasspath == null) {
-      myClasspath = ContainerUtil.newArrayList();
-      addGradleClassPath(myClasspath);
-      final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      for (Module module : moduleManager.getModules()) {
-        if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-          addOtherClassPath(myClasspath);
-          break;
+    List<String> result = ContainerUtil.newArrayList();
+    addGradleClassPath(result);
+    if (!GradleSettings.getInstance(myProject).getLinkedProjectsSettings().isEmpty()) {
+      addOtherClassPath(result);
+    }
+    return result;
+  }
+
+  private void addGradleClassPath(@NotNull final List<String> classpath) {
+    if (myGradleClasspath == null) {
+      myGradleClasspath = ContainerUtil.newArrayList();
+      String gradleLibDirPath = null;
+      String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
+      if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
+        gradleLibDirPath = PathUtil.getParentPath(gradleToolingApiJarPath);
+      }
+      if (gradleLibDirPath == null || gradleLibDirPath.isEmpty()) return;
+
+      File gradleLibDir = new File(gradleLibDirPath);
+      if (!gradleLibDir.isDirectory()) return;
+
+      File[] children = FileUtil.notNullize(gradleLibDir.listFiles());
+      for (File child : children) {
+        final String fileName = child.getName();
+        if (fileName.endsWith(".jar") && child.isFile()) {
+          myGradleClasspath.add(child.getAbsolutePath());
         }
       }
     }
-    return myClasspath;
-  }
-
-  private static void addGradleClassPath(@NotNull final List<String> classpath) {
-    String gradleLibDirPath = null;
-    String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
-    if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
-      gradleLibDirPath = PathUtil.getParentPath(gradleToolingApiJarPath);
-    }
-    if (gradleLibDirPath == null || gradleLibDirPath.isEmpty()) return;
-
-    File gradleLibDir = new File(gradleLibDirPath);
-    if (!gradleLibDir.isDirectory()) return;
-
-    File[] children = FileUtil.notNullize(gradleLibDir.listFiles());
-    for (File child : children) {
-      final String fileName = child.getName();
-      if (fileName.endsWith(".jar") && child.isFile()) {
-        classpath.add(child.getAbsolutePath());
-      }
-    }
+    ContainerUtil.addAll(classpath, myGradleClasspath);
   }
 
   private static void addOtherClassPath(@NotNull final List<String> classpath) {

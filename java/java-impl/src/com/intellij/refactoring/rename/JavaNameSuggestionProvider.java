@@ -118,7 +118,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     }
     final List<String> result = new ArrayList<>();
     result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
-    if (name.startsWith(prefix)) {
+    if (name.startsWith(prefix) && !prefix.isEmpty()) {
       name = name.substring(prefix.length());
       result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
     }

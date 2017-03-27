@@ -4,32 +4,31 @@ REGEXP_FILE
       RegExpClassImpl: <[\Qabc?*+.))]][]\E]>
         PsiElement(CLASS_BEGIN)('[')
         PsiWhiteSpace('\Q')
-        RegExpUnionImpl: <abc?*+.))]][]>
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpCharImpl: <b>
-            PsiElement(CHARACTER)('b')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
-          RegExpCharImpl: <?>
-            PsiElement(CHARACTER)('?')
-          RegExpCharImpl: <*>
-            PsiElement(CHARACTER)('*')
-          RegExpCharImpl: <+>
-            PsiElement(CHARACTER)('+')
-          RegExpCharImpl: <.>
-            PsiElement(CHARACTER)('.')
-          RegExpCharImpl: <)>
-            PsiElement(CHARACTER)(')')
-          RegExpCharImpl: <)>
-            PsiElement(CHARACTER)(')')
-          RegExpCharImpl: <]>
-            PsiElement(CHARACTER)(']')
-          RegExpCharImpl: <]>
-            PsiElement(CHARACTER)(']')
-          RegExpCharImpl: <[>
-            PsiElement(CHARACTER)('[')
-          RegExpCharImpl: <]>
-            PsiElement(CHARACTER)(']')
+        RegExpCharImpl: <a>
+          PsiElement(CHARACTER)('a')
+        RegExpCharImpl: <b>
+          PsiElement(CHARACTER)('b')
+        RegExpCharImpl: <c>
+          PsiElement(CHARACTER)('c')
+        RegExpCharImpl: <?>
+          PsiElement(CHARACTER)('?')
+        RegExpCharImpl: <*>
+          PsiElement(CHARACTER)('*')
+        RegExpCharImpl: <+>
+          PsiElement(CHARACTER)('+')
+        RegExpCharImpl: <.>
+          PsiElement(CHARACTER)('.')
+        RegExpCharImpl: <)>
+          PsiElement(CHARACTER)(')')
+        RegExpCharImpl: <)>
+          PsiElement(CHARACTER)(')')
+        RegExpCharImpl: <]>
+          PsiElement(CHARACTER)(']')
+        RegExpCharImpl: <]>
+          PsiElement(CHARACTER)(']')
+        RegExpCharImpl: <[>
+          PsiElement(CHARACTER)('[')
+        RegExpCharImpl: <]>
+          PsiElement(CHARACTER)(']')
         PsiWhiteSpace('\E')
         PsiElement(CLASS_END)(']')

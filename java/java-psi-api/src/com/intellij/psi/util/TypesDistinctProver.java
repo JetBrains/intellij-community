@@ -26,7 +26,7 @@ import java.util.Set;
  * Date: Aug 12, 2010
  */
 public class TypesDistinctProver {
-  public static final Set<String> ARRAY_SUPER_CLASSES = new HashSet<String>();
+  public static final Set<String> ARRAY_SUPER_CLASSES = new HashSet<>();
   static {
     ARRAY_SUPER_CLASSES.add(CommonClassNames.JAVA_IO_SERIALIZABLE);
     ARRAY_SUPER_CLASSES.add(CommonClassNames.JAVA_LANG_CLONEABLE);

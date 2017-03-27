@@ -143,6 +143,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
+    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
+    { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
     });
     put("Mac OS X 10.5+", new String[][] {
     { "F5",                       "CopyElement", "Console.TableResult.Reload", "UML.ApplyCurrentLayout"},
@@ -221,6 +223,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt S",              "FindUsages", "context.save"},
     { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
     { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
+    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "shift control X",          "GotoPreviousError", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     });
     put("Visual Studio", new String[][] {
@@ -351,6 +354,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift control F6",         "NextTab", "ChangeTypeSignature"},
     { "shift control G",          "GotoSymbol", "ClassTemplateNavigation", "GoToClass"},
     { "control SUBTRACT",         "CollapseAll", "CollapseRegion"},
+    { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "shift control X",          "EditorToggleShowWhitespaces", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     });
     put("Eclipse (Mac OS X)", new String[][] {
@@ -377,6 +381,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
       { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
+      { "meta alt I",               "Inline", "DatabaseView.GenerateScriptIntoConsole"}
     });
   }};
   // @formatter:on

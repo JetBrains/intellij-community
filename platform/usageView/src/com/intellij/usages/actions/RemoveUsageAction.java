@@ -17,6 +17,7 @@ package com.intellij.usages.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
@@ -38,7 +39,8 @@ public class RemoveUsageAction extends AnAction {
     process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
   }
 
-  private static void process(Usage[] usages, UsageView usageView) {
+  private static void process(@NotNull Usage[] usages, @NotNull UsageView usageView) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (usages.length == 0) return;
     Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
     final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
@@ -52,7 +54,9 @@ public class RemoveUsageAction extends AnAction {
     }
   }
 
+  @NotNull
   private static Usage[] getUsages(AnActionEvent context) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     UsageView usageView = context.getData(UsageView.USAGE_VIEW_KEY);
     if (usageView == null) return Usage.EMPTY_ARRAY;
     Usage[] usages = context.getData(UsageView.USAGES_KEY);

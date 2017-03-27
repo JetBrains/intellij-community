@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -58,21 +59,23 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   public static <Init,Result> ProblemDescriptor[] checkFileWithExternalAnnotator(@NotNull PsiFile file,
                                                                                  @NotNull InspectionManager manager,
                                                                                  boolean isOnTheFly,
-                                                                                 @NotNull ExternalAnnotator<Init,Result> annotator) {
+                                                                                 @NotNull ExternalAnnotator<Init, Result> annotator) {
     if (isOnTheFly) {
       // ExternalAnnotator does this work
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
-    Init info = annotator.collectInformation(file);
+    Init info = ReadAction.compute(() -> annotator.collectInformation(file));
     if (info != null) {
       Result annotationResult = annotator.doAnnotate(info);
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
-      AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
-      annotator.apply(file, annotationResult, annotationHolder);
-      return convertToProblemDescriptors(annotationHolder, manager, file);
+      return ReadAction.compute(() -> {
+        AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
+        annotator.apply(file, annotationResult, annotationHolder);
+        return convertToProblemDescriptors(annotationHolder, manager, file);
+      });
     }
     return ProblemDescriptor.EMPTY_ARRAY;
   }

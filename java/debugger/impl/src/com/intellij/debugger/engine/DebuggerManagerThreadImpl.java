@@ -34,14 +34,14 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author lex
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
-  public static final int COMMAND_TIMEOUT = 3000;
+  static final int COMMAND_TIMEOUT = 3000;
 
   private volatile boolean myDisposed;
 
@@ -106,7 +106,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
    * if worker thread is still processing the same command
    * calls terminateCommand
    */
-  public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeout) {
+  public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeoutMillis) {
     final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
     invoke(command);
@@ -131,10 +131,9 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
               }
             }
           }
-        }, terminateTimeout, TimeUnit.MILLISECONDS);
+        }, terminateTimeoutMillis, TimeUnit.MILLISECONDS);
     }
   }
-
 
   @Override
   public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {
@@ -174,7 +173,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
 
-  public void startLongProcessAndFork(Runnable process) {
+  void startLongProcessAndFork(Runnable process) {
     assertIsManagerThread();
     startNewWorkerThread();
 
@@ -235,7 +234,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
   }
 
-  public void restartIfNeeded () {
+  void restartIfNeeded() {
     if (myEvents.isClosed()) {
       myEvents.reopen();
       startNewWorkerThread();

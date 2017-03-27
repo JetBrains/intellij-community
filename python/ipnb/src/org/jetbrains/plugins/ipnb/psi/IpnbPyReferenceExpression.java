@@ -20,7 +20,7 @@ public class IpnbPyReferenceExpression extends PyReferenceExpressionImpl {
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(PyResolveContext context) {
+  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     if (isQualified()) {
       return new PyQualifiedReference(this, context);
     }

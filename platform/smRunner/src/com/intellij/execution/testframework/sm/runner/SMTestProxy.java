@@ -628,8 +628,9 @@ public class SMTestProxy extends AbstractTestProxy {
     addAfterLastPassed(new Printable() {
       public void printOn(final Printer printer) {
         String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
-        LOG.assertTrue(errorText != null);
-        TestFailedState.printError(printer, Collections.singletonList(errorText));
+        if (errorText != null) {
+          TestFailedState.printError(printer, Collections.singletonList(errorText));
+        }
       }
     });
   }

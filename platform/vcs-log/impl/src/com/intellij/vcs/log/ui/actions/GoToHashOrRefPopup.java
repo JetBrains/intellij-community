@@ -40,7 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

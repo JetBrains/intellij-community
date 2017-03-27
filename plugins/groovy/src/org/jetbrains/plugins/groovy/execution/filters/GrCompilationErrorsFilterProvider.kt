@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.execution.filters
 
-import com.intellij.execution.filters.ConsoleFilterProvider
-import com.intellij.execution.filters.RegexpFilter
-import com.intellij.execution.filters.RegexpFilter.FILE_PATH_MACROS
-import com.intellij.execution.filters.RegexpFilter.LINE_MACROS
+import com.intellij.execution.filters.*
 import com.intellij.openapi.project.Project
 
 class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
 
-  override fun getDefaultFilters(project: Project) = arrayOf(RegexpFilter(project, "(file:)?${FILE_PATH_MACROS}: ${LINE_MACROS}.*"))
+  override fun getDefaultFilters(project: Project): Array<Filter> = arrayOf(
+    object : RegexpFilter(project, "(file:)?${FILE_PATH_MACROS}: ${LINE_MACROS}.*") {
+
+      override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo {
+        return super.createOpenFileHyperlink(fileName, line, column)
+               ?: LazyFileHyperlinkInfo(project, fileName, line, column)
+      }
+    }
+  )
 }

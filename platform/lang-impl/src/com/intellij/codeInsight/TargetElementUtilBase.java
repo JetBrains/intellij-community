@@ -96,6 +96,9 @@ public abstract class TargetElementUtilBase {
 
   public abstract boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element);
 
+  /**
+   * @return a scope where element's implementations (Goto/Show Implementations) should be searched
+   */
   @NotNull
   public abstract SearchScope getSearchScope(Editor editor, @NotNull PsiElement element);
 }

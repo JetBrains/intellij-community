@@ -180,7 +180,7 @@ public class ByChar {
 
     int start = left ? offset1 : offset2;
 
-    return start + TrimUtil.expandForwardW(text1, text2, offset1, offset2, text1.length(), text2.length());
+    return start + TrimUtil.expandWhitespacesForward(text1, text2, offset1, offset2, text1.length(), text2.length());
   }
 
   //

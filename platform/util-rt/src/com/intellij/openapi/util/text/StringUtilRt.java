@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class StringUtilRt {
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
@@ -119,10 +119,10 @@ public class StringUtilRt {
   }
 
   @NotNull
-  public static CharSequence unifyLineSeparators(@NotNull CharSequence text,
-                                                 @NotNull String newSeparator,
-                                                 @Nullable int[] offsetsToKeep,
-                                                 boolean keepCarriageReturn) {
+  private static CharSequence unifyLineSeparators(@NotNull CharSequence text,
+                                                  @NotNull String newSeparator,
+                                                  @Nullable int[] offsetsToKeep,
+                                                  boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
     final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
@@ -241,7 +241,7 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+  static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     try {
       return Enum.valueOf(clazz, string);
     }

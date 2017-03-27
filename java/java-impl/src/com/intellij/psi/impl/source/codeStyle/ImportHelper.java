@@ -314,7 +314,10 @@ public class ImportHelper{
       else if ((aClass = facade.findClass(onDemand, resolveScope)) != null) {  // import static foo.package1.Class1.*;
         if (isStatic) {
           PsiMember[][] membersArray = {aClass.getInnerClasses(), aClass.getMethods(), aClass.getFields()};
-          Set<String> set = Arrays.stream(membersArray).flatMap(Arrays::stream).map(PsiMember::getName).collect(toSet());
+          Set<String> set = Arrays.stream(membersArray)
+            .flatMap(Arrays::stream)
+            .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
+            .map(PsiMember::getName).collect(toSet());
           classNames.put(onDemand, set);
         }
         else {

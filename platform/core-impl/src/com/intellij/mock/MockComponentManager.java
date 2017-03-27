@@ -42,7 +42,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
   private final MutablePicoContainer myPicoContainer;
 
-  private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
+  private final Map<Class, Object> myComponents = new HashMap<>();
   private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {

@@ -55,7 +55,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
       if (!(tt instanceof HighlightInfo)) return true;
       HighlightInfo info = (HighlightInfo)tt;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.highlighter == null
+             || info.getHighlighter() == null
              || processor.process(info);
     });
   }
@@ -75,7 +75,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
       if (!(tt instanceof HighlightInfo)) return true;
       HighlightInfo info = (HighlightInfo)tt;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.highlighter == null
+             || info.getHighlighter() == null
              || processor.process(info);
     });
   }

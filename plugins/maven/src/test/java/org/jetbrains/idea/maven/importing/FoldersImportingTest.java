@@ -915,7 +915,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertExcludes("project", "target/bar", "target/foo");
+    assertExcludes("project", "target");
 
     assertSources("project",
                   "src/main/java",
@@ -945,7 +945,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    assertExcludes("project", "target/xxx");
+    assertExcludes("project", "target");
   }
 
   public void testDoesNotExcludeSourcesUnderTargetDirWithProperties() throws Exception {
@@ -962,7 +962,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertSources("project", "target/src");
-    assertExcludes("project", "target/xxx");
+    assertExcludes("project", "target");
   }
 
   public void testDoesNotExcludeFoldersWithSourcesUnderTargetDir() throws Exception {
@@ -980,7 +980,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    assertExcludes("project", "target/foo");
+    assertExcludes("project", "target");
 
     assertSources("project", "target/src/main");
     assertResources("project", "src/main/resources");
@@ -996,7 +996,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertExcludes("project", "target/foo");
+    assertExcludes("project", "target");
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources/baz");
@@ -1014,7 +1014,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     });
 
     importProject();
-    assertExcludes("project", "target/foo");
+    assertExcludes("project", "target");
   }
 
   public void testSourceFoldersOrder() throws Exception {
@@ -1105,7 +1105,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertSources("project", "target/src");
     assertTestSources("project", "target/test/subFolder");
-    assertExcludes("project", "target/foo");
+    assertExcludes("project", "target");
   }
 
   public void testUnexcludeNewSourcesUnderCompilerOutputDir() throws Exception {
@@ -1128,7 +1128,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertSources("project", "target/classes/src");
-    assertExcludes("project");
+    assertExcludes("project", "target");
 
     //assertFalse(getCompilerExtension("project").isExcludeOutput());
   }

@@ -35,6 +35,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -141,6 +143,16 @@ public final class NavigationUtil {
 
     builder.getScrollPane().setBorder(null);
     builder.getScrollPane().setViewportBorder(null);
+
+    Project project = elements[0].getProject();
+    if (!DumbService.isDumb(project)) {
+      project.getMessageBus().connect(popup).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        @Override
+        public void enteredDumbMode() {
+          popup.cancel();
+        }
+      });
+    }
 
     return popup;
   }

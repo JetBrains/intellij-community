@@ -238,7 +238,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   @Nullable
-  private Sdk getSdk() {
+  protected Sdk getSdk() {
     if (myModule == null) {
       return ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
@@ -252,15 +252,17 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     Sdk selectedSdk = getSelectedSdk();
     if (selectedSdk instanceof PyDetectedSdk) {
       final String sdkName = selectedSdk.getName();
-      VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      final VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
         @Override
         public VirtualFile compute() {
           return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
         }
       });
-      selectedSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-      if (selectedSdk != null) {
-        myProjectSdksModel.addSdk(selectedSdk);
+      if (sdkHome != null) {
+        selectedSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+        if (selectedSdk != null) {
+          myProjectSdksModel.addSdk(selectedSdk);
+        }
       }
     }
     else if (myInitialSdkSet.contains(selectedSdk) && selectedSdk != null) {
@@ -302,7 +304,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
   }
 
-  private void setSdk(final Sdk item) {
+  protected void setSdk(final Sdk item) {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(myProject).setProjectSdk(item));
     if (myModule != null) {
       ModuleRootModificationUtil.setModuleSdk(myModule, item);

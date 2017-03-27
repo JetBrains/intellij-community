@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.ui.AppIcon;
 
 import java.util.Map;
 
@@ -50,6 +51,7 @@ public class JBProtocolCheckoutCommand extends JBProtocolCommand {
         if (providerEx.getVcsId().equals(vcsId)) {
           Project project = ProjectManager.getInstance().getDefaultProject();
           CheckoutProvider.Listener listener = ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
+          AppIcon.getInstance().requestAttention(null, true);
           providerEx.doCheckout(project, listener, repository);
           break;
         }

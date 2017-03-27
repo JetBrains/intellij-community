@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
     return new Visitor(holder);
   }
 
-
   private static class Visitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
@@ -81,6 +80,10 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
       try {
         guardExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(guard, field);
       } catch (IncorrectOperationException ignore) {
+        return;
+      }
+      if (guardExpression instanceof PsiThisExpression && !PsiUtil.isAccessedForWriting(expression) &&
+          field.hasModifierProperty(PsiModifier.VOLATILE)) {
         return;
       }
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);

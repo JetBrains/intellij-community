@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
@@ -311,7 +310,7 @@ public class GdkMethodUtil {
         final String name = signatures.second;
 
         final List<GrMethod> methods = ContainerUtil.newArrayList();
-        final PsiClass closure = GroovyPsiManager.getInstance(statement.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
+        final PsiClass closure = JavaPsiFacade.getInstance(statement.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
         if (closure == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
         signatures.first.accept(new GrSignatureVisitor() {

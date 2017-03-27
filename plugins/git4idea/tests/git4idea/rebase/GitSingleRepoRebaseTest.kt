@@ -25,11 +25,7 @@ import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.file
-import git4idea.test.GitExecutor.git
-import git4idea.test.RepoBuilder
-import git4idea.test.UNKNOWN_ERROR_TEXT
-import git4idea.test.build
+import git4idea.test.*
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
@@ -80,7 +76,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertTrue(myVcsHelper.mergeDialogWasShown())
+    `assert merge dialog was shown`()
   }
 
   fun `test fail on 2nd commit should show notification with proposal to abort`() {
@@ -104,7 +100,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     var conflicts = 0
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
         conflicts++
         myRepo.assertConflict("c.txt")
         resolveConflicts(myRepo)
@@ -120,7 +116,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test continue rebase after resolving all conflicts`() {
     myRepo.`prepare simple conflict`()
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
         resolveConflicts(myRepo)
     }
 
@@ -262,7 +258,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test local changes are restored after successful abort`() {
     myRepo.`prepare simple conflict`()
     val localChange = LocalChange(myRepo, "new.txt", "content").generate()
-    myVcsHelper.onMerge {}
+    `do nothing on merge`()
     myDialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
@@ -279,7 +275,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test local changes are not restored after failed abort`() {
     myRepo.`prepare simple conflict`()
     LocalChange(myRepo, "new.txt", "content").generate()
-    myVcsHelper.onMerge {}
+    `do nothing on merge`()
     myDialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
@@ -358,7 +354,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseOnMaster()
     myRepo.assertConflict("c.txt")
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       resolveConflicts(myRepo)
     }
     GitRebaseUtils.continueRebase(myProject)
@@ -382,7 +378,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     val hash2skip = DvcsUtil.getShortHash(git("log -2 --pretty=%H").lines()[1])
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       file("c.txt").write("base\nmaster")
       resolveConflicts(myRepo)
     }

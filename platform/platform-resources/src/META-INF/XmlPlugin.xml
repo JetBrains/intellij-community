@@ -440,7 +440,7 @@
                      bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
-    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING" unfair="true"
+    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>

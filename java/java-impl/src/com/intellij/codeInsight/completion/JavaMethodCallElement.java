@@ -168,19 +168,27 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       importOrQualify(document, file, method, startOffset);
     }
 
-    final PsiType type = method.getReturnType();
-    if (context.getCompletionChar() == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
-      context.setAddCompletionChar(false);
-      context.commitDocument();
-      final int offset = context.getOffset(refStart);
-      final PsiMethodCallExpression methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethodCallExpression.class, false);
-      if (methodCall != null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
-        document.insertString(methodCall.getTextRange().getStartOffset(), "!");
-      }
+    PsiCallExpression methodCall = findCallAtOffset(context, context.getOffset(refStart));
+    if (methodCall != null) {
+      CompletionMemory.registerChosenMethod(method, methodCall);
+      handleNegation(context, document, method, methodCall);
     }
 
     startArgumentLiveTemplate(context, method);
+  }
+
+  static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
+    context.commitDocument();
+    return PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCallExpression.class, false);
+  }
+
+  private static void handleNegation(InsertionContext context, Document document, PsiMethod method, PsiCallExpression methodCall) {
+    PsiType type = method.getReturnType();
+    if (context.getCompletionChar() == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
+      context.setAddCompletionChar(false);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
+      document.insertString(methodCall.getTextRange().getStartOffset(), "!");
+    }
   }
 
   private void importOrQualify(Document document, PsiFile file, PsiMethod method, int startOffset) {
@@ -202,7 +210,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
                                             PsiExpressionList argList,
                                             TextRange argRange) {
     Template template = TemplateManager.getInstance(method.getProject()).createTemplate("", "");
-    template.addTextSegment(argList.getText().substring(0, caretOffset - argRange.getStartOffset()));
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (i > 0) {
@@ -246,7 +253,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     Template template = createArgTemplate(method, caretOffset, argList, argRange);
 
-    context.getDocument().deleteString(argRange.getStartOffset(), argRange.getEndOffset());
+    context.getDocument().deleteString(caretOffset, argRange.getEndOffset());
     TemplateManager.getInstance(method.getProject()).startTemplate(editor, template);
 
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);

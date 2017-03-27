@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -476,12 +476,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         }
       }, this);
 
-      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-        @Override
-        public void uiSettingsChanged(UISettings uiSettings) {
-          updateNorthPanel();
-        }
-      });
+      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, uiSettings -> updateNorthPanel());
 
       updateNorthPanel();
     }
@@ -494,9 +489,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
     private void updateNorthPanel() {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR
+      myNorthPanel.setVisible(UISettings.getInstance().getShowNavigationBar()
                               && !(myContainer instanceof DockContainer.Dialog)
-                              && !UISettings.getInstance().PRESENTATION_MODE);
+                              && !UISettings.getInstance().getPresentationMode());
 
       IdeRootPaneNorthExtension[] extensions =
         Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
@@ -547,7 +542,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     }
 
     @Override
-    public boolean dispatch(AWTEvent e) {
+    public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent) {
         if (myCurrentDragSession != null) {
           stopCurrentDragSession();

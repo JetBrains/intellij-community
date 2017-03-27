@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -537,8 +537,7 @@ public class MvcModuleStructureUtil {
 
     ModuleDeleteProvider.removeModule(toRemove, null, usingModels, moduleModel);
 
-    ModifiableRootModel[] rootModels = usingModels.toArray(new ModifiableRootModel[usingModels.size()]);
-    ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
+    ModifiableModelCommitter.multiCommit(usingModels, moduleModel);
   }
 
   @NotNull

@@ -132,8 +132,13 @@ public class FileGroupingRule implements UsageGroupingRule, DumbAware {
     }
 
     @Override
-    public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+    public int compareTo(@NotNull UsageGroup otherGroup) {
+      int compareTexts = getText(null).compareToIgnoreCase(otherGroup.getText(null));
+      if (compareTexts != 0) return compareTexts;
+      if (otherGroup instanceof FileUsageGroup) {
+        return myFile.getPath().compareTo(((FileUsageGroup)otherGroup).myFile.getPath());
+      }
+      return 0;
     }
 
     @Override

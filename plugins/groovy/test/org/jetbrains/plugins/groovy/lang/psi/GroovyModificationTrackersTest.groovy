@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi
 
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
@@ -61,27 +61,35 @@ class A {
     doTest 'def a<caret>= 1', true
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   void doTest(String text, boolean shouldChange) {
     fixture.configureByText '_.groovy', text
-    def (beforeStructure, beforeOutOfCodeBlock) = getModificationCounts()
+    def (long beforeStructure, long beforeOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
+    List<Throwable> changeTraces = []
+    if (!shouldChange) {
+      PsiModificationTracker.Listener listener = {
+        def message = "java scrtucture: $javaStructureCount, out of code block: $outOfCodeBlockCount"
+        changeTraces << new Throwable(message)
+      }
+      project.messageBus.connect testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
+    }
     fixture.type " "
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-    def (afterStructure, afterOutOfCodeBlock) = getModificationCounts()
-    if (shouldChange) {
-      assert beforeStructure < afterStructure
-      assert beforeOutOfCodeBlock < afterOutOfCodeBlock
+    def (long afterStructure, long afterOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
+    try {
+      if (shouldChange) {
+        assert beforeStructure < afterStructure && beforeOutOfCodeBlock < afterOutOfCodeBlock
+      }
+      else {
+        assert beforeStructure == afterStructure && beforeOutOfCodeBlock == afterOutOfCodeBlock
+      }
     }
-    else {
-      assert beforeStructure == afterStructure
-      assert beforeOutOfCodeBlock == afterOutOfCodeBlock
+    catch (Throwable e) {
+      changeTraces*.printStackTrace()
+      throw e
     }
   }
 
-  @CompileStatic
-  List<Long> getModificationCounts() {
-    psiManager.modificationTracker.with {
-      [javaStructureModificationCount, outOfCodeBlockModificationCount]
-    }
-  }
+  private long getJavaStructureCount() { psiManager.modificationTracker.javaStructureModificationCount }
+
+  private long getOutOfCodeBlockCount() { psiManager.modificationTracker.outOfCodeBlockModificationCount }
 }

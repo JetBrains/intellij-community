@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,11 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
@@ -59,11 +58,6 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     myProject = project;
     myPsiContext = context;
     myData = data;
-  }
-
-  @Override
-  public Value getValue() {
-    return null;
   }
 
   @Override
@@ -152,8 +146,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
 
   protected String getGenClassQName() {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<String>)() -> JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass()));
+    return ReadAction.compute(() -> JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass()));
   }
 
   ///////////////// Compiler stuff

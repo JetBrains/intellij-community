@@ -266,6 +266,10 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     return myProject;
   }
 
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
   public void setConfiguration(RunConfigurationBase configuration) {
     myConfiguration = configuration;
   }

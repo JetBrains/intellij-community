@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -612,22 +612,6 @@ class Any {
       }
       ~new A()
 ''', 'java.lang.String')
-  }
-
-  void testPlus1() {
-    doExprTest('2+2', 'java.lang.Integer')
-  }
-
-  void testPlus2() {
-    doExprTest('2f+2', 'java.lang.Double')
-  }
-
-  void testPlus3() {
-    doExprTest('2f+2f', 'java.lang.Double')
-  }
-
-  void testPlus4() {
-    doExprTest('2.5+2', 'java.math.BigDecimal')
   }
 
   void testMultiply1() {

@@ -165,4 +165,8 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     return myBaseLexer.getBufferEnd();
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "[" + myBaseLexer + ", " + myTemplateLexer + "]";
+  }
 }

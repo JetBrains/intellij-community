@@ -77,9 +77,16 @@ public abstract class ImportFromSourcesTestCase extends PlatformTestCase {
       myBuilder.setupProjectStructure(map);
       for (ProjectStructureDetector detector : map.keySet()) {
         List<ModuleWizardStep> steps = detector.createWizardSteps(myBuilder, myBuilder.getProjectDescriptor(detector), EmptyIcon.ICON_16);
-        for (ModuleWizardStep step : steps) {
-          if (step instanceof AbstractStepWithProgress<?>) {
-            performStep((AbstractStepWithProgress<?>)step);
+        try {
+          for (ModuleWizardStep step : steps) {
+            if (step instanceof AbstractStepWithProgress<?>) {
+              performStep((AbstractStepWithProgress<?>)step);
+            }
+          }
+        }
+        finally {
+          for (ModuleWizardStep step : steps) {
+            step.disposeUIResources();
           }
         }
       }

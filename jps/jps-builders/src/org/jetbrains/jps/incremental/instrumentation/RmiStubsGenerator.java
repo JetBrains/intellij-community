@@ -88,14 +88,14 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
   protected ExitCode performBuild(CompileContext context, ModuleChunk chunk, InstrumentationClassFinder finder, OutputConsumer outputConsumer) {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     if (!outputConsumer.getCompiledClasses().isEmpty()) {
-      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new THashMap<ModuleBuildTarget, Collection<ClassItem>>();
+      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new THashMap<>();
       for (ModuleBuildTarget target : chunk.getTargets()) {
         for (CompiledClass compiledClass : outputConsumer.getTargetCompiledClasses(target)) {
           try {
             if (isRemote(compiledClass, finder)) {
               Collection<ClassItem> list = remoteClasses.get(target);
               if (list ==  null) {
-                list = new ArrayList<ClassItem>();
+                list = new ArrayList<>();
                 remoteClasses.put(target, list);
               }
               list.add(new ClassItem(compiledClass));
@@ -130,7 +130,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     final String classpathString = buf.toString();
     final String rmicPath = getPathToRmic(chunk);
     final RmicCompilerOptions options = getOptions(context);
-    final List<ModuleBuildTarget> targetsProcessed = new ArrayList<ModuleBuildTarget>(remoteClasses.size());
+    final List<ModuleBuildTarget> targetsProcessed = new ArrayList<>(remoteClasses.size());
 
     for (Map.Entry<ModuleBuildTarget, Collection<ClassItem>> entry : remoteClasses.entrySet()) {
       try {
@@ -186,7 +186,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
 
     // registering generated files
-    final Map<File, File[]> fsCache = new THashMap<File, File[]>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, File[]> fsCache = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     for (ModuleBuildTarget target : targetsProcessed) {
       final Collection<ClassItem> items = remoteClasses.get(target);
       for (ClassItem item : items) {
@@ -221,7 +221,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
                                                          final String classpath,
                                                          final RmicCompilerOptions config,
                                                          final Collection<ClassItem> items) {
-    final List<String> commandLine = new ArrayList<String>();
+    final List<String> commandLine = new ArrayList<>();
     commandLine.add(compilerPath);
 
     if (config.DEBUGGING_INFO) {
@@ -323,7 +323,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
       if (candidates == null || candidates.length == 0) {
         return Collections.emptyList();
       }
-      final Collection<File> result = new SmartList<File>();
+      final Collection<File> result = new SmartList<>();
       final String[] suffixes = new String[GEN_SUFFIXES.length];
       for (int i = 0; i < GEN_SUFFIXES.length; i++) {
         suffixes[i] = baseName + GEN_SUFFIXES[i];

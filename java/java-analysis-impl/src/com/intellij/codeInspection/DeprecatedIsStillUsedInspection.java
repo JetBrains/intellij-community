@@ -26,19 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
-  //@Override
-  //@NotNull
-  //public String getDisplayName() {
-  //  return "Deprecated member is used";
-  //}
-  //
-  //@Override
-  //@NotNull
-  //public String getShortName() {
-  //  return "DeprecatedIsUsed";
-  //}
-  //
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
@@ -56,7 +43,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
     };
   }
 
-  private void checkMember(@NotNull PsiMember member, @NotNull PsiIdentifier identifier, @NotNull ProblemsHolder holder) {
+  private static void checkMember(@NotNull PsiMember member, @NotNull PsiIdentifier identifier, @NotNull ProblemsHolder holder) {
     if (!(member instanceof PsiDocCommentOwner) || !isDeprecated((PsiDocCommentOwner)member)) {
       return;
     }
@@ -69,7 +56,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
   }
 
   private static boolean isDeprecated(PsiDocCommentOwner element) {
-    return element.isDeprecated() || element.getContainingClass() != null && element.getContainingClass().isDeprecated();
+    return element.isDeprecated();
   }
 
 

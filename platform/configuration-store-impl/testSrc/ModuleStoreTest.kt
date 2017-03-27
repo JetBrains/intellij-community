@@ -77,6 +77,16 @@ class ModuleStoreTest {
     }
   }
 
+  @Test fun `newModule should always create a new module from scratch`() {
+    val moduleFile = runWriteAction {
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+    }
+
+    Paths.get(moduleFile.path).createModule().useAndDispose {
+      assertThat(getOptionValue("foo")).isNull()
+    }
+  }
+
   @Test fun `must be empty if classpath storage`() {
     // we must not use VFS here, file must not be created
     val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
@@ -146,7 +156,7 @@ class ModuleStoreTest {
     m1.removeContentRoot()
     m2.removeContentRoot()
 
-    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
     m1.assertChangesApplied()
     m2.assertChangesApplied()

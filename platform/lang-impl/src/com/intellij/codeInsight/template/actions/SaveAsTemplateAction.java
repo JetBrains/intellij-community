@@ -24,6 +24,10 @@
  */
 package com.intellij.codeInsight.template.actions;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.OffsetKey;
+import com.intellij.codeInsight.completion.OffsetMap;
+import com.intellij.codeInsight.completion.OffsetsInFile;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.lang.StdLanguages;
@@ -31,7 +35,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -146,10 +149,18 @@ public class SaveAsTemplateAction extends AnAction {
     final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);
 
-    PsiFile copy = WriteAction.compute(() -> TemplateManagerImpl.insertDummyIdentifier(editor, file));
-    Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(copy, startOffset);
+    OffsetKey startKey = OffsetKey.create("pivot");
+    OffsetsInFile offsets = new OffsetsInFile(file);
+    offsets.getOffsets().addOffset(startKey, startOffset);
+    OffsetsInFile copy = TemplateManagerImpl.copyWithDummyIdentifier(offsets,
+                                                                     editor.getSelectionModel().getSelectionStart(),
+                                                                     editor.getSelectionModel().getSelectionEnd(),
+                                                                     CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
 
-    for(TemplateContextType contextType: TemplateManagerImpl.getAllContextTypes()) {
+    Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(copy.getFile(),
+                                                                                        copy.getOffsets().getOffset(startKey));
+
+    for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
       template.getTemplateContext().setEnabled(contextType, applicable.contains(contextType));
     }
 

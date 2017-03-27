@@ -17,12 +17,15 @@ package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.Transient
 import java.util.*
 
 @State(
@@ -31,18 +34,11 @@ import java.util.*
 )
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
-    @JvmField val KEY: Key<TextDiffSettings> = Key.create("TextDiffSettings")
-
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
     @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", "Disable")
-
-    @JvmStatic
-    fun getInstance(): TextDiffSettingsHolder {
-      return ServiceManager.getService(TextDiffSettingsHolder::class.java)
-    }
   }
 
-  internal data class SharedSettings(
+  data class SharedSettings(
     // Fragments settings
     var CONTEXT_RANGE: Int = 4,
 
@@ -50,7 +46,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var MERGE_LST_GUTTER_MARKERS: Boolean = true
   )
 
-  internal data class PlaceSettings(
+  data class PlaceSettings(
     // Diff settings
     var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
     var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
@@ -68,11 +64,18 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Fragments settings
     var EXPAND_BY_DEFAULT: Boolean = true
-  )
+  ) {
+    @Transient
+    val eventDispatcher: EventDispatcher<TextDiffSettings.Listener> = EventDispatcher.create(TextDiffSettings.Listener::class.java)
+  }
 
-  class TextDiffSettings internal constructor(val SHARED_SETTINGS: SharedSettings,
-                                              val PLACE_SETTINGS: PlaceSettings) {
+  class TextDiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
+                                              private val PLACE_SETTINGS: PlaceSettings) {
     constructor() : this(SharedSettings(), PlaceSettings())
+
+    fun addListener(listener: Listener, disposable: Disposable) {
+      PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
+    }
 
     // Presentation settings
 
@@ -84,11 +87,13 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     var highlightPolicy: HighlightPolicy
       get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
-      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value }
+      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged() }
 
     var ignorePolicy: IgnorePolicy
       get()      = PLACE_SETTINGS.IGNORE_POLICY
-      set(value) { PLACE_SETTINGS.IGNORE_POLICY = value }
+      set(value) { PLACE_SETTINGS.IGNORE_POLICY = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.ignorePolicyChanged() }
 
     //
     // Merge
@@ -141,50 +146,53 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     //
 
     companion object {
-      @JvmStatic
-      fun getSettings(): TextDiffSettings {
-        return getSettings(null)
-      }
+      @JvmField val KEY: Key<TextDiffSettings> = Key.create("TextDiffSettings")
 
-      @JvmStatic
-      fun getSettings(place: String?): TextDiffSettings {
-        return getInstance().getSettings(place)
-      }
+      @JvmStatic fun getSettings(): TextDiffSettings = getSettings(null)
+      @JvmStatic fun getSettings(place: String?): TextDiffSettings = service<TextDiffSettingsHolder>().getSettings(place)
+    }
+
+    interface Listener : EventListener {
+      fun highlightPolicyChanged() {}
+      fun ignorePolicyChanged() {}
     }
   }
 
   fun getSettings(place: String?): TextDiffSettings {
-    val placeSettings = myState.PLACES_MAP.getOrPut(place ?: DiffPlaces.DEFAULT, { PlaceSettings() })
+    val placeKey = place ?: DiffPlaces.DEFAULT
+    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
     return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings)
   }
 
+  private fun copyStateWithoutDefaults(): State {
+    val result = State()
+    result.SHARED_SETTINGS = myState.SHARED_SETTINGS
+    result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP, { defaultPlaceSettings(it) })
+    return result
+  }
+
+  private fun defaultPlaceSettings(place: String): PlaceSettings {
+    val settings = PlaceSettings();
+    if (place == DiffPlaces.CHANGES_VIEW) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
+    if (place == DiffPlaces.COMMIT_DIALOG) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
+    return settings
+  }
+
+
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = defaultPlaceSettings()
-    internal var SHARED_SETTINGS = SharedSettings()
-
-    companion object {
-      private fun defaultPlaceSettings(): TreeMap<String, PlaceSettings> {
-        val map = TreeMap<String, PlaceSettings>()
-
-        val changes = PlaceSettings()
-        changes.EXPAND_BY_DEFAULT = false
-        val commit = PlaceSettings()
-        commit.EXPAND_BY_DEFAULT = false
-
-        map.put(DiffPlaces.DEFAULT, PlaceSettings())
-        map.put(DiffPlaces.CHANGES_VIEW, changes)
-        map.put(DiffPlaces.COMMIT_DIALOG, commit)
-
-        return map
-      }
-    }
+    @JvmField var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
+    @JvmField var SHARED_SETTINGS = SharedSettings()
   }
 
   private var myState: State = State()
 
   override fun getState(): State {
-    return myState
+    return copyStateWithoutDefaults()
   }
 
   override fun loadState(state: State) {

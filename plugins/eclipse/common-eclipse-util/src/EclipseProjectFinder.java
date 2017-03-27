@@ -68,10 +68,7 @@ public class EclipseProjectFinder implements EclipseXml {
         }
         name = name.replace("\n", " ").trim();
       }
-      catch (JDOMException e) {
-        return null;
-      }
-      catch (IOException e) {
+      catch (JDOMException | IOException e) {
         return null;
       }
     }

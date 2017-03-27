@@ -17,6 +17,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -47,7 +48,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters parameters, @NotNull final Processor<PsiMethod> consumer) {
     final PsiMethod method = parameters.getMethod();
 
-    Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)method::getProject);
+    Project project = ReadAction.compute(method::getProject);
     final SearchScope searchScope = parameters.getScope();
 
     if (searchScope instanceof LocalSearchScope) {
@@ -58,14 +59,14 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     if (cached == null) {
       cached = compute(method, project);
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)method::isPhysical)) {
+      if (ReadAction.compute(method::isPhysical)) {
         HighlightingCaches.getInstance(project).OVERRIDING_METHODS.put(method, cached);
       }
     }
 
     for (final PsiMethod subMethod : cached) {
       ProgressManager.checkCanceled();
-      if (!ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> PsiSearchScopeUtil.isInScope(searchScope, subMethod))) {
+      if (!ReadAction.compute(() -> PsiSearchScopeUtil.isInScope(searchScope, subMethod))) {
         continue;
       }
       if (!consumer.process(subMethod) || !parameters.isCheckDeep()) {
@@ -82,7 +83,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
-    final PsiClass methodContainingClass = ApplicationManager.getApplication().runReadAction((Computable<PsiClass>)method::getContainingClass);
+    final PsiClass methodContainingClass = ReadAction.compute(method::getContainingClass);
     if (methodContainingClass == null) return true;
 
     final boolean[] success = {true};

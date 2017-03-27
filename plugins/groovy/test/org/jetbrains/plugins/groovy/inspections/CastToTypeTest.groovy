@@ -39,6 +39,6 @@ class CastToTypeTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(true) + '_after.groovy')
   }
 
-  void testSimple() {doTest('Cast to List<capture of ? extends Abc>')}
+  void testSimple() {doTest('Cast to List<? extends Abc>')}
   void testInReturnType() {doTest('Cast to int')}
 }

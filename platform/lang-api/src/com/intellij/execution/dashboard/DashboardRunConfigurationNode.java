@@ -24,6 +24,4 @@ import org.jetbrains.annotations.NotNull;
 public interface DashboardRunConfigurationNode extends DashboardNode {
   @NotNull
   RunnerAndConfigurationSettings getConfigurationSettings();
-
-  boolean isTerminated();
 }

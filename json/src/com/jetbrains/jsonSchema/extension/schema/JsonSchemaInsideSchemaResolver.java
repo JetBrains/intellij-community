@@ -61,7 +61,7 @@ public class JsonSchemaInsideSchemaResolver {
           if (jsonObject.getParent() instanceof JsonProperty) ref.set(((JsonProperty)jsonObject.getParent()).getNameElement());
           else ref.set(jsonObject);
         }
-      }, mySchemaFile, object, true, mySteps);
+      }, mySchemaFile, object, true, mySteps, false);
       return true;
     });
     return ref.get();

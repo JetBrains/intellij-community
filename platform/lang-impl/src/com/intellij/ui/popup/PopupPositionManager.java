@@ -135,11 +135,11 @@ public class PopupPositionManager {
   }
 
   public static class PositionAdjuster {
-    private final int myGap;
+    protected final int myGap;
 
-    private final Component myRelativeTo;
-    private final Point myRelativeOnScreen;
-    private final Rectangle myScreenRect;
+    protected final Component myRelativeTo;
+    protected final Point myRelativeOnScreen;
+    protected final Rectangle myScreenRect;
 
     public PositionAdjuster(final Component relativeTo, int gap) {
       myRelativeTo = relativeTo;
@@ -257,7 +257,7 @@ public class PopupPositionManager {
       }
     }
 
-    private static Rectangle crop(final Rectangle source, final Rectangle toCrop) {
+    protected static Rectangle crop(final Rectangle source, final Rectangle toCrop) {
       final Rectangle result = new Rectangle(toCrop);
       if (toCrop.x < source.x) {
         result.width -= source.x - toCrop.x;

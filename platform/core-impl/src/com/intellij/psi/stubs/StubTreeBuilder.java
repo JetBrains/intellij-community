@@ -86,7 +86,7 @@ public class StubTreeBuilder {
             data = stubBuilder.buildStubTree(psi);
 
             final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
-            final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubbedRoots.size());
+            final List<PsiFileStub> stubs = new ArrayList<>(stubbedRoots.size());
             stubs.add((PsiFileStub)data);
 
             for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
@@ -124,7 +124,7 @@ public class StubTreeBuilder {
   @NotNull
   public static List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
     final List<Trinity<Language, IStubFileElementType, PsiFile>> roots =
-      new SmartList<Trinity<Language, IStubFileElementType, PsiFile>>();
+      new SmartList<>();
     final PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile file = viewProvider.getPsi(language);
@@ -136,20 +136,12 @@ public class StubTreeBuilder {
       }
     }
 
-    ContainerUtil.sort(roots, new Comparator<Trinity<Language, IStubFileElementType, PsiFile>>() {
-      @Override
-      public int compare(Trinity<Language, IStubFileElementType, PsiFile> o1, Trinity<Language, IStubFileElementType, PsiFile> o2) {
-        if (o1.third == stubBindingRoot) return o2.third == stubBindingRoot ? 0 : -1;
-        else if (o2.third == stubBindingRoot) return 1;
-        else return StringUtil.compare(o1.first.getID(), o2.first.getID(), false);
-      }
+    ContainerUtil.sort(roots, (o1, o2) -> {
+      if (o1.third == stubBindingRoot) return o2.third == stubBindingRoot ? 0 : -1;
+      else if (o2.third == stubBindingRoot) return 1;
+      else return StringUtil.compare(o1.first.getID(), o2.first.getID(), false);
     });
 
-    return ContainerUtil.map(roots, new Function<Trinity<Language, IStubFileElementType, PsiFile>, Pair<IStubFileElementType, PsiFile>>() {
-      @Override
-      public Pair<IStubFileElementType, PsiFile> fun(Trinity<Language, IStubFileElementType, PsiFile> trinity) {
-        return Pair.create(trinity.second, trinity.third);
-      }
-    });
+    return ContainerUtil.map(roots, trinity -> Pair.create(trinity.second, trinity.third));
   }
 }

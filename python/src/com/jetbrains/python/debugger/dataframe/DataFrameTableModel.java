@@ -18,8 +18,9 @@ package com.jetbrains.python.debugger.dataframe;
 import com.google.common.collect.Maps;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
+import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
-import com.jetbrains.python.debugger.array.TableChunkDatasource;
+import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
@@ -33,9 +34,12 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
   private final Map<Integer, ArrayChunk.ColHeader> myColHeaders = Maps.newConcurrentMap();
   private final RowHeaderModel myRowHeaderModel;
 
-  public DataFrameTableModel(int rows, int columns, TableChunkDatasource provider) {
-
-    super(rows, columns, provider);
+  public DataFrameTableModel(int rows,
+                             int columns,
+                             PyDataViewerPanel dataProvider,
+                             PyDebugValue debugValue,
+                             DataFrameViewStrategy strategy) {
+    super(rows, columns, dataProvider, debugValue, strategy);
     myRowHeaderModel = new RowHeaderModel();
   }
   /* we use labels for the first column so we need to offset columns by one everywhere */

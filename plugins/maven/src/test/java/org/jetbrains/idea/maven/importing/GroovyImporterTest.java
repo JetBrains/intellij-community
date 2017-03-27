@@ -355,8 +355,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestSources("project", "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    assertExcludes("project",
-                   "target/generated-sources/groovy-stubs");
+    assertExcludes("project", "target");
   }
 
   public void testDoNotAddCustomGroovySpecificGeneratedSources() throws Exception {
@@ -407,9 +406,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestSources("project", "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    assertExcludes("project",
-                   "target/generated-sources/bar",
-                   "target/generated-sources/foo");
+    assertExcludes("project", "target");
   }
 
   public void testDoNotAddCustomGroovySpecificGeneratedSourcesByRelativePath() throws Exception {
@@ -456,9 +453,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                   "target/generated-sources/xxx");
     assertTestSources("project");
 
-    assertExcludes("project",
-                   "target/generated-sources/bar",
-                   "target/generated-sources/foo");
+    assertExcludes("project", "target");
   }
 
   public void testUpdatingGroovySpecificGeneratedSourcesOnFoldersUpdate() throws Exception {
@@ -510,8 +505,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                     "target/generated-sources/xxx");
       assertTestSources("project",
                         "src/test/groovy");
-      assertExcludes("project",
-                     "target/generated-sources/groovy-stubs");
+      assertExcludes("project", "target");
     }
     finally {
       // do not lock files by maven process
@@ -558,8 +552,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestSources("project", "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    assertExcludes("project",
-                   "target/generated-sources/groovy-stubs");
+    assertExcludes("project", "target");
   }
 
 }

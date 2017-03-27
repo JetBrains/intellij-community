@@ -196,19 +196,33 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
       suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
 
-      if (!result.getPrefixMatcher().getPrefix().isEmpty()) {
-        for (String keyword : ContainerUtil.ar("null", "true", "false")) {
-          String tagText = "{@code " + keyword + "}";
-          result.addElement(LookupElementBuilder.create(keyword).withPresentableText(tagText).withInsertHandler(
-            (context, item) -> context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), tagText))
-          );
-        }
-      }
+      suggestCodeLiterals(result, position);
 
       return;
     }
 
     super.fillCompletionVariants(parameters, result);
+  }
+
+  private static void suggestCodeLiterals(@NotNull CompletionResultSet result, PsiElement position) {
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiInlineDocTag && !"code".equals(((PsiInlineDocTag)parent).getName())) {
+      return;
+    }
+
+    if (!result.getPrefixMatcher().getPrefix().isEmpty()) {
+      for (String keyword : ContainerUtil.ar("null", "true", "false")) {
+        LookupElementBuilder element = LookupElementBuilder.create(keyword);
+        result.addElement(parent instanceof PsiInlineDocTag ? element : wrapIntoCodeTag(element));
+      }
+    }
+  }
+
+  @NotNull
+  private static LookupElementBuilder wrapIntoCodeTag(LookupElementBuilder element) {
+    String tagText = "{@code " + element.getLookupString() + "}";
+    return element.withPresentableText(tagText).withInsertHandler(
+      (context, item) -> context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), tagText));
   }
 
   private void suggestLinkWrappingVariants(@NotNull CompletionParameters parameters,

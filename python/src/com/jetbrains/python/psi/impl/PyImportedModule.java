@@ -23,13 +23,16 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.types.PyImportedModuleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class PyImportedModule extends LightElement {
+public class PyImportedModule extends LightElement implements PyTypedElement {
   @Nullable private PyImportElement myImportElement;
   @NotNull private final PyFile myContainingFile;
   @NotNull private final QualifiedName myImportedPrefix;
@@ -106,6 +109,12 @@ public class PyImportedModule extends LightElement {
       return PyUtil.getPackageElement((PsiDirectory)element, this);
     }
     return element;
+  }
+
+  @Nullable
+  @Override
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    return new PyImportedModuleType(this);
   }
 
   @Nullable

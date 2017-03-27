@@ -59,7 +59,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   @NonNls
   private static final String FOLDER_NAME = "folderName";
   @NonNls
-  private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
+  static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
   @NonNls
   public static final String NAME_ATTR = "name";
   //@NonNls
