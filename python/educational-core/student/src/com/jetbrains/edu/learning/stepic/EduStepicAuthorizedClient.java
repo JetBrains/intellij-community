@@ -138,11 +138,12 @@ public class EduStepicAuthorizedClient {
     final StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
     if (tokenInfo != null) {
       final StepicUser user = new StepicUser(email, password, tokenInfo);
+      ourClient = createInitializedClient(user.getAccessToken());
+
       final StepicUser currentUser = getCurrentUser();
       if (currentUser != null) {
         user.setId(currentUser.getId());
       }
-      ourClient = createInitializedClient(user.getAccessToken());
 
       return user;
     }
