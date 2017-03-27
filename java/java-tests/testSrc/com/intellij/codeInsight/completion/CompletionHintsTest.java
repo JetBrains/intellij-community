@@ -134,6 +134,24 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
   }
 
+  public void testTabWithNestedCompletion() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    myFixture.doHighlighting();
+    myFixture.type("System.getPro");
+    complete("getProperty(String key, String def)");
+    myFixture.doHighlighting();
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, <caret>), ) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, )<caret>, ) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), <caret>) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), )<caret> } }");
+  }
+
   private void showParameterInfo() {
     myFixture.performEditorAction("ParameterInfo");
     UIUtil.dispatchAllInvocationEvents();
