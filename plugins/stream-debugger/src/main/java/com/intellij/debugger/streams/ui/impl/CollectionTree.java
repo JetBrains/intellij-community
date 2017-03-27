@@ -235,7 +235,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     int topIndex = 0;
     int bottomIndex = 1;
-    int topY = getRowBounds(rows[bottomIndex]).y;
+    int topY = getRowBounds(rows[topIndex]).y;
 
     final Result result = new Result();
     while (bottomIndex < rows.length) {
