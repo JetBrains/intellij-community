@@ -65,7 +65,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     return result;
   }
 
-  protected boolean isOurEditor(Editor editor) {
+  boolean isOurEditor(Editor editor) {
     return editor != null &&
            editor.getComponent().isShowing() &&
            !Boolean.TRUE.equals(editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY)) &&

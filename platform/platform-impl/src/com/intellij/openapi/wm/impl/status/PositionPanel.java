@@ -69,6 +69,7 @@ public class PositionPanel extends EditorBasedWidget
     updatePosition(getEditor());
   }
 
+  @Override
   @NotNull
   public String ID() {
     return ID;
@@ -79,15 +80,18 @@ public class PositionPanel extends EditorBasedWidget
     return new PositionPanel(getProject());
   }
 
+  @Override
   public WidgetPresentation getPresentation(@NotNull final PlatformType type) {
     return this;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myText == null ? "" : myText;
   }
 
+  @Override
   @NotNull
   public String getMaxPossibleText() {
     return MAX_POSSIBLE_TEXT;
@@ -98,10 +102,12 @@ public class PositionPanel extends EditorBasedWidget
     return Component.CENTER_ALIGNMENT;
   }
 
+  @Override
   public String getTooltipText() {
     return UIBundle.message("go.to.line.command.double.click");
   }
 
+  @Override
   public Consumer<MouseEvent> getClickConsumer() {
     return mouseEvent -> {
       Project project = getProject();
@@ -122,6 +128,7 @@ public class PositionPanel extends EditorBasedWidget
     };
   }
 
+  @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
@@ -143,6 +150,7 @@ public class PositionPanel extends EditorBasedWidget
     if (isFocusedEditor(editor)) updatePosition(editor);
   }
 
+  @Override
   public void caretPositionChanged(final CaretEvent e) {
     Editor editor = e.getEditor();
     // When multiple carets exist in editor, we don't show information about caret positions
