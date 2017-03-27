@@ -78,7 +78,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
         vmBreakpoints = list
         while (iterator.hasNext()) {
           val vmBreakpoint = iterator.next()
-          if ((vmToIdeBreakpoints.get(vmBreakpoint)?.size ?: -1) > 1) {
+          if (vmToIdeBreakpoints[vmBreakpoint]?.any { it != breakpoint } ?: false) {
             // we must not disable vm breakpoint - it is used for another ide breakpoints
             iterator.remove()
           }
@@ -88,7 +88,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
         vmBreakpoints = IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.remove(breakpoint) ?: return nullPromise()
         for (vmBreakpoint in vmBreakpoints) {
           vmToIdeBreakpoints.remove(vmBreakpoint, breakpoint)
-          if (vmToIdeBreakpoints.containsKey(vmBreakpoint)) {
+          if (vmToIdeBreakpoints[vmBreakpoint]?.any { it != breakpoint } ?: false) {
             // we must not remove vm breakpoint - it is used for another ide breakpoints
             return nullPromise()
           }
