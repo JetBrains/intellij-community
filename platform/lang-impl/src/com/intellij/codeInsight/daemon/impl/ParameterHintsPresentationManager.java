@@ -88,20 +88,23 @@ public class ParameterHintsPresentationManager implements Disposable {
   }
 
   public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
-    updateRenderer(editor, hint, null, useAnimation);
+    if (useAnimation) {
+      updateRenderer(editor, hint, null);
+    }
+    else {
+      Disposer.dispose(hint);  
+    }
   }
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
-    updateRenderer(editor, hint, newText, true);
+    updateRenderer(editor, hint, newText);
   }
 
-  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, boolean useAnimation) {
+  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText, useAnimation);
+    renderer.update(editor, newText, true);
     hint.updateSize();
-    if (useAnimation) {
-      scheduleRendererUpdate(editor, hint);
-    }
+    scheduleRendererUpdate(editor, hint);
   }
 
   @Override
