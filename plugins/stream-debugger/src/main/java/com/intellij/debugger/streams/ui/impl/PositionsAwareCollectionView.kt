@@ -2,7 +2,6 @@ package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.ui.PaintingListener
-import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.EventDispatcher
@@ -12,8 +11,8 @@ import com.intellij.util.EventDispatcher
  */
 class PositionsAwareCollectionView(header: String,
                                    evaluationContext: EvaluationContextImpl,
-                                   private val values: List<ValueWithPosition>) : CollectionView(header, evaluationContext,
-                                                                                                 values.map { it.traceElement }) {
+                                   private val values: List<ValueWithPositionImpl>) : CollectionView(header, evaluationContext,
+                                                                                                     values.map { it.traceElement }) {
   private val myDispatcher: EventDispatcher<ValuesPositionsListener> = EventDispatcher.create(ValuesPositionsListener::class.java)
 
   init {
@@ -27,22 +26,46 @@ class PositionsAwareCollectionView(header: String,
   fun addValuesPositionsListener(listener: ValuesPositionsListener): Unit = myDispatcher.addListener(listener)
 
   private fun updateValues(): Unit {
+    var changed: Boolean = false
     val visibleRect = instancesTree.visibleRect
     for (value in values) {
       val rect = instancesTree.getRectByValue(value.traceElement)
       if (rect == null) {
-        value.position = -1
-        value.isVisible = false
-        value.isSelected = false
+        changed = value.invalidate(changed)
       }
       else {
-        value.isVisible = visibleRect.intersects(rect)
-        value.position = rect.y + rect.height / 2 - visibleRect.y
-        value.isSelected = instancesTree.isSelected(value.traceElement)
+        changed = value.set(changed,
+                            rect.y + rect.height / 2 - visibleRect.y,
+                            visibleRect.intersects(rect),
+                            instancesTree.isSelected(value.traceElement))
       }
     }
 
-    ApplicationManager.getApplication().invokeLater({ myDispatcher.multicaster.valuesPositionsChanged() })
+    if (changed) {
+      ApplicationManager.getApplication().invokeLater({ myDispatcher.multicaster.valuesPositionsChanged() })
+    }
+  }
+
+  private fun ValueWithPositionImpl.invalidate(modified: Boolean): Boolean {
+    return when (modified) {
+      true -> {
+        setInvalid()
+        true
+      }
+      false -> updateToInvalid()
+    }
+  }
+
+  private fun ValueWithPositionImpl.set(modified: Boolean, pos: Int, visible: Boolean, selected: Boolean): Boolean {
+    return when (modified) {
+      true -> {
+        setProperties(pos, visible, selected)
+        true
+      }
+      false -> updateProperties(pos, visible, selected)
+    }
   }
 }
+
+
 

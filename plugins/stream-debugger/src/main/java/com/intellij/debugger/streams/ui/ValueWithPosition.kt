@@ -8,8 +8,8 @@ import com.intellij.debugger.streams.trace.TraceElement
 interface ValueWithPosition {
   val traceElement: TraceElement
 
-  var isVisible: Boolean
-  var position: Int
-  var isSelected: Boolean
+  val isVisible: Boolean
+  val position: Int
+  val isSelected: Boolean
 }
 

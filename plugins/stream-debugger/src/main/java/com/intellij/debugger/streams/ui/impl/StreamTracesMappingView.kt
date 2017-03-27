@@ -43,12 +43,12 @@ class StreamTracesMappingView(
   fun resolve(prev: TraceController): LinkedValuesWithPositions {
     val prevTrace = prev.resolvedTrace
 
-    val pool = mutableMapOf<TraceElement, ValueWithPosition>()
-    fun getValue(element: TraceElement): ValueWithPosition = pool.computeIfAbsent(element, { ValueWithPositionImpl(it) })
+    val pool = mutableMapOf<TraceElement, ValueWithPositionImpl>()
+    fun getValue(element: TraceElement): ValueWithPositionImpl = pool.computeIfAbsent(element, ::ValueWithPositionImpl)
 
-    val prevValues = mutableListOf<ValueWithPosition>()
-    val nextValues = mutableSetOf<ValueWithPosition>()
-    val mapping = mutableMapOf<ValueWithPosition, MutableSet<ValueWithPosition>>()
+    val prevValues = mutableListOf<ValueWithPositionImpl>()
+    val nextValues = mutableSetOf<ValueWithPositionImpl>()
+    val mapping = mutableMapOf<ValueWithPositionImpl, MutableSet<ValueWithPositionImpl>>()
 
     for (element in prevTrace.values) {
       val prevValue = getValue(element)
@@ -74,8 +74,8 @@ class StreamTracesMappingView(
   }
 
   data class LinkedValuesWithPositions(
-    val valuesBefore: List<ValueWithPosition>,
-    val valuesAfter: List<ValueWithPosition>,
+    val valuesBefore: List<ValueWithPositionImpl>,
+    val valuesAfter: List<ValueWithPositionImpl>,
     val mapping: LinkedValuesMapping
   )
 }
