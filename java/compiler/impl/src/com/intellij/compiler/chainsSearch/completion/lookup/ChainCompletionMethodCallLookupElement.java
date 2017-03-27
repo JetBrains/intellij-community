@@ -27,7 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,12 +80,9 @@ public class ChainCompletionMethodCallLookupElement extends JavaMethodCallElemen
       assert file instanceof PsiJavaFile;
       final PsiJavaFile javaFile = (PsiJavaFile)file;
       if (myReplaceElements != null) {
-        myReplaceElements.forEachValue(new TObjectProcedure<SubLookupElement>() {
-          @Override
-          public boolean execute(final SubLookupElement subLookupElement) {
-            subLookupElement.doImport(javaFile);
-            return true;
-          }
+        myReplaceElements.forEachValue(subLookupElement -> {
+          subLookupElement.doImport(javaFile);
+          return true;
         });
       }
       context.commitDocument();

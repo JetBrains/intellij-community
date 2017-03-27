@@ -19,47 +19,28 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
-import com.intellij.compiler.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
-import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.sub.GetterLookupSubLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.sub.SubLookupElement;
-import com.intellij.compiler.chainsSearch.context.ContextRelevantStaticMethod;
+import com.intellij.compiler.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionLookupElementUtil.createLookupElement;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class MethodsChainLookupRangingHelper {
-
-  public static List<LookupElement> chainsToWeightableLookupElements(List<MethodsChain> chains,
-                                                                     ChainCompletionContext context) {
-    CachedRelevantStaticMethodSearcher staticMethodSearcher = new CachedRelevantStaticMethodSearcher(context);
-    List<LookupElement> lookupElements = new ArrayList<>(chains.size());
-    for (MethodsChain chain : chains) {
-      LookupElement lookupElement = chainToWeightableLookupElement(chain, context, staticMethodSearcher);
-      if (lookupElement != null) {
-        lookupElements.add(lookupElement);
-      }
-    }
-    return lookupElements;
-  }
-
-  @SuppressWarnings("ConstantConditions")
   @Nullable
-  private static LookupElement chainToWeightableLookupElement(MethodsChain chain,
-                                                              ChainCompletionContext context,
-                                                              CachedRelevantStaticMethodSearcher staticMethodSearcher) {
+  public static LookupElement chainToWeightableLookupElement(MethodsChain chain,
+                                                             ChainCompletionContext context) {
     int chainSize = chain.size();
     assert chainSize != 0;
     int lastMethodWeight = chain.getChainWeight();
@@ -90,8 +71,7 @@ public class MethodsChainLookupRangingHelper {
         qualifierClass = null;
       }
 
-      MethodProcResult procResult = processMethod(method, qualifierClass, isHead, lastMethodWeight, context, staticMethodSearcher,
-                                                        nullableNotNullManager);
+      MethodProcResult procResult = processMethod(method, qualifierClass, isHead, lastMethodWeight, context, nullableNotNullManager);
       if (procResult == null) {
         return null;
       }
@@ -126,7 +106,6 @@ public class MethodsChainLookupRangingHelper {
                                                 boolean isHeadMethod,
                                                 int weight,
                                                 ChainCompletionContext context,
-                                                CachedRelevantStaticMethodSearcher staticMethodSearcher,
                                                 NullableNotNullManager nullableNotNullManager) {
     int unreachableParametersCount = 0;
     int notMatchedStringVars = 0;
@@ -153,16 +132,6 @@ public class MethodsChainLookupRangingHelper {
         PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
         if (contextVariable != null) {
           if (contextVariables.size() == 1) parametersMap.put(i, createSubLookup(contextVariable));
-          matchedParametersInContext++;
-          continue;
-        }
-        ContextRelevantStaticMethod contextRelevantStaticMethod =
-          ContainerUtil.getFirstItem(staticMethodSearcher.getRelevantStaticMethods(type, weight), null);
-        if (contextRelevantStaticMethod != null) {
-          //
-          // In most cases it is not really relevant
-          //
-          //parametersMap.put(i, contextRelevantStaticMethod.createLookupElement());
           matchedParametersInContext++;
           continue;
         }

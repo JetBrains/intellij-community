@@ -18,7 +18,6 @@ package com.intellij.compiler.chainsSearch;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -48,21 +47,6 @@ public final class ChainCompletionStringUtil {
       }
     }
     return false;
-  }
-
-  public static boolean isShortNamePrimitiveOrArrayOfPrimitives(final @Nullable String shortName) {
-    if (shortName == null) {
-      return false;
-    }
-    return PRIMITIVES_SHORT_NAMES.contains(deleteArraySigns(shortName));
-  }
-
-  private static String deleteArraySigns(final @NotNull String typeName) {
-    String nameWithoutArraySign = typeName;
-    while (nameWithoutArraySign.endsWith("[]")) {
-      nameWithoutArraySign = nameWithoutArraySign.substring(0, nameWithoutArraySign.length() - 2);
-    }
-    return nameWithoutArraySign;
   }
 
   private static final String[] PRIMITIVES_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,

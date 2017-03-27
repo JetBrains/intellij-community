@@ -105,6 +105,10 @@ public class ChainCompletionContext {
     return false;
   }
 
+  public PsiFile getContextFile() {
+    return myContext.getContainingFile();
+  }
+
   @NotNull
   public Set<PsiType> getContextTypes() {
     return myContextElements.stream().map(ChainCompletionContext::getType).collect(Collectors.toSet());

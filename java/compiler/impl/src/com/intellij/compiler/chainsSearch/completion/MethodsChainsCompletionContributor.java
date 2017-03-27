@@ -20,28 +20,28 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
-import com.intellij.compiler.chainsSearch.*;
+import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
+import com.intellij.compiler.chainsSearch.ChainsSearcher;
+import com.intellij.compiler.chainsSearch.MethodsChain;
+import com.intellij.compiler.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.TargetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.intellij.compiler.chainsSearch.completion.CompletionContributorPatternUtil.patternForMethodCallParameter;
-import static com.intellij.compiler.chainsSearch.completion.CompletionContributorPatternUtil.patternForVariableAssignment;
 import static com.intellij.patterns.PsiJavaPatterns.or;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author Dmitry Batkovich
@@ -62,17 +62,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         try {
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
-
-          Set<PsiType> contextTypesKeysSet = completionContext.getContextTypes();
-          Set<PsiType> contextRelevantTypes = new HashSet<>(contextTypesKeysSet.size() + 1);
-          for (PsiType type : contextTypesKeysSet) {
-            if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
-              contextRelevantTypes.add(type);
-            }
-          }
-          TargetType target = completionContext.getTarget();
-          contextRelevantTypes.remove(target.getPsiType());
-          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(target, contextRelevantTypes, completionContext);
+          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
           if (!IS_UNIT_TEST_MODE) {
             result.runRemainingContributors(parameters, completionResult -> {
               LookupElement lookupElement = completionResult.getLookupElement();
@@ -99,54 +89,22 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static List<LookupElement> searchForLookups(TargetType target,
-                                                      Set<PsiType> contextRelevantTypes,
-                                                      ChainCompletionContext completionContext) {
-    Project project = completionContext.getProject();
-    CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
+  private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
+    CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
+    TargetType target = context.getTarget();
     List<MethodsChain> searchResult =
-      searchChains(target, ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE, ChainSearchMagicConstants.MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
-    if (searchResult.size() < ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE) {
-      if (!target.isArray()) {
-        List<MethodsChain> inheritorFilteredSearchResult = new SmartList<>();
-        Processor<TargetType> consumer = targetType -> {
-          for (MethodsChain chain : searchChains(targetType,
-                                                 ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
-                                                 ChainSearchMagicConstants.MAX_CHAIN_SIZE,
-                                                 completionContext,
-                                                 methodsUsageIndexReader)) {
-            boolean insert = true;
-            for (MethodsChain baseChain : searchResult) {
-              MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain);
-              if (r != MethodsChain.CompareResult.NOT_EQUAL) {
-                insert = false;
-                break;
-              }
-            }
-            if (insert) {
-              inheritorFilteredSearchResult.add(chain);
-            }
-          }
-          searchResult.addAll(inheritorFilteredSearchResult);
-          return searchResult.size() < ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE;
-        };
-        DirectClassInheritorsSearch.search(((PsiClassType)target.getPsiType()).resolve()).forEach(psiClass -> {
-          String inheritorQName = psiClass.getQualifiedName();
-          if (inheritorQName == null) {
-            return true;
-          }
-          return consumer.process(new TargetType(inheritorQName, false, new PsiImmediateClassType(psiClass, PsiSubstitutor.EMPTY)));
-        });
-      }
-    }
-    List<MethodsChain> chains = searchResult.size() > ChainSearchMagicConstants.MAX_CHAIN_SIZE ? chooseHead(searchResult) : searchResult;
-    return MethodsChainLookupRangingHelper
-      .chainsToWeightableLookupElements(filterTailAndGetSumLastMethodOccurrence(chains), completionContext);
-  }
+      ChainsSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
+                            target,
+                            ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
+                            context,
+                            methodsUsageIndexReader);
+    int maxWeight = searchResult.stream().mapToInt(MethodsChain::getChainWeight).max().orElse(0);
 
-  private static List<MethodsChain> chooseHead(List<MethodsChain> elements) {
-    Collections.sort(elements, (o1, o2) -> o2.getChainWeight() - o1.getChainWeight());
-    return elements.subList(0, ChainSearchMagicConstants.MAX_CHAIN_SIZE);
+    return searchResult
+      .stream()
+      .filter(ch -> ch.getChainWeight() * ChainSearchMagicConstants.FILTER_RATIO >= maxWeight)
+      .map(ch -> MethodsChainLookupRangingHelper.chainToWeightableLookupElement(ch, context))
+      .collect(Collectors.toList());
   }
 
   @Nullable
@@ -191,30 +149,19 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     return ChainCompletionContext.createContext(type, identifierText, assignmentExpression);
   }
 
-  private static List<MethodsChain> filterTailAndGetSumLastMethodOccurrence(List<MethodsChain> chains) {
-    int maxWeight = 0;
-    for (MethodsChain chain : chains) {
-      int chainWeight = chain.getChainWeight();
-      if (chainWeight > maxWeight) {
-        maxWeight = chainWeight;
-      }
-    }
+  @NotNull
+  private static ElementPattern<PsiElement> patternForVariableAssignment() {
+    final ElementPattern<PsiElement> patternForParent = or(psiElement().withText(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED)
+                                                             .afterSiblingSkipping(psiElement(PsiWhiteSpace.class),
+                                                                                   psiElement(PsiJavaToken.class).withText("=")));
 
-    List<MethodsChain> filteredResult = new ArrayList<>();
-    for (MethodsChain chain : chains) {
-      int chainWeight = chain.getChainWeight();
-      if (chainWeight * ChainSearchMagicConstants.FILTER_RATIO >= maxWeight) {
-        filteredResult.add(chain);
-      }
-    }
-    return filteredResult;
+    return psiElement().withParent(patternForParent).withSuperParent(2, or(psiElement(PsiAssignmentExpression.class),
+                                                                           psiElement(PsiLocalVariable.class)
+                                                                             .inside(PsiDeclarationStatement.class))).inside(PsiMethod.class);
   }
 
-  private static List<MethodsChain> searchChains(TargetType target,
-                                                 int maxResultSize,
-                                                 int maxChainSize,
-                                                 ChainCompletionContext context,
-                                                 CompilerReferenceServiceEx methodsUsageIndexReader) {
-    return ChainsSearcher.search(maxChainSize, target, maxResultSize, context, methodsUsageIndexReader);
+  @NotNull
+  private static ElementPattern<PsiElement> patternForMethodCallParameter() {
+    return psiElement().withSuperParent(3, PsiMethodCallExpressionImpl.class);
   }
 }
