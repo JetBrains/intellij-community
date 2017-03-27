@@ -13,6 +13,11 @@ import javax.swing.JPanel
  */
 class MappingPane(private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
+  companion object {
+    val selectedLinkColor: JBColor = JBColor.BLUE
+    val regularLinkColor: JBColor = JBColor.DARK_GRAY
+  }
+
   init {
     // TODO: fix this workaround
     add(JBLabel(" "), BorderLayout.NORTH)
@@ -32,10 +37,18 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
         val position: Int = value.position
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         for (nextValue in linkedValues.filter { it.isVisible }) {
-          g.color = JBColor.BLACK
+          g.color = getLineColor(value, nextValue)
           g.drawLine(x1, position, x2, nextValue.position)
         }
       }
+    }
+
+    private fun getLineColor(left: ValueWithPosition, right: ValueWithPosition): JBColor {
+      if (left.isSelected || right.isSelected) {
+        return selectedLinkColor
+      }
+
+      return regularLinkColor
     }
   }
 }
