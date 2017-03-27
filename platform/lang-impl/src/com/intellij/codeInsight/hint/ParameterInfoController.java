@@ -219,8 +219,13 @@ public class ParameterInfoController implements Disposable {
   }
 
   private void adjustPositionForLookup(@NotNull Lookup lookup) {
-    if (!myHint.isVisible() || myEditor.isDisposed()) {
+    if (myEditor.isDisposed()) {
       Disposer.dispose(this);
+      return;
+    }
+
+    if (!myHint.isVisible()) {
+      if (!myKeepOnHintHidden) Disposer.dispose(this);
       return;
     }
 
