@@ -148,6 +148,19 @@
             <arg value="apply"/>
             <arg value="${patchFile}"/>
         </exec>
+
+        <!-- Remove when switch to branch with this commit (IDEA Community 172)-->
+        <property name="temporaryPatchFile"
+                  value="${basedir}/patches/Don_t_show_help_button_if_there_is_no_help_available.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${temporaryPatchFile}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${temporaryPatchFile}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->

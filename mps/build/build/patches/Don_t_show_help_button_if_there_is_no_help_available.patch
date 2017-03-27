@@ -1,0 +1,20 @@
+Index: community/platform/platform-api/src/com/intellij/openapi/ui/DialogWrapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/platform-api/src/com/intellij/openapi/ui/DialogWrapper.java	(revision 01d1840b323a355201163a3c8c8f9a603f6be2c3)
++++ community/platform/platform-api/src/com/intellij/openapi/ui/DialogWrapper.java	(revision 9dbc09708d3e79273b6e16cee176b52d54816c16)
+@@ -1080,7 +1080,11 @@
+    */
+   @NotNull
+   protected Action[] createActions() {
+-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
++    Action helpAction = getHelpAction();
++
++    return helpAction == myHelpAction && getHelpId() == null
++           ? new Action[]{getOKAction(), getCancelAction()}
++           : new Action[]{getOKAction(), getCancelAction(), helpAction};
+   }
+ 
+   @NotNull
