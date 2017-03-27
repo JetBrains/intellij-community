@@ -378,6 +378,7 @@ public class InferenceSession {
 
     myCheckApplicabilityPhase = false;
     if (properties != null && !properties.isApplicabilityCheck()) {
+      String expectedActualErrorMessage = null;
       final PsiMethod method = properties.getMethod();
       if (parent instanceof PsiCallExpression && PsiPolyExpressionUtil.isMethodCallPolyExpression((PsiExpression)parent, method)) {
         final PsiType returnType = method.getReturnType();
@@ -389,12 +390,17 @@ public class InferenceSession {
           }
 
           if (targetType != null && !PsiType.VOID.equals(targetType)) {
-            registerReturnTypeConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
+            PsiType actualType = PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType);
+            registerReturnTypeConstraints(actualType, targetType);
+            expectedActualErrorMessage = "Incompatible types. Required " + targetType.getPresentableText() + " but '" + method.getName() + "' was inferred to " + actualType.getPresentableText() + ":";
           }
         }
       }
 
       if (!repeatInferencePhases()) {
+        if (expectedActualErrorMessage != null && myErrorMessages != null) {
+          myErrorMessages.add(0, expectedActualErrorMessage);
+        }
         resolveBounds(getInputInferenceVariablesFromTopLevelFunctionalExpressions(args, properties), initialSubstitutor);
         return;
       }

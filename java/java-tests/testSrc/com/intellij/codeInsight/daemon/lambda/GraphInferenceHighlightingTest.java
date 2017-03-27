@@ -153,7 +153,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
     boolean found = false;
     for (String tooltip : tooltips) {
-      if (tooltip.contains("reason: no instance(s) of type variable(s) K, U exist so that Map&lt;K, U&gt; conforms to Function&lt;U, V&gt;")) {
+      if (tooltip.contains("no instance(s) of type variable(s) K, U exist so that Map&lt;K, U&gt; conforms to Function&lt;U, V&gt;")) {
         found = true;
         break;
       }
