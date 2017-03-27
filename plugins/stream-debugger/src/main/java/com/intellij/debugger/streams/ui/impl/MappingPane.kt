@@ -16,7 +16,7 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
     val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
     val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
 
-    val MAX_ANGLE_TO_DRAW_LINK = 3 * Math.PI / 8
+    val MAX_ANGLE_TO_DRAW_LINK = 4 * Math.PI / 10
     val STROKE = BasicStroke(2.toFloat())
   }
 
@@ -53,14 +53,6 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
     private fun needToDraw(x1: Int, x2: Int, left: ValueWithPosition, right: ValueWithPosition): Boolean {
       if (left.isVisible && right.isVisible) {
         return true
-      }
-
-      if (!left.isVisible && !right.isVisible) {
-        return false
-      }
-
-      if (left.position == -1 || right.position == -1) {
-        return false
       }
 
       return angleToNormal(x1, left.position, x2, right.position) < MAX_ANGLE_TO_DRAW_LINK
