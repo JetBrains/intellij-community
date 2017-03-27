@@ -30,11 +30,13 @@ class PositionsAwareCollectionView(header: String,
     val visibleRect = instancesTree.visibleRect
     for (value in values) {
       val rect = instancesTree.getRectByValue(value.traceElement)
-      if (rect == null || !visibleRect.intersects(rect)) {
+      if (rect == null) {
         value.position = -1
+        value.isVisible = false
         value.isSelected = false
       }
       else {
+        value.isVisible = visibleRect.intersects(rect)
         value.position = rect.y + rect.height / 2 - visibleRect.y
         value.isSelected = instancesTree.isSelected(value.traceElement)
       }

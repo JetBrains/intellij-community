@@ -4,14 +4,19 @@ import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.debugger.streams.ui.ValueWithPosition
 
 /**
+ * TODO: use data class
  * @author Vitaliy.Bibaev
  */
 class ValueWithPositionImpl(override val traceElement: TraceElement) : ValueWithPosition {
   private var myPosition = -1
   private var myIsSelected = false
+  private var myIsVisible = false
 
-  override val isVisible: Boolean
-    get() = position != -1
+  override var isVisible: Boolean
+    get() = myIsVisible
+    set(value) {
+      myIsVisible = value
+    }
 
   override var position: Int
     get() = myPosition
