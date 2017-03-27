@@ -75,7 +75,7 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
-    if (!(exprList instanceof PsiExpressionList)) return;
+    if (!(exprList instanceof PsiExpressionList) || !(exprList.getParent() instanceof PsiCall)) return;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
     ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
