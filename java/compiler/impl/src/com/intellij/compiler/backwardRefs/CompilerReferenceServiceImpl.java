@@ -259,10 +259,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         final TIntHashSet ids1 = myReader.getAllContainingFileIds(ref1);
         final TIntHashSet ids2 = myReader.getAllContainingFileIds(ref2);
         final TIntHashSet intersection = intersection(ids1, ids2);
-        if ((ids1.size() - intersection.size()) * correlationThreshold < intersection.size()) {
+        if ((ids1.size() - intersection.size()) * correlationThreshold < ids1.size()) {
           return true;
         }
-        if ((ids1.size() - intersection.size()) * correlationThreshold < intersection.size()) {
+        if ((ids2.size() - intersection.size()) * correlationThreshold < ids2.size()) {
           return true;
         }
         return false;
