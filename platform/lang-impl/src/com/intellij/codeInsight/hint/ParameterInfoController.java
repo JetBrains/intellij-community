@@ -143,10 +143,6 @@ public class ParameterInfoController implements Disposable {
     myHint.setSelectingHint(true);
     myComponent.setParameterOwner(parameterOwner);
     myComponent.setHighlightedParameter(highlighted);
-    myComponent.update(); // to have correct preferred size
-    if (showHint) {
-      showHint(requestFocus);
-    }
 
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.add(this);
@@ -187,11 +183,15 @@ public class ParameterInfoController implements Disposable {
       }
     };
     LookupManager.getInstance(project).addPropertyChangeListener(lookupListener, this);
-
-    updateComponent();
     if (myEditor instanceof EditorImpl) {
       Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
     }
+
+    myComponent.update(); // to have correct preferred size
+    if (showHint) {
+      showHint(requestFocus);
+    }
+    updateComponent();
   }
 
   @Override
