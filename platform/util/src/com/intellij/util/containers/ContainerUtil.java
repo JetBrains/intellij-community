@@ -2660,6 +2660,37 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <T, V> List<V> map2FlattenedList(@NotNull Iterable<? extends T> collection, @NotNull Function<T, List<V>> function) {
+    List<V> result = null;
+    boolean isOriginal = true;
+    for (T each : collection) {
+      List<V> toAdd = function.fun(each);
+      if (!toAdd.isEmpty()) {
+        if (result == null) {
+          result = toAdd;
+        }
+        else {
+          if (isOriginal) {
+            List<V> original = result;
+            result = new ArrayList<V>(result.size() + toAdd.size());
+            result.addAll(original);
+            isOriginal = false;
+          }
+          result.addAll(toAdd);
+        }
+      }
+    }
+
+    if (result == null) {
+      return emptyList();
+    }
+    else {
+      return Collections.unmodifiableList(result);
+    }
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
     return ContainerUtilRt.map2Set(collection, mapper);
   }
