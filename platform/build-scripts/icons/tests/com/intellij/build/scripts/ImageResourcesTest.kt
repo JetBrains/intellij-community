@@ -32,6 +32,7 @@ import java.util.*
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
 
+@Ignore // Fails from bazel (it ends up calling PathManager.getHomePath which fails from bazel)
 class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
@@ -42,6 +43,7 @@ class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   }
 }
 
+@Ignore // Fails from bazel (it ends up calling PathManager.getHomePath which fails from bazel)
 class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
@@ -75,6 +77,7 @@ class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
 }
 
 
+@Ignore // Fails from bazel (it ends up calling PathManager.getHomePath which fails from bazel)
 @RunWith(Parameterized::class)
 abstract class ImageResourcesTestBase {
   @JvmField @Parameter(value = 0) var testName: String? = null
