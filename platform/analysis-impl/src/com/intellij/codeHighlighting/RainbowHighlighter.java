@@ -22,7 +22,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.Pair;
@@ -331,8 +330,8 @@ public class RainbowHighlighter {
   @NotNull
   private static TextAttributesKey createRainbowKey(int i, Color rainbowColor) {
     //noinspection deprecation
-    TextAttributesKey key = TextAttributesKey.createTextAttributesKey(
-      EditorColorsSchemeImpl.createMutableTextAttributesKeyExternalName(RAINBOW_TEMP_PREF + i), 
+    TextAttributesKey key = TextAttributesKey.createTempTextAttributesKey(
+      RAINBOW_TEMP_PREF + i,
       new TextAttributes());
     key.getDefaultAttributes().setForegroundColor(rainbowColor);
     return key;
