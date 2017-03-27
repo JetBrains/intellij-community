@@ -34,6 +34,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -160,7 +161,10 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     select(paths);
     highlightValues(elements);
-    tryScrollTo(paths);
+
+    if (paths.length > 0) {
+      scrollPathToVisible(paths[0]);
+    }
 
     updatePresentation();
   }
@@ -188,9 +192,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     myIgnoreInternalSelectionEvents = true;
     getSelectionModel().setSelectionPaths(paths);
-    if (paths.length > 0) {
-      scrollPathToVisible(paths[0]);
-    }
     myIgnoreInternalSelectionEvents = false;
   }
 
@@ -201,23 +202,59 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   private void tryScrollTo(@NotNull List<TraceElement> elements) {
-    if (elements.isEmpty()) {
+    final int[] rows = elements.stream().map(myValue2Path::get).filter(Objects::nonNull).mapToInt(this::getRowForPath).sorted().toArray();
+    if (rows.length == 0) {
       return;
     }
 
-    for (final TraceElement element : elements) {
-      final TreePath path = myValue2Path.get(element);
-      if (path != null) {
-        scrollPathToVisible(path);
-        return;
-      }
+    if (isShowing()) {
+      final Rectangle bestVisibleArea = optimizeRowsCountInVisibleRect(rows);
+      scrollRectToVisible(bestVisibleArea);
+    }
+    else {
+      // Use slow path if component hidden
+      scrollPathToVisible(getPathForRow(rows[0]));
     }
   }
 
-  private void tryScrollTo(@NotNull TreePath[] paths) {
-    if (paths.length > 0) {
-      scrollPathToVisible(paths[0]);
+  @NotNull
+  private Rectangle optimizeRowsCountInVisibleRect(int[] rows) {
+    // a simple scan-line algorithm to find an optimal subset of visible rows (maximum)
+    final Rectangle visibleRect = getVisibleRect();
+    final int height = visibleRect.height;
+
+    class Result {
+      private int top = 0;
+      private int bot = 0;
+
+      @Contract(pure = true)
+      private int count() {
+        return bot - top;
+      }
     }
+
+    int topIndex = 0;
+    int bottomIndex = 1;
+    int topY = getRowBounds(rows[bottomIndex]).y;
+
+    final Result result = new Result();
+    while (bottomIndex < rows.length) {
+      final int nextY = getRowBounds(rows[bottomIndex]).y;
+      while (nextY - topY > height) {
+        topIndex++;
+        topY = getRowBounds(rows[topIndex]).y;
+      }
+
+      if (bottomIndex - topIndex > result.count()) {
+        result.top = topIndex;
+        result.bot = bottomIndex;
+      }
+
+      bottomIndex++;
+    }
+
+    final int y = getRowBounds(rows[result.top]).y;
+    return new Rectangle(visibleRect.x, y, visibleRect.width, height);
   }
 
   private void highlightValues(@NotNull List<TraceElement> elements) {
