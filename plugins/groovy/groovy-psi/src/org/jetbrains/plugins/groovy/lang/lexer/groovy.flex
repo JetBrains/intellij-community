@@ -121,38 +121,20 @@ mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 mSTRING_NL = {mONE_NL}
 mSTRING_ESC = \\ [^] | \\ ({WHITE_SPACE})+ (\n|\r)
 
-////////////////////////////////////////////////////////////////////////////
+mSINGLE_QUOTED_CONTENT = {mSTRING_ESC} | [^'\\\r\n]
+mSINGLE_QUOTED_LITERAL = \' {mSINGLE_QUOTED_CONTENT}* \'?
 
-mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
-    | "\""
-    | [^\\\'\r\n]
-    | "$")*
-mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
-mTRIPLE_QUOTED_STRING = \'\'\' ({mSTRING_ESC}
-    | [^\\']
-    | {mSTRING_NL}
-    | \'(\')?[^'] )* (\'{1,3} | \\)?
+mTRIPLE_SINGLE_QUOTED_CONTENT = {mSINGLE_QUOTED_CONTENT} | {mSTRING_NL} | \'(\')?[^']
+mTRIPLE_SINGLE_QUOTED_LITERAL = \'\'\' {mTRIPLE_SINGLE_QUOTED_CONTENT}* (\'{0,3} | \\?)
 
-mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING} | {mSINGLE_QUOTED_STRING}
+mDOUBLE_QUOTED_CONTENT = {mSTRING_ESC} | [^\"\\$\n\r]
+mDOUBLE_QUOTED_LITERAL = \" {mDOUBLE_QUOTED_CONTENT}* \"
 
-// Single-double-quoted GStrings
-mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
-    | [^\\\"\r\n"$"]
-    | "\'" )+
+mTRIPLE_DOUBLE_QUOTED_CONTENT = {mDOUBLE_QUOTED_CONTENT} | {mSTRING_NL} | \"(\")?[^\"\\$]
+mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 
-// Triple-double-quoted GStrings
-mGSTRING_TRIPLE_CONTENT = ({mSTRING_ESC}
-    | \'
-    | \" (\")? [^\""$"\\]
-    | [^\\\""$"]
-    | {mSTRING_NL})+
-
-mGSTRING_TRIPLE_CTOR_END = {mGSTRING_TRIPLE_CONTENT} \"\"\"
-
-mGSTRING_LITERAL = \"\"
-    | \" ([^\\\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
-    | \"\"\" {mGSTRING_TRIPLE_CTOR_END}
-
+mSTRING_LITERAL = {mSINGLE_QUOTED_LITERAL} | {mTRIPLE_SINGLE_QUOTED_LITERAL}
+mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 
 %%
 
@@ -405,7 +387,6 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {mSTRING_LITERAL}                         { return storeToken(mSTRING_LITERAL); }
-{mSINGLE_QUOTED_STRING_BEGIN}             { return storeToken(mSTRING_LITERAL); }
 {mGSTRING_LITERAL}                        { return storeToken(mGSTRING_LITERAL); }
 \"\"\"                                    {
                                             yybeginstate(IN_TRIPLE_GSTRING);

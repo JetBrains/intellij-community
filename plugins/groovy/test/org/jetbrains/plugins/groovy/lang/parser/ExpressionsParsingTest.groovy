@@ -170,6 +170,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testgstring$triple$triple3() throws Throwable { doTest() }
 
+  void testgstring$triple$triple4() throws Throwable { doTest() }
+
   void testgstring$triple$quote_and_slash() throws Throwable { doTest() }
 
   void testgstring$ugly_lexer() throws Throwable { doTest() }
