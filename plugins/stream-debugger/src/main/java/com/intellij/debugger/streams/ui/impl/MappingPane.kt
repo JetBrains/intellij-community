@@ -14,8 +14,8 @@ import javax.swing.JPanel
 class MappingPane(private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
   companion object {
-    val selectedLinkColor: JBColor = JBColor.BLUE
-    val regularLinkColor: JBColor = JBColor.DARK_GRAY
+    val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
+    val REGULAR_LINK_COLOR: JBColor = JBColor.DARK_GRAY
   }
 
   init {
@@ -43,12 +43,13 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
       }
     }
 
+
     private fun getLineColor(left: ValueWithPosition, right: ValueWithPosition): JBColor {
       if (left.isSelected || right.isSelected) {
-        return selectedLinkColor
+        return SELECTED_LINK_COLOR
       }
 
-      return regularLinkColor
+      return REGULAR_LINK_COLOR
     }
   }
 }
