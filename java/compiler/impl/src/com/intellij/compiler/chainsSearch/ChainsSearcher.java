@@ -56,7 +56,7 @@ public class ChainsSearcher {
   private static SearchInitializer createInitializer(TargetType target,
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethods(target.getClassQName(), false);
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), false);
     return new SearchInitializer(methods, context);
   }
 
@@ -105,7 +105,7 @@ public class ChainsSearcher {
         continue;
       }
       String currentReturnType = headSignature.getOwner();
-      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethods(currentReturnType, false);
+      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethodReferenceOccurrences(currentReturnType, false);
       MaxSizeTreeSet<OccurrencesAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<>(maxResultSize);
       for (OccurrencesAware<MethodIncompleteSignature> indexValue : nextMethods) {
@@ -137,7 +137,7 @@ public class ChainsSearcher {
         boolean isBreak = false;
         for (OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
           if (!isBreak) {
-            if (indexReader.areCorrelated(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.CORRELATION)) {
+            if (indexReader.areReferencesUsageCorrelated(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.CORRELATION)) {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;

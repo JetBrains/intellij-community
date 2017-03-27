@@ -47,7 +47,7 @@ public class CachedRelevantStaticMethodSearcher {
         myCompletionContext.getTarget().getClassQName().equals(resultQualifiedClassName)) {
       return Collections.emptyList();
     }
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues = myIndexReader.findMethods(resultQualifiedClassName, true);
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues = myIndexReader.findMethodReferenceOccurrences(resultQualifiedClassName, true);
     int occurrences = 0;
     List<ContextRelevantStaticMethod> relevantMethods = new SmartList<>();
     for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {

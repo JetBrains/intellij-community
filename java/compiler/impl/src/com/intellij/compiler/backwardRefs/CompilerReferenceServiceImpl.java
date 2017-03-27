@@ -222,7 +222,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public TreeSet<OccurrencesAware<MethodIncompleteSignature>> findMethods(@NotNull String rawReturnType, boolean onlyStatic) {
+  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType, boolean onlyStatic) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
@@ -234,11 +234,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         }
         return builder.build()
           .flatMap(sd -> myReader.getMembersFor(sd)
-            .stream()
-            .filter(r -> r instanceof LightRef.JavaLightMethodRef)
-            .map(r -> new OccurrencesAware<>(
-              new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
-              myReader.getOccurrenceCount(r))))
+          .stream()
+          .filter(r -> r instanceof LightRef.JavaLightMethodRef)
+          .map(r -> new OccurrencesAware<>(
+            new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+            myReader.getOccurrenceCount(r))))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
@@ -251,7 +251,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   @Override
-  public boolean areCorrelated(@NotNull LightRef ref1, @NotNull LightRef ref2, int correlationThreshold) {
+  public boolean areReferencesUsageCorrelated(@NotNull LightRef ref1, @NotNull LightRef ref2, int correlationThreshold) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
