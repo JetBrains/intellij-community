@@ -42,4 +42,9 @@ public class OccurrencesAware<V> implements Comparable<OccurrencesAware<V>> {
     }
     return myUnderlying.hashCode() - that.myUnderlying.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return getOccurrences() + " for " + myUnderlying;
+  }
 }

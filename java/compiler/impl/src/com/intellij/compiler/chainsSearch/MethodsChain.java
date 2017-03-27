@@ -113,7 +113,7 @@ public class MethodsChain {
 
   @Override
   public String toString() {
-    return myRevertedPath.stream().map(methods -> methods[0].getName()).collect(Collectors.joining("<-"));
+    return myQualifierClass.getName() + "." + myRevertedPath.stream().map(methods -> methods[0].getName() + "()").collect(Collectors.joining("."));
   }
 
   @SuppressWarnings("ConstantConditions")
