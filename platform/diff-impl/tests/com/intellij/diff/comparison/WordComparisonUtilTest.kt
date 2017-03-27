@@ -378,9 +378,9 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
 
     lines_inner {
       ("A B_C D" - "A_B C_D")
-      (" --  - " - "  -- - ").default()
-      (" --  - " - "  --   ").trim()
-      ("  -    " - "  -    ").ignore()
+      (" -  -- " - " - --  ").default()
+      (" -  -- " - "   --  ").trim()
+      ("    -  " - "    -  ").ignore()
       testAll()
     }
 

@@ -70,7 +70,8 @@ class MyersLCS {
    */
   public void executeLinear() {
     try {
-      execute(20000 + 10 * (int)Math.sqrt(myCount1 + myCount2), false);
+      int threshold = 20000 + 10 * (int)Math.sqrt(myCount1 + myCount2);
+      execute(threshold, false);
     }
     catch (FilesTooBigForDiffException e) {
       throw new IllegalStateException(e); // should not happen
@@ -87,12 +88,14 @@ class MyersLCS {
   }
 
   public void executeWithThreshold() throws FilesTooBigForDiffException {
-    execute(20000 + 10 * (int)Math.sqrt(myCount1 + myCount2), true);
+    int threshold = Math.max(20000 + 10 * (int)Math.sqrt(myCount1 + myCount2),
+                             FilesTooBigForDiffException.DELTA_THRESHOLD_SIZE);
+    execute(threshold, true);
   }
 
   private void execute(int threshold, boolean throwException) throws FilesTooBigForDiffException {
     if (myCount1 == 0 || myCount2 == 0) return;
-    execute(0, myCount1, 0, myCount2, threshold, throwException);
+    execute(0, myCount1, 0, myCount2, Math.min(threshold, myCount1 + myCount2), throwException);
   }
 
   //LCS( old[oldStart, oldEnd), new[newStart, newEnd) )

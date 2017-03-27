@@ -593,7 +593,8 @@ class MergeTest : MergeTestBase() {
                 5 ======
                 modify
                 6 ======
-                7 ======""".trimIndent()
+                7 ======
+                8 ======""".trimIndent()
     val text2 = """
                 1 ======
                 2 ======
@@ -604,8 +605,9 @@ class MergeTest : MergeTestBase() {
                 5 ======
                 modify
                 6 ======
+                7 ======
                 delete modify
-                7 ======""".trimIndent()
+                8 ======""".trimIndent()
     val text3 = """
                 1 ======
                 2 ======
@@ -616,8 +618,9 @@ class MergeTest : MergeTestBase() {
                 5 ======
                 modify right
                 6 ======
+                7 ======
                 modify
-                7 ======""".trimIndent()
+                8 ======""".trimIndent()
 
     testN(text1, text2, text3) {
       checkUndo(1) {
@@ -636,8 +639,9 @@ class MergeTest : MergeTestBase() {
                     5 ======
                     modify right
                     6 ======
+                    7 ======
                     delete modify
-                    7 ======""".trimIndent())
+                    8 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
@@ -658,8 +662,9 @@ class MergeTest : MergeTestBase() {
                     5 ======
                     modify
                     6 ======
+                    7 ======
                     delete modify
-                    7 ======""".trimIndent())
+                    8 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
@@ -678,8 +683,9 @@ class MergeTest : MergeTestBase() {
                     5 ======
                     modify right
                     6 ======
+                    7 ======
                     delete modify
-                    7 ======""".trimIndent())
+                    8 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
@@ -701,8 +707,9 @@ class MergeTest : MergeTestBase() {
                     5 ======
                     modify right
                     6 ======
+                    7 ======
                     delete modify
-                    7 ======""".trimIndent())
+                    8 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
@@ -723,8 +730,9 @@ class MergeTest : MergeTestBase() {
                     5 ======
                     USER modify
                     6 ======
+                    7 ======
                     delete modify
-                    7 ======""".trimIndent())
+                    8 ======""".trimIndent())
     }
   }
 }
