@@ -91,6 +91,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private final List<AbstractFilePatchInProgress> myPatches;
   private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
+  @NotNull private EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
@@ -155,6 +156,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myRecentPathFileChange = new AtomicReference<>();
     myBinaryShelvedPatches = binaryShelvedPatches;
     myPreselectedChanges = preselectedChanges;
+    myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED);
+    cleanNotifications();
     myChangesTreeList = new MyChangeTreeList(project, Collections.emptyList(),
                                              new Runnable() {
                                                public void run() {
@@ -372,15 +375,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class MyUpdater implements Runnable {
     public void run() {
+      cleanNotifications();
       final FilePresentationModel filePresentationModel = myRecentPathFileChange.get();
       final VirtualFile file = filePresentationModel != null ? filePresentationModel.getVf() : null;
       if (file == null) {
         ApplicationManager.getApplication().invokeLater(myReset, ModalityState.stateForComponent(myCenterPanel));
         return;
       }
-
-      final PatchReader patchReader = loadPatches(file);
-      List<FilePatch> filePatches = patchReader != null ? ContainerUtil.newArrayList(patchReader.getAllPatches()) : Collections.emptyList();
+      myReader = loadPatches(file);
+      List<FilePatch> filePatches = myReader != null ? ContainerUtil.newArrayList(myReader.getAllPatches()) : Collections.emptyList();
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
       }
@@ -393,7 +396,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
         myPatches.clear();
         myPatches.addAll(matchedPatches);
-        myReader = patchReader;
         updateTree(true);
         paintBusy(false);
         updateOkActions();
@@ -402,7 +404,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static PatchReader loadPatches(@NotNull VirtualFile patchFile) {
+  private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
     try {
       reader = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<PatchReader, IOException>() {
@@ -413,17 +415,29 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       });
     }
     catch (IOException e) {
-      LOG.warn("Can't read patchFile: " + patchFile.getPresentableName(), e);
+      addNotificationAndWarn("Can't read patchFile " + patchFile.getPresentableName() + ": " + e.getMessage());
       return null;
     }
     try {
       reader.parseAllPatches();
     }
     catch (PatchSyntaxException e) {
+      addNotificationAndWarn("Can't read patch: " + e.getMessage());
       return null;
     }
 
     return reader;
+  }
+
+  private void addNotificationAndWarn(@NotNull String errorMessage) {
+    LOG.warn(errorMessage);
+    myErrorNotificationPanel.text(errorMessage);
+    myErrorNotificationPanel.setVisible(true);
+  }
+
+  private void cleanNotifications() {
+    myErrorNotificationPanel.setText("");
+    myErrorNotificationPanel.setVisible(false);
   }
 
   @CalledInAwt
@@ -516,7 +530,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       ++gb.gridy;
       gb.weighty = 1;
       gb.fill = GridBagConstraints.BOTH;
-      treePanel.add(ScrollPaneFactory.createScrollPane(myChangesTreeList), gb);
+      JPanel changeTreePanel = JBUI.Panels.simplePanel(myChangesTreeList).addToTop(myErrorNotificationPanel);
+      treePanel.add(ScrollPaneFactory.createScrollPane(changeTreePanel), gb);
 
       ++gb.gridy;
       gb.weighty = 0;
