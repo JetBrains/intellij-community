@@ -51,7 +51,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Object ANY_VALUE = new Object();
 
   private static final Set<String> OPTIONAL_METHOD_NAMES = ContainerUtil
-    .set("of", "ofNullable", "fromNullable", "empty", "absent", "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
+    .set("of", "ofNullable", "fromNullable", "empty", "absent", "or", "orElse", "orElseGet", "ifPresent", "map", "flatMap", "filter",
+         "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
@@ -275,6 +276,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       case "empty":
       case "absent":
         result = runner.getFactory().getOptionalFactory().getOptional(false);
+        break;
+      case "orElse":
+        if (argValues != null && argValues.length == 1) {
+          switch (memState.checkOptional(qualifier)) {
+            case YES:
+              result = runner.getFactory().createTypeValue(instruction.getResultType(), Nullness.NOT_NULL);
+              break;
+            case NO:
+              result = argValues[0];
+              break;
+            case UNSURE:
+              Nullness nullness =
+                memState.isNotNull(argValues[0]) ? Nullness.NOT_NULL : memState.isNull(argValues[0]) ? Nullness.NULLABLE : Nullness.UNKNOWN;
+              result = runner.getFactory().createTypeValue(instruction.getResultType(), nullness);
+              break;
+          }
+        }
         break;
       case "filter":
       case "flatMap":
