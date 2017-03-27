@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyModuleFindUsagesHandler extends FindUsagesHandler {
+public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
   private final PsiFileSystemItem myElement;
 
   protected PyModuleFindUsagesHandler(@NotNull PsiFileSystemItem file) {
