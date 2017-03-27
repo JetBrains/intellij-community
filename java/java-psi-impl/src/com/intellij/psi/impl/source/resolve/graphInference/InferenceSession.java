@@ -1265,7 +1265,13 @@ public class InferenceSession {
       }
 
       if (type instanceof PsiIntersectionType) {
-        final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        if (conflictingConjunctsMessage == null) {
+          if (findParameterizationOfTheSameGenericClass(var.getBounds(InferenceBound.UPPER), pair -> pair.first == null || pair.second == null || pair.first.equals(pair.second)) != null) {
+            //warn if upper bounds has same generic class with different type arguments
+            conflictingConjunctsMessage = type.getPresentableText(false);
+          }
+        }
         if (conflictingConjunctsMessage != null) {
           registerIncompatibleErrorMessage("Type parameter " + var.getParameter().getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
           return PsiType.NULL;
