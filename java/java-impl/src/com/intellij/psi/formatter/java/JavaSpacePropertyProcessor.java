@@ -1720,6 +1720,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.ANONYMOUS_CLASS) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_CLASS_LBRACE, null);
     }
+    else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.NAME) {
+      createSpaceInCode(true);
+    }
   }
 
   @Override
