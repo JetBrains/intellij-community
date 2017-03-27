@@ -20,7 +20,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -133,7 +132,7 @@ public class SheetMessage {
     Component focusCandidate = beforeShowFocusOwner.get();
 
     if (focusCandidate == null) {
-      focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
+      focusCandidate = getGlobalInstance().getLastFocusedFor(getGlobalInstance().getLastFocusedFrame());
     }
 
     final Component finalFocusCandidate = focusCandidate;
@@ -183,7 +182,7 @@ public class SheetMessage {
     return myController.getResult();
   }
 
-  void startAnimation (final boolean enlarge) {
+  void startAnimation(final boolean enlarge) {
     staticImage = myController.getStaticImage();
     JPanel staticPanel = new JPanel() {
       @Override
@@ -234,12 +233,14 @@ public class SheetMessage {
 
           IJSwingUtilities.moveMousePointerOn(myWindow.getRootPane().getDefaultButton());
           myController.requestFocus();
-        } else {
+        } 
+        else {
           if (restoreFullScreenButton) {
             FullScreenUtilities.setWindowCanFullScreen(myParent, true);
           }
           myParent.removeComponentListener(myPositionListener);
           myController.dispose();
+          DialogWrapper.cleanupWindowListeners(myWindow);
           myWindow.dispose();
           DialogWrapper.cleanupRootPane(myWindow.getRootPane());
         }
