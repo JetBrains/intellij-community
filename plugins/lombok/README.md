@@ -66,7 +66,9 @@ In your project: Click <kbd>Preferences</kbd> -> <kbd>Build, Execution, Deployme
 Afterwards you might need to do a complete rebuild of your project via <kbd>Build</kbd> -> <kbd>Rebuild Project</kbd>.
 
 ### Lombok project dependency
-Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.
+Make sure you have Lombok dependency added to your project. This plugin **does not** automatically add it for you.  
+
+**Please Note:** Using newest version of the Lombok dependency is recommended, but does not guarantee that all the features introduced will be available. See [Lombok changelog](https://projectlombok.org/changelog.html) for more details.
 
 If you are using Gradle/Maven/Ivy, see example below:
 
@@ -75,7 +77,7 @@ In your `build.gradle`:
 ```groovy
 // 'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.16.14"
+compile "org.projectlombok:lombok:1.16.16"
 ```
 
 ##### Maven
@@ -85,7 +87,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.16.14</version>
+		<version>1.16.16</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -94,7 +96,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.16.14" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.16.16" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
