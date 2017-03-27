@@ -5,6 +5,7 @@ import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
+import com.intellij.debugger.streams.ui.ValuesPositionsListener
 import java.awt.GridLayout
 import javax.swing.JPanel
 
@@ -18,13 +19,22 @@ class StreamTracesMappingView(
   init {
     val resolve = resolve(prevController)
 
+    val mappingPane = MappingPane(resolve.valuesBefore, resolve.mapping)
+
+    val listener = object : ValuesPositionsListener {
+      override fun valuesPositionsChanged() {
+        mappingPane.repaint()
+      }
+    }
+
     val beforeView = PositionsAwareCollectionView("Before", evaluationContext, resolve.valuesBefore)
     prevController.register(beforeView)
+    beforeView.addValuesPositionsListener(listener)
 
     val afterView = PositionsAwareCollectionView("After", evaluationContext, resolve.valuesAfter)
     nextController.register(afterView)
+    afterView.addValuesPositionsListener(listener)
 
-    val mappingPane = MappingPane(resolve.valuesBefore, resolve.mapping)
     add(beforeView)
     add(mappingPane)
     add(afterView)
