@@ -44,7 +44,7 @@ class StreamTracesMappingView(
     val prevTrace = prev.resolvedTrace
 
     val pool = mutableMapOf<TraceElement, ValueWithPosition>()
-    fun getValue(element: TraceElement): ValueWithPosition = pool.computeIfAbsent(element, ::ValueWithPositionImpl)
+    fun getValue(element: TraceElement): ValueWithPosition = pool.computeIfAbsent(element, { ValueWithPositionImpl(it) })
 
     val prevValues = mutableListOf<ValueWithPosition>()
     val nextValues = mutableSetOf<ValueWithPosition>()
