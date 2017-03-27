@@ -209,7 +209,13 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     if (isShowing()) {
       final Rectangle bestVisibleArea = optimizeRowsCountInVisibleRect(rows);
-      scrollRectToVisible(bestVisibleArea);
+      final Rectangle visibleRect = getVisibleRect();
+      final boolean notVisibleHighlightedRowExists = Arrays
+        .stream(rows)
+        .anyMatch(x -> !visibleRect.intersects(getRowBounds(x)));
+      if (notVisibleHighlightedRowExists) {
+        scrollRectToVisible(bestVisibleArea);
+      }
     }
     else {
       // Use slow path if component hidden
