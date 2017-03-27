@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -44,6 +45,14 @@ class CompilationContextImpl implements CompilationContext {
   final JpsProject project
   final JpsGlobal global
   final JpsGantProjectBuilder projectBuilder
+
+  @CompileDynamic
+  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot, Script gantScript) {
+    GantBinding binding = (GantBinding) gantScript.binding
+    //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
+    return create(binding.ant, binding.projectBuilder, binding.project, binding.global, communityHome, projectHome,
+                   { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
+   }
 
   static CompilationContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                        String communityHome, String projectHome,
