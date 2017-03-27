@@ -68,11 +68,6 @@ public class CCStepicConnector {
     indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
 
-    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
-    if (client == null) {
-      LOG.warn("Http client is null");
-      return;
-    }
     final StepicUser currentUser = EduStepicAuthorizedClient.getCurrentUser();
     if (currentUser != null) {
       final List<StepicUser> courseAuthors = course.getAuthors();
@@ -90,6 +85,11 @@ public class CCStepicConnector {
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
     try {
+      final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      if (client == null) {
+        LOG.warn("Http client is null");
+        return;
+      }
       final CloseableHttpResponse response = client.execute(request);
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
