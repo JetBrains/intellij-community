@@ -42,4 +42,11 @@ class OptionalOrElse {
       return "";
     }
   }
+
+  void isPresentCheck(Optional<String> opt) {
+    String result = opt.orElse(null);
+    if(<warning descr="Condition 'result == null && opt.isPresent()' is always 'false'">result == null && <warning descr="Condition 'opt.isPresent()' is always 'false' when reached">opt.isPresent()</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
 }

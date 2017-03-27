@@ -287,10 +287,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
               result = argValues[0];
               break;
             case UNSURE:
-              Nullness nullness =
-                memState.isNotNull(argValues[0]) ? Nullness.NOT_NULL : memState.isNull(argValues[0]) ? Nullness.NULLABLE : Nullness.UNKNOWN;
-              result = runner.getFactory().createTypeValue(instruction.getResultType(), nullness);
-              break;
+              DfaMemoryState falseState = memState.createCopy();
+              memState.push(runner.getFactory().createTypeValue(instruction.getResultType(), Nullness.NOT_NULL));
+              memState.applyIsPresentCheck(true, qualifier);
+              falseState.push(argValues[0]);
+              falseState.applyIsPresentCheck(false, qualifier);
+              return Arrays.asList(memState, falseState);
           }
         }
         break;
