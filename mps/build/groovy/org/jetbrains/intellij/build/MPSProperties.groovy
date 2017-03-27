@@ -98,6 +98,30 @@ class MPSProperties extends ProductProperties {
         context.ant.copy(todir: "$targetDirectory/lib/libpty/") {
             fileset(dir: "$context.paths.communityHome/lib/libpty/")
         }
+
+        // copy binaries
+        context.ant.copy(todir: "$targetDirectory/bin/linux/") {
+            fileset(dir: "$context.paths.communityHome/bin/linux/")
+        }
+        context.ant.copy(todir: "$targetDirectory/bin/mac/") {
+            fileset(dir: "$context.paths.communityHome/bin/mac/",
+                    excludes: "*.sh")
+        }
+        context.ant.copy(todir: "$targetDirectory/bin/win/") {
+            fileset(dir: "$context.paths.communityHome/bin/win/")
+        }
+
+        // copy mac executable
+        context.ant.copy(file: "$context.paths.communityHome/build/conf/mac/Contents/MacOS/idea",
+                tofile: "$targetDirectory/build/resources/mps")
+
+        // copy windows append.bat
+        context.ant.copy(file: "$context.paths.communityHome/bin/scripts/win/append.bat",
+                todir: "$targetDirectory/bin/win/")
+
+        // copy jre version
+        context.ant.copy(file: "$context.paths.communityHome/build/conf/jreVersions.properties",
+                todir: "$targetDirectory/build/conf/")
     }
 
     @Override

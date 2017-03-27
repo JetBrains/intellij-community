@@ -204,6 +204,11 @@
         <echo message="Cleaning destination folders in MPS sources..."/>
 
         <delete dir="${mps.folder}/lib"/>
+        <delete dir="${mps.folder}/bin/linux"/>
+        <delete dir="${mps.folder}/bin/mac"/>
+        <delete dir="${mps.folder}/bin/win"/>
+        <delete file="${mps.folder}/build/resources/mps"/>
+        <delete dir="${mps.folder}/build/conf"/>
         <delete dir="${mps.folder}/plugins/cvsIntegration/lib"/>
         <delete dir="${mps.folder}/plugins/git4idea/lib"/>
         <delete dir="${mps.folder}/plugins/svn4idea/lib"/>
@@ -211,6 +216,10 @@
 
         <mkdir dir="${mps.folder}/lib"/>
         <mkdir dir="${mps.folder}/lib/src"/>
+        <mkdir dir="${mps.folder}/bin/linux"/>
+        <mkdir dir="${mps.folder}/bin/mac"/>
+        <mkdir dir="${mps.folder}/bin/win"/>
+        <mkdir dir="${mps.folder}/build/conf"/>
         <mkdir dir="${mps.folder}/plugins/cvsIntegration/lib"/>
         <mkdir dir="${mps.folder}/plugins/git4idea/lib"/>
         <mkdir dir="${mps.folder}/plugins/svn4idea/lib"/>
@@ -228,6 +237,19 @@
 
         <!--Copy platform sources to MPS lib folder-->
         <copy file="${community.out}/artifacts/platform-sources.zip" todir="${mps.folder}/lib/src"/>
+
+        <!--Copy binaries-->
+        <copy todir="${mps.folder}/bin/linux">
+            <fileset dir="${community.out}/dist.all/bin/linux"/>
+        </copy>
+        <copy todir="${mps.folder}/bin/mac">
+            <fileset dir="${community.out}/dist.all/bin/mac"/>
+        </copy>
+        <copy todir="${mps.folder}/bin/win">
+            <fileset dir="${community.out}/dist.all/bin/win"/>
+        </copy>
+        <copy file="${community.out}/dist.all/build/resources/mps" todir="${mps.folder}/build/resources"/>
+        <copy file="${community.out}/dist.all/build/conf/jreVersions.properties" todir="${mps.folder}/build/conf"/>
 
         <!--Copy plugin libraries to plugin folders-->
         <copy todir="${mps.folder}/plugins/cvsIntegration/lib">
