@@ -4,10 +4,7 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import java.awt.BasicStroke
-import java.awt.BorderLayout
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import javax.swing.JPanel
 
 /**
@@ -20,6 +17,7 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
     val REGULAR_LINK_COLOR: JBColor = JBColor.DARK_GRAY
 
     val MAX_ANGLE_TO_DRAW_LINK = 3 * Math.PI / 8
+    val STROKE = BasicStroke(2.toFloat())
   }
 
   init {
@@ -34,8 +32,8 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
         return
       }
 
-      if(g is Graphics2D) {
-        g.stroke = BasicStroke(2.toFloat())
+      if (g is Graphics2D) {
+        g.stroke = STROKE
       }
 
       val x1 = x
