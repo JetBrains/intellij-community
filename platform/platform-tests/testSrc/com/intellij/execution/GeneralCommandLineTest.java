@@ -41,7 +41,7 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class GeneralCommandLineTest {
-  private static final String[] ARGUMENTS = {
+  public static final String[] ARGUMENTS = {
     "with space",
     "  leading and trailing  spaces  ",
     "\"quoted\"",
