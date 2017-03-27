@@ -20,10 +20,7 @@ import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ZipperUpdater;
@@ -33,10 +30,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -50,7 +49,12 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     final MyUpdater updater = new MyUpdater(project, service);
     ApplicationManager.getApplication().getMessageBus().connect(project)
       .subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(updater));
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(updater), project);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeAnyChangeAbstractAdapter() {
+      @Override
+      protected void onChange(@Nullable PsiFile file) {
+        if (file != null) updater.onFileChange(file.getViewProvider().getVirtualFile());
+      }
+    });
   }
 
   private JsonSchemaVfsListener(@NotNull MyUpdater updater) {
@@ -66,20 +70,6 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         myUpdater.onFileChange(schemaFile);
       }
     });
-  }
-
-  private static class MyDocumentListener extends DocumentAdapter {
-    private final MyUpdater myUpdater;
-
-    private MyDocumentListener(MyUpdater updater) {
-      myUpdater = updater;
-    }
-
-    @Override
-    public void documentChanged(DocumentEvent e) {
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
-      if (file != null) myUpdater.onFileChange(file);
-    }
   }
 
   private static class MyUpdater {
