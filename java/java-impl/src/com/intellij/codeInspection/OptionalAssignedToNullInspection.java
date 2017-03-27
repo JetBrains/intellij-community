@@ -83,7 +83,7 @@ public class OptionalAssignedToNullInspection extends BaseJavaBatchLocalInspecti
 
       private void checkNulls(PsiType type, PsiExpression expression, String declaration) {
         if (expression != null && TypeUtils.isOptional(type)) {
-          ExpressionUtils.possibleValues(expression).filter(ExpressionUtils::isNullLiteral)
+          ExpressionUtils.nonStructuralChildren(expression).filter(ExpressionUtils::isNullLiteral)
             .forEach(nullLiteral -> register(nullLiteral, (PsiClassType)type, declaration));
         }
       }

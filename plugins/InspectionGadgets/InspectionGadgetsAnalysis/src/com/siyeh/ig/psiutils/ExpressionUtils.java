@@ -242,7 +242,7 @@ public class ExpressionUtils {
    * @param expression expression to create a stream from
    * @return a new stream
    */
-  public static Stream<PsiExpression> possibleValues(@NotNull PsiExpression expression) {
+  public static Stream<PsiExpression> nonStructuralChildren(@NotNull PsiExpression expression) {
     return StreamEx.ofTree(expression, e -> {
       if (e instanceof PsiConditionalExpression) {
         PsiConditionalExpression ternary = (PsiConditionalExpression)e;
