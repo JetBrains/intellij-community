@@ -17,6 +17,12 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
   private var myIsSelected: Boolean = DEFAULT_SELECTED_VALUE
   private var myIsVisible: Boolean = DEFAULT_VISIBLE_VALUE
 
+  override fun equals(other: Any?): Boolean {
+    return other != null && other is ValueWithPosition && traceElement == other.traceElement
+  }
+
+  override fun hashCode(): Int = traceElement.hashCode()
+
   override val isVisible: Boolean
     get() = myIsVisible
 
