@@ -1603,7 +1603,7 @@ public class InferenceSession {
       for (int i = 0; i < functionalMethodParameters.length; i++) {
         final PsiType pType = signature.getParameterTypes()[i];
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
-                                                      PsiUtil.captureToplevelWildcards(pType, reference)));
+                                                      PsiUtil.captureToplevelWildcards(pType, functionalMethodParameters[i])));
       }
     }
     else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
@@ -1650,7 +1650,7 @@ public class InferenceSession {
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
-                                                      PsiUtil.captureToplevelWildcards(interfaceParamType, reference)));
+                                                      PsiUtil.captureToplevelWildcards(interfaceParamType, functionalMethodParameters[i])));
       }
     }
 
