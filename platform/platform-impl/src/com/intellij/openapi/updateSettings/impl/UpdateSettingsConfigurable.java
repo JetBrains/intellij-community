@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -38,7 +37,6 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -46,7 +44,7 @@ import java.util.List;
 /**
  * @author pti
  */
-public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private final UpdateSettings mySettings;
   private final boolean myCheckNowEnabled;
   private UpdatesSettingsPanel myPanel;
