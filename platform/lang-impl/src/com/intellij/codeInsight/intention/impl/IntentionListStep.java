@@ -100,12 +100,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   //true if something changed
-  boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions, boolean callUpdate) {
-    boolean changed = wrapActionsTo(intentions.errorFixesToShow, myCachedErrorFixes, callUpdate);
-    changed |= wrapActionsTo(intentions.inspectionFixesToShow, myCachedInspectionFixes, callUpdate);
-    changed |= wrapActionsTo(intentions.intentionsToShow, myCachedIntentions, callUpdate);
-    changed |= wrapActionsTo(intentions.guttersToShow, myCachedGutters, callUpdate);
-    changed |= wrapActionsTo(intentions.notificationActionsToShow, myCachedNotifications, callUpdate);
+  boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
+    boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myCachedErrorFixes, callUpdate);
+    changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myCachedInspectionFixes, callUpdate);
+    changed |= wrapActionsTo(newInfo.intentionsToShow, myCachedIntentions, callUpdate);
+    changed |= wrapActionsTo(newInfo.guttersToShow, myCachedGutters, callUpdate);
+    changed |= wrapActionsTo(newInfo.notificationActionsToShow, myCachedNotifications, callUpdate);
     return changed;
   }
 
@@ -254,7 +254,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     return myFinalRunnable;
   }
 
-  private void applyAction(final IntentionActionWithTextCaching cachedAction) {
+  private void applyAction(@NotNull IntentionActionWithTextCaching cachedAction) {
     myFinalRunnable = () -> {
       HintManager.getInstance().hideAllHints();
       if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
