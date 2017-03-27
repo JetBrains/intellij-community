@@ -28,13 +28,7 @@ public class IntLCSAutoTest extends TestCase {
   private static final int MAX_LENGTH = 300;
   private static final int CHAR_COUNT = 20;
 
-  private enum Type {IntLCS, MyersLCS, PatienceLCS}
-
-  public void testIntLCS() throws Exception {
-    for (int i = 0; i < ITERATIONS; i++) {
-      doTestLCS(MAX_LENGTH, CHAR_COUNT, Type.IntLCS);
-    }
-  }
+  private enum Type {MyersLCS, PatienceLCS}
 
   public void testMyersLCS() throws Exception {
     for (int i = 0; i < ITERATIONS; i++) {
@@ -45,12 +39,6 @@ public class IntLCSAutoTest extends TestCase {
   public void testPatienceLCS() throws Exception {
     for (int i = 0; i < ITERATIONS; i++) {
       doTestLCS(MAX_LENGTH, CHAR_COUNT, Type.PatienceLCS);
-    }
-  }
-
-  public void testMyersImplementations() throws Exception {
-    for (int i = 0; i < ITERATIONS; i++) {
-      doTestMyersImplementations(MAX_LENGTH, CHAR_COUNT);
     }
   }
 
@@ -67,10 +55,6 @@ public class IntLCSAutoTest extends TestCase {
     BitSet changes2 = new BitSet(sequence2.length);
 
     switch (type) {
-      case IntLCS:
-        IntLCS intLCS = new IntLCS(sequence1, sequence2, start1, count1, start2, count2, changes1, changes2);
-        intLCS.execute();
-        break;
       case MyersLCS:
         MyersLCS myersLCS = new MyersLCS(sequence1, sequence2, start1, count1, start2, count2, changes1, changes2);
         myersLCS.execute();
@@ -84,31 +68,9 @@ public class IntLCSAutoTest extends TestCase {
     verifyLCS(sequence1, sequence2, start1, count1, start2, count2, changes1, changes2);
   }
 
-  private void doTestMyersImplementations(int maxLength, int charCount) throws FilesTooBigForDiffException {
-    generateSequence(maxLength, charCount);
-
-    int[] sequence1 = generateSequence(maxLength, charCount);
-    int[] sequence2 = generateSequence(maxLength, charCount);
-
-    int start1 = RNG.nextInt(sequence1.length);
-    int start2 = RNG.nextInt(sequence2.length);
-    int count1 = RNG.nextInt(sequence1.length - start1);
-    int count2 = RNG.nextInt(sequence2.length - start2);
-
-    BitSet intLCSChanges1 = new BitSet(sequence1.length);
-    BitSet intLCSChanges2 = new BitSet(sequence2.length);
-
-    IntLCS intLCS = new IntLCS(sequence1, sequence2, start1, count1, start2, count2, intLCSChanges1, intLCSChanges2);
-    intLCS.execute();
-
-    BitSet myersLCSChanges1 = new BitSet(sequence1.length);
-    BitSet myersLCSChanges2 = new BitSet(sequence2.length);
-
-    MyersLCS myersLCS = new MyersLCS(sequence1, sequence2, start1, count1, start2, count2, myersLCSChanges1, myersLCSChanges2);
-    myersLCS.execute();
-
-    assertEquals(intLCSChanges1.cardinality(), myersLCSChanges1.cardinality());
-    assertEquals(intLCSChanges2.cardinality(), myersLCSChanges2.cardinality());
+  public static void verifyLCS(@NotNull int[] sequence1, @NotNull int[] sequence2,
+                               @NotNull BitSet changes1, @NotNull BitSet changes2) {
+    verifyLCS(sequence1, sequence2, 0, sequence1.length, 0, sequence2.length, changes1, changes2);
   }
 
   private static void verifyLCS(@NotNull int[] sequence1, @NotNull int[] sequence2,

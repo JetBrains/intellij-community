@@ -18,6 +18,8 @@ package com.intellij.util.diff;
 
 import junit.framework.TestCase;
 
+import java.util.BitSet;
+
 /**
  * @author dyoma
  */
@@ -48,7 +50,7 @@ public class IntLCSTest extends TestCase {
   }
 
   public void testOneTail() throws FilesTooBigForDiffException {
-    assertEquals(1, new IntLCS(new int[]{1, 2}, new int[]{1, 2, 3}).execute());
+    assertEquals(1, countChanges(new int[]{1, 2}, new int[]{1, 2, 3}));
   }
 
   public void testSingleMiddle() throws FilesTooBigForDiffException {
@@ -58,13 +60,14 @@ public class IntLCSTest extends TestCase {
   }
 
   public void testAbsolutelyDifferent() throws FilesTooBigForDiffException {
-    assertEquals(4, new IntLCS(new int[]{1, 2}, new int[]{3, 4}).execute());
-    assertEquals(6, new IntLCS(new int[]{1, 2, 3}, new int[]{4, 5, 6}).execute());
+    assertEquals(4, countChanges(new int[]{1, 2}, new int[]{3, 4}));
+    assertEquals(6, countChanges(new int[]{1, 2, 3}, new int[]{4, 5, 6}));
   }
 
-  private Diff.Change buildChange(int[] first, int[] second, int expectedNonDiags) throws FilesTooBigForDiffException {
-    IntLCS intLCS = new IntLCS(first, second);
-    assertEquals(expectedNonDiags, intLCS.execute());
+  private static Diff.Change buildChange(int[] first, int[] second, int expectedNonDiags) throws FilesTooBigForDiffException {
+    assertEquals(expectedNonDiags, countChanges(first, second));
+    MyersLCS intLCS = new MyersLCS(first, second);
+    intLCS.execute();
     Reindexer reindexer = new Reindexer();
     reindexer.idInit(first.length, second.length);
     Diff.ChangeBuilder builder = new Diff.ChangeBuilder(0);
@@ -84,5 +87,12 @@ public class IntLCSTest extends TestCase {
   public static void checkLastChange(Diff.Change change, int line0, int line1, int inserted, int deleted) {
     checkChange(change, line0, line1, inserted, deleted);
     assertNull("Expected last change", change.link);
+  }
+
+  private static int countChanges(int[] first, int[] second) throws FilesTooBigForDiffException {
+    MyersLCS lcs = new MyersLCS(first, second);
+    lcs.execute();
+    BitSet[] changes = lcs.getChanges();
+    return changes[0].cardinality() + changes[1].cardinality();
   }
 }
