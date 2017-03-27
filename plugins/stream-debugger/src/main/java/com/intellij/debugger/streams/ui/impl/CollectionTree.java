@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.ui.PaintingListener;
 import com.intellij.debugger.streams.ui.TraceContainer;
 import com.intellij.debugger.streams.ui.ValuesSelectionListener;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -56,7 +57,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
   private final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
   private Set<TreePath> myHighlighted = Collections.emptySet();
-  private final EventDispatcher<ValuesSelectionListener> myDispatcher = EventDispatcher.create(ValuesSelectionListener.class);
+  private final EventDispatcher<ValuesSelectionListener> mySelectionDispatcher = EventDispatcher.create(ValuesSelectionListener.class);
+  private final EventDispatcher<PaintingListener> myPaintingDispatcher = EventDispatcher.create(PaintingListener.class);
 
   private boolean myIgnoreInternalSelectionEvents = false;
   private boolean myIgnoreExternalSelectionEvents = false;
@@ -166,7 +168,17 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   @Override
   public void addSelectionListener(@NotNull ValuesSelectionListener listener) {
     // TODO: dispose?
-    myDispatcher.addListener(listener);
+    mySelectionDispatcher.addListener(listener);
+  }
+
+  public void addPaintingListener(@NotNull PaintingListener listener) {
+    myPaintingDispatcher.addListener(listener);
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    myPaintingDispatcher.getMulticaster().componentPainted();
   }
 
   private void select(@NotNull TreePath[] paths) {
@@ -184,7 +196,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
   private void fireSelectionChanged(List<TraceElement> selectedItems) {
     myIgnoreExternalSelectionEvents = true;
-    myDispatcher.getMulticaster().selectionChanged(selectedItems);
+    mySelectionDispatcher.getMulticaster().selectionChanged(selectedItems);
     myIgnoreExternalSelectionEvents = false;
   }
 
