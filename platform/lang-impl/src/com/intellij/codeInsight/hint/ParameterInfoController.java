@@ -458,6 +458,7 @@ public class ParameterInfoController implements Disposable {
 
   /**
    * Returned Point is in layered pane coordinate system.
+   * Second value is a {@link com.intellij.codeInsight.hint.HintManager.PositionFlags position flag}.
    */
   static Pair<Point, Short> chooseBestHintPosition(Project project,
                                                    Editor editor,
