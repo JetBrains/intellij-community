@@ -18,6 +18,7 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
@@ -33,11 +34,13 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.junit.Assert;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
+@Bombed(user = "develar", month = Calendar.MAY, day = 1)
 public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   private GuavaInspection myInspection;
 
