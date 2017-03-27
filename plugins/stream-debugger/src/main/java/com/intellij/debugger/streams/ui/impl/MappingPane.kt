@@ -14,7 +14,7 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
   companion object {
     val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
-    val REGULAR_LINK_COLOR: JBColor = JBColor.DARK_GRAY
+    val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
 
     val MAX_ANGLE_TO_DRAW_LINK = 3 * Math.PI / 8
     val STROKE = BasicStroke(2.toFloat())
