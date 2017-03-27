@@ -225,9 +225,11 @@ public class SubstitutorComputer {
       return argType;
     }
 
-    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, myPlace) &&
-        TypesUtil.isAssignableByMethodCallConversion(paramType, argType, myPlace)) {
-      return paramType;
+    if (!TypesUtil.isAssignable( TypeConversionUtil.erasure(paramType), argType, myPlace)) {
+      if (TypesUtil.isAssignableByMethodCallConversion(paramType, argType, myPlace)) {
+        return paramType;
+      }
+      return null;
     }
     return argType;
   }
