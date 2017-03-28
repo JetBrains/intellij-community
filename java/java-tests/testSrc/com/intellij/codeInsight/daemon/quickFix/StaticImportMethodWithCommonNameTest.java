@@ -24,8 +24,8 @@ public class StaticImportMethodWithCommonNameTest extends LightCodeInsightFixtur
   protected void setUp() throws Exception {
     super.setUp();
     int idx = 0;
-    while (idx++ < 50) {
-      myFixture.addClass("package a; class Test" + idx + "{ public void format(String s, String s1) {}}");
+    while (idx++ < 450) {
+      myFixture.addClass("package a; class ATest" + idx + "{ public void format(String s, String s1) {}}");
     }
   }
 
