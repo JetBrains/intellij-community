@@ -58,10 +58,12 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor) ?: return
     
-    e.presentation.text = when (info) {
+    val text = when (info) {
       is HintInfo.OptionInfo -> "Show Hints Settings..."
       is HintInfo.MethodInfo -> CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()) 
     }
+    
+    e.presentation.setText(text, false)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
