@@ -171,6 +171,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-impl/java-impl.iml" filepath="$PROJECT_DIR$/java/java-impl/java-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-indexing-api/java-indexing-api.iml" filepath="$PROJECT_DIR$/java/java-indexing-api/java-indexing-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-indexing-impl/java-indexing-impl.iml" filepath="$PROJECT_DIR$/java/java-indexing-impl/java-indexing-impl.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model/java-lib-model.iml" filepath="$PROJECT_DIR$/../base/build-system/java-lib-plugin/java-lib-model/java-lib-model.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" filepath="$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-impl/java-psi-impl.iml" filepath="$PROJECT_DIR$/java/java-psi-impl/java-psi-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-runtime/java-runtime.iml" filepath="$PROJECT_DIR$/java/java-runtime/java-runtime.iml" group="java" />
