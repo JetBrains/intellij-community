@@ -34,7 +34,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test
+  public void testMultipleCases() throws Exception {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
   }
 
   /**
@@ -97,14 +103,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PY_TEST_NAME,
-                                                                                 PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                                     PyUniversalPyTestConfiguration.class));
   }
 
   @Test
   public void testProduceConfigurationOnFile() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "spam.py") {
+      new CreateConfigurationByFileTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "spam.py") {
         @NotNull
         @Override
         protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
@@ -116,7 +122,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testRenameClass() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PY_TEST_NAME,
         PyUniversalPyTestConfiguration.class));
   }
