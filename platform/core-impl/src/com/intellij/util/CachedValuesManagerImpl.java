@@ -15,10 +15,11 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,9 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                                                         @NotNull Key<CachedValue<T>> key,
                                                         @NotNull CachedValueProvider<T> provider,
                                                         boolean trackValue) {
-    CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
+    if (!SystemInfo.isJavaVersionAtLeast("9")) {
+      CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
+    }
     CachedValue<T> value;
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
