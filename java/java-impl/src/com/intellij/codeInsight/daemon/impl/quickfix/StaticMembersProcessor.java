@@ -83,7 +83,14 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       if (qualifiedName != null && containingFile != null && !ImportFilter.shouldImport(containingFile, qualifiedName)) {
         return true;
       }
+
+      PsiModifierList modifierList = member.getModifierList();
+      if (modifierList != null && member instanceof PsiMethod && !modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
+        //methods in interfaces must have explicit static modifier or they are not static;
+        return true;
+      }
     }
+
     PsiFile file = member.getContainingFile();
     if (file instanceof PsiJavaFile
         //do not show methods from default package
