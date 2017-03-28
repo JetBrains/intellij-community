@@ -33,8 +33,8 @@ public class Timings {
   /**
    * Measured on dual core p4 3HZ 1gig ram
    */
-  public static final long ETALON_CPU_TIMING = 200;
-  public static final long ETALON_IO_TIMING = 100;
+  public static final long REFERENCE_CPU_TIMING = 200;
+  public static final long REFERENCE_IO_TIMING = 100;
 
   static {
     CpuTimings timings = CpuTimings.calcStableCpuTiming();
@@ -91,13 +91,13 @@ public class Timings {
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
-    return Math.max(1, (int)(1.0 * value * ETALON_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
+    return Math.max(1, (int)(1.0 * value * REFERENCE_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
   }
 
   public static String getStatistics() {
     return
-      " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
-      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
-      Runtime.getRuntime().availableProcessors() + " cores.";
+      " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING * 1.0 / REFERENCE_CPU_TIMING * 100) + "% of the reference CPU)" +
+      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING * 1.0 / REFERENCE_IO_TIMING * 100) + "% of the reference IO)" +
+      ", " + Runtime.getRuntime().availableProcessors() + " cores.";
   }
 }
