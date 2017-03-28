@@ -9,7 +9,7 @@ interface ValueWithPosition {
   val traceElement: TraceElement
 
   val isVisible: Boolean
+  val isHighlighted: Boolean
   val position: Int
-  val isSelected: Boolean
 }
 

@@ -276,7 +276,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     repaint();
   }
 
-  public boolean isSelected(@NotNull TraceElement traceElement) {
+  public boolean isHighlighted(@NotNull TraceElement traceElement) {
     final TreePath path = myValue2Path.get(traceElement);
     return path != null && (myHighlighted.contains(path) || isPathSelected(path));
   }

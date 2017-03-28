@@ -49,7 +49,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     }
 
     lastValues?.let {
-      val view = PositionsAwareCollectionView(controllers.last().call.name, evaluationContext, it)
+      val view = PositionsAwareCollectionView(" ", evaluationContext, it)
       controllers.last().register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {

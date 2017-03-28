@@ -37,7 +37,7 @@ class PositionsAwareCollectionView(header: String,
         changed = value.set(changed,
                             rect.y + rect.height / 2 - visibleRect.y,
                             visibleRect.intersects(rect),
-                            instancesTree.isSelected(value.traceElement))
+                            instancesTree.isHighlighted(value.traceElement))
       }
     }
 
@@ -56,13 +56,13 @@ class PositionsAwareCollectionView(header: String,
     }
   }
 
-  private fun ValueWithPositionImpl.set(modified: Boolean, pos: Int, visible: Boolean, selected: Boolean): Boolean {
+  private fun ValueWithPositionImpl.set(modified: Boolean, pos: Int, visible: Boolean, highlighted: Boolean): Boolean {
     return when (modified) {
       true -> {
-        setProperties(pos, visible, selected)
+        setProperties(pos, visible, highlighted)
         true
       }
-      false -> updateProperties(pos, visible, selected)
+      false -> updateProperties(pos, visible, highlighted)
     }
   }
 }

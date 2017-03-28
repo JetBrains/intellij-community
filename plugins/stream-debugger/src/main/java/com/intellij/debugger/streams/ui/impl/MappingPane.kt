@@ -64,7 +64,7 @@ class MappingPane(name: String,
     }
 
     private fun getLineColor(left: ValueWithPosition, right: ValueWithPosition): JBColor {
-      if (left.isSelected || right.isSelected) {
+      if (left.isHighlighted && right.isHighlighted) {
         return SELECTED_LINK_COLOR
       }
 

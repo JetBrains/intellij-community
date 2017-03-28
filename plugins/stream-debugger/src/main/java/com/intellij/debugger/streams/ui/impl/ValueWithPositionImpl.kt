@@ -9,13 +9,13 @@ import com.intellij.debugger.streams.ui.ValueWithPosition
 data class ValueWithPositionImpl(override val traceElement: TraceElement) : ValueWithPosition {
   companion object {
     val INVALID_POSITION = Int.MIN_VALUE
-    val DEFAULT_SELECTED_VALUE = false
     val DEFAULT_VISIBLE_VALUE = false
+    val DEFAULT_HIGHLIGHTING_VALUE = false
   }
 
   private var myPosition: Int = INVALID_POSITION
-  private var myIsSelected: Boolean = DEFAULT_SELECTED_VALUE
   private var myIsVisible: Boolean = DEFAULT_VISIBLE_VALUE
+  private var myIsHighlighted: Boolean = DEFAULT_HIGHLIGHTING_VALUE
 
   override fun equals(other: Any?): Boolean {
     return other != null && other is ValueWithPosition && traceElement == other.traceElement
@@ -29,24 +29,24 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
   override val position: Int
     get() = myPosition
 
-  override val isSelected: Boolean
-    get() = myIsSelected
+  override val isHighlighted: Boolean
+    get() = myIsHighlighted
 
   fun updateToInvalid(): Boolean =
-    updateProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_SELECTED_VALUE)
+    updateProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
   fun setInvalid(): Unit =
-    setProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_SELECTED_VALUE)
+    setProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
-  fun updateProperties(position: Int, isVisible: Boolean, isSelected: Boolean): Boolean {
-    val changed = myPosition != position || myIsVisible != isVisible || myIsSelected != isSelected
-    setProperties(position, isVisible, isSelected)
+  fun updateProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean): Boolean {
+    val changed = myPosition != position || myIsVisible != isVisible || myIsHighlighted != isHighlighted
+    setProperties(position, isVisible, isHighlighted)
     return changed
   }
 
-  fun setProperties(position: Int, isVisible: Boolean, isSelected: Boolean): Unit {
+  fun setProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean): Unit {
     myPosition = position
-    myIsSelected = isSelected
+    myIsHighlighted = isHighlighted
     myIsVisible = isVisible
   }
 }
