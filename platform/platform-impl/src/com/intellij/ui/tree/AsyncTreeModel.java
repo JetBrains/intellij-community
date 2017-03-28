@@ -41,11 +41,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * @author Sergey.Malenkov
  */
-public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
+public final class AsyncTreeModel extends AbstractTreeModel implements Disposable, Identifiable, Searchable, Navigatable {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final AtomicReference<AsyncPromise<Entry<Object>>> rootLoader = new AtomicReference<>();
   private final Command.Processor processor;
@@ -111,6 +112,40 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   @Override
   public void dispose() {
     model.removeTreeModelListener(listener);
+  }
+
+  @Override
+  public Object getUniqueID(@NotNull TreePath path) {
+    return model instanceof Identifiable ? ((Identifiable)model).getUniqueID(path) : null;
+  }
+
+  @NotNull
+  @Override
+  public Promise<TreePath> getTreePath(Object object) {
+    return model instanceof Searchable ? resolve(((Searchable)model).getTreePath(object)) : rejectedPromise();
+  }
+
+  @NotNull
+  @Override
+  public Promise<TreePath> nextTreePath(@NotNull TreePath path, Object object) {
+    return model instanceof Navigatable ? resolve(((Navigatable)model).nextTreePath(path, object)) : rejectedPromise();
+  }
+
+  @NotNull
+  @Override
+  public Promise<TreePath> prevTreePath(@NotNull TreePath path, Object object) {
+    return model instanceof Navigatable ? resolve(((Navigatable)model).prevTreePath(path, object)) : rejectedPromise();
+  }
+
+  private Promise<TreePath> resolve(Promise<TreePath> promise) {
+    AsyncPromise<TreePath> async = new AsyncPromise<>();
+    promise.rejected(error -> processor.foreground.invokeLaterIfNeeded(() -> async.setError(error)));
+    promise.done(result -> processor.foreground.invokeLaterIfNeeded(() -> sync(async, result)));
+    return async;
+  }
+
+  private void sync(AsyncPromise<TreePath> promise, TreePath path) {
+    promise.setResult(path);//todo load
   }
 
   @Override
