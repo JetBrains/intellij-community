@@ -16,6 +16,7 @@
 package com.intellij.ui.messages;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -45,7 +46,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * Created by Denis Fokin
  */
-public class SheetController {
+public class SheetController implements Disposable {
 
   private static final KeyStroke VK_ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
