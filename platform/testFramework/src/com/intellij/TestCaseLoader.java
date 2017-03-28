@@ -27,6 +27,7 @@ package com.intellij;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.JITSensitive;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -198,29 +199,32 @@ public class TestCaseLoader {
     return Collections.emptyList();
   }
 
-  private int getRank(Class aClass) {
-    final String name = aClass.getName();
-    if (aClass == myFirstTestClass) return -1;
-    if (aClass == myLastTestClass) return myClassList.size() + ourRankList.size();
-    int i = ourRankList.indexOf(name);
+  private static int getRank(Class aClass) {
+    if (TestAll.isPerformanceTestsRun()) {
+      return moveToStart(aClass) ? 0 : 1;
+    }
+
+    int i = ourRankList.indexOf(aClass.getName());
     if (i != -1) {
       return i;
     }
     return ourRankList.size();
   }
 
+  private static boolean moveToStart(Class testClass) {
+    return testClass.getAnnotation(JITSensitive.class) != null;
+  }
+
   public List<Class> getClasses() {
     List<Class> result = new ArrayList<>(myClassList.size());
-    if (myFirstTestClass != null) {
-      result.add(myFirstTestClass);
-    }
     result.addAll(myClassList);
+    Collections.sort(result, Comparator.comparingInt(TestCaseLoader::getRank));
+    
+    if (myFirstTestClass != null) {
+      result.add(0, myFirstTestClass);
+    }
     if (myLastTestClass != null) {
       result.add(myLastTestClass);
-    }
-
-    if (!ourRankList.isEmpty()) {
-      Collections.sort(result, (o1, o2) -> getRank(o1) - getRank(o2));
     }
 
     return result;
