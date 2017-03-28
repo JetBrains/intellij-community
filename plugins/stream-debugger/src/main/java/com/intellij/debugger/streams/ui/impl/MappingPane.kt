@@ -4,7 +4,11 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import java.awt.*
+import com.intellij.util.ui.JBUI
+import java.awt.BasicStroke
+import java.awt.BorderLayout
+import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -19,7 +23,7 @@ class MappingPane(name: String,
     val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
 
     val MAX_ANGLE_TO_DRAW_LINK = 4 * Math.PI / 10
-    val STROKE = BasicStroke(2.toFloat())
+    val STROKE = BasicStroke(JBUI.scale(1.toFloat()))
   }
 
   init {
