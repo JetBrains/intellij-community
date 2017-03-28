@@ -21,8 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.function.Predicate;
@@ -30,6 +32,14 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class LeakHunter {
+
+  // Android Studio: to avoid false positives, the leak checker won't inspect the internal state of mocking libraries.
+  private static final List<String> MOCKING_SUPPORT_CLASSES = Arrays.asList(
+    "org.easymock.internal.MocksBehavior",
+    "org.mockito.internal.stubbing.OngoingStubbingImpl");
+
+  private static final Predicate<Object> SHOULD_EXAMINE_VALUE = o -> !MOCKING_SUPPORT_CLASSES.contains(o.getClass().getName());
+
   @TestOnly
   public static void checkProjectLeak() throws AssertionError {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
@@ -82,7 +92,7 @@ public final class LeakHunter {
     PersistentEnumeratorBase.clearCacheForTests();
     Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __ -> true, (value, backLink) -> {
+        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, SHOULD_EXAMINE_VALUE, (value, backLink) -> {
           @SuppressWarnings("unchecked")
           T leaked = (T)value;
           if (isReallyLeak == null || isReallyLeak.test(leaked)) {
