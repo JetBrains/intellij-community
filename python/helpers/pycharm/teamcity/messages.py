@@ -81,6 +81,10 @@ class TeamcityServiceMessages(object):
     def blockClosed(self, name, flowId=None):
         self.message('blockClosed', name=name, flowId=flowId)
 
+    # Special PyCharm-specific extension to track subtests, additional property is ignored by TeamCity
+    def subTestBlockOpened(self, name, subTestResult, flowId=None):
+        self.message('blockOpened', name=name, subTestResult=subTestResult, flowId=flowId)
+
     def block(self, name, flowId=None):
         import teamcity.context_managers as cm
         return cm.block(self, name=name, flowId=flowId)

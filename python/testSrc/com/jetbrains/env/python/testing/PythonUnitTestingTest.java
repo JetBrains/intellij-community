@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
@@ -47,6 +48,36 @@ import static org.junit.Assert.assertEquals;
  * @author traff
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
+
+  @EnvTestTagsRequired(tags = "python3") // No subtest in py2
+  @Test
+  public void testSubtest() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py") {
+      @Override
+      protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all) {
+        final String expectedResult = "Test tree:\n" +
+                                      "[root]\n" +
+                                      ".test_subtest\n" +
+                                      "..SpamTest\n" +
+                                      "...test_test\n" +
+                                      "....(i=0)(-)\n" +
+                                      "....(i=1)(+)\n" +
+                                      "....(i=2)(-)\n" +
+                                      "....(i=3)(+)\n" +
+                                      "....(i=4)(-)\n" +
+                                      "....(i=5)(+)\n" +
+                                      "....(i=6)(-)\n" +
+                                      "....(i=7)(+)\n" +
+                                      "....(i=8)(-)\n" +
+                                      "....(i=9)(+)\n";
+        Assert.assertEquals("", expectedResult, runner.getFormattedTestTree());
+
+      }
+    });
+  }
 
   @Test
   public void testMultipleCases() throws Exception {
