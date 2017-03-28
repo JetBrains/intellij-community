@@ -127,26 +127,24 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     PsiParameter[] methodParameters = method.getParameterList().getParameters();
     if (exprPosition < methodParameters.length) {
       PsiParameter methodParameter = methodParameters[exprPosition];
-      return ChainCompletionContext.createContext(methodParameter.getType(), null, PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
+      return ChainCompletionContext.createContext(methodParameter.getType(), PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
     }
     return null;
   }
 
   @Nullable
   private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable) {
-    PsiType varType = localVariable.getType();
-    String varName = localVariable.getName();
     PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
-    return ChainCompletionContext.createContext(varType, varName, declaration);
+    return ChainCompletionContext.createContext(localVariable.getType(), declaration);
   }
 
   @Nullable
   private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression) {
-    PsiType type = assignmentExpression.getLExpression().getType();
-    PsiIdentifier identifier = PsiTreeUtil.getChildOfType(assignmentExpression.getLExpression(), PsiIdentifier.class);
-    if (identifier == null) return null;
-    String identifierText = identifier.getText();
-    return ChainCompletionContext.createContext(type, identifierText, assignmentExpression);
+    if (!(assignmentExpression instanceof PsiReferenceExpression)) return null;
+    PsiElement resolved = ((PsiReferenceExpression)assignmentExpression).resolve();
+    return resolved instanceof PsiVariable
+           ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression)
+           : null;
   }
 
   @NotNull

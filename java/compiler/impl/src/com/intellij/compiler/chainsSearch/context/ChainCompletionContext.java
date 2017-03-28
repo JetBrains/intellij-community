@@ -15,9 +15,9 @@
  */
 package com.intellij.compiler.chainsSearch.context;
 
+import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.ChainCompletionStringUtil;
 import com.intellij.compiler.chainsSearch.MethodChainsSearchUtil;
-import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -86,11 +86,6 @@ public class ChainCompletionContext {
   @NotNull
   public TargetType getTarget() {
     return myTarget;
-  }
-
-  @NotNull
-  public List<PsiNamedElement> getContextElements() {
-    return myContextElements;
   }
 
   public boolean contains(@Nullable PsiType type) {
@@ -164,13 +159,11 @@ public class ChainCompletionContext {
     return myResolver.get(sign);
   }
 
-
   @Nullable
-  public static ChainCompletionContext createContext(@Nullable PsiType variableType,
-                                                     @Nullable String variableName,
+  public static ChainCompletionContext createContext(@Nullable PsiType targetType,
                                                      @Nullable PsiElement containingElement) {
     if (containingElement == null) return null;
-    TargetType target = TargetType.create(variableType);
+    TargetType target = TargetType.create(targetType);
     if (target == null) return null;
 
     ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement);
