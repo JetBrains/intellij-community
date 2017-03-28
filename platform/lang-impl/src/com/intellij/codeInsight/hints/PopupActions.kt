@@ -128,6 +128,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
         "settings" -> showSettings(language)
         "undo" -> undo(language, info)
       }
+      notification.expire()
     }
 
     val notification = Notification("Parameter Name Hints", "Method \"$methodName\" added to blacklist", 
