@@ -24,10 +24,11 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
@@ -38,6 +39,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -229,8 +231,12 @@ public class DfaVariableValue extends DfaValue {
 
   private static boolean isOnlyImplicitlyInitialized(PsiField field) {
     return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null) && weAreSureThereAreNoExplicitWrites(field),
+      isImplicitlyInitializedNotNull(field) && weAreSureThereAreNoExplicitWrites(field),
       PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static boolean isImplicitlyInitializedNotNull(PsiField field) {
+    return ContainerUtil.exists(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME), p -> p.isImplicitlyNotNullInitialized(field));
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {

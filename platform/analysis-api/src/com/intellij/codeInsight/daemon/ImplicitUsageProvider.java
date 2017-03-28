@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to disable highlighting of certain elements as unused when such elements are not referenced
@@ -36,4 +37,11 @@ public interface ImplicitUsageProvider {
   boolean isImplicitUsage(PsiElement element);
   boolean isImplicitRead(PsiElement element);
   boolean isImplicitWrite(PsiElement element);
+
+  /**
+   * @return true if the given element is implicitly initialized to a non-null value
+   */
+  default boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
+    return false;
+  }
 }
