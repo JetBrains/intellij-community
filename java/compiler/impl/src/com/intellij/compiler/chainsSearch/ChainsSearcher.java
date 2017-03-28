@@ -67,7 +67,6 @@ public class ChainsSearcher {
                                            int maxResultSize,
                                            String targetQName,
                                            ChainCompletionContext context) {
-    Set<PsiType> allExcludedNames = Collections.singleton(context.getTarget().getPsiType());
     SearchInitializer.InitResult initResult = initializer.init(Collections.emptySet());
 
     Map<MethodIncompleteSignature, MethodsChain> knownDistance = initResult.getChains();
