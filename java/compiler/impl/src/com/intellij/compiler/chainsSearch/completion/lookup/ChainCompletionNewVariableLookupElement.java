@@ -65,7 +65,14 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
       LOG.error("element on caret position MUST BE not null");
       return;
     }
-    final PsiStatement statement = (PsiStatement) caretElement.getPrevSibling();
+
+    PsiElement prevSibling = caretElement.getPrevSibling();
+    final PsiStatement statement;
+    if (prevSibling instanceof PsiStatement) {
+      statement = (PsiStatement)prevSibling;
+    } else {
+      statement = PsiTreeUtil.getParentOfType(prevSibling, PsiStatement.class);
+    }
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
     if (codeBlock == null) {
       LOG.error("code block MUST BE not null");
