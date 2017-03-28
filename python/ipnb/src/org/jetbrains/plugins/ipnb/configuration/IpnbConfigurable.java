@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.configuration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
@@ -30,8 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class IpnbConfigurable implements SearchableConfigurable {
+  private static final Logger LOG = Logger.getInstance(IpnbConfigurable.class);
   private static final int DEFAULT_PADDING = 3;
   private JPanel myMainPanel;
   private JBTextField myUrlField;
@@ -58,24 +62,34 @@ public class IpnbConfigurable implements SearchableConfigurable {
     return new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        setWarningLabelIcon(IpnbSettings.getInstance(myProject).isRemote());
+        if (mySpecificNotebookSettingsPanel instanceof SettingsPanelPro) {
+          boolean isRemote = ((SettingsPanelPro)mySpecificNotebookSettingsPanel).isRemote();
+          setWarningLabelIcon(isRemote);
+        }
       }
     };
   }
 
   private void setWarningLabelIcon(boolean isRemote) {
     if (myUrlField == null) return;
-    final String url = myUrlField.getText();
-    if (isRemote && !url.startsWith("https") || !isRemote && url.startsWith("https") ) {
-      Dimension oldPreferredSize = myWarningIcon.getPreferredSize();
-      myWarningIcon.setIcon(AllIcons.General.BalloonWarning);
-      myWarningIcon.setPreferredSize(oldPreferredSize);
-      myWarningIcon.setMinimumSize(oldPreferredSize);
-      myWarningIcon.revalidate();
-      String message = isRemote ? "Use HTTPS for remote notebooks" : "Use HTTP for local notebooks";
-      IdeTooltipManager.getInstance().setCustomTooltip(myWarningIcon, new TooltipWithClickableLinks.ForBrowser(myWarningIcon, message));
+    try {
+      URL url = new URL(myUrlField.getText());
+      String protocol = url.getProtocol();
+      boolean isSupportedProtocol = protocol.equals(isRemote ? "https" : "http");
+      if (!isSupportedProtocol) {
+        Dimension oldPreferredSize = myWarningIcon.getPreferredSize();
+        myWarningIcon.setIcon(AllIcons.General.BalloonWarning);
+        myWarningIcon.setPreferredSize(oldPreferredSize);
+        myWarningIcon.setMinimumSize(oldPreferredSize);
+        myWarningIcon.revalidate();
+        String message = isRemote ? "Use HTTPS for remote notebooks" : "Use HTTP for local notebooks";
+        IdeTooltipManager.getInstance().setCustomTooltip(myWarningIcon, new TooltipWithClickableLinks.ForBrowser(myWarningIcon, message));
 
-      return;
+        return;
+      }
+    }
+    catch (MalformedURLException e) {
+      LOG.warn(e.getMessage());
     }
 
     myWarningIcon.setIcon(AllIcons.Nodes.EmptyNode);
@@ -196,9 +210,8 @@ public class IpnbConfigurable implements SearchableConfigurable {
     
     public boolean isModified() {
       final boolean wasRemote = IpnbSettings.getInstance(myProject).isRemote();
-      final boolean isRemote = myRemote.isSelected();
-      
-      if (wasRemote != isRemote) return true;
+
+      if (wasRemote != isRemote()) return true;
       
       if (wasRemote) {
         return myRemoteSettingsPanel.isModified();
@@ -208,9 +221,13 @@ public class IpnbConfigurable implements SearchableConfigurable {
       }
     }
 
+    public boolean isRemote() {
+      return myRemote.isSelected();
+    }
+
     @Override
     public void apply() {
-      final boolean isRemote = myRemote.isSelected();
+      final boolean isRemote = isRemote();
       final boolean wasRemote = IpnbSettings.getInstance(myProject).isRemote();
       
       if (isRemote != wasRemote) {
