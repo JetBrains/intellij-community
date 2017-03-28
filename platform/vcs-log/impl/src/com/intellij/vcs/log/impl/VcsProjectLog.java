@@ -170,7 +170,7 @@ public class VcsProjectLog implements Disposable {
     public synchronized VcsLogManager getValue() {
       if (myValue == null) {
         myValue = compute();
-        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated();
+        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(myValue);
       }
       return myValue;
     }
@@ -184,7 +184,7 @@ public class VcsProjectLog implements Disposable {
     @CalledInAwt
     public synchronized void drop() {
       if (myValue != null) {
-        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed();
+        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
         Disposer.dispose(myValue);
       }
       myValue = null;
@@ -213,9 +213,9 @@ public class VcsProjectLog implements Disposable {
 
   public interface ProjectLogListener {
     @CalledInAwt
-    void logCreated();
+    void logCreated(@NotNull VcsLogManager manager);
 
     @CalledInAwt
-    void logDisposed();
+    void logDisposed(@NotNull VcsLogManager manager);
   }
 }
