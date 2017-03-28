@@ -201,32 +201,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void duringCompletion(CompletionInitializationContext initContext) {
-    if (isAutopopupCompletion()) {
-      if (shouldPreselectFirstSuggestion(myParameters)) {
-        if (!CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
-          myLookup.setFocusDegree(LookupImpl.FocusDegree.SEMI_FOCUSED);
-          if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
-            String dotShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT);
-            if (StringUtil.isNotEmpty(dotShortcut)) {
-              addAdvertisement("Press " + dotShortcut + " to choose the selected (or first) suggestion and insert a dot afterwards", null);
-            }
-          }
-        } else {
-          myLookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
-        }
-      }
-      if (!myEditor.isOneLineMode() &&
-          FeatureUsageTracker.getInstance()
-            .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS, getProject())) {
-        String downShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN);
-        String upShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP);
-        if (StringUtil.isNotEmpty(downShortcut) && StringUtil.isNotEmpty(upShortcut)) {
-          addAdvertisement(downShortcut + " and " + upShortcut + " will move caret down and up in the editor", null);
-        }
-      }
-    } else if (DumbService.isDumb(getProject())) {
-      addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
+    if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(myParameters)) {
+      myLookup.setFocusDegree(CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
+                              ? LookupImpl.FocusDegree.FOCUSED
+                              : LookupImpl.FocusDegree.SEMI_FOCUSED);
     }
+    addDefaultAdvertisements();
 
     ProgressManager.checkCanceled();
 
@@ -261,6 +241,54 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
     if (document instanceof DocumentWindow) {
       myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
+    }
+  }
+  
+
+  private void addDefaultAdvertisements() {
+    if (DumbService.isDumb(getProject())) {
+      addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
+      return;
+    }
+    
+    advertiseTabReplacement();
+    if (isAutopopupCompletion()) {
+      if (shouldPreselectFirstSuggestion(myParameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
+        advertiseCtrlDot();
+      }
+      advertiseCtrlArrows();
+    }
+  }
+
+  private void advertiseTabReplacement() {
+    if (CompletionUtil.shouldShowFeature(myParameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE) &&
+      myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET)) {
+      String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+      if (StringUtil.isNotEmpty(shortcut)) {
+        addAdvertisement("Use " + shortcut + " to overwrite the current identifier with the chosen variant", null);
+      }
+    }
+  }
+
+  private void advertiseCtrlDot() {
+    if (FeatureUsageTracker
+      .getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
+      String dotShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT);
+      if (StringUtil.isNotEmpty(dotShortcut)) {
+        addAdvertisement("Press " + dotShortcut + " to choose the selected (or first) suggestion and insert a dot afterwards", null);
+      }
+    }
+  }
+
+  private void advertiseCtrlArrows() {
+    if (!myEditor.isOneLineMode() &&
+        FeatureUsageTracker.getInstance()
+          .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS, getProject())) {
+      String downShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_DOWN);
+      String upShortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_LOOKUP_UP);
+      if (StringUtil.isNotEmpty(downShortcut) && StringUtil.isNotEmpty(upShortcut)) {
+        addAdvertisement(downShortcut + " and " + upShortcut + " will move caret down and up in the editor", null);
+      }
     }
   }
 
