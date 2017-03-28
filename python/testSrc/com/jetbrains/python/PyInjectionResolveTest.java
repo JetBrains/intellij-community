@@ -118,4 +118,9 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   public void testFunctionTypeCommentReturnTypeReference() {
     assertResolvesTo(PyClass.class, "MyClass");
   }
+
+  // PY-22094
+  public void testFStringInsideAssertStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyParameter.class, "name"));
+  }
 }
