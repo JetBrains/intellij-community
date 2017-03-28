@@ -442,6 +442,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       @Override
       public boolean isImplicitWrite(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
     }, getTestRootDisposable());
