@@ -27,6 +27,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -86,11 +87,10 @@ public class TestsPattern extends TestPackage {
     return super.createSearchingForTestsTask();
   }
 
-  private static PsiClass getTestClass(Project project, String className) {
-    return JavaExecutionUtil.findMainClass(project,
-                                           (className.contains(",")
-                                           ? className.substring(0, className.indexOf(','))
-                                           : className).trim(), GlobalSearchScope.allScope(project));
+  private PsiClass getTestClass(Project project, String className) {
+    SourceScope sourceScope = getSourceScope();
+    GlobalSearchScope searchScope = sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
+    return JavaExecutionUtil.findMainClass(project, StringUtil.getPackageName(className, ','), searchScope);
   }
 
   @Override
