@@ -49,7 +49,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase {
+public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase
+  implements LocatableConfiguration {
   private static final Logger LOG = Logger.getInstance(DeployToServerRunConfiguration.class);
   private static final String DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE = "type";
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
@@ -153,6 +154,17 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
 
   public void setDeploymentConfiguration(D deploymentConfiguration) {
     myDeploymentConfiguration = deploymentConfiguration;
+  }
+
+  @Override
+  public boolean isGeneratedName() {
+    return getDeploymentSource() != null && getDeploymentConfigurator().isGeneratedConfigurationName(getName(), getDeploymentSource());
+  }
+
+  @Nullable
+  @Override
+  public String suggestedName() {
+    return getDeploymentSource() == null ? null : getDeploymentConfigurator().suggestConfigurationName(getDeploymentSource());
   }
 
   @Override
