@@ -29,6 +29,7 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
 import com.jetbrains.python.testing.universalTests.TestTargetType;
@@ -48,8 +49,14 @@ import static org.junit.Assert.assertEquals;
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   @Test
+  public void testMultipleCases() throws Exception {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class));
+  }
+
+  @Test
   public void testConfigurationProducer() throws Exception {
-    new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
   }
 
   /**
@@ -118,14 +125,14 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                                                  PyUniversalUnitTestConfiguration.class));
   }
 
   @Test
   public void testRenameClass() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
         PyUniversalUnitTestConfiguration.class));
   }

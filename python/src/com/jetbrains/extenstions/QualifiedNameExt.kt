@@ -17,20 +17,22 @@ package com.jetbrains.extenstions
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.resolve.fromModule
+import com.jetbrains.python.psi.resolve.resolveModuleAt
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkType
 
 /**
  * Resolves qname of any symbol to appropriate PSI element.
  */
-fun QualifiedName.toElement(module: Module, context: TypeEvalContext, folderToStart: VirtualFile? = null): PsiElement? {
+fun QualifiedName.toElement(module: Module,
+                            context: TypeEvalContext,
+                            folderToStart: VirtualFile? = null): PsiElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -39,22 +41,20 @@ fun QualifiedName.toElement(module: Module, context: TypeEvalContext, folderToSt
   // Drill as deep, as we can
   var lastElement: String? = null
 
-  var resolveContext = fromModule(module)
+  var psiDirectory: PsiDirectory? = null
+  val resolveContext = fromModule(module).copyWithMembers()
   if (folderToStart != null) {
-    val psiDirectory = PsiManager.getInstance(module.project).findDirectory(folderToStart)
-    if (psiDirectory != null) {
-      resolveContext = resolveContext.copyWithRelative(psiDirectory)
-    }
-  }
-
-  // check for module and set if py3k
-  if (PythonSdkType.getLanguageLevelForSdk(module.getSdk()).isPy3K) {
-    resolveContext = resolveContext.copyWithPlainDirectories()
+    psiDirectory = PsiManager.getInstance(module.project).findDirectory(folderToStart)
   }
 
 
   while (currentName.componentCount > 0 && element == null) {
-    element = resolveQualifiedName(currentName, resolveContext.copyWithMembers()).firstOrNull()
+    if (psiDirectory != null) {
+      element = resolveModuleAt(currentName, psiDirectory, resolveContext).firstOrNull()
+    } else {
+      element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
+    }
+
     if (element != null) {
       break
     }

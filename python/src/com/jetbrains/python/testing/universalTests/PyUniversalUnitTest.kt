@@ -77,6 +77,7 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
   override fun isFrameworkInstalled() = true //Unittest is always available
 
   // See loader.py:     is_not_importable = not os.path.isfile(os.path.join(start_dir, '__init__.py'))
+  // https://mail.python.org/pipermail/python-dev/2017-March/147656.html
   override fun packageOnlyIfInitPy(anchor: PsiElement) = true
 }
 

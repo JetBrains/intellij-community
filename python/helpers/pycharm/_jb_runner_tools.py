@@ -402,7 +402,7 @@ def jb_start_tests():
     NewTeamcityServiceMessages().message('enteredTheMatrix')
 
     # Working dir should be on path, that is how runners work when launched from command line
-    sys.path.append(os.getcwd())
+    sys.path.insert(1, os.getcwd())
     return namespace.path, namespace.target, additional_args
 
 
