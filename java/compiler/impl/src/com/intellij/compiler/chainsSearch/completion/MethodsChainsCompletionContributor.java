@@ -28,6 +28,7 @@ import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.TargetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
@@ -47,6 +48,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author Dmitry Batkovich
  */
 public class MethodsChainsCompletionContributor extends CompletionContributor {
+  private static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodsChainsCompletionContributor.class);
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   public static final CompletionType COMPLETION_TYPE = IS_UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
@@ -60,6 +62,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         try {
+          if (!Registry.is(REGISTRY_KEY)) return;
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
