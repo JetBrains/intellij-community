@@ -27,6 +27,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 import static javax.swing.SwingConstants.EAST;
@@ -114,28 +115,30 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
-  public static void paintErrorBorder(Graphics2D g, int width, int height, boolean hasFocus) {
+  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean hasFocus) {
     int lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 4 : 3);
-    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
     g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
-    g.setStroke(new UIUtil.OuterStroke(lw));
-    g.draw(shape);
+
+    Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    path.append(new RoundRectangle2D.Double(0, 0, width, height, arc + lw * 2, arc + lw * 2), false);
+    path.append(new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, arc, arc), false);
+
+    g.fill(path);
   }
 
-  public static void paintFocusBorder(Graphics2D g, int width, int height) {
-    int lw = JBUI.scale(4);
-    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
-
+  public static void paintFocusBorder(Graphics2D g, int width, int height, int lw, int arc) {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
     g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
-    g.setStroke(new UIUtil.OuterStroke(JBUI.scale(lw)));
-    g.draw(shape);
+
+    Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    path.append(new RoundRectangle2D.Double(0, 0, width, height, arc + lw * 2, arc + lw * 2), false);
+    path.append(new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, arc, arc), false);
+
+    g.fill(path);
   }
 
   public static boolean isCurrentEventShiftDownEvent() {

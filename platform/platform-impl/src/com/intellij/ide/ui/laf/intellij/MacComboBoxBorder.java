@@ -40,8 +40,10 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
       g2.translate(x, y);
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+      Shape clip = g2.getClip();
       Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
       area.subtract(getButtonBounds(c));
+      area.intersect(new Area(clip));
       g2.setClip(area);
 
       int arc = isRound(c) ? JBUI.scale(8) : 0;
@@ -65,7 +67,8 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
                              c.getHeight() - JBUI.scale(6),
                              arc, null, Gray.xBC);
 
-      paint(c, g2, width, height);
+      g2.setClip(clip); // Reset clip
+      paint(c, g2, width, height, arc);
     } finally {
       g2.dispose();
     }
@@ -117,6 +120,9 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
     area.subtract(new Area(innerShape));
     area.add(getButtonBounds(c));
+
+    Area clip = new Area(g2.getClip());
+    area.intersect(clip);
     g2.setClip(area);
   }
 }

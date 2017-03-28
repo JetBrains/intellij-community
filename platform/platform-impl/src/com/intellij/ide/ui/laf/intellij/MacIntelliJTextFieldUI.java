@@ -15,12 +15,11 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.Area;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -79,10 +78,10 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   protected Rectangle getDrawingRect() {
-    return new Rectangle(0, (myTextField.getHeight() - 26) / 2, myTextField.getWidth(), myTextField.getHeight());
+    return new Rectangle(0, (myTextField.getHeight() - 28) / 2, myTextField.getWidth(), myTextField.getHeight());
   }
 
-  Icon getSearchIcon(Component c) {
+  private static Icon getSearchIcon(Component c) {
     return MacIntelliJIconCache.getIcon(isSearchFieldWithHistoryPopup(c) ? "searchFieldWithHistory" : "searchFieldLabel");
   }
 
@@ -91,13 +90,14 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     Icon icon = getSearchIcon(myTextField);
     return new Point(r.x + (hasText() || myTextField.hasFocus() || isSearchFieldWithHistoryPopup(myTextField)
                             ? JBUI.scale(8)
-                            : (r.width - icon.getIconWidth()) / 2)
-      , r.y + (r.height - icon.getIconHeight()) / 2 + JBUI.scale(1));
+                            : (r.width - icon.getIconWidth()) / 2),
+      r.y + (r.height - icon.getIconHeight()) / 2);
   }
 
   protected Point getClearIconCoord() {
-    final Rectangle r = getDrawingRect();
-    return new Point(r.x + r.width - JBUI.scale(16) - JBUI.scale(6), r.y + (r.height - JBUI.scale(16)) / 2);
+    Rectangle r = getDrawingRect();
+    Icon icon = MacIntelliJIconCache.getIcon("searchFieldClear");
+    return new Point(r.x + r.width - icon.getIconWidth() - JBUI.scale(6), r.y + (r.height - icon.getIconHeight()) / 2);
   }
 
   protected Point getAddNewLineIconCoord() {
@@ -135,7 +135,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    return new Dimension(size.width + getIconsWidth(c), Math.max(26, size.height));
+    return new Dimension(size.width + getIconsWidth(c), Math.max(28, size.height));
   }
 
   @Override
@@ -158,47 +158,48 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
-    final boolean noBorder = c.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE;
-    boolean hasFocus = c.hasFocus() && !noBorder;
-    Icon left = MacIntelliJIconCache.getIcon("searchFieldLeft", false, hasFocus);
-    Icon middle = MacIntelliJIconCache.getIcon("searchFieldMiddle", false, hasFocus);
-    Icon right = MacIntelliJIconCache.getIcon("searchFieldRight", false, hasFocus);
-    Graphics gg = g.create(0, 0, c.getWidth(), c.getHeight());
-    gg.setClip(r.x, r.y, r.width - right.getIconWidth(), r.height);
-    int x = r.x;
-    int stop = r.x + (r.width - right.getIconWidth());
-    left.paintIcon(c, g, r.x, r.y);
-    x += left.getIconWidth();
-    while (x < stop) {
-      middle.paintIcon(c, gg, x, r.y);
-      x += middle.getIconWidth();
-    }
-    gg.dispose();
-    right.paintIcon(c, g, stop, r.y);
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      RectanglePainter.paint(g2, r.x + JBUI.scale(3), r.y + JBUI.scale(3),
+                             r.width - JBUI.scale(6), r.height - JBUI.scale(6),
+                             JBUI.scale(8), c.getBackground(), Gray.xBC);
 
-    boolean withHistoryPopup = isSearchFieldWithHistoryPopup(c);
-    Icon label = getSearchIcon(c);
-    boolean isEmpty = !hasText();
-    Point point = getSearchIconCoord();
-    if (isEmpty && !c.hasFocus() && !withHistoryPopup) {
-      label.paintIcon(c, g, point.x, point.y);
-    }
-    else {
-      gg = g.create(0, 0, c.getWidth(), c.getHeight());
-      gg.setClip(point.x, point.y, isEmpty ? label.getIconWidth() : 16, label.getIconHeight());
-      label.paintIcon(c, gg, point.x, point.y);
-    }
-
-    Icon clearIcon = MacIntelliJIconCache.getIcon("searchFieldClear");
-    if (!isEmpty) {
-      clearIcon.paintIcon(c, g, getClearIconCoord().x, r.y);
-    }
-    AbstractAction newLineAction = getNewLineAction(c);
-    if (newLineAction != null) {
-      Icon newLineIcon = (Icon)newLineAction.getValue(Action.SMALL_ICON);
-      if (newLineIcon != null) {
-        newLineIcon.paintIcon(c, g, getAddNewLineIconCoord().x, r.y);
+      if (c.hasFocus() && c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
+        g2.translate(r.x, r.y);
+        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, JBUI.scale(4), JBUI.scale(6));
+        g2.translate(-r.x, -r.y);
       }
+
+      boolean withHistoryPopup = isSearchFieldWithHistoryPopup(c);
+      Icon label = getSearchIcon(c);
+      boolean isEmpty = !hasText();
+      Point point = getSearchIconCoord();
+      if (isEmpty && !c.hasFocus() && !withHistoryPopup) {
+        label.paintIcon(c, g2, point.x, point.y);
+      } else {
+        Graphics ig = g2.create(0, 0, c.getWidth(), c.getHeight());
+
+        Area area = new Area(new Rectangle2D.Double(point.x, point.y, isEmpty ? label.getIconWidth() : 16, label.getIconHeight()));
+        area.intersect(new Area(ig.getClip()));
+        ig.setClip(area);
+        label.paintIcon(c, ig, point.x, point.y);
+        ig.dispose();
+      }
+
+      if (!isEmpty) {
+        Point ic = getClearIconCoord();
+        MacIntelliJIconCache.getIcon("searchFieldClear").paintIcon(c, g2, ic.x, ic.y);
+      }
+
+      AbstractAction newLineAction = getNewLineAction(c);
+      if (newLineAction != null) {
+        Icon newLineIcon = (Icon)newLineAction.getValue(Action.SMALL_ICON);
+        if (newLineIcon != null) {
+          newLineIcon.paintIcon(c, g2, getAddNewLineIconCoord().x, r.y);
+        }
+      }
+    } finally {
+      g2.dispose();
     }
   }
 
@@ -212,7 +213,9 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
         rect.width -= 36 + extraOffset;
         if (getNewLineAction(myTextField) != null) rect.width -= 24;
         rect.x += 19 + extraOffset;
-        rect.y += 1;
+        if (rect.height % 2 == 1) {
+          rect.y += 1;
+        }
       }
       else {
         rect.x += 2;
@@ -228,35 +231,19 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     super.paintSafely(g);
   }
 
-  @SuppressWarnings("UseJBColor")
   public static void paintAquaSearchFocusRing(Graphics2D g, Rectangle r, Component c) {
-    g = (Graphics2D)g.create(0, 0, r.width, r.height);
-    GraphicsUtil.setupAAPainting(g);
-    g.setColor(c.getBackground());
-    RoundRectangle2D.Double border = getShape(r, 4, true);
-    g.fill(border);
-
-    g.setColor(Gray._192);
-    g.setStroke(new BasicStroke(.5f));
-    g.draw(getShape(r, 4, false));
-
-    if (c.hasFocus()) {
-      Color graphiteColor = new Color(0x6f6f72);
-      Color blueColor = ColorUtil.brighter(new Color(0x006de2), 3);
-      g.setColor(ColorUtil.withAlpha(IntelliJLaf.isGraphite() ? graphiteColor : blueColor, .35));
-      Area area = new Area(getShape(r, 7, false));
-      area.subtract(new Area(getShape(r, 3.5, true)));
-      g.fill(area);
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      RectanglePainter.paint(g, r.x + JBUI.scale(3), r.y + JBUI.scale(3),
+                             r.width - JBUI.scale(6), r.height - JBUI.scale(6),
+                             JBUI.scale(8), c.getBackground(), Gray.xBC);
+      if (c.hasFocus()) {
+        g.translate(r.x, r.y);
+        DarculaUIUtil.paintFocusBorder(g, r.width, r.height, JBUI.scale(4), JBUI.scale(6));
+      }
     }
-    g.dispose();
-  }
-
-  private static RoundRectangle2D.Double getShape(Rectangle r, double radius, boolean inner) {
-    double max_radius = 6;
-    radius = Math.min(max_radius, Math.max(0, radius));
-    double inset = max_radius - radius;
-    double indent = inner ? 0.5 : 0;
-    return new RoundRectangle2D.Double(r.x + inset + indent, r.y + inset + indent, r.width - 2 * inset - indent,
-                                       r.height - 2 * inset - indent, 2 * radius, 2 * radius);
+    finally {
+      g2.dispose();
+    }
   }
 }

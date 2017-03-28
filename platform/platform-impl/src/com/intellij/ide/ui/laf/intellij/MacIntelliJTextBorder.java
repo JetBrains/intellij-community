@@ -57,20 +57,20 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
 
       if (c.getParent() instanceof JComboBox) return;
 
-      paint(c, g2, width, height);
+      paint(c, g2, width, height, 0);
     } finally {
       g2.dispose();
     }
   }
 
-  public void paint(Component c, Graphics2D g2, int width, int height) {
+  public void paint(Component c, Graphics2D g2, int width, int height, int arc) {
     clipForBorder(c, g2, width, height);
 
     Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
     if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-      DarculaUIUtil.paintErrorBorder(g2, width, height, isFocused(c));
+      DarculaUIUtil.paintErrorBorder(g2, width, height, arc, isFocused(c));
     } else if (isFocused(c)) {
-      DarculaUIUtil.paintFocusBorder(g2, width, height);
+      DarculaUIUtil.paintFocusBorder(g2, width, height, JBUI.scale(4), arc);
     }
   }
 
@@ -83,6 +83,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     area.subtract(new Area(new Rectangle2D.Double(JBUI.scale(4), JBUI.scale(4),
                                                   width - JBUI.scale(8),
                                                   height - JBUI.scale(8))));
+    area.intersect(new Area(g2.getClip()));
     g2.setClip(area);
   }
 }
