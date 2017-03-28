@@ -154,7 +154,7 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<>();
-    containingClass.accept(new JavaRecursiveElementVisitor() {
+    containingClass.accept(new JavaRecursiveElementWalkingVisitor() {
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
 
       @Override
