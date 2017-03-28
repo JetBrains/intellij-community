@@ -39,6 +39,14 @@ import java.util.*;
  * User: cdr
  */
 public class LeakHunter {
+
+  // Android Studio: to avoid false positives, the leak checker won't inspect the internal state of mocking libraries.
+  private static final List<String> MOCKING_SUPPORT_CLASSES = Arrays.asList(
+    "org.easymock.internal.MocksBehavior",
+    "org.mockito.internal.stubbing.OngoingStubbingImpl");
+
+  private static final Condition<Object> SHOULD_EXAMINE_VALUE = o -> !MOCKING_SUPPORT_CLASSES.contains(o.getClass().getName());
+
   @TestOnly
   public static void checkProjectLeak() throws Exception {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
@@ -83,7 +91,7 @@ public class LeakHunter {
     }
     PersistentEnumeratorBase.clearCacheForTests();
     ApplicationManager.getApplication().runReadAction(() -> {
-      DebugReflectionUtil.walkObjects(10000, roots, suspectClass, Conditions.alwaysTrue(), (value, backLink) -> {
+      DebugReflectionUtil.walkObjects(10000, roots, suspectClass, SHOULD_EXAMINE_VALUE, (value, backLink) -> {
         @SuppressWarnings("unchecked")
         T leaked = (T)value;
         if (isReallyLeak == null || isReallyLeak.value(leaked)) {
