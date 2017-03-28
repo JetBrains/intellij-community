@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
@@ -123,9 +124,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  @NotNull
-  public PsiReference getReference() {
-    return this;
+  public TextRange getRangeInElement() {
+    PsiElement nameElement = getReferenceNameElement();
+    TextRange stringContentRange = GrStringUtil.getStringContentRange(nameElement);
+    if (stringContentRange != null) return stringContentRange.shiftRight(nameElement.getStartOffsetInParent());
+    return super.getRangeInElement();
   }
 
   @Override

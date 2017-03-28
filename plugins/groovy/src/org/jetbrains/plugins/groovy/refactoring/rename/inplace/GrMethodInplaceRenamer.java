@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@ package org.jetbrains.plugins.groovy.refactoring.rename.inplace;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * Created by Max Medvedev on 26/03/14
@@ -32,5 +37,19 @@ public class GrMethodInplaceRenamer extends MemberInplaceRenamer {
   @Override
   protected boolean isIdentifier(String newName, Language language) {
     return true;
+  }
+
+  @Nullable
+  @Override
+  protected PsiElement getNameIdentifier(PsiElement elementToRename) {
+    return elementToRename instanceof GrNamedElement ? ((GrNamedElement)elementToRename).getNameIdentifierGroovy() : null;
+  }
+
+  @NotNull
+  @Override
+  protected TextRange getRangeToRename(@NotNull PsiElement element) {
+    TextRange stringContentRange = GrStringUtil.getStringContentRange(element);
+    if (stringContentRange != null) return stringContentRange;
+    return super.getRangeToRename(element);
   }
 }
