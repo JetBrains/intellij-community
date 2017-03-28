@@ -25,10 +25,7 @@ import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.ProcessingContext;
@@ -66,6 +63,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
+  private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
 
@@ -89,7 +87,8 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @NotNull
   private CompletionSorterImpl obtainSorter(LookupElement element) {
-    return myProcess.getSorter(element);
+    //noinspection ConstantConditions
+    return element.getUserData(mySorterKey);
   }
 
   @NotNull
@@ -130,6 +129,10 @@ public class CompletionLookupArranger extends LookupArranger {
       result.put(item, additionalRelevance == null ? mainRelevance : ContainerUtil.concat(mainRelevance, additionalRelevance));
     }
     return result;
+  }
+
+  void associateSorter(LookupElement element, CompletionSorterImpl sorter) {
+    element.putUserData(mySorterKey, sorter);
   }
 
   private static boolean haveSameWeights(List<Pair<LookupElement, Object>> pairs) {
