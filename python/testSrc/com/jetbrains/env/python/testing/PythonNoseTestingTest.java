@@ -23,6 +23,11 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+  @Test
+  public void testMultipleCases() throws Exception {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
+  }
 
   /**
    * Checks tests are resolved when launched from subfolder
@@ -85,20 +90,20 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
                                                                                  PyUniversalNoseTestConfiguration.class));
   }
 
   @Test
   public void testRenameClass() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
         PyUniversalNoseTestConfiguration.class));
   }
