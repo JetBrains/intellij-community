@@ -551,7 +551,7 @@ public class FormatterImpl extends FormatterEx
 
   private static boolean hasContentAfterLineBreak(final FormattingDocumentModel documentModel, final int offset, final WhiteSpace whiteSpace) {
     return documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getEndOffset()) &&
-           documentModel.getTextLength() != offset;
+           documentModel.getTextLength() != whiteSpace.getEndOffset();
   }
 
   @Override
