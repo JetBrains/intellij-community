@@ -3,4 +3,4 @@ class Package {
         ""
     }
 }
-print new Package().<caret>'package'
+print new Package().'<caret>package'

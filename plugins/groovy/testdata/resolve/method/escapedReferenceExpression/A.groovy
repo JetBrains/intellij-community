@@ -1,1 +1,1 @@
-print String.<ref>'package'.name
+print String.'<ref>package'.name
