@@ -74,7 +74,7 @@ import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFile
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
 public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx implements ModificationTracker {
-  private final static Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
+  private static final Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
 
   private final Set<FileType> myFileTypes;
   private final DirtyScopeHolder myDirtyScopeHolder;
@@ -250,18 +250,23 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
+  /**
+   * conditional probability P(ref1 | ref2) = P(ref1 * ref2) / P(ref2) > 1 - 1 / threshold
+   *
+   * where P(ref) is a probability that ref is occurred in a file.
+   */
   @Override
-  public boolean areReferencesUsageCorrelated(@NotNull LightRef ref1, @NotNull LightRef ref2, int correlationThreshold) {
+  public boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int correlationThreshold) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
       try {
-        final TIntHashSet ids1 = myReader.getAllContainingFileIds(ref1);
-        final TIntHashSet ids2 = myReader.getAllContainingFileIds(ref2);
+        final TIntHashSet ids1 = myReader.getAllContainingFileIds(qualifier);
+        final TIntHashSet ids2 = myReader.getAllContainingFileIds(base);
         final TIntHashSet intersection = intersection(ids1, ids2);
-        if ((ids1.size() - intersection.size()) * correlationThreshold < ids1.size()) {
-          return true;
-        }
+        //if ((ids1.size() - intersection.size()) * correlationThreshold < ids1.size()) {
+        //  return true;
+        //} do not use symmetric formula
         if ((ids2.size() - intersection.size()) * correlationThreshold < ids2.size()) {
           return true;
         }

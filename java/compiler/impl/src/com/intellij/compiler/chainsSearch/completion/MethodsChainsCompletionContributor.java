@@ -59,6 +59,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
+        if (true) return;
         try {
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;

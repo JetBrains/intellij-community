@@ -36,7 +36,7 @@ import java.util.Collection;
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
 public class ChainCompletionNewVariableLookupElement extends LookupElementDecorator<LookupElement> {
-  private final static Logger log = Logger.getInstance(ChainCompletionNewVariableLookupElement.class);
+  private final static Logger LOG = Logger.getInstance(ChainCompletionNewVariableLookupElement.class);
 
   private final PsiClass myPsiClass;
   private final String myNewVarName;
@@ -62,13 +62,13 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
     ((PsiJavaFile)file).importClass(myPsiClass);
     final PsiElement caretElement = file.findElementAt(context.getEditor().getCaretModel().getOffset());
     if (caretElement == null) {
-      log.error("element on caret position MUST BE not null");
+      LOG.error("element on caret position MUST BE not null");
       return;
     }
     final PsiStatement statement = (PsiStatement) caretElement.getPrevSibling();
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
     if (codeBlock == null) {
-      log.error("code block MUST BE not null");
+      LOG.error("code block MUST BE not null");
       return;
     }
     final Project project = context.getProject();
