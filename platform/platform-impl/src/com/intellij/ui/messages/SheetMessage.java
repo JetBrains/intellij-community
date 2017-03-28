@@ -246,7 +246,7 @@ public class SheetMessage implements Disposable {
           myController.requestFocus();
         } 
         else {
-          Disposer.dispose(this);
+          Disposer.dispose(SheetMessage.this);
         }
       }
     };
