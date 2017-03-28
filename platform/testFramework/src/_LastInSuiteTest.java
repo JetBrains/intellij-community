@@ -49,7 +49,9 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   // In the merge we lost our changes to LeakHunter
-  public void ignored_testProjectLeak() throws Exception {
+  public void testProjectLeak() throws Exception {
+    if (Boolean.TRUE) { return; } // Ignore the test, but don't rename the method as it's used via reflection.
+
     boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
     if (guiTestMode) {
       final Application application = ApplicationManager.getApplication();
