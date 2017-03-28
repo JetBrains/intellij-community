@@ -1045,7 +1045,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
       addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING, expectedType));
     }
-    else if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
+    else if (TypeConversionUtil.isPrimitiveAndNotNull(exprType) && TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING, expectedType));
     }

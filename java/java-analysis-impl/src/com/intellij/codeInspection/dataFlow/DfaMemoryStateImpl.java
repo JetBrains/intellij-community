@@ -76,17 +76,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDefaultVariableStates = toCopy.myDefaultVariableStates; // shared between all states
     
     myStack = new Stack<>(toCopy.myStack);
-    myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
+    myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.size());
+    toCopy.myDistinctClasses.forEach(myDistinctClasses::add);
     myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
     myIdToEqClassesIndices = new MyIdMap(toCopy.myIdToEqClassesIndices.size());
-    toCopy.myIdToEqClassesIndices.forEachEntry(new TIntObjectProcedure<int[]>() {
-      @Override
-      public boolean execute(int id, int[] set) {
-        myIdToEqClassesIndices.put(id, set);
-        return true;
-      }
+    toCopy.myIdToEqClassesIndices.forEachEntry((id, set) -> {
+      myIdToEqClassesIndices.put(id, set);
+      return true;
     });
     myVariableStates = ContainerUtil.newLinkedHashMap(toCopy.myVariableStates);
     
@@ -868,12 +866,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
-    PsiType type = dfaLeft.getVariableType();
-    if (!TypeConversionUtil.isPrimitiveWrapper(type)) {
-      return true;
-    }
     if (negated) {
       // from the fact "wrappers are not the same" it does not follow that "unboxed values are not equal"
+      return true;
+    }
+    PsiType type = dfaLeft.getVariableType();
+    if (!TypeConversionUtil.isPrimitiveWrapper(type)) {
       return true;
     }
 
