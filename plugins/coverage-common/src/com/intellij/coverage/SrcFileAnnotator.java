@@ -202,10 +202,10 @@ public class SrcFileAnnotator implements Disposable {
   @Nullable
   private SoftReference<TIntIntHashMap> doGetLineMapping(final long date, boolean oldToNew, MyEditorBean editorBean) {
     VirtualFile virtualFile = editorBean.getVFile();
+    if (myOldContent == null && ApplicationManager.getApplication().isDispatchThread()) return null;
     final byte[] oldContent;
     synchronized (LOCK) {
       if (myOldContent == null) {
-        if (ApplicationManager.getApplication().isDispatchThread()) return null;
         final LocalHistory localHistory = LocalHistory.getInstance();
         byte[] byteContent = localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
           public boolean isSuitable(long revisionTimestamp) {
