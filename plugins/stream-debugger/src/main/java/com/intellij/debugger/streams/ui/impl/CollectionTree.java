@@ -273,7 +273,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   public boolean isSelected(@NotNull TraceElement traceElement) {
-    return isPathSelected(myValue2Path.get(traceElement));
+    final TreePath path = myValue2Path.get(traceElement);
+    return path != null && (myHighlighted.contains(path) || isPathSelected(path));
   }
 
   private class MyRootValue extends XValue {
