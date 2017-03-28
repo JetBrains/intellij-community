@@ -42,5 +42,4 @@ intellij {
 
 dependencies {
   compile files("${System.properties['java.home']}/../lib/tools.jar")
-  compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.1"
 }
