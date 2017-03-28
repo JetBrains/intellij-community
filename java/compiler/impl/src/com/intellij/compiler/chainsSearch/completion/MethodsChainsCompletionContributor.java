@@ -48,7 +48,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author Dmitry Batkovich
  */
 public class MethodsChainsCompletionContributor extends CompletionContributor {
-  private static final String REGISTRY_KEY = "compiler.ref.chain.search";
+  public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodsChainsCompletionContributor.class);
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   public static final CompletionType COMPLETION_TYPE = IS_UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;

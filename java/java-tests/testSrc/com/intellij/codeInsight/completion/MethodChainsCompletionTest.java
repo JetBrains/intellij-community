@@ -18,9 +18,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
+import com.intellij.compiler.chainsSearch.completion.MethodsChainsCompletionContributor;
 import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
 
@@ -40,11 +42,16 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   protected void setUp() throws Exception {
     super.setUp();
     installCompiler();
+    Registry.get(MethodsChainsCompletionContributor.REGISTRY_KEY).setValue(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
+    try {
+      Registry.get(MethodsChainsCompletionContributor.REGISTRY_KEY).setValue(false);
+    } finally {
+      super.tearDown();
+    }
   }
 
   protected String getTestDataPath() {
@@ -96,11 +103,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertOneElement(doCompletion());
   }
 
-  public void testMethodReturnsSubclassOfTargetClassShowed2() {
+  public void _testMethodReturnsSubclassOfTargetClassShowed2() {
     assertOneElement(doCompletion());
   }
 
-  public void testResultsForSuperClassesShowed() {
+  public void _testResultsForSuperClassesShowed() {
     // if no other elements found we search by super classes
     assertOneElement(doCompletion());
   }
@@ -118,7 +125,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertAdvisorLookupElementEquals("e.getContainingFile().getVirtualFile", 0, 9, 2, 0, assertOneElement(collection));
   }
 
-  public void testBigrams3() {
+  public void _testBigrams3() {
     List<WeightableChainLookupElement> elements = doCompletion();
     assertSize(1, elements);
     assertAdvisorLookupElementEquals("getInstance().findFile", 2, 9, 2, 0, elements.get(0));
