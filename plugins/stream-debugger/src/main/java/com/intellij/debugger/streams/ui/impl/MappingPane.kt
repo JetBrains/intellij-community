@@ -6,11 +6,13 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import java.awt.*
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 /**
  * @author Vitaliy.Bibaev
  */
-class MappingPane(private val beforeValues: List<ValueWithPosition>,
+class MappingPane(name: String,
+                  private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
   companion object {
     val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
@@ -21,8 +23,7 @@ class MappingPane(private val beforeValues: List<ValueWithPosition>,
   }
 
   init {
-    // TODO: fix this workaround
-    add(JBLabel(" "), BorderLayout.NORTH)
+    add(JBLabel(name, SwingConstants.CENTER), BorderLayout.NORTH)
     add(MyDrawPane(), BorderLayout.CENTER)
   }
 

@@ -104,7 +104,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
-    final FlatTraceView flatView = new FlatTraceView(controllers, context);
+    final FlatView flatView = new FlatView(controllers, context);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
   }
 
