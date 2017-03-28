@@ -52,6 +52,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.codeInsight.hints.HintUtilsKt.getBlackListInvalidLineNumbers;
 import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
@@ -102,19 +103,20 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private void updateOkEnabled(@NotNull Language language, @NotNull EditorTextField editorTextField) {
     String text = editorTextField.getText();
-    List<Integer> invalidLines = HintUtilsKt.getBlackListInvalidLineNumbers(text);
+    List<Integer> invalidLines = getBlackListInvalidLineNumbers(text);
     
     myIsValidPatterns.put(language, invalidLines.isEmpty());
     boolean isEveryOneValid = !myIsValidPatterns.containsValue(false);
     
     getOKAction().setEnabled(isEveryOneValid);
-    highlightErrorLines(invalidLines, editorTextField);
+
+    Editor editor = editorTextField.getEditor();
+    if (editor != null) {
+      highlightErrorLines(invalidLines, editor);
+    }
   }
 
-  private static void highlightErrorLines(@NotNull List<Integer> lines, @NotNull EditorTextField editorTextField) {
-    Editor editor = editorTextField.getEditor();
-    if (editor == null) return;
-
+  private static void highlightErrorLines(@NotNull List<Integer> lines, @NotNull Editor editor) {
     final TextAttributes attributes = editor.getColorsScheme().getAttributes(ERRORS_ATTRIBUTES);
     final Document document = editor.getDocument();
     final int totalLines = document.getLineCount();
@@ -205,7 +207,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
     String blackList = getLanguageBlackList(language);
 
-    EditorTextField editorTextField = createEditorField(blackList);
+    EditorTextField editorTextField = createBlacklistEditorField(blackList);
     editorTextField.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -229,7 +231,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   @NotNull
-  private String getBlacklistExplanationHTML(Language language) {
+  private static String getBlacklistExplanationHTML(Language language) {
     InlayParameterHintsProvider hintsProvider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (hintsProvider == null) {
       return CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation");
@@ -318,7 +320,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
   
   @NotNull
-  private static EditorTextField createEditorField(@NotNull String text) {
+  private static EditorTextField createBlacklistEditorField(@NotNull String text) {
     Document document = EditorFactory.getInstance().createDocument(text);
     EditorTextField field = new EditorTextField(document, null, FileTypes.PLAIN_TEXT, false, false);
     field.setPreferredSize(new Dimension(200, 350));
@@ -326,6 +328,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       editor.setVerticalScrollbarVisible(true);
       editor.setHorizontalScrollbarVisible(true);
       editor.getSettings().setAdditionalLinesCount(2);
+      highlightErrorLines(getBlackListInvalidLineNumbers(text), editor);
     });
     return field;
   }
