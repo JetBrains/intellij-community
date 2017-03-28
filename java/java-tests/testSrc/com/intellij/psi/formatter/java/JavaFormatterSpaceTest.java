@@ -673,5 +673,16 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                "    @Annotation THREE\n" +
                "}");
   }
+
+  public void testSpaceBeforeComma() {
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doClassTest(
+      "public void main(String[] args, String xxx) {\n" +
+      "  foo(100, 200);\n" +
+      "}",
+      "public void main(String[] args , String xxx) {\n" +
+      "    foo(100 , 200);\n" +
+      "}");
+  }
   
 }
