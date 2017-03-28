@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
 import com.jetbrains.python.testing.universalTests.TestTargetType;
