@@ -618,7 +618,7 @@ public class GrStringUtil {
 
     String text = element.getText();
     String startQuote = getStartQuote(text);
-    String endQuote = getEndQuote(text);
+    String endQuote = getEndQuote(text.substring(startQuote.length()));
     return new TextRange(startQuote.length(), element.getTextLength() - endQuote.length());
   }
 
