@@ -60,14 +60,14 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
-      public void logCreated() {
+      public void logCreated(@NotNull VcsLogManager logManager) {
         addLogUi();
       }
 
       @Override
-      public void logDisposed() {
+      public void logDisposed(@NotNull VcsLogManager logManager) {
         myContainer.removeAll();
-        closeLogTabs();
+        closeLogTabs(logManager);
       }
     });
 
@@ -90,7 +90,11 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Override
   public void disposeContent() {
     myContainer.removeAll();
-    closeLogTabs();
+    
+    VcsLogManager logManager = myProjectLog.getLogManager();
+    if (logManager != null) {
+      closeLogTabs(logManager);
+    }
   }
 
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
@@ -149,17 +153,14 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  private void closeLogTabs() {
+  private void closeLogTabs(@NotNull VcsLogManager logManager) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
 
     if (toolWindow != null) {
-      VcsLogManager logManager = myProjectLog.getLogManager();
-      if (logManager != null) {
-        for (String tabName : logManager.getTabNames()) {
-          if (!TAB_NAME.equals(tabName)) { // main tab is closed by the ChangesViewContentManager
-            Content content = toolWindow.getContentManager().findContent(tabName);
-            ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
-          }
+      for (String tabName : logManager.getTabNames()) {
+        if (!TAB_NAME.equals(tabName)) { // main tab is closed by the ChangesViewContentManager
+          Content content = toolWindow.getContentManager().findContent(tabName);
+          ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
         }
       }
     }
