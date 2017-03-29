@@ -722,7 +722,7 @@ public final class TreeUtil {
     }
   }
 
-  public static void collapseAll(@NotNull final JTree tree, final int keepSelectionLevel) {
+  public static void collapseAll(@NotNull JTree tree, final int keepSelectionLevel) {
     final TreePath leadSelectionPath = tree.getLeadSelectionPath();
     // Collapse all
     int row = tree.getRowCount() - 1;
@@ -730,8 +730,10 @@ public final class TreeUtil {
       tree.collapseRow(row);
       row--;
     }
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    tree.expandPath(new TreePath(root));
+    Object root = tree.getModel().getRoot();
+    if (root != null) {
+      tree.expandPath(new TreePath(root));
+    }
     if (leadSelectionPath != null) {
       final Object[] path = leadSelectionPath.getPath();
       final Object[] pathToSelect = new Object[path.length > keepSelectionLevel && keepSelectionLevel >= 0 ? keepSelectionLevel : path.length];
@@ -883,14 +885,14 @@ public final class TreeUtil {
     return result;
   }
 
-  public static void unselect(@NotNull JTree tree, @NotNull final DefaultMutableTreeNode node) {
-    final TreePath rootPath = new TreePath(node.getPath());
-    final TreePath[] selectionPaths = tree.getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        if (selectionPath.getPathCount() > rootPath.getPathCount() && rootPath.isDescendant(selectionPath)) {
-          tree.removeSelectionPath(selectionPath);
-        }
+  public static void unselectPath(@NotNull JTree tree, @Nullable TreePath path) {
+    if (path == null) return;
+    TreePath[] selectionPaths = tree.getSelectionPaths();
+    if (selectionPaths == null) return;
+
+    for (TreePath selectionPath : selectionPaths) {
+      if (selectionPath.getPathCount() > path.getPathCount() && path.isDescendant(selectionPath)) {
+        tree.removeSelectionPath(selectionPath);
       }
     }
   }
@@ -982,6 +984,11 @@ public final class TreeUtil {
       if (toRetain.equals(each)) continue;
       tree.getSelectionModel().removeSelectionPath(each);
     }
+  }
+
+  @Nullable
+  public static Object getUserObject(@Nullable Object node) {
+    return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
   }
 
   @FunctionalInterface

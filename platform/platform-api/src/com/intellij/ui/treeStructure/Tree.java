@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,7 +339,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           component = pathObjects[pathObjects.length - 2];
         }
 
-        Color color = getFileColorFor((DefaultMutableTreeNode)component);
+        Color color = getFileColorFor(TreeUtil.getUserObject(component));
         if (color != null) {
           g.setColor(color);
           g.fillRect(0, bounds.y, getWidth(), bounds.height);

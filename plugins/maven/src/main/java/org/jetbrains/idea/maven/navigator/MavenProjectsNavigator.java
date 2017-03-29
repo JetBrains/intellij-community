@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -359,16 +358,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       r.run();
 
       if (shouldCreate) {
-        if (myState.treeState != null) {
-          TreeState treeState = new TreeState();
-          try {
-            treeState.readExternal(myState.treeState);
-            treeState.applyTo(myTree);
-          }
-          catch (InvalidDataException e) {
-            MavenLog.LOG.info(e);
-          }
-        }
+        TreeState.createFrom(myState.treeState).applyTo(myTree);
       }
     });
   }
