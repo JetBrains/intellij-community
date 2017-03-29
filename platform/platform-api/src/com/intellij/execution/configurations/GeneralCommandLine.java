@@ -98,6 +98,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
+  private ProcessBuilder.Redirect myInputRedirect;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
@@ -281,6 +282,17 @@ public class GeneralCommandLine implements UserDataHolder {
     withRedirectErrorStream(redirectErrorStream);
   }
 
+  @Nullable
+  public ProcessBuilder.Redirect getInputRedirect() {
+    return myInputRedirect;
+  }
+
+  @NotNull
+  public GeneralCommandLine withInputRedirect(@Nullable ProcessBuilder.Redirect inputRedirect) {
+    myInputRedirect = inputRedirect;
+    return this;
+  }
+
   /**
    * Returns string representation of this command line.<br/>
    * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
@@ -371,6 +383,9 @@ public class GeneralCommandLine implements UserDataHolder {
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
     builder.redirectErrorStream(myRedirectErrorStream);
+    if (myInputRedirect != null) {
+      builder.redirectInput(myInputRedirect);
+    }
     return builder.start();
   }
 
