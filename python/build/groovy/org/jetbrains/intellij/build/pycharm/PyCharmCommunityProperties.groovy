@@ -67,6 +67,9 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
         "PyCharm Community Edition"
       }
+
+      @Override
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/python" }
     }
   }
 
