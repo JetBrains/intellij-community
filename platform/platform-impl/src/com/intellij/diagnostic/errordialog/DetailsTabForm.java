@@ -32,7 +32,7 @@ public class DetailsTabForm {
   public DetailsTabForm(@Nullable Action analyzeAction) {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     myDetailsPane.setBackground(UIUtil.getTextFieldBackground());
-    myDetailsHolder.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, 205));
+    myDetailsHolder.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, 150));
     myDetailsHolder.setBorder(IdeBorderFactory.createBorder());
     if (analyzeAction != null) {
       myAnalyzeStacktraceButton.setAction(analyzeAction);
