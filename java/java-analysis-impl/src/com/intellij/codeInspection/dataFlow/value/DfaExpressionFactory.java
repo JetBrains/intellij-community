@@ -73,7 +73,6 @@ public class DfaExpressionFactory {
       return getExpressionDfaValue(((PsiParenthesizedExpression)expression).getExpression());
     }
 
-    PsiType type = expression.getType();
     if (expression instanceof PsiArrayAccessExpression) {
       PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
       DfaValue qualifier = getExpressionDfaValue(arrayExpression);
@@ -83,6 +82,7 @@ public class DfaExpressionFactory {
           return myFactory.getVarFactory().createVariableValue(indexVar, expression.getType(), false, (DfaVariableValue)qualifier);
         }
       }
+      PsiType type = expression.getType();
       if (type != null) {
         return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, null));
       }
@@ -105,11 +105,11 @@ public class DfaExpressionFactory {
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    if (value != null && type != null) {
-      if (value instanceof String) {
-        return myFactory.createTypeValue(type, Nullness.NOT_NULL); // Non-null string literal.
+    if (value != null) {
+      PsiType type = expression.getType();
+      if (type != null) {
+        return myFactory.getConstFactory().createFromValue(value, type, null);
       }
-      return myFactory.getConstFactory().createFromValue(value, type, null);
     }
 
     if (expression instanceof PsiThisExpression) {

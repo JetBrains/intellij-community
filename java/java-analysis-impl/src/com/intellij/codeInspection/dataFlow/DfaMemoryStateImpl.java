@@ -1015,6 +1015,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public LongRangeSet getRange(DfaValue value) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
+      if (!TypeConversionUtil.isPrimitiveAndNotNull(var.getVariableType())) {
+        return null;
+      }
       DfaVariableState state = getVariableState(var);
       LongRangeSet range = state.getRange();
       if (range == null) {
