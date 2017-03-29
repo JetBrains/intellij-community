@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public class GeneralCommandLineTest {
     return new GeneralCommandLine(command);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void printCommandLine() {
     GeneralCommandLine commandLine = createCommandLine();
     commandLine.setExePath("e x e path");
@@ -141,7 +141,7 @@ public class GeneralCommandLineTest {
                  commandLine.getCommandLineString());
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void unicodePath() throws Exception {
     String mark = String.valueOf(new Random().nextInt());
     String prefix = "spaces 'and quotes' and " + UNICODE_RU + "_" + UNICODE_EU + " ";
@@ -163,7 +163,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void unicodeClassPath() throws Exception {
     assumeTrue(UNICODE != null);
 
@@ -178,14 +178,14 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaApp() throws Exception {
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String output = execHelper(command);
     checkParamPassing(output, ARGUMENTS);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -197,7 +197,7 @@ public class GeneralCommandLineTest {
     checkParamPassing(output, ARGUMENTS);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughNestedWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -212,7 +212,7 @@ public class GeneralCommandLineTest {
     checkParamPassing(output, ARGUMENTS);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -229,7 +229,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndNestedWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -249,7 +249,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToEchoThroughWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -271,7 +271,7 @@ public class GeneralCommandLineTest {
     checkParamPassing(output, args);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void winShellCommand() {
     assumeTrue(SystemInfo.isWindows);
 
@@ -280,7 +280,7 @@ public class GeneralCommandLineTest {
     assertEquals(string, echo);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void winShellScriptQuoting() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -300,7 +300,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void winShellQuotingWithExtraSwitch() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -310,7 +310,7 @@ public class GeneralCommandLineTest {
     assertEquals(param, output.trim());
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void hackyEnvMap() {
     Map<String, String> env = createCommandLine().getEnvironment();
 
@@ -331,7 +331,7 @@ public class GeneralCommandLineTest {
     catch (AssertionError ignored) { }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void environmentPassing() throws Exception {
     Map<String, String> testEnv = new HashMap<>();
     testEnv.put("VALUE_1", "some value");
@@ -342,7 +342,7 @@ public class GeneralCommandLineTest {
     checkEnvPassing(command, testEnv, false);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void unicodeEnvironment() throws Exception {
     assumeTrue("UTF-8".equals(System.getProperty("file.encoding")));
 
@@ -352,7 +352,7 @@ public class GeneralCommandLineTest {
     checkEnvPassing(command, testEnv, false);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void emptyEnvironmentPassing() throws Exception {
     Map<String, String> env = newHashMap(pair("a", "b"), pair("", "c"));
     Map<String, String> expected = newHashMap(pair("a", "b"));
