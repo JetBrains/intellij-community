@@ -10,6 +10,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,10 +42,12 @@ public class EvaluateExpressionTracer implements StreamTracer {
         public void evaluated(@NotNull XValue result) {
           if (result instanceof JavaValue) {
             final Value reference = ((JavaValue)result).getDescriptor().getValue();
-            final EvaluationContextImpl context = ((JavaValue)result).getEvaluationContext();
-            final TracingResult interpretedResult = myResultInterpreter.interpret(chain, reference);
-            callback.evaluated(interpretedResult, context);
-            return;
+            if (reference instanceof ArrayReference) {
+              final TracingResult interpretedResult = myResultInterpreter.interpret(chain, (ArrayReference)reference);
+              final EvaluationContextImpl context = ((JavaValue)result).getEvaluationContext();
+              callback.evaluated(interpretedResult, context);
+              return;
+            }
           }
 
           callback.failed(streamTraceExpression, "Evaluation result type is unexpected");

@@ -26,19 +26,13 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
 
   @NotNull
   @Override
-  public TracingResult interpret(@NotNull StreamChain chain, @NotNull Value evaluationResult) {
-    if (evaluationResult instanceof ArrayReference) {
-      final ArrayReference resultArray = (ArrayReference)evaluationResult;
-      final ArrayReference info = (ArrayReference)resultArray.getValue(0);
-      final Value streamResult = resultArray.getValue(1);
-      final Value time = resultArray.getValue(2);
-      logTime(time);
-      final List<TraceInfo> trace = getTrace(chain, info);
-      return new TracingResultImpl(streamResult, trace);
-    }
-    else {
-      throw new IllegalArgumentException("result of evaluation must be an ArrayReference");
-    }
+  public TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray) {
+    final ArrayReference info = (ArrayReference)resultArray.getValue(0);
+    final Value streamResult = resultArray.getValue(1);
+    final Value time = resultArray.getValue(2);
+    logTime(time);
+    final List<TraceInfo> trace = getTrace(chain, info);
+    return new TracingResultImpl(streamResult, trace);
   }
 
   @NotNull
