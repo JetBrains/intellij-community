@@ -15,13 +15,17 @@
  */
 package com.intellij.mock;
 
-import com.intellij.openapi.editor.BaseDocumentAdapterEx;
+import com.intellij.openapi.editor.BaseDocumentAdapter;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class MockDocument extends BaseDocumentAdapterEx {
+public class MockDocument extends BaseDocumentAdapter implements DocumentEx {
   private StringBuffer myText = new StringBuffer();
   private long myModStamp = LocalTimeCounter.currentTime();
 
@@ -45,6 +49,11 @@ public class MockDocument extends BaseDocumentAdapterEx {
     myText = new StringBuffer();
     myText.append(chars);
     myModStamp = newModificationStamp;
+  }
+
+  @Override
+  public void moveText(int srcStart, int srcEnd, int dstOffset) {
+    throw new UnsupportedOperationException();
   }
 
   public CharSequence textToCharArray() {
@@ -103,6 +112,12 @@ public class MockDocument extends BaseDocumentAdapterEx {
     return myModStamp;
   }
 
+  @NotNull
+  @Override
+  public LineIterator createLineIterator() {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public void setModificationStamp(long modificationStamp) {
     myModStamp = modificationStamp;
@@ -122,5 +137,24 @@ public class MockDocument extends BaseDocumentAdapterEx {
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  }
+
+  @Override
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  }
+
+  @Override
+  public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
+    return false;
+  }
+
+  @Override
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
+    return false;
+  }
+
+  @Override
+  public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+    return false;
   }
 }

@@ -621,15 +621,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public boolean isInBulkUpdate() {
-    return false;
-  }
-
-  @Override
-  public void setInBulkUpdate(boolean value) {
-  }
-
-  @Override
   @NotNull
   public DocumentEx getDelegate() {
     return myDelegate;

@@ -16,13 +16,14 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.BaseDocumentAdapterEx;
+import com.intellij.openapi.editor.BaseDocumentAdapter;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
@@ -353,12 +354,26 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  private static class MyDocument extends BaseDocumentAdapterEx {
+  private static class MyDocument extends BaseDocumentAdapter implements DocumentEx {
     RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {
     };
     char[] myChars = ArrayUtil.EMPTY_CHAR_ARRAY;
     String myString = "";
     LineSet myLineSet = LineSet.createLineSet(myString);
+
+    @Override
+    public void setModificationStamp(long modificationStamp) {
+    }
+
+    @Override
+    public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void moveText(int srcStart, int srcEnd, int dstOffset) {
+      throw new UnsupportedOperationException();
+    }
 
     @Override
     public void setText(@NotNull CharSequence text) {
