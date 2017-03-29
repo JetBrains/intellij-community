@@ -818,6 +818,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           if (!processor.process(inputIdsIterator.next(), value)) {
             return false;
           }
+          ProgressManager.checkCanceled();
         }
       }
       return true;
@@ -879,6 +880,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         if (valueIt.getValueAssociationPredicate().contains(restrictedFileId) && !processor.process(restrictToFile, value)) {
           return false;
         }
+        ProgressManager.checkCanceled();
       }
       return true;
     });
@@ -905,9 +907,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
               return false;
             }
             if (ensureValueProcessedOnce) {
+              ProgressManager.checkCanceled();
               break; // continue with the next value
             }
           }
+
+          ProgressManager.checkCanceled();
         }
       }
       return true;
