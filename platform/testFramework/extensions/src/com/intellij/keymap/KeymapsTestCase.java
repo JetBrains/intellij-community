@@ -668,18 +668,26 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     return new KeyboardShortcut(fst, snd);
   }
 
-  private static String getText(Shortcut shortcut) {
+  @NotNull
+  private static String getText(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       KeyStroke fst = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-      String s = KeyStrokeAdapter.toString(fst);
+      String s = getText(fst);
 
       KeyStroke snd = ((KeyboardShortcut)shortcut).getSecondKeyStroke();
       if (snd != null) {
-        s += "," + KeyStrokeAdapter.toString(snd);
+        s += "," + getText(snd);
       }
       return s;
     }
     return KeymapUtil.getShortcutText(shortcut);
+  }
+
+  private static String getText(KeyStroke fst) {
+    String text = KeyStrokeAdapter.toString(fst);
+    int offset = text.lastIndexOf(' ');
+    if (offset == -1) offset = 0;
+    return text.substring(0, offset) + text.substring(offset).toUpperCase(Locale.ENGLISH);
   }
 
   private static void convertMac(@NotNull Shortcut[] there) {
