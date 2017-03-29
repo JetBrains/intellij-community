@@ -24,12 +24,14 @@ public class StringFactory {
   private static final Constructor<String> ourConstructor;
 
   static {
-    Constructor<String> constructor = null;
+    Constructor<String> constructor;
     try {
       constructor = String.class.getDeclaredConstructor(char[].class, boolean.class);
       constructor.setAccessible(true);
     }
-    catch (Throwable ignored) { }
+    catch (Throwable ignored) {
+      constructor = null; // setAccessible fails without explicit permission on Java 9
+    }
     ourConstructor = constructor;
   }
 
