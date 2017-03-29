@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonFlavorProvider;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.util.Comparator;
@@ -52,6 +54,14 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
     int flavor2weight = flavor2 instanceof CPythonSdkFlavor ? 1 : 0;
     if (flavor1weight != flavor2weight) {
       return flavor2weight - flavor1weight;
+    }
+
+    for (PySdkWeightProvider provider : Extensions.getExtensions(PySdkWeightProvider.EP_NAME)) {
+      int weight1 = provider.getWeight(o1);
+      int weight2 = provider.getWeight(o2);
+      if(weight1 != weight2) {
+        return weight2 - weight1;
+      }
     }
 
     return -Comparing.compare(o1.getVersionString(), o2.getVersionString());
