@@ -497,7 +497,6 @@ public class StudyUtils {
     String text = task.getTaskDescription() != null ? task.getTaskDescription() : getTaskTextByTaskName(task, taskDirectory);
 
     if (text == null) return null;
-    text = convertToHtml(text);
     if (course.isAdaptive()) text = wrapAdaptiveCourseText(task, text);
 
     return wrapTextToDisplayLatex(text);
@@ -537,20 +536,33 @@ public class StudyUtils {
   @Nullable
   private static String getTaskTextByTaskName(@NotNull Task task, @Nullable VirtualFile taskDirectory) {
     if (taskDirectory == null) return null;
-    final String taskFileNameMd = constructTaskTextFilename(task, EduNames.TASK_MD);
-    final String taskFileNameHtml = constructTaskTextFilename(task, EduNames.TASK_HTML);
 
-    VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(taskFileNameMd), taskDirectory.findChild(taskFileNameHtml));
-
-    if (taskTextFile == null) {
-      VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
-      if (srcDir != null) {
-         taskTextFile = ObjectUtils.chooseNotNull(srcDir.findChild(taskFileNameHtml), srcDir.findChild(taskFileNameMd));
-      }
+    String textFromHtmlFile = getTextByTaskFileFormat(task, taskDirectory, EduNames.TASK_HTML);
+    if (textFromHtmlFile != null) {
+      return textFromHtmlFile;
     }
+
+    String taskTextFromMd = getTextByTaskFileFormat(task, taskDirectory, EduNames.TASK_HTML);
+    return convertToHtml(taskTextFromMd);
+  }
+
+  @Nullable
+  private static String getTextByTaskFileFormat(@NotNull Task task, @NotNull VirtualFile taskDirectory, @NotNull String taskTextFileName) {
+    String textFilename = constructTaskTextFilename(task, taskTextFileName);
+    VirtualFile taskTextFile = taskDirectory.findChild(taskTextFileName);
+
     if (taskTextFile != null) {
       return String.valueOf(LoadTextUtil.loadText(taskTextFile));
     }
+
+    VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
+    if (srcDir != null) {
+      VirtualFile taskTextSrcFile = srcDir.findChild(textFilename);
+      if (taskTextSrcFile != null) {
+        return String.valueOf(LoadTextUtil.loadText(taskTextSrcFile));
+      }
+    }
+
     return null;
   }
 
@@ -713,7 +725,9 @@ public class StudyUtils {
     return task;
   }
 
-  private static String convertToHtml(@NotNull final String content) {
+  @Nullable
+  private static String convertToHtml(@Nullable final String content) {
+    if (content == null) return null;
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
     MarkdownUtil.replaceCodeBlock(lines);
