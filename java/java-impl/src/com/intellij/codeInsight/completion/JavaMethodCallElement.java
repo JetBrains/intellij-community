@@ -294,7 +294,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     int parametersCount = parameterList.getParametersCount();
     if (methodCall == null ||
         parametersCount == 0 ||
-        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
+        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
         Registry.is("java.completion.argument.live.template") ||
         !Registry.is("java.completion.argument.hints")) {
       return;
