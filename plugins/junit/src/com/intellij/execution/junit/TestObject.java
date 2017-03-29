@@ -162,16 +162,21 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
-    if (isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) {
+    GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
+    if (JUnitUtil.isJUnit5(globalSearchScope, project)) {
       javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
 
       final PathsList classPath = javaParameters.getClassPath();
       classPath.add(PathUtil.getJarPathForClass(TestExecutionListener.class));
-      classPath.add(PathUtil.getJarPathForClass(JupiterTestEngine.class));
       classPath.add(PathUtil.getJarPathForClass(JUnitException.class));
       classPath.add(PathUtil.getJarPathForClass(TestEngine.class));
       classPath.add(PathUtil.getJarPathForClass(JUnitPlatform.class));
+
+      if (JavaPsiFacade.getInstance(project).findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope) != null) {
+        classPath.add(PathUtil.getJarPathForClass(JupiterTestEngine.class));
+      }
+
       try {
         JUnitUtil.getTestCaseClass(sourceScope);
         classPath.add(PathUtil.getJarPathForClass(VintageTestEngine.class));
@@ -184,9 +189,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   public static boolean isJUnit5(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
-    return JUnitUtil.isJUnit5(module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                             : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project),
-                              project);
+    return JUnitUtil.isJUnit5(getScopeForJUnit(module, sourceScope, project), project);
+  }
+
+  private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
+    return module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                             : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project);
   }
 
   @NotNull
