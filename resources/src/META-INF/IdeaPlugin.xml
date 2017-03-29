@@ -776,9 +776,11 @@
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2streamapi" displayName="Loop can be collapsed with Stream API"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"/>
+   -->
     <localInspection groupPath="Java" language="JAVA" shortName="StreamToLoop" displayName="Stream API call chain can be replaced with loop"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"/>
@@ -823,11 +825,13 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
                      displayName="Block marker comment"/>
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
+    -->
     <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
@@ -838,34 +842,46 @@
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
+    -->
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ListSort"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
                      displayName="Collections.sort() can be replaced with List.sort()"/>
+    -->
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ArraySetAll"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ArraySetAllInspection"
                      displayName="Loop can be replaced with Arrays.setAll()"/>
+    -->
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8CollectionRemoveIf"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
                      displayName="Loop can be replaced with Collection.removeIf()"/>
+    -->
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapApi"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapApiInspection"
                      displayName="Replace with single Map method"/>
+    -->
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
                      displayName="Replace with Map.forEach"/>
+    -->
     <localInspection groupPath="Java" language="JAVA" shortName="ExcessiveLambdaUsage"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
@@ -891,11 +907,13 @@
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
                      displayName="Use bulk operation instead of iteration"/>
+    <!-- Android Studio: Replaced with subclass in the Android plugin which filters based on API level
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ComparatorCombinatorsInspection"
                      displayName="Use Comparator combinators"/>
+    -->
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceInefficientStreamCount"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
@@ -911,6 +929,7 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
                      displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
+    <!-- Android Studio: Not relevant
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
@@ -920,7 +939,7 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
                      bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
-
+    -->
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Java/Control Flow</category>
