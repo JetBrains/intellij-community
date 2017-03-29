@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,26 +26,20 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
-  @NotNull
-  private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
-    settings -> settings != null && usesMyModule(settings.getConfiguration());
   @NotNull
   private final Module myModule;
   @NotNull
@@ -62,8 +56,10 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
-          for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-            myManager.removeConfiguration(settings);
+          for (RunnerAndConfigurationSettings settings : new ArrayList<>(myManager.getConfigurationSettings())) {
+            if (usesMyModule(settings.getConfiguration())) {
+              myManager.removeConfiguration(settings);
+            }
           }
         }
       }
@@ -94,11 +90,6 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     }
   }
 
-  @NotNull
-  private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
-  }
-
   private boolean usesMyModule(RunConfiguration config) {
     return config instanceof ModuleBasedConfiguration
            && myModule.equals(((ModuleBasedConfiguration)config).getConfigurationModule().getModule());
@@ -106,8 +97,10 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + ")");
-    for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-      myManager.addConfigurationElement(element, settings);
+    for (RunnerAndConfigurationSettings settings : new ArrayList<>(myManager.getConfigurationSettings())) {
+      if (usesMyModule(settings.getConfiguration())) {
+        myManager.addConfigurationElement(element, settings);
+      }
     }
     if (myUnloadedElements != null) {
       for (final Element unloadedElement : myUnloadedElements) {
