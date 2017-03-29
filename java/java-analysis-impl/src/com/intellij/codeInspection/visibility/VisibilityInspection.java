@@ -191,7 +191,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     //ignore anonymous classes. They do not have access modifiers.
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
-      if (refClass.isAnonymous() || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
+      if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
     }
 
 
@@ -208,7 +208,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     if (refElement instanceof RefClass) {
-      if (isTopLevelClass(refElement) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
+      if (isTopLevelClass(refElement) && minLevel <= 0 && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
     //ignore interface members. They always have public access modifier.
@@ -478,6 +478,10 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
     for (RefElement entryPoint : entryPointsManager.getEntryPoints()) {
+      //don't ignore entry points with explicit visibility requirements
+      if (entryPoint instanceof RefJavaElement && getMinVisibilityLevel((RefJavaElement)entryPoint) > 0) {
+        continue;
+      }
       ignoreElement(processor, entryPoint);
     }
 
