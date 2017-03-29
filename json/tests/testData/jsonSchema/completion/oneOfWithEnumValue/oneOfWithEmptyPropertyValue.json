@@ -1,0 +1,6 @@
+{
+  "client_address": {
+    "building": "1",
+    "type":<caret>
+  }
+}
