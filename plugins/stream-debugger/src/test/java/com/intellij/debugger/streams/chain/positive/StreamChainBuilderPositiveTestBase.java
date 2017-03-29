@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
@@ -36,12 +37,12 @@ public abstract class StreamChainBuilderPositiveTestBase extends StreamChainBuil
   void doTest() throws Exception {
     final PsiElement elementAtCaret = configureAndGetElementAtCaret();
     assertNotNull(elementAtCaret);
-    final StreamChain chain = getChainBuilder().build(elementAtCaret);
-    checkResultChain(chain);
+    final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);
+    checkResultChains(chains);
   }
 
   @NotNull
   protected abstract String getDirectoryName();
 
-  protected abstract void checkResultChain(StreamChain chain);
+  protected abstract void checkResultChains(@NotNull List<StreamChain> chains);
 }

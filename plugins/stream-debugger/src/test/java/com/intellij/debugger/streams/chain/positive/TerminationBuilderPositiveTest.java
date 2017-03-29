@@ -20,6 +20,8 @@ import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -102,8 +104,9 @@ public class TerminationBuilderPositiveTest extends StreamChainBuilderPositiveTe
   }
 
   @Override
-  protected void checkResultChain(StreamChain chain) {
-    assertNotNull(chain);
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
+    assertFalse(chains.isEmpty());
+    final StreamChain chain = chains.get(0);
     final StreamCall terminationCall = chain.getTerminationCall();
     assertNotNull(terminationCall);
 

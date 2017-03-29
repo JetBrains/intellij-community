@@ -56,8 +56,7 @@ public class StreamChainBuilderNegativeTest extends StreamChainBuilderTestCase {
   private void doTest() {
     final PsiElement element = configureAndGetElementAtCaret();
     assertNotNull(element);
-    final StreamChain chain = getChainBuilder().build(element);
-    assertNull(chain);
+    assertTrue(getChainBuilder().build(element).isEmpty());
   }
 
   @NotNull

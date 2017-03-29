@@ -90,7 +90,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         printContext(getDebugProcess().getDebuggerContext());
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
           final PsiElement elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session);
-          return elementAtBreakpoint == null ? null : chainBuilder.build(elementAtBreakpoint);
+          final List<StreamChain> chains = elementAtBreakpoint == null ? null : myChainBuilder.build(elementAtBreakpoint);
+          return chains == null || chains.isEmpty() ? null : chains.get(0);
         });
 
         if (chain == null) {

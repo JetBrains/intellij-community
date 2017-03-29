@@ -19,12 +19,14 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
 public interface StreamChainBuilder {
   boolean isChainExists(@NotNull PsiElement startElement);
 
-  @Nullable
-  StreamChain build(@NotNull PsiElement startElement);
+  @NotNull
+  List<StreamChain> build(@NotNull PsiElement startElement);
 }

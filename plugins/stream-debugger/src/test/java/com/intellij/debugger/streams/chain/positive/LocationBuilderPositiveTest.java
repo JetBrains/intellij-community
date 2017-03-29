@@ -18,6 +18,8 @@ package com.intellij.debugger.streams.chain.positive;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -58,14 +60,14 @@ public class LocationBuilderPositiveTest extends StreamChainBuilderPositiveTestB
     doTest();
   }
 
-  @Override
-  protected void checkResultChain(StreamChain chain) {
-    assertNotNull(chain);
-  }
-
   @NotNull
   @Override
   protected String getDirectoryName() {
     return "location";
+  }
+
+  @Override
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
+    assertFalse(chains.isEmpty());
   }
 }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -46,6 +47,8 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
   private static final Set<String> SUPPORTED_TERMINATION =
     StreamEx.of("collect", "sum", "reduce", "toArray", "anyMatch", "allMatch", "max", "min", "findAny", "close", "count", "forEach",
                 "average", "summaryStatistics", "forEachOrdered", "findFirst", "noneMatch", "spliterator", "iterator").toSet();
+
+  private static final List<StreamChain> NO_RESULT = Collections.emptyList();
 
   private static final Ref<PsiMethodCallExpression> SEARCH_RESULT = new Ref<>();
   private static final PsiElementVisitor STREAM_CALL_VISITOR = new JavaRecursiveElementWalkingVisitor() {
@@ -80,16 +83,16 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
     return tryFindStreamCall(startElement) != null;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public StreamChain build(@NotNull PsiElement startElement) {
+  public List<StreamChain> build(@NotNull PsiElement startElement) {
     final PsiMethodCallExpression call = tryFindStreamCall(startElement);
     if (call != null) {
       final List<IntermediateStreamCall> intermediateStreamCalls = new ArrayList<>();
       final String name = resolveProducerCallName(call);
       final String args = resolveArguments(call);
       GenericType prevCallType = resolveType(call);
-      if (prevCallType == null) return null;
+      if (prevCallType == null) return NO_RESULT;
       final ProducerStreamCall producer = new ProducerStreamCallImpl(name, args, prevCallType);
       PsiElement current = call.getParent();
       while (current != null) {
@@ -97,10 +100,10 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)current;
           final String callName = resolveMethodName(methodCall);
           final String callArgs = resolveArguments(methodCall);
-          if (callName == null) return null;
+          if (callName == null) return NO_RESULT;
           final StreamCallType type = getType(callName);
           final GenericType currentType = resolveType(methodCall);
-          if (currentType == null) return null;
+          if (currentType == null) return NO_RESULT;
           if (StreamCallType.INTERMEDIATE.equals(type)) {
             final IntermediateStreamCall streamCall = new IntermediateStreamCallImpl(callName, callArgs, prevCallType, currentType);
             intermediateStreamCalls.add(streamCall);
@@ -120,7 +123,7 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
       }
     }
 
-    return null;
+    return NO_RESULT;
   }
 
   @Nullable

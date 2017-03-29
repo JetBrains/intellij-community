@@ -73,8 +73,9 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
                       @NotNull GenericType... intermediateAfterTypes) {
     final PsiElement elementAtCaret = configureAndGetElementAtCaret();
     assertNotNull(elementAtCaret);
-    final StreamChain chain = getChainBuilder().build(elementAtCaret);
-    assertNotNull(chain);
+    final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);
+    assertFalse(chains.isEmpty());
+    final StreamChain chain = chains.get(0);
     final List<IntermediateStreamCall> intermediateCalls = chain.getIntermediateCalls();
     assertEquals(intermediateAfterTypes.length, intermediateCalls.size());
     assertEquals(producerAfterType, chain.getProducerCall().getTypeAfter());
@@ -103,8 +104,9 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
   }
 
   @Override
-  protected void checkResultChain(StreamChain chain) {
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
     throw new AssertionError();
+
   }
 
   @Override

@@ -20,6 +20,8 @@ import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -85,8 +87,9 @@ public class IntermediateBuilderPositiveTest extends StreamChainBuilderPositiveT
   }
 
   @Override
-  protected void checkResultChain(StreamChain chain) {
-    assertNotNull(chain);
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
+    assertFalse(chains.isEmpty());
+    final StreamChain chain = chains.get(0);
     assertEquals(1, chain.getIntermediateCalls().size());
     final String callName = getTestName(true);
     final StreamCall call = chain.getIntermediateCalls().get(0);

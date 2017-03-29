@@ -18,6 +18,8 @@ package com.intellij.debugger.streams.chain.positive;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -47,9 +49,9 @@ public class ProducerBuilderPositiveTest extends StreamChainBuilderPositiveTestB
   }
 
   @Override
-  protected void checkResultChain(StreamChain chain) {
-    assertNotNull(chain);
-    assertNotNull(chain.getProducerCall());
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
+    assertFalse(chains.isEmpty());
+    assertNotNull(chains.get(0).getProducerCall());
   }
 
   @NotNull

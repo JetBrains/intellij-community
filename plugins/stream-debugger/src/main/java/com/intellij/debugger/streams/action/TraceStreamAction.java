@@ -62,7 +62,8 @@ public class TraceStreamAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-    final StreamChain chain = element == null ? null : myChainBuilder.build(element);
+    final List<StreamChain> chains = element == null ? null : myChainBuilder.build(element);
+    final StreamChain chain = chains == null || chains.isEmpty() ? null : chains.get(0);
 
     if (chain != null) {
       final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
