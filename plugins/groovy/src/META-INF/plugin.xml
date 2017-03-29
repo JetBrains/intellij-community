@@ -1651,9 +1651,7 @@
   <actions>
     <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
             text="Execute Groovy Code"
-            description="Execute Groovy code in console">
-      <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
-    </action>
+            description="Execute Groovy code in console"/>
 
     <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
            popup="true"

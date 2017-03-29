@@ -53,6 +53,8 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
 
   protected abstract void collectUnknownActions(Set<String> result);
 
+  protected abstract Set<String> getBoundActions();
+
   protected static void appendKnownDuplicates(Map<String, Map<String, List<String>>> result, Map<String, String[][]> duplicates) {
     for (Map.Entry<String, String[][]> eachKeymap : duplicates.entrySet()) {
       String keymapName = eachKeymap.getKey();
@@ -396,6 +398,44 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
                                "so either assign another shortcut, or remove it; see Keymap_XWin.xml for reference).";
         TestCase.fail(message);
       }
+    }
+  }
+
+
+  public void testBoundActions() {
+    StringBuilder failMessage = new StringBuilder();
+
+    Set<String> knownBoundActions = getBoundActions();
+
+    Keymap[] keymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
+    for (Keymap keymap : keymaps) {
+      KeymapImpl keymapImpl = (KeymapImpl)keymap;
+      List<String> unboundActionsWithShortcut = new ArrayList<>();
+
+      for (String actionId : keymapImpl.getActionIds()) {
+        if (knownBoundActions.contains(actionId)) continue;
+
+        Shortcut[] ownShortcuts = keymapImpl.getOwnShortcuts(actionId);
+        boolean isBound = keymapImpl.isActionBound(actionId);
+
+        if (isBound && ownShortcuts != null) {
+          unboundActionsWithShortcut.add(actionId);
+        }
+      }
+
+      if (!unboundActionsWithShortcut.isEmpty()) {
+        failMessage.append(String.format("Shortcut for bound action found in keymap '%s':\n", keymap));
+        for (String action : unboundActionsWithShortcut) {
+          failMessage.append("     \"").append(action).append("\"\n");
+        }
+        failMessage.append("\n");
+      }
+    }
+
+    if (failMessage.length() > 0) {
+      TestCase.fail(failMessage +
+                    "\n" +
+                    "Please remove these actions from keymaps, or add to the 'known bound actions' list");
     }
   }
 }

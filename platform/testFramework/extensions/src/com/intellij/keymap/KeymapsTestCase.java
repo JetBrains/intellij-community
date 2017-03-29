@@ -34,6 +34,11 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     result.addAll(UNCNOWN_ACTION_IDS);
   }
 
+  @Override
+  protected Set<String> getBoundActions() {
+    return DEFAULT_BOUND_ACTIONS;
+  }
+
   // @formatter:off
   @NonNls @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = new THashMap<String, String[][]>(){{
@@ -360,5 +365,9 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
     ""
+  );
+
+  @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = ContainerUtil.set(
+    "EditorDelete"
   );
 }

@@ -153,14 +153,8 @@
   <action id="TypeHierarchy">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="H"/>
   </action>
-  <action id="TypeHierarchyBase.BaseOnThisType">
-    <keyboard-shortcut first-keystroke="meta UP"/>
-  </action>
   <action id="Unscramble">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="T"/>
-  </action>
-  <action id="UsageView.ShowRecentFindUsages">
-    <keyboard-shortcut first-keystroke="control COMMA"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
