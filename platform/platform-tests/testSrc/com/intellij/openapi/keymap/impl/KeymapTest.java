@@ -25,6 +25,7 @@ import com.intellij.testFramework.PlatformTestCase;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -189,6 +190,15 @@ public class KeymapTest extends PlatformTestCase {
       actionManager.unregisterAction(ACTION_2);
       actionManager.unregisterAction(ACTION_1);
     }
+  }
+
+  public void testChangingMouseShortcutInGrandChild() throws Exception {
+    MouseShortcut mouseShortcut = new MouseShortcut(MouseEvent.BUTTON1, 0, 1);
+    myParent.addShortcut(ACTION_2, mouseShortcut);
+    Keymap grandChild = myChild.deriveKeymap("GrandChild");
+    grandChild.removeShortcut(ACTION_2, mouseShortcut);
+    grandChild.addShortcut(ACTION_1, mouseShortcut);
+    assertThat(grandChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1);
   }
 
   public void testRemovingShortcutLast() throws Exception {
