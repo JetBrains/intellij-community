@@ -1,0 +1,19 @@
+<<<DO_NOT_KEEP_WHITESPACES>>>
+<a>
+    <b>
+        <!--
+        <action class="com.intellij.localVcs.CheckFileContentProviderAction" id="CheckFileContentProvider" text="Check File Content Provider"></action>
+        -->
+    </b>
+</a>
+<<</DO_NOT_KEEP_WHITESPACES>>>
+
+<<<KEEP_WHITESPACES>>>
+<a>
+    <b>
+<!--
+<action class="com.intellij.localVcs.CheckFileContentProviderAction" id="CheckFileContentProvider" text="Check File Content Provider"></action>
+-->
+    </b>
+</a>
+<<</KEEP_WHITESPACES>>>
