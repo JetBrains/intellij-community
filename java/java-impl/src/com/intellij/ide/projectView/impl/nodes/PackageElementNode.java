@@ -108,11 +108,16 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
 
   @Override
+  public boolean validate() {
+    PackageElement value = getValue();
+    return value != null && value.getPackage().isValid() && (value.getModule() == null || !value.getModule().isDisposed());
+  }
+
+  @Override
   protected void update(final PresentationData presentation) {
     try {
-      PackageElement value = getValue();
-      if (value != null && value.getPackage().isValid() && (value.getModule() == null || !value.getModule().isDisposed())) {
-        updateValidData(presentation, value);
+      if (validate()) {
+        updateValidData(presentation, getValue());
         return;
       }
     }
