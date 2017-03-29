@@ -1,11 +1,12 @@
 package com.jetbrains.edu.learning.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -53,7 +54,11 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
       return;
     }
     FileDocumentManager.getInstance().saveAllDocuments();
-    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor == null) {
+      return;
+    }
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (virtualFile == null) {
       return;
     }
