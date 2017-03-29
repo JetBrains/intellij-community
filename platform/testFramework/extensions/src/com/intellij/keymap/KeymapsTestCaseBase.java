@@ -49,13 +49,17 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
   private static final Set<String> LINUX_KEYMAPS = ContainerUtil.newHashSet("Default for XWin", "Default for GNOME", "Default for KDE");
 
 
-  protected abstract void collectKnownDuplicates(Map<String, Map<String, List<String>>> result);
+  /**
+   * @return Keymap -> Shortcut -> [ActionId]
+   */
+  protected abstract Map<String, Map<String, List<String>>> getKnownDuplicates();
 
-  protected abstract void collectUnknownActions(Set<String> result);
+  protected abstract Set<String> getUnknownActions();
 
   protected abstract Set<String> getBoundActions();
 
-  protected static void appendKnownDuplicates(Map<String, Map<String, List<String>>> result, Map<String, String[][]> duplicates) {
+  protected static Map<String, Map<String, List<String>>> parseKnownDuplicates(Map<String, String[][]> duplicates) {
+    HashMap<String, Map<String, List<String>>> result = new HashMap<>();
     for (Map.Entry<String, String[][]> eachKeymap : duplicates.entrySet()) {
       String keymapName = eachKeymap.getKey();
 
@@ -73,14 +77,30 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
         mapping.put(shortcuts[0], ContainerUtil.newArrayList(shortcuts, 1, shortcuts.length));
       }
     }
-  }
-
-
-  private Map<String, Map<String, List<String>>> getKnownDuplicates() {
-    Map<String, Map<String, List<String>>> result = new LinkedHashMap<>();
-    collectKnownDuplicates(result);
     return result;
   }
+
+  protected static Map<String, Map<String, List<String>>> parseKnownDuplicates(Map<String, String[][]> baseDuplicates,
+                                                                               Map<String, String[][]> ideDuplicates) {
+    Map<String, Map<String, List<String>>> baseMap = parseKnownDuplicates(baseDuplicates);
+    baseMap.keySet().retainAll(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), Keymap::getName));
+
+    Map<String, Map<String, List<String>>> ideMap = parseKnownDuplicates(ideDuplicates);
+
+    Map<String, Map<String, List<String>>> result = new HashMap<>();
+    for (String keymap : ContainerUtil.union(baseMap.keySet(), ideMap.keySet())) {
+      Map<String, List<String>> mapping = new HashMap<>();
+      result.put(keymap, mapping);
+
+      Map<String, List<String>> baseMapping = baseMap.get(keymap);
+      Map<String, List<String>> ideMapping = ideMap.get(keymap);
+
+      if (baseMapping != null) mapping.putAll(baseMapping);
+      if (ideMapping != null) mapping.putAll(ideMapping);
+    }
+    return result;
+  }
+
 
   public void testDuplicateShortcuts() {
     StringBuilder failMessage = new StringBuilder();
@@ -202,8 +222,7 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
   }
 
   public void testValidActionIds() {
-    THashSet<String> unknownActions = new THashSet<>();
-    collectUnknownActions(unknownActions);
+    Set<String> unknownActions = getUnknownActions();
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     Map<String, List<String>> missingActions = new FactoryMap<String, List<String>>() {

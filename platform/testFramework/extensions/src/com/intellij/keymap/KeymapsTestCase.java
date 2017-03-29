@@ -19,29 +19,13 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
-  @Override
-  protected void collectKnownDuplicates(Map<String, Map<String, List<String>>> result) {
-    appendKnownDuplicates(result, DEFAULT_DUPLICATES);
-  }
-
-  @Override
-  protected void collectUnknownActions(Set<String> result) {
-    result.addAll(UNCNOWN_ACTION_IDS);
-  }
-
-  @Override
-  protected Set<String> getBoundActions() {
-    return DEFAULT_BOUND_ACTIONS;
-  }
-
   // @formatter:off
   @NonNls @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final Map<String, String[][]> DEFAULT_DUPLICATES = new THashMap<String, String[][]>(){{
+  protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new THashMap<String, String[][]>(){{
     put("$default", new String[][] {
     { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -357,7 +341,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   }};
   // @formatter:on
 
-  @NonNls private static final Set<String> UNCNOWN_ACTION_IDS = ContainerUtil.set(
+  @NonNls protected static final Set<String> DEFAULT_UNKNOWN_ACTION_IDS = ContainerUtil.set(
     "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow",
     "ActivateFindToolWindow",
     "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
