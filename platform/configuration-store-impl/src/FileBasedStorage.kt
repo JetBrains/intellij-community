@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
@@ -196,7 +197,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
     virtualFile!!
   }
 
-  if (LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) {
+  if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
       throw IllegalStateException("Content equals, but it must be handled not on this level: ${result.name}")
