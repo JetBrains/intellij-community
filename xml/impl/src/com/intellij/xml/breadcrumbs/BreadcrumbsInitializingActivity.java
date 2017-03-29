@@ -15,9 +15,7 @@
  */
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -31,6 +29,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -41,9 +41,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
+  private static final RegistryValue ABOVE = Registry.get("editor.breadcrumbs.above");
+
   @Override
   public void runActivity(@NotNull Project project) {
     if (project.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -52,10 +52,15 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
 
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
-    connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener(project));
+    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+      @Override
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
+        reinitBreadcrumbsInAllEditors(project);
+      }
+    });
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(project), project);
-    connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener(project));
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> reinitBreadcrumbsInAllEditors(project));
   }
 
   private static class MyFileEditorManagerListener implements FileEditorManagerListener {
@@ -84,37 +89,8 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     }
   }
 
-  private static class MyFileTypeListener implements FileTypeListener {
-    private final Project myProject;
-
-    public MyFileTypeListener(@NotNull Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void fileTypesChanged(@NotNull FileTypeEvent event) {
-      if (!myProject.isDisposed()) {
-        reinitBreadcrumbsInAllEditors(myProject);
-      }
-    }
-  }
-
-  private static class MyUISettingsListener implements UISettingsListener {
-    private final Project myProject;
-
-    public MyUISettingsListener(@NotNull Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void uiSettingsChanged(UISettings uiSettings) {
-      if (!myProject.isDisposed()) {
-        reinitBreadcrumbsInAllEditors(myProject);
-      }
-    }
-  }
-
   private static void reinitBreadcrumbsInAllEditors(@NotNull Project project) {
+    if (!project.isDisposed()) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
       reinitBreadcrumbsComponent(fileEditorManager, virtualFile);
@@ -134,15 +110,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
           }
 
           final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor);
-          final JComponent c = wrapper.getComponent();
-          fileEditorManager.addTopComponent(fileEditor, c);
-
-          Disposer.register(fileEditor, new Disposable() {
-            @Override
-            public void dispose() {
-              disposeWrapper(fileEditorManager, fileEditor, wrapper);
-            }
-          });
+          registerWrapper(fileEditorManager, fileEditor, wrapper);
         }
       }
     }
@@ -173,10 +141,27 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     return provider != null && BreadcrumbsXmlWrapper.findInfoProvider(provider) != null;
   }
 
+  private static void registerWrapper(@NotNull FileEditorManager fileEditorManager,
+                                      @NotNull FileEditor fileEditor,
+                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
+    if (ABOVE.asBoolean()) {
+      fileEditorManager.addTopComponent(fileEditor, wrapper.getComponent());
+    }
+    else {
+      fileEditorManager.addBottomComponent(fileEditor, wrapper.getComponent());
+    }
+    Disposer.register(fileEditor, () -> disposeWrapper(fileEditorManager, fileEditor, wrapper));
+  }
+
   private static void disposeWrapper(@NotNull FileEditorManager fileEditorManager,
                                      @NotNull FileEditor fileEditor,
                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
-    fileEditorManager.removeTopComponent(fileEditor, wrapper.getComponent());
+    if (ABOVE.asBoolean()) {
+      fileEditorManager.removeTopComponent(fileEditor, wrapper.getComponent());
+    }
+    else {
+      fileEditorManager.removeBottomComponent(fileEditor, wrapper.getComponent());
+    }
     Disposer.dispose(wrapper);
   }
 }
