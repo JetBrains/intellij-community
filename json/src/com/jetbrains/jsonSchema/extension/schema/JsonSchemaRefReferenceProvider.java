@@ -30,8 +30,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -70,10 +68,10 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       }
 
       final String normalized = JsonSchemaExportedDefinitions.normalizeId(splitter.getRelativePath());
-      if (StringUtil.isEmptyOrSpaces(normalized) || normalized.replace("\\", "/").split("/").length == 0) {
+      if (StringUtil.isEmptyOrSpaces(normalized) || StringUtil.split(normalized.replace("\\", "/"), "/").size() == 0) {
         return myElement.getManager().findFile(schemaFile);
       }
-      final ArrayList<String> chain = new ArrayList<String>(Arrays.asList(normalized.replace("\\", "/").split("/")));
+      final List<String> chain = StringUtil.split(normalized.replace("\\", "/"), "/");
       final Iterator<String> iterator = chain.iterator();
       boolean canSkip = true;
       while (iterator.hasNext()) {
@@ -85,9 +83,8 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       }
 
       final List<JsonSchemaWalker.Step> steps = JsonSchemaWalker.buildSteps(StringUtil.join(chain, "/")).getFirst();
-      final PsiElement element = new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps)
+      return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps)
         .resolveInSchemaRecursively();
-      return element;
     }
   }
 }
