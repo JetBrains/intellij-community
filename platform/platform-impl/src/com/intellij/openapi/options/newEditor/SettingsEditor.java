@@ -75,6 +75,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         myFilter.update(null, false, true);
         return myTreeView.select(configurable);
       }
+
+      @Override
+      public void revalidate() {
+        myEditor.requestUpdate();
+      }
     };
     mySearch = new SettingsSearch() {
       @Override
