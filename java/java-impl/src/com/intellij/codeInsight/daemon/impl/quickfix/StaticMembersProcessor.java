@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.ImportFilter;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -85,7 +86,9 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
 
       PsiModifierList modifierList = member.getModifierList();
-      if (modifierList != null && member instanceof PsiMethod && !modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
+      if (modifierList != null && member instanceof PsiMethod &&
+          member.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+          && !modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
         //methods in interfaces must have explicit static modifier or they are not static;
         return true;
       }
