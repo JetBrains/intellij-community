@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
-import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.idea.IdeaProjectLoader
-
-includeTool << JpsGantTool
 
 target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)

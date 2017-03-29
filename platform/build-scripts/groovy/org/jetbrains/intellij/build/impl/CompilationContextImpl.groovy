@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
+import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -46,10 +47,12 @@ class CompilationContextImpl implements CompilationContext {
   final JpsGlobal global
   final JpsGantProjectBuilder projectBuilder
 
+  @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
   static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot, Script gantScript) {
     GantBinding binding = (GantBinding) gantScript.binding
-    //noinspection GrUnresolvedAccess, GroovyAssignabilityCheck
+    binding.includeTool << JpsGantTool
+    //noinspection GroovyAssignabilityCheck
     return create(binding.ant, binding.projectBuilder, binding.project, binding.global, communityHome, projectHome,
                    { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
    }
