@@ -216,6 +216,21 @@ class CompilationContextImpl implements CompilationContext {
     project.modules.find { it.name == name }
   }
 
+  @Override
+  void notifyArtifactBuilt(String artifactPath) {
+    def file = new File(artifactPath)
+    def baseDir = new File(paths.projectHome)
+    if (!FileUtil.isAncestor(baseDir, file, true)) {
+      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
+      return
+    }
+    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+    if (file.isDirectory()) {
+      relativePath += "=>" + file.name
+    }
+    messages.artifactBuild(relativePath)
+  }
+
   private static String toCanonicalPath(String communityHome) {
     FileUtil.toSystemIndependentName(new File(communityHome).canonicalPath)
   }
