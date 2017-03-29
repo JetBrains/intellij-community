@@ -27,6 +27,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
@@ -100,15 +101,9 @@ public class GeneralCommandLineTest {
   @Test
   public void unicodePath() throws Exception {
     String mark = String.valueOf(new Random().nextInt());
-    String prefix = "spaces 'and quotes' and " + UNICODE_RU + "_" + UNICODE_EU + " ";
-
-    File script;
-    if (SystemInfo.isWindows) {
-      script = ExecUtil.createTempExecutableScript(prefix, ".cmd", "@echo " + mark + "\n");
-    }
-    else {
-      script = ExecUtil.createTempExecutableScript(prefix, ".sh", "#!/bin/sh\n" + "echo " + mark + "\n");
-    }
+    File script = createTempScript("spaces 'and quotes' and " + UNICODE_RU + "_" + UNICODE_EU + " ",
+                                   "@echo " + mark + "\n",
+                                   "#!/bin/sh\n" + "echo " + mark + "\n");
 
     try {
       String output = execAndGetOutput(createCommandLine(script.getPath()));
@@ -117,6 +112,16 @@ public class GeneralCommandLineTest {
     finally {
       FileUtil.delete(script);
     }
+  }
+
+  @NotNull
+  private static File createTempScript(@NotNull String scriptNamePrefix,
+                                       @NotNull String winScriptContent,
+                                       @NotNull String unixScriptContent) throws IOException, ExecutionException {
+    if (SystemInfo.isWindows) {
+      return ExecUtil.createTempExecutableScript(scriptNamePrefix, ".cmd", winScriptContent);
+    }
+    return ExecUtil.createTempExecutableScript(scriptNamePrefix, ".sh", unixScriptContent);
   }
 
   @Test
@@ -219,6 +224,26 @@ public class GeneralCommandLineTest {
     GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
     String output = execAndGetOutput(commandLine);
     assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+  }
+
+  @Test
+  public void redirectInput() throws Exception {
+    String content = "Line 1\nLine 2";
+    File input = FileUtil.createTempFile("input", null);
+    FileUtil.writeToFile(input, content);
+    File script = createTempScript("print-stdin",
+                                   "@echo off\n" + "findstr \"^\"\n",
+                                   "#!/bin/sh\n" + "cat\n");
+    try {
+      GeneralCommandLine commandLine = createCommandLine(script.getPath());
+      commandLine.withInputRedirect(ProcessBuilder.Redirect.from(input));
+      String output = execAndGetOutput(commandLine);
+      assertEquals(content, StringUtil.convertLineSeparators(output.trim()));
+    }
+    finally {
+      FileUtil.delete(script);
+      FileUtil.delete(input);
+    }
   }
 
   @Test
