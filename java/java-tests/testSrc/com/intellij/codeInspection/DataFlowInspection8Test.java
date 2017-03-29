@@ -18,6 +18,8 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -130,6 +132,16 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     nnnManager.setNotNulls("foo.NotNull");
     nnnManager.setNullables("foo.Nullable");
     Disposer.register(getTestRootDisposable(), () -> {
+      nnnManager.setNotNulls();
+      nnnManager.setNullables();
+    });
+  }
+
+  static void setCustomAnnotations(Project project, Disposable parentDisposable, String notNull, String nullable) {
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(project);
+    nnnManager.setNotNulls(notNull);
+    nnnManager.setNullables(nullable);
+    Disposer.register(parentDisposable, () -> {
       nnnManager.setNotNulls();
       nnnManager.setNullables();
     });
