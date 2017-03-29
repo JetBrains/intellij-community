@@ -296,7 +296,8 @@ binding.setVariable("commonJvmArgsForTests", {
 })
 
 private static boolean shouldAddDebugOptions() {
-  return "true" != System.getProperty("idea.performance.tests")
+  return System.getProperty("product") != "studio" &&
+         "true" != System.getProperty("idea.performance.tests")
 }
 
 binding.setVariable("forceDelete", { String dirPath ->
