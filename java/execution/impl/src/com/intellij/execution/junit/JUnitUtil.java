@@ -253,8 +253,13 @@ public class JUnitUtil {
   }
 
   public static boolean isJUnit5(GlobalSearchScope scope, Project project) {
-    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(TEST5_PACKAGE_FQN);
-    return aPackage != null && aPackage.getDirectories(scope).length > 0;
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    Condition<String> foundCondition = aPackageName -> {
+      PsiPackage aPackage = facade.findPackage(aPackageName);
+      return aPackage != null && aPackage.getDirectories(scope).length > 0;
+    };
+
+    return foundCondition.value(TEST5_PACKAGE_FQN) || foundCondition.value("org.junit.platform.engine");
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {
