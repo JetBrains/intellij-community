@@ -486,12 +486,7 @@ public abstract class InplaceRefactoring {
 
   @Nullable
   protected PsiElement getNameIdentifier() {
-    return getNameIdentifier(myElementToRename);
-  }
-
-  @Nullable
-  protected PsiElement getNameIdentifier(PsiElement elementToRename) {
-    return elementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)elementToRename).getNameIdentifier() : null;
+    return myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
   }
 
   public static EditorEx createPreviewComponent(Project project, FileType languageFileType) {

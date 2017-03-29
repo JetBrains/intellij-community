@@ -21,10 +21,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.light.JavaIdentifier;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
@@ -41,16 +41,10 @@ public class GrMethodInplaceRenamer extends MemberInplaceRenamer {
     return true;
   }
 
-  @Nullable
-  @Override
-  protected PsiElement getNameIdentifier(PsiElement elementToRename) {
-    return elementToRename instanceof GrNamedElement ? ((GrNamedElement)elementToRename).getNameIdentifierGroovy() : null;
-  }
-
   @NotNull
   @Override
   protected TextRange getRangeToRename(@NotNull PsiElement element) {
-    TextRange range = GrStringUtil.getStringContentRange(element);
+    TextRange range = getIdentifierNameRange(element);
     return range != null ? range : super.getRangeToRename(element);
   }
 
@@ -59,6 +53,14 @@ public class GrMethodInplaceRenamer extends MemberInplaceRenamer {
   protected TextRange getRangeToRename(@NotNull PsiReference reference) {
     TextRange range = getReferenceNameRange(reference.getElement());
     return range != null ? range : super.getRangeToRename(reference);
+  }
+
+  @Nullable
+  private static TextRange getIdentifierNameRange(@NotNull PsiElement element) {
+    if (element instanceof JavaIdentifier) {
+      return GrStringUtil.getStringContentRange(element.getNavigationElement());
+    }
+    return null;
   }
 
   @Nullable
