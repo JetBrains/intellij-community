@@ -20,8 +20,9 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
   init {
     var prevMappingPane: MappingPane? = null
     var lastValues: List<ValueWithPositionImpl>? = null
-    for (controller in controllers.subList(0, controllers.size - 1)) {
-      val (valuesBefore, valuesAfter, mapping) = controller.resolve()
+    for (indexedController in controllers.subList(0, controllers.size - 1).withIndex()) {
+      val controller = indexedController.value
+      val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[indexedController.index + 1])
       val mappingPane = MappingPane(controller.call.name, valuesBefore, mapping)
 
       val view = PositionsAwareCollectionView(" ", evaluationContext, valuesBefore)
@@ -65,9 +66,8 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
   private fun getValue(element: TraceElement): ValueWithPositionImpl = myPool.computeIfAbsent(element, ::ValueWithPositionImpl)
 
-  private fun TraceController.resolve(): LinkedValuesWithPositions {
+  private fun TraceController.resolve(nextController: TraceController): LinkedValuesWithPositions {
     val prevValues = mutableListOf<ValueWithPositionImpl>()
-    val nextValues = mutableSetOf<ValueWithPositionImpl>()
     val mapping = mutableMapOf<ValueWithPositionImpl, MutableSet<ValueWithPositionImpl>>()
 
     for (element in resolvedTrace.values) {
@@ -75,7 +75,6 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       prevValues += prevValue
       for (nextElement in resolvedTrace.getNextValues(element)) {
         val nextValue = getValue(nextElement)
-        nextValues += nextValue
         mapping.computeIfAbsent(prevValue, { mutableSetOf() }) += nextValue
         mapping.computeIfAbsent(nextValue, { mutableSetOf() }) += prevValue
       }
@@ -86,7 +85,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       resultMapping.put(key, mapping[key]!!.toList())
     }
 
-    return LinkedValuesWithPositions(prevValues, nextValues.toList(), object : LinkedValuesMapping {
+    return LinkedValuesWithPositions(prevValues, nextController.values.map { getValue(it) }, object : LinkedValuesMapping {
       override fun getLinkedValues(value: ValueWithPosition): List<ValueWithPosition>? {
         return resultMapping[value]
       }
