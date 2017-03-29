@@ -25,5 +25,5 @@ target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)
   String outputDir = "$home/out/tests"
   def context = CompilationContextImpl.create(home, home, outputDir, this)
-  TestingTasks.create(context).runTests([])
+  TestingTasks.create(context).runTests([], "community-main", null)
 }

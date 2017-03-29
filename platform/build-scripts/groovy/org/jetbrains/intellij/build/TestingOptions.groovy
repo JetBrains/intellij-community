@@ -16,17 +16,19 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
+import groovy.transform.CompileStatic
 
 /**
  * @author nik
  */
+@CompileStatic
 class TestingOptions {
   /**
    * Semicolon-separated names of test groups tests from which should be executed, by default all tests will be executed.
-   * <p> Test groups are defined in testGroups.properties files and there is an implicit ALL_EXCLUDE_DEFINED group for tests which aren't
-   * included into any group. </p>
+   * <p> Test groups are defined in testGroups.properties files and there is an implicit 'ALL_EXCLUDE_DEFINED' group for tests which aren't
+   * included into any group and 'ALL' group for all tests. By default 'ALL_EXCLUDE_DEFINED' group is used. </p>
    */
-  String testGroup = System.getProperty("intellij.build.test.group", oldTestGroup)
+  String testGroup = System.getProperty("intellij.build.test.groups", oldTestGroup)
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported.
@@ -53,10 +55,16 @@ class TestingOptions {
    */
   String jvmMemoryOptions = System.getProperty("intellij.build.test.jvm.memory.options", oldJvmMemoryOptions)
 
-  private String oldTestGroup = System.getProperty("idea.test.group")
+  /**
+   * Specifies a module which classpath will be used to search the test classes.
+   */
+  String mainModule = System.getProperty("intellij.build.test.main.module", oldMainModule)
+
+  private String oldTestGroup = System.getProperty("idea.test.group", "ALL_EXCLUDE_DEFINED")
   private String oldTestPatterns = System.getProperty("idea.test.patterns")
   private String oldPlatformPrefix = System.getProperty("idea.platform.prefix")
   private int oldDebugPort = SystemProperties.getIntProperty("debug.port", -1)
   private boolean oldSuspendDebugProcess = System.getProperty("debug.suspend", "n") == "y"
   private String oldJvmMemoryOptions = System.getProperty("test.jvm.memory")
+  private String oldMainModule = System.getProperty("module.to.make")
 }

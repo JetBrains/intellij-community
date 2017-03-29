@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -24,6 +25,9 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil
+
 /**
  * @author nik
  */
@@ -38,11 +42,11 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   @Override
-  void runTests(List<String> additionalJvmOptions) {
+  void runTests(List<String> additionalJvmOptions, String defaultMainModule, String excludedSourceDirectory) {
     CompilationTasks.create(context).compileAllModulesAndTests()
 
-    String testModule = "community-main"
-    List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(testModule), true)
+    def mainModule = options.mainModule ?: defaultMainModule
+    List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
@@ -94,6 +98,19 @@ class TestingTasksImpl extends TestingTasks {
       if (key.startsWith("pass.")) {
         systemProperties[key.substring("pass.".length())] = value
       }
+    }
+
+    if (excludedSourceDirectory != null) {
+      List<JpsModule> excludedModules = context.project.modules.findAll {
+        List<String> contentRoots = it.contentRootsList.urls
+        !contentRoots.isEmpty() && FileUtil.isAncestor(new File(excludedSourceDirectory), JpsPathUtil.urlToFile(contentRoots.first()), false)
+      }
+      List<String> excludedRoots = excludedModules.collectMany {
+        [context.projectBuilder.moduleOutput(it), context.projectBuilder.moduleTestsOutput(it)]
+      }
+      File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
+      excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
+      systemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
 
     boolean suspendDebugProcess = options.suspendDebugProcess

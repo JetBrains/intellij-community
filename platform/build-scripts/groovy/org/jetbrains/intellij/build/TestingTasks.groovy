@@ -22,7 +22,11 @@ import org.jetbrains.intellij.build.impl.TestingTasksImpl
  */
 @CompileStatic
 abstract class TestingTasks {
-  abstract void runTests(List<String> additionalJvmOptions)
+  /**
+   * @param defaultMainModule main module to be used instead of {@link TestingOptions#mainModule} if it isn't specified
+   * @param excludedSourceDirectory if not {@code null} tests from modules which sources are located under this directory will be skipped
+   */
+  abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, String excludedSourceDirectory)
 
   static TestingTasks create(CompilationContext context, TestingOptions options = new TestingOptions()) {
     return new TestingTasksImpl(context, options)
