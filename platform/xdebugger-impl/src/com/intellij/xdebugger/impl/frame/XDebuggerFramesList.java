@@ -143,6 +143,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   }
 
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
+    private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer(myProject);
+
     public XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
         @Nullable
@@ -163,9 +165,14 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      return component;
+      if (myDescriptor.hasSeparatorAboveOf(value)) {
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return component;
+      }
+      else {
+        return myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
     }
 
     @Override
