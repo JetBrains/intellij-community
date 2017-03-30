@@ -31,8 +31,6 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public class MigrateToNewDiffUtil {
-  @NonNls public static final Object DO_NOT_TRY_MIGRATE = "doNotTryMigrate";
-
   @NotNull
   public static DiffRequest convertRequest(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
     DiffRequest request = convertRequestFair(oldRequest);

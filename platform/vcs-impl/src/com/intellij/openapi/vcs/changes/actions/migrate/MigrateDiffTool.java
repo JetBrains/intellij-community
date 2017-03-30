@@ -47,7 +47,6 @@ public class MigrateDiffTool implements DiffTool {
   public boolean canShow(DiffRequest request) {
     if (request instanceof MergeRequest) return false;
     if (request.getContents().length != 2) return false;
-    if (request.getHints().contains(MigrateToNewDiffUtil.DO_NOT_TRY_MIGRATE)) return false;
     if (request.getOnOkRunnable() != null) return false;
     if (!DiffManagerImpl.INTERNAL_DIFF.canShow(request) && !BinaryDiffTool.INSTANCE.canShow(request)) return false;
     for (DiffTool tool : DiffManagerImpl.getInstanceEx().getAdditionTools()) {
