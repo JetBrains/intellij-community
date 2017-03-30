@@ -118,35 +118,35 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   }
 
   public void init() {
-    synchronized (isInitializationWasStarted) {
-      if (isInitializationWasStarted.getAndSet(true)) return;
+    if (isInitializationWasStarted.getAndSet(true)) return;
 
-      myWatcher = new ExternalSystemProjectsWatcher(myProject);
-      myWatcher.start();
+    myWatcher = new ExternalSystemProjectsWatcher(myProject);
+    myWatcher.start();
 
-      // load external projects data
-      ExternalProjectsDataStorage.getInstance(myProject).load();
-      myRunManagerListener.attach();
+    // load external projects data
+    ExternalProjectsDataStorage.getInstance(myProject).load();
+    myRunManagerListener.attach();
 
-      // init shortcuts manager
-      myShortcutsManager.init();
-      for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
-        final Collection<ExternalProjectInfo> externalProjects =
-          ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
-        for (ExternalProjectInfo externalProject : externalProjects) {
-          if (externalProject.getExternalProjectStructure() == null) continue;
-          Collection<DataNode<TaskData>> taskData =
-            ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
-          myShortcutsManager.scheduleKeymapUpdate(taskData);
-        }
-
-        if (!externalProjects.isEmpty()) {
-          myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
-        }
+    // init shortcuts manager
+    myShortcutsManager.init();
+    for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
+      final Collection<ExternalProjectInfo> externalProjects =
+        ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
+      for (ExternalProjectInfo externalProject : externalProjects) {
+        if (externalProject.getExternalProjectStructure() == null) continue;
+        Collection<DataNode<TaskData>> taskData =
+          ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
+        myShortcutsManager.scheduleKeymapUpdate(taskData);
       }
-      // init task activation info
-      myTaskActivator.init();
 
+      if (!externalProjects.isEmpty()) {
+        myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
+      }
+    }
+    // init task activation info
+    myTaskActivator.init();
+
+    synchronized (isInitializationFinished) {
       isInitializationFinished.set(true);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         myPostInitializationActivities.run();
@@ -156,10 +156,13 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   }
 
   public void runWhenInitialized(Runnable runnable) {
-    if (isInitializationFinished.get()){
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    } else {
-      myPostInitializationActivities.add(runnable);
+    synchronized(isInitializationFinished) {
+      if (isInitializationFinished.get()) {
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      }
+      else {
+        myPostInitializationActivities.add(runnable);
+      }
     }
   }
 

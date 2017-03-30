@@ -17,10 +17,22 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.util.SmartList;
 
-public class CompositeRunnable extends SmartList<Runnable> implements Runnable {
+import java.util.List;
+
+public class CompositeRunnable implements Runnable {
+  private List<Runnable> list = new SmartList<>();
+
+  public boolean add(Runnable runnable) {
+    return list.add(runnable);
+  }
+
+  public void clear() {
+    list = new SmartList<>();
+  }
+
   @Override
   public void run() {
-    for (Runnable runnable : this) {
+    for (Runnable runnable : list) {
       runnable.run();
     }
   }
