@@ -53,10 +53,6 @@ public class StepIntersection<Data, Area> {
                                     (o1, o2) -> o1.intersects(o2) ? 0 : o1.getStartOffset() < o2.getStartOffset() ? -1 : 1);
   }
 
-  public void resetIndex() {
-    myAreaIndex = 0;
-  }
-
   public List<Data> process(final Iterable<Data> data) {
     final List<Data> result = new ArrayList<>();
     process(data, (data1, area) -> result.add(data1));
