@@ -83,7 +83,7 @@ public class CCCreateLesson extends CCCreateStudyItemActionBase {
 
   @Override
   protected List<? extends StudyItem> getSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
-    return course.getLessons();
+    return course.getLessons(true);
   }
 
   @Override
