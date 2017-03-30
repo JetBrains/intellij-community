@@ -171,6 +171,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
           }
           document.deleteString(closingMatcher.start(), closingMatcher.end());
           document.deleteString(openingMatcher.start(), openingMatcher.end());
+          FileDocumentManager.getInstance().saveDocument(document);
           placeholders.add(answerPlaceholder);
           pos = answerPlaceholder.getOffset() + answerPlaceholder.getRealLength();
         }
