@@ -15,14 +15,22 @@
  */
 package com.jetbrains.python.testing.universalTests
 
+import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.commandInterface.commandLine.CommandLineLanguage
+import com.jetbrains.commandInterface.commandLine.CommandLinePart
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineArgument
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineOption
 import com.jetbrains.extensions.getQName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
@@ -30,6 +38,7 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveModuleAt
+import java.util.*
 
 /**
  * @author Ilya.Kazakevich
@@ -104,5 +113,47 @@ private fun findVFSItemRoot(virtualFile: VirtualFile, project: Project): Virtual
            .map(com.intellij.openapi.util.Pair<String, VirtualFile>::second)
            .firstOrNull() ?: return null
 
+}
+
+
+/**
+ * Emulates command line processor by parsing command line to arguments that can be provided as argv.
+ * Escape chars are not supported but quotes work.
+ * @throws ExecutionException if can't be parsed
+ */
+fun getParsedAdditionalArguments(project: Project, additionalArguments: String): List<String> {
+  val factory = PsiFileFactory.getInstance(project)
+  val file = factory.createFileFromText(CommandLineLanguage.INSTANCE,
+                                        String.format("fake_command %s", additionalArguments)) as CommandLineFile
+
+  if (file.children.any { it is PsiErrorElement }) {
+    throw ExecutionException("Additional arguments can't be parsed. Please check they are valid: $additionalArguments")
+  }
+
+
+  val additionalArgsList = ArrayList<String>()
+  var skipArgument = false
+  file.children.filterIsInstance(CommandLinePart::class.java).forEach {
+    when (it) {
+      is CommandLineOption -> {
+        val optionText = it.text
+        val possibleArgument = it.findArgument()
+        if (possibleArgument != null) {
+          additionalArgsList.add(optionText + possibleArgument.valueNoQuotes)
+          skipArgument = true
+        }
+        else {
+          additionalArgsList.add(optionText)
+        }
+      }
+      is CommandLineArgument -> {
+        if (!skipArgument) {
+          additionalArgsList.add(it.valueNoQuotes)
+        }
+        skipArgument = false
+      }
+    }
+  }
+  return additionalArgsList
 }
 
