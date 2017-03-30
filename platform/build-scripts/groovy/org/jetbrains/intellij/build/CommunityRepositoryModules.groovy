@@ -89,7 +89,6 @@ class CommunityRepositoryModules {
     "xml-structure-view-impl",
     "xml",
     "configuration-store-impl",
-    "aether-dependency-resolver",
   ]
 
   /**

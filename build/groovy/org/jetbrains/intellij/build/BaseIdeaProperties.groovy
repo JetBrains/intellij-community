@@ -89,6 +89,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "jps-launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
+    productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "aether-dependency-resolver")
     productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
     productLayout.additionalPlatformJars.
