@@ -31,7 +31,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.junit5.JUnit5IdeaTestRunner;
+import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -160,7 +160,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
     if (JUnitUtil.isJUnit5(globalSearchScope, project)) {
       javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
-      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
+      //detect junit 5 rt without dependency on junit5_rt module
+      File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
+      String junit5Name = junit4Rt.getName().replace("junit", "junit5");
+      javaParameters.getClassPath().add(new File(junit4Rt.getParent(), junit5Name));
 
       final PathsList classPath = javaParameters.getClassPath();
       File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
