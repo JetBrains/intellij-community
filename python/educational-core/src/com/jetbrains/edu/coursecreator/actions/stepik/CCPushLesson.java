@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator.actions;
+package com.jetbrains.edu.coursecreator.actions.stepik;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -14,16 +14,17 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
-public class CCPushTask extends DumbAwareAction {
-  public CCPushTask() {
-    super("Update Task on Stepik", "Update Task on Stepik", null);
+import java.util.List;
+
+public class CCPushLesson extends DumbAwareAction {
+  public CCPushLesson() {
+    super("Update Lesson on Stepik", "Update Lesson on Stepik", null);
   }
 
   @Override
@@ -39,18 +40,15 @@ public class CCPushTask extends DumbAwareAction {
       return;
     }
     if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
-    PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
+    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
-    final PsiDirectory lessonDir = taskDir.getParentDirectory();
-    if (lessonDir == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && lesson.getId() > 0 && ((RemoteCourse)course).getId() > 0) {
+    if (lesson != null && ((RemoteCourse)course).getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
-      final com.jetbrains.edu.learning.courseFormat.tasks.Task task = lesson.getTask(taskDir.getName());
-      if (task.getStepId() <= 0) {
-        e.getPresentation().setText("Upload Task to Stepik");
+      if (lesson.getId() <= 0) {
+        e.getPresentation().setText("Upload Lesson to Stepik");
       }
     }
   }
@@ -63,33 +61,31 @@ public class CCPushTask extends DumbAwareAction {
       return;
     }
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || !(course instanceof RemoteCourse)) {
       return;
     }
-    PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
+    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
-    final PsiDirectory lessonDir = taskDir.getParentDirectory();
-    if (lessonDir == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson == null) return;
-
-    final com.jetbrains.edu.learning.courseFormat.tasks.Task task = lesson.getTask(taskDir.getName());
-    if (task == null) return;
-
-    ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Task", true) {
+    if (lesson == null) {
+      return;
+    }
+    ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Lesson", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Uploading task to " + EduStepicNames.STEPIC_URL);
-        if (task.getStepId() <= 0) {
-          CCStepicConnector.postTask(project, task, lesson.getId());
+        indicator.setText("Uploading lesson to " + EduStepicNames.STEPIC_URL);
+        if (lesson.getId() > 0) {
+          CCStepicConnector.updateLesson(project, lesson);
         }
         else {
-          CCStepicConnector.updateTask(project, task);
+          final int lessonId = CCStepicConnector.postLesson(project, lesson);
+          final List<Integer> sections = ((RemoteCourse)course).getSections();
+          final Integer sectionId = sections.get(sections.size()-1);
+          CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
         }
-      }
-    });
+      }});
   }
 
 }
