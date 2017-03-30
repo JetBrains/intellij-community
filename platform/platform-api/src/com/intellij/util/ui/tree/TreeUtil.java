@@ -991,6 +991,12 @@ public final class TreeUtil {
     return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
   }
 
+  @Nullable
+  public static TreePath getSelectedPathIfOne(JTree tree) {
+    TreePath[] paths = tree.getSelectionPaths();
+    return paths != null && paths.length == 1 ? paths[0] : null;
+  }
+
   @FunctionalInterface
   public interface Traverse{
     boolean accept(Object node);

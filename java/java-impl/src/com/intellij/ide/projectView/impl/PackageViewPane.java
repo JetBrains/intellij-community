@@ -238,11 +238,6 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       public String toString() {
         return getTitle() + " " + super.toString();
       }
-
-      @Override
-      public DefaultMutableTreeNode getSelectedNode() {
-        return PackageViewPane.this.getSelectedNode();
-      }
     };
   }
 

@@ -52,6 +52,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -302,9 +303,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public abstract SelectInTarget createSelectInTarget();
 
   public final TreePath getSelectedPath() {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null && paths.length == 1) return paths[0];
-    return null;
+    return TreeUtil.getSelectedPathIfOne(myTree);
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
@@ -319,14 +318,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
-    if (path == null) {
-      return null;
-    }
-    Object lastPathComponent = path.getLastPathComponent();
-    if (!(lastPathComponent instanceof DefaultMutableTreeNode)) {
-      return null;
-    }
-    return (DefaultMutableTreeNode)lastPathComponent;
+    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
   public final Object getSelectedElement() {
