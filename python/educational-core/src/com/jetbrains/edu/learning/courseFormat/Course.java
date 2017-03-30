@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -198,6 +199,10 @@ public class Course {
 
   public boolean isAdaptive() {
     return false;
+  }
+
+  public void sortLessons() {
+    Collections.sort(lessons, EduUtils.INDEX_COMPARATOR);
   }
 
   @Override

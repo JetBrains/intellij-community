@@ -307,7 +307,7 @@ public class CCUtils {
     });
     if (task.getTestsText().isEmpty()) return null;
     lesson.addTask(task);
-    lesson.setIndex(1);
+    lesson.setIndex(course.getLessons().size());
     return lesson;
   }
 }
