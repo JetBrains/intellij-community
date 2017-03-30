@@ -431,7 +431,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private void addNotificationAndWarn(@NotNull String errorMessage) {
     LOG.warn(errorMessage);
-    myErrorNotificationPanel.text(errorMessage);
+    myErrorNotificationPanel.setText(errorMessage);
     myErrorNotificationPanel.setVisible(true);
   }
 
