@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.checkin.StepIntersection;
@@ -74,8 +73,7 @@ public abstract class TodoForRanges {
         public TextRange convert(TodoItemData o) {
           return o.getTextRange();
         }
-      }, Convertor.SELF, myRanges, () -> ""
-      );
+      }, Convertor.SELF, myRanges);
     final List<TodoItemData> filtered = stepIntersection.process(Arrays.asList(todoItems));
     final List<Pair<TextRange, TextAttributes>> result = new ArrayList<>(filtered.size());
     int offset = 0;

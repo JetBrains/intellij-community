@@ -29,7 +29,6 @@ import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -219,13 +218,7 @@ public class TodoCheckinHandlerWorker {
           }
         }
         final StepIntersection<TodoItem, LineFragment> intersection =
-          new StepIntersection<>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments,
-                                 new Getter<String>() {
-                                   @Override
-                                   public String get() {
-                                     return myAfterContent;
-                                   }
-                                 });
+          new StepIntersection<>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments);
 
         intersection.process(newTodoItems, new PairConsumer<TodoItem, LineFragment>() {
 
@@ -279,12 +272,7 @@ public class TodoCheckinHandlerWorker {
       }
       if (myOldTodoTexts == null) {
         final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<>(
-          LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems, new Getter<String>() {
-          @Override
-          public String get() {
-            return myBeforeContent;
-          }
-        });
+          LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems);
         myOldTodoTexts = new HashSet<>();
         intersection.process(Collections.singletonList(myCurrentLineFragment), new PairConsumer<LineFragment, TodoItem>() {
           @Override

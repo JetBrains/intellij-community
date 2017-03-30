@@ -101,8 +101,7 @@ public class IntersectionTest extends TestCase {
       public TextRange convert(Area o) {
         return o.getTextRange();
       }
-    }, Arrays.asList(areas), () -> ""
-    );
+    }, Arrays.asList(areas));
   }
 
   private static class Data {

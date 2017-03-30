@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -43,15 +41,11 @@ public class StepIntersection<Data, Area> {
   private Area myCurArea;
   private final List<Area> myAreas;
   private final HackSearch<Data,Area,TextRange> myHackSearch;
-  // EA-28497, EA-26379
-  private final Getter<String> myDebugDocumentTextGetter;
 
   public StepIntersection(Convertor<Data, TextRange> dataConvertor,
                           Convertor<Area, TextRange> areasConvertor,
-                          final List<Area> areas,
-                          Getter<String> debugDocumentTextGetter) {
+                          final List<Area> areas) {
     myAreas = areas;
-    myDebugDocumentTextGetter = debugDocumentTextGetter;
     myAreaIndex = 0;
     myDataConvertor = dataConvertor;
     myAreasConvertor = areasConvertor;
