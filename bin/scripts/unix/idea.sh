@@ -63,34 +63,52 @@ fi
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
-elif [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+  echo "@@product_uc@@_JDK: $@@product_uc@@_JDK"
+fi
+
+if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ] &&
+   [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
   JDK=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
   if [ ! -d "$JDK" ]; then
     JDK="$IDE_HOME/$JDK"
   fi
-elif [ "$OS_TYPE" = "Linux" ] && [ -x "$IDE_HOME/jre64/bin/java" ] && "$IDE_HOME/jre64/bin/java" -version > /dev/null 2>&1 ; then
+  echo "boot jdk: $JDK"
+fi
+
+if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ] &&
+   [ "$OS_TYPE" = "Linux" ] && [ -x "$IDE_HOME/jre64/bin/java" ] && "$IDE_HOME/jre64/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre64"
-elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+  echo "bundled jre: $JDK"
+fi
+
+if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ] &&
+   [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
-elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
-  JDK="$JAVA_HOME"
-else
-  JAVA_BIN_PATH=`which java`
-  if [ -n "$JAVA_BIN_PATH" ]; then
-    if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
-      JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    elif [ "$OS_TYPE" = "SunOS" ]; then
-      JAVA_LOCATION="/usr/jdk/latest"
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    elif [ "$OS_TYPE" = "Darwin" ]; then
-      JAVA_LOCATION=`/usr/libexec/java_home`
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
+  echo "JDK_HOME: $JDK"
+fi
+
+if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ]; then
+  if [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
+    JDK="$JAVA_HOME"
+    echo "JAVA_HOME: $JDK"
+  else
+    JAVA_BIN_PATH=`which java`
+    if [ -n "$JAVA_BIN_PATH" ]; then
+      if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
+        JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
+        if [ -x "$JAVA_LOCATION/bin/java" ]; then
+          JDK="$JAVA_LOCATION"
+        fi
+      elif [ "$OS_TYPE" = "SunOS" ]; then
+        JAVA_LOCATION="/usr/jdk/latest"
+        if [ -x "$JAVA_LOCATION/bin/java" ]; then
+          JDK="$JAVA_LOCATION"
+        fi
+      elif [ "$OS_TYPE" = "Darwin" ]; then
+        JAVA_LOCATION=`/usr/libexec/java_home`
+        if [ -x "$JAVA_LOCATION/bin/java" ]; then
+          JDK="$JAVA_LOCATION"
+        fi
       fi
     fi
 
