@@ -197,7 +197,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
     virtualFile!!
   }
 
-  if ((LOG.isDebugEnabled || ApplicationManager.getApplication ().isUnitTestMode) && result.length < FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+  if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
       throw IllegalStateException("Content equals, but it must be handled not on this level: ${result.name}")
