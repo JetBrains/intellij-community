@@ -91,6 +91,7 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static final boolean isXWindow = isUnix && !isMac;
+  public static final boolean isWayland = !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
