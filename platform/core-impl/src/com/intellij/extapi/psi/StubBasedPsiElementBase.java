@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -367,7 +366,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @NotNull
   public IStubElementType getElementType() {
     if (!(myElementType instanceof IStubElementType)) {
-      throw new AssertionError("Not a stub type: " + myElementType + " in " + getClass());
+      throw new ClassCastException("Not a stub type: " + myElementType + " in " + getClass());
     }
     return (IStubElementType)myElementType;
   }

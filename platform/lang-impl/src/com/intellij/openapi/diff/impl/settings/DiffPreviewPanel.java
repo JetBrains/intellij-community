@@ -51,6 +51,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -108,8 +109,7 @@ class DiffPreviewPanel implements PreviewPanel {
     private final List<DiffContent> myContents;
 
     public SampleRequest() {
-      com.intellij.openapi.diff.DiffContent[] contents = DiffPreviewProvider.getContents();
-      myContents = ContainerUtil.list(convert(contents[0]), convert(contents[1]), convert(contents[2]));
+      myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
     private static DiffContent convert(@NotNull com.intellij.openapi.diff.DiffContent content) {
