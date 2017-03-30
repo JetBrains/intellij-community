@@ -19,11 +19,15 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
@@ -33,11 +37,13 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.java.compiler.*;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -157,6 +163,11 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   @Override
   public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(), new JpsTestModuleOutputPackagingElementSerializer());
+  }
+
+  @NotNull
+  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
+    return Collections.singletonList(new JpsRepositoryLibraryPropertiesSerializer());
   }
 
   private static void loadExplodedDirectoryExtension(JpsModule module, Element rootModelComponent) {
@@ -369,6 +380,29 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       }
       if (properties.isForGeneratedSources()) {
         sourceRootTag.setAttribute(IS_GENERATED_ATTRIBUTE, Boolean.TRUE.toString());
+      }
+    }
+  }
+
+  private static class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
+    private static final String MAVEN_ID_ATTRIBUTE = "maven-id";
+
+    public JpsRepositoryLibraryPropertiesSerializer() {
+      super(JpsRepositoryLibraryType.INSTANCE, JpsRepositoryLibraryType.INSTANCE.getTypeId());
+    }
+
+    @Override
+    public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem) {
+      return JpsElementFactory.getInstance().createSimpleElement(new JpsMavenRepositoryLibraryDescriptor(
+        elem != null? elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null) : null
+      ));
+    }
+
+    @Override
+    public void saveProperties(JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> properties, Element element) {
+      final String mavenId = properties.getData().getMavenId();
+      if (mavenId != null) {
+        element.setAttribute(MAVEN_ID_ATTRIBUTE, mavenId);
       }
     }
   }

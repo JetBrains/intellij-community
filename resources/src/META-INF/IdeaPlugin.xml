@@ -331,6 +331,8 @@
     <extensionPoint name="java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
 
     <extensionPoint name="java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
+
+    <extensionPoint name="repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -1903,6 +1905,11 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CompletionStageChainCallExtractor"/>
 
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
+
+    <library.type implementation="com.intellij.jarRepository.RepositoryLibraryType"/>
+    <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>
+    <applicationService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
+    <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibrarySynchronizer"/>
   </extensions>
 
   <actions>

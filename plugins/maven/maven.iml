@@ -27,15 +27,6 @@
     <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="XmlBeans" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/wadl-core.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
@@ -45,9 +36,9 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="maven-jps-plugin" />
-    <orderEntry type="module" module-name="maven-artifact-resolver-m2" />
-    <orderEntry type="module" module-name="maven-artifact-resolver-m3" />
-    <orderEntry type="module" module-name="maven-artifact-resolver-m31" />
+    <orderEntry type="module" module-name="maven-artifact-resolver-m2" scope="PROVIDED" />
+    <orderEntry type="module" module-name="maven-artifact-resolver-m3" scope="PROVIDED" />
+    <orderEntry type="module" module-name="maven-artifact-resolver-m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="properties-psi-api" />
@@ -62,6 +53,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="external-system-api" exported="" />
     <orderEntry type="module" module-name="external-system-impl" exported="" />
+    <orderEntry type="module" module-name="aether-dependency-resolver" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="util-tests" scope="TEST" />

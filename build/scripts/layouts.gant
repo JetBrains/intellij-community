@@ -61,24 +61,36 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
       jar("groovy-rt-constants.jar") {
         module("groovy-rt-constants")
       }
-      jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
-
-
-      jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
-      jar("aether-dependency-resolver.jar") { module("aether-dependency-resolver") }
-      fileset(dir: "$home/plugins/maven/lib") {
+      jar("ui-designer-jps-plugin.jar") {
+        module("ui-designer-jps-plugin")
+      }
+      jar("maven-jps-plugin.jar") {
+        module("maven-jps-plugin")
+      }
+      jar("aether-dependency-resolver.jar") {
+        module("aether-dependency-resolver")
+      }
+      fileset(dir: "$home/lib") {
         include(name: "aether-*.jar")
         include(name: "maven-aether-provider-*.jar")
       }
-      jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
-      fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+      jar("gradle-jps-plugin.jar") {
+        module("gradle-jps-plugin")
+      }
+      fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") {
+        include(name: "plexus-utils-*.jar")
+      }
 
       jar("eclipse-jps-plugin.jar") {
         module("common-eclipse-util")
         module("eclipse-jps-plugin")
       }
-      jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
-      jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
+      jar("devkit-jps-plugin.jar") {
+        module("devkit-jps-plugin")
+      }
+      jar("intellilang-jps-plugin.jar") {
+        module("intellilang-jps-plugin")
+      }
       fileset(dir: "$home/lib") {
         include(name: "jdom.jar")
         include(name: "jna.jar")
@@ -100,7 +112,9 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
       fileset(dir: "$home/jps/lib") {
         include(name: "optimizedFileManager.jar")
       }
-      jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
+      jar("ant-jps-plugin.jar") {
+        module("ant-jps-plugin")
+      }
       additionalJars()
     }
     jar("jps-build-test-${buildNumber}.jar") {
