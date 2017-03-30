@@ -133,9 +133,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  public void directoryMappingChanged() {
-  }
-
   public boolean markExternalChangesAsUpToDate() {
     return false;
   }
