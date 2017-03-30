@@ -25,7 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
@@ -88,7 +88,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseClicked(MouseEvent e) {
         final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
+        if (selectedItem != null && ((Course)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           mySettingsPanel.showLoginDialog(false, "Signing In");
         }
       }
@@ -96,14 +96,14 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseEntered(MouseEvent e) {
         final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
+        if (selectedItem != null && ((Course)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        final CourseInfo selectedItem = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        final Course selectedItem = (Course)mySettingsPanel.getCoursesComboBox().getSelectedItem();
         if (selectedItem != null && selectedItem.isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getDefaultCursor());
         }
@@ -166,7 +166,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     return mySettingsPanel;
   }
 
-  public void setSelectedCourse(CourseInfo course) {
+  public void setSelectedCourse(Course course) {
     myGenerator.setSelectedCourse(course);
   }
 
@@ -184,12 +184,12 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
     return generator -> {
       final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
-      final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
-      if (course == null) return true;
-      if (course.getId() > 0 && !enrolledCoursesIds.contains(course.getId())) {
+      final Course course = (Course)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+      if (course == null || !(course instanceof RemoteCourse)) return true;
+      if (((RemoteCourse)course).getId() > 0 && !enrolledCoursesIds.contains(((RemoteCourse)course).getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(),
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(((RemoteCourse)course).getId(),
                                                                                    StepicUpdateSettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 

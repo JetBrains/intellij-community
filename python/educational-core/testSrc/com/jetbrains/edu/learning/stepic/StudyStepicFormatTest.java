@@ -8,7 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -65,9 +65,9 @@ public class StudyStepicFormatTest {
       EduStepicClient.deserializeStepicResponse(StepicWrappers.CoursesContainer.class, responseString);
     assertNotNull(container.courses);
     assertTrue("Incorrect number of courses", container.courses.size() == 4);
-    List<CourseInfo> filtered = ContainerUtil.filter(container.courses, info -> EduStepicConnector.canBeOpened(info));
+    List<RemoteCourse> filtered = ContainerUtil.filter(container.courses, info -> EduStepicConnector.canBeOpened(info));
     assertEquals(ContainerUtil.newArrayList("Adaptive Python", "Introduction to Python", "format2"),
-                 ContainerUtil.map(filtered, CourseInfo::getName));
+                 ContainerUtil.map(filtered, RemoteCourse::getName));
   }
 
   @Test

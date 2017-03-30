@@ -14,8 +14,8 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +33,8 @@ public class CCPushCourse extends DumbAwareAction {
     presentation.setEnabledAndVisible(project != null && CCUtils.isCourseCreator(project));
     if (project != null) {
       final Course course = StudyTaskManager.getInstance(project).getCourse();
-      if (course != null) {
-        final int id = course.getId();
-        if (id > 0) {
-          presentation.setText("Update Course on Stepik");
-        }
+      if (course instanceof RemoteCourse) {
+        presentation.setText("Update Course on Stepik");
       }
     }
   }
@@ -53,7 +50,7 @@ public class CCPushCourse extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    if (course.getId() > 0) {
+    if (course instanceof RemoteCourse) {
       ProgressManager.getInstance().run(new Task.Modal(project, "Updating Course", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -62,10 +59,9 @@ public class CCPushCourse extends DumbAwareAction {
               CCStepicConnector.updateLesson(project, lesson);
             }
             else {
-              final CourseInfo info = CourseInfo.fromCourse(course);
               final int lessonId = CCStepicConnector.postLesson(project, lesson);
               if (lessonId != -1) {
-                final List<Integer> sections = info.getSections();
+                final List<Integer> sections = ((RemoteCourse)course).getSections();
                 final Integer sectionId = sections.get(sections.size() - 1);
                 CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
               }

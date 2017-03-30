@@ -20,8 +20,8 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
@@ -58,7 +58,7 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
 
   private static void createCourse(Project project, String courseId) {
     final VirtualFile baseDir = project.getBaseDir();
-    final CourseInfo info = CCStepicConnector.getCourseInfo(courseId);
+    final RemoteCourse info = CCStepicConnector.getCourseInfo(courseId);
     if (info == null) return;
 
     final Course course = EduStepicConnector.getCourse(project, info);

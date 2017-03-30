@@ -146,10 +146,8 @@ public class StudyProjectComponent implements ProjectComponent {
 
   private void updateCourse() {
     final Course currentCourse = StudyTaskManager.getInstance(myProject).getCourse();
-    final CourseInfo info = CourseInfo.fromCourse(currentCourse);
-    if (info == null) return;
-
-    final Course course = EduStepicConnector.getCourse(myProject, info);
+    if (currentCourse == null || !(currentCourse instanceof RemoteCourse)) return;
+    final Course course = EduStepicConnector.getCourse(myProject, (RemoteCourse)currentCourse);
     if (course == null) return;
     course.initCourse(false);
 

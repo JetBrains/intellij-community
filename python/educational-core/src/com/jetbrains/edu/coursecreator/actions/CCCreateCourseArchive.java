@@ -220,7 +220,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void generateJson(VirtualFile parentDir, Course course) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
-      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskSerializer()).create();
+      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskAdapter()).create();
     final String json = gson.toJson(course);
     final File courseJson = new File(parentDir.getPath(), EduNames.COURSE_META_FILE);
     OutputStreamWriter outputStreamWriter = null;

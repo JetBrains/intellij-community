@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.REMOTE_COURSE;
+
 /**
  * Implementation of class which contains all the information
  * about study in context of current project
@@ -115,10 +117,32 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     if (myCourse == null) {
       return null;
     }
+
+    return serialize();
+  }
+
+  @NotNull
+  private Element serialize() {
     Element el = new Element("taskManager");
-    Element courseElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
-    XmlSerializer.serializeInto(this, courseElement);
-    el.addContent(courseElement);
+    Element taskManagerElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
+    XmlSerializer.serializeInto(this, taskManagerElement);
+
+    if (myCourse instanceof RemoteCourse) {
+      try {
+        Element course = new Element(REMOTE_COURSE);
+        //noinspection RedundantCast
+        XmlSerializer.serializeInto((RemoteCourse)myCourse, course);
+
+        final Element xmlCourse = StudySerializationUtils.Xml.getChildWithName(taskManagerElement, StudySerializationUtils.COURSE);
+        xmlCourse.removeContent();
+        xmlCourse.addContent(course);
+      }
+      catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
+        LOG.error("Failed to serialize remote course");
+      }
+    }
+
+    el.addContent(taskManagerElement);
     return el;
   }
 
@@ -143,7 +167,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
         //case 5:
         //  state = StudySerializationUtils.Xml.convertToSixthVersion(state, myProject);
       }
-      XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
+      deserialize(state);
       VERSION = CURRENT_VERSION;
       if (myCourse != null) {
         myCourse.initCourse(true);
@@ -151,6 +175,18 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     }
     catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
       LOG.error("Unexpected course format:\n", new XMLOutputter().outputString(state));
+    }
+  }
+
+  private void deserialize(Element state) throws StudySerializationUtils.StudyUnrecognizedFormatException {
+    final Element taskManagerElement = state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT);
+    XmlSerializer.deserializeInto(this, taskManagerElement);
+    final Element xmlCourse = StudySerializationUtils.Xml.getChildWithName(taskManagerElement, StudySerializationUtils.COURSE);
+    final Element remoteCourseElement = xmlCourse.getChild(REMOTE_COURSE);
+    if (remoteCourseElement != null) {
+      final RemoteCourse remoteCourse = new RemoteCourse();
+      XmlSerializer.deserializeInto(remoteCourse, remoteCourseElement);
+      myCourse = remoteCourse;
     }
   }
 

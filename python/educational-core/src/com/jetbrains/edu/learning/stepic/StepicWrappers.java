@@ -11,8 +11,8 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
@@ -171,7 +171,7 @@ public class StepicWrappers {
   }
 
   public static class CoursesContainer {
-    public List<CourseInfo> courses;
+    public List<RemoteCourse> courses;
     public Map meta;
   }
 
@@ -185,10 +185,10 @@ public class StepicWrappers {
   }
 
   public static class CourseWrapper {
-    CourseInfo course;
+    RemoteCourse course;
 
     public CourseWrapper(Course course) {
-      this.course = new CourseInfo();
+      this.course = new RemoteCourse();
       this.course.setName(course.getName());
       this.course.setDescription(course.getDescription());
       this.course.setAuthors(course.getAuthors());

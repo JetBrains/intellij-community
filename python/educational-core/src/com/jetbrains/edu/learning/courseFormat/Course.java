@@ -8,32 +8,29 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Course {
-  @Expose private List<Lesson> lessons = new ArrayList<>();
-  @Expose private List<StepicUser> authors = new ArrayList<>();
-  @Expose private String description;
-  @Expose private String name;
-  @Expose private int id;
-  @Expose @SerializedName("update_date") private Date myUpdateDate;
-  @Expose private boolean isAdaptive = false;
-  @Expose @SerializedName("language") private String myLanguage = "Python";
+  public static final Course INVALID_COURSE = new Course();
+
+  @Expose protected List<Lesson> lessons = new ArrayList<>();
+  transient private List<StepicUser> authors = new ArrayList<>();
+  @Expose @SerializedName("summary") private String description;
+  @Expose @SerializedName("title") private String name;
+
+  transient private String myLanguage = "Python";
 
   //this field is used to distinguish ordinary and CheckIO projects,
   //"PyCharm" is used here for historical reasons
   private String courseType = EduNames.PYCHARM;
-  private String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
+  protected String courseMode = EduNames.STUDY; //this field is used to distinguish study and course creator modes
 
   public Course() {}
 
@@ -136,35 +133,10 @@ public class Course {
   }
 
   public boolean isUpToDate() {
-    if (id == 0) return true;
-    if (!EduNames.STUDY.equals(courseMode)) return true;
-    final Date date = EduStepicConnector.getCourseUpdateDate(id);
-    if (date == null) return true;
-    if (myUpdateDate == null) return true;
-    if (date.after(myUpdateDate)) return false;
-    for (Lesson lesson : lessons) {
-      if (!lesson.isUpToDate()) return false;
-    }
     return true;
   }
 
-  public void setUpdated() {
-    setUpdateDate(EduStepicConnector.getCourseUpdateDate(id));
-    for (Lesson lesson : lessons) {
-      lesson.setUpdateDate(EduStepicConnector.getLessonUpdateDate(lesson.getId()));
-      for (Task task : lesson.getTaskList()) {
-        task.setUpdateDate(EduStepicConnector.getTaskUpdateDate(task.getStepId()));
-      }
-    }
-  }
-
-  public void setUpdateDate(Date date) {
-    myUpdateDate = date;
-  }
-
-  public Date getUpdateDate() {
-    return myUpdateDate;
-  }
+  public void setUpdated() {}
 
   public Language getLanguageById() {
     return Language.findLanguageByID(getLanguageID());
@@ -209,22 +181,6 @@ public class Course {
     this.courseType = courseType;
   }
 
-  public boolean isAdaptive() {
-    return isAdaptive;
-  }
-
-  public void setAdaptive(boolean adaptive) {
-    isAdaptive = adaptive;
-  }
-
-  public int getId() {
-    return id;
-  }
-
-  public void setId(int id) {
-    this.id = id;
-  }
-
   public String getCourseMode() {
     return courseMode;
   }
@@ -235,8 +191,17 @@ public class Course {
 
   public Course copy() {
     Element element = XmlSerializer.serialize(this);
-    Course copy = XmlSerializer.deserialize(element, Course.class);
+    Course copy = XmlSerializer.deserialize(element, getClass());
     copy.initCourse(true);
     return copy;
+  }
+
+  public boolean isAdaptive() {
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }

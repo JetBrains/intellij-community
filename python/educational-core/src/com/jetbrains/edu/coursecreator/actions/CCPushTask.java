@@ -12,11 +12,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ public class CCPushTask extends DumbAwareAction {
       return;
     }
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || !(course instanceof RemoteCourse)) {
       return;
     }
     if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
@@ -45,7 +46,7 @@ public class CCPushTask extends DumbAwareAction {
     final PsiDirectory lessonDir = taskDir.getParentDirectory();
     if (lessonDir == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && lesson.getId() > 0 && course.getId() > 0) {
+    if (lesson != null && lesson.getId() > 0 && ((RemoteCourse)course).getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
       final com.jetbrains.edu.learning.courseFormat.tasks.Task task = lesson.getTask(taskDir.getName());
       if (task.getStepId() <= 0) {
