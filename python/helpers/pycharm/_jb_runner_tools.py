@@ -207,20 +207,19 @@ class NewTeamcityServiceMessages(_old_service_messages):
     # Blocks are used for 2 cases now:
     # 1) Unittest subtests
     # 2) setup/teardown (does not work, see https://github.com/JetBrains/teamcity-messages/issues/114)
-    def blockOpened(self, name, flowId=None):
-         self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+    # def blockOpened(self, name, flowId=None):
+    #      self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
 
     def blockClosed(self, name, flowId=None):
-        test_name = ".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)])
-        if self._latest_subtest_result:
-            self.testFinished(test_name)
-        else:
+        test_name = ".".join(TREE_MANAGER.current_branch)
+        if self._latest_subtest_result == "Failure":
             self.testFailed(test_name)
 
+        self.testFinished(test_name)
         self._latest_subtest_result = None
 
     def subTestBlockOpened(self, name, subTestResult, flowId=None):
-        self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+        self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
     def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
