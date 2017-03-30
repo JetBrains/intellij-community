@@ -213,7 +213,7 @@ public class TodoCheckinHandlerWorker {
         List<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
         lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
         final StepIntersection<TodoItem, LineFragment> intersection = new StepIntersection<>(
-          TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments);
+          TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR, lineFragments);
 
         intersection.process(newTodoItems, (todoItem, lineFragment) -> {
           ProgressManager.checkCanceled();
@@ -262,7 +262,7 @@ public class TodoCheckinHandlerWorker {
       }
       if (myOldTodoTexts == null) {
         final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<>(
-          LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems);
+          LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR, myOldItems);
         myOldTodoTexts = new HashSet<>();
         intersection.process(Collections.singletonList(myCurrentLineFragment), new PairConsumer<LineFragment, TodoItem>() {
           @Override
@@ -318,34 +318,16 @@ public class TodoCheckinHandlerWorker {
   private final static String ourCannotLoadPreviousRevision = "Can not load previous revision";
   private final static String ourCannotLoadCurrentRevision = "Can not load current revision";
 
-  private static class TodoItemConvertor implements Convertor<TodoItem, TextRange> {
-    private static final TodoItemConvertor ourInstance = new TodoItemConvertor();
+  private static final Convertor<TodoItem, TextRange> TODO_ITEM_CONVERTOR = o -> {
+    final TextRange textRange = o.getTextRange();
+    return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
+  };
 
-    public static TodoItemConvertor getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public TextRange convert(TodoItem o) {
-      final TextRange textRange = o.getTextRange();
-      return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
-    }
-  }
-
-  private static class LineFragmentConvertor implements Convertor<LineFragment, TextRange> {
-    private static final LineFragmentConvertor ourInstance = new LineFragmentConvertor();
-
-    public static LineFragmentConvertor getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public TextRange convert(LineFragment o) {
-      int start = o.getStartOffset2();
-      int end = o.getEndOffset2();
-      return new TextRange(start, Math.max(start, end - 1));
-    }
-  }
+  private static final Convertor<LineFragment, TextRange> LINE_FRAGMENT_CONVERTOR = o -> {
+    int start = o.getStartOffset2();
+    int end = o.getEndOffset2();
+    return new TextRange(start, Math.max(start, end - 1));
+  };
 
   public List<TodoItem> inOneList() {
     final List<TodoItem> list = new ArrayList<>();
