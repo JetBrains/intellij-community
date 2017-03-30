@@ -119,9 +119,9 @@
       <reference id="CC.NewStep"/>
       <separator/>
       <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive"/>
-      <action id="PushTask" class="com.jetbrains.edu.coursecreator.actions.CCPushTask"/>
-      <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson"/>
-      <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse"/>
+      <action id="PushTask" class="com.jetbrains.edu.coursecreator.actions.stepik.CCPushTask"/>
+      <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.stepik.CCPushLesson"/>
+      <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.stepik.CCPushCourse"/>
       <reference id="ChangeCourseInfo"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
     </group>
@@ -151,7 +151,7 @@
     </group>
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
-    <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.CCGetCourseFromStepic"/>
+    <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.stepik.CCGetCourseFromStepic"/>
 
   </actions>
 
