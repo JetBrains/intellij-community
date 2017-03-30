@@ -16,12 +16,12 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-public class SimpleContentTest extends IdeaTestCase {
+public class SimpleContentTest extends PlatformTestCase {
   public void testEqualsAndDifferent() throws IOException {
     SimpleContent content1 = new SimpleContent("a\nb");
     SimpleContent content2 = new SimpleContent("a\nb");

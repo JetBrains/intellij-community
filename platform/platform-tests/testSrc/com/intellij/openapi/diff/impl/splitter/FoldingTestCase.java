@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.diff.impl.splitter;
 
-import com.intellij.openapi.editor.*;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.ArrayList;
 
-public abstract class FoldingTestCase extends IdeaTestCase {
+public abstract class FoldingTestCase extends PlatformTestCase {
   private final ArrayList<Editor> myEditorsToDispose = new ArrayList<>();
 
   protected static void addFolding(Editor editor, final int startOffset, final int endOffset) {

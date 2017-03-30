@@ -21,11 +21,11 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Assertion;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 
-public class ChangeListTest extends IdeaTestCase {
+public class ChangeListTest extends PlatformTestCase {
   private MergeTestUtils myUtils;
   private final Assertion CHECK = new Assertion();
 

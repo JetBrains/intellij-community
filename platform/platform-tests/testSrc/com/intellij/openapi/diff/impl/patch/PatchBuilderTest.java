@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +30,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PatchBuilderTest extends IdeaTestCase {
+public class PatchBuilderTest extends PlatformTestCase {
   public void testAddFile() throws Exception {
     doTest();
   }
@@ -153,7 +153,8 @@ public class PatchBuilderTest extends IdeaTestCase {
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths, @Nullable String forceLSeparator) throws IOException, VcsException {
-    String testDataPath = PathManagerEx.getTestDataPath() + "/diff/patch/" + getTestName(true);
+    String testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+    String testDataPath = testDataRoot + "diff/patch/" + getTestName(true);
     assertTrue(new File(testDataPath).isDirectory());
     String beforePath = testDataPath + "/before";
     String afterPath = testDataPath + "/after";

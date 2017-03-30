@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
@@ -27,15 +26,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public abstract class BaseDiffTestCase extends IdeaTestCase {
+public abstract class BaseDiffTestCase extends PlatformTestCase {
   private File myFile1;
   private File myFile2;
   public static final DiffContent.Listener SHOULD_NOT_INVALIDATE = new DiffContent.Listener() {
@@ -78,8 +77,8 @@ public abstract class BaseDiffTestCase extends IdeaTestCase {
   }
 
   public static File getDirectory() {
-    String[] path = new String[]{PathManager.getHomePath(), "testData", "diff"};
-    return new File(StringUtil.join(path, File.separator));
+    String testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+    return new File(testDataRoot, "diff");
   }
 
   protected void setFile1(String file1) { myFile1 = getFile(file1); }

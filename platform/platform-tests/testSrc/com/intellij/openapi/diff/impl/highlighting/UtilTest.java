@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.MultiCheck;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.util.Assertion;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;

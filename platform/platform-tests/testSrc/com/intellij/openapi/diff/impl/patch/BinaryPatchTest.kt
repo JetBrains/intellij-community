@@ -15,16 +15,16 @@
  */
 package com.intellij.openapi.diff.impl.patch
 
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.patch.BinaryPatchWriter.writeBinaries
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.IdeaTestCase
+import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import java.io.File
 import java.io.StringWriter
 import java.util.*
 
-class BinaryPatchTest : IdeaTestCase() {
+class BinaryPatchTest : PlatformTestCase() {
 
   var dataFileName = "data.bin"
   var filePatchName = "file.patch"
@@ -63,7 +63,8 @@ class BinaryPatchTest : IdeaTestCase() {
   }
 
   private fun doTest(reverse: Boolean = false) {
-    val testDataPath = "${PathManagerEx.getTestDataPath()}/diff/binaryPatch/${getTestName(true)}"
+    val testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/"
+    val testDataPath = "${testDataRoot}/diff/binaryPatch/${getTestName(true)}"
     val dataFile = File(testDataPath, dataFileName)
     dataFile.setExecutable(false)
     val decodedContentBytes = FileUtil.loadFileBytes(dataFile)

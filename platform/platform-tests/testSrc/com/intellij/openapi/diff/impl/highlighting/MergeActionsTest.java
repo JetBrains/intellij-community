@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffFilesTest;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import junit.framework.Test;
 import junit.framework.TestSuite;

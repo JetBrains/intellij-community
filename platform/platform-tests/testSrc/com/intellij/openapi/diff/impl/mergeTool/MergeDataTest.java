@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
-import com.intellij.openapi.diff.BaseDiffTestCase;
 import com.intellij.openapi.diff.ActionButtonPresentation;
+import com.intellij.openapi.diff.BaseDiffTestCase;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.testFramework.TempFiles;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.TempFiles;
 
 import java.io.IOException;
 

@@ -30,12 +30,12 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Assertion;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
-public class MergeFuncTest extends IdeaTestCase {
+public class MergeFuncTest extends PlatformTestCase {
   private MergeTestUtils myUtils;
   private Document myLeft;
   private Document myBase;
@@ -45,7 +45,6 @@ public class MergeFuncTest extends IdeaTestCase {
   private Editor myERight;
   private MergeList myMergeList;
   private final Assertion CHECK = new Assertion();
-  private final ApplyNonConflicts myApplyNonConflicts = new ApplyNonConflicts(null);
   private ChangeCounter myCounters;
 
   public void testNoConflicts() throws FilesTooBigForDiffException {
@@ -369,19 +368,19 @@ public class MergeFuncTest extends IdeaTestCase {
 
   private void checkApplyNoConflicts(boolean isEnabled) {
     AnActionEvent event = createApplyEvent();
-    myApplyNonConflicts.update(event);
+    new ApplyNonConflicts(null).update(event);
     Presentation presentation = event.getPresentation();
     assertEquals(isEnabled, presentation.isEnabled());
   }
 
   private AnActionEvent createApplyEvent() {
     return new AnActionEvent(null, SimpleDataContext.getSimpleContext(MergeList.DATA_KEY.getName(), myMergeList), ActionPlaces.UNKNOWN,
-                             myApplyNonConflicts.getTemplatePresentation().clone(),
-                                            ActionManager.getInstance(),
-                                            0);
+                             new Presentation(),
+                             ActionManager.getInstance(),
+                             0);
   }
 
   public void runApplyNonConflicts() {
-    myApplyNonConflicts.actionPerformed(createApplyEvent());
+    new ApplyNonConflicts(null).actionPerformed(createApplyEvent());
   }
 }

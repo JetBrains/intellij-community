@@ -17,7 +17,6 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -26,7 +25,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -34,7 +33,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyPatchTest extends IdeaTestCase {
+public class ApplyPatchTest extends PlatformTestCase {
   public void testAddLine() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS, null);
   }
@@ -196,7 +195,8 @@ public class ApplyPatchTest extends IdeaTestCase {
     ApplicationManager.getApplication()
       .runWriteAction(() -> FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old")));
 
-    String testDataPath = PathManagerEx.getTestDataPath() + "/diff/applyPatch/" + getTestName(true);
+    String testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+    String testDataPath = testDataRoot + "/diff/applyPatch/" + getTestName(true);
     String beforePath = testDataPath + "/before";
     String afterPath = testDataPath + "/after";
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterPath.replace(File.separatorChar, '/'));

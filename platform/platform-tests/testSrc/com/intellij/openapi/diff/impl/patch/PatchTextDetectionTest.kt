@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.diff.impl.patch
 
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import java.io.File
 
@@ -50,8 +50,8 @@ class PatchTextDetectionTest : PlatformTestCase() {
 
 
   private fun doTest(expected: Boolean) {
-
-    val testDataPath = PathManagerEx.getTestDataPath() + "/diff/patchTextDetection/" + getTestName(true)
+    val testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/"
+    val testDataPath = testDataRoot + "/diff/patchTextDetection/" + getTestName(true)
     PsiTestUtil.createTestProjectStructure(myProject, myModule, testDataPath, PlatformTestCase.myFilesToDelete)
     val patchPath = testDataPath + "/test.patch"
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
