@@ -680,7 +680,7 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void waitForAllBackgroundActivityToCalmDown() {
+  static void waitForAllBackgroundActivityToCalmDown() {
     for (int i = 0; i < 50; i++) {
       CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
       if (!data.hasAnyActivityBesides(Thread.currentThread())) {
