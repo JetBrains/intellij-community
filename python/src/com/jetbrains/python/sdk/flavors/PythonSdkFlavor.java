@@ -94,16 +94,21 @@ public abstract class PythonSdkFlavor {
       result.addAll(getPlatformIndependentFlavors());
     }
 
-    for (PythonFlavorProvider provider : Extensions.getExtensions(PythonFlavorProvider.EP_NAME)) {
-      PythonSdkFlavor flavor = provider.getFlavor(addPlatformIndependent);
-      if (flavor != null) {
-        result.add(flavor);
-      }
-    }
+    result.addAll(getPlatformFlavorsFromExtensions(addPlatformIndependent));
 
     return result;
   }
 
+  public static List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isInpedendent) {
+    List<PythonSdkFlavor> result = new ArrayList<>();
+    for (PythonFlavorProvider provider : Extensions.getExtensions(PythonFlavorProvider.EP_NAME)) {
+      PythonSdkFlavor flavor = provider.getFlavor(isInpedendent);
+      if (flavor != null) {
+        result.add(flavor);
+      }
+    }
+    return result;
+  }
 
   public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
     List<PythonSdkFlavor> result = Lists.newArrayList();
@@ -149,6 +154,12 @@ public abstract class PythonSdkFlavor {
         return flavor;
       }
     }
+
+    for (PythonSdkFlavor flavor: getPlatformFlavorsFromExtensions(true)) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }          
     return null;
   }
 
