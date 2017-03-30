@@ -19,14 +19,12 @@ import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.processing.DiffCorrection;
-import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
-import com.intellij.openapi.diff.impl.string.DiffString;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
+import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -210,7 +208,7 @@ public class TodoCheckinHandlerWorker {
           myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
           return;
         }
-        ArrayList<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
+        List<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
         for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext(); ) {
           ProgressManager.checkCanceled();
           final LineFragment next = iterator.next();
@@ -327,13 +325,11 @@ public class TodoCheckinHandlerWorker {
     return StringUtil.join(fragment.split("\\s"), " ");
   }
 
-  private static ArrayList<LineFragment> getLineFragments(final String fileName, String beforeContent, String afterContent) throws VcsException {
+  private static List<LineFragment> getLineFragments(@NotNull String fileName, @NotNull String beforeContent, @NotNull String afterContent)
+    throws VcsException {
     try {
-      DiffFragment[] woFormattingBlocks =
-        DiffPolicy.LINES_WO_FORMATTING.buildFragments(DiffString.create(beforeContent), DiffString.create(afterContent));
-      DiffFragment[] step1lineFragments =
-        new DiffCorrection.TrueLineBlocks(ComparisonPolicy.IGNORE_SPACE).correctAndNormalize(woFormattingBlocks);
-      return new DiffFragmentsProcessor().process(step1lineFragments);
+      return new TextCompareProcessor(ComparisonPolicy.IGNORE_SPACE, DiffPolicy.LINES_WO_FORMATTING, HighlightMode.BY_LINE)
+        .process(beforeContent, afterContent);
     } catch (FilesTooBigForDiffException e) {
       throw new VcsException("File " + fileName + " is too big and there are too many changes to build a diff", e);
     }
