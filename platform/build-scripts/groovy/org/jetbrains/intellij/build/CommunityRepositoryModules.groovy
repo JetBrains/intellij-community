@@ -89,6 +89,7 @@ class CommunityRepositoryModules {
     "xml-structure-view-impl",
     "xml",
     "configuration-store-impl",
+    "aether-dependency-resolver",
   ]
 
   /**
@@ -158,7 +159,6 @@ class CommunityRepositoryModules {
     },
     plugin("maven") {
       withModule("maven-jps-plugin")
-      withModule("aether-dependency-resolver")
       withModule("maven-server-api")
       withModule("maven2-server-impl")
       withModule("maven3-server-common")

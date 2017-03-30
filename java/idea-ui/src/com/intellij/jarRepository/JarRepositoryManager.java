@@ -373,7 +373,7 @@ public class JarRepositoryManager {
   @Nullable
   private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
     final Ref<T> result = Ref.create(null);
-    new Task.Modal(project, title, true) {
+    new Task.Modal(project, title, false) {  // todo: is cancel  support possible with aether?
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
