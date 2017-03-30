@@ -69,7 +69,7 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
   public Settings getState() {
     // cleanup GradleExtensions entries created by previous version from workspace file
     // TODO remove PersistentStateComponent implementation in future version
-    return myState;
+    return new Settings();
   }
 
   @Override

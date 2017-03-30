@@ -32,6 +32,8 @@ import java.awt.*;
 public class MergeTool implements DiffTool {
   public static final Logger LOG = Logger.getInstance(MergeTool.class);
 
+  public static final MergeTool INSTANCE = new MergeTool();
+
   public void show(DiffRequest data) {
     if (data instanceof MergeRequestImpl) {
       showDialog((MergeRequestImpl)data);

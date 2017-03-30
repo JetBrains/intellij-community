@@ -174,7 +174,8 @@ public class EduAdaptiveStepicConnector {
   private static Task getTheoryTaskFromStep(@NotNull String lessonName, @NotNull StepicWrappers.Step block, int stepId) {
     final Task task = new TheoryTask(lessonName);
     task.setStepId(stepId);
-    task.setText(block.text);
+
+    task.addTaskText(EduNames.TASK_HTML, block.text);
 
     createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
     return task;
@@ -186,7 +187,7 @@ public class EduAdaptiveStepicConnector {
                                             int stepId, int userId) {
     final ChoiceTask task = new ChoiceTask(lessonName);
     task.setStepId(stepId);
-    task.setText(block.text);
+    task.addTaskText(EduNames.TASK_HTML, block.text);
 
     final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(stepId, userId);
     if (attempt != null) {
@@ -338,7 +339,7 @@ public class EduAdaptiveStepicConnector {
             }
             final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
             if (window != null) {
-              window.setTaskText(StudyUtils.wrapTextToDisplayLatex(unsolvedTask.getText()), unsolvedTask.getTaskDir(project), project);
+              window.setTaskText(StudyUtils.wrapTextToDisplayLatex(unsolvedTask.getTaskDescription()), unsolvedTask.getTaskDir(project), project);
             }
             StudyNavigator.navigateToTask(project, lessonName, taskName);
           }
@@ -425,32 +426,28 @@ public class EduAdaptiveStepicConnector {
                                           int lessonID) {
     final Task task = new CodeTask(name);
     task.setStepId(lessonID);
-    task.setText(step.text);
+
     task.setStatus(StudyStatus.Unchecked);
+    final StringBuilder taskDescription = new StringBuilder(step.text);
     if (step.options.samples != null) {
-      final StringBuilder builder = new StringBuilder();
+      taskDescription.append("<br>");
       for (List<String> sample : step.options.samples) {
         if (sample.size() == 2) {
-          builder.append("<b>Sample Input:</b><br>");
-          builder.append(StringUtil.replace(sample.get(0), "\n", "<br>"));
-          builder.append("<br>");
-          builder.append("<b>Sample Output:</b><br>");
-          builder.append(StringUtil.replace(sample.get(1), "\n", "<br>"));
-          builder.append("<br><br>");
+          taskDescription.append("<b>Sample Input:</b><br>");
+          taskDescription.append(StringUtil.replace(sample.get(0), "\n", "<br>"));
+          taskDescription.append("<br>");
+          taskDescription.append("<b>Sample Output:</b><br>");
+          taskDescription.append(StringUtil.replace(sample.get(1), "\n", "<br>"));
+          taskDescription.append("<br><br>");
         }
       }
-      task.setText(task.getText() + "<br>" + builder.toString());
     }
 
     if (step.options.executionMemoryLimit != null && step.options.executionTimeLimit != null) {
-      String builder = "<b>Memory limit</b>: " +
-                       step.options.executionMemoryLimit + " Mb" +
-                       "<br>" +
-                       "<b>Time limit</b>: " +
-                       step.options.executionTimeLimit + "s" +
-                       "<br><br>";
-      task.setText(task.getText() + builder);
+      taskDescription.append("<br>").append("<b>Memory limit</b>: ").append(step.options.executionMemoryLimit).append(" Mb").append("<br>")
+        .append("<b>Time limit</b>: ").append(step.options.executionTimeLimit).append("s").append("<br><br>");
     }
+    task.addTaskText(EduNames.TASK_HTML, taskDescription.toString());
 
     if (step.options.test != null) {
       for (StepicWrappers.FileWrapper wrapper : step.options.test) {

@@ -31,7 +31,7 @@ public class PyStudyTestRunner extends StudyTestRunner {
     Course course = myTask.getLesson().getCourse();
     PyEduPluginConfigurator configurator = new PyEduPluginConfigurator();
     String testsFileName = configurator.getTestFileName();
-    if (myTask instanceof TaskWithSubtasks && ((TaskWithSubtasks)myTask).getActiveSubtaskIndex() != 0) {
+    if (myTask instanceof TaskWithSubtasks) {
       testsFileName = FileUtil.getNameWithoutExtension(testsFileName);
       int index = ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
       testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(configurator.getTestFileName());

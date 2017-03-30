@@ -64,7 +64,10 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
@@ -492,7 +495,7 @@ public class StudyUtils {
       return null;
     }
     final Course course = task.getLesson().getCourse();
-    String text = task.getText() != null ? task.getText() : getTaskTextByTaskName(task, taskDirectory);
+    String text = task.getTaskDescription() != null ? task.getTaskDescription() : getTaskTextByTaskName(task, taskDirectory);
 
     if (text == null) return null;
     text = convertToHtml(text);

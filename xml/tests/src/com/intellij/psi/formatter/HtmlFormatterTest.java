@@ -17,7 +17,6 @@ package com.intellij.psi.formatter;
 
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class HtmlFormatterTest extends FormatterTestCase {
+public class HtmlFormatterTest extends XmlFormatterTestBase {
   @Override
   protected String getBasePath() {
     return "psi/formatter/html";
@@ -261,11 +260,6 @@ public class HtmlFormatterTest extends FormatterTestCase {
   
   public void testPerformance() throws Exception {
     doTestPerformance("html reformat with range", 5000, null);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/community/xml/tests/testData";
   }
 
   public void doTestPerformance(@NotNull String message, int expectedTime, OptionsSetup optionsSetup) throws Exception {

@@ -76,10 +76,16 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
                                   });
           if (imported != null) {
             getOptions().addImportedScheme(imported);
+            getSchemesPanel()
+              .showStatus(
+                ApplicationBundle.message("settings.editor.scheme.import.success", importSource.getPresentableUrl(), imported.getName()),
+                MessageType.INFO);
           }
         }
         catch (SchemeImportException e) {
-          getSchemesPanel().showStatus("Import failed: " + e.getMessage(), MessageType.ERROR);
+          getSchemesPanel()
+            .showStatus(ApplicationBundle.message("settings.editor.scheme.import.failure", importSource.getPresentableUrl()),
+                        MessageType.ERROR);
         }
       }
     }

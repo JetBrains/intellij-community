@@ -5,11 +5,9 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -37,7 +35,6 @@ public class Task implements StudyItem {
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
-  private String text;
   protected Map<String, String> testsText = new HashMap<>();
   protected Map<String, String> taskTexts = new HashMap<>();
 
@@ -71,14 +68,6 @@ public class Task implements StudyItem {
   @Override
   public void setName(String name) {
     this.name = name;
-  }
-
-  public String getText() {
-    return text;
-  }
-
-  public void setText(final String text) {
-    this.text = text;
   }
 
   @Override
@@ -166,20 +155,11 @@ public class Task implements StudyItem {
     return null;
   }
 
-  @NotNull
-  public String getTaskText(@NotNull final Project project) {
-    if (!StringUtil.isEmptyOrSpaces(text)) return text;
-    final VirtualFile taskDir = getTaskDir(project);
-    if (taskDir != null) {
-      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
-      if (file == null) return "";
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
-        return document.getImmutableCharSequence().toString();
-      }
+  public String getTaskDescription() {
+    if (!taskTexts.isEmpty()) {
+      return taskTexts.get(EduNames.TASK_HTML);
     }
-
-    return "";
+    return null;
   }
 
   @NotNull
@@ -207,7 +187,7 @@ public class Task implements StudyItem {
     if (myIndex != task.myIndex) return false;
     if (name != null ? !name.equals(task.name) : task.name != null) return false;
     if (taskFiles != null ? !taskFiles.equals(task.taskFiles) : task.taskFiles != null) return false;
-    if (text != null ? !text.equals(task.text) : task.text != null) return false;
+    if (taskTexts != null ? !taskTexts.equals(task.taskTexts) : task.taskTexts != null) return false;
     if (testsText != null ? !testsText.equals(task.testsText) : task.testsText != null) return false;
 
     return true;
@@ -218,7 +198,7 @@ public class Task implements StudyItem {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + myIndex;
     result = 31 * result + (taskFiles != null ? taskFiles.hashCode() : 0);
-    result = 31 * result + (text != null ? text.hashCode() : 0);
+    result = 31 * result + (taskTexts != null ? taskTexts.hashCode() : 0);
     result = 31 * result + (testsText != null ? testsText.hashCode() : 0);
     return result;
   }
@@ -273,7 +253,6 @@ public class Task implements StudyItem {
     setStatus(task.getStatus());
     setStepId(task.getStepId());
     taskFiles = task.getTaskFiles();
-    setText(task.getText());
     testsText = task.getTestsText();
     taskTexts = task.getTaskTexts();
     setLesson(task.getLesson());

@@ -25,8 +25,8 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
@@ -357,13 +357,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.mirrorOf(s);
   }
 
-  public StringReference mirrorOfStringLiteral(String s, DebuggerUtilsImpl.SupplierThrowing<StringReference, EvaluateException> generator)
+  public StringReference mirrorOfStringLiteral(String s, ThrowableComputable<StringReference, EvaluateException> generator)
     throws EvaluateException {
     StringReference reference = myStringLiteralCache.get(s);
     if (reference != null && !reference.isCollected()) {
       return reference;
     }
-    reference = generator.get();
+    reference = generator.compute();
     myStringLiteralCache.put(s, reference);
     return reference;
   }
