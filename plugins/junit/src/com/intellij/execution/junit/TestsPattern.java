@@ -90,7 +90,7 @@ public class TestsPattern extends TestPackage {
   private PsiClass getTestClass(Project project, String className) {
     SourceScope sourceScope = getSourceScope();
     GlobalSearchScope searchScope = sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
-    return JavaExecutionUtil.findMainClass(project, StringUtil.getPackageName(className, ','), searchScope);
+    return JavaExecutionUtil.findMainClass(project, className.contains(",") ? StringUtil.getPackageName(className, ',') : className, searchScope);
   }
 
   @Override
