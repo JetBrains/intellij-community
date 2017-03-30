@@ -727,7 +727,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
     if (vm == null) {
-      throw new VMDisconnectedException();
+      if (isInInitialState()) {
+        throw new IllegalStateException("Virtual machine is not initialized yet");
+      }
+      else {
+        throw new VMDisconnectedException();
+      }
     }
     return vm;
   }
@@ -1997,7 +2002,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() throws Exception {
-              commitVM(vm1);
+              try {
+                commitVM(vm1);
+              } catch (VMDisconnectedException e) {
+                fail();
+              }
             }
           }));
         }

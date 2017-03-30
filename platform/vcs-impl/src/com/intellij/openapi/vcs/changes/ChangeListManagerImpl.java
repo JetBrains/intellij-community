@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
@@ -154,6 +156,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
+        @Override
+        public void projectClosing(Project project) {
+          //noinspection TestOnlyProblems
+          waitEverythingDoneInTestMode();
+        }
+      });
+    }
   }
 
   private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
@@ -321,14 +332,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull @NonNls
   public String getComponentName() {
     return "ChangeListManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   /**
@@ -1282,8 +1285,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                            StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(),
-                            new ArrayList<>(), false, synchronously, FunctionUtil.nullConstant(), null).doCommit();
+                            StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
+                            false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
   }
 
   @Override
@@ -1552,6 +1555,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     Future future = ourUpdateAlarm.get();
     if (future != null) {
       future.cancel(true);
+      ourUpdateAlarm.compareAndSet(future, null);
     }
   }
 
@@ -1572,7 +1576,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       catch (InterruptedException | ExecutionException e) {
         LOG.error(e);
       }
-      catch (TimeoutException ignore) {
+      catch (TimeoutException | CancellationException ignore) {
       }
     }
   }

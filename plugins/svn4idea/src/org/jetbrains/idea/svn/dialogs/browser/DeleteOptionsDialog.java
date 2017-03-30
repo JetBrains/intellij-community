@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -105,12 +103,9 @@ public class DeleteOptionsDialog extends DialogWrapper {
       myCommitMessage.setText(lastMessage);
       myCommitMessage.selectAll();
     }
-    messagesBox.addActionListener(new ActionListener() {
-
-      public void actionPerformed(ActionEvent e) {
-        myCommitMessage.setText(messagesBox.getSelectedItem().toString());
-        myCommitMessage.selectAll();
-      }
+    messagesBox.addActionListener(e -> {
+      myCommitMessage.setText(messagesBox.getSelectedItem().toString());
+      myCommitMessage.selectAll();
     });
     return panel;
   }

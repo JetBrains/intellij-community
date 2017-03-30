@@ -115,7 +115,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     this(key, string, group, true);
   }
 
-  public TemplateImpl(@NotNull String key, String string, @NotNull String group, boolean storeBuildingStacktrace) {
+  TemplateImpl(@NotNull String key, String string, @NotNull String group, boolean storeBuildingStacktrace) {
     myKey = key;
     myString = StringUtil.convertLineSeparators(StringUtil.notNullize(string));
     myGroupName = group;

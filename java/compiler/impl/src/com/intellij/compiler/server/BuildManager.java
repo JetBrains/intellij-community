@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -253,7 +253,7 @@ public class BuildManager implements Disposable {
     projectManager.addProjectManagerListener(new ProjectWatcher());
 
     final MessageBusConnection conn = application.getMessageBus().connect();
-    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
@@ -1035,7 +1035,7 @@ public class BuildManager implements Disposable {
   }
 
   private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
-    final String compilerPath;
+    String compilerPath;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
 
@@ -1055,9 +1055,21 @@ public class BuildManager implements Disposable {
         // this is the most universal way to obtain tools.jar path in this particular case
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
         if (systemCompiler == null) {
-          throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+          //temporary workaround for IDEA-169747
+          try {
+            compilerPath = ClasspathBootstrap.getResourcePath(Class.forName("com.sun.tools.javac.api.JavacTool", false, BuildManager.class.getClassLoader()));
+          }
+          catch (Throwable t) {
+            LOG.info(t);
+            compilerPath = null;
+          }
+          if (compilerPath == null) {
+            throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+          }
         }
-        compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
+        else {
+          compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
+        }
       }
       else {
         compilerPath = projectJdkType.getToolsPath(projectJdk);

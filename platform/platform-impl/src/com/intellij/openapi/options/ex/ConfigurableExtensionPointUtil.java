@@ -354,13 +354,13 @@ public class ConfigurableExtensionPointUtil {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
         for (ConfigurableEP<Configurable> extension : application.getExtensions(Configurable.APPLICATION_CONFIGURABLE)) {
-          addValid(list, ConfigurableWrapper.wrapConfigurable(extension), null);
+          addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), null);
         }
       }
     }
     if (project != null && !project.isDisposed()) {
       for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {
-        addValid(list, ConfigurableWrapper.wrapConfigurable(extension), project);
+        addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project);
       }
     }
     return list;

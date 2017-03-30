@@ -184,31 +184,31 @@ datatypes w = "http://whattf.org/datatype-draft"
 	mli.inner =
 		( common.inner.flow )
 
-## Popup menu: <menu type=popup>
+## Popup menu: <menu type=context>
 
-	menu.popup.elem =
-		element menu { menu.popup.inner & menu.popup.attrs }
-	menu.popup.attrs =
+	menu.context.elem =
+		element menu { menu.context.inner & menu.context.attrs }
+	menu.context.attrs =
 		(	common.attrs
-		&	menu.popup.attrs.type?
+		&	menu.context.attrs.type?
 		&	menu.attrs.label?
 		&	common.attrs.aria?
 		)
-		menu.popup.attrs.type =
+		menu.context.attrs.type =
 			attribute type {
-				w:string "popup"
+				w:string "context"
 			}
 		menu.attrs.label =
 			attribute label {
 				string
 			}
-	menu.popup.inner =
+	menu.context.inner =
 		(	menuitem.elem*
 		&	hr.elem*
-		&	menu.popup.elem*
+		&	menu.context.elem*
 		&	common.elem.script-supporting*
 		)
-	menu.elem |= menu.popup.elem
+	menu.elem |= menu.context.elem
 
 ## Ambiguous menu: <menu> (with no "type" attribute)
 	menu.ambiguous.elem =

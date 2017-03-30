@@ -100,7 +100,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     if (mySubscribed.getAndSet(true)) return;
 
     Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         Set<VirtualFile> toRefresh = null;

@@ -21,13 +21,11 @@ import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.openapi.options.SchemeImportUtil;
-import com.intellij.openapi.options.SchemeImporter;
-import com.intellij.openapi.options.SchemeImporterEP;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -90,7 +88,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   private boolean tryImportWithImportHandler(@NotNull String importerName) {
      for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
        if (importerName.equals(importHandler.getTitle())) {
-         importHandler.performImport(getSchemesPanel(), scheme -> {
+         importHandler.performImport(getSchemesPanel().getToolbar(), scheme -> {
            if (scheme != null) getOptions().addImportedScheme(scheme);
          });
          return true;
@@ -115,7 +113,18 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
 
   @Override
   protected void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
-    // Unsupported for now.
+    EditorColorsScheme schemeToExport = scheme;
+    if (scheme instanceof AbstractColorsScheme) {
+      EditorColorsScheme parent = ((AbstractColorsScheme)scheme).getParentScheme();
+      if (!(parent instanceof DefaultColorsScheme)) {
+        schemeToExport = parent;
+      }
+    }
+    if (schemeToExport.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+      schemeToExport = (EditorColorsScheme)schemeToExport.clone();
+      schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
+    }
+    super.exportScheme(schemeToExport, exporterName);
   }
 
   @Override

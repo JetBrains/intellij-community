@@ -28,4 +28,8 @@ public class JsonSchemaDocumentationTest extends JsonBySchemaDocumentationBaseTe
   public void testSecondLevel() throws Exception {
     doTest(true, "json");
   }
+
+  public void testCheckEscaping() throws Exception {
+    doTest(true, "json");
+  }
 }

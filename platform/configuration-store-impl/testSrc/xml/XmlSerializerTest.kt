@@ -504,15 +504,15 @@ internal class XmlSerializerTest {
     doSerializerTest("<BeanWithEnum>\n" + "  <option name=\"FLD\" value=\"VALUE_3\" />\n" + "</BeanWithEnum>", bean)
   }
 
-  @Test fun conversionFromTextToAttribute() {
-    @Tag("condition")
-    class ConditionBean {
-      @Attribute("expression")
-      var newCondition: String? = null
-      @Text
-      var oldCondition: String? = null
-    }
+  @Tag("condition")
+  private class ConditionBean {
+    @Attribute("expression")
+    var newCondition: String? = null
+    @Text
+    var oldCondition: String? = null
+  }
 
+  @Test fun conversionFromTextToAttribute() {
     @Tag("bean")
     class Bean {
       @Property(surroundWithTag = false)
@@ -526,6 +526,22 @@ internal class XmlSerializerTest {
     bean = Bean()
     bean.conditionBean.newCondition = "2+2"
     doSerializerTest("<bean>\n  <condition expression=\"2+2\" />\n" + "</bean>", bean)
+  }
+
+  @Test fun `no_wrap`() {
+    @Tag("bean")
+    class Bean {
+      @Property(flat = true)
+      var conditionBean = ConditionBean()
+    }
+
+    var bean = Bean()
+    bean.conditionBean.oldCondition = "2+2"
+    doSerializerTest("<bean>2+2</bean>", bean)
+
+    bean = Bean()
+    bean.conditionBean.newCondition = "2+2"
+    doSerializerTest("<bean expression=\"2+2\" />", bean)
   }
 
   @Test fun deserializeInto() {

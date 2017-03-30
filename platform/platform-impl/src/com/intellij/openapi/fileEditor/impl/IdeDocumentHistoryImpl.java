@@ -540,7 +540,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
     }
-
   }
 
   @NotNull
@@ -548,9 +547,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   List<PlaceInfo> getBackPlaces() {
     return myBackPlaces;
   }
-
-  @Override
-  public final void initComponent() { }
 
   @Override
   public final void disposeComponent() {
@@ -570,6 +566,4 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     return false;
   }
-
-
 }

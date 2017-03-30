@@ -419,6 +419,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
           List<FilePointerPartNode> nodes = new ArrayList<>();
           addPointersUnder(eventFile, false, "", nodes);
+          toFireEvents.addAll(nodes); // files deleted from eventFile and created in moveEvent.getNewParent()
           for (FilePointerPartNode node : nodes) {
             VirtualFilePointerImpl pointer = node.getAnyPointer();
             VirtualFile file = pointer == null ? null : pointer.getFile();

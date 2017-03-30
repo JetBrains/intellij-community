@@ -131,6 +131,11 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
   @Override
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
+    onStart(id, workingDir);
+  }
+
+  @Override
+  public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
     myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (myAlarm.getActiveRequestCount() <= 0) {
       myAlarm.addRequest(() -> update(), TOO_LONG_EXECUTION_MS);

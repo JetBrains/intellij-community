@@ -46,11 +46,6 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
   }
 
   @Override
-  public Icon getBigIcon() {
-    return AllIcons.Modules.Types.WebModule;
-  }
-
-  @Override
   public Icon getNodeIcon(final boolean isOpened) {
     return AllIcons.Nodes.Module;
   }

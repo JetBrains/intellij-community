@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,22 +93,10 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
   }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "CreatePatchCommitExecutor";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   private class CreatePatchCommitSession implements CommitSession, CommitSessionContextAware {

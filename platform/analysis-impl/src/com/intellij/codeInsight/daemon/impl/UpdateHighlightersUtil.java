@@ -195,7 +195,8 @@ public class UpdateHighlightersUtil {
 
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>(10);
     final boolean[] changed = {false};
-    RangeMarkerTree.sweep((RangeMarkerTree.Generator<HighlightInfo>)processor1 -> ContainerUtil.process(infos, processor1), (offset, info, atStart, overlappingIntervals) -> {
+    RangeMarkerTree.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(infos, proc);
+    RangeMarkerTree.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
       if (!atStart) return true;
       if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
@@ -256,7 +257,8 @@ public class UpdateHighlightersUtil {
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     final boolean[] changed = {false};
-    RangeMarkerTree.sweep((RangeMarkerTree.Generator<HighlightInfo>)processor -> ContainerUtil.process(infos, processor), (offset, info, atStart, overlappingIntervals) -> {
+    RangeMarkerTree.Generator<HighlightInfo> generator = (Processor<HighlightInfo> processor) -> ContainerUtil.process(infos, processor);
+    RangeMarkerTree.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
       if (!atStart) {
         return true;
       }

@@ -40,6 +40,7 @@ public abstract class FileTypeRegistry {
    *
    * @return The list of file types.
    */
+  @NotNull
   public abstract FileType[] getRegisteredFileTypes();
 
   /**

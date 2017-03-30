@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,14 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author max
@@ -584,8 +586,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
-                names = ArrayUtil.append(names, StringUtil
-                  .sanitizeJavaIdentifier(changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName))));
+                String name = qualifierExpression.getText() + StringUtil.capitalize(propertyName);
+                String[] propertySuggestions = getSuggestionsByName(name, variableKind, false, correctKeywords);
+                names = StreamEx.of(names).append(propertySuggestions).distinct().toArray(String[]::new);
               }
               return new NamesByExprInfo(propertyName, names);
             }
@@ -677,12 +680,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NotNull
   private static String constantValueToConstantName(@NotNull String[] names) {
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < names.length; i++) {
-      if (i > 0) result.append("_");
-      result.append(names[i]);
-    }
-    return result.toString();
+    return String.join("_", names);
   }
 
   @NotNull
@@ -749,13 +747,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           method = (PsiMethod)navElement;
         }
         PsiExpression[] expressions = list.getExpressions();
-        int index = -1;
-        for (int i = 0; i < expressions.length; i++) {
-          if (expressions[i] == expr) {
-            index = i;
-            break;
-          }
-        }
+        int index = ArrayUtil.indexOf(expressions, expr);
         PsiParameter[] parameters = method.getParameterList().getParameters();
         if (index < parameters.length) {
           String name = parameters[index].getName();
@@ -860,15 +852,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   public String propertyNameToVariableName(@NotNull String propertyName, @NotNull VariableKind variableKind) {
     if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
       String[] words = NameUtil.nameToWords(propertyName);
-      StringBuilder buffer = new StringBuilder();
-      for (int i = 0; i < words.length; i++) {
-        String word = words[i];
-        if (i > 0) {
-          buffer.append("_");
-        }
-        buffer.append(StringUtil.toUpperCase(word));
-      }
-      return buffer.toString();
+      return StringUtil.join(words, StringUtil::toUpperCase, "_");
     }
 
     String prefix = getPrefixByVariableKind(variableKind);
@@ -899,62 +883,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   @Override
   public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward) {
-    return suggestUniqueVariableName(baseName, place, lookForward, false);
+    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> false);
   }
 
-  @NotNull 
-  private static String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward, boolean allowShadowing) {
-    PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
-    for (int index = 0; ; index++) {
-      String name = index > 0 ? baseName + index : baseName;
-      if (hasConflictingVariable(place, name, allowShadowing) || lookForward && hasConflictingVariableAfterwards(scope, name)) {
-        continue;
-      }
-      return name;
-    }
-  }
-
-  private static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope, @NotNull final String name) {
-    PsiElement run = scope;
-    while (run != null) {
-      class CancelException extends RuntimeException {
-      }
-      try {
-        run.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitClass(final PsiClass aClass) {}
-
-          @Override public void visitVariable(PsiVariable variable) {
-            if (name.equals(variable.getName())) {
-              throw new CancelException();
-            }
-          }
-        });
-      }
-      catch (CancelException e) {
-        return true;
-      }
-      run = run.getNextSibling();
-      if (scope instanceof PsiMethod || scope instanceof PsiForeachStatement) {//do not check next member for param name conflict
-        break;
-      }
-    }
-    return false;
-  }
-
-  private static boolean hasConflictingVariable(@Nullable PsiElement place, @NotNull String name, boolean allowShadowing) {
-    if (place == null) {
-      return false;
-    }
-    PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
-    PsiVariable existingVariable = helper.resolveAccessibleReferencedVariable(name, place);
-    if (existingVariable == null) return false;
-
-    if (allowShadowing && existingVariable instanceof PsiField && PsiTreeUtil.getNonStrictParentOfType(place, PsiMethod.class) != null) {
-      return false;
-    }
-    
-    return true;
+  @NotNull
+  @Override
+  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused) {
+    return suggestUniqueVariableName(baseName, place, true, false, canBeReused);
   }
 
   @Override
@@ -975,7 +910,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
       String unique = suggestUniqueVariableName(name, place, lookForward);
       if (!unique.equals(name)) {
-        String withShadowing = suggestUniqueVariableName(name, place, lookForward, true);
+        String withShadowing = suggestUniqueVariableName(name, place, lookForward, true, v -> false);
         if (withShadowing.equals(name)) {
           uniqueNames.add(name);
         }
@@ -989,6 +924,68 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         baseNameInfo.nameChosen(name);
       }
     };
+  }
+
+  @NotNull
+  private static String suggestUniqueVariableName(@NotNull String baseName,
+                                                  PsiElement place,
+                                                  boolean lookForward,
+                                                  boolean allowShadowing,
+                                                  Predicate<PsiVariable> canBeReused) {
+    PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
+    for (int index = 0; ; index++) {
+      String name = index > 0 ? baseName + index : baseName;
+      if (hasConflictingVariable(place, name, allowShadowing) ||
+          lookForward && hasConflictingVariableAfterwards(scope, name, canBeReused)) {
+        continue;
+      }
+      return name;
+    }
+  }
+
+  private static boolean hasConflictingVariable(@Nullable PsiElement place, @NotNull String name, boolean allowShadowing) {
+    if (place == null) {
+      return false;
+    }
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
+    PsiVariable existingVariable = helper.resolveAccessibleReferencedVariable(name, place);
+    if (existingVariable == null) return false;
+
+    if (allowShadowing && existingVariable instanceof PsiField && PsiTreeUtil.getNonStrictParentOfType(place, PsiMethod.class) != null) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  private static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
+                                                          @NotNull final String name,
+                                                          @NotNull Predicate<PsiVariable> canBeReused) {
+    PsiElement run = scope;
+    while (run != null) {
+      class CancelException extends RuntimeException {
+      }
+      try {
+        run.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitClass(final PsiClass aClass) {}
+
+          @Override public void visitVariable(PsiVariable variable) {
+            if (name.equals(variable.getName()) && !canBeReused.test(variable)) {
+              throw new CancelException();
+            }
+          }
+        });
+      }
+      catch (CancelException e) {
+        return true;
+      }
+      run = run.getNextSibling();
+      if (scope instanceof PsiMethod || scope instanceof PsiForeachStatement) {//do not check next member for param name conflict
+        break;
+      }
+    }
+    return false;
   }
 
   private static void sortVariableNameSuggestions(@NotNull String[] names,

@@ -108,7 +108,8 @@ public class XsltSupport {
   }
 
   public static boolean isXsltAttribute(@NotNull XmlAttribute attribute) {
-    return isXsltTag(attribute.getParent());
+    XmlTag parent = attribute.getParent();
+    return parent != null && isXsltTag(parent);
   }
 
   public static boolean isXsltTag(@NotNull XmlTag tag) {

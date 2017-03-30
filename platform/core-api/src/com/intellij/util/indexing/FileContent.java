@@ -37,6 +37,7 @@ public interface FileContent extends UserDataHolder {
   @NotNull
   String getFileName();
 
+  @NotNull
   byte[] getContent();
 
   @NotNull

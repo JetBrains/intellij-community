@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/lib/proxy-vole_20131209.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/proxy-vole-20131209-src.zip!/"/>
+    </SOURCES>
   </library>
 </component>

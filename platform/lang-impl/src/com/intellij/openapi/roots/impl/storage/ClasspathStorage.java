@@ -90,7 +90,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     final List<String> paths = myConverter.getFilePaths();
     MessageBusConnection busConnection = module.getMessageBus().connect();
-    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {

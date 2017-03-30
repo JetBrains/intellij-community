@@ -206,7 +206,8 @@ public class JUnitUtil {
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
-    if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
+    final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
+    if (topLevelClass != null && AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) return true;
 
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
@@ -252,8 +253,13 @@ public class JUnitUtil {
   }
 
   public static boolean isJUnit5(GlobalSearchScope scope, Project project) {
-    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(TEST5_PACKAGE_FQN);
-    return aPackage != null && aPackage.getDirectories(scope).length > 0;
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    Condition<String> foundCondition = aPackageName -> {
+      PsiPackage aPackage = facade.findPackage(aPackageName);
+      return aPackage != null && aPackage.getDirectories(scope).length > 0;
+    };
+
+    return foundCondition.value(TEST5_PACKAGE_FQN) || foundCondition.value("org.junit.platform.engine");
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {

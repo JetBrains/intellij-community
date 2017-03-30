@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
@@ -34,20 +35,32 @@ import static org.junit.Assert.*;
 public class StringUtilTest {
   @Test
   public void testTrimLeadingChar() throws Exception {
-    assertEquals("", StringUtil.trimLeading("", ' '));
-    assertEquals("", StringUtil.trimLeading(" ", ' '));
-    assertEquals("", StringUtil.trimLeading("    ", ' '));
-    assertEquals("a  ", StringUtil.trimLeading("a  ", ' '));
-    assertEquals("a  ", StringUtil.trimLeading("  a  ", ' '));
+    doTestTrimLeading("", "");
+    doTestTrimLeading("", " ");
+    doTestTrimLeading("", "    ");
+    doTestTrimLeading("a  ", "a  ");
+    doTestTrimLeading("a  ", "  a  ");
   }
 
   @Test
   public void testTrimTrailingChar() throws Exception {
-    assertEquals("", StringUtil.trimTrailing("", ' '));
-    assertEquals("", StringUtil.trimTrailing(" ", ' '));
-    assertEquals("", StringUtil.trimTrailing("    ", ' '));
-    assertEquals("  a", StringUtil.trimTrailing("  a", ' '));
-    assertEquals("  a", StringUtil.trimTrailing("  a  ", ' '));
+    doTestTrimTrailing("", "");
+    doTestTrimTrailing("", " ");
+    doTestTrimTrailing("", "    ");
+    doTestTrimTrailing("  a", "  a");
+    doTestTrimTrailing("  a", "  a  ");
+  }
+
+  private static void doTestTrimLeading(@NotNull String expected, @NotNull String string) {
+    assertEquals(expected, StringUtil.trimLeading(string));
+    assertEquals(expected, StringUtil.trimLeading(string, ' '));
+    assertEquals(expected, StringUtil.trimLeading(new StringBuilder(string), ' ').toString());
+  }
+
+  private static void doTestTrimTrailing(@NotNull String expected, @NotNull String string) {
+    assertEquals(expected, StringUtil.trimTrailing(string));
+    assertEquals(expected, StringUtil.trimTrailing(string, ' '));
+    assertEquals(expected, StringUtil.trimTrailing(new StringBuilder(string), ' ').toString());
   }
 
   @Test
@@ -114,6 +127,8 @@ public class StringUtilTest {
     assertEquals("cookie", StringUtil.unpluralize("cookies"));
     assertEquals("search", StringUtil.unpluralize("searches"));
     assertEquals("process", StringUtil.unpluralize("process"));
+    assertEquals("PROPERTY", StringUtil.unpluralize("PROPERTIES"));
+    assertEquals("THIS", StringUtil.unpluralize("THESE"));
   }
 
   @Test
@@ -134,6 +149,8 @@ public class StringUtilTest {
     assertEquals("PLANS", StringUtil.pluralize("PLAN"));
     assertEquals("stackTraceLineExes", StringUtil.pluralize("stackTraceLineEx"));
     assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
+    assertEquals("PROPERTIES", StringUtil.pluralize("PROPERTY"));
+    assertEquals("THESE", StringUtil.pluralize("THIS"));
   }
 
   @Test
@@ -153,18 +170,18 @@ public class StringUtilTest {
     final List<String> strings = new ArrayList<>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
                                                                "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
     final Comparator<String> c = (o1, o2) -> StringUtil.naturalCompare(o1, o2);
-    Collections.sort(strings, c);
+    strings.sort(c);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);
     final List<String> strings2 = new ArrayList<>(Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2"));
-    Collections.sort(strings2, c);
+    strings2.sort(c);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
     assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
     //idea-80853
     final List<String> strings3 = new ArrayList<>(
       Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"));
-    Collections.sort(strings3, c);
+    strings3.sort(c);
     assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"), strings3);
   }
 
@@ -286,9 +303,9 @@ public class StringUtilTest {
 
   @Test
   public void testJoin() {
-    assertEquals("", StringUtil.join(Collections.<String>emptyList(), ","));
+    assertEquals("", StringUtil.join(Collections.emptyList(), ","));
     assertEquals("qqq", StringUtil.join(Collections.singletonList("qqq"), ","));
-    assertEquals("", StringUtil.join(Collections.<String>singletonList(null), ","));
+    assertEquals("", StringUtil.join(Collections.singletonList(null), ","));
     assertEquals("a,b", StringUtil.join(Arrays.asList("a", "b"), ","));
     assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
     assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
@@ -311,7 +328,8 @@ public class StringUtilTest {
   @Test
   public void testReplaceReturnReplacementIfTextEqualsToReplacedText() {
     String newS = "/tmp";
-    assertSame(StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS), newS);
+    assertSame(newS,
+               StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS));
   }
 
   @Test

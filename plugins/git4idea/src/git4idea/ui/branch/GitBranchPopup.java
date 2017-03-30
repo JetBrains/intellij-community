@@ -41,7 +41,8 @@ import java.util.Objects;
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_NUM;
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
-import static com.intellij.dvcs.ui.BranchActionUtil.*;
+import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
+import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.stream.Collectors.toList;
 
@@ -134,7 +135,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                                                                                                                     remoteBranch,
                                                                                                                     myCurrentRepository));
     wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfFavorites(remoteBranchActions), SHOW_ALL_REMOTES_KEY);
+                               getNumOfTopShownBranches(remoteBranchActions), SHOW_ALL_REMOTES_KEY);
   }
 
   @Nullable

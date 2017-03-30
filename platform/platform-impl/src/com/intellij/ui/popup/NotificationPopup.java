@@ -19,9 +19,7 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -34,31 +32,18 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public class NotificationPopup {
-
-  private Impl myImpl;
-
-  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
-    this(owner, content, backgroud, true);
+  public NotificationPopup(final JComponent owner, final JComponent content, Color background) {
+    this(owner, content, background, true);
   }
 
-  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize) {
-    this(owner, content, backgroud, useDefaultPreferredSize, null, false);
+  public NotificationPopup(final JComponent owner, final JComponent content, Color background, boolean useDefaultPreferredSize) {
+    this(owner, content, background, useDefaultPreferredSize, null, false);
   }
 
-  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
+  public NotificationPopup(final JComponent owner, final JComponent content, Color background, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
     final IdeFrame frame = findFrame(owner);
     if (frame == null || !((Window)frame).isShowing() || frame.getBalloonLayout() == null) {
-      final FramelessNotificationPopup popup = new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize, clickHandler);
-
-      myImpl = new Impl() {
-        public void addListener(JBPopupListener listener) {
-          popup.getPopup().addListener(listener);
-        }
-
-        public void hide() {
-          popup.getPopup().cancel();
-        }
-      };
+      new FramelessNotificationPopup(owner, content, background, useDefaultPreferredSize, clickHandler);
     } else {
       final Wrapper wrapper = new NonOpaquePanel(content) {
         @Override
@@ -80,27 +65,15 @@ public class NotificationPopup {
         .setHideOnFrameResize(false)
         .setHideOnKeyOutside(false)
         .setCloseButtonEnabled(true)
-        .setFillColor(backgroud)
+        .setFillColor(background)
         .setShowCallout(false)
         .setClickHandler(clickHandler, closeOnClick)
         .createBalloon();
-
-      ((BalloonImpl)balloon).traceDispose(true);
 
       BalloonLayout layout = frame.getBalloonLayout();
       assert layout != null;
 
       layout.add(balloon);
-
-      myImpl = new Impl() {
-        public void addListener(JBPopupListener listener) {
-          balloon.addListener(listener);
-        }
-
-        public void hide() {
-          balloon.hide();
-        }
-      };
     }
   }
 
@@ -115,17 +88,5 @@ public class NotificationPopup {
 
   public JBPopup getPopup() {
     return null;
-  }
-
-
-  interface Impl {
-    void addListener(JBPopupListener listener);
-    void hide();
-  }
-
-  public void addListener(JBPopupListener listener) {
-  }
-
-  public void hide() {
   }
 }

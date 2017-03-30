@@ -93,7 +93,7 @@ class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRev
 
     TreeNodeOnVcsRevision that = (TreeNodeOnVcsRevision)o;
 
-    if (myRevision != null ? !myRevision.getRevisionNumber().equals(that.myRevision.getRevisionNumber()) : that.myRevision != null) {
+    if (!myRevision.getRevisionNumber().equals(that.myRevision.getRevisionNumber())) {
       return false;
     }
 
@@ -102,6 +102,6 @@ class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRev
 
   @Override
   public int hashCode() {
-    return myRevision != null ? myRevision.getRevisionNumber().hashCode() : 0;
+    return myRevision.getRevisionNumber().hashCode();
   }
 }

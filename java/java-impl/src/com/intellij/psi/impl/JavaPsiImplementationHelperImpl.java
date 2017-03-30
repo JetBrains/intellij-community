@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -69,7 +67,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public PsiClass getOriginalClass(PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) return (PsiClass)cls;
-    
+
     if (DumbService.isDumb(myProject)) return psiClass;
 
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
@@ -111,7 +109,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
     for (OrderEntry orderEntry : index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile())) {
-      if (!(orderEntry instanceof LibraryOrSdkOrderEntry)) continue;
+      if (!(orderEntry instanceof LibraryOrSdkOrderEntry) || !orderEntry.isValid()) continue;
       for (VirtualFile root : orderEntry.getFiles(OrderRootType.SOURCES)) {
         VirtualFile source = root.findFileByRelativePath(relativePath);
         if (source != null && source.isValid()) {
@@ -170,12 +168,15 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
         return null;
       }
       String className = virtualFile.getNameWithoutExtension();
+      Set<VirtualFile> visitedRoots = ContainerUtil.newHashSet();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
         for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
-          VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-          PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
-          if (javaFile != null) {
-            return javaFile.getLanguageLevel();
+          if (visitedRoots.add(rootFile)) {
+            VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+            PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
+            if (javaFile != null) {
+              return javaFile.getLanguageLevel();
+            }
           }
         }
       }
@@ -252,7 +253,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       }
       return result;
     }
-    
+
     return aClass.getRBrace();
   }
 

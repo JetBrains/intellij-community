@@ -149,6 +149,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
     return getDelegate().getSuperClass();
   }
 
+  @NotNull
   @Override
   public PsiClass[] getInterfaces() {
     return getDelegate().getInterfaces();

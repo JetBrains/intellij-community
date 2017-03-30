@@ -35,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -81,14 +80,10 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
                                                        "Select the directory which will not be tracked for changes",
                                                        project,
                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateControls();
-      }
-    };
-    myIgnoreAllFilesUnderRadioButton.addActionListener(listener);
-    myIgnoreAllFilesMatchingRadioButton.addActionListener(listener);
-    myIgnoreSpecifiedFileRadioButton.addActionListener(listener);
+    ItemListener listener = e -> updateControls();
+    myIgnoreAllFilesUnderRadioButton.addItemListener(listener);
+    myIgnoreAllFilesMatchingRadioButton.addItemListener(listener);
+    myIgnoreSpecifiedFileRadioButton.addItemListener(listener);
     updateControls();
   }
 

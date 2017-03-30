@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,6 +219,13 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testLeaveTrailingComment() throws Exception { doTest(); }
 
   public void testConvertComment() throws Exception {
+    doTest();
+  }
+
+  public void testJoiningMethodCallWhenItDoesntFit() throws Exception {
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    settings.RIGHT_MARGIN = 20;
     doTest();
   }
 

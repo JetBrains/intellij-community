@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.*;
 
 /**
  * Holds execution settings of particular invocation of an external system.
@@ -22,12 +23,16 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
+  @NotNull private final Set<String> myVmOptions;
+  @NotNull private final List<String> myArguments;
 
   @NotNull private transient UserDataHolderBase myUserData = new UserDataHolderBase();
 
   public ExternalSystemExecutionSettings() {
     int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
     setRemoteProcessIdleTtlInMs(ttl);
+    myVmOptions = new LinkedHashSet<>();
+    myArguments = new ArrayList<>();
   }
 
   /**
@@ -49,6 +54,46 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myVerboseProcessing = verboseProcessing;
   }
 
+  @NotNull
+  public Set<String> getVmOptions() {
+    return Collections.unmodifiableSet(myVmOptions);
+  }
+
+  @NotNull
+  public List<String> getArguments() {
+    return Collections.unmodifiableList(myArguments);
+  }
+
+  public ExternalSystemExecutionSettings withVmOptions(Collection<String> vmOptions) {
+    myVmOptions.addAll(vmOptions);
+    return this;
+  }
+
+  public ExternalSystemExecutionSettings withVmOptions(String... vmOptions) {
+    Collections.addAll(myVmOptions, vmOptions);
+    return this;
+  }
+
+  public ExternalSystemExecutionSettings withVmOption(String vmOption) {
+    myVmOptions.add(vmOption);
+    return this;
+  }
+
+  public ExternalSystemExecutionSettings withArguments(Collection<String> arguments) {
+    myArguments.addAll(arguments);
+    return this;
+  }
+
+  public ExternalSystemExecutionSettings withArguments(String... arguments) {
+    Collections.addAll(myArguments, arguments);
+    return this;
+  }
+
+  public ExternalSystemExecutionSettings withArgument(String argument) {
+    myArguments.add(argument);
+    return this;
+  }
+
   @Nullable
   @Override
   public <U> U getUserData(@NotNull Key<U> key) {
@@ -64,6 +109,8 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public int hashCode() {
     int result = (int)(myRemoteProcessIdleTtlInMs ^ (myRemoteProcessIdleTtlInMs >>> 32));
     result = 31 * result + (myVerboseProcessing ? 1 : 0);
+    result = 31 * result + myVmOptions.hashCode();
+    result = 31 * result + myArguments.hashCode();
     return result;
   }
 
@@ -76,6 +123,8 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
     if (myRemoteProcessIdleTtlInMs != that.myRemoteProcessIdleTtlInMs) return false;
     if (myVerboseProcessing != that.myVerboseProcessing) return false;
+    if (!myVmOptions.equals(that.myVmOptions)) return false;
+    if (!myArguments.equals(that.myArguments)) return false;
     return true;
   }
 }

@@ -32,7 +32,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
+public class VcsIntegrationEnablerTest extends VcsRootBaseTest {
 
   private VirtualFile myTestRoot;
 
@@ -139,9 +139,8 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
 
     @Override
     protected boolean initOrNotifyError(@NotNull final VirtualFile projectDir) {
-      File file = new File(projectDir.getPath(), ".mock");
+      File file = new File(projectDir.getPath(), DOT_MOCK);
       VcsNotifier.getInstance(myProject).notifySuccess("Created mock repository in " + projectDir.getPresentableUrl());
-      myFilesToDelete.add(file);
       return file.mkdir();
     }
   }

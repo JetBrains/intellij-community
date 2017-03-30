@@ -556,10 +556,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(ProjectUtil.guessCurrentProject(getPanel())).clone();
-    codeStyle.apply(settings);
-    reset(settings);
-    onSomethingChanged();    
+    codeStyle.apply(mySettings);
+    resetImpl(mySettings);
+    myModel.fireAfterCurrentSettingsChanged();
   }
 
   /**

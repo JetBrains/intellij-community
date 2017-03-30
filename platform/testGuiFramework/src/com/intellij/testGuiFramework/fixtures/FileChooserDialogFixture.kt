@@ -94,7 +94,8 @@ class FileChooserDialogFixture private constructor(robot: Robot,
   fun waitFilledTextField(): FileChooserDialogFixture {
     pause(object : Condition("Wait until JTextField component will be filled by default path") {
       override fun test(): Boolean {
-        return textFieldFixture.text()!!.isEmpty()
+        val text = textFieldFixture.text()
+        return text != null && text.isNotEmpty()
       }
     }, GuiTestUtil.THIRTY_SEC_TIMEOUT)
     return this

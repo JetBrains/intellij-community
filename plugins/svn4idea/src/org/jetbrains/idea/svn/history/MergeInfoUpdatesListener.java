@@ -18,11 +18,8 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -54,35 +51,19 @@ public class MergeInfoUpdatesListener {
       myMergeInfoRefreshActions = new ArrayList<>();
       myMergeInfoRefreshActions.add(action);
 
-      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
-        public void execute(final Project project, final VirtualFile vcsRoot) {
-          callReloadMergeInfo();
-        }
-      });
-      final Consumer<Boolean> reloadConsumer = new Consumer<Boolean>() {
-        @Override
-        public void consume(Boolean aBoolean) {
-          if (Boolean.TRUE.equals(aBoolean)) {
-            callReloadMergeInfo();
-          }
-        }
-      };
-      final Runnable reloadRunnable = new Runnable() {
-        @Override
-        public void run() {
+      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, (project, vcsRoot) -> callReloadMergeInfo());
+      final Consumer<Boolean> reloadConsumer = aBoolean -> {
+        if (Boolean.TRUE.equals(aBoolean)) {
           callReloadMergeInfo();
         }
       };
+      final Runnable reloadRunnable = () -> callReloadMergeInfo();
       myConnection.subscribe(SvnVcs.WC_CONVERTED, reloadRunnable);
       myConnection.subscribe(RootsAndBranches.REFRESH_REQUEST, reloadRunnable);
 
       myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadConsumer);
 
-      myConnection.subscribe(VCS_CONFIGURATION_CHANGED, new VcsListener() {
-        public void directoryMappingChanged() {
-          callReloadMergeInfo();
-        }
-      });
+      myConnection.subscribe(VCS_CONFIGURATION_CHANGED, () -> callReloadMergeInfo());
 
       myConnection.subscribe(CommittedChangesTreeBrowser.ITEMS_RELOADED, new CommittedChangesTreeBrowser.CommittedChangesReloadListener() {
         public void itemsReloaded() {
@@ -92,44 +73,25 @@ public class MergeInfoUpdatesListener {
         }
       });
 
-      myConnection.subscribe(SvnMergeInfoCache.SVN_MERGE_INFO_CACHE, new SvnMergeInfoCache.SvnMergeInfoCacheListener() {
-        public void copyRevisionUpdated() {
-          doForEachInitialized(new Consumer<RootsAndBranches>() {
-            public void consume(final RootsAndBranches rootsAndBranches) {
-              rootsAndBranches.fireRepaint();
-            }
-          });
-        }
-      });
+      myConnection
+        .subscribe(SvnMergeInfoCache.SVN_MERGE_INFO_CACHE, () -> doForEachInitialized(rootsAndBranches -> rootsAndBranches.fireRepaint()));
 
-      myConnection.subscribe(Merger.COMMITTED_CHANGES_MERGED_STATE, new Merger.CommittedChangesMergedStateChanged() {
-        public void event(final List<CommittedChangeList> list) {
-          doForEachInitialized(new Consumer<RootsAndBranches>() {
-            public void consume(RootsAndBranches rootsAndBranches) {
-              rootsAndBranches.refreshByLists(list);
-            }
-          });
-        }
-      });
+      myConnection.subscribe(Merger.COMMITTED_CHANGES_MERGED_STATE,
+                             list -> doForEachInitialized(rootsAndBranches -> rootsAndBranches.refreshByLists(list)));
     } else {
       myMergeInfoRefreshActions.add(action);
     }
   }
 
   private void doForEachInitialized(final Consumer<RootsAndBranches> consumer) {
-    myUpdater.queue(new Runnable() {
-      public void run() {
-        for (final RootsAndBranches action : myMergeInfoRefreshActions) {
-          if (action.strategyInitialized()) {
-            if (ApplicationManager.getApplication().isDispatchThread()) {
-              consumer.consume(action);
-            } else {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  consumer.consume(action);
-                }
-              });
-            }
+    myUpdater.queue(() -> {
+      for (final RootsAndBranches action : myMergeInfoRefreshActions) {
+        if (action.strategyInitialized()) {
+          if (ApplicationManager.getApplication().isDispatchThread()) {
+            consumer.consume(action);
+          }
+          else {
+            ApplicationManager.getApplication().invokeLater(() -> consumer.consume(action));
           }
         }
       }
@@ -137,11 +99,9 @@ public class MergeInfoUpdatesListener {
   }
   
   private void callReloadMergeInfo() {
-    doForEachInitialized(new Consumer<RootsAndBranches>() {
-      public void consume(final RootsAndBranches rootsAndBranches) {
-        rootsAndBranches.reloadPanels();
-        rootsAndBranches.refresh();
-      }
+    doForEachInitialized(rootsAndBranches -> {
+      rootsAndBranches.reloadPanels();
+      rootsAndBranches.refresh();
     });
   }
 

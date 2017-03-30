@@ -42,7 +42,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
 
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(checker.isEnabled());
-    
+
     presentation.setVisible(checker.isVisible());
     if (checker.isEnabled()) {
       presentation.setText(SvnBundle.message("action.share.whole.project.text"));
@@ -73,19 +73,20 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       myHadNoMappings = MyCheckResult.notMapped.equals(result);
       if (MyCheckResult.notMapped.equals(result)) {
         // no change list manager working
-        if(SvnUtil.seemsLikeVersionedDir(baseDir)) return;
-      } else if (SvnStatusUtil.isUnderControl(myProject, baseDir)) {
+        if (SvnUtil.seemsLikeVersionedDir(baseDir)) return;
+      }
+      else if (SvnStatusUtil.isUnderControl(myProject, baseDir)) {
         return;
       }
 
-      if ((! myHadNoMappings) && (! SvnVcs.getInstance(myProject).getSvnFileUrlMapping().isEmpty())) {
+      if ((!myHadNoMappings) && (!SvnVcs.getInstance(myProject).getSvnFileUrlMapping().isEmpty())) {
         // there are some versioned dirs under project dir
         return;
       }
 
       // visible: already checked above
       myVisible = true;
-      myEnabled = (! vcsManager.isBackgroundVcsOperationRunning());
+      myEnabled = (!vcsManager.isBackgroundVcsOperationRunning());
     }
 
     private static enum MyCheckResult {
@@ -137,7 +138,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);
-    if (! checker.isEnabled()) return;
+    if (!checker.isEnabled()) return;
 
     final Project project = checker.getProject();
     final VirtualFile baseDir = project.getBaseDir();
@@ -146,26 +147,21 @@ public class ShareWholeProject extends AnAction implements DumbAware {
     boolean excThrown = false;
     try {
       success = ShareProjectAction.share(project, baseDir);
-    } catch (VcsException exc) {
+    }
+    catch (VcsException exc) {
       AbstractVcsHelper.getInstance(project).showError(exc, "Failed to Share Project");
       excThrown = true;
-    } finally {
+    }
+    finally {
       // if success = false -> either action was cancelled or exception was thrown, so also check for exception
       if (success || excThrown) {
-        baseDir.refresh(true, true, new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(project.getBaseDir());
-                if (checker.isHadNoMappings() && SvnUtil.seemsLikeVersionedDir(baseDir)) {
-                  final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-                  vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", SvnVcs.VCS_NAME)));
-                }
-              }
-            }, ModalityState.NON_MODAL, project.getDisposed());
+        baseDir.refresh(true, true, () -> ApplicationManager.getApplication().invokeLater(() -> {
+          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(project.getBaseDir());
+          if (checker.isHadNoMappings() && SvnUtil.seemsLikeVersionedDir(baseDir)) {
+            final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+            vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", SvnVcs.VCS_NAME)));
           }
-        });
+        }, ModalityState.NON_MODAL, project.getDisposed()));
       }
     }
   }

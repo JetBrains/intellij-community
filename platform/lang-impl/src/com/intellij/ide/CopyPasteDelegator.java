@@ -19,6 +19,7 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -31,6 +32,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -139,45 +141,16 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;
-      
-      PsiDirectory targetDirectory = null;
+
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       try {
-        PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
         final Module module = LangDataKeys.MODULE.getData(dataContext);
-        if (module != null && target instanceof PsiDirectoryContainer) {
-          final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
-          if (directories.length == 1) {
-            target = directories[0];
-          }
-        }
+        PsiElement target = getPasteTarget(dataContext, module);
         if (isCopied[0]) {
-          targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
-          if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
-            final PsiDirectory[] directories = module == null ? ((PsiDirectoryContainer)target).getDirectories()
-                                                              : ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
-            if (directories.length > 0) {
-              targetDirectory = directories[0];
-              targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, directories.length > 1);
-            }
-          }
-          if (targetDirectory == null && target != null) {
-            final PsiFile containingFile = target.getContainingFile();
-            if (containingFile != null) {
-              targetDirectory = containingFile.getContainingDirectory();
-            }
-          }
-          if (CopyHandler.canCopy(elements)) {
-            CopyHandler.doCopy(elements, targetDirectory);
-          }
+          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCopy(elements, module, target));
         }
         else if (MoveHandler.canMove(elements, target)) {
-          MoveHandler.doMove(myProject, elements, target, dataContext, new MoveCallback() {
-            @Override
-            public void refactoringCompleted() {
-              PsiCopyPasteManager.getInstance().clear();
-            }
-          });
+          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCut(dataContext, elements, target));
         }
         else {
           return false;
@@ -186,11 +159,62 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       finally {
         DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
         updateView();
+      }
+      return true;
+    }
+
+    private PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {
+      PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
+      if (module != null && target instanceof PsiDirectoryContainer) {
+        final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
+        if (directories.length == 1) {
+          return directories[0];
+        }
+      }
+      return target;
+    }
+
+    @Nullable
+    private PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
+      PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
+      if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
+        final PsiDirectory[] directories = module == null ? ((PsiDirectoryContainer)target).getDirectories()
+                                                          : ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
+        if (directories.length > 0) {
+          targetDirectory = directories[0];
+          targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, directories.length > 1);
+        }
+      }
+      if (targetDirectory == null && target != null) {
+        final PsiFile containingFile = target.getContainingFile();
+        if (containingFile != null) {
+          targetDirectory = containingFile.getContainingDirectory();
+        }
+      }
+      return targetDirectory;
+    }
+
+    private void pasteAfterCopy(PsiElement[] elements, Module module, PsiElement target) {
+      PsiDirectory targetDirectory = getTargetDirectory(module, target);
+      try {
+        if (CopyHandler.canCopy(elements)) {
+          CopyHandler.doCopy(elements, targetDirectory);
+        }
+      }
+      finally {
         if (targetDirectory != null) {
           targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, null);
         }
       }
-      return true;
+    }
+
+    private void pasteAfterCut(DataContext dataContext, PsiElement[] elements, PsiElement target) {
+      MoveHandler.doMove(myProject, elements, target, dataContext, new MoveCallback() {
+        @Override
+        public void refactoringCompleted() {
+          PsiCopyPasteManager.getInstance().clear();
+        }
+      });
     }
 
     @Override

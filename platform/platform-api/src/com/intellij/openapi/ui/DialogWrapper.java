@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -69,6 +68,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
@@ -171,8 +171,8 @@ public abstract class DialogWrapper {
   private Computable<Point> myInitialLocationCallback;
 
   private Dimension  myActualSize = null;
-  private String     myLastErrorText = null;
-  private JComponent myLastComponent = null;
+
+  private List<ValidationInfo> myInfo = Collections.emptyList();
 
   @NotNull
   protected final Disposable myDisposable = new Disposable() {
@@ -342,14 +342,24 @@ public abstract class DialogWrapper {
     return null;
   }
 
-  public void setValidationDelay(int delay) {
-    myValidationDelay = delay;
+  /**
+   * Validates user input and returns <code>List&lt;ValidationInfo&gt;</code>.
+   * If everything is fine the returned list is empty otherwise
+   * the list contains all invalid fields with error messages.
+   * This method should preferably be used when validating forms with multiply
+   * fields that require validation.
+   *
+   * @return <code>List&lt;ValidationInfo&gt;</code> of invalid fields. List
+   * is empty if no errors found.
+   */
+  @NotNull
+  protected List<ValidationInfo> doValidateAll() {
+    ValidationInfo vi = doValidate();
+    return vi != null ? Collections.singletonList(vi) : Collections.EMPTY_LIST;
   }
 
-  private void reportProblem(@NotNull final ValidationInfo info) {
-    installErrorPainter();
-    myErrorPainter.setValidationInfo(info);
-    updateErrorMessage(info);
+  public void setValidationDelay(int delay) {
+    myValidationDelay = delay;
   }
 
   private void installErrorPainter() {
@@ -358,23 +368,16 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
-  private void clearProblems() {
-    myErrorPainter.setValidationInfo(null);
-    updateErrorMessage(null);
-  }
-
-  protected void updateErrorMessage(@Nullable ValidationInfo info) {
-    String msg = (info == null) ? null : info.message;
-    JComponent errorComponent = (info == null) ? null : info.component;
+  protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
     boolean updateNeeded = Registry.is("ide.inplace.errors.balloon") ?
-                           !StringUtil.equals(msg, myLastErrorText) : !myErrorText.isTextSet(msg);
+                           !myInfo.equals(info) : !myErrorText.isTextSet(info);
 
     if (updateNeeded) {
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
-        setErrorText(msg, errorComponent);
+        setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(msg == null);
+        getOKAction().setEnabled(info.isEmpty());
       });
     }
   }
@@ -452,6 +455,11 @@ public abstract class DialogWrapper {
     return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
+  private static boolean isRemoveHelpButton() {
+    return SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
+           Registry.is("ide.remove.help.button.from.dialogs");
+  }
+
   /**
    * Creates panel located at the south of the content pane. By default that
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
@@ -468,10 +476,11 @@ public abstract class DialogWrapper {
     }
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
-      hasHelpToMoveToLeftSide = true;
+    if (isRemoveHelpButton()) {
       actions.remove(getHelpAction());
-    } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
+    }
+    else if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
+      hasHelpToMoveToLeftSide = true;
       actions.remove(getHelpAction());
     }
 
@@ -519,7 +528,7 @@ public abstract class DialogWrapper {
     }
 
 
-    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide, myDoNotAsk);
+    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
 
   @NotNull
@@ -589,8 +598,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
                                   @NotNull List<JButton> rightSideButtons,
-                                  boolean hasHelpToMoveToLeftSide,
-                                  @Nullable DoNotAskOption doNotAsk) {
+                                  boolean hasHelpToMoveToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {
@@ -601,6 +609,15 @@ public abstract class DialogWrapper {
         return super.getBackground();
       }
     };
+
+    if (myDoNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(myDoNotAsk.getDoNotShowMessage());
+      myCheckBoxDoNotShowDialog.setVisible(myDoNotAsk.canBeHidden());
+      myCheckBoxDoNotShowDialog.setSelected(!myDoNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+    }
+    JComponent doNotAskCheckbox = createDoNotAskCheckbox();
+
     final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
     //noinspection UseDPIAwareInsets
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
@@ -624,26 +641,15 @@ public abstract class DialogWrapper {
         }
         lrButtonsPanel.add(buttonsPanel, bag.next());
       }
-      if (SwingConstants.CENTER == myButtonAlignment) {
+      if (SwingConstants.CENTER == myButtonAlignment && doNotAskCheckbox == null) {
         lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
       }
     }
 
     JComponent helpButton = null;
     if (hasHelpToMoveToLeftSide) {
-      if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
-        helpButton = createHelpButton(insets);
-      }
+      helpButton = createHelpButton(insets);
     }
-
-    if (doNotAsk != null) {
-      myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
-      myCheckBoxDoNotShowDialog.setVisible(doNotAsk.canBeHidden());
-      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
-      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-    }
-    JComponent doNotAskCheckbox = createDoNotAskCheckbox();
-
 
     if (helpButton != null || doNotAskCheckbox != null) {
       JPanel leftPanel = new JPanel(new BorderLayout());
@@ -1074,7 +1080,11 @@ public abstract class DialogWrapper {
    */
   @NotNull
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+    Action helpAction = getHelpAction();
+
+    return helpAction == myHelpAction && getHelpId() == null
+           ? new Action[]{getOKAction(), getCancelAction()}
+           : new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
   @NotNull
@@ -1392,13 +1402,12 @@ public abstract class DialogWrapper {
     myValidationAlarm.cancelAllRequests();
     final Runnable validateRequest = () -> {
       if (myDisposed) return;
-      final ValidationInfo result = doValidate();
-      if (result == null) {
-        clearProblems();
+      List<ValidationInfo> result = doValidateAll();
+      if (!result.isEmpty()) {
+        installErrorPainter();
       }
-      else {
-        reportProblem(result);
-      }
+      myErrorPainter.setValidationInfo(result);
+      updateErrorInfo(result);
 
       if (!myDisposed) {
         initValidation();
@@ -1526,7 +1535,7 @@ public abstract class DialogWrapper {
   /**
    * @return the help identifier or null if no help is available.
    */
-  @Nullable
+  @Nullable @NonNls
   protected String getHelpId() {
     return null;
   }
@@ -1860,8 +1869,9 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
-      ValidationInfo info = doValidate();
-      if (info != null) {
+      List<ValidationInfo> infoList = doValidateAll();
+      if (!infoList.isEmpty()) {
+        ValidationInfo info = infoList.get(0);
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
@@ -1941,60 +1951,92 @@ public abstract class DialogWrapper {
   }
 
   protected void setErrorText(@Nullable final String text, @Nullable final JComponent component) {
-    if (Comparing.equal(myLastErrorText, text) && Comparing.equal(myLastComponent, component)) {
-      return;
-    }
+    setErrorInfoAll((text == null) ?
+                 Collections.EMPTY_LIST :
+                 Collections.singletonList(new ValidationInfo(text, component)));
+  }
+
+  protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
+    if (myInfo.equals(info)) return;
 
     myErrorTextAlarm.cancelAllRequests();
+    SwingUtilities.invokeLater(() -> myErrorText.clearError());
 
-    if (Registry.is("ide.inplace.errors.outline") && myLastComponent != null) {
-      myLastComponent.putClientProperty("JComponent.error.outline", Boolean.FALSE);
-      myLastComponent.putClientProperty("JComponent.error.balloon.builder", null);
+    List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
+    if (Registry.is("ide.inplace.errors.outline")) {
+      corrected.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
+            forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", false));
     }
 
-    myLastErrorText = text;
-    myLastComponent = component;
+    if (Registry.is("ide.inplace.errors.balloon")) {
+      corrected.stream().filter(vi -> vi.component != null).forEach(vi -> {
+        vi.component.putClientProperty("JComponent.error.balloon.builder", null);
 
-    Boolean outline = Boolean.valueOf(text != null && !text.isEmpty());
-    if (Registry.is("ide.inplace.errors.outline") && component != null) {
-      component.putClientProperty("JComponent.error.outline", outline);
-    }
+        Balloon balloon = (Balloon)vi.component.getClientProperty("JComponent.error.balloon");
+        if (balloon != null && !balloon.isDisposed()) {
+          balloon.hide();
+        }
 
-    if (Registry.is("ide.inplace.errors.balloon") && component != null && outline) {
-      JLabel label = new JLabel();
-      label.setHorizontalAlignment(SwingConstants.LEADING);
-      setErrorTipText(component, label, text);
-
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
-        .setDisposable(getDisposable())
-        .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-        .setPointerSize(new JBDimension(17, 6))
-        .setCornerToPointerDistance(JBUI.scale(30))
-        .setBorderColor(BALLOON_BORDER)
-        .setFillColor(BALLOON_BACKGROUND)
-        .setHideOnFrameResize(false)
-        .setRequestFocus(false)
-        .setAnimationCycle(100)
-        .setShadow(true);
-
-      myLastComponent.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
-      if (myLastComponent.hasFocus()) {
-        showErrorTip(balloonBuilder, myLastComponent, label, text);
-      }
-
-      myLastComponent.addFocusListener(new FocusAdapter() {
-        @Override public void focusGained(FocusEvent e) {
-          JComponent c = (JComponent)e.getComponent();
-          if (c.getClientProperty("JComponent.error.balloon") == null) {
-              showErrorTip((BalloonBuilder)c.getClientProperty("JComponent.error.balloon.builder"), c, label, text);
+        Component fc = getFocusable(vi.component);
+        if (fc != null) {
+          for (FocusListener fl : fc.getFocusListeners()) {
+            if (fl instanceof ErrorFocusListener) {
+              vi.component.removeFocusListener(fl);
+            }
           }
         }
       });
-    } else {
+    }
+
+    myInfo = info;
+
+    if (Registry.is("ide.inplace.errors.outline")) {
+      myInfo.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
+        forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", true));
+    }
+
+    if (Registry.is("ide.inplace.errors.balloon") && !myInfo.isEmpty()) {
+      for (ValidationInfo vi : myInfo) {
+        Component fc = getFocusable(vi.component);
+        if (fc != null && fc.isFocusable()) {
+          if (vi.component.getClientProperty("JComponent.error.balloon.builder") == null) {
+            JLabel label = new JLabel();
+            label.setHorizontalAlignment(SwingConstants.LEADING);
+            setErrorTipText(vi.component, label, vi.message);
+
+            BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
+              .setDisposable(getDisposable())
+              .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
+              .setPointerSize(new JBDimension(17, 6))
+              .setCornerToPointerDistance(JBUI.scale(30))
+              .setHideOnKeyOutside(false)
+              .setHideOnClickOutside(false)
+              .setHideOnAction(false)
+              .setBorderColor(BALLOON_BORDER)
+              .setFillColor(BALLOON_BACKGROUND)
+              .setHideOnFrameResize(false)
+              .setRequestFocus(false)
+              .setAnimationCycle(100)
+              .setShadow(true);
+
+            vi.component.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
+
+            ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
+            if (fc.hasFocus()) {
+              SwingUtilities.invokeLater(() -> showErrorTip(balloonBuilder, vi.component, label, vi.message));
+            }
+
+            fc.addFocusListener(fl);
+            Disposer.register(getDisposable(), () -> fc.removeFocusListener(fl));
+          }
+        } else {
+          SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+        }
+      }
+    } else if (!myInfo.isEmpty()) {
       myErrorTextAlarm.addRequest(() -> {
-        myErrorText.setError(myLastErrorText);
-        if (myActualSize == null && !myErrorText.isVisible()) {
-          myActualSize = getSize();
+        for (ValidationInfo vi : myInfo) {
+          myErrorText.appendError(vi.message);
         }
       }, 300, null);
     }
@@ -2050,6 +2092,36 @@ public abstract class DialogWrapper {
     label.setText(htmlText);
   }
 
+  private Component getFocusable(Component source) {
+    if (source == null) {
+      return null;
+    } else if (source instanceof JScrollPane) {
+      return ((JScrollPane)source).getViewport().getView();
+    } else if (source instanceof JComboBox && ((JComboBox)source).isEditable()) {
+      return ((JComboBox)source).getEditor().getEditorComponent();
+    } else if (source instanceof JSpinner) {
+      Container c = ((JSpinner)source).getEditor();
+      synchronized (c.getTreeLock()) {
+        return c.getComponent(0);
+      }
+    } else if (source instanceof Container) {
+      Container container = (Container)source;
+      List<Component> cl;
+      synchronized (container.getTreeLock()) {
+        cl = Arrays.asList(container.getComponents());
+      }
+      return cl.stream().filter(c -> c.isFocusable()).count() > 1 ? null : source;
+    } else {
+      return source;
+    }
+  }
+
+  private void updateSize() {
+    if (myActualSize == null && !myErrorText.isVisible()) {
+      myActualSize = getSize();
+    }
+  }
+
   @Nullable
   public static DialogWrapper findInstance(Component c) {
     while (c != null) {
@@ -2099,14 +2171,13 @@ public abstract class DialogWrapper {
     }.start();
   }
 
-  private static class ErrorText extends JPanel {
+  private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private String myText;
+    private List<String> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setIcon(AllIcons.Actions.Lightning);
-      myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
+      myLabel.setBorder(JBUI.Borders.empty(16, 13, 16, 13));
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -2117,21 +2188,37 @@ public abstract class DialogWrapper {
       add(pane, BorderLayout.CENTER);
     }
 
-    public void setError(String text) {
-      myText = text;
+    private void clearError() {
+      errors.clear();
       myLabel.setBounds(0, 0, 0, 0);
-      setVisible(text != null);
-      myLabel.setText(text != null
-                      ? "<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'><left>" + text + "</left></b></font></html>"
-                      : "");
+      myLabel.setText("");
+      setVisible(false);
+      updateSize();
     }
 
-    public boolean shouldBeVisible() {
-      return !StringUtil.isEmpty(myText);
+    private void appendError(String text) {
+      errors.add(text);
+      myLabel.setBounds(0, 0, 0, 0);
+      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'>");
+      errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
+      sb.append("</font></html>");
+      myLabel.setText(sb.toString());
+      setVisible(true);
+      updateSize();
     }
 
-    public boolean isTextSet(@Nullable String text) {
-      return StringUtil.equals(text, myText);
+    private boolean shouldBeVisible() {
+      return !errors.isEmpty();
+    }
+
+    private boolean isTextSet(@NotNull List<ValidationInfo> info) {
+      if (info.isEmpty()) {
+        return errors.isEmpty();
+      } else if (errors.size() == info.size()){
+        return errors.equals(info.stream().map(i -> i.message).collect(Collectors.toList()));
+      } else {
+        return false;
+      }
     }
   }
 
@@ -2240,31 +2327,36 @@ public abstract class DialogWrapper {
   }
 
   private class ErrorPainter extends AbstractPainter {
-    private ValidationInfo myInfo;
+    private List<ValidationInfo> info;
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-      if (myInfo != null && myInfo.component != null && !Registry.is("ide.inplace.errors.outline")) {
-        final JComponent comp = myInfo.component;
-        final int w = comp.getWidth();
-        final int h = comp.getHeight();
-        Point p;
-        switch (getErrorPaintingType()) {
-          case DOT:
-            p = SwingUtilities.convertPoint(comp, 2, h / 2, component);
-            AllIcons.Ide.ErrorPoint.paintIcon(component, g, p.x, p.y);
-            break;
-          case SIGN:
-            p = SwingUtilities.convertPoint(comp, w, 0, component);
-            AllIcons.General.Error.paintIcon(component, g, p.x - 8, p.y - 8);
-            break;
-          case LINE:
-            p = SwingUtilities.convertPoint(comp, 0, h, component);
-            final GraphicsConfig config = new GraphicsConfig(g);
-            g.setColor(new Color(255, 0, 0, 100));
-            g.fillRoundRect(p.x, p.y - 2, w, 4, 2, 2);
-            config.restore();
-            break;
+      for (ValidationInfo i : info) {
+        if (i.component != null && !(Registry.is("ide.inplace.errors.outline"))) {
+          int w = i.component.getWidth();
+          int h = i.component.getHeight();
+          Point p;
+          switch (getErrorPaintingType()) {
+            case DOT:
+              p = SwingUtilities.convertPoint(i.component, 2, h / 2, component);
+              AllIcons.Ide.ErrorPoint.paintIcon(component, g, p.x, p.y);
+              break;
+            case SIGN:
+              p = SwingUtilities.convertPoint(i.component, w, 0, component);
+              AllIcons.General.Error.paintIcon(component, g, p.x - 8, p.y - 8);
+              break;
+            case LINE:
+              p = SwingUtilities.convertPoint(i.component, 0, h, component);
+              Graphics g2 = g.create();
+              try {
+                //noinspection UseJBColor
+                g2.setColor(new Color(255, 0, 0, 100));
+                g2.fillRoundRect(p.x, p.y - 2, w, 4, 2, 2);
+              } finally {
+                g2.dispose();
+              }
+              break;
+          }
         }
       }
     }
@@ -2274,12 +2366,12 @@ public abstract class DialogWrapper {
       return true;
     }
 
-    private void setValidationInfo(@Nullable ValidationInfo info) {
-      myInfo = info;
+    private void setValidationInfo(@NotNull List<ValidationInfo> info) {
+      this.info = info;
     }
   }
 
-  private class ErrorTipTracker extends PositionTracker<Balloon> {
+  private static class ErrorTipTracker extends PositionTracker<Balloon> {
     private final int y;
 
     private ErrorTipTracker(JComponent component, int y) {
@@ -2291,6 +2383,32 @@ public abstract class DialogWrapper {
       int width = getComponent().getWidth();
       int delta = width < JBUI.scale(120) ? width / 2 : JBUI.scale(60);
       return new RelativePoint(getComponent(), new Point(delta, y));
+    }
+  }
+
+  private class ErrorFocusListener implements FocusListener {
+    private final JLabel     label;
+    private final String     text;
+    private final JComponent propertyRoot;
+
+    private ErrorFocusListener(JLabel label, String text, JComponent propertyRoot) {
+      this.label = label;
+      this.text = text;
+      this.propertyRoot = propertyRoot;
+    }
+
+    @Override public void focusGained(FocusEvent e) {
+      Balloon b = (Balloon)propertyRoot.getClientProperty("JComponent.error.balloon");
+      if (b == null || b.isDisposed()) {
+        showErrorTip((BalloonBuilder)propertyRoot.getClientProperty("JComponent.error.balloon.builder"), propertyRoot, label, text);
+      }
+    }
+
+    @Override public void focusLost(FocusEvent e) {
+      Balloon b = (Balloon)propertyRoot.getClientProperty("JComponent.error.balloon");
+      if (b != null && !b.isDisposed()) {
+        b.hide();
+      }
     }
   }
 

@@ -40,8 +40,11 @@ import java.util.Map;
  */
 public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;
-  
-  public StringIndex(String testName, final IndexStorage<String, String> storage, final PersistentHashMap<Integer, Collection<String>> inputIndex)
+  private volatile Exception myRebuildException;
+  public StringIndex(String testName,
+                     final IndexStorage<String, String> storage,
+                     final PersistentHashMap<Integer, Collection<String>> inputIndex,
+                     boolean failOnRebuildRequest)
     throws IOException {
     ID<String, String> id = ID.create(testName + "string_index");
     IndexExtension<String, String, PathContentPair> extension = new IndexExtension<String, String, PathContentPair>() {
@@ -83,7 +86,11 @@ public class StringIndex {
     }) {
       @Override
       public void requestRebuild(@NotNull Exception ex) {
-        Assert.fail();
+        if (failOnRebuildRequest) {
+          Assert.fail();
+        } else {
+          myRebuildException = ex;
+        }
       }
 
     };
@@ -93,8 +100,8 @@ public class StringIndex {
     return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
   }
   
-  public void update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
-    myIndex.update(Math.abs(path.hashCode()), toInput(path, content)).compute();
+  public boolean update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
+    return myIndex.update(Math.abs(path.hashCode()), toInput(path, content)).compute();
   }
 
   public void flush() throws StorageException {
@@ -108,6 +115,10 @@ public class StringIndex {
   @Nullable
   private PathContentPair toInput(@NotNull String path, @Nullable String content) {
     return content != null ? new PathContentPair(path, content) : null;
+  }
+
+  public Exception getRebuildException() {
+    return myRebuildException;
   }
 
   private static class Indexer implements DataIndexer<String, String, PathContentPair> {
@@ -147,5 +158,8 @@ public class StringIndex {
       this.content = content;
     }
   }
-  
+
+  public MapReduceIndex<String, String, PathContentPair> getIndex() {
+    return myIndex;
+  }
 }

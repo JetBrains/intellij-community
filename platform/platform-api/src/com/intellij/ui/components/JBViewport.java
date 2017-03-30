@@ -20,8 +20,6 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
@@ -38,7 +36,6 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-import java.awt.event.MouseWheelEvent;
 
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
@@ -47,7 +44,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
   private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
 
-  private static final RegistryValue CAPABILITIES_DEBUG = Registry.get("idea.true.smooth.scrolling.debug");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug");
   private static final int NOTIFICATION_TIMEOUT = 1500;
 
@@ -80,10 +76,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
-  private boolean myUpdateViewPosition; // avoid cyclic references
-  private final ViewPosition myViewX = new ViewPosition();
-  private final ViewPosition myViewY = new ViewPosition();
-
   public JBViewport() {
     addContainerListener(new ContainerListener() {
       @Override
@@ -108,57 +100,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void setViewPosition(Point p) {
-    if (CAPABILITIES_DEBUG.asBoolean() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
+    if (ScrollSettings.isDebugEnabled() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
       checkScrollingCapabilities();
     }
-
-    if (myUpdateViewPosition) return;
-    myViewX.set(p.x);
-    myViewY.set(p.y);
     super.setViewPosition(p);
-  }
-
-  /**
-   * Updates a view position directly without using a corresponding scroll bar.
-   *
-   * @param event a wheel event with a precise wheel rotation used to calculate an absolute delta
-   */
-  void updateViewPosition(MouseWheelEvent event) {
-    Component view = getView();
-    if (view == null) return; // nothing to scroll
-
-    if (event.isShiftDown()) {
-      if (!myViewX.update(view, event, view.getWidth() - getWidth())) return; // nothing changed
-    }
-    else {
-      if (!myViewY.update(view, event, view.getHeight() - getHeight())) return; // nothing changed
-    }
-    try {
-      myUpdateViewPosition = true;
-      super.setViewPosition(new Point(myViewX.get(), myViewY.get()));
-    }
-    finally {
-      myUpdateViewPosition = false;
-    }
-  }
-
-  /**
-   * Calculates an offset in pixels to scroll a view precisely.
-   *
-   * @param view a view to scroll
-   * @param event a wheel event with a precise wheel rotation used to calculate an absolute delta
-   * @return a non-zero finite floating-point value, if a scrolling should be performed
-   */
-  private static double getAbsoluteDelta(Component view, MouseWheelEvent event) {
-    // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
-    // so we use 10 to restore amount of pixels to scroll.
-    int unitSizeInPixels = 10;
-    if (!SystemInfo.isMac) {
-      Font font = view.getFont();
-      unitSizeInPixels = font != null ? font.getSize() : JBUI.scale(10); // assume an unit size
-      unitSizeInPixels *= event.getScrollAmount(); // an operating system may increase a scrolling speed
-    }
-    return unitSizeInPixels * event.getPreciseWheelRotation();
   }
 
   // A heuristic to detect whether this viewport belongs to the "Event Log" tool window (which we use for output)
@@ -248,7 +193,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getView();
         if (child != null) {
@@ -361,24 +306,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return false;
   }
 
-  /**
-   * Returns the alignment of the specified scroll bar
-   * if and only if the specified scroll bar
-   * is located over the main viewport.
-   *
-   * @param bar the scroll bar to process
-   * @return the scroll bar alignment or {@code null}
-   */
-  private static Alignment getAlignment(JScrollBar bar) {
-    if (bar != null && bar.isVisible() && !bar.isOpaque()) {
-      return UIUtil.getClientProperty(bar, Alignment.class);
-    }
-    return null;
-  }
-
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
-    return (!SystemInfo.isMac || horizontal && Registry.is("mac.scroll.horizontal.gap")) &&
-           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && Registry.is("ide.scroll.align.component")));
+    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac()) &&
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent()));
   }
 
   static Insets getViewInsets(JComponent view) {
@@ -541,7 +471,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             if (vsb != null && vsb.isVisible()) {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
-                  ? (!opaque || Registry.is("ide.scroll.layout.header.over.corner"))
+                  ? (!opaque || ScrollSettings.isHeaderOverCorner())
                   : (!opaque && viewport == pane.getViewport())) {
                 Alignment va = UIUtil.getClientProperty(vsb, Alignment.class);
                 if (va == Alignment.LEFT) {
@@ -557,7 +487,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             if (hsb != null && hsb.isVisible()) {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
-                  ? (!opaque || Registry.is("ide.scroll.layout.header.over.corner"))
+                  ? (!opaque || ScrollSettings.isHeaderOverCorner())
                   : (!opaque && viewport == pane.getViewport())) {
                 Alignment ha = UIUtil.getClientProperty(hsb, Alignment.class);
                 if (ha == Alignment.TOP) {
@@ -571,58 +501,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
           }
         }
       }
-    }
-  }
-
-  private static final class ViewPosition {
-    private int myValue;
-    private int myDirection;
-    private double myAccumulator;
-
-    /**
-     * @return current view position
-     */
-    int get() {
-      return myValue;
-    }
-
-    /**
-     * Sets new view position and resets internal accumulator.
-     *
-     * @param newValue new value for position
-     */
-    void set(int newValue) {
-      myValue = newValue;
-      myAccumulator = newValue;
-    }
-
-    /**
-     * Updates internal accumulator and calculates corresponding view position.
-     *
-     * @param view  a view to scroll
-     * @param event a wheel event with a precise wheel rotation used to calculate an absolute delta
-     * @param max   a maximal value for
-     * @return {@code true} if current view position is changed, {@code false} otherwise
-     */
-    boolean update(Component view, MouseWheelEvent event, int max) {
-      int old = myValue;
-      int reset = 0;
-      if (max > 0) {
-        double delta = getAbsoluteDelta(view, event);
-        if (delta == 0.0D || !Double.isFinite(delta)) return false;
-        // remove fractional part if a scrolling direction is changed
-        int direction = delta < 0.0D ? -1 : 1;
-        if (direction != myDirection) myAccumulator = myValue;
-        myDirection = direction;
-        // add the specified delta to the value
-        myAccumulator += delta;
-        myValue = (int)myAccumulator;
-        // bind calculated value to the range [0..max]
-        if (0 <= myValue && myValue <= max) return myValue != old;
-        if (myValue > max) reset = max; // reset accumulator to max value
-      }
-      set(reset); // reset accumulator if a value is out of the range
-      return reset != old;
     }
   }
 }

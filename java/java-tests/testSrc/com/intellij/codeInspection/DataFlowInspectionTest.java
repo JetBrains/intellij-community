@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCanBeNullDoesntImplyIsNull() throws Throwable { doTest(); }
   public void testAnnReport() throws Throwable { doTest(); }
 
+  public void testSuppressStaticFlags() throws Throwable { doTest(); }
+
   public void testBigMethodNotComplex() throws Throwable { doTest(); }
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
@@ -95,6 +97,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
+  public void testInternedStringConstants() { doTest(); }
   public void testDontSaveTypeValue() { doTest(); }
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
   public void testGreaterIsNotEquals() throws Throwable { doTest(); }
@@ -273,6 +276,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testManySequentialIfsNotComplex() { doTest(); }
   public void testManySequentialInstanceofsNotComplex() { doTest(); }
   public void testLongDisjunctionsNotComplex() { doTest(); }
+  public void testManyDistinctPairsNotComplex() { doTest(); }
   public void testWhileNotComplex() { doTest(); }
   public void testAssertTrueNotComplex() { doTest(); }
   public void testAssertThrowsAssertionError() { doTest(); }
@@ -442,6 +446,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       @Override
       public boolean isImplicitWrite(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
     }, myFixture.getTestRootDisposable());

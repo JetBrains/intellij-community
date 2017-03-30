@@ -143,9 +143,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return level;
   }
 
-  @Override
   public void readExternal(@NotNull Element element) {
-    super.readExternal(element);
+    mySerializer.readExternal(this, element);
 
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
@@ -208,7 +207,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return myDataHolder.read();
     }
 
-    Element element = super.writeScheme();
+    Element element = new Element(PROFILE);
+    writeExternal(element);
     if (isProjectLevel()) {
       element.setAttribute("version", "1.0");
     }
@@ -222,12 +222,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return element;
   }
 
-  @Override
   public void writeExternal(@NotNull Element element) {
     // must be first - compatibility
     element.setAttribute(VERSION_TAG, VALID_VERSION);
 
-    super.writeExternal(element);
+    mySerializer.writeExternal(this, element);
 
     synchronized (myLock) {
       if (!wasInitialized()) {
@@ -595,6 +594,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
+      @NotNull
       @Override
       public String[] getSourceToolNames() {
         return merger.getSourceToolNames();

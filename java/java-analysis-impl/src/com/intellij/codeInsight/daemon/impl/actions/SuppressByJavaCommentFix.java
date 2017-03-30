@@ -33,6 +33,10 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
     super(key, PsiStatement.class);
   }
 
+  public SuppressByJavaCommentFix(@NotNull String toolId) {
+    super(toolId, PsiStatement.class);
+  }
+
   @Override
   @Nullable
   public PsiElement getContainer(PsiElement context) {

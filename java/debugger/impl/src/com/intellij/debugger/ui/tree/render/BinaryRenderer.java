@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
 
 /**
@@ -35,42 +31,34 @@ public class BinaryRenderer extends NodeRendererImpl {
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException {
     Value value = valueDescriptor.getValue();
-    StringBuilder buf = new StringBuilder();
 
     if (value == null) {
       return "null";
     }
-    else {
-      String prefix = "0b";
-      buf.append(prefix);
-      if (value instanceof LongValue) {
-        buf.append(Long.toBinaryString(((LongValue)value).longValue()));
-      }
-      else if (value instanceof PrimitiveValue) {
-        buf.append(Integer.toBinaryString(((PrimitiveValue)value).intValue()));
-      }
-      else {
-        LOG.assertTrue(false);
-      }
-      // group by 8
-      for (int i = buf.length() - 8; i > prefix.length(); i -= 8) {
-        buf.insert(i, '_');
-      }
-      return buf.toString();
+
+    StringBuilder buf = new StringBuilder("0b");
+    int prefixLength = buf.length();
+    if (value instanceof ByteValue) {
+      buf.append(Integer.toBinaryString(0xff & ((ByteValue)value).byteValue()));
     }
-  }
+    else if (value instanceof ShortValue) {
+      buf.append(Integer.toBinaryString(0xffff & ((ShortValue)value).shortValue()));
+    }
+    else if (value instanceof IntegerValue) {
+      buf.append(Integer.toBinaryString(((PrimitiveValue)value).intValue()));
+    }
+    else if (value instanceof LongValue) {
+      buf.append(Long.toBinaryString(((LongValue)value).longValue()));
+    }
+    else {
+      LOG.error("Unsupported value " + value);
+    }
 
-  @Override
-  public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {}
-
-  @Override
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return null;
-  }
-
-  @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return false;
+    // group by 8
+    for (int i = buf.length() - 8; i > prefixLength; i -= 8) {
+      buf.insert(i, '_');
+    }
+    return buf.toString();
   }
 
   @Override

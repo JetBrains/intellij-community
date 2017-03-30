@@ -36,7 +36,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
                              MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW,
                              MainVcsLogUiProperties.SHOW_TAG_NAMES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
-                             MainVcsLogUiProperties.TEXT_FILTER_REGEX);
+                             MainVcsLogUiProperties.TEXT_FILTER_REGEX,
+                             CommonUiProperties.COLUMN_ORDER);
   private final Set<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
@@ -52,6 +53,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public boolean SHOW_TAG_NAMES = false;
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
     public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
+    public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();
   }
 
   @NotNull
@@ -86,6 +88,11 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (TEXT_FILTER_REGEX.equals(property)) {
       return (T)Boolean.valueOf(getTextFilterSettings().REGEX);
     }
+    else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+      List<Integer> order = getState().COLUMN_ORDER;
+      if (order == null) order = ContainerUtil.newArrayList();
+      return (T)order;
+    }
     else if (property instanceof VcsLogHighlighterProperty) {
       Boolean result = getState().HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
       if (result == null) return (T)Boolean.TRUE;
@@ -99,6 +106,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> void set(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property, @NotNull T value) {
     if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
@@ -124,6 +132,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
     else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
       getTextFilterSettings().MATCH_CASE = (boolean)(Boolean)value;
+    }
+    else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+      getState().COLUMN_ORDER = (List<Integer>)value;
     }
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
@@ -264,6 +275,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     public abstract void onColumnWidthChanged(int column);
 
+    public abstract void onColumnOrderChanged();
+
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
@@ -286,6 +299,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       }
       else if (TEXT_FILTER_REGEX.equals(property) || TEXT_FILTER_MATCH_CASE.equals(property)) {
         onTextFilterSettingsChanged();
+      }
+      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+        onColumnOrderChanged();
       }
       else if (property instanceof VcsLogHighlighterProperty) {
         onHighlighterChanged();

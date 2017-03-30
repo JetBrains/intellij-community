@@ -44,7 +44,7 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element);
+    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, myRootSchema);
     if (walker == null) return null;
 
     if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) {
@@ -55,7 +55,7 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
         if (value instanceof JsonObject) {
           final JsonProperty description = ((JsonObject)value).findProperty("description");
           if (description != null && description.getValue() instanceof JsonStringLiteral) {
-            return StringUtil.unquoteString(description.getValue().getText());
+            return StringUtil.escapeXml(StringUtil.unquoteString(description.getValue().getText()));
           }
         }
         return null;
@@ -70,6 +70,22 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
                           @NotNull VirtualFile schemaFile,
                           @NotNull List<JsonSchemaWalker.Step> steps) {
         result.set(schema.getDescription());
+      }
+
+      @Override
+      public void oneOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        //todo?
+      }
+
+      @Override
+      public void anyOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        //todo?
       }
     }, myRootSchema, mySchemaFile);
 

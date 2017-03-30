@@ -190,6 +190,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     }
 
     @Override
+    public void onColumnOrderChanged() {
+      myMainFrame.getGraphTable().onColumnOrderSettingChanged();
+    }
+
+    @Override
     public void onTextFilterSettingsChanged() {
       applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
     }

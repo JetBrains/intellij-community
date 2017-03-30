@@ -440,6 +440,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
 
     final XmlFile file = XmlUtil.getContainingFile(this);
+    if (file == null) return null;
     final PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
     if (psiFile instanceof XmlFile) {
       return (XmlFile)psiFile;

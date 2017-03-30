@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
@@ -37,7 +38,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,8 +51,10 @@ import java.util.List;
  */
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "unused"})
   public boolean m_ignoreJavadoc; // left here to prevent changes to project files.
+
+  public boolean ignoreInModuleStatements = true;
 
   @Override
   @NotNull
@@ -65,6 +70,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor2");
     }
     return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor1");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.in.module.statements.option"), this, "ignoreInModuleStatements");
   }
 
   @Override
@@ -179,16 +190,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
-    return !"module-info.java".equals(file.getName());
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryFullyQualifiedNameVisitor();
   }
 
-  private static class UnnecessaryFullyQualifiedNameVisitor extends BaseInspectionVisitor {
+  private class UnnecessaryFullyQualifiedNameVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -235,6 +241,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
+      if (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
+        return;
+      }
       final List<PsiJavaCodeReferenceElement> references = new ArrayList<>(2);
       references.add(reference);
       if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
@@ -264,7 +273,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private static void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
+    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
       while (rParent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;
@@ -275,16 +284,16 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         rParent = rParent.getParent();
       }
     }
-  }
 
-  private static boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
-    if ("package-info.java".equals(javaFile.getName())) {
-      return true;
+    private boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
+      if ("package-info.java".equals(javaFile.getName())) {
+        return true;
+      }
+      final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+      if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
+        return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
+      }
+      return javaSettings.useFqNamesInJavadocAlways();
     }
-    final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
-    if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
-      return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
-    }
-    return javaSettings.useFqNamesInJavadocAlways();
   }
 }

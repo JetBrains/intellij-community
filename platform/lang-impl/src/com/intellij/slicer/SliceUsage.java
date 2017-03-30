@@ -35,8 +35,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
 
-  public SliceUsage(@NotNull PsiElement element,
-                    @NotNull SliceUsage parent) {
+  public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     super(new UsageInfo(element));
     myParent = parent;
     params = parent.params;
@@ -51,12 +50,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   public void processChildren(@NotNull Processor<SliceUsage> processor) {
-    final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        return getElement();
-      }
-    });
+    final PsiElement element = ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)this::getElement);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();
 
@@ -97,5 +91,5 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   }
 
   @NotNull
-  protected  abstract  SliceUsage copy();
+  protected abstract SliceUsage copy();
 }

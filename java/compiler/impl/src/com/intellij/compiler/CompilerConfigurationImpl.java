@@ -355,18 +355,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       throw new MalformedPatternException(ex);
     }
   }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void projectClosed() {
-  }
-
+  
   public JavacCompiler getJavacCompiler() {
     createCompilers();
     return JAVAC_EXTERNAL_BACKEND;

@@ -105,7 +105,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     Ref<Boolean> updated = Ref.create(false);
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
       VirtualFileManager.VFS_CHANGES,
-      new BulkFileListener.Adapter() {
+      new BulkFileListener() {
         @Override
         public void before(@NotNull List<? extends VFileEvent> events) {
           for (VFileEvent event : events) {

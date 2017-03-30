@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef/";
 
   @Override
   protected void setUp() throws Exception {
@@ -41,509 +40,135 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testIDEA93587() throws Exception {
-    doTest(true);
-  }
-  
-  public void testIDEA106522() throws Exception {
-    doTest();
-  }
-  
-  public void testIDEA112574() throws Exception {
-    doTest();
-  }
-  
-  public void testIDEA113558() throws Exception {
-    doTest(true);
-  }
-
-  public void testAfterDistinctOps() throws Exception {
-    doTest(true);
-  }
-
-  public void testUncheckedWarningWithRawSecondSearchAndMethodFromSuper() throws Exception {
-    doTest(true);
-  }
-
-  public void testWildcardReturns() throws Exception {
-    doTest(false);
-  }
-
-  public void testInexactMethodReferencePrimitiveBound() throws Exception {
-    doTest(false);
-  }
-
-  public void testAfterCollectors1() throws Exception {
-    doTest(false);
-  }
-
-  public void testAfterCollectors2() throws Exception {
-    doTest(false);
-  }
-
-  public void testIDEA116359() throws Exception {
-    doTest(false);
-  }
-
-  public void testAfterSliceOps() throws Exception {
-    doTest(false);
-  }
-
-  public void testAssertNumberOfParameters() throws Exception {
-    doTest(false);
-  }
-
-  public void testGenericArrayCreation() throws Exception {
-    doTest(true);
-  }
-
-  public void testWildcardsInClassTypeQualifier() throws Exception {
-    doTest();
-  }
-
-  public void testRawConstructorReferenceWithTypeParams() throws Exception {
-    doTest();
-  }
-
-  public void testCheckReturnTypeForExactRefs() throws Exception {
-    doTest();
-  }
-
-  public void testPotentialApplicability() throws Exception {
-    doTest();
-  }
-
-  public void testLiftMethodReferenceTypeParams() throws Exception {
-    doTest();
-  }
-
-  public void testHighlightReferenceWhenContradictBoundsAreInferred() throws Exception {
-    doTest();
-  }
-
-  public void testAfterBounds() throws Exception {
-    doTest();
-  }
-
-  public void testIncludeContainingClassParamsInResolveSetForConstructorRefs() throws Exception {
-    doTest();
-  }
-
-  public void testContainingClassTypeParamsForBounds() throws Exception {
-    doTest();
-  }
-
-  public void testCapturingReturnValue() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA117311() throws Exception {
-    doTest();
-  }
-
-  public void testDeepWildcardEliminating() throws Exception {
-    doTest();
-  }
-
-  public void _testLambdaExercise() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA118437() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA113297() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA120376() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA120370() throws Exception {
-    doTest();
-  }
-
-  public void testExcludeContainingClassTypeParamsFromInference() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureTypeParametersAreNotModifiedDuringGroundTypeEvaluation() throws Exception {
-    doTest();
-  }
-
-  public void testIncorrectArrayCreationSignature() throws Exception {
-    doTest();
-  }
-
-  public void testRawTargetType() throws Exception {
-    doTest();
-  }
-
-  public void testReturnTypeCheckForRawReceiver() throws Exception {
-    doTest();
-  }
-
-  public void testStaticNonStaticReferenceTypeAmbiguity() throws Exception {
-    doTest();
-  }
-
-  public void testSuperClassPotentiallyApplicableMembers() throws Exception {
-    doTest();
-  }
-
-  public void testExactMethodReferencePertinentToApplicabilityCheck() throws Exception {
-    doTest();
-  }
-
-  public void testAmbiguityVarargs() throws Exception {
-    doTest();
-  }
-
-  public void testRawInnerClassQualifier() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122100() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122509() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122681() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA112191() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA122018comment() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123223() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123248() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123366() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123366comment() throws Exception {
-    doTest();
-  }
-
-  public void testFromReferenceWithTypeArgs() throws Exception {
-    doTest();
-  }
-
-  public void testRefOnStaticInterfaceMethod() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedMethodReference() throws Exception {
-    doTest(true);
-  }
-
-  public void testIDEA124148() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA124613() throws Exception {
-    doTest();
-  }
-
-  public void testCollectingApplicabilityConstraints() {
-    doTest();
-  }
-
-  public void testIDEA126062() {
-    doTest();
-  }
-
-  public void testRejectReceiverTypesForConstructorRefs() {
-    doTest();
-  }
-
-  public void testEnumValuesMethod() throws Exception {
-    doTest();
-  }
-
-  public void testMissedApplicableMemberContainingClassSubstitution() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA126969() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127506() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127275() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127275_() throws Exception {
-    doTest();
-  }
-
-  public void testUnresolvedMethodReference() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA128534() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA128712() throws Exception {
-    doTest();
-  }
-
-  public void testAdditionalConstraints3Level() throws Exception {
-    doTest();
-  }
-
-  public void testWildcardParametrization() throws Exception {
-    doTest();
-  }
-
-  public void testReceiverTypeSubstitution() throws Exception {
-    doTest();
-  }
-
-  public void testTypeParametersInitOrder() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA132560() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureThatCapturedWildcardsAreNotOpenWithoutAnyReason() throws Exception {
-    doTest();
-  }
-
-  public void testVarargsParametersCountComparison() throws Exception {
-    doTest(true);
-  }
-
-  public void testPotentialCompatibilityWithInvalidShape() throws Exception {
-    doTest(true);
-  }
-
-  public void testSiteSubstitutionOfNonReceiverReference() throws Exception {
-    doTest();
-  }
-
-  public void testRawReferenceTypeWithReceiver() throws Exception {
-    doTest();
-  }
-
-  public void testMethodReferenceTypeArgumentsApplicability() throws Exception {
-    doTest();
-  }
-
-  public void testTypeNameInterfaceSuperMethodReferenceApplicability() throws Exception {
-    doTest();
-  }
-
-  public void testNewParameterizedReferenceOnRawType() throws Exception {
-    doTest();
-  }
-
-  public void testArrayTypeNewReifiable() throws Exception {
-    doTest();
-  }
-
-  public void testReturnTypeApplocabilityIfCapturedWildcardInferred() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA133935() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA132379() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA136581() throws Exception {
-    doTest();
-  }
-
-  public void testSuperSubstitutorInNormalCase() throws Exception {
-    doTest(false);
-  }
-
-  public void testSecondSearchIfFirstParameterIsASubtypeOfReferenceTypeFromExpressionDeclaration() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureNotResolvedMethodRefsAreNotMarkedAsExact() throws Exception {
-    doTest();
-  }
-
-  public void testReceiverSubstitutorForExactReferenceInMethodReferenceConstraint() throws Exception {
-    doTest();
-  }
-
-  public void testSkipCheckedExceptionsHandledByInterfaceMethod() throws Exception {
-    doTest();
-  }
-
-  public void testConstraintsFromNonRawReceiverType() throws Exception {
-    doTest();
-  }
-
-  public void testSubstitutionForReturnTypeConstraintsForTargetGenericMethod() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA140586() throws Exception {
-    doTest();
-  }
-
-  public void testUnhandledExceptionsInQualifier() throws Exception {
-    doTest();
-  }
-
-  public void testRawClassTypeOnConstructorReference() throws Exception {
-    doTest();
-  }
-
-  public void testIncompleteCodeWithMethodReferenceOverLambdaParameter() throws Exception {
-    doTest();
-  }
-
-  public void testIncompleteMethodReferenceWithUncheckedWarningInspection() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedReturnTypeOfMethodReference() throws Exception {
-    doTest();
-  }
-
-  public void testEnumConstantsAsContext() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA138752() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA136708() throws Exception {
-    doTest();
-  }
-
-  public void testContainingClassTypeParametersShouldNotBeInferredDuringMethodReferenceProcessing() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA147511() throws Exception {
-    doTest();
-  }
-
-  public void testRawInferredTypeCheck() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA147873() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA148553() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA148093() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA148841() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedTypesOfImplicitParameterTypes() throws Exception {
-    doTest();
-  }
-
-  public void testApplicabilityConflictMessage() throws Exception {
-    doTest();
-  }
-
-  public void testQualifierOfCapturedWildcardType() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedWildcardInReceiverPosition() throws Exception {
-    doTest();
-  }
-
-  public void testGetClassReturnTypeInMethodReference() throws Exception {
-    doTest();
-  }
-
-  public void testCaptureTypeOfNewArrayExpression() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA152659() throws Exception {
-    doTest();
-  }
-
-  public void testFreshVariableLowerBoundsDuringSuptypeChecks() throws Exception {
-    doTest();
-  }
-
-  public void testTypeParameterInstantiation() throws Exception {
-    doTest();
-  }
-
-  public void testIgnoreForeignVariables() throws Exception {
-    doTest();
-  }
-
-  public void testChainedCallsWithMethodReferenceInside() throws Exception {
-    doTest();
-  }
-
-  public void testApplicabilityErrorVisibleWhenConstraintsFromFunctionalExpressionsProvideValidSubstitutor() {
-    doTest();
-  }
-
-  public void testMethodReferenceSecondSearchDontInfluenceTopSiteSubstitutor() throws Exception {
-    doTest();
-  }
-
-  public void testCheckReturnTypeOfMethodReferenceWhenTheRestIsGood() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureResolveToClassInConstructorRefs() throws Exception {
-    doTest();
-  }
-
-  public void testReturnTypeCompatibilityConstraintForSecondSearchCase() throws Exception {
-    doTest();
-  }
-
-  public void testNonExactMethodReferenceOnRawClassType() throws Exception {
-    doTest();
-  }
-
-  public void testMethodREfToContainingMethodWithGenericParam() throws Exception {
-    doTest();
-  }
+  public void testIDEA93587() { doTest(true); }
+
+  public void testIDEA106522() { doTest(); }
+  public void testIDEA112574() { doTest(); }
+  public void testIDEA113558() { doTest(true); }
+  public void testAfterDistinctOps() { doTest(true); }
+  public void testUncheckedWarningWithRawSecondSearchAndMethodFromSuper() { doTest(true); }
+  public void testWildcardReturns() { doTest(false); }
+  public void testInexactMethodReferencePrimitiveBound() { doTest(false); }
+  public void testAfterCollectors1() { doTest(false); }
+  public void testAfterCollectors2() { doTest(false); }
+  public void testIDEA116359() { doTest(false); }
+  public void testAfterSliceOps() { doTest(false); }
+  public void testAssertNumberOfParameters() { doTest(false); }
+  public void testGenericArrayCreation() { doTest(true); }
+  public void testWildcardsInClassTypeQualifier() { doTest(); }
+  public void testRawConstructorReferenceWithTypeParams() { doTest(); }
+  public void testCheckReturnTypeForExactRefs() { doTest(); }
+  public void testPotentialApplicability() { doTest(); }
+  public void testLiftMethodReferenceTypeParams() { doTest(); }
+  public void testHighlightReferenceWhenContradictBoundsAreInferred() { doTest(); }
+  public void testAfterBounds() { doTest(); }
+  public void testIncludeContainingClassParamsInResolveSetForConstructorRefs() { doTest(); }
+  public void testContainingClassTypeParamsForBounds() { doTest(); }
+  public void testCapturingReturnValue() { doTest(); }
+  public void testIDEA117311() { doTest(); }
+  public void testDeepWildcardEliminating() { doTest(); }
+  //public void testLambdaExercise() { doTest(); }
+  public void testIDEA118437() { doTest(); }
+  public void testIDEA113297() { doTest(); }
+  public void testIDEA120376() { doTest(); }
+  public void testIDEA120370() { doTest(); }
+  public void testExcludeContainingClassTypeParamsFromInference() { doTest(); }
+  public void testEnsureTypeParametersAreNotModifiedDuringGroundTypeEvaluation() { doTest(); }
+  public void testIncorrectArrayCreationSignature() { doTest(); }
+  public void testRawTargetType() { doTest(); }
+  public void testReturnTypeCheckForRawReceiver() { doTest(); }
+  public void testStaticNonStaticReferenceTypeAmbiguity() { doTest(); }
+  public void testSuperClassPotentiallyApplicableMembers() { doTest(); }
+  public void testExactMethodReferencePertinentToApplicabilityCheck() { doTest(); }
+  public void testAmbiguityVarargs() { doTest(); }
+  public void testRawInnerClassQualifier() { doTest(); }
+  public void testIDEA122100() { doTest(); }
+  public void testIDEA122509() { doTest(); }
+  public void testIDEA122681() { doTest(); }
+  public void testIDEA112191() { doTest(); }
+  public void testIDEA122018comment() { doTest(); }
+  public void testIDEA123223() { doTest(); }
+  public void testIDEA123248() { doTest(); }
+  public void testIDEA123366() { doTest(); }
+  public void testIDEA123366comment() { doTest(); }
+  public void testFromReferenceWithTypeArgs() { doTest(); }
+  public void testRefOnStaticInterfaceMethod() { doTest(); }
+  public void testUncheckedMethodReference() { doTest(true); }
+  public void testIDEA124148() { doTest(); }
+  public void testIDEA124613() { doTest(); }
+  public void testCollectingApplicabilityConstraints() { doTest(); }
+  public void testIDEA126062() { doTest(); }
+  public void testRejectReceiverTypesForConstructorRefs() { doTest(); }
+  public void testEnumValuesMethod() { doTest(); }
+  public void testMissedApplicableMemberContainingClassSubstitution() { doTest(); }
+  public void testIDEA126969() { doTest(); }
+  public void testIDEA127506() { doTest(); }
+  public void testIDEA127275() { doTest(); }
+  public void testIDEA127275_() { doTest(); }
+  public void testUnresolvedMethodReference() { doTest(); }
+  public void testIDEA128534() { doTest(); }
+  public void testIDEA128712() { doTest(); }
+  public void testAdditionalConstraints3Level() { doTest(); }
+  public void testWildcardParametrization() { doTest(); }
+  public void testReceiverTypeSubstitution() { doTest(); }
+  public void testTypeParametersInitOrder() { doTest(); }
+  public void testIDEA132560() { doTest(); }
+  public void testEnsureThatCapturedWildcardsAreNotOpenWithoutAnyReason() { doTest(); }
+  public void testVarargsParametersCountComparison() { doTest(true); }
+  public void testPotentialCompatibilityWithInvalidShape() { doTest(true); }
+  public void testSiteSubstitutionOfNonReceiverReference() { doTest(); }
+  public void testRawReferenceTypeWithReceiver() { doTest(); }
+  public void testMethodReferenceTypeArgumentsApplicability() { doTest(); }
+  public void testTypeNameInterfaceSuperMethodReferenceApplicability() { doTest(); }
+  public void testNewParameterizedReferenceOnRawType() { doTest(); }
+  public void testArrayTypeNewReifiable() { doTest(); }
+  public void testReturnTypeApplicabilityIfCapturedWildcardInferred() { doTest(); }
+  public void testIDEA133935() { doTest(); }
+  public void testIDEA132379() { doTest(); }
+  public void testIDEA136581() { doTest(); }
+  public void testSuperSubstitutorInNormalCase() { doTest(false); }
+  public void testSecondSearchIfFirstParameterIsASubtypeOfReferenceTypeFromExpressionDeclaration() { doTest(); }
+  public void testEnsureNotResolvedMethodRefsAreNotMarkedAsExact() { doTest(); }
+  public void testReceiverSubstitutorForExactReferenceInMethodReferenceConstraint() { doTest(); }
+  public void testSkipCheckedExceptionsHandledByInterfaceMethod() { doTest(); }
+  public void testConstraintsFromNonRawReceiverType() { doTest(); }
+  public void testSubstitutionForReturnTypeConstraintsForTargetGenericMethod() { doTest(); }
+  public void testIDEA140586() { doTest(); }
+  public void testUnhandledExceptionsInQualifier() { doTest(); }
+  public void testRawClassTypeOnConstructorReference() { doTest(); }
+  public void testIncompleteCodeWithMethodReferenceOverLambdaParameter() { doTest(); }
+  public void testIncompleteMethodReferenceWithUncheckedWarningInspection() { doTest(); }
+  public void testCapturedReturnTypeOfMethodReference() { doTest(); }
+  public void testEnumConstantsAsContext() { doTest(); }
+  public void testIDEA138752() { doTest(); }
+  public void testIDEA136708() { doTest(); }
+  public void testContainingClassTypeParametersShouldNotBeInferredDuringMethodReferenceProcessing() { doTest(); }
+  public void testIDEA147511() { doTest(); }
+  public void testRawInferredTypeCheck() { doTest(); }
+  public void testIDEA147873() { doTest(); }
+  public void testIDEA148553() { doTest(); }
+  public void testIDEA148093() { doTest(); }
+  public void testIDEA148841() { doTest(); }
+  public void testCapturedTypesOfImplicitParameterTypes() { doTest(); }
+  public void testApplicabilityConflictMessage() { doTest(); }
+  public void testQualifierOfCapturedWildcardType() { doTest(); }
+  public void testCapturedWildcardInReceiverPosition() { doTest(); }
+  public void testGetClassReturnTypeInMethodReference() { doTest(); }
+  public void testCaptureTypeOfNewArrayExpression() { doTest(); }
+  public void testIDEA152659() { doTest(); }
+  public void testFreshVariableLowerBoundsDuringSuperTypeChecks() { doTest(); }
+  public void testTypeParameterInstantiation() { doTest(); }
+  public void testIgnoreForeignVariables() { doTest(); }
+  public void testChainedCallsWithMethodReferenceInside() { doTest(); }
+  public void testApplicabilityErrorVisibleWhenConstraintsFromFunctionalExpressionsProvideValidSubstitutor() { doTest(); }
+  public void testMethodReferenceSecondSearchDontInfluenceTopSiteSubstitutor() { doTest(); }
+  public void testCheckReturnTypeOfMethodReferenceWhenTheRestIsGood() { doTest(); }
+  public void testEnsureResolveToClassInConstructorRefs() { doTest(); }
+  public void testReturnTypeCompatibilityConstraintForSecondSearchCase() { doTest(); }
+  public void testMethodInInheritorFoundBySecondSearch() { doTest(); }
+  public void testNonExactMethodReferenceOnRawClassType() { doTest(); }
+  public void testMethodREfToContainingMethodWithGenericParam() { doTest(); }
+  public void testDistinguishCapturedWildcardsByDifferentParameters() throws Exception { doTest(); }
 
   private void doTest() {
     doTest(false);
@@ -551,6 +176,6 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + getTestName(false) + ".java", warnings, false);
   }
 }

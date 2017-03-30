@@ -1,4 +1,4 @@
-// "Extract variable 'arr' to separate mapping method" "true"
+// "Extract variable 'arr' to 'mapToObj' operation" "true"
 import java.util.*;
 import java.util.stream.*;
 

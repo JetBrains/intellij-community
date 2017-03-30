@@ -39,7 +39,7 @@ import java.awt.event.MouseWheelEvent;
  *
  * @see #createUI(JComponent)
  */
-public class JBScrollBar extends JScrollBar implements TopComponent, Interpolable, FinelyAdjustable {
+public class JBScrollBar extends JScrollBar implements TopComponent, Interpolable {
   /**
    * This key defines a region painter, which is used by the custom ScrollBarUI
    * to draw additional paintings (i.e. error stripes) on the scrollbar's track.
@@ -50,7 +50,8 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   private static final double THRESHOLD = 1D + 1E-5D;
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
-  private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
+  private double myFractionalRemainder;
+  private boolean wasPositiveDelta;
   private boolean isUnitIncrementSet;
   private boolean isBlockIncrementSet;
 
@@ -176,17 +177,12 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   @Override
   public void setCurrentValue(int value) {
     super.setValue(value);
-    myAdjuster.reset();
+    myFractionalRemainder = 0.0;
   }
 
   @Override
   public int getTargetValue() {
     return myInterpolator.getTarget();
-  }
-
-  @Override
-  public void adjustValue(double delta) {
-    myAdjuster.adjustValue(delta);
   }
 
   /**
@@ -204,9 +200,26 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     if (!Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
-    double minDelta = (double)getMinimum() - value;
-    double maxDelta = (double)getMaximum() - getVisibleAmount() - value;
-    adjustValue(Math.max(minDelta, Math.min(maxDelta, delta)));
+    double minDelta = (double)(getMinimum() - value);
+    double maxDelta = (double)(getMaximum() - getVisibleAmount() - value);
+    double deltaAdjusted = Math.max(minDelta, Math.min(maxDelta, delta));
+    if (deltaAdjusted != 0.0) {
+      boolean isPositiveDelta = deltaAdjusted > 0.0;
+      if (wasPositiveDelta != isPositiveDelta) {
+        // reset accumulator if scrolling direction is changed
+        wasPositiveDelta = isPositiveDelta;
+        myFractionalRemainder = 0.0;
+      }
+      deltaAdjusted += myFractionalRemainder;
+      int valueAdjusted = (int)deltaAdjusted;
+      if (valueAdjusted == 0) {
+        myFractionalRemainder = deltaAdjusted;
+      }
+      else {
+        myFractionalRemainder = deltaAdjusted - (double)valueAdjusted;
+        setValue(value + valueAdjusted);
+      }
+    }
     event.consume();
     return true;
   }

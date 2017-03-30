@@ -81,7 +81,8 @@ public class GitFetcher {
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
-    repository.getRepositoryFiles().refresh(false);
+    repository.update();
+    repository.getRepositoryFiles().refreshNonTrackedData();
     return fetchResult;
   }
 

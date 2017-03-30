@@ -33,4 +33,9 @@ public class PatchSyntaxException extends Exception {
   public int getLine() {
     return myLine;
   }
+
+  @Override
+  public String getMessage() {
+    return String.format(super.getMessage() + " (line:%d)", myLine);
+  }
 }

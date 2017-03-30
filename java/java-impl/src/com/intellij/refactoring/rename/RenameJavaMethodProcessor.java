@@ -381,4 +381,23 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   public void setToSearchForTextOccurrences(final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = enabled;
   }
+
+  @Override
+  public UsageInfo createUsageInfo(@NotNull PsiElement element, PsiReference ref, PsiElement referenceElement) {
+    return new MoveRenameUsageInfo(referenceElement, ref,
+                                   ref.getRangeInElement().getStartOffset(),
+                                   ref.getRangeInElement().getEndOffset(),
+                                   element,
+                                   ref.resolve() == null && !(ref instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref).multiResolve(true).length > 0)) {
+      @Override
+      public boolean equals(Object o) {
+        return super.equals(o) && o instanceof MoveRenameUsageInfo && element.equals(((MoveRenameUsageInfo)o).getReferencedElement());
+      }
+
+      @Override
+      public int hashCode() {
+        return 29 * super.hashCode() + element.hashCode();
+      }
+    };
+  }
 }

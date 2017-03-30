@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.testFramework.vcs.FileBasedTest;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
@@ -31,7 +30,6 @@ import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.ISVNSession;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,45 +73,29 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
   public void testCancel() throws Exception {
     final SvnIdeaRepositoryPoolManager poolManager = new SvnIdeaRepositoryPoolManager(true, null, null, 1, 1);
     final SVNURL url = SVNURL.parseURIEncoded("http://a.b.c");
-    poolManager.setCreator(new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
-      @Override
-      public SVNRepository convert(SVNURL svnurl) throws SVNException {
-        return new MockSvnRepository(svnurl, ISVNSession.DEFAULT);
-      }
-    });
+    poolManager.setCreator(svnurl -> new MockSvnRepository(svnurl, ISVNSession.DEFAULT));
     final MockSvnRepository repository1 = (MockSvnRepository)poolManager.createRepository(url, true);
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    poolManager.setCreator(new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
-      @Override
-      public SVNRepository convert(SVNURL svnurl) throws SVNException {
-        semaphore.waitFor();
-        return new MockSvnRepository(svnurl, ISVNSession.DEFAULT);
-      }
+    poolManager.setCreator(svnurl -> {
+      semaphore.waitFor();
+      return new MockSvnRepository(svnurl, ISVNSession.DEFAULT);
     });
     final SVNException[] exc = new SVNException[1];
-    final Runnable target = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final MockSvnRepository repository = (MockSvnRepository)poolManager.createRepository(url, true);
-          repository.fireConnectionClosed();
-        }
-        catch (SVNException e) {
-          e.printStackTrace();
-          exc[0] = e;
-        }
+    final Runnable target = () -> {
+      try {
+        final MockSvnRepository repository = (MockSvnRepository)poolManager.createRepository(url, true);
+        repository.fireConnectionClosed();
+      }
+      catch (SVNException e) {
+        e.printStackTrace();
+        exc[0] = e;
       }
     };
     final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    Thread thread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(target, indicator);
-      }
-    }, "svn cache repo");
+    Thread thread = new Thread(() -> ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(target, indicator), "svn cache repo");
     thread.start();
 
     TimeoutUtil.sleep(10);
@@ -156,12 +138,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
   }
 
   private void testBigFlow(final SvnIdeaRepositoryPoolManager poolManager, boolean disposeAfter) throws SVNException, InterruptedException {
-    poolManager.setCreator(new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
-      @Override
-      public SVNRepository convert(SVNURL svnurl) throws SVNException {
-        return new MockSvnRepository(svnurl, ISVNSession.DEFAULT);
-      }
-    });
+    poolManager.setCreator(svnurl -> new MockSvnRepository(svnurl, ISVNSession.DEFAULT));
     final SVNURL url = SVNURL.parseURIEncoded("http://a.b.c");
     final Random random = new Random(System.currentTimeMillis() & 0x00ff);
     final int[] cnt = new int[1];
@@ -169,24 +146,21 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     final SVNException[] exc = new SVNException[1];
     List<Thread> threads = new ArrayList<>();
     for (int i = 0; i < 25; i++) {
-      Runnable target = new Runnable() {
-        @Override
-        public void run() {
-          MockSvnRepository repository = null;
-          try {
-            repository = (MockSvnRepository)poolManager.createRepository(url, true);
-          }
-          catch (SVNException e) {
-            e.printStackTrace();
-            exc[0] = e;
-            return;
-          }
-          repository.fireConnectionOpened();
-          TimeoutUtil.sleep(random.nextInt(10));
-          repository.fireConnectionClosed();
-          synchronized (cnt) {
-            -- cnt[0];
-          }
+      Runnable target = () -> {
+        MockSvnRepository repository = null;
+        try {
+          repository = (MockSvnRepository)poolManager.createRepository(url, true);
+        }
+        catch (SVNException e) {
+          e.printStackTrace();
+          exc[0] = e;
+          return;
+        }
+        repository.fireConnectionOpened();
+        TimeoutUtil.sleep(random.nextInt(10));
+        repository.fireConnectionClosed();
+        synchronized (cnt) {
+          -- cnt[0];
         }
       };
       Thread thread = new Thread(target, "svn cache");

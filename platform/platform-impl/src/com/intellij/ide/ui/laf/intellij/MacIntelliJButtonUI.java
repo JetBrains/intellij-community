@@ -25,6 +25,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -72,8 +74,12 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         icon.paintIcon(b, g, x, y);
         x += icon.getIconWidth();
         int stop = w - (isFocused ? 0 : 2) - (getRightIcon(b).getIconWidth());
+
         Graphics gg = g.create(0, 0, w, h);
-        gg.setClip(x, y, stop - x, h);
+        Area area = new Area(new Rectangle2D.Double(x, y, stop - x, h));
+        area.intersect(new Area(gg.getClip()));
+        gg.setClip(area);
+
         icon = getMiddleIcon(b);
         while (x < stop) {
           icon.paintIcon(b, gg, x, y);

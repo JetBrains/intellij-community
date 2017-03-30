@@ -16,7 +16,7 @@ class a  {
   * @deprecated
   */
   a(int i,int j,int k) {
-     new <warning descr="'a(int, int, int)' is deprecated">a</warning>(k+i+j,<warning descr="'dep' is deprecated">dep</warning>,notdep);
+     new a(k+i+j,dep,notdep);
   }
 }
 
@@ -33,7 +33,7 @@ class b extends a {
   * @deprecated
   */
   b(int i) {
-    <warning descr="'a(int, int, int)' is deprecated">super</warning>(0,0,i);
+    super(0,0,i);
     System.out.print(i);
   }
 }

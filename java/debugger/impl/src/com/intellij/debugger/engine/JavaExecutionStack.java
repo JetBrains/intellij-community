@@ -236,6 +236,9 @@ public class JavaExecutionStack extends XExecutionStack {
             myContainer.addStackFrames(Collections.emptyList(), true);
             return;
           }
+          else {
+            ((JavaStackFrame)frame).setInsertCapturePoint(StackCapturingLineBreakpoint.getMatchingDisabledInsertionPoint(frameProxy));
+          }
         }
 
         myDebugProcess.getManagerThread().schedule(

@@ -40,7 +40,6 @@ import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -118,18 +117,15 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @NotNull
   private static InfoConsumer createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
                                                 @NotNull final Map<String, VirtualFile> fileMap) {
-    return new InfoConsumer() {
-      @Override
-      public void consume(Info info) throws SVNException {
-        if (info != null) {
-          VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
+    return info -> {
+      if (info != null) {
+        VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
 
-          if (file != null) {
-            revisionMap.put(file, getRevision(info));
-          }
-          else {
-            LOG.info("Could not find virtual file for path " + info.getFile().getAbsolutePath());
-          }
+        if (file != null) {
+          revisionMap.put(file, getRevision(info));
+        }
+        else {
+          LOG.info("Could not find virtual file for path " + info.getFile().getAbsolutePath());
         }
       }
     };

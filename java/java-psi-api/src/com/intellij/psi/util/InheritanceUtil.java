@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -131,13 +132,20 @@ public class InheritanceUtil {
 
   public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
                                                     PsiElement scope,
-                                                    final boolean isSuperClassAccepted,
+                                                    boolean isSuperClassAccepted,
+                                                    boolean isTypeParamsAccepted) {
+    return hasEnclosingInstanceInScope(aClass, scope, psiClass -> isSuperClassAccepted, isTypeParamsAccepted);
+  }
+
+  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
+                                                    PsiElement scope,
+                                                    Condition<PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
     while (place != null && place != aClass && !(place instanceof PsiFile)) {
       if (place instanceof PsiClass) {
-        if (isSuperClassAccepted) {
+        if (isSuperClassAccepted.value((PsiClass)place)) {
           if (isInheritorOrSelf((PsiClass)place, aClass, true)) return true;
         }
         else {

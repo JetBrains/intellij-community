@@ -16,8 +16,12 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,12 +31,21 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -42,6 +55,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +63,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -113,8 +129,8 @@ public class CaptureConfigurable implements SearchableConfigurable {
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> {
           try {
-            myTableModel.add(c.clone());
-            table.getSelectionModel().setSelectionInterval(table.getRowCount() - 1, table.getRowCount() - 1);
+            int idx = myTableModel.add(c.clone());
+            table.getSelectionModel().setSelectionInterval(idx, idx);
           }
           catch (CloneNotSupportedException ex) {
             LOG.error(ex);
@@ -123,10 +139,48 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
+    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected", "Enable Selected", PlatformIcons.SELECT_ALL_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = true);
+        table.repaint();
+      }
+    });
+    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected", "Disable Selected", PlatformIcons.UNSELECT_ALL_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = false);
+        table.repaint();
+      }
+    });
+
+    new DumbAwareAction("Toggle") {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() == 1);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = !c.myEnabled);
+        table.repaint();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
+
     decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return super.isFileVisible(file, showHiddenFiles) &&
@@ -141,19 +195,24 @@ public class CaptureConfigurable implements SearchableConfigurable {
         descriptor.setDescription("Please select a file to import.");
         descriptor.setTitle("Import Capture Points");
 
-        VirtualFile file = FileChooser.chooseFile(descriptor, e.getProject(), null);
-        if (file == null) return;
-        try {
-          Document document = JDOMUtil.loadDocument(file.getInputStream());
-          table.getSelectionModel().clearSelection();
-          int start = table.getRowCount();
-          List<Element> children = document.getRootElement().getChildren();
-          children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
-          table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
-        }
-        catch (Exception ex) {
-          final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+        VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
+        if (ArrayUtil.isEmpty(files)) return;
+
+        table.getSelectionModel().clearSelection();
+
+        for (VirtualFile file : files) {
+          try {
+            Document document = JDOMUtil.loadDocument(file.getInputStream());
+            List<Element> children = document.getRootElement().getChildren();
+            children.forEach(element -> {
+              int idx = myTableModel.addIfNeeded(XmlSerializer.deserialize(element, CapturePoint.class));
+              table.getSelectionModel().addSelectionInterval(idx, idx);
+            });
+          }
+          catch (Exception ex) {
+            final String msg = ex.getLocalizedMessage();
+            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          }
         }
       }
     });
@@ -214,7 +273,102 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     static final String[] COLUMN_NAMES =
       new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
-    List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    List<CapturePoint> myCapturePoints;
+
+    private MyTableModel() {
+      myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+      scanPoints();
+    }
+
+    private void scanPoints() {
+      if (Registry.is("debugger.capture.points.annotations")) {
+        List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
+        scanPointsInt(true, capturePointsFromAnnotations);
+        scanPointsInt(false, capturePointsFromAnnotations);
+
+        capturePointsFromAnnotations.forEach(this::addIfNeeded);
+      }
+    }
+
+    private static void scanPointsInt(boolean capture, List<CapturePoint> capturePointsFromAnnotations) {
+      try {
+        String annotationName = (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
+        Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+        GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
+        if (annotationClass != null) {
+          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class).forEach(e -> {
+            if (e instanceof PsiMethod) {
+              addCapturePointIfNeeded(e, (PsiMethod)e, annotationName, "this", capture, capturePointsFromAnnotations);
+            }
+            else if (e instanceof PsiParameter) {
+              PsiParameter psiParameter = (PsiParameter)e;
+              PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
+              addCapturePointIfNeeded(psiParameter, psiMethod, annotationName,
+                                      DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
+                                      capture, capturePointsFromAnnotations);
+            }
+          });
+        }
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
+                                                PsiMethod psiMethod,
+                                                String annotationName,
+                                                String defaultExpression,
+                                                boolean capture,
+                                                List<CapturePoint> capturePointsFromAnnotations) {
+      CapturePoint capturePoint = new CapturePoint();
+      capturePoint.myEnabled = false;
+      if (capture) {
+        capturePoint.myClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+      else {
+        capturePoint.myInsertClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myInsertMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+
+      PsiModifierList modifierList = psiElement.getModifierList();
+      if (modifierList != null) {
+        PsiAnnotation annotation = modifierList.findAnnotation(annotationName);
+        if (annotation != null) {
+          PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+          String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
+          if (StringUtil.isEmpty(keyExpression)) {
+            keyExpression = defaultExpression;
+          }
+          if (capture) {
+            capturePoint.myCaptureKeyExpression = keyExpression;
+          }
+          else {
+            capturePoint.myInsertKeyExpression = keyExpression;
+          }
+
+          PsiAnnotationMemberValue groupValue = annotation.findAttributeValue("group");
+          String group = groupValue != null ? StringUtil.unquoteString(groupValue.getText()) : null;
+          if (!StringUtil.isEmpty(group)) {
+            for (CapturePoint capturePointsFromAnnotation : capturePointsFromAnnotations) {
+              if (StringUtil.startsWith(group, capturePointsFromAnnotation.myClassName) &&
+                  StringUtil.endsWith(group, capturePointsFromAnnotation.myMethodName)) {
+                capturePointsFromAnnotation.myInsertClassName = capturePoint.myInsertClassName;
+                capturePointsFromAnnotation.myInsertMethodName = capturePoint.myInsertMethodName;
+                capturePointsFromAnnotation.myInsertKeyExpression = capturePoint.myInsertKeyExpression;
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      capturePointsFromAnnotations.add(capturePoint);
+    }
 
     public String getColumnName(int column) {
       return COLUMN_NAMES[column];
@@ -293,10 +447,30 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return myCapturePoints.get(idx);
     }
 
-    public void add(CapturePoint p) {
+    int add(CapturePoint p) {
       myCapturePoints.add(p);
       int lastRow = getRowCount() - 1;
       fireTableRowsInserted(lastRow, lastRow);
+      return lastRow;
+    }
+
+    int addIfNeeded(CapturePoint p) {
+      CapturePoint clone = p;
+      try {
+        clone = p.clone();
+        clone.myEnabled = !clone.myEnabled;
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+      }
+      int idx = myCapturePoints.indexOf(p);
+      if (idx < 0) {
+        idx = myCapturePoints.indexOf(clone);
+      }
+      if (idx < 0) {
+        idx = add(p);
+      }
+      return idx;
     }
 
     public void addRow() {
@@ -325,6 +499,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    myTableModel.scanPoints();
     myTableModel.fireTableDataChanged();
   }
 

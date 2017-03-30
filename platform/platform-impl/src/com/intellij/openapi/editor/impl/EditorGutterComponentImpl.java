@@ -25,6 +25,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
@@ -65,7 +66,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
-import gnu.trove.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntFunction;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +200,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
           Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            EditorImpl.handleDrop(myEditor, transferable);
+            EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
           }
         }
         myDnDInProgress = false;
@@ -761,6 +765,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (renderer == null) {
         return;
       }
+      if (!areIconsShown() && !(renderer instanceof NonHideableIconGutterMark)) {
+        return;
+      }
       if (!isHighlighterVisible(highlighter)) {
         return;
       }
@@ -802,13 +809,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    if (!areIconsShown()) {
-      myIconsAreaWidth = 0;
-      myLastNonDumbModeIconAreaWidth = 0;
-      return;
-    }
-
-    int minWidth = (int)(START_ICON_AREA_WIDTH * myEditor.getScale());
+    int minWidth = areIconsShown() ? (int)(START_ICON_AREA_WIDTH * myEditor.getScale()) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     processGutterRenderers((line, renderers) -> {
@@ -989,8 +990,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
-    if (!areIconsShown()) return;
-
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;

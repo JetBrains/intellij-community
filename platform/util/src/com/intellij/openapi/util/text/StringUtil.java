@@ -1059,6 +1059,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static StringBuilder trimLeading(@NotNull StringBuilder builder, char symbol) {
+    int index = 0;
+    while (index < builder.length() && builder.charAt(index) == symbol) index++;
+    if (index > 0) builder.delete(0, index);
+    return builder;
+  }
+
+  @NotNull
   @Contract(pure = true)
   public static String trimTrailing(@NotNull String string) {
     return trimTrailing((CharSequence)string).toString();
@@ -1078,6 +1086,14 @@ public class StringUtil extends StringUtilRt {
     int index = string.length() - 1;
     while (index >= 0 && string.charAt(index) == symbol) index--;
     return string.substring(0, index + 1);
+  }
+
+  @NotNull
+  public static StringBuilder trimTrailing(@NotNull StringBuilder builder, char symbol) {
+    int index = builder.length() - 1;
+    while (index >= 0 && builder.charAt(index) == symbol) index--;
+    builder.setLength(index + 1);
+    return builder;
   }
 
   @Contract(pure = true)
@@ -1490,7 +1506,7 @@ public class StringUtil extends StringUtilRt {
                                 @NotNull Function<? super T, String> f,
                                 @NotNull @NonNls String separator) {
     if (items.isEmpty()) return "";
-    if (items.size() == 1) return f.fun(items.iterator().next());
+    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
     return join((Iterable<? extends T>)items, f, separator);
   }
 

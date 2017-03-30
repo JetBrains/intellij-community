@@ -60,10 +60,12 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
+import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +85,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
@@ -143,7 +146,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        DiffShelvedChangesAction.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
+        DataContext dc = DataManager.getInstance().getDataContext(myTree);
+        if (getShelveChanges(dc).isEmpty() && getBinaryShelveChanges(dc).isEmpty()) return false;
+        DiffShelvedChangesAction.showShelvedChangesDiff(dc);
         return true;
       }
     }.installOn(myTree);
@@ -483,7 +488,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     private final IssueLinkRenderer myIssueLinkRenderer;
     private final Map<Couple<String>, String> myMoveRenameInfo;
     private static final Icon PatchIcon = StdFileTypes.PATCH.getIcon();
-    private static final Icon DisabledPatchIcon = AllIcons.Nodes.DisabledPointcut;
+    private static final Icon AppliedPatchIcon =
+      new IconSizeWrapper(Patch_applied, Patch_applied.getIconWidth(), Patch_applied.getIconHeight()) {
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+          GraphicsUtil.paintWithAlpha(g, 0.6f);
+          super.paintIcon(c, g, x, y);
+        }
+      };
     private static final Icon DisabledToDeleteIcon = IconUtil.desaturate(AllIcons.Actions.GC);
 
     public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
@@ -498,7 +510,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
         if (changeListData.isRecycled()) {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-          setIcon(changeListData.isMarkedToDelete() ? DisabledToDeleteIcon : DisabledPatchIcon);
+          setIcon(changeListData.isMarkedToDelete() ? DisabledToDeleteIcon : AppliedPatchIcon);
         }
         else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);

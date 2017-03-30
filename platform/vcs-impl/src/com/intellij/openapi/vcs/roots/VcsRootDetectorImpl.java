@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -28,10 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class VcsRootDetectorImpl implements VcsRootDetector {
+  private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
   private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;
@@ -97,6 +96,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
+    LOG.debug("Scanning inside [" + dir + "], depth = " + depth);
     final Set<VcsRoot> roots = new HashSet<>();
     if (depth > MAXIMUM_SCAN_DEPTH) {
       // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
@@ -107,6 +107,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return roots;
     }
     List<AbstractVcs> vcsList = getVcsListFor(dir);
+    LOG.debug("Found following VCSs: " + vcsList);
     for (AbstractVcs vcs : vcsList) {
       roots.add(new VcsRoot(vcs, dir));
     }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -358,11 +360,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           anchor = PsiTreeUtil.getParentOfType(ref, PsiStatement.class);
         }
         LOG.assertTrue(anchor != null);
-        tryStatement.getTryBlock().add(anchor);
-        tryStatement = (PsiTryStatement)anchor.getParent().addAfter(tryStatement, anchor);
+        PsiElement container = anchor.getParent();
+        PsiElement[] elements = SurroundWithUtil.moveDeclarationsOut(container, new PsiElement[]{anchor}, true);
+        tryStatement = (PsiTryStatement)container.addAfter(tryStatement, elements[elements.length - 1]);
+        PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+        LOG.assertTrue(tryBlock != null);
+        tryBlock.addRange(elements[0], elements[elements.length - 1]);
 
         addExceptions(newExceptions, tryStatement);
-        anchor.delete();
+        container.deleteChildRange(elements[0], elements[elements.length - 1]);
         tryStatement.getCatchSections()[0].delete(); //Delete dummy catch section
       }
     }
@@ -945,12 +951,17 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   private static PsiParameter createNewParameter(JavaChangeInfo changeInfo, JavaParameterInfo newParm,
                                                  PsiSubstitutor... substitutor) throws IncorrectOperationException {
     final PsiParameterList list = changeInfo.getMethod().getParameterList();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
+    final Project project = list.getProject();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiType type = newParm.createType(list);
     for (PsiSubstitutor psiSubstitutor : substitutor) {
       type = psiSubstitutor.substitute(type);
     }
-    return factory.createParameter(newParm.getName(), type, list);
+    PsiParameter parameter = factory.createParameter(newParm.getName(), type, list);
+    if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS) {
+      PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
+    }
+    return parameter;
   }
 
   private static void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
@@ -1150,6 +1161,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
           PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
+          if (CodeStyleSettingsManager.getSettings(manager.getProject()).GENERATE_FINAL_PARAMETERS) {
+            PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
+          }
           prototype.getParameterList().add(param);
         }
 

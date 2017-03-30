@@ -40,7 +40,9 @@ val SUCCESS_RESULT = GitCommandResult(true, 0, emptyList(), emptyList(), null)
 class TestGitImpl : GitImpl() {
   private val LOG = Logger.getInstance(TestGitImpl::class.java)
 
-  @Volatile var stashListener: ((GitRepository) -> Unit)? =  null
+  @Volatile var stashListener: ((GitRepository) -> Unit)? = null
+  @Volatile var mergeListener: ((GitRepository) -> Unit)? = null
+  @Volatile var pushListener: ((GitRepository) -> Unit)? = null
 
   @Volatile private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
@@ -54,6 +56,7 @@ class TestGitImpl : GitImpl() {
                     updateTracking: Boolean,
                     tagMode: String?,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
+    pushListener?.invoke(repository)
     return myPushHandler(repository) ?:
         super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
   }
@@ -114,6 +117,14 @@ class TestGitImpl : GitImpl() {
   override fun stashSave(repository: GitRepository, message: String): GitCommandResult {
     stashListener?.invoke(repository)
     return  super.stashSave(repository, message)
+  }
+
+  override fun merge(repository: GitRepository,
+                     branchToMerge: String,
+                     additionalParams: MutableList<String>?,
+                     vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    mergeListener?.invoke(repository)
+    return super.merge(repository, branchToMerge, additionalParams, *listeners)
   }
 
   fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {

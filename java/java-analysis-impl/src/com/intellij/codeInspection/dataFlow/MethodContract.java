@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author peter
@@ -49,7 +51,7 @@ public class MethodContract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MethodContract)) return false;
+    if (o == null || o.getClass() != getClass()) return false;
 
     MethodContract contract = (MethodContract)o;
 
@@ -72,6 +74,13 @@ public class MethodContract {
   @Override
   public String toString() {
     return StringUtil.join(arguments, constraint -> constraint.toString(), ", ") + " -> " + returnValue;
+  }
+
+  /**
+   * @return true if this contract result does not depend on arguments
+   */
+  boolean isTrivial() {
+    return Arrays.stream(this.arguments).allMatch(Predicate.isEqual(ValueConstraint.ANY_VALUE));
   }
 
   public enum ValueConstraint {
@@ -138,4 +147,17 @@ public class MethodContract {
     }
   }
 
+  abstract static class QualifierBasedContract extends MethodContract {
+    public QualifierBasedContract(@NotNull ValueConstraint[] arguments,
+                                  @NotNull ValueConstraint returnValue) {
+      super(arguments, returnValue);
+    }
+
+    @Override
+    boolean isTrivial() {
+      return false;
+    }
+
+    abstract boolean applyContract(boolean matches, DfaValue qualifier, DfaMemoryState memoryState);
+  }
 }

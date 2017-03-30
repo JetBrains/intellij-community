@@ -67,12 +67,7 @@ public class SvnExcludingIgnoredOperation {
     }
 
     private boolean isIgnoredByVcs(final VirtualFile file) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return myVcsManager.isIgnored(file);
-        }
-      });
+      return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> myVcsManager.isIgnored(file));
     }
   }
 

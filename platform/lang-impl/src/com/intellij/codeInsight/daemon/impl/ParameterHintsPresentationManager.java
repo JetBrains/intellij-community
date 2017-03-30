@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
+  private static final Key<Boolean> PINNED = Key.create("parameter.hint.pinned");
   private static final Key<MyFontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
@@ -62,21 +64,36 @@ public class ParameterHintsPresentationManager implements Disposable {
     return inlay.getRenderer() instanceof MyRenderer;
   }
 
+  public boolean isPinned(@NotNull Inlay inlay) {
+    return Boolean.TRUE.equals(inlay.getUserData(PINNED));
+  }
+
+  public void unpin(@NotNull Inlay inlay) {
+    inlay.putUserData(PINNED, null);
+  }
+
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
+  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, boolean pinned) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
     Inlay inlay = editor.getInlayModel().addInlineElement(offset, renderer);
-    if (useAnimation && inlay != null) {
-      scheduleRendererUpdate(editor, inlay);
+    if (inlay != null) {
+      if (pinned) inlay.putUserData(PINNED, Boolean.TRUE);
+      if (useAnimation) scheduleRendererUpdate(editor, inlay);
     }
+    return inlay;
   }
 
-  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint) {
-    updateRenderer(editor, hint, null);
+  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
+    if (useAnimation) {
+      updateRenderer(editor, hint, null);
+    }
+    else {
+      Disposer.dispose(hint);  
+    }
   }
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
@@ -85,7 +102,7 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText);
+    renderer.update(editor, newText, true);
     hint.updateSize();
     scheduleRendererUpdate(editor, hint);
   }
@@ -107,6 +124,12 @@ public class ParameterHintsPresentationManager implements Disposable {
   private void scheduleAnimationStep(@NotNull AnimationStep step) {
     myAlarm.cancelRequest(step);
     myAlarm.addRequest(step, ANIMATION_STEP_MS, ModalityState.any());
+  }
+
+  @TestOnly
+  public boolean isAnimationInProgress(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return editor.getUserData(ANIMATION_STEP) != null;
   }
 
   private static Font getFont(@NotNull Editor editor) {
@@ -155,16 +178,15 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int step;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
-      updateState(editor, text);
-      if (!animated) step = steps + 1;
+      updateState(editor, text, animated);
     }
 
     private String getText() {
       return myText;
     }
 
-    public void update(Editor editor, String newText) {
-      updateState(editor, newText);
+    public void update(Editor editor, String newText, boolean animated) {
+      updateState(editor, newText, animated);
     }
 
     @Nullable
@@ -173,13 +195,13 @@ public class ParameterHintsPresentationManager implements Disposable {
       return "ParameterNameHints";
     }
 
-    private void updateState(Editor editor, String text) {
+    private void updateState(Editor editor, String text, boolean animated) {
       FontMetrics metrics = getFontMetrics(editor).metrics;
       startWidth = doCalcWidth(myText, metrics);
       myText = text;
       int endWidth = doCalcWidth(myText, metrics);
-      step = 1;
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
+      step = animated ? 1 : steps + 1;
     }
     
     public boolean nextStep() {

@@ -5,7 +5,7 @@ public class Test {
   public void test() {
     Map<String, String> myMap;
 
-      myMap = Map.<String, String>of("a", "1", "b", "1", "c", "1",
+      myMap = Map.of("a", "1", "b", "1", "c", "1",
 
               // D follows
               "d", "1", "e", /* this is also 1*/ "1", "f", "1", "g", "1", // G is important!

@@ -179,7 +179,7 @@ public class ReadJsonSchemaFromPsi {
           if (value instanceof JsonStringLiteral) {
             objects.add("\"" + StringUtil.unquoteString(((JsonStringLiteral)value).getValue()) + "\"");
           } else if (value instanceof JsonNumberLiteral) {
-            objects.add(getNumber(value));
+            objects.add(getNumber((JsonNumberLiteral)value));
           } else if (value instanceof JsonBooleanLiteral) {
             objects.add(((JsonBooleanLiteral)value).getValue());
           } else if (value instanceof JsonNullLiteral) {
@@ -192,12 +192,12 @@ public class ReadJsonSchemaFromPsi {
   }
 
   @NotNull
-  private static Number getNumber(@NotNull JsonValue value) {
+  private static Number getNumber(@NotNull JsonNumberLiteral value) {
     Number numberValue;
     try {
       numberValue = Integer.parseInt(value.getText());
     } catch (NumberFormatException e) {
-      numberValue = ((JsonNumberLiteral)value).getValue();
+      numberValue = value.getValue();
     }
     return numberValue;
   }

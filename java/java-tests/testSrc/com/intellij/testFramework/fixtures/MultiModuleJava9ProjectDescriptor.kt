@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
         if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
   }
 
-  override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
+  override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
 
   override fun setUpProject(project: Project, handler: SetupHandler) {
     super.setUpProject(project, handler)

@@ -56,7 +56,7 @@ class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   }
 
   @Override
-  public String toString() {
+  public String getNodeText() {
     return myClassName;
   }
 }

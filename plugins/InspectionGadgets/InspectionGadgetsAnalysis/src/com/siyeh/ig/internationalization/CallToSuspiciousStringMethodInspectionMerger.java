@@ -16,6 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -27,6 +28,7 @@ public class CallToSuspiciousStringMethodInspectionMerger extends InspectionElem
     return "CallToSuspiciousStringMethod";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {
@@ -36,6 +38,7 @@ public class CallToSuspiciousStringMethodInspectionMerger extends InspectionElem
     };
   }
 
+  @NotNull
   @Override
   public String[] getSuppressIds() {
     return new String[] {

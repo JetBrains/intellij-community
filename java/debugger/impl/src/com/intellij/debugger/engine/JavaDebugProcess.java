@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ExecutionConsoleEx;
@@ -45,7 +43,6 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -166,7 +163,7 @@ public class JavaDebugProcess extends XDebugProcess {
         return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
       }
     };
-    session.addSessionListener(new XDebugSessionAdapter() {
+    session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
         saveNodeHistory();
@@ -373,41 +370,20 @@ public class JavaDebugProcess extends XDebugProcess {
                            AllIcons.Debugger.MemoryView.Active, null);
 
         memoryViewContent.setCloseable(false);
-        memoryViewContent.setPinned(true);
         memoryViewContent.setShouldDisposeContent(true);
 
         final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
         process.putUserData(MemoryViewDebugProcessData.KEY, data);
 
+        ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
         ui.addListener(new ContentManagerAdapter() {
           @Override
-          public void contentAdded(ContentManagerEvent event) {
-            changeMemoryViewMode(event);
-          }
-
-          @Override
-          public void contentRemoved(ContentManagerEvent event) {
-            changeMemoryViewMode(event);
-          }
-
-          @Override
           public void selectionChanged(ContentManagerEvent event) {
-            changeMemoryViewMode(event);
-          }
-
-          private void changeMemoryViewMode(@Nullable ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
-              final ContentManagerEvent.ContentOperation operation = event.getOperation();
-              final boolean isAddOperation = operation.equals(ContentManagerEvent.ContentOperation.add);
-
-              if (isAddOperation || operation.equals(ContentManagerEvent.ContentOperation.remove)) {
-                classesFilteredView.setActive(isAddOperation, process.getManagerThread());
-              }
+              classesFilteredView.setActive(memoryViewContent.isSelected(), process);
             }
           }
-        }, classesFilteredView);
-
-        ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
+        }, memoryViewContent);
       }
     };
   }

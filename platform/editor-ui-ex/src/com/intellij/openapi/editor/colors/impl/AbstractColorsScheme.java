@@ -32,10 +32,9 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.*;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -54,6 +53,7 @@ import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MA
 import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
+@SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme implements EditorColorsScheme, SerializableScheme {
   private static final int CURR_VERSION = 142;
 
@@ -422,10 +422,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
         }
         continue;
       }
-
       TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
-      myAttributesMap.put(key, attr);
-      migrateErrorStripeColorFrom14(key, attr);
+      if (attr != null) {
+        myAttributesMap.put(key, attr);
+        migrateErrorStripeColorFrom14(key, attr);
+      }
     }
   }
 
@@ -522,16 +523,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   }
 
   private int readFontSize(Element element, boolean isDefault, Float fontScale) {
-    Float size = (float)myValueReader.read(Integer.class, element);
-    if (size == null) {
+    if (isDefault) {
+      return (int)(UISettings.getNormalizingScale() * DEFAULT_FONT_SIZE.getSize());
+    }
+    Integer intSize = myValueReader.read(Integer.class, element);
+    if (intSize == null) {
       return -1;
     }
-    if (!isDefault) {
-      size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
-    }
-    return (int)JBUI.scale(size);
+    return UISettings.restoreFontSize(intSize, fontScale);
   }
-
+  
   private FontPreferencesImpl readFontSettings(@NotNull Element element,
                                                boolean isDefaultScheme,
                                                @Nullable Float fontScale) {
@@ -562,7 +563,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
 
-    /**
+    /*
      * FONT_SCALE is used to correctly identify the font size in both the JRE-managed HiDPI mode and
      * the IDE-managed HiDPI mode: {@link UIUtil#isJreHiDPIEnabled()}. Also, it helps to distinguish
      * the "hidpi-aware" scheme version from the previous one. Namely, the absence of the FONT_SCALE
@@ -571,7 +572,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
      * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
      * FONT_SCALE value should also be written by that reason.
      */
-    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
+    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getNormalizingScale())); // must precede font options
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
@@ -903,6 +904,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return null;
   }
 
+  public EditorColorsScheme getParentScheme() {
+    return myParentScheme;
+  }
+
   @NotNull
   @Override
   public Element writeScheme() {
@@ -1003,7 +1008,23 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     assert newParent instanceof ReadOnlyColorsScheme : "New parent scheme must be read-only";
     myParentScheme = newParent;
   }
-  
+
+  private volatile Map<TextAttributesKey, TextAttributes> myAttributesCacheMap;
+
+  @NotNull
+  @Override
+  public Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache() {
+    if (myAttributesCacheMap == null) {
+      myAttributesCacheMap = ContainerUtil.newConcurrentMap();
+    }
+    return myAttributesCacheMap;
+  }
+
+  @Override
+  public void dropGeneratedTextAttributesCache() {
+    myAttributesCacheMap = null;
+  }
+
   void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();

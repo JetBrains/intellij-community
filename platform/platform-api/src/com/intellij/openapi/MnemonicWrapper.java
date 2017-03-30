@@ -16,6 +16,7 @@
 package com.intellij.openapi;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
@@ -87,7 +88,16 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
       myEvent = true;
       if (myTextChanged) updateText();
       setMnemonicCode(disabled ? KeyEvent.VK_UNDEFINED : myCode);
-      setMnemonicIndex(disabled ? -1 : myIndex);
+      try {
+        setMnemonicIndex(disabled ? -1 : myIndex);
+      }
+      catch (IllegalArgumentException cause) {
+        // EA-94674 - IAE: AbstractButton.setDisplayedMnemonicIndex
+        StringBuilder sb = new StringBuilder("cannot set mnemonic index ");
+        if (myTextChanged) sb.append("if text changed ");
+        String message = sb.append(myComponent).toString();
+        Logger.getInstance(MnemonicWrapper.class).warn(message, cause);
+      }
       Component component = getFocusableComponent();
       if (component != null) {
         component.setFocusable(disabled || myFocusable);

@@ -134,6 +134,7 @@ public class LayeredIcon extends JBUI.AuxScalableJBIcon {
     return myIcons[layer];
   }
 
+  @NotNull
   public Icon[] getAllLayers() {
     return myIcons;
   }

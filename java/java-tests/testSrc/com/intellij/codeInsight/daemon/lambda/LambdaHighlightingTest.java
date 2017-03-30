@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.pom.java.LanguageLevel;
 
 public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/highlighting";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/highlighting/";
 
   @Override
   protected void setUp() throws Exception {
@@ -30,7 +30,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testStaticAccess() { doTest(); }
   public void testEffectiveFinal() { doTest(); }
-  public void testFieldInitializedUsedInLambda() {doTest();}
+  public void testFieldInitializedUsedInLambda() { doTest(); }
   public void testReassignUsedVars() { doTest(); }
   public void testLambdaContext() { doTest(); }
   public void testReturnTypeCompatibility() { doTest(); }
@@ -87,26 +87,26 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() { doTest(); }
   public void testConflictResolution() { doTest(); }
   public void testIDEA108195() { doTest(); }
-  public void testDiamondInference() { doTest();}
-  public void testFunctionalInterfaceCheck() { doTest();}
-  public void testUnderscores() { doTest(true);}
-  public void testReturnTypeAmbiguity() { doTest();}
-  public void testWildcardsAndFormalLambdaParams() {doTest();}
-  public void testFinalInitializer() {doTest();}
-  public void testBreakContinueInside() {doTest();}
-  public void testSameLambdaParamNames() {doTest();}
-  public void testIDEA123308() {doTest();}
-  public void testIntersection() {doTest();}
-  public void testNoBoxingInLambdaFormalParams() {doTest();}
-  public void testGenericNotGenericInterfaceMethod() {doTest();}
-  public void testInferredFromCast() {doTest();}
-  public void testReferencedFromSelf() {doTest();}
+  public void testDiamondInference() { doTest(); }
+  public void testFunctionalInterfaceCheck() { doTest(); }
+  public void testUnderscores() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(true); }
+  public void testReturnTypeAmbiguity() { doTest(); }
+  public void testWildcardsAndFormalLambdaParams() { doTest(); }
+  public void testFinalInitializer() { doTest(); }
+  public void testBreakContinueInside() { doTest(); }
+  public void testSameLambdaParamNames() { doTest(); }
+  public void testIDEA123308() { doTest(); }
+  public void testIntersection() { doTest(); }
+  public void testNoBoxingInLambdaFormalParams() { doTest(); }
+  public void testGenericNotGenericInterfaceMethod() { doTest(); }
+  public void testInferredFromCast() { doTest(); }
+  public void testReferencedFromSelf() { doTest(); }
 
   private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  private void doTest(boolean checkWarnings) {
+    doTest(BASE_PATH + getTestName(false) + ".java", checkWarnings, false);
   }
 }

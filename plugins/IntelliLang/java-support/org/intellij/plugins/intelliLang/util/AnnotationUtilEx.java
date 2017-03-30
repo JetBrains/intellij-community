@@ -119,7 +119,7 @@ public class AnnotationUtilEx {
   }
 
   public interface AnnotatedElementVisitor {
-    boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression);
+    boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression);
     boolean visitMethodReturnStatement(PsiElement source, PsiMethod method);
     boolean visitVariable(PsiVariable variable);
     boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
@@ -178,8 +178,8 @@ public class AnnotationUtilEx {
     else if (parent instanceof PsiArrayInitializerMemberValue || parent instanceof PsiNameValuePair) {
       return true;
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
-      return visitor.visitMethodParameter((PsiExpression)element, (PsiCallExpression)parent.getParent());
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall) {
+      return visitor.visitMethodParameter((PsiExpression)element, (PsiCall)parent.getParent());
     }
     return true;
   }

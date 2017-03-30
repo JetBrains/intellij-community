@@ -121,12 +121,8 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
 
   private void trackDeletedFile(@NotNull ProgressEvent event) {
     @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
-    VirtualFile virtualFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Nullable
-      public VirtualFile compute() {
-        return VirtualFileManager.getInstance().findFileByUrl(filePath);
-      }
-    });
+    VirtualFile virtualFile = ApplicationManager.getApplication()
+      .runReadAction((Computable<VirtualFile>)() -> VirtualFileManager.getInstance().findFileByUrl(filePath));
 
     if (virtualFile != null) {
       myDeletedFiles.add(virtualFile);

@@ -29,4 +29,6 @@ public class ValidTest {
   public JRadioButton field4B;
   public JPanel p4;
   public JCheckBox field5;
+  public JComboBox comboBox;
+  public JSpinner spinner;
 }

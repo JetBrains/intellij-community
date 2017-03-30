@@ -122,6 +122,11 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
+  public boolean onlyDoubleQuotesForStringLiterals() {
+    return true;
+  }
+
+  @Override
   public boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element) {
     PsiElement current = element instanceof JsonProperty ? element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
     while (current != null && current.getNode().getElementType() != JsonElementTypes.COMMA) {

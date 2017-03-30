@@ -33,6 +33,7 @@ public class PyBraceMatcher implements PairedBraceMatcher {
       new BracePair(PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET, false), new BracePair(PyTokenTypes.LBRACE, PyTokenTypes.RBRACE, false)};
   }
 
+  @NotNull
   public BracePair[] getPairs() {
     return PAIRS;
   }

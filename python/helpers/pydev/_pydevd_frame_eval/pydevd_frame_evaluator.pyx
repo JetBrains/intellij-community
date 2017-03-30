@@ -2,7 +2,7 @@ import dis
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_THREAD_SUSPEND
-from _pydevd_bundle.pydevd_constants import STATE_SUSPEND
+from _pydevd_bundle.pydevd_constants import STATE_RUN, STATE_SUSPEND, get_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
@@ -32,6 +32,14 @@ def is_use_code_extra():
 
 def set_use_code_extra(new_value):
     UseCodeExtraHolder.use_code_extra = new_value
+
+
+def enable_tracing_debugger_for_frame(main_debugger, frame, thread_id):
+    main_debugger.SetTrace(main_debugger.trace_dispatch)
+    main_debugger.set_trace_for_frame_and_parents(frame)
+    if thread_id not in main_debugger.disable_tracing_after_exit_frames:
+        main_debugger.disable_tracing_after_exit_frames[thread_id] = set()
+    main_debugger.disable_tracing_after_exit_frames[thread_id].add(frame)
 
 
 cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
@@ -93,7 +101,8 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             return _PyEval_EvalFrameDefault(frame_obj, exc)
 
         main_debugger = get_global_debugger()
-        if additional_info.pydev_state == STATE_SUSPEND and t.stop_reason == CMD_THREAD_SUSPEND:
+        if (additional_info.pydev_state == STATE_SUSPEND and t.stop_reason == CMD_THREAD_SUSPEND) or \
+            (additional_info.pydev_state == STATE_RUN and main_debugger.disable_tracing_after_exit_frames):
             main_debugger.process_internal_commands()
 
         was_break = False
@@ -107,11 +116,16 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
                     if code_object not in breakpoint.code_objects:
                         # This check is needed for generator functions, because after each yield the new frame is created
                         # but the former code object is used
-                        breakpoints_to_update.append(breakpoint)
-                        new_code = insert_code(frame.f_code, pydev_trace_code_wrapper.__code__, line)
-                        Py_INCREF(new_code)
-                        frame_obj.f_code = <PyCodeObject *> new_code
-                        was_break = True
+                        success, new_code = insert_code(frame.f_code, pydev_trace_code_wrapper.__code__, line)
+                        if success:
+                            breakpoints_to_update.append(breakpoint)
+                            Py_INCREF(new_code)
+                            frame_obj.f_code = <PyCodeObject *> new_code
+                            was_break = True
+                        else:
+                            enable_tracing_debugger_for_frame(main_debugger, frame, get_thread_id(t))
+                            was_break = False
+                            break
             if was_break:
                 update_globals_dict(frame.f_globals)
                 for bp in breakpoints_to_update:

@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
 import java.util.Map;
@@ -99,14 +97,12 @@ public class MultipleRootEditorWithSplitter extends JPanel {
       }
     });
 
-    myList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        final FilePath root = ((FilePath)myList.getSelectedValue());
-        if (root != null) {
-          layout.show(myConfigureRootPanel, root.getPath());
-        } else {
-          layout.show(myConfigureRootPanel, EMPTY);
-        }
+    myList.addListSelectionListener(e -> {
+      final FilePath root = ((FilePath)myList.getSelectedValue());
+      if (root != null) {
+        layout.show(myConfigureRootPanel, root.getPath());
+      } else {
+        layout.show(myConfigureRootPanel, EMPTY);
       }
     });
 

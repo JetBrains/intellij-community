@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -455,6 +453,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(() -> task.run()));
   }
 
@@ -651,6 +650,9 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return stacktraceAsString(unwrapped);
+    }
     String reason = unwrapped.getLocalizedMessage();
     if (!StringUtil.isEmpty(reason)) {
       return reason;
@@ -659,10 +661,14 @@ public class ExternalSystemApiUtil {
       return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
     }
     else {
-      StringWriter writer = new StringWriter();
-      unwrapped.printStackTrace(new PrintWriter(writer));
-      return writer.toString();
+      return stacktraceAsString(unwrapped);
     }
+  }
+
+  private static String stacktraceAsString(Throwable unwrapped) {
+    StringWriter writer = new StringWriter();
+    unwrapped.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
   }
 
   @SuppressWarnings("unchecked")

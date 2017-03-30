@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,15 +103,12 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       return;
     }
 
-    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, new Consumer<Info>() {
-      @Override
-      public void consume(Info info) {
-        try {
-          handler.consume(info);
-        }
-        catch (SVNException e) {
-          throw new SvnExceptionWrapper(e);
-        }
+    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, info -> {
+      try {
+        handler.consume(info);
+      }
+      catch (SVNException e) {
+        throw new SvnExceptionWrapper(e);
       }
     });
 

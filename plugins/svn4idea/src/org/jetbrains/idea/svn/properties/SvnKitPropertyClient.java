@@ -97,12 +97,7 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   public void setProperties(@NotNull File file, @NotNull PropertiesMap properties) throws VcsException {
     final SVNProperties propertiesToSet = toSvnProperties(properties);
     try {
-      createClient().doSetProperty(file, new ISVNPropertyValueProvider() {
-        @Override
-        public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
-          return propertiesToSet;
-        }
-      }, true, SVNDepth.EMPTY, null, null);
+      createClient().doSetProperty(file, (path, properties1) -> propertiesToSet, true, SVNDepth.EMPTY, null, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

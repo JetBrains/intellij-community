@@ -916,4 +916,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public String toString() {
     return super.toString() + ":"+myStorageFile;
   }
+
+  @TestOnly
+  public PersistentHashMapValueStorage getValueStorage() {
+    return myValueStorage;
+  }
+
+  @TestOnly
+  public boolean getReadOnly() {
+    return myIsReadOnly;
+  }
 }

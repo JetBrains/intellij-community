@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda/";
 
   @Override
   protected void setUp() throws Exception {
@@ -90,274 +89,73 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedLambdaExpressionsNoFormalParams1() { doTest(); }
   public void testDeepNestedLambdaExpressionsNoFormalParams() { doTest(); }
   public void testNestedLambdaExpressionsNoFormalParamsStopAtStandalone() { doTest(); }
-
-  public void testNestedLambdaCheckedExceptionsConstraints() throws Exception {
-    doTest();
-  }
-
-  public void testNestedLambdaWithInferenceVariableAsTargetType() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127596() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA124983() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123951() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA124190() throws Exception {
-    doTest();
-  }
-  public void testIDEA127124comment() throws Exception {
-    doTest();
-  }
-
-  public void testParenthesizedExpressionsDuringConstrainsCollection() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA126778() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureGroundTypeToGetLambdaParameterType() throws Exception {
-    doTest();
-  }
-
-  public void testSameParametrizationCheckTakesTypeParametersIntoAccount() throws Exception {
-    doTest();
-  }
-
-  public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
-    doTest();
-  }
-
-  public void testCheckedExceptionsConstraintsSubstitutions1() throws Exception {
-    doTest();
-  }
-
-  public void testCheckedExceptionsConstraintsSubstitutions2() throws Exception {
-    doTest();
-  }
-
-  public void testCheckedExceptionsConstraintsSubstitutionsDeepInBody() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA130129() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA130920() throws Exception {
-    doTest();
-  }
-
-  public void testExpectedReturnTypeInAnonymousInsideLambda() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA131700() throws Exception {
-    doTest();
-  }
-
-  public void testPropertiesInsteadOfSiteSubstitutorIfAny() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127124() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA123987() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA136759() throws Exception {
-    doTest();
-  }
-
-  public void testInfiniteLoopAndValueCompatibility() throws Exception {
-    doTest();
-  }
-
-  public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() throws Exception {
-    doTest();
-  }
-
-  public void testEnsureNoCaptureIsPerformedOverTargetTypeOfCastExpressionWhichMarksFunctionalExpression() throws Exception {
-    doTest();
-  }
-
-  public void testCaptureInReturnStatementOfLambdaExpression() throws Exception {
-    doTest();
-  }
-
-  public void testControlFlowAnalysisFailedValueCompatibilityUnchanged() throws Exception {
-    doTest();
-  }
-
-  public void testNonAccessibleFunctionalInterfaceTypeArguments() throws Exception {
-    doTest();
-  }
-
-  //JDK-8043374
-  public void testIntersectionTypeOfDifferentParameterizationOfTheSameClassInNonWildcardParameterization() throws Exception {
-    doTest();
-  }
-
-  public void testPreserveCapturedWildcardsDuringNonWildcardParameterization() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA136401() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA133920() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA132253() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA144840() throws Exception {
-    doTest();
-  }
-
-  public void testRecursiveAtSiteSubstitutorsWithAdditionalConstraints() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA136325() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA127215() throws Exception {
-    doTest();
-  }
-
-  public void testGroundTargetTypeForExpectedReturnTypeOfLambdaExpression() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA149224() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA149670() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA149709() throws Exception {
-    doTest();
-  }
-
-  public void testResolveOrderShouldTakeIntoAccountDependenciesOfAlreadyResolvedVars() throws Exception {
-    doTest();
-  }
-
-  public void testCodeBlockLambdaWithIsValueCompatibleChecks() throws Exception {
-    doTest();
-  }
-
-  public void testCodeBlockLambdaWithoutParamsIsValueCompatibleChecks() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromReturnLambdaStatementWhereContainingMethodNonGeneric() throws Exception {
-    doTest();
-  }
-
-  public void testCLikeArrayDeclarationInLambdaWithExplicitTypes() throws Exception {
-    doTest();
-  }
-
-  public void testAdditionalConstraintsOrderWhenOutputVariablesAlreadyHaveProperEqualBound() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA153284() throws Exception {
-    doTest();
-  }
-
-  public void testAvoidPartlyRawTypesAsTheyWontBeTreatedAsWildcardParameterizedAnyway() throws Exception {
-    doTest();
-  }
-
-  public void testDeepChainOfNestedLambdasOverCachedTopLevel() throws Exception {
-    doTest();
-  }
-
-  public void testIDEA153999() throws Exception {
-    doTest();
-  }
-
-  public void testFieldReferencedFromLambdaInitializations() throws Exception {
-    doTest();
-  }
-
-  public void testRawSiteSubstitutorWithExpectedGenericsParameterType() throws Exception {
-    doTest();
-  }
-
-  public void testPreserveCapturedWildcardAsLambdaParameterType() throws Exception {
-    doTest();
-  }
-
-  public void testDontWarnAboutNestedLambdaForAProblemInOuter() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedPartial() throws Exception {
-    doTest();
-  }
-
-  public void testVarargMethodWithThrownTypes() throws Exception {
-    doTest();
-  }
-
-  public void testExceptionInLambdaBodyCheck() throws Exception {
-    doTest();
-  }
-
-  public void testHighlightFaultyLambdaReturnExpression() throws Exception {
-    doTest();
-  }
-
-  public void testUncheckedConstraintOnInferenceVariableWithProperUpperBound() throws Exception {
-    doTest();
-  }
-
-  public void testCollectLambdaAdditionalConstraintsByGroundType() throws Exception {
-    doTest();
-  }
-
-  public void testInferTypeParametersFromFunctionalInterfaceInputs() throws Exception {
-    doTest();
-  }
-
-  public void testGroundTargetTypeWhenAbstractMethodInSuperclass() throws Exception {
-    doTest();
-  }
+  public void testNestedLambdaCheckedExceptionsConstraints() { doTest(); }
+  public void testNestedLambdaWithInferenceVariableAsTargetType() { doTest(); }
+  public void testIDEA127596() { doTest(); }
+  public void testIDEA124983() { doTest(); }
+  public void testIDEA123951() { doTest(); }
+  public void testIDEA124190() { doTest(); }
+  public void testIDEA127124comment() { doTest(); }
+  public void testParenthesizedExpressionsDuringConstrainsCollection() { doTest(); }
+  public void testIDEA126778() { doTest(); }
+  public void testEnsureGroundTypeToGetLambdaParameterType() { doTest(); }
+  public void testSameParametrizationCheckTakesTypeParametersIntoAccount() { doTest(); }
+  public void testCheckedExceptionsConstraintsSubstitutions() { doTest(); }
+  public void testCheckedExceptionsConstraintsSubstitutions1() { doTest(); }
+  public void testCheckedExceptionsConstraintsSubstitutions2() { doTest(); }
+  public void testCheckedExceptionsConstraintsSubstitutionsDeepInBody() { doTest(); }
+  public void testIDEA130129() { doTest(); }
+  public void testIDEA130920() { doTest(); }
+  public void testExpectedReturnTypeInAnonymousInsideLambda() { doTest(); }
+  public void testIDEA131700() { doTest(); }
+  public void testPropertiesInsteadOfSiteSubstitutorIfAny() { doTest(); }
+  public void testIDEA127124() { doTest(); }
+  public void testIDEA123987() { doTest(); }
+  public void testIDEA136759() { doTest(); }
+  public void testInfiniteLoopAndValueCompatibility() { doTest(); }
+  public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() { doTest(); }
+  public void testEnsureNoCaptureIsPerformedOverTargetTypeOfCastExpressionWhichMarksFunctionalExpression() { doTest(); }
+  public void testCaptureInReturnStatementOfLambdaExpression() { doTest(); }
+  public void testControlFlowAnalysisFailedValueCompatibilityUnchanged() { doTest(); }
+  public void testNonAccessibleFunctionalInterfaceTypeArguments() { doTest(); }
+  public void testIntersectionTypeOfDifferentParameterizationOfTheSameClassInNonWildcardParameterization() { doTest(); /* JDK-8043374 */ }
+  public void testPreserveCapturedWildcardsDuringNonWildcardParameterization() { doTest(); }
+  public void testIDEA136401() { doTest(); }
+  public void testIDEA133920() { doTest(); }
+  public void testIDEA132253() { doTest(); }
+  public void testIDEA144840() { doTest(); }
+  public void testRecursiveAtSiteSubstitutorsWithAdditionalConstraints() { doTest(); }
+  public void testIDEA136325() { doTest(); }
+  public void testIDEA127215() { doTest(); }
+  public void testGroundTargetTypeForExpectedReturnTypeOfLambdaExpression() { doTest(); }
+  public void testIDEA149224() { doTest(); }
+  public void testIDEA149670() { doTest(); }
+  public void testIDEA149709() { doTest(); }
+  public void testResolveOrderShouldTakeIntoAccountDependenciesOfAlreadyResolvedVars() { doTest(); }
+  public void testCodeBlockLambdaWithIsValueCompatibleChecks() { doTest(); }
+  public void testCodeBlockLambdaWithoutParamsIsValueCompatibleChecks() { doTest(); }
+  public void testInferenceFromReturnLambdaStatementWhereContainingMethodNonGeneric() { doTest(); }
+  public void testCLikeArrayDeclarationInLambdaWithExplicitTypes() { doTest(); }
+  public void testAdditionalConstraintsOrderWhenOutputVariablesAlreadyHaveProperEqualBound() { doTest(); }
+  public void testIDEA153284() { doTest(); }
+  public void testAvoidPartlyRawTypesAsTheyWontBeTreatedAsWildcardParameterizedAnyway() { doTest(); }
+  public void testDeepChainOfNestedLambdasOverCachedTopLevel() { doTest(); }
+  public void testIDEA153999() { doTest(); }
+  public void testFieldReferencedFromLambdaInitializations() { doTest(); }
+  public void testRawSiteSubstitutorWithExpectedGenericsParameterType() { doTest(); }
+  public void testPreserveCapturedWildcardAsLambdaParameterType() { doTest(); }
+  public void testDontWarnAboutNestedLambdaForAProblemInOuter() { doTest(); }
+  public void testUncheckedPartial() { doTest(); }
+  public void testVarargMethodWithThrownTypes() { doTest(); }
+  public void testExceptionInLambdaBodyCheck() { doTest(); }
+  public void testHighlightFaultyLambdaReturnExpression() { doTest(); }
+  public void testUncheckedConstraintOnInferenceVariableWithProperUpperBound() { doTest(); }
+  public void testCollectLambdaAdditionalConstraintsByGroundType() { doTest(); }
+  public void testInferTypeParametersFromFunctionalInterfaceInputs() { doTest(); }
+  public void testGroundTargetTypeWhenAbstractMethodInSuperclass() { doTest(); }
 
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(BASE_PATH + getTestName(false) + ".java", false, false);
   }
-
-  /*
-  public static Test suite() {
-    final TestSuite suite = new TestSuite();
-    for (int i = 0; i < 1000; i++) {
-      suite.addTestSuite(NewLambdaHighlightingTest.class);
-    }
-    return suite;
-  }*/
 }

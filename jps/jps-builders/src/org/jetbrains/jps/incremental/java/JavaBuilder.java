@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       });
 
-      if (!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) {
+      if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) &&
+          JpsJavaSdkType.parseVersion(getLanguageLevel(ContainerUtil.getFirstItem(chunk.getModules()))) >= 9) {
         // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
         JavaModuleIndex index = getJavaModuleIndex(context);
         for (JpsModule module : chunk.getModules()) {

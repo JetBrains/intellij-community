@@ -21,6 +21,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -225,18 +226,16 @@ public abstract class PatchAction {
 
     PatchAction that = (PatchAction)o;
 
-    if (myFlags != that.myFlags) return false;
     if (myChecksum != that.myChecksum) return false;
-    if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
+    if (!Objects.equals(myPath, that.myPath)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myPath != null ? myPath.hashCode() : 0;
+    int result = Objects.hashCode(myPath);
     result = 31 * result + (int)(myChecksum ^ (myChecksum >>> 32));
-    result = 31 * result + myFlags;
     return result;
   }
 }

@@ -10,11 +10,21 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
 
   @NotNull public static final ExternalSystemTaskNotificationListener NULL_OBJECT = new ExternalSystemTaskNotificationListenerAdapter() { };
 
-  @Override
+  /**
+   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
+   */
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
   }
 
   @Override
+  public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+    onQueued(id, workingDir);
+    onStart(id);
+  }
+
+  /**
+   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
+   */
   public void onStart(@NotNull ExternalSystemTaskId id) {
   }
 

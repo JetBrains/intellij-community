@@ -27,7 +27,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author yole
  */
-public class PerformanceWatcher extends ApplicationComponent.Adapter implements Disposable {
+public class PerformanceWatcher implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
@@ -74,12 +73,6 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
   private long myFreezeStart;
   private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
-  /**
-   * If the product is unresponsive for UNRESPONSIVE_THRESHOLD_SECONDS, dump threads every UNRESPONSIVE_INTERVAL_SECONDS
-   */
-  private int UNRESPONSIVE_THRESHOLD_SECONDS = 5;
-  private int UNRESPONSIVE_INTERVAL_SECONDS = 5;
-  private static final int SAMPLING_INTERVAL_MS = 1000;
   private static final long ourIdeStart = System.currentTimeMillis();
 
   public static PerformanceWatcher getInstance() {
@@ -89,14 +82,11 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
   public PerformanceWatcher() {
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
     myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> samplePerformance(), SAMPLING_INTERVAL_MS, SAMPLING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> samplePerformance(), getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
   }
 
   @Override
   public void initComponent() {
-    UNRESPONSIVE_THRESHOLD_SECONDS = SystemProperties.getIntProperty("performance.watcher.threshold", 5);
-    UNRESPONSIVE_INTERVAL_SECONDS = SystemProperties.getIntProperty("performance.watcher.interval", 5);
-
     if (shouldWatch()) {
       final AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
       service.setNewThreadListener(new Consumer<Thread>() {
@@ -121,6 +111,10 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
         }
       }
     }
+  }
+
+  private static int getMaxAttempts() {
+    return Registry.intValue("performance.watcher.unresponsive.max.attempts.before.log");
   }
 
   private void watchCodeCache(final MemoryPoolMXBean bean) {
@@ -172,26 +166,26 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     }
   }
 
-  private boolean shouldWatch() {
+  private static boolean shouldWatch() {
     return !ApplicationManager.getApplication().isHeadlessEnvironment() &&
-           UNRESPONSIVE_INTERVAL_SECONDS != 0 &&
-           UNRESPONSIVE_THRESHOLD_SECONDS != 0;
+           Registry.intValue("performance.watcher.unresponsive.interval.ms") != 0 &&
+           getMaxAttempts() != 0;
   }
 
   private void samplePerformance() {
     long millis = System.currentTimeMillis();
-    long diff = millis - myLastSampling - SAMPLING_INTERVAL_MS;
+    long diff = millis - myLastSampling - getSamplingInterval();
     myLastSampling = millis;
 
     // an unexpected delay of 3 seconds is considered as several delays: of 3, 2 and 1 seconds, because otherwise
     // this background thread would be sampled 3 times.
     while (diff >= 0) {
       myGeneralApdex = myGeneralApdex.withEvent(TOLERABLE_LATENCY, diff);
-      diff -= SAMPLING_INTERVAL_MS;
+      diff -= getSamplingInterval();
     }
 
     int edtRequests = myEdtRequestsQueued.get();
-    if (edtRequests >= UNRESPONSIVE_THRESHOLD_SECONDS) {
+    if (edtRequests >= getMaxAttempts()) {
       edtFrozen(millis);
     }
     else if (edtRequests == 0) {
@@ -203,8 +197,12 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     SwingUtilities.invokeLater(new SwingThreadRunnable(millis));
   }
 
+  private static int getSamplingInterval() {
+    return Registry.intValue("performance.watcher.sampling.interval.ms");
+  }
+
   private void edtFrozen(long currentMillis) {
-    if (currentMillis - myLastDumpTime >= UNRESPONSIVE_INTERVAL_SECONDS * 1000) {
+    if (currentMillis - myLastDumpTime >= Registry.intValue("performance.watcher.unresponsive.interval.ms")) {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
         myFreezeStart = currentMillis;

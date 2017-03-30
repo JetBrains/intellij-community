@@ -135,12 +135,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return null;
   }
 
+  @NotNull
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
     final SmartList<PsiVariable> result = new SmartList<>();
     scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.VARIABLE, result), ResolveState.initial(), null, place);
     return result.toArray(new PsiVariable[result.size()]);
   }
 
+  @NotNull
   public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
     final SmartList<PsiMethod> result = new SmartList<>();
     scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);

@@ -1,10 +1,10 @@
 class Test {
   interface IInt {
-    int _();
+    int m();
   }
 
   interface ILong {
-    long _();
+    long m();
   }
 
   void m(IInt i, Long l) {}

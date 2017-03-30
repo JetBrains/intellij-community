@@ -1,6 +1,6 @@
 class Test {
     interface I {
-        Object _();
+        Object m();
     }
     static class Foo<X> {}
     static class Foo1 {}
@@ -10,4 +10,3 @@ class Test {
 
     }
 }
-

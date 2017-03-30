@@ -61,6 +61,9 @@ class PropertyAccessor implements MutableAccessor {
       throw new XmlSerializationException(e);
     }
     catch (InvocationTargetException e) {
+      Throwable exception = e.getTargetException();
+      if (exception instanceof Error) throw (Error)exception;
+      if (exception instanceof RuntimeException) throw (RuntimeException)exception;
       throw new XmlSerializationException(e);
     }
   }

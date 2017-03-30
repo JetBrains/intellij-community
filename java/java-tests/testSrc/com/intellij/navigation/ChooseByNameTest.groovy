@@ -15,6 +15,7 @@
  */
 package com.intellij.navigation
 
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
@@ -350,6 +351,17 @@ class Intf {
     def file = ReadAction.compute { myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope).containingFile }
     def elements = getPopupElements(new GotoFileModel(project), "Object.class", true)
     assert file in elements
+  }
+
+  void "test classes sorted by qualified name dispreferring excluded from import and completion"() {
+    def foo = myFixture.addClass('package foo; class List {}')
+    def bar = myFixture.addClass('package bar; class List {}')
+
+    def popup = createPopup(new GotoClassModel2(project), myFixture.addClass('class Context {}'))
+    assert calcPopupElements(popup, "List", false) == [bar, foo]
+
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
+    assert calcPopupElements(popup, "List", false) == [foo, bar]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {

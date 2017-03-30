@@ -229,6 +229,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return readOnlyFiles;
   }
 
+  @NotNull
   private static RefEntity[] getSelectedElements(InspectionResultsView view) {
     if (view == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<>(Arrays.asList(view.getTree().getSelectedElements()));

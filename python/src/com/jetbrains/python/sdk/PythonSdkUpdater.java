@@ -19,10 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -426,6 +423,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
     final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
+      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
       ApplicationManager.getApplication().invokeAndWait(() -> {
         final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
         final SdkModificator modificatorToCommit = sdkModificator != null ? sdkModificator :

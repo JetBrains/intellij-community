@@ -1222,6 +1222,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             .map(PyWithItem::getTarget)
             .select(PyTargetExpression.class)
             .forEach(result::add);
+
+          super.visitPyWithStatement(node);
         }
       });
       return result;
@@ -1386,7 +1388,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyPsiUtils.assertValid(this);
     if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
       final PyClass implicitSuper;
-      if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30)) {
+      if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && getMetaClassQName() == null) {
         implicitSuper = as(resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE),
                                                  fromFoothold(this)), PyClass.class);
       }
@@ -1461,8 +1463,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     else {
-      final PyClassStub stub = getStub();
-      final QualifiedName name = stub != null ? stub.getMetaClass() : PyPsiUtils.asQualifiedName(getMetaClassExpression());
+      final QualifiedName name = getMetaClassQName();
       final PsiFile file = getContainingFile();
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
@@ -1483,6 +1484,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     return null;
+  }
+
+  @Nullable
+  private QualifiedName getMetaClassQName() {
+    final PyClassStub stub = getStub();
+    return stub != null ? stub.getMetaClass() : PyPsiUtils.asQualifiedName(getMetaClassExpression());
   }
 
   @Nullable

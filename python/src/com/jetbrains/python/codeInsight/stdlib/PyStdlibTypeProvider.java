@@ -148,7 +148,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context), callSite);
+        return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context).getMappedParameters(), callSite);
       }
       else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);

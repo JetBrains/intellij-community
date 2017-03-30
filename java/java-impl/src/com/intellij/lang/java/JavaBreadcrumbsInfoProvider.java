@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
@@ -47,9 +48,7 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   @Override
   public String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
-      boolean isDumb = DumbService.isDumb(e.getProject());
-      PsiType type = isDumb ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
-      return type == null ? "->" : "-> " + getTypeText(type, false);
+      return PsiExpressionTrimRenderer.render((PsiExpression)e);
     }
     else if (e instanceof PsiAnonymousClass) {
       String name = ((PsiAnonymousClass)e).getBaseClassReference().getReferenceName();

@@ -53,11 +53,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.jetbrains.extenstions.toElement
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyQualifiedNameOwner
-import com.jetbrains.python.psi.stubs.PyFunctionNameIndex
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
@@ -70,6 +66,7 @@ import com.jetbrains.reflection.getProperties
 import org.jdom.Element
 import java.io.File
 import java.util.*
+import java.util.regex.Pattern
 import javax.swing.JComponent
 
 
@@ -82,25 +79,6 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUniversalUnitTe
 
 internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
 
-
-/**
- * For cases like "module.class.test_name.subtest_name" situated somewhere deep in folder which is not package,
- * this function tries to resolve test_name using index.
- */
-private fun findFunctionByPartialName(qualifiedName: QualifiedName, project: Project): PyFunction? {
-  // TODO: Add to background if too slow
-  val components = ArrayList(qualifiedName.components)
-  components.reverse()
-  components.forEach {
-    for (function in PyFunctionNameIndex.find(it, project)) {
-      val name = function.qualifiedName
-      if (name != null && name.contains(qualifiedName.toString())) {
-        return function
-      }
-    }
-  }
-  return null
-}
 
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
@@ -131,19 +109,27 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 }
 
 
+// folder provided by python side. Resolve test names versus it
+private val PATH_URL = Pattern.compile("^python<([^<>]+)>$")
+
 private object PyUniversalTestsLocator : SMTestLocator {
   override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     if (scope !is ModuleWithDependenciesScope) {
       return listOf()
     }
+    val matcher = PATH_URL.matcher(protocol)
+
+    val folder = if (matcher.matches()) {
+      LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
+    }
+    else {
+      null
+    }
+
     val qualifiedName = QualifiedName.fromDottedString(path)
     // Assume qname id good and resolve it directly
-    var element = qualifiedName.toElement(scope.module,
-                                          TypeEvalContext.codeAnalysis(project, null))
-    if (element == null) {
-      // If no luck then resolve it using heuristic
-      element = findFunctionByPartialName(qualifiedName, project)
-    }
+    val element = qualifiedName.toElement(scope.module,
+                                          TypeEvalContext.codeAnalysis(project, null), folderToStart = folder)
     if (element != null) {
       // Path is qualified name of python test according to runners protocol
       // Parentheses are part of generators / parametrized tests
@@ -218,9 +204,9 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
   /**
    * Converts target to PSI element if possible
    */
-  fun asPsiElement(module: Module, context: TypeEvalContext): PsiElement? {
+  fun asPsiElement(module: Module, context: TypeEvalContext, folderToStart: VirtualFile? = null): PsiElement? {
     if (targetType == TestTargetType.PYTHON) {
-      return QualifiedName.fromDottedString(target).toElement(module, context)
+      return QualifiedName.fromDottedString(target).toElement(module, context, folderToStart)
     }
     return null
   }
@@ -307,13 +293,6 @@ abstract class PyUniversalTestConfiguration(project: Project,
   override fun getRefactoringElementListener(element: PsiElement?): RefactoringElementListener? {
     val myModule = module
     val targetElement: PsiElement?
-    if (myModule != null) {
-      targetElement = target.asPsiElement(myModule, TypeEvalContext.userInitiated(project, null))
-    }
-    else {
-      targetElement = null
-    }
-    val targetFile = target.asVirtualFile(LocalFileSystem.getInstance())
 
     val workingDirectoryFile = if (workingDirectory.isNotEmpty()) {
       LocalFileSystem.getInstance().findFileByPath(workingDirectory)
@@ -321,6 +300,16 @@ abstract class PyUniversalTestConfiguration(project: Project,
     else {
       null
     }
+
+    if (myModule != null) {
+      targetElement = target.asPsiElement(myModule, TypeEvalContext.userInitiated(project, null), workingDirectoryFile)
+    }
+    else {
+      targetElement = null
+    }
+    val targetFile = target.asVirtualFile(LocalFileSystem.getInstance())
+
+
 
     if (targetElement != null && PsiTreeUtil.isAncestor(element, targetElement, false)) {
       return PyElementTargetRenamer(targetElement, workingDirectoryFile)
@@ -481,12 +470,22 @@ abstract class PyUniversalTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     when (element) {
-      is PyFile -> PythonUnitTestUtil.isUnitTestFile(element)
-      is PsiDirectory -> element.children.any { it is PyFile && PythonUnitTestUtil.isUnitTestFile(it) }
+      is PyFile -> isTestFile(element)
+      is PsiDirectory -> element.children.any { it is PyFile && isTestFile(it) }
       is PyFunction -> PythonUnitTestUtil.isTestCaseFunction(element, runBareFunctions)
       is PyClass -> PythonUnitTestUtil.isTestCaseClass(element, TypeEvalContext.userInitiated(element.project, element.containingFile))
       else -> false
     }
+
+  /**
+   * When checking if configuration is ok we need to know if folders could be packages: i.e. if foo.bar requires init.py in foo to work
+   */
+  open fun packageOnlyIfInitPy(anchor: PsiElement) = (!LanguageLevel.forElement(anchor).isPy3K)
+}
+
+private fun isTestFile(file: PyFile): Boolean {
+  return PythonUnitTestUtil.isUnitTestFile(file) ||
+         PythonUnitTestUtil.getTestCaseClassesFromFile(file, TypeEvalContext.userInitiated(file.project, file)).isNotEmpty()
 }
 
 abstract class PyUniversalTestFactory<out CONF_T : PyUniversalTestConfiguration> : PythonConfigurationFactoryBase(
@@ -532,7 +531,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
       location.target.copyTo(configuration.target)
     }
     else {
-      val targetForConfig = getTargetForConfig(configuration, sourceElement.get()) ?: return false
+      val targetForConfig = getTargetForConfig(configuration, sourceElement.get(), true) ?: return false
       targetForConfig.copyTo(configuration.target)
     }
     configuration.setGeneratedName()
@@ -545,7 +544,10 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
    * @return configuration name and its target
    */
   private fun getTargetForConfig(configuration: PyUniversalTestConfiguration,
-                                 baseElement: PsiElement): ConfigurationTarget? {
+                                 baseElement: PsiElement, fixConfiguration: Boolean = false): ConfigurationTarget? {
+
+    val fixPackages = (fixConfiguration && configuration.packageOnlyIfInitPy(baseElement))
+
     var element = baseElement
     // Go up until we reach top of the file
     // asking configuration about each element if it is supported or not
@@ -553,15 +555,31 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
     do {
       if (configuration.couldBeTestTarget(element)) {
         when (element) {
-          is PyQualifiedNameOwner -> { // Function, class, method
-            val qualifiedName = element.qualifiedName
+          is  PyQualifiedNameOwner -> { // Function, class, method
+            var qualifiedName = element.qualifiedName
             if (qualifiedName == null) {
               Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("$element has no qualified name")
               return null
             }
+            if (fixPackages) {
+
+              val pathResult = findPathWithPackagesByName(element)
+              if (pathResult == null) {
+                Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("Can't resolve")
+                return null
+              }
+              configuration.workingDirectory = pathResult.first.path
+              qualifiedName = pathResult.second.toString()
+            }
             return ConfigurationTarget(qualifiedName, TestTargetType.PYTHON)
           }
-          is PsiFileSystemItem -> return ConfigurationTarget(element.virtualFile.path, TestTargetType.PATH)
+          is PsiFileSystemItem -> {
+            val path = element.virtualFile
+            if (fixPackages) {
+              configuration.workingDirectory = findPathWithPackagesByFsItem(element)?.path ?: return null
+            }
+            return ConfigurationTarget(path.path, TestTargetType.PATH)
+          }
         }
       }
       element = element.parent

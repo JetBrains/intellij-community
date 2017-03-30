@@ -36,9 +36,14 @@ public class Runner {
 
   private static Logger logger = null;
   private static boolean ourCaseSensitiveFs;
+  private static boolean jrePresent = false;
 
   public static Logger logger() {
     return logger;
+  }
+
+  public static boolean isJrePresent() {
+    return jrePresent;
   }
 
   public static boolean isCaseSensitiveFs() {
@@ -105,6 +110,16 @@ public class Runner {
 
       initLogger();
       logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
+      if (new File (destFolder + "/jre").exists()) {
+        jrePresent = true;
+        logger().info("jre is present");
+        if(new File (destFolder + "/jre/bin/server/classes.jsa").setWritable(true)) {
+          logger().info("setWritable: " + destFolder + "/jre/bin/server/classes.jsa");
+        }
+        if(new File (destFolder + "/jre/jre/bin/server/classes.jsa").setWritable(true)) {
+          logger().info("setWritable: " + destFolder + "/jre/jre/bin/server/classes.jsa");
+        }
+      }
 
       if ("install".equals(args[0])) {
         install(jarFile, destFolder);
@@ -313,6 +328,7 @@ public class Runner {
         Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
         return PatchFileCreator.apply(result, resolutions, ui);
       }
+      catch (OperationCancelledException ignored) { }
       catch (Throwable e) {
         printStackTrace(e);
         ui.showError(e);

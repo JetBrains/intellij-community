@@ -197,6 +197,7 @@ public class UsageViewImpl implements UsageView {
           myTree = new Tree(myModel) {
             {
               ToolTipManager.sharedInstance().registerComponent(this);
+              setHorizontalAutoScrollingEnabled(false);
             }
 
             @Override
@@ -248,7 +249,10 @@ public class UsageViewImpl implements UsageView {
           toolWindowPanel.setContent(myCentralPanel);
 
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
-          collapseAll();
+          SwingUtilities.invokeLater(() -> {
+            if (isDisposed || myProject.isDisposed()) return;
+            collapseAll();
+          });
 
           myModelTracker.addListener(isPropertyChange-> {
             if (!isPropertyChange) {
@@ -536,6 +540,7 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
+  @NotNull
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<>(providers.length);
@@ -545,6 +550,7 @@ public class UsageViewImpl implements UsageView {
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
 
+  @NotNull
   private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<>(providers.length);
@@ -942,7 +948,7 @@ public class UsageViewImpl implements UsageView {
   void expandRoot() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();
-    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
+    TreeUtil.expand(myTree, 1);
   }
 
   @NotNull
@@ -1697,7 +1703,9 @@ public class UsageViewImpl implements UsageView {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
       else {
-        Node node = getSelectedNode();
+        // can arrive here outside EDT from usage view preview.
+        // ignore all these fancy actions in this case.
+        Node node = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNode() : null;
         if (node != null) {
           Object userObject = node.getUserObject();
           if (userObject instanceof TypeSafeDataProvider) {

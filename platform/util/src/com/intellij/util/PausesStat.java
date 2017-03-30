@@ -27,7 +27,7 @@ public class PausesStat {
   @NotNull private final String myName;
   private final Thread myEdtThread;
   private boolean started;
-  private long startTimeStamp;
+  private long startTimeStamp = System.currentTimeMillis();
   private int maxDuration;
   private Object maxDurationDescription;
   private int totalNumberRecorded;
@@ -51,9 +51,9 @@ public class PausesStat {
 
   public void started() {
     assertEdt();
+    startTimeStamp = System.currentTimeMillis();
     assert !started;
     started = true;
-    startTimeStamp = System.currentTimeMillis();
   }
 
   private void assertEdt() {
@@ -64,7 +64,11 @@ public class PausesStat {
     assertEdt();
     assert started;
     long finishStamp = System.currentTimeMillis();
+    long startTimeStamp = this.startTimeStamp;
+    if (finishStamp < startTimeStamp) throw new IllegalStateException("startTimeStamp: " + startTimeStamp + "; finishStamp: " + finishStamp);
     int duration = (int)(finishStamp - startTimeStamp);
+    if (duration < 0) throw new IllegalStateException("startTimeStamp: " + startTimeStamp + "; finishStamp: " + finishStamp+"; duration: "+duration);
+
     started = false;
     duration = Math.min(duration, Short.MAX_VALUE);
     if (duration > maxDuration) {

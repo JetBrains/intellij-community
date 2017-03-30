@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,33 +84,30 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiElement body = expression.getBody();
           final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-          if (functionalInterfaceType != null) {
-            PsiExpression methodRefCandidate = extractMethodReferenceCandidateExpression(body, false);
-            final PsiExpression candidate =
-              canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null, methodRefCandidate);
-            if (candidate != null) {
-              PsiExpression qualifier =
-                methodRefCandidate instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)methodRefCandidate).getMethodExpression().getQualifierExpression()
-                                                                      : methodRefCandidate instanceof PsiNewExpression
-                                                                        ? ((PsiNewExpression)methodRefCandidate).getQualifier()
-                                                                        : null;
-              boolean safeQualifier = checkQualifier(qualifier);
-              ProblemHighlightType type;
-              if (safeQualifier) {
-                type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-              }
-              else {
-                if (!isOnTheFly) return;
-                type = ProblemHighlightType.INFORMATION;
-              }
-              PsiElement element = InspectionProjectProfileManager.isInformationLevel(getShortName(), expression) ? expression : candidate;
-              holder.registerProblem(holder.getManager().createProblemDescriptor(
-                element,
-                "Can be replaced with method reference",
-                type != ProblemHighlightType.INFORMATION,
-                type, true, new ReplaceWithMethodRefFix(safeQualifier ? "" : " (may change semantics)")));
-            }
+          if (functionalInterfaceType == null) return;
+          MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
+          if (methodRefCandidate == null) return;
+          final PsiExpression candidate =
+            canBeMethodReferenceProblem(expression.getParameterList().getParameters(), functionalInterfaceType, null,
+                                        methodRefCandidate.myExpression);
+          if (candidate == null) return;
+          ProblemHighlightType type;
+          if (methodRefCandidate.mySafeQualifier && methodRefCandidate.myConformsCodeStyle) {
+            type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           }
+          else {
+            if (!isOnTheFly) return;
+            type = ProblemHighlightType.INFORMATION;
+          }
+          PsiElement element =
+            type == ProblemHighlightType.INFORMATION || InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)
+            ? expression
+            : candidate;
+          holder.registerProblem(holder.getManager().createProblemDescriptor(
+            element,
+            "Can be replaced with method reference",
+            type != ProblemHighlightType.INFORMATION,
+            type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
         }
       }
     };
@@ -121,8 +118,9 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                           final PsiVariable[] parameters,
                                                           PsiType functionalInterfaceType,
                                                           @Nullable PsiElement context) {
-    PsiExpression methodRefCandidate = extractMethodReferenceCandidateExpression(body, true);
-    return canBeMethodReferenceProblem(parameters, functionalInterfaceType, context, methodRefCandidate);
+    MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(body);
+    if (methodRefCandidate == null || !methodRefCandidate.mySafeQualifier || !methodRefCandidate.myConformsCodeStyle) return null;
+    return canBeMethodReferenceProblem(parameters, functionalInterfaceType, context, methodRefCandidate.myExpression);
   }
 
   @Nullable
@@ -263,32 +261,30 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  public static PsiExpression extractMethodReferenceCandidateExpression(PsiElement body, boolean checkSideEffectPureQualifier) {
+  static MethodReferenceCandidate extractMethodReferenceCandidateExpression(PsiElement body) {
     final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
     if (expression == null) {
       return null;
     }
     if (expression instanceof PsiNewExpression) {
-      if (!checkSideEffectPureQualifier || checkQualifier(((PsiNewExpression)expression).getQualifier())) {
-        return expression;
-      }
+      return new MethodReferenceCandidate(expression, checkQualifier(((PsiNewExpression)expression).getQualifier()), true);
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      if (!checkSideEffectPureQualifier || checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier())) {
-        return expression;
-      }
+      return new MethodReferenceCandidate(expression,
+                                          checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
     }
 
-    if (expression instanceof PsiInstanceOfExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_INSTANCEOF) {
-      return expression;
+    if (expression instanceof PsiInstanceOfExpression) {
+      return new MethodReferenceCandidate(expression, true,
+                                          CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_INSTANCEOF);
     }
-    else if (expression instanceof PsiBinaryExpression &&
-             CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK) {
+    else if (expression instanceof PsiBinaryExpression) {
       if (ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null) {
-        return expression;
+        return new MethodReferenceCandidate(expression, true,
+                                            CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK);
       }
     }
-    else if (expression instanceof PsiTypeCastExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_CAST) {
+    else if (expression instanceof PsiTypeCastExpression) {
       PsiTypeElement typeElement = ((PsiTypeCastExpression)expression).getCastType();
       if (typeElement != null) {
         PsiJavaCodeReferenceElement refs = typeElement.getInnermostComponentReferenceElement();
@@ -297,7 +293,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         }
         PsiType type = typeElement.getType();
         if (type instanceof PsiPrimitiveType || PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return null;
-        return expression;
+        return new MethodReferenceCandidate(expression, true, CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_CAST);
       }
     }
     return null;
@@ -638,5 +634,17 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       return replace;
     }
     return lambda;
+  }
+
+  static class MethodReferenceCandidate {
+    final PsiExpression myExpression;
+    final boolean mySafeQualifier;
+    final boolean myConformsCodeStyle;
+
+    MethodReferenceCandidate(PsiExpression expression, boolean safeQualifier, boolean conformsCodeStyle) {
+      myExpression = expression;
+      mySafeQualifier = safeQualifier;
+      myConformsCodeStyle = conformsCodeStyle;
+    }
   }
 }

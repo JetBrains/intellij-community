@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -433,14 +433,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   @NotNull
   public String getComponentName() {
     return COMPONENT_NAME;
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   private static class FacetManagerModel extends FacetModelBase {

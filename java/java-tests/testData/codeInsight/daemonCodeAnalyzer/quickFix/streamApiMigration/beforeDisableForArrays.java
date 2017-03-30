@@ -1,4 +1,4 @@
-// "Replace with forEach" "false"
+// "Replace with forEach" "INFORMATION"
 import java.util.*;
 
 class A {

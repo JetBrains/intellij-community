@@ -343,6 +343,7 @@ public class ControlFlowUtil {
     return array;
   }
 
+  @NotNull
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     ArrayList<PsiVariable> array = new ArrayList<>();
@@ -1008,6 +1009,7 @@ public class ControlFlowUtil {
     return visitor.getResult().booleanValue();
   }
 
+  @NotNull
   public static Object[] getAllWorldProblemsAtOnce(final ControlFlow flow) {
     InstructionClientVisitor[] visitors = {
       new ReturnPresentClientVisitor(flow),
@@ -2044,6 +2046,7 @@ public class ControlFlowUtil {
       }
     }
 
+    @NotNull
     int[] getNextOffsets(int offset) {
       return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtil.EMPTY_INT_ARRAY;
     }

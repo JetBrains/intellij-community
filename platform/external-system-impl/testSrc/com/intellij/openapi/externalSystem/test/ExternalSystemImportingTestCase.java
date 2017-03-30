@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -74,8 +75,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
-  protected void assertModules(String... expectedNames) {
-    Module[] actual = ModuleManager.getInstance(myProject).getModules();
+  protected void assertModules(@NotNull Project project, String... expectedNames) {
+    Module[] actual = ModuleManager.getInstance(project).getModules();
     List<String> actualNames = new ArrayList<>();
 
     for (Module m : actual) {
@@ -83,6 +84,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
 
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  protected void assertModules(String... expectedNames) {
+    assertModules(myProject, expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {

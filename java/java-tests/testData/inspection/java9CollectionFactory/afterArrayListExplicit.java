@@ -4,7 +4,7 @@ import java.util.*;
 public class Test {
   public void testList() {
     List<Integer> list;
-      list = List.<Integer>of(1, 2);
+      list = List.of(1, 2);
     System.out.println(list);
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -563,6 +564,24 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 
+  public void testBackgroundCommitInDialogInTransaction() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+
+    TransactionGuard.submitTransaction(myProject, () -> {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        document.insertString(0, "x");
+        LaterInvocator.enterModal(new Object());
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+      });
+
+      waitTenSecondsForCommit(document);
+      assertTrue(getPsiDocumentManager().isCommitted(document));
+    });
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
     PsiFile psiFile = findFile(vFile);
@@ -651,7 +670,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testUndoShouldAddToCommitQueue() throws IOException {
     VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
     PsiFile file = findFile(virtualFile);
-    assertTrue(file.getFileType().getName().equals("JAVA"));
+    assertEquals("JAVA", file.getFileType().getName());
 
     assertNotNull(file);
     assertTrue(file.isPhysical());
@@ -766,9 +785,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(pdm.isCommitted(document));
     assertFalse(file.isValid());
 
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      document.replaceString(0, document.getTextLength(), "xxxxxxxxxxxxxxxxxxxx");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () ->
+      document.replaceString(0, document.getTextLength(), "xxxxxxxxxxxxxxxxxxxx"));
     pdm.commitAllDocuments();
     assertTrue(pdm.isCommitted(document));
 
@@ -789,7 +807,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     return StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);
   }
 
-  private static abstract class FileTooBigExceptionCase extends AbstractExceptionCase {
+  private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {
     @Override
     public Class getExpectedExceptionClass() {
       return FileTooBigException.class;

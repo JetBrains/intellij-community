@@ -89,6 +89,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
+    myTable.resetDefaultFocusTraversalKeys();
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
     pane.setPreferredSize(JBUI.size(100, 155));
     TableColumnModel columnModel = myTable.getColumnModel();

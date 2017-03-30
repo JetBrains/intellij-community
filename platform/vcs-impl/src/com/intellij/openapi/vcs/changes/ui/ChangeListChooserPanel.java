@@ -233,8 +233,9 @@ public class ChangeListChooserPanel extends JPanel {
 
     public MyEditorComboBox() {
       super(PREF_WIDTH);
-      JBColor fg = new JBColor(0x00b53d, 0x24953c);
-      TextIcon icon = new TextIcon("New", fg, ColorUtil.toAlpha(fg, 40), JBUI.scale(2));
+      JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
+      JBColor bg = new JBColor(0xebfcf1, 0x313b32);
+      TextIcon icon = new TextIcon("New", fg, bg, JBUI.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
       icon.setRound(JBUI.scale(4));
       JLabel label = new JLabel(icon);

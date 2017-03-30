@@ -9,8 +9,10 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.ModuleRootManagerComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.modifyModules
+import com.intellij.project.rootManager
 import com.intellij.testFramework.*
 import com.intellij.util.Function
 import com.intellij.util.SmartList
@@ -67,7 +69,8 @@ internal class ModuleStoreRenameTest {
         }
       }
     },
-    DisposeModulesRule(projectRule)
+    DisposeModulesRule(projectRule),
+    EdtRule()
   )
 
   @Rule fun getChain() = ruleChain
@@ -130,5 +133,25 @@ internal class ModuleStoreRenameTest {
     finally {
       runInEdtAndWait { runWriteAction { parentVirtualDir.delete(this) } }
     }
+  }
+
+  @Test
+  @RunsInEdt
+  fun `rename module source root`() {
+    runInEdtAndWait { module.saveStore() }
+    val storage = module.storage
+    val parentVirtualDir = storage.virtualFile!!.parent
+    val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
+    runWriteAction {
+      PsiTestUtil.addSourceContentToRoots(module, src, false)
+    }
+    module.saveStore()
+
+    val rootManager = module.rootManager as ModuleRootManagerComponent
+    val stateModificationCount = rootManager.stateModificationCount
+
+    runWriteAction { src.rename(null, "bar") }
+
+    assertThat(stateModificationCount).isLessThan(rootManager.stateModificationCount)
   }
 }

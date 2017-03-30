@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.rollback;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -109,12 +111,7 @@ public class Reverter {
   }
 
   public void moveGroup() {
-    Collections.sort(myFromToModified, new Comparator<CopiedAsideInfo>() {
-      @Override
-      public int compare(CopiedAsideInfo o1, CopiedAsideInfo o2) {
-        return FileUtil.compareFiles(o1.getTo(), o2.getTo());
-      }
-    });
+    Collections.sort(myFromToModified, (o1, o2) -> FileUtil.compareFiles(o1.getTo(), o2.getTo()));
     for (CopiedAsideInfo info : myFromToModified) {
       if (info.getParentImmediateReverted().exists()) {
         // parent successfully renamed/moved
@@ -135,26 +132,23 @@ public class Reverter {
             }
           }
           else {
-            FileUtil.processFilesRecursively(root, new Processor<File>() {
-              @Override
-              public boolean process(File file) {
-                if (file.isDirectory()) return true;
-                String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), File.separatorChar);
-                File newFile = new File(target, relativePath);
-                newFile.getParentFile().mkdirs();
-                try {
-                  if (target.exists()) {
-                    FileUtil.copy(file, newFile);
-                  }
-                  else {
-                    FileUtil.rename(file, newFile);
-                  }
+            FileUtil.processFilesRecursively(root, file -> {
+              if (file.isDirectory()) return true;
+              String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), File.separatorChar);
+              File newFile = new File(target, relativePath);
+              newFile.getParentFile().mkdirs();
+              try {
+                if (target.exists()) {
+                  FileUtil.copy(file, newFile);
                 }
-                catch (IOException e) {
-                  myExceptions.add(new VcsException(e));
+                else {
+                  FileUtil.rename(file, newFile);
                 }
-                return true;
               }
+              catch (IOException e) {
+                myExceptions.add(new VcsException(e));
+              }
+              return true;
             });
           }
         }

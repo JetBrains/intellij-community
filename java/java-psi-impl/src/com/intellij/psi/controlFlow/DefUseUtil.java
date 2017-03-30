@@ -454,6 +454,7 @@ public class DefUseUtil {
   }
 
 
+  @NotNull
   private static IntArrayList[] getBackwardTraces(final List<Instruction> instructions) {
     final IntArrayList[] states = new IntArrayList[instructions.size()];
     for (int i = 0; i < states.length; i++) {

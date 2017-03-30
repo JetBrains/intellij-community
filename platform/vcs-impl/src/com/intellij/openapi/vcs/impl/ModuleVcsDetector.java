@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
@@ -43,7 +44,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class ModuleVcsDetector implements ProjectComponent {
+public class ModuleVcsDetector implements ProjectComponent, Disposable {
   private final Project myProject;
   private final MessageBus myMessageBus;
   private final ProjectLevelVcsManagerImpl myVcsManager;
@@ -60,24 +61,18 @@ public class ModuleVcsDetector implements ProjectComponent {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     
     final StartupManager manager = StartupManager.getInstance(myProject);
-    manager.registerStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        if (myVcsManager.needAutodetectMappings()) {
-          autoDetectVcsMappings(true);
-        }
-        myVcsManager.updateActiveVcss();
+    manager.registerStartupActivity(() -> {
+      if (myVcsManager.needAutodetectMappings()) {
+        autoDetectVcsMappings(true);
       }
+      myVcsManager.updateActiveVcss();
     });
-    manager.registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        if (myMessageBus != null) {
-          myConnection = myMessageBus.connect();
-          final MyModulesListener listener = new MyModulesListener();
-          myConnection.subscribe(ProjectTopics.MODULES, listener);
-          myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
-        }
+    manager.registerPostStartupActivity(() -> {
+      if (myMessageBus != null) {
+        myConnection = myMessageBus.connect(this);
+        final MyModulesListener listener = new MyModulesListener();
+        myConnection.subscribe(ProjectTopics.MODULES, listener);
+        myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
       }
     });
   }
@@ -113,11 +108,7 @@ public class ModuleVcsDetector implements ProjectComponent {
       myMappingsForRemovedModules.addAll(getMappings(module));
     }
   }
-
-  @Override
-  public void projectClosed() {
-  }
-
+  
   @Override
   @NonNls
   @NotNull
@@ -126,14 +117,7 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-    if (myConnection != null) {
-      myConnection.disconnect();
-    }
+  public void dispose() {
   }
 
   private void autoDetectVcsMappings(final boolean tryMapPieces) {

@@ -32,8 +32,6 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -138,12 +136,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   @NotNull
   private static VcsException createException(boolean isWarning, @NotNull String... messages) {
-    Collection<String> notEmptyMessages = ContainerUtil.mapNotNull(messages, new Function<String, String>() {
-      @Override
-      public String fun(@Nullable String message) {
-        return StringUtil.nullize(message, true);
-      }
-    });
+    Collection<String> notEmptyMessages = ContainerUtil.mapNotNull(messages, message -> StringUtil.nullize(message, true));
 
     return new VcsException(notEmptyMessages).setIsWarning(isWarning);
   }
@@ -249,11 +242,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void stepToNextChangeList() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ProgressManager.getInstance().run(SvnIntegrateChangesTask.this);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> ProgressManager.getInstance().run(SvnIntegrateChangesTask.this));
   }
 
   /**
@@ -275,8 +264,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.invokeAfterUpdate(new Runnable() {
-      public void run() {
+    changeListManager.invokeAfterUpdate(
+      () -> {
         Collection<Change> changes = new ArrayList<>();
         for (FilePath file : files) {
           ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
@@ -284,24 +273,16 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
         CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
         prepareAndShowResults();
-      }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle,
-      new Consumer<VcsDirtyScopeManager>() {
-        public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
-          vcsDirtyScopeManager.filePathsDirty(files, null);
-        }
-      }, null);
+      }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle, vcsDirtyScopeManager -> vcsDirtyScopeManager.filePathsDirty(files, null),
+      null);
   }
 
   @NotNull
   private Collection<FilePath> gatherChangedPaths() {
     final Collection<FilePath> result = new ArrayList<>();
 
-    UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
-      public void onFile(final String filePath, final String groupId) {
-        result.add(VcsUtil.getFilePath(new File(filePath)));
-      }
-    });
+    UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(),
+                                            (filePath, groupId) -> result.add(VcsUtil.getFilePath(new File(filePath))));
     ContainerUtil.addIfNotNull(result, myMergeTarget);
 
     return result;
@@ -313,11 +294,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if (myMergeTarget != null) {
       dirtyScope.addDir(myMergeTarget);
     } else {
-      UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
-        public void onFile(final String filePath, final String groupId) {
-          dirtyScope.addFile(VcsUtil.getFilePath(new File(filePath)));
-        }
-      });
+      UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(),
+                                              (filePath, groupId) -> dirtyScope.addFile(VcsUtil.getFilePath(new File(filePath))));
     }
 
     showAlienCommit(dirtyScope);

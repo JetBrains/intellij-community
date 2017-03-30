@@ -296,7 +296,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               expression instanceof PsiMethodCallExpression?
                 ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
                 : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
-              myInsideLambda,
+              myInsideLambda || (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null),
               null
             ));
           }

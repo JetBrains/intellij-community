@@ -36,7 +36,8 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vcs.roots.VcsRootPlatformTest.DOT_MOCK
+import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.io.File
@@ -68,6 +69,8 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     }
   }
 
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#com.intellij.openapi.vcs.roots")
+
   fun `test root is added automatically in simple case`() {
     assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
 
@@ -78,9 +81,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
   }
 
   fun `test nothing is added automatically if two roots detected`() {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
-    val subRoot = File(myProjectPath, "lib")
-    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    val subRoot = createNestedRoots()
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
@@ -111,9 +112,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
   // IDEA-CR-18592
   fun `test single root is not added automatically if there is ignored root`() {
-    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
-    val subRoot = File(myProjectPath, "lib")
-    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    val subRoot = createNestedRoots()
     VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(FileUtil.toSystemIndependentName(subRoot.path)))
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
@@ -123,6 +122,14 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
       The directory ${toSystemDependentName(myProjectPath)} is under mock, but is not registered in the Settings.
       <a>Add root</a> <a>Configure</a> <a>Ignore</a>
       """.trimIndent())
+  }
+
+  private fun createNestedRoots(): File {
+    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
+    val subRoot = File(myProjectPath, "lib")
+    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subRoot)
+    return subRoot
   }
 
   private fun getExtensionPoint() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)

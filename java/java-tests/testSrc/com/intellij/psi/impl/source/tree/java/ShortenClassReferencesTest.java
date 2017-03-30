@@ -81,6 +81,18 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
                           "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Inner;}}");
   }
 
+  public void testConflictingClassInSamePackage() throws Exception {
+    myFixture.addClass("package p1; public class Outer{}");
+    myFixture.addClass("package p2; public class Outer{}");
+    myFixture.configureByText("a.java", "package p2; class Outer1 extends p1.Outer {}");
+    doShortenRefs();
+    myFixture.checkResult("package p2;\n" +
+                          "\n" +
+                          "import p1.Outer;\n" +
+                          "\n" +
+                          "class Outer1 extends Outer {}");
+  }
+
   public void testWhiteSpaceForMovedTypeAnnotations() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".java");
     PsiElement elementAtCaret = myFixture.getElementAtCaret();

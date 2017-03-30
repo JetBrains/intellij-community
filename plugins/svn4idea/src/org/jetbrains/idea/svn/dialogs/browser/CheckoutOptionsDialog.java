@@ -32,20 +32,17 @@ import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
-import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class CheckoutOptionsDialog extends DialogWrapper {
   private JCheckBox myExternalsCheckbox;
@@ -68,35 +65,25 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     fillTargetList(target);
     validateTargetSelected();
 
-    mySelectTarget.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        // choose directory here/
-        FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        fcd.setShowFileSystemRoots(true);
-        fcd.setTitle(SvnBundle.message("checkout.directory.chooser.title"));
-        fcd.setDescription(SvnBundle.message("checkout.directory.chooser.prompt"));
-        fcd.setHideIgnored(false);
-        VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), project, null);
-        if (file == null) {
-          return;
-        }
-        fillTargetList(new File(file.getPath()));
-        validateTargetSelected();
+    mySelectTarget.addActionListener(e -> {
+      // choose directory here/
+      FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      fcd.setShowFileSystemRoots(true);
+      fcd.setTitle(SvnBundle.message("checkout.directory.chooser.title"));
+      fcd.setDescription(SvnBundle.message("checkout.directory.chooser.prompt"));
+      fcd.setHideIgnored(false);
+      VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), project, null);
+      if (file == null) {
+        return;
       }
+      fillTargetList(virtualToIoFile(file));
+      validateTargetSelected();
     });
-    myLocalTargetList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        validateTargetSelected();
-      }
-    });
+    myLocalTargetList.addListSelectionListener(e -> validateTargetSelected());
 
     svnSelectRevisionPanel.setRoot(root);
     svnSelectRevisionPanel.setProject(project);
-    svnSelectRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
-      public String getUrl() {
-        return urlText;
-      }
-    });
+    svnSelectRevisionPanel.setUrlProvider(() -> urlText);
 
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     myDepthLabel.setLabelFor(myDepthCombo);

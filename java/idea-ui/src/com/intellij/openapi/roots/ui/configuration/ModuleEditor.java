@@ -318,24 +318,21 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myGenericSettingsPanel = null;
     }
     finally {
-      myModifiableRootModel = null;
-      myModifiableRootModelProxy = null;
+      resetModifiableModel();
     }
   }
 
   public ModifiableRootModel apply() throws ConfigurationException {
-    try {
-      for (ModuleConfigurationEditor editor : myEditors) {
-        editor.saveData();
-        editor.apply();
-      }
+    for (ModuleConfigurationEditor editor : myEditors) {
+      editor.saveData();
+      editor.apply();
+    }
+    return myModifiableRootModel;
+  }
 
-      return myModifiableRootModel;
-    }
-    finally {
-      myModifiableRootModel = null;
-      myModifiableRootModelProxy = null;
-    }
+  void resetModifiableModel() {
+    myModifiableRootModel = null;
+    myModifiableRootModelProxy = null;
   }
 
   public void canApply() throws ConfigurationException {

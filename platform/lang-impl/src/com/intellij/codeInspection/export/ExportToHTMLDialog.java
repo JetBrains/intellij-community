@@ -84,4 +84,9 @@ public class ExportToHTMLDialog extends DialogWrapper{
     }
     exportToHTMLSettings.OUTPUT_DIRECTORY = myTargetDirectoryField.getText();
   }
+
+  @Override
+  protected String getHelpId() {
+    return "procedures.inspecting.export";
+  }
 }

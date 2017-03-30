@@ -43,12 +43,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -87,11 +83,7 @@ public class CopyOptionsDialog extends DialogWrapper {
 
     myBrowser.setRepositoryURL(root.getURL(), false, 
         new OpeningExpander.Factory(subPath, (RepositoryTreeNode)((node.getParent() instanceof RepositoryTreeNode) ? node.getParent() : null)));
-    myBrowser.addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        update();
-      }
-    });
+    myBrowser.addChangeListener(e -> update());
 
     myNameField.setText(SVNPathUtil.tail(myURL.getPath()));
     myNameField.selectAll();
@@ -112,13 +104,11 @@ public class CopyOptionsDialog extends DialogWrapper {
       myCommitMessage.setText(lastMessage);
       myCommitMessage.selectAll();
     }
-    myMessagesBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Object item = myMessagesBox.getSelectedItem();
-        if (item != null) {
-          myCommitMessage.setText(item.toString());
-          myCommitMessage.selectAll();
-        }
+    myMessagesBox.addActionListener(e -> {
+      final Object item = myMessagesBox.getSelectedItem();
+      if (item != null) {
+        myCommitMessage.setText(item.toString());
+        myCommitMessage.selectAll();
       }
     });
     Disposer.register(getDisposable(), myBrowser);

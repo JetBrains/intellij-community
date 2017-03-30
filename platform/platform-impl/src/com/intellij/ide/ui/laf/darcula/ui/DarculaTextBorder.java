@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
@@ -31,7 +32,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextBorder implements Border, UIResource {
+public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
     int vOffset = TextFieldWithPopupHandlerUI.isSearchField(c) ? 6 : 4;
@@ -56,7 +57,7 @@ public class DarculaTextBorder implements Border, UIResource {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (DarculaTextFieldUI.isSearchField(c)) return;
+    if (TextFieldWithPopupHandlerUI.isSearchField(c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -64,7 +65,7 @@ public class DarculaTextBorder implements Border, UIResource {
 
       Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, c.hasFocus());
+        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, c.hasFocus());
       } else if (c.hasFocus()) {
         DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2)));
       } else {

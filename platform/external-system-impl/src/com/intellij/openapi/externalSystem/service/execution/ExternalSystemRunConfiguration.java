@@ -4,6 +4,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -25,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -34,6 +36,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
@@ -166,9 +169,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       if (tasks.isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
-      String debuggerSetup = null;
+      String jvmAgentSetup = null;
       if (myDebugPort > 0) {
-        debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+        jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+      } else {
+        ParametersList parametersList = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+        if (parametersList != null) {
+          for (String parameter : parametersList.getList()) {
+            if (parameter.startsWith("-agentlib:")) continue;
+            if (parameter.startsWith("-agentpath:")) continue;
+            if (parameter.startsWith("-javaagent:")) continue;
+            throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
+          }
+          jvmAgentSetup = parametersList.getParametersString();
+        }
       }
 
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -179,7 +193,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    tasks,
                                                                                    mySettings.getVmOptions(),
                                                                                    mySettings.getScriptParameters(),
-                                                                                   debuggerSetup);
+                                                                                   jvmAgentSetup);
       copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
@@ -203,7 +217,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
         }
         processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
         foldGreetingOrFarewell(consoleView, greeting, true);
-        task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
+        ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
           private boolean myResetGreeting = true;
 
@@ -241,7 +255,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
             foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
-        });
+        };
+        task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
       result.setRestartActions(consoleManager.getRestartActions(consoleView));

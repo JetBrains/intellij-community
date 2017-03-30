@@ -2,9 +2,8 @@
 """
 Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCharm+test+runners+protocol)
 """
-import argparse
 import atexit
-import imp
+import _jb_utils
 import os
 import re
 import sys
@@ -23,7 +22,7 @@ def _parse_parametrized(part):
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses
     """
-    match = re.match("^(.+)(\(.+\))$", part)
+    match = re.match("^(.+)(\\(.+\\))$", part)
     if not match:
         return [part]
     else:
@@ -159,12 +158,13 @@ class NewTeamcityServiceMessages(_old_service_messages):
         # Intellij may fail to process message if it has char just before it.
         # Space before message has no visible affect, but saves from such cases
         print(" ")
-        if messageName in {"enteredTheMatrix", "testCount"}:
+        if messageName in set(["enteredTheMatrix", "testCount"]):
             _old_service_messages.message(self, messageName, **properties)
             return
 
         try:
-            properties["locationHint"] = "python://{0}".format(properties["name"])
+            # Report directory so Java site knows which folder to resolve names against
+            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), properties["name"])
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -205,14 +205,23 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return test_name
 
     # Blocks are used for 2 cases now:
-    # 1) Unittest subtests (broken, because failure can't be reported)
+    # 1) Unittest subtests
     # 2) setup/teardown (does not work, see https://github.com/JetBrains/teamcity-messages/issues/114)
-    # So, temporary disabled
-    # def blockOpened(self, name, flowId=None):
-    #     self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
-    #
-    # def blockClosed(self, name, flowId=None):
-    #     self.testFinished(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+    def blockOpened(self, name, flowId=None):
+         self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+
+    def blockClosed(self, name, flowId=None):
+        test_name = ".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)])
+        if self._latest_subtest_result:
+            self.testFinished(test_name)
+        else:
+            self.testFailed(test_name)
+
+        self._latest_subtest_result = None
+
+    def subTestBlockOpened(self, name, subTestResult, flowId=None):
+        self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+        self._latest_subtest_result = subTestResult
 
     def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
         test_name_as_list = self._test_to_list(testName)
@@ -237,7 +246,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 "details": details}
         self.message("testFailed", **args)
 
-    def testFinished(self, testName, testDuration=None, flowId=None,  is_suite=False):
+    def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
         testName = ".".join(self._test_to_list(testName))
 
         def _write_finished_message():
@@ -291,6 +300,58 @@ messages.TeamcityServiceMessages = NewTeamcityServiceMessages
 # Monkeypatched
 
 
+class _SymbolNameSplitter(object):
+    """
+    Strategy to split symbol name to package/module part and symbols part.
+        
+    """
+    def check_is_importable(self, parts, current_step, separator):
+        """
+        
+        Run this method for each name part. Method throws ImportError when name is not importable. 
+        That means previous name is where module name ends.
+        :param parts: list of module name parts
+        :param current_step: from 0 to len(parts)
+        :param separator: module name separator (".")
+        """
+        raise NotImplementedError()
+
+
+class _SymbolName2KSplitter(_SymbolNameSplitter):
+    """
+    Based on imp which works in 2, but not 3.
+    It also emulates packages for folders with out of __init__.py.
+    Say, you have Python path "spam.eggs" where "spam" is plain folder.
+    It works for Py3, but not Py2.
+    find_module for "spam" raises exception which is processed then (see "_symbol_processed") 
+    """
+    def __init__(self):
+        super(_SymbolNameSplitter, self).__init__()
+        self._path = None
+        # Set to True when at least one find_module success, so we have at least one symbol
+        self._symbol_processed = False
+
+    def check_is_importable(self, parts, current_step, separator):
+        import imp
+        module_to_import = parts[current_step]
+        (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
+        self._symbol_processed = True
+        if desc[2] == imp.PKG_DIRECTORY:
+            # Package
+            self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+
+
+
+class _SymbolName3KSplitter(_SymbolNameSplitter):
+    """
+    Based on importlib which works in 3, but not 2
+    """
+    def check_is_importable(self, parts, current_step, separator):
+        import importlib
+        module_to_import = separator.join(parts[:current_step + 1])
+        importlib.import_module(module_to_import)
+
+
 def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     """
     Targets are always dot separated according to manual.
@@ -307,19 +368,18 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
         return []
 
     def _patch_target(target):
-        path = None
-        parts = target.split(".")
+        _jb_utils.VersionAgnosticUtils.is_py3k()
+        splitter = _SymbolName3KSplitter() if _jb_utils.VersionAgnosticUtils.is_py3k() else _SymbolName2KSplitter()
+
+        separator = "."
+        parts = target.split(separator)
         for i in range(0, len(parts)):
-            m = parts[i]
             try:
-                (fil, path, desc) = imp.find_module(m, [path] if path else None)
+                splitter.check_is_importable(parts, i, separator)
             except ImportError:
                 fs_part = fs_glue.join(parts[:i])
                 python_path = python_glue.join(parts[i:])
                 return fs_part + fs_to_python_glue + python_path if python_path else fs_part
-            if desc[2] == imp.PKG_DIRECTORY:
-                # Package
-                path = imp.load_module(m, fil, path, desc).__path__[0]
         return target
 
     return map(_patch_target, targets)
@@ -342,12 +402,16 @@ def jb_start_tests():
         del sys.argv[index:]
     except ValueError:
         pass
-    parser = argparse.ArgumentParser(description='PyCharm test runner')
-    parser.add_argument('--path', help='Path to file or folder to run')
-    parser.add_argument('--target', help='Python target to run', action="append")
-    namespace = parser.parse_args()
+    utils = _jb_utils.VersionAgnosticUtils()
+
+    namespace = utils.get_options(
+        _jb_utils.OptionDescription('--path', 'Path to file or folder to run'),
+        _jb_utils.OptionDescription('--target', 'Python target to run', "append"))
     del sys.argv[1:]  # Remove all args
     NewTeamcityServiceMessages().message('enteredTheMatrix')
+
+    # Working dir should be on path, that is how runners work when launched from command line
+    sys.path.insert(1, os.getcwd())
     return namespace.path, namespace.target, additional_args
 
 
@@ -363,4 +427,4 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1}".format(framework_name, " ".join(args)))
+    print("Launching {0} with arguments {1} in {2}".format(framework_name, " ".join(args), os.getcwd()))

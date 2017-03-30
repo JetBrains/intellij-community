@@ -19,6 +19,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
@@ -89,11 +90,47 @@ abstract class GitPlatformTest : VcsPlatformTest() {
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
   protected fun prepareRemoteRepo(source: GitRepository, target: File = File(myTestRoot, "parent.git")): File {
-    val targetName = "origin"
+    cd(myTestRoot)
     git("clone --bare '${source.root.path}' ${target.path}")
     cd(source)
-    git("remote add $targetName '${target.path}'")
+    git("remote add origin '${target.path}'")
     return target
+  }
+
+  /**
+   * Creates 3 repositories: a bare "parent" repository, and two clones of it.
+   *
+   * One of the clones - "bro" - is outside of the project.
+   * Another one is inside the project, is registered as a Git root, and is represented by [GitRepository].
+   *
+   * Parent and bro are created just inside the [testRoot](myTestRoot).
+   * The main clone is created at [repoRoot], which is assumed to be inside the project.
+   */
+  protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity {
+    val parentRepo = createParentRepo(parentName)
+    val broRepo = createBroRepo(broName, parentRepo)
+
+    val repository = createRepository(myProject, repoRoot)
+    cd(repository)
+    git("remote add origin " + parentRepo.path)
+    git("push --set-upstream origin master:master")
+
+    Executor.cd(broRepo.path)
+    git("pull")
+
+    return ReposTrinity(repository, parentRepo, broRepo)
+  }
+
+  private fun createParentRepo(parentName: String): File {
+    Executor.cd(myTestRoot)
+    git("init --bare $parentName.git")
+    return File(myTestRoot, parentName + ".git")
+  }
+
+  private fun createBroRepo(broName: String, parentRepo: File): File {
+    Executor.cd(myTestRoot)
+    git("clone " + parentRepo.name + " " + broName)
+    return File(myTestRoot, broName)
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
@@ -121,4 +158,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun `assert merge dialog was shown`() {
     assertTrue("Merge dialog was not shown", vcsHelper.mergeDialogWasShown())
   }
+
+  protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
+
 }

@@ -1,6 +1,6 @@
 class Test {
     interface I {
-        int _();
+        int m();
     }
 
     static abstract class Parent {

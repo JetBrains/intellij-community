@@ -256,7 +256,7 @@ public class PyArgumentListInspection extends PyInspection {
   private static String addPossibleCalleesRepresentationAndWrapInHtml(@NotNull String prefix,
                                                                       @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                                       @NotNull TypeEvalContext context) {
-    final String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context);
+    final String possibleCalleesRepresentation = XmlStringUtil.escapeString(calculatePossibleCalleesRepresentation(mappings, context));
     return XmlStringUtil.wrapInHtml(prefix + "<br>" + PyBundle.message("INSP.possible.callees") + ":<br>" + possibleCalleesRepresentation);
   }
 

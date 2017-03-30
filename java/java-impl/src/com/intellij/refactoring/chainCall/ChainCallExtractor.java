@@ -16,12 +16,15 @@
 package com.intellij.refactoring.chainCall;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -55,7 +58,25 @@ public interface ChainCallExtractor {
    * @return chain call. Result is correct only if {@link #canExtractChainCall} was checked before
    * for given expression and expressionType
    */
-  String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType);
+  default String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
+    if(expression instanceof PsiArrayInitializerExpression) {
+      expression = RefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
+    }
+    String typeArgument = OptionalUtil.getMapTypeArgument(expression, expressionType);
+    return "." + typeArgument + getMethodName(variable, expression, expressionType) +
+           "(" + variable.getName() + "->" + expression.getText() + ")";
+  }
+
+  /**
+   * Returns a name of the method to be extracted
+   *
+   * @param variable variable to be used as chain call input
+   * @param expression mapping expression
+   * @param expressionType target expression type
+   * @return chain call. Result is correct only if {@link #canExtractChainCall} was checked before
+   * for given expression and expressionType
+   */
+  String getMethodName(PsiVariable variable, PsiExpression expression, PsiType expressionType);
 
   /**
    * Returns new name for the existing call from which element is to be extracted. Sometimes it should be renamed
@@ -84,7 +105,8 @@ public interface ChainCallExtractor {
     PsiMethodCallExpression call = tryCast(args.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
     for(ChainCallExtractor extractor : KEY.getExtensions()) {
-      if(extractor.canExtractChainCall(call, expression, targetType)) {
+      if(extractor.canExtractChainCall(call, expression, targetType) &&
+         StringUtil.isNotEmpty(extractor.getMethodName(parameter, expression, targetType))) {
         return extractor;
       }
     }

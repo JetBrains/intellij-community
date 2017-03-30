@@ -17,7 +17,6 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -374,12 +373,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
       myAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
-      Disposer.register(svnVcs.getProject(), new Disposable() {
-        @Override
-        public void dispose() {
-          myAuthManager = null;
-        }
-      });
+      Disposer.register(svnVcs.getProject(), () -> myAuthManager = null);
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, myAuthManager));

@@ -20,6 +20,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -59,7 +60,8 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
+public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
+                                                                                   Disposable, ProjectComponent {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
@@ -191,7 +193,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myToolWindow = null;
     myProjectsManager = null;
   }

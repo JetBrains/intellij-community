@@ -37,7 +37,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
-private val chromeVersionFromUserAgent = Pattern.compile(" Chrome/([\\d.]+) ")
+val chromeVersionFromUserAgent: Pattern = Pattern.compile(" Chrome/([\\d.]+) ")
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
@@ -55,7 +55,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
-      pathInfo = pathToFileManager.doFindByRelativePath(path)
+      pathInfo = pathToFileManager.doFindByRelativePath(path, defaultPathQuery)
       if (pathInfo == null) {
         HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true

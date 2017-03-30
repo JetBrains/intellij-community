@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
     return LanguageLevel.HIGHEST;
   }
 
-  protected static void setLanguageLevel(final LanguageLevel level) {
+  protected void setLanguageLevel(LanguageLevel level) {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 

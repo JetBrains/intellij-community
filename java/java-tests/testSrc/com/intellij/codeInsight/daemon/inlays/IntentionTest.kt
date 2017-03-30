@@ -53,12 +53,34 @@ class Test {
   void check(int isShow) {}
 }
 """)
+    assertHintExistsAndDisappearsAfterIntention()
+  }
+  
+  fun `test add elements which has inlays`() {
+    myFixture.configureByText("a.java", """
+class ParamHintsTest {
+
+    public static void main(String[] args) {
+        Mvl(
+                <caret>Math.abs(1) * 100, 32, 32
+        );
+    }
+
+    public static double Mvl(double first, double x, double c) {
+        return Double.NaN;
+    }
+}
+""")
+    assertHintExistsAndDisappearsAfterIntention()
+  }
+  
+  private fun assertHintExistsAndDisappearsAfterIntention() {
     myFixture.doHighlighting()
 
     val caretOffset = editor.caretModel.offset
     val before = editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
     assertThat(before).isNotEmpty
-    
+
     val intention = myFixture.getAvailableIntention("Do not show hints for current method")
     myFixture.launchAction(intention!!)
     myFixture.doHighlighting()

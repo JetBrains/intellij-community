@@ -1688,6 +1688,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long e = System.currentTimeMillis();
     //System.out.println("Hi elapsed: "+(e-s));
 
+    //List<String> dumps = new ArrayList<>();
+
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
     System.out.println("N = " + N);
@@ -1702,12 +1704,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           // wait to engage all highlighting threads
           return;
         }
+        // uncomment to debug what's causing pauses
+        /*
+        AtomicBoolean finished = new AtomicBoolean();
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+          if (!finished.get()) {
+            dumps.add(ThreadDumper.dumpThreadsToString());
+          }
+        }, 10, TimeUnit.MILLISECONDS);
+        */
         type(' ');
         long end = System.currentTimeMillis();
+        //finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
         assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
-        System.out.println(interruptTime);
         throw new ProcessCanceledException();
       };
       try {
@@ -1727,12 +1738,20 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       //highlightErrors();
     }
 
+    System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
+
+    /*
+    for (String dump : dumps) {
+      System.out.println("\n\n-----------------------------\n\n" + dump);
+    }
+    */
+
     long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
     long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
     long max = Arrays.stream(interruptTimes).max().getAsLong();
     long min = Arrays.stream(interruptTimes).min().getAsLong();
     System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
-    assertTrue(mean < 10);
+    assertTrue(String.valueOf(mean), mean < 10);
   }
 
   @NotNull
@@ -2440,7 +2459,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       waitForDaemon();
-      checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+      checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
       new WriteCommandAction<Void>(myProject) {
         @Override
@@ -2449,7 +2468,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
       }.execute();
       waitForDaemon();
-      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
+      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
       waitForDaemon();

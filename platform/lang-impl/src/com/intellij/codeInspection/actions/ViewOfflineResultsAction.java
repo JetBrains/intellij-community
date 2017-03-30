@@ -167,7 +167,9 @@ public class ViewOfflineResultsAction extends AnAction {
         }
       };
       for (String id : resMap.keySet()) {
-        inspectionProfile.enableTool(id, project);
+        if (inspectionProfile.getToolsOrNull(id, project) != null) {
+          inspectionProfile.enableTool(id, project);
+        }
       }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);

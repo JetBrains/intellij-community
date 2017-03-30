@@ -141,7 +141,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   protected ErrorStripe getErrorStripe(Object object) {
-    return null;
+    return object instanceof ErrorStripe ? (ErrorStripe)object : null;
   }
 
   public final void update() {

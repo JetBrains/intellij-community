@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
   }
 
+  @Nullable
   public static String[] quickFixTexts(RefEntity where, @NotNull InspectionToolPresentation toolPresentation){
     QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(new RefEntity[] {where}, null);
     if (quickFixes == null) {

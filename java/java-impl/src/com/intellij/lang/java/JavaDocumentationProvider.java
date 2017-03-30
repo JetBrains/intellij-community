@@ -403,12 +403,13 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Nullable
   @Override
   public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
-    for (PsiElement e = startPoint; e != null; e = e.getParent()) {
-      if (e instanceof PsiDocCommentOwner) {
-        return Pair.create(e, ((PsiDocCommentOwner)e).getDocComment());
+    PsiElement docCommentOwner = PsiTreeUtil.findFirstParent(startPoint, e -> {
+      if (e instanceof PsiDocCommentOwner && !(e instanceof PsiTypeParameter) && !(e instanceof PsiAnonymousClass)) {
+        return true;
       }
-    }
-    return null;
+      return false;
+    });
+    return docCommentOwner == null ? null : Pair.create(docCommentOwner, ((PsiDocCommentOwner)docCommentOwner).getDocComment());
   }
 
   @Override

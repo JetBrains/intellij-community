@@ -115,12 +115,10 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
             }
           }
           if (paths.isEmpty()) return;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              AutoSvnUpdater.run(new AutoSvnUpdater(project, paths.toArray(new FilePath[paths.size()])), ActionInfo.UPDATE.getActionName());
-            }
-          }, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(
+            () -> AutoSvnUpdater
+              .run(new AutoSvnUpdater(project, paths.toArray(new FilePath[paths.size()])), ActionInfo.UPDATE.getActionName()),
+            ModalityState.NON_MODAL);
         }
       }
     };

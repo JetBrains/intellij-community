@@ -152,17 +152,17 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
   private fun checkLineChanges(fragments: List<LineFragment>, expected: List<Couple<IntPair>>) {
     val changes = convertLineFragments(fragments)
-    assertOrderedEquals(changes, expected)
+    assertOrderedEquals(expected, changes)
   }
 
   private fun checkDiffChanges(fragments: List<DiffFragment>, expected: List<Couple<IntPair>>) {
     val changes = convertDiffFragments(fragments)
-    assertOrderedEquals(changes, expected)
+    assertOrderedEquals(expected, changes)
   }
 
   private fun checkMergeChanges(fragments: List<MergeWordFragment>, expected: List<Trio<IntPair>>) {
     val changes = convertMergeFragments(fragments)
-    assertOrderedEquals(changes, expected)
+    assertOrderedEquals(expected, changes)
   }
 
   private fun checkLineMatching(fragments: List<LineFragment>, matchings: Couple<BitSet>) {

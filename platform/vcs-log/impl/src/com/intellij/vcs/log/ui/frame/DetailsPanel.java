@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -52,6 +53,7 @@ import java.util.List;
  */
 public class DetailsPanel extends JPanel implements EditorColorsListener {
   private static final int MAX_ROWS = 50;
+  private static final int MIN_SIZE = 20;
 
   @NotNull private final VcsLogData myLogData;
 
@@ -200,6 +202,12 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
   @NotNull
   private CommitPanel getCommitPanel(int index) {
     return (CommitPanel)myMainContentPanel.getComponent(2 * index);
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension minimumSize = super.getMinimumSize();
+    return new Dimension(Math.max(minimumSize.width, JBUI.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUI.scale(MIN_SIZE)));
   }
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener {

@@ -1514,12 +1514,19 @@ class XInternalError {}
 
     def p = LookupElementPresentation.renderElement(item)
     assert p.itemText == 'public void run'
-    assert p.tailText == '(t, myInt) {...}'
+    assert p.tailText == '(String t, int myInt) {...}'
     assert p.typeText == 'Foo'
 
     lookup.currentItem = item
     myFixture.type('\n')
     checkResult()
+  }
+
+  void testImplementViaCompletionWithGenerics() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'public void methodWithGenerics', 'public void methodWithTypeParam'
+    assert LookupElementPresentation.renderElement(lookup.items[0]).tailText == '(List k) {...}'
+    assert LookupElementPresentation.renderElement(lookup.items[1]).tailText == '(K k) {...}'
   }
 
   void testImplementViaOverrideCompletion() {
@@ -1552,7 +1559,7 @@ class XInternalError {}
 
     p = LookupElementPresentation.renderElement(setter)
     assert p.itemText == setter.lookupString
-    assert p.tailText == '(field) {...}'
+    assert p.tailText == '(int field) {...}'
     assert !p.typeText
 
     lookup.currentItem = getter

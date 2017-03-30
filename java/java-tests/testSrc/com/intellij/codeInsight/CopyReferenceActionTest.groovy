@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
     performCopy()
     myFixture.configureByText("a.java", "import p.Foo; class Bar { <caret>}")
     performPaste()
-    myFixture.checkResult """import p.Foo; class Bar {p1.Foo}"""
+    myFixture.checkResult """import p.Foo; class Bar { p1.Foo}"""
   }
 
   void testAddImport() {

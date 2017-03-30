@@ -101,6 +101,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myRecognizedFileType.setFileTypes(types);
   }
 
+  @NotNull
   private static FileType[] getModifiableFileTypes() {
     FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     ArrayList<FileType> result = new ArrayList<>();
@@ -296,7 +297,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         }
       }
       myTempPatternsTable.addAssociation(matcher, type);
-      myTempTemplateDataLanguages.addAssociation(matcher, dialog.getTemplateDataLanguage());
+      Language language = dialog.getTemplateDataLanguage();
+      if (language != null) myTempTemplateDataLanguages.addAssociation(matcher, language);
 
       updateExtensionList();
       final int index = myPatterns.getListModel().indexOf(matcher.getPresentableString());

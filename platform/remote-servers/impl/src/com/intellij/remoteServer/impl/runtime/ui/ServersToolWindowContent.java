@@ -52,8 +52,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
   @NonNls private static final String SERVERS_TOOL_WINDOW_POPUP = "RemoteServersViewPopup";
 
-  @NonNls
-  private static final String HELP_ID = "Application_Servers_tool_window";
   private static final String MESSAGE_CARD = "message";
   private static final String EMPTY_SELECTION_MESSAGE = "Select a server or deployment in the tree to view details";
 
@@ -263,7 +261,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
     group.add(new Separator());
-    group.add(new ContextHelpAction(HELP_ID));
+    group.add(new ContextHelpAction(myContribution.getContextHelpId()));
 
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 
@@ -274,6 +272,9 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
       public Object getData(@NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
           return ServersToolWindowContent.this;
+        }
+        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return myContribution.getContextHelpId();
         }
         return myContribution.getData(dataId, ServersToolWindowContent.this);
       }

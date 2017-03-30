@@ -427,6 +427,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
   public void testModuleInfo() {
     PsiJavaFile file = getFile("../../stubBuilder/module-info");
     assertEquals(LanguageLevel.JDK_1_9, file.getLanguageLevel());
+    assertEquals("", file.getPackageName());
 
     PsiJavaModule module = file.getModuleDeclaration();
     assertNotNull(module);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ShowParameterInfoContext;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
@@ -26,10 +30,13 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -44,6 +51,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -169,12 +178,22 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     PsiCallExpression methodCall = findCallAtOffset(context, context.getOffset(refStart));
+    // make sure this is the method call we've just added, not the enclosing one
+    if (methodCall != null) {
+      PsiElement completedElement = methodCall instanceof PsiMethodCallExpression ?
+                                    ((PsiMethodCallExpression)methodCall).getMethodExpression().getReferenceNameElement() : null;
+      TextRange completedElementRange = completedElement == null ? null : completedElement.getTextRange();
+      if (completedElementRange == null || completedElementRange.getStartOffset() != context.getStartOffset()) {
+        methodCall = null;
+      }
+    }
     if (methodCall != null) {
       CompletionMemory.registerChosenMethod(method, methodCall);
       handleNegation(context, document, method, methodCall);
     }
 
     startArgumentLiveTemplate(context, method);
+    showParameterHints(context, method, methodCall);
   }
 
   static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
@@ -268,6 +287,45 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     });
     return true;
+  }
+
+  public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
+    PsiParameterList parameterList = method.getParameterList();
+    int parametersCount = parameterList.getParametersCount();
+    if (methodCall == null || methodCall.getArgumentList() == null || !"()".equals(methodCall.getArgumentList().getText()) ||
+        parametersCount == 0 ||
+        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
+        Registry.is("java.completion.argument.live.template") ||
+        !Registry.is("java.completion.argument.hints")) {
+      return;
+    }
+
+    Editor editor = context.getEditor();
+    CaretModel caretModel = editor.getCaretModel();
+    int offset = caretModel.getOffset();
+    caretModel.moveToOffset(offset - 1); // avoid caret impact on hints location
+    editor.getDocument().insertString(offset, StringUtil.repeat(", ", parametersCount - 1));
+    List<Inlay> addedHints = new ArrayList<>(parametersCount);
+    for (PsiParameter parameter : parameterList.getParameters()) {
+      String name = parameter.getName();
+      if (name != null) {
+        addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
+      }
+      offset += 2;
+    }
+    int braceOffset = caretModel.getOffset();
+    caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(braceOffset + 1).leanForward(true));
+
+    Project project = context.getProject();
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
+    handler.findElementForParameterInfo(infoContext);
+
+    Disposer.register(new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null, methodCall.getArgumentList(), handler, false, false), () -> {
+      for (Inlay inlay : addedHints) {
+        if (inlay != null) ParameterHintsPresentationManager.getInstance().unpin(inlay);
+      }
+    });
   }
 
   private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {

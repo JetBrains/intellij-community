@@ -11,7 +11,7 @@ package test.deadcode;
 import java.io.IOException;
 
 public class aaa {
-  int a;
+  Object a;
   int b;
 
   void x(int i, Object o) {

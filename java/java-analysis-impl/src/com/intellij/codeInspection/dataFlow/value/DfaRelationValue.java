@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -166,6 +167,23 @@ public class DfaRelationValue extends DfaValue {
 
   public boolean isNonEquality() {
     return myRelation == EQEQ && myIsNegated || myRelation == GT && !myIsNegated || myRelation == GE && myIsNegated;
+  }
+
+  /**
+   * @return comparison operation (GT, GE, LE, LT, EQEQ, NE) if this relation represents comparison, null otherwise
+   */
+  @Nullable
+  public IElementType getComparisonOperation() {
+    if(myRelation == GT) {
+      return myIsNegated ? LE : GT;
+    }
+    if(myRelation == GE) {
+      return myIsNegated ? LT : GE;
+    }
+    if(myRelation == EQEQ) {
+      return myIsNegated ? NE : EQEQ;
+    }
+    return null;
   }
 
   public boolean isInstanceOf() {

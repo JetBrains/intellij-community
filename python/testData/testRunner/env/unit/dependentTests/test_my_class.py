@@ -1,7 +1,7 @@
 import unittest
-from testedCode.my_class import *
+from .testedCode.my_class import *
 
 class MyClassTest(unittest.TestCase):
   def test_foo(self):
     c = MyClass()
-    self.assertEquals("bar", c.foo())
+    self.assertEqual("bar", c.foo())

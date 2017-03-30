@@ -1,9 +1,8 @@
 import java.util.List;
 
 class Test {
-
     interface Function<K, V> {
-        V _(K k);
+        V f(K k);
     }
 
     static {
@@ -18,9 +17,8 @@ class Test {
 }
 
 class Test1 {
-
   interface Function<K> {
-    K _();
+    K f();
   }
 
   static {

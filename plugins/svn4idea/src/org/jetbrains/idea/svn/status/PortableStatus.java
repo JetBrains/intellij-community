@@ -108,21 +108,11 @@ public class PortableStatus extends Status {
           remotePropertiesStatus, isLocked, isCopied, isSwitched, null, remoteLock,
           localLock, changelistName, null);
     myConflicted = isConflicted;
-    myInfoGetter = infoGetter == null ? new Getter<Info>() {
-      @Override
-      public Info get() {
-        return null;
-      }
-    } : infoGetter;
+    myInfoGetter = infoGetter == null ? () -> null : infoGetter;
   }
 
   public PortableStatus() {
-    myInfoGetter = new Getter<Info>() {
-      @Override
-      public Info get() {
-        return null;
-      }
-    };
+    myInfoGetter = () -> null;
     setCommittedRevision(SVNRevision.UNDEFINED);
   }
 

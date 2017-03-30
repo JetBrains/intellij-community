@@ -21,9 +21,7 @@ import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.SupportCode;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +56,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     SupportCode.TextWithMnemonic twm = getTextWithMnemonic(module, component);
     if (twm != null) {
       checkTextWithMnemonic(module, component, twm, collector);
@@ -91,7 +89,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
   }
 
   private void checkTextWithMnemonic(final Module module,
-                                     final IComponent component,
+                                     @NotNull IComponent component,
                                      final SupportCode.TextWithMnemonic twm,
                                      final FormErrorCollector collector) {
     IRootContainer root = FormEditingUtil.getRoot(component);
@@ -104,13 +102,8 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                          UIDesignerBundle.message("inspection.duplicate.mnemonics.message",
                                                   FormInspectionUtil.getText(module, oldComponent),
                                                   FormInspectionUtil.getText(module, component)),
-                         new EditorQuickFixProvider() {
-                           @Override
-                           public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                             return new AssignMnemonicFix(editor, component,
-                                                          UIDesignerBundle.message("inspection.duplicate.mnemonics.quickfix"));
-                           }
-                         });
+                         (EditorQuickFixProvider)(editor, component1) -> new AssignMnemonicFix(editor, component1,
+                                                                                               UIDesignerBundle.message("inspection.duplicate.mnemonics.quickfix")));
     }
     else {
       map.put(key, component);

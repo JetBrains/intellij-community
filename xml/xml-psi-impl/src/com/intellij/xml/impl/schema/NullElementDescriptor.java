@@ -27,6 +27,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 public class NullElementDescriptor implements XmlElementDescriptor {
   private static final NullElementDescriptor INSTANCE = new NullElementDescriptor();
@@ -113,6 +114,7 @@ public class NullElementDescriptor implements XmlElementDescriptor {
   public void init(PsiElement element) {
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

@@ -44,7 +44,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -87,13 +86,13 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
-import com.intellij.util.ref.GCUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -266,8 +265,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
-      initApplication();
       ApplicationInfoImpl.setInStressTest(isStressTest());
+      if (isPerformanceTest()) {
+        Timings.getStatistics();
+      }
+      initApplication();
 
       ourApplication.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
@@ -371,7 +373,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     new RunAll(
       () -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings(),
       this::checkForSettingsDamage,
-      () -> doTearDown(project, ourApplication, true),
+      () -> doTearDown(project, ourApplication),
+      () -> checkEditorsReleased(),
       super::tearDown,
       () -> myThreadTracker.checkLeak(),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
@@ -379,7 +382,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ).run();
   }
 
-  public static void doTearDown(@NotNull final Project project, @NotNull IdeaTestApplication application, boolean checkForEditors) throws Exception {
+  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) throws Exception {
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
       append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
@@ -423,17 +426,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
+      append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).
-      append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
-      append(() -> UIUtil.dispatchAllInvocationEvents()).
-      append(() -> {
-        if (checkForEditors) {
-          checkEditorsReleased();
-        }
-      }).
       append(() -> {
         if (ourTestCount++ % 100 == 0) {
           // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
@@ -475,20 +472,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void checkEditorsReleased() {
-    Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
-    if (allEditors.length == 0) {
-      return;
-    }
-    RunAll runAll = new RunAll();
-    for (Editor editor : allEditors) {
-      runAll = runAll
-        .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
-        .append(() -> EditorFactory.getInstance().releaseEditor(editor));
-    }
-
-    runAll
-      .append(() -> ((EditorImpl)allEditors[0]).throwDisposalError("Unreleased editors: " + allEditors.length))
-      .run();
+    new RunAll(
+      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> {
+        RunAll runAll = new RunAll();
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          runAll = runAll
+            .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
+            .append(() -> EditorFactory.getInstance().releaseEditor(editor));
+        }
+        runAll.run();
+      }).run();
   }
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")

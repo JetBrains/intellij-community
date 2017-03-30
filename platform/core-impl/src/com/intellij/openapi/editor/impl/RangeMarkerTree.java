@@ -308,14 +308,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   public boolean sweep(final int start, final int end, @NotNull SweepProcessor<T> sweepProcessor) {
-    return sweep(new Generator<T>() {
-      @Override
-      public boolean generateInStartOffsetOrder(@NotNull Processor<T> processor) {
-        return processOverlappingWith(start, end, processor);
-      }
-    }, sweepProcessor);
+    return sweep(processor -> processOverlappingWith(start, end, processor), sweepProcessor);
   }
 
+  @FunctionalInterface
   public interface Generator<T> {
     boolean generateInStartOffsetOrder(@NotNull Processor<T> processor);
   }

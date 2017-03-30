@@ -373,7 +373,7 @@ public class AbstractTreeUi {
       }
     };
 
-    if (!forceEdt && (isPassthroughMode() || !isEdt() && !isTreeShowing() && !myWasEverShown)) {
+    if (isPassthroughMode() || (!forceEdt && !isEdt() && !isTreeShowing() && !myWasEverShown)) {
       actual.run();
     }
     else {
@@ -987,18 +987,20 @@ public class AbstractTreeUi {
 
       final ActionCallback result = new ActionCallback();
       Object eachParent = element;
+      boolean updateStructureOfElement = updateStructure;
       while(eachParent != null) {
         DefaultMutableTreeNode node = getNodeForElement(eachParent, false);
         if (node != null) {
-          addSubtreeToUpdate(node, updateStructure);
+          addSubtreeToUpdate(node, updateStructureOfElement);
           break;
         }
 
         eachParent = getTreeStructure().getParentElement(eachParent);
-        updateStructure = true; // always update children if element does not exist
+        updateStructureOfElement = true; // always update children if element does not exist
       }
 
       if (eachParent == null) {
+        // update root node as requested if corresponding node is not found
         addSubtreeToUpdate(getRootNode(), updateStructure);
       }
 
@@ -2775,7 +2777,7 @@ public class AbstractTreeUi {
 
     maybeReady();
     if (reallyRemoved) {
-      myTreeModel.nodeStructureChanged(parent);
+      nodeStructureChanged(parent);
     }
   }
 
@@ -3504,6 +3506,15 @@ public class AbstractTreeUi {
     });
   }
 
+  private void nodeStructureChanged(final DefaultMutableTreeNode node) {
+    invokeLaterIfNeeded(true, new TreeRunnable("AbstractTreeUi.nodeStructureChanged") {
+      @Override
+      public void perform() {
+        myTreeModel.nodeStructureChanged(node);
+      }
+    });
+  }
+
   public DefaultTreeModel getTreeModel() {
     return myTreeModel;
   }
@@ -3552,7 +3563,7 @@ public class AbstractTreeUi {
             for (TreeNode each : all) {
               parentNode.add((MutableTreeNode)each);
             }
-            myTreeModel.nodeStructureChanged(parentNode);
+            nodeStructureChanged(parentNode);
 
             if (expanded != null) {
               while (expanded.hasMoreElements()) {
@@ -4793,7 +4804,7 @@ public class AbstractTreeUi {
       disposeNode((DefaultMutableTreeNode)copy.nextElement());
     }
     node.removeAllChildren();
-    myTreeModel.nodeStructureChanged(node);
+    nodeStructureChanged(node);
   }
 
   private void maybeUpdateSubtreeToUpdate(@NotNull final DefaultMutableTreeNode subtreeRoot) {

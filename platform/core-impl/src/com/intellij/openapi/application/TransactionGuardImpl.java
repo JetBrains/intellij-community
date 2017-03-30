@@ -226,14 +226,25 @@ public class TransactionGuardImpl extends TransactionGuard {
   public void assertWriteActionAllowed() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (areAssertionsEnabled() && !myWritingAllowed && !myErrorReported) {
-      String message = "Write access is allowed from write-safe contexts only. " +
-                       "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
-                       "See TransactionGuard documentation for details." +
-                       "\n  current modality=" + ModalityState.current() +
-                       "\n  known modalities=" + myWriteSafeModalities;
       // please assign exceptions here to Peter
-      LOG.error(message);
+      LOG.error(reportWriteUnsafeContext(ModalityState.current()));
       myErrorReported = true;
+    }
+  }
+
+  private String reportWriteUnsafeContext(@NotNull ModalityState modality) {
+    return "Write-unsafe context! Model changes are allowed from write-safe contexts only. " +
+           "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
+           "See TransactionGuard documentation for details." +
+           "\n  current modality=" + modality +
+           "\n  known modalities=" + myWriteSafeModalities;
+  }
+
+  @Override
+  public void assertWriteSafeContext(@NotNull ModalityState modality) {
+    if (!isWriteSafeModality(modality) && areAssertionsEnabled()) {
+      // please assign exceptions here to Peter
+      LOG.error(reportWriteUnsafeContext(modality));
     }
   }
 

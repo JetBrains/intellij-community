@@ -255,6 +255,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     return null;
   }
 
+  @Nullable
   protected ParameterInfoImpl[] getNewParametersInfo(PsiExpression[] expressions,
                                                      PsiMethod targetMethod,
                                                      PsiSubstitutor substitutor) {
@@ -263,6 +264,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                 new HashSet<>());
   }
 
+  @Nullable
   private ParameterInfoImpl[] getNewParametersInfo(PsiExpression[] expressions,
                                                    PsiMethod targetMethod,
                                                    PsiSubstitutor substitutor,

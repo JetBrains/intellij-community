@@ -1,15 +1,20 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.BaseConfigurationTestCase;
+import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.junit.*;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -40,6 +45,30 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     PsiClass psiClass = findClass(getModule1(), qualifiedName);
     PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
     JUnitConfiguration configuration = createConfiguration(testMethod);
+
+    checkClassName(qualifiedName, configuration);
+    checkMethodName(METHOD_NAME, configuration);
+    checkPackage(packageName, configuration);
+    checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
+  }
+
+  public void testMethodInAbstractJUnit3TestCase() throws Exception {
+    String packageName = "abstractTests";
+    String shortName = "AbstractTestImpl1";
+    String qualifiedName = StringUtil.getQualifiedName(packageName, shortName);
+    PsiClass psiClass = findClass(getModule1(), qualifiedName);
+    PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, true)[0];
+
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(CommonDataKeys.PROJECT, myProject);
+    if (LangDataKeys.MODULE.getData(dataContext) == null) {
+      dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
+    }
+    dataContext.put(Location.DATA_KEY, MethodLocation.elementInClass(testMethod, psiClass));
+
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    RunnerAndConfigurationSettings settings = context.getConfiguration();
+    JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
 
     checkClassName(qualifiedName, configuration);
     checkMethodName(METHOD_NAME, configuration);

@@ -181,7 +181,7 @@ public class Merger implements IMerger {
 
   @Nullable
   public String getSkipped() {
-    return getSkippedMessage(myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.<CommittedChangeList>emptyList());
+    return getSkippedMessage(myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.emptyList());
   }
 
   @Nullable
@@ -221,7 +221,7 @@ public class Merger implements IMerger {
       List<CommittedChangeList> processed =
         myMergeChunk != null
         ? ContainerUtil.newArrayList(myMergeChunk.chunkAndBeforeLists())
-        : ContainerUtil.<CommittedChangeList>emptyList();
+        : ContainerUtil.emptyList();
 
       myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE).event(processed);
     }

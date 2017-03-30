@@ -115,6 +115,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return getReferencesByElement(element);
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
     final int offsetInElement = ElementManipulators.getOffsetInElement(element);
     final String text = ElementManipulators.getValueText(element);

@@ -45,6 +45,8 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable1;
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable2;
@@ -67,7 +69,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myPrevNextConflictIterable = new MyPrevNextConflictIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(getEditors().toArray(new EditorEx[3]), this);
+    myFoldingModel = new MyFoldingModel(toObjectArray(getEditors(), EditorEx.class), this);
 
     DiffUtil.registerAction(new PrevConflictAction(), myPanel);
     DiffUtil.registerAction(new NextConflictAction(), myPanel);

@@ -882,14 +882,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     @Override
     protected void paintComponent(final Graphics g) {
       final Insets i = getInsets();
+      int gap = JBUI.scale(2);
+      int offset = JBUI.scale(3);
+
       if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
         if (getParent() != null) {
           final JBColor col = new JBColor(Gray._128, Gray._111);
           final Graphics2D g2 = (Graphics2D)g;
           if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.top + 2, getParent().getSize().height - 2 - i.top - i.bottom, 3, col, false);
+            UIUtil.drawDoubleSpaceDottedLine(g2, i.top + gap, getParent().getSize().height - gap - i.top - i.bottom, offset, col, false);
           } else {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.left + 2, getParent().getSize().width - 2 - i.left - i.right, 3, col, true);
+            UIUtil.drawDoubleSpaceDottedLine(g2, i.left + gap, getParent().getSize().width - gap - i.left - i.right, offset, col, true);
           }
         }
       }
@@ -897,10 +900,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         g.setColor(UIUtil.getSeparatorColor());
         if (getParent() != null) {
           if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawLine(g, 3, 2, 3, getParent().getSize().height - 2);
+            UIUtil.drawLine(g, offset, gap, offset, getParent().getSize().height - gap);
           }
           else {
-            UIUtil.drawLine(g, 2, 3, getParent().getSize().width - 2, 3);
+            UIUtil.drawLine(g, gap, offset, getParent().getSize().width - gap, offset);
           }
         }
       }
@@ -1298,6 +1301,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @TestOnly
   public Presentation getPresentation(AnAction action) {
     return myPresentationFactory.getPresentation(action);
+  }
+
+  public void clearPresentationCache() {
+    myPresentationFactory.reset();
   }
 
   public interface PopupStateModifier {

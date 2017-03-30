@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
@@ -33,11 +34,13 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.junit.Assert;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
+@Bombed(user = "develar", month = Calendar.MAY, day = 1)
 public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   private GuavaInspection myInspection;
 
@@ -56,7 +59,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-19.0.jar");
+    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-21.0.jar");
     moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }

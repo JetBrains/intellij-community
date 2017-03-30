@@ -258,6 +258,21 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22507
+  public void testTimetupleOnAssertedDate() {
+    doMultiFileTest();
+  }
+
+  // PY-23069
+  public void testDunderNewCallInDictInheritor() {
+    doTest();
+  }
+
+  // PY-22767
+  public void testBuiltinZip() {
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 

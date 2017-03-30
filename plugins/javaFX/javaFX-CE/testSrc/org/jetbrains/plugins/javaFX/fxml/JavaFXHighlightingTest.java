@@ -505,6 +505,11 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testBuiltInFxmlFieldsAndMethod() {
+    myFixture.addClass("package java.util; public class ResourceBundle {}");
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java", getTestName(true) + ".fxml");
+  }
+
   private void doTest() {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }

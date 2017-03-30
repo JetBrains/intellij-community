@@ -52,11 +52,6 @@ public class UnknownModuleType extends ModuleType {
   }
 
   @Override
-  public Icon getBigIcon() {
-    return myModuleType.getBigIcon();
-  }
-
-  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return myModuleType.getIcon();
   }

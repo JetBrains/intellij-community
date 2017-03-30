@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,9 @@ public interface Document extends UserDataHolder {
    */
   @Contract(pure=true)
   @NotNull
-  CharSequence getCharsSequence();
+  default CharSequence getCharsSequence() {
+    return getText();
+  }
 
   /**
    * @return a char sequence representing document content that's guaranteed to be immutable. No read- or write-action is necessary.
@@ -77,7 +79,9 @@ public interface Document extends UserDataHolder {
    */
   @NotNull
   @Contract(pure=true)
-  CharSequence getImmutableCharSequence();
+  default CharSequence getImmutableCharSequence() {
+    return getText();
+  }
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
@@ -92,7 +96,9 @@ public interface Document extends UserDataHolder {
    * @see #getCharsSequence()
    */
   @Contract(pure=true)
-  int getTextLength();
+  default int getTextLength() {
+    return getImmutableCharSequence().length();
+  }
 
   /**
    * Returns the number of lines in the document.
@@ -188,23 +194,27 @@ public interface Document extends UserDataHolder {
    * from the document (the read-only state can be removed by checking the file out
    * from the version control system, or by clearing the read-only attribute on the file).
    */
-  void fireReadOnlyModificationAttempt();
+  default void fireReadOnlyModificationAttempt() {
+  }
 
   /**
    * Adds a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void addDocumentListener(@NotNull DocumentListener listener);
+  default void addDocumentListener(@NotNull DocumentListener listener) {
+  }
 
-  void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable);
+  default void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
+  }
 
   /**
    * Removes a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void removeDocumentListener(@NotNull DocumentListener listener);
+  default void removeDocumentListener(@NotNull DocumentListener listener) {
+  }
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
@@ -235,7 +245,8 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  default void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  }
 
   /**
    * Removes a listener for receiving notifications about changes in the properties of the document
@@ -243,7 +254,8 @@ public interface Document extends UserDataHolder {
    *
    * @param listener the listener instance.
    */
-  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
+  default void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+  }
 
   /**
    * Marks the document as read-only or read/write. This method only modifies the flag stored
@@ -302,7 +314,8 @@ public interface Document extends UserDataHolder {
    * @see #createGuardedBlock(int, int)
    * @see #stopGuardedBlockChecking()
    */
-  void startGuardedBlockChecking();
+  default void startGuardedBlockChecking() {
+  }
 
   /**
    * Disables checking for read-only markers when the document is modified. Checking is disabled by default.
@@ -310,7 +323,8 @@ public interface Document extends UserDataHolder {
    * @see #createGuardedBlock(int, int)
    * @see #startGuardedBlockChecking()
    */
-  void stopGuardedBlockChecking();
+  default void stopGuardedBlockChecking() {
+  }
 
   /**
    * Sets the maximum size of the cyclic buffer used for the document. If the document uses
@@ -319,7 +333,8 @@ public interface Document extends UserDataHolder {
    *
    * @param bufferSize the cyclic buffer size, or 0 if the document should not use a cyclic buffer.
    */
-  void setCyclicBufferSize(int bufferSize);
+  default void setCyclicBufferSize(int bufferSize) {
+  }
 
   void setText(@NotNull final CharSequence text);
 

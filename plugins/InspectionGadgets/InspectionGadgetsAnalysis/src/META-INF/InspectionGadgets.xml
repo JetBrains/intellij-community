@@ -1335,7 +1335,7 @@
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="UnnecessaryBoxing" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.boxing.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids5"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.UnnecessaryBoxingInspection"/>
-    <localInspection groupPath="Jav,Java language level migration aidsa" language="JAVA" shortName="UnnecessaryUnboxing" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.unboxing.display.name"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="UnnecessaryUnboxing" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.unboxing.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids5"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.UnnecessaryUnboxingInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" suppressId="WhileLoopReplaceableByForEach" shortName="WhileCanBeForeach" bundle="com.siyeh.InspectionGadgetsBundle"
@@ -2806,6 +2806,10 @@
                      key="junit5.converter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5ConverterInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5Platform" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.platform.runner.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
   </extensions>
 
 </idea-plugin>

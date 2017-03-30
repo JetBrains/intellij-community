@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -99,6 +100,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     new ProjectViewToolWindowFactory().createToolWindowContent(getProject(), toolWindow);
 
     projectView.changeView(ProjectViewPane.ID);
+    UIUtil.dispatchAllInvocationEvents();
 
     JComponent component = ((ProjectViewImpl)projectView).getComponent();
     DataContext context = DataManager.getInstance().getDataContext(component);

@@ -157,20 +157,6 @@ except:
         except NameError:
             def dict_contains(d, key):
                 return d.has_key(key)
-try:
-    dict_pop = dict.pop
-except:
-    #=======================================================================================================================
-    # Jython 2.1
-    #=======================================================================================================================
-    def dict_pop(d, key, default=None):
-        try:
-            ret = d[key]
-            del d[key]
-            return ret
-        except:
-            return default
-
 
 if IS_PY3K:
     def dict_keys(d):

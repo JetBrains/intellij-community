@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 
 public class VcsLogCreatePatchAction extends CreatePatchFromChangesAction {
 
@@ -26,5 +27,11 @@ public class VcsLogCreatePatchAction extends CreatePatchFromChangesAction {
   public void update(AnActionEvent e) {
     Change[] changes;
     e.getPresentation().setEnabled((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+    super.actionPerformed(e);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,14 +293,8 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testDiamondOccurrences() {
-    final LanguageLevel oldLevel = getLanguageLevel();
-    try {
-      setLanguageLevel(LanguageLevel.JDK_1_7);
-      doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
-    }
-    finally {
-      setLanguageLevel(oldLevel);
-    }
+    setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
   public void testPreserveDiamondOccurrences() {

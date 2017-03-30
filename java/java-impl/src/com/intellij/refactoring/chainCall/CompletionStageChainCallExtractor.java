@@ -15,37 +15,26 @@
  */
 package com.intellij.refactoring.chainCall;
 
-import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Tagir Valeev
  */
 public class CompletionStageChainCallExtractor implements ChainCallExtractor {
+  private static final CallMatcher NEXT_CALL =
+    CallMatcher.instanceCall("java.util.concurrent.CompletionStage", "thenApply", "thenAccept", "thenCompose").parameterCount(1);
+
   @Override
   public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {
     if (expressionType instanceof PsiPrimitiveType) return false;
-    String methodName = call.getMethodExpression().getReferenceName();
-    if (!"thenApply".equals(methodName) && !"thenAccept".equals(methodName) && !"thenCompose".equals(methodName)) {
-      return false;
-    }
     if (call.getMethodExpression().getQualifierExpression() == null) return false;
-    PsiMethod method = call.resolveMethod();
-    return method != null &&
-           method.getParameterList().getParametersCount() == 1 &&
-           InheritanceUtil.isInheritor(method.getContainingClass(), "java.util.concurrent.CompletionStage");
+    return NEXT_CALL.test(call);
   }
 
   @Override
-  public String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
-    if(expression instanceof PsiArrayInitializerExpression) {
-      expression = RefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
-    }
-    String typeArgument = OptionalUtil.getMapTypeArgument(expression, expressionType);
-    return "." + typeArgument + "thenApply" +
-           "(" + variable.getName() + "->" + expression.getText() + ")";
+  public String getMethodName(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
+    return "thenApply";
   }
 }

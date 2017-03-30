@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -26,7 +27,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 import static javax.swing.SwingConstants.EAST;
@@ -39,15 +40,21 @@ public class DarculaUIUtil {
   private static final Color GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
 
   @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80ff0f0f, true);
+  private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80f53b3b, true);
   private static final JBColor DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
 
   @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f2aaaa, true);
+  private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f7bcbc, true);
   private static final JBColor DEFAULT_INACTIVE_ERROR_COLOR = new JBColor(0xebbcbc, 0x725252);
 
   private static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_ERROR_COLOR : DEFAULT_ACTIVE_ERROR_COLOR);
   private static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color MAC_REGULAR_COLOR = new Color(0x80479cfc, true);
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color MAC_GRAPHITE_COLOR = new Color(0x8099979d, true);
 
   public static void paintFocusRing(Graphics g, Rectangle bounds) {
     MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
@@ -108,16 +115,30 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
-  public static void paintErrorBorder(Graphics2D g, int width, int height, boolean hasFocus) {
-    int lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
-    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
+  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean hasFocus) {
+    int lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 4 : 3);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
     g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
-    g.setStroke(new OuterStroke(lw));
-    g.draw(shape);
+
+    Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    path.append(new RoundRectangle2D.Double(0, 0, width, height, arc + lw * 2, arc + lw * 2), false);
+    path.append(new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, arc, arc), false);
+
+    g.fill(path);
+  }
+
+  public static void paintFocusBorder(Graphics2D g, int width, int height, int lw, int arc) {
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+    g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
+
+    Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    path.append(new RoundRectangle2D.Double(0, 0, width, height, arc + lw * 2, arc + lw * 2), false);
+    path.append(new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, arc, arc), false);
+
+    g.fill(path);
   }
 
   public static boolean isCurrentEventShiftDownEvent() {
@@ -139,38 +160,5 @@ public class DarculaUIUtil {
       }
     }
     return -1;
-  }
-
-  private static class OuterStroke implements Stroke {
-    private final BasicStroke stroke;
-
-    private OuterStroke(float width) {
-      stroke = new BasicStroke(width);
-    }
-
-    public Shape createStrokedShape(Shape s) {
-      float lw = stroke.getLineWidth();
-      float delta = lw / 2f;
-
-      if (s instanceof Rectangle2D) {
-        Rectangle2D rs = (Rectangle2D) s;
-        return stroke.createStrokedShape(
-          new Rectangle2D.Double(rs.getX() - delta,
-                                 rs.getY() - delta,
-                                 rs.getWidth() + lw,
-                                 rs.getHeight() + lw));
-      } else if (s instanceof RoundRectangle2D) {
-        RoundRectangle2D rrs = (RoundRectangle2D) s;
-        return stroke.createStrokedShape(
-          new RoundRectangle2D.Double(rrs.getX() - delta,
-                                      rrs.getY() - delta,
-                                      rrs.getWidth() + lw,
-                                      rrs.getHeight() + lw,
-                                      rrs.getArcWidth() + lw,
-                                      rrs.getArcHeight() + lw));
-      } else {
-        throw new UnsupportedOperationException("Shape is not supported");
-      }
-    }
   }
 }

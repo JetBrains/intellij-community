@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.source.CharTableImpl;
@@ -63,7 +64,9 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
     String text = getText();
     try {
       PsiJavaParserFacade facade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-      annotation = facade.createAnnotationFromText(text, getPsi());
+      annotation = facade instanceof PsiElementFactoryImpl
+          ? ((PsiElementFactoryImpl) facade).createAnnotationFromText(text, getPsi(), false)
+          : facade.createAnnotationFromText(text, getPsi());
       myParsedFromRepository = new SoftReference<>(annotation);
       return annotation;
     }

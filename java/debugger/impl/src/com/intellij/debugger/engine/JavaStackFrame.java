@@ -29,6 +29,8 @@ import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -45,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -68,6 +71,8 @@ import java.util.*;
  */
 public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
+  public static final DummyMessageValueNode LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE =
+    new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final DebugProcessImpl myDebugProcess;
   @Nullable private final XSourcePosition myXSourcePosition;
@@ -76,6 +81,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
+  private CapturePoint myInsertCapturePoint;
 
   public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
     myDescriptor = descriptor;
@@ -123,6 +129,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     }
     FRAME_RENDERER.customizePresentation(myDescriptor, component, selectedDescriptor);
+    if (myInsertCapturePoint != null) {
+      component.setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+    }
   }
 
   @Override
@@ -137,6 +146,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       @Override
       public void threadAction() {
         if (node.isObsolete()) return;
+        if (myInsertCapturePoint != null) {
+          node.setMessage("Async stacktrace from " +
+                          myInsertCapturePoint.myClassName + "." + myInsertCapturePoint.myMethodName +
+                          " could be available here, enable in", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
+                          SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
+        }
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
@@ -321,7 +336,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
     catch (EvaluateException e) {
       if (e.getCause() instanceof AbsentInformationException) {
-        children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+        children.add(LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
         // trying to collect values from variable slots
         try {
           for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(getStackFrameProxy(), debugProcess, true).entrySet()) {
@@ -388,6 +403,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
           renderer.renderValue(myMessage);
         }
       }, false);
+    }
+
+    @Override
+    public String toString() {
+      return myMessage;
     }
   }
 
@@ -667,6 +687,10 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     });
     return rangeRef.get();
+  }
+
+  public void setInsertCapturePoint(CapturePoint insertCapturePoint) {
+    myInsertCapturePoint = insertCapturePoint;
   }
 
   @Override

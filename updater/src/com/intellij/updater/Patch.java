@@ -70,7 +70,7 @@ public class Patch {
     File newerDir = new File(spec.getNewFolder());
     Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui);
     Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false, ui);
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), true);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), spec.getOptionalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -86,8 +86,8 @@ public class Patch {
 
     for (Map.Entry<String, DiffCalculator.Update> each : diff.filesToUpdate.entrySet()) {
       DiffCalculator.Update update = each.getValue();
-      if (!spec.isBinary() && Utils.isZipFile(each.getKey())) {
-        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum, update.move));
+      if (!spec.isBinary() && !update.move && Utils.isZipFile(each.getKey())) {
+        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum));
       }
       else {
         tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
@@ -311,7 +311,9 @@ public class Patch {
       if (each.shouldApply(toDir, options)) actionsToProcess.add(each);
     }
 
-    forEach(actionsToProcess, "Backing up files...", ui, true, action -> action.backup(toDir, backupDir));
+    if (backupDir != null) {
+      forEach(actionsToProcess, "Backing up files...", ui, true, action -> action.backup(toDir, backupDir));
+    }
 
     List<PatchAction> appliedActions = new ArrayList<>();
     boolean shouldRevert = false;
@@ -342,7 +344,9 @@ public class Patch {
     }
 
     if (shouldRevert) {
-      revert(appliedActions, backupDir, rootDir, ui);
+      if (backupDir != null) {
+        revert(appliedActions, backupDir, rootDir, ui);
+      }
       appliedActions.clear();
 
       if (cancelled) throw new OperationCancelledException();

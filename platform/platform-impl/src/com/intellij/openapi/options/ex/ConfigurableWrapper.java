@@ -38,10 +38,15 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
+    return wrapConfigurable(ep, false);
+  }
+
+  @Nullable
+  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
     if (!ep.canCreateConfigurable()) {
       return null;
     }
-    if (ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
+    if (settings || ep.displayName != null || ep.key != null || ep.parentId != null || ep.groupId != null) {
       //noinspection unchecked
       return (T)(!ep.dynamic && ep.children == null && ep.childrenEPName == null ? new ConfigurableWrapper(ep) : new CompositeWrapper(ep));
     }
@@ -194,9 +199,12 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       }
       return id;
     }
-    return myEp.instanceClass != null
-           ? myEp.instanceClass
-           : myEp.providerClass;
+    // order from #ConfigurableEP(PicoContainer, Project)
+    return myEp.providerClass != null
+           ? myEp.providerClass
+           : myEp.instanceClass != null
+             ? myEp.instanceClass
+             : myEp.implementationClass;
   }
 
   @NotNull

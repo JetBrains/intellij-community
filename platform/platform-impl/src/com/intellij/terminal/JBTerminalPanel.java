@@ -144,7 +144,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   @Override
-  public boolean dispatch(AWTEvent e) {
+  public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
       dispatchEvent(e);
       return true;

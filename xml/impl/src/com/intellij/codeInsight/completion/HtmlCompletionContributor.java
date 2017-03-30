@@ -17,9 +17,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,7 +37,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
+import static com.intellij.html.impl.util.MicrodataUtil.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class HtmlCompletionContributor extends CompletionContributor {
@@ -58,7 +64,7 @@ public class HtmlCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static boolean hasHtmlAttributesCompletion(PsiElement position) {
+  public static boolean hasHtmlAttributesCompletion(PsiElement position) {
     if (PsiTreeUtil.getParentOfType(position, HtmlTag.class, false) != null) {
       return true;
     }
@@ -119,9 +125,30 @@ public class HtmlCompletionContributor extends CompletionContributor {
           names[i] = charSets[i].toString();
         }
         return names;
+      } else if ("itemprop".equals(name)) {
+        XmlTag scopeTag = findScopeTag(tag);
+        return scopeTag != null ? findItemProperties(scopeTag) : ArrayUtil.EMPTY_STRING_ARRAY;
       }
     }
 
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
+
+  private static String[] findItemProperties(@NotNull XmlTag tag) {
+    final XmlAttribute typeAttribute = tag.getAttribute(ITEM_TYPE);
+    if (typeAttribute != null) {
+      final XmlAttributeValue valueElement = typeAttribute.getValueElement();
+      final PsiReference[] references = valueElement != null ? valueElement.getReferences() : PsiReference.EMPTY_ARRAY;
+      List<String> result = new ArrayList<>();
+      for (PsiReference reference : references) {
+        final PsiElement target = reference != null ? reference.resolve() : null;
+        if (target instanceof PsiFile) {
+          result.addAll(extractProperties((PsiFile)target, StringUtil.unquoteString(reference.getCanonicalText())));
+        }
+      }
+      return ArrayUtil.toStringArray(result);
+    }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
 }

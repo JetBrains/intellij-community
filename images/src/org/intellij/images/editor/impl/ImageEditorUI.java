@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
@@ -78,7 +79,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   @NonNls
   private static final String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";
 
-  private final @Nullable ImageEditor editor;
+  @Nullable
+  private final ImageEditor editor;
   private final DeleteProvider deleteProvider;
   private final CopyPasteSupport copyPasteSupport;
 
@@ -483,31 +485,45 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   @Nullable
   public Object getData(String dataId) {
-
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return editor != null ? editor.getProject() : null;
-    } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return editor != null ? editor.getFile() : null;
-    } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return editor != null ? new VirtualFile[]{editor.getFile()} : VirtualFile.EMPTY_ARRAY;
-    } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return getData(CommonDataKeys.PSI_ELEMENT.getName());
-    } else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      VirtualFile file = editor != null ? editor.getFile() : null;
-      return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
-    } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return editor != null ? new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())} : PsiElement.EMPTY_ARRAY;
-    } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
+    }
+    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      return findPsiFile();
+    }
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return findPsiFile();
+    }
+    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      PsiElement psi = findPsiFile();
+      return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
+    }
+    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
       return this;
-    } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
+    }
+    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
       return copyPasteSupport.getCutProvider();
-    } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+    }
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return deleteProvider;
-    } else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
+    }
+    else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
       return editor != null ? editor : this;
     }
 
     return null;
+  }
+
+  @Nullable
+  private PsiFile findPsiFile() {
+    VirtualFile file = editor != null ? editor.getFile() : null;
+    return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
   }
 
   @Override

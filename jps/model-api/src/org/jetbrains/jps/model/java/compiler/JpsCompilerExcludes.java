@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.java.compiler;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * @author nik
@@ -25,5 +26,17 @@ public interface JpsCompilerExcludes {
 
   void addExcludedDirectory(String url, boolean recursively);
 
+  /**
+   * @return {@code true} if {@code file} is explicitly excluded or located under excluded directory
+   */
   boolean isExcluded(File file);
+
+  /**
+   * @return set of explicitly excluded files
+   */
+  Set<File> getExcludedFiles();
+
+  Set<File> getExcludedDirectories();
+
+  Set<File> getRecursivelyExcludedDirectories();
 }

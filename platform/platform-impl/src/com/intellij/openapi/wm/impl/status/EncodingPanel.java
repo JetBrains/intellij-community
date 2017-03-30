@@ -214,7 +214,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
 
       if (file == null) {
         toolTipText = "";
-        charsetName = "n/a";
+        charsetName = "";
       }
       else {
         Pair<Charset, String> check = EncodingUtil.checkSomeActionEnabled(file);

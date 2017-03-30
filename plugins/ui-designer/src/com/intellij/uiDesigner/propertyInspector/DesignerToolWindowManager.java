@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexander Lobas
  */
-public class DesignerToolWindowManager extends AbstractToolWindowManager {
+public class DesignerToolWindowManager extends AbstractToolWindowManager implements Disposable {
   private final DesignerToolWindow myToolWindowPanel;
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
@@ -117,7 +118,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager {
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     if (myToolWindowPanel != null) {
       myToolWindowPanel.dispose();
     }

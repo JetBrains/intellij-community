@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ import java.util.Map;
 /**
  * @author mike
  */
-public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent {
+public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged =
     Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
@@ -106,6 +106,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     });
 
+    if (project.isDefault()) return;
+
     startupManager.registerPreStartupActivity(() -> {
       DocumentAdapter documentListener = new DocumentAdapter() {
         @Override
@@ -123,12 +125,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
       }
     });
-    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        fileStatusesChanged();
-      }
-    });
+    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
   }
 
   public void setFileStatusProvider(final FileStatusProvider fileStatusProvider) {
@@ -156,15 +153,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myCachedStatuses.clear();
   }
 
@@ -172,10 +161,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   @NotNull
   public String getComponentName() {
     return "FileStatusManager";
-  }
-
-  @Override
-  public void initComponent() {
   }
 
   @Override

@@ -26,20 +26,8 @@ public class UpdateZipAction extends BaseUpdateAction {
   private Set<String> myFilesToUpdate;
   private Set<String> myFilesToDelete;
 
-  public UpdateZipAction(Patch patch, String path, String source, long checksum, boolean move) {
-    super(patch, path, source, checksum, move);
-  }
-
-  // test support
-  public UpdateZipAction(Patch patch, String path,
-                         Collection<String> filesToCreate,
-                         Collection<String> filesToUpdate,
-                         Collection<String> filesToDelete,
-                         long checksum) {
-    super(patch, path, path, checksum, false);
-    myFilesToCreate = new HashSet<>(filesToCreate);
-    myFilesToUpdate = new HashSet<>(filesToUpdate);
-    myFilesToDelete = new HashSet<>(filesToDelete);
+  public UpdateZipAction(Patch patch, String path, String source, long checksum) {
+    super(patch, path, source, checksum, false);
   }
 
   public UpdateZipAction(Patch patch, DataInputStream in) throws IOException {
@@ -62,6 +50,19 @@ public class UpdateZipAction extends BaseUpdateAction {
     while (count-- > 0) {
       myFilesToDelete.add(in.readUTF());
     }
+  }
+
+  /* for tests */
+  UpdateZipAction(Patch patch, String path, Collection<String> toCreate, Collection<String> toUpdate, Collection<String> toDelete, long checksum) {
+    this(patch, path, path, toCreate, toUpdate, toDelete, checksum);
+  }
+
+  /* for tests */
+  UpdateZipAction(Patch patch, String path, String source, Collection<String> toCreate, Collection<String> toUpdate, Collection<String> toDelete, long checksum) {
+    super(patch, path, source, checksum, false);
+    myFilesToCreate = new HashSet<>(toCreate);
+    myFilesToUpdate = new HashSet<>(toUpdate);
+    myFilesToDelete = new HashSet<>(toDelete);
   }
 
   @Override
@@ -90,7 +91,7 @@ public class UpdateZipAction extends BaseUpdateAction {
     processZipFile(olderFile, (entry, in) -> oldCheckSums.put(entry.getName(), Digester.digestStream(in)));
     processZipFile(newerFile, (entry, in) -> newCheckSums.put(entry.getName(), Digester.digestStream(in)));
 
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums, Collections.emptyList(), false);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums);
     myFilesToCreate = diff.filesToCreate.keySet();
     myFilesToUpdate = diff.filesToUpdate.keySet();
     myFilesToDelete = diff.filesToDelete.keySet();
@@ -134,9 +135,11 @@ public class UpdateZipAction extends BaseUpdateAction {
   @Override
   protected void doApply(final ZipFile patchFile, File backupDir, File toFile) throws IOException {
     File temp = Utils.getTempFile(toFile.getName());
+    //in case no backup is required
+    File source = backupDir == null ? toFile : getSource(backupDir);
 
     try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp), 0)) {
-      processZipFile(getSource(backupDir), (entry, in) -> {
+      processZipFile(source, (entry, in) -> {
         String path = entry.getName();
         if (myFilesToUpdate.contains(path)) {
           try (OutputStream entryOut = out.zipStream(path)) {
@@ -201,14 +204,13 @@ public class UpdateZipAction extends BaseUpdateAction {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
     UpdateZipAction that = (UpdateZipAction)o;
 
-    if (myFilesToCreate != null ? !myFilesToCreate.equals(that.myFilesToCreate) : that.myFilesToCreate != null) return false;
-    if (myFilesToUpdate != null ? !myFilesToUpdate.equals(that.myFilesToUpdate) : that.myFilesToUpdate != null) return false;
-    if (myFilesToDelete != null ? !myFilesToDelete.equals(that.myFilesToDelete) : that.myFilesToDelete != null) return false;
+    if (!Objects.equals(myFilesToCreate, that.myFilesToCreate)) return false;
+    if (!Objects.equals(myFilesToUpdate, that.myFilesToUpdate)) return false;
+    if (!Objects.equals(myFilesToDelete, that.myFilesToDelete)) return false;
 
     return true;
   }
@@ -216,9 +218,9 @@ public class UpdateZipAction extends BaseUpdateAction {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (myFilesToCreate != null ? myFilesToCreate.hashCode() : 0);
-    result = 31 * result + (myFilesToUpdate != null ? myFilesToUpdate.hashCode() : 0);
-    result = 31 * result + (myFilesToDelete != null ? myFilesToDelete.hashCode() : 0);
+    result = 31 * result + Objects.hashCode(myFilesToCreate);
+    result = 31 * result + Objects.hashCode(myFilesToDelete);
+    result = 31 * result + Objects.hashCode(myFilesToUpdate);
     return result;
   }
 }

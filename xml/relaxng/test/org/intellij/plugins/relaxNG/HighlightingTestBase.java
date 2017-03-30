@@ -222,6 +222,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   private static class DefaultInspectionProvider implements InspectionToolProvider {
+    @NotNull
     @Override
     public Class[] getInspectionClasses() {
       return new Class[]{

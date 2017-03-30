@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -98,7 +97,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     final RangeMarker marker;
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
-      marker = editor.getDocument().createRangeMarker(new TextRange(offset, offset));
+      marker = editor.getDocument().createRangeMarker(offset, offset);
     } else {
       marker = null;
     }

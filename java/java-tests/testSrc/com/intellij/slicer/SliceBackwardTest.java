@@ -81,4 +81,7 @@ public class SliceBackwardTest extends SliceTestCase {
 
   public void testListTrackToArray() throws Exception { doTest();}
   public void testTryCatchFinally() throws Exception { doTest();}
+  public void testFinalVarAssignedBeforePassingToAnonymous() throws Exception { doTest();}
+  public void testLocalVarDeclarationAndAssignment() throws Exception { doTest();}
+  public void testSearchOverriddenMethodsInThisClassHierarchy() throws Exception { doTest();}
 }

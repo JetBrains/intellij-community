@@ -33,9 +33,9 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -179,16 +179,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
     sb.append(getName());
 
-    if (context != null) {
-      final PyType argumentType = getArgumentType(context);
-      if (argumentType != null) {
-        sb.append(": ");
-        sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
-      }
+    final PyType argumentType = context == null ? null : getArgumentType(context);
+    if (argumentType != null) {
+      sb.append(": ");
+      sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
     }
 
     final PyExpression defaultValue = getDefaultValue();
-    if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue)) {
+    if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue, argumentType)) {
       String representation = PyUtil.getReadableRepr(defaultValue, true);
       if (defaultValue instanceof PyStringLiteralExpression) {
         final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
@@ -202,11 +200,13 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return sb.toString();
   }
 
-  private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue, @Nullable PyExpression defaultValue) {
+  private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue,
+                                                      @Nullable PyExpression defaultValue,
+                                                      @Nullable PyType type) {
     if (!includeDefaultValue || defaultValue == null) return false;
 
     // In case of `None` default value, it will be listed in the type as `Optional[...]` or `Union[..., None, ...]`
-    return !PyNames.NONE.equals(defaultValue.getText());
+    return type == null || !PyNames.NONE.equals(defaultValue.getText());
   }
 
   @Override

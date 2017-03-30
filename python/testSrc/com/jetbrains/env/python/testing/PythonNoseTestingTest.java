@@ -13,6 +13,8 @@ import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.io.IOException;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -21,6 +23,11 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+  @Test
+  public void testMultipleCases() throws Exception {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
+  }
 
   /**
    * Checks tests are resolved when launched from subfolder
@@ -28,11 +35,17 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-          return new PyNoseTestProcessRunner("tests", 0);
+          return new PyNoseTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalNoseTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -43,11 +56,17 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-          return new PyNoseTestProcessRunner("tests", 0);
+          return new PyNoseTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalNoseTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -71,20 +90,20 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyUniversalNoseTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
                                                                                  PyUniversalNoseTestConfiguration.class));
   }
 
   @Test
   public void testRenameClass() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
         PyUniversalNoseTestConfiguration.class));
   }

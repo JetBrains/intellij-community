@@ -68,11 +68,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
         final PyExpression typeElement = args[1];
 
-        // TODO support tuple of types as the second argument of isinstance()
-        pushAssertion(target, myPositive, context -> {
-          final PyType type = context.getType(typeElement);
-          return type instanceof PyClassType ? ((PyClassType)type).toInstance() : type;
-        });
+        pushAssertion(target, myPositive, context -> context.getType(typeElement));
       }
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
@@ -150,6 +146,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                             @NotNull TypeEvalContext context) {
     final PyType transformedType = transformTypeFromAssertion(suggested);
     if (positive) {
+      if (!(initial instanceof PyUnionType) &&
+          !PyTypeChecker.isUnknown(initial) &&
+          PyTypeChecker.match(transformedType, initial, context)) {
+        return initial;
+      }
       return transformedType;
     }
     else if (initial instanceof PyUnionType) {
@@ -184,17 +185,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
       public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-        final PyType initial = context.getType(target);
-        final PyType suggested = suggestedType.apply(context);
-
-        if (!(initial instanceof PyUnionType) &&
-            !PyTypeChecker.isUnknown(initial) &&
-            PyTypeChecker.match(suggested, initial, context)) {
-          return initial;
-        }
-        else {
-          return createAssertionType(initial, suggested, positive, context);
-        }
+        return createAssertionType(context.getType(target), suggestedType.apply(context), positive, context);
       }
     };
 

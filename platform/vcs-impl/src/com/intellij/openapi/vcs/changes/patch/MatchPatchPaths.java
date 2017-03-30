@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -32,7 +31,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.AutoMatchStrategy.processStipUp;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class MatchPatchPaths {
   private static final int BIG_FILE_BOUND = 100000;
@@ -186,13 +185,7 @@ public class MatchPatchPaths {
       }
       else {
         //files order is not defined, so get the best variant depends on it, too
-        final List<AbstractFilePatchInProgress> variants =
-          ObjectsConvertor.convert(files, new Convertor<VirtualFile, AbstractFilePatchInProgress>() {
-            @Override
-            public AbstractFilePatchInProgress convert(VirtualFile o) {
-              return processMatch(patch, o);
-            }
-          }, ObjectsConvertor.NOT_NULL);
+        List<AbstractFilePatchInProgress> variants = mapNotNull(files, file -> processMatch(patch, file));
         if (variants.isEmpty()) {
           newOrWithoutMatches.add(patch); // just to be sure
         }
@@ -217,12 +210,7 @@ public class MatchPatchPaths {
   private static void putSelected(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result,
                                   @NotNull final List<AbstractFilePatchInProgress> variants,
                                   @NotNull AbstractFilePatchInProgress patchInProgress) {
-    patchInProgress.setAutoBases(ObjectsConvertor.convert(variants, new Convertor<AbstractFilePatchInProgress, VirtualFile>() {
-      @Override
-      public VirtualFile convert(AbstractFilePatchInProgress o) {
-        return o.getBase();
-      }
-    }, ObjectsConvertor.NOT_NULL));
+    patchInProgress.setAutoBases(mapNotNull(variants, AbstractFilePatchInProgress::getBase));
     result.putValue(patchInProgress.getBase(), patchInProgress);
   }
 

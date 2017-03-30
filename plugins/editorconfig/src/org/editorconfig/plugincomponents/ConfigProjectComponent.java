@@ -1,6 +1,7 @@
 package org.editorconfig.plugincomponents;
 
 import com.intellij.AppTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 public class ConfigProjectComponent implements StartupActivity, DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     // Register project-level config managers
     final EditorFactory editorFactory = EditorFactory.getInstance();
     MessageBus bus = project.getMessageBus();
@@ -53,7 +56,7 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
           if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
               !Registry.is("editor.config.stop.at.project.root")) {
             for (Editor editor : editorFactory.getAllEditors()) {
-              if (editor.isDisposed()) continue;;
+              if (editor.isDisposed()) continue;
               ((EditorEx)editor).reinitSettings();
             }
           }

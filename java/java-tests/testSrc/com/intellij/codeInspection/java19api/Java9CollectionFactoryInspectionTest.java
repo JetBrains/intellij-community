@@ -17,7 +17,9 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,6 +35,11 @@ public class Java9CollectionFactoryInspectionTest extends LightQuickFixParameter
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new Java9CollectionFactoryInspection()};
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk9();
   }
 
   public void test() throws Exception {

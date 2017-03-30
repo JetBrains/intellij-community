@@ -1041,6 +1041,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               else {
                 myLastMinimumSize = new Dimension(size);
                 JBInsets.addTo(size, window.getInsets());
+                Rectangle screen = ScreenUtil.getScreenRectangle(window);
+                if (size.width > screen.width || size.height > screen.height) {
+                  Application application = ApplicationManager.getApplication();
+                  if (application != null && application.isInternal()) {
+                    LOG.warn("minimum size " + size.width + "x" + size.height +
+                             " is bigger than screen " + screen.width + "x" + screen.height);
+                  }
+                  if (size.width > screen.width) size.width = screen.width;
+                  if (size.height > screen.height) size.height = screen.height;
+                }
               }
               window.setMinimumSize(size);
             }

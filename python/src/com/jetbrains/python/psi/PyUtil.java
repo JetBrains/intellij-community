@@ -852,7 +852,15 @@ public class PyUtil {
       // concurrent hash map is a null-hostile collection
       return CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return cache.computeIfAbsent(Optional.ofNullable(param), p -> Optional.ofNullable(f.fun(param))).orElse(null);
+    // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key 
+    // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
+    final Optional<P> wrappedParam = Optional.ofNullable(param);
+    Optional<T> value = cache.get(wrappedParam);
+    if (value == null) {
+      value = Optional.ofNullable(f.fun(param));
+      cache.put(wrappedParam, value);
+    }
+    return value.orElse(null);
   }
 
   /**
@@ -1520,64 +1528,6 @@ public class PyUtil {
       }
     }
     return element;
-  }
-
-  @NotNull
-  public static List<List<PyParameter>> getOverloadedParametersSet(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(context.getType(callable), context);
-    return parametersSet != null ? parametersSet : Collections.singletonList(Arrays.asList(callable.getParameterList().getParameters()));
-  }
-
-  @Nullable
-  private static List<PyParameter> getParametersOfCallableType(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
-    if (callableTypeParameters != null) {
-      boolean allParametersDefined = true;
-      final List<PyParameter> parameters = new ArrayList<>();
-      for (PyCallableParameter callableParameter : callableTypeParameters) {
-        final PyParameter parameter = callableParameter.getParameter();
-        if (parameter == null) {
-          allParametersDefined = false;
-          break;
-        }
-        parameters.add(parameter);
-      }
-      if (allParametersDefined) {
-        return parameters;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<List<PyParameter>> getOverloadedParametersSet(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyUnionType) {
-      type = ((PyUnionType)type).excludeNull(context);
-    }
-
-    if (type instanceof PyCallableType) {
-      final List<PyParameter> results = getParametersOfCallableType((PyCallableType)type, context);
-      if (results != null) {
-        return Collections.singletonList(results);
-      }
-    }
-    else if (type instanceof PyUnionType) {
-      final List<List<PyParameter>> results = new ArrayList<>();
-      final Collection<PyType> members = ((PyUnionType)type).getMembers();
-      for (PyType member : members) {
-        if (member instanceof PyCallableType) {
-          final List<PyParameter> parameters = getParametersOfCallableType((PyCallableType)member, context);
-          if (parameters != null) {
-            results.add(parameters);
-          }
-        }
-      }
-      if (!results.isEmpty()) {
-        return results;
-      }
-    }
-
-    return null;
   }
 
   @NotNull

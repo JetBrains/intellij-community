@@ -139,16 +139,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                       int defaultOptionIndex)
   {
 
-    final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, new String[]{yesText, noText}) {
+    final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, yesText, noText) {
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
-        if (selectedValue.equals(yesText)) {
-          onYes.run();
-        }
-        else {
-          onNo.run();
-        }
-        return FINAL_CHOICE;
+        return doFinalStep(selectedValue.equals(yesText) ? onYes : onNo);
       }
 
       @Override

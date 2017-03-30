@@ -161,9 +161,10 @@ public class UpdateCacheTest extends PsiTestCase {
     final VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
     Project project = myProject;
     ProjectUtil.closeAndDispose(project);
+    myProject = null;
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
 
-    assertTrue("Project was not disposed", myProject.isDisposed());
+    assertTrue("Project was not disposed", project.isDisposed());
     myModule = null;
     
     final File file = new File(root.getPath(), "1.java");

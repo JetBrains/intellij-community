@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
 import io.netty.util.internal.SystemPropertyUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,6 +60,7 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @NotNull private final ActionCallback callback;
 
+    @Debugger.Capture
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
@@ -401,6 +399,7 @@ public class LaterInvocator {
       }
     }
 
+    @Debugger.Insert(keyExpression = "lastInfo", group = "com.intellij.openapi.application.impl.LaterInvocator$RunnableInfo.<init>")
     private boolean runNextEvent() {
       final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;

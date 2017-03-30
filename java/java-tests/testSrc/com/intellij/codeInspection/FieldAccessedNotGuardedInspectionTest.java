@@ -28,22 +28,22 @@ public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtu
   }
 
   public void testJavax_itself() throws Exception {
-    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
     doTest();
   }
 
   public void testSyncOnFieldQualifier() throws Exception {
-    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
     doTest();
   }
 
   public void testFieldAccessNotGuarded() {
-    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
     doTest();
   }
 
   public void testCheapReadWriteLock() {
-    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
+    doTest();
+  }
+
+  public void testStaticSyncOnClass() {
     doTest();
   }
 
@@ -64,6 +64,7 @@ public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtu
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
     myFixture.enableInspections(new FieldAccessNotGuardedInspection());
   }
 

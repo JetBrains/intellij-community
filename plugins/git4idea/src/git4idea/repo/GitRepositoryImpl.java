@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -149,6 +150,12 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return myVcs;
   }
 
+  @NotNull
+  @Override
+  public Collection<GitSubmoduleInfo> getSubmodules() {
+    return myInfo.getSubmodules();
+  }
+
   /**
    * @return local and remote branches in this repository.
    */
@@ -200,8 +207,14 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
+    Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
+                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules);
+  }
+
+  @NotNull
+  private File getSubmoduleFile() {
+    return new File(VfsUtilCore.virtualToIoFile(getRoot()), ".gitmodules");
   }
 
   private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {

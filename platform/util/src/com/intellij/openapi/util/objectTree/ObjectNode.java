@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,9 +118,16 @@ final class ObjectNode<T> {
         synchronized (myTree.treeLock) {
           childrenArray = getChildrenArray();
         }
-        //todo: [kirillk] optimize
+
+        List<Throwable> exceptions = new SmartList<Throwable>();
+
         for (int i = childrenArray.length - 1; i >= 0; i--) {
-          childrenArray[i].execute(action);
+          try {
+            childrenArray[i].execute(action);
+          }
+          catch (Throwable e) {
+            exceptions.add(e);
+          }
         }
 
         synchronized (myTree.treeLock) {
@@ -130,14 +138,13 @@ final class ObjectNode<T> {
           action.execute(myObject);
           myTree.fireExecuted(myObject);
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
         catch (Throwable e) {
-          LOG.error(e);
+          exceptions.add(e);
         }
 
         remove();
+
+        handleExceptions(exceptions);
       }
 
       @Override
@@ -145,6 +152,21 @@ final class ObjectNode<T> {
 
       }
     });
+  }
+
+  private static void handleExceptions(List<Throwable> exceptions) {
+    if (!exceptions.isEmpty()) {
+      for (Throwable exception : exceptions) {
+        if (!(exception instanceof ProcessCanceledException)) {
+          LOG.error(exception);
+        }
+      }
+
+      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
+      if (pce != null) {
+        throw pce;
+      }
+    }
   }
 
   private void remove() {

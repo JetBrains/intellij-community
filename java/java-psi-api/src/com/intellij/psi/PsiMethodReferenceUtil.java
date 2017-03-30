@@ -107,13 +107,6 @@ public class PsiMethodReferenceUtil {
             return false;
           }
 
-          PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
-          if (qContainingClass != null && containingClass != null &&
-              isReceiverType(getFirstParameterType(functionalInterfaceType, expression), qContainingClass, subst)) {
-            subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
-            LOG.assertTrue(subst != null);
-          }
-
           methodReturnType = subst.substitute(methodReturnType);
         }
       }

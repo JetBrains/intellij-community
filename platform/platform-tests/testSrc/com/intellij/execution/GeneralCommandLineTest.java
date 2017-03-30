@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
@@ -78,7 +79,7 @@ public class GeneralCommandLineTest {
     return new GeneralCommandLine(command);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void printCommandLine() {
     GeneralCommandLine commandLine = createCommandLine();
     commandLine.setExePath("e x e path");
@@ -93,22 +94,16 @@ public class GeneralCommandLineTest {
                  " \"\\\"quoted with spaces\\\"\"" +
                  " \"param 1\"" +
                  " param2" +
-                 " \"trailing slash\\\"",
+                 " \"trailing slash\"\\",
                  commandLine.getCommandLineString());
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void unicodePath() throws Exception {
     String mark = String.valueOf(new Random().nextInt());
-    String prefix = "spaces 'and quotes' and " + UNICODE_RU + "_" + UNICODE_EU + " ";
-
-    File script;
-    if (SystemInfo.isWindows) {
-      script = ExecUtil.createTempExecutableScript(prefix, ".cmd", "@echo " + mark + "\n");
-    }
-    else {
-      script = ExecUtil.createTempExecutableScript(prefix, ".sh", "#!/bin/sh\n" + "echo " + mark + "\n");
-    }
+    File script = createTempScript("spaces 'and quotes' and " + UNICODE_RU + "_" + UNICODE_EU + " ",
+                                   "@echo " + mark + "\n",
+                                   "#!/bin/sh\n" + "echo " + mark + "\n");
 
     try {
       String output = execAndGetOutput(createCommandLine(script.getPath()));
@@ -119,7 +114,17 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @NotNull
+  private static File createTempScript(@NotNull String scriptNamePrefix,
+                                       @NotNull String winScriptContent,
+                                       @NotNull String unixScriptContent) throws IOException, ExecutionException {
+    if (SystemInfo.isWindows) {
+      return ExecUtil.createTempExecutableScript(scriptNamePrefix, ".cmd", winScriptContent);
+    }
+    return ExecUtil.createTempExecutableScript(scriptNamePrefix, ".sh", unixScriptContent);
+  }
+
+  @Test(timeout = 60000)
   public void unicodeClassPath() throws Exception {
     assumeTrue(UNICODE != null);
 
@@ -134,7 +139,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaApp() throws Exception {
     String[] args = ArrayUtil.mergeArrays(ARGUMENTS, "&<>()@^|", "\"&<>()@^|\"");
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, args);
@@ -142,7 +147,7 @@ public class GeneralCommandLineTest {
     checkParamPassing(output, args);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -154,7 +159,7 @@ public class GeneralCommandLineTest {
     checkParamPassing(output, ARGUMENTS);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndWinShell() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -171,7 +176,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void unicodeParameters() throws Exception {
     assumeTrue(UNICODE != null);
 
@@ -181,7 +186,7 @@ public class GeneralCommandLineTest {
     checkParamPassing(output, args);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void winShellCommand() {
     assumeTrue(SystemInfo.isWindows);
 
@@ -190,7 +195,7 @@ public class GeneralCommandLineTest {
     assertEquals('"' + string + '"', echo);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void winShellScriptQuoting() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -211,7 +216,7 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void winShellQuotingWithExtraSwitch() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
@@ -221,7 +226,27 @@ public class GeneralCommandLineTest {
     assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
   }
 
-  @Test
+  @Test(timeout = 60000)
+  public void redirectInput() throws Exception {
+    String content = "Line 1\nLine 2\n";
+    File input = FileUtil.createTempFile("input", null);
+    FileUtil.writeToFile(input, content);
+    File script = createTempScript("print-stdin",
+                                   "@echo off\n" + "findstr \"^\"\n",
+                                   "#!/bin/sh\n" + "cat\n");
+    try {
+      GeneralCommandLine commandLine = createCommandLine(script.getPath());
+      commandLine.withInputRedirect(ProcessBuilder.Redirect.from(input));
+      String output = execAndGetOutput(commandLine);
+      assertEquals(content, StringUtil.convertLineSeparators(output));
+    }
+    finally {
+      FileUtil.delete(script);
+      FileUtil.delete(input);
+    }
+  }
+
+  @Test(timeout = 60000)
   public void hackyEnvMap() {
     Map<String, String> env = createCommandLine().getEnvironment();
 
@@ -242,7 +267,7 @@ public class GeneralCommandLineTest {
     catch (AssertionError ignored) { }
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void environmentPassing() throws Exception {
     Map<String, String> testEnv = new HashMap<>();
     testEnv.put("VALUE_1", "some value");
@@ -253,7 +278,7 @@ public class GeneralCommandLineTest {
     checkEnvPassing(command, testEnv, false);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void unicodeEnvironment() throws Exception {
     assumeTrue("UTF-8".equals(System.getProperty("file.encoding")));
 
@@ -263,7 +288,7 @@ public class GeneralCommandLineTest {
     checkEnvPassing(command, testEnv, false);
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void emptyEnvironmentPassing() throws Exception {
     Map<String, String> env = newHashMap(pair("a", "b"), pair("", "c"));
     Map<String, String> expected = newHashMap(pair("a", "b"));

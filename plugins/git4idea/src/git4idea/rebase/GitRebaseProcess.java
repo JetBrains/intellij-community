@@ -99,7 +99,7 @@ public class GitRebaseProcess {
   }
 
   public void rebase() {
-    new GitFreezingProcess(myProject, "rebase", () -> doRebase()).execute();
+    new GitFreezingProcess(myProject, "rebase", this::doRebase).execute();
   }
 
   /**
@@ -118,7 +118,7 @@ public class GitRebaseProcess {
 
     Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
     Collection<GitRepository> toRefresh = newLinkedHashSet();
-    List<GitRepository> repositoriesToRebase = myRebaseSpec.getIncompleteRepositories();
+    List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
@@ -331,7 +331,7 @@ public class GitRebaseProcess {
   }
 
   private void notifySuccess(@NotNull Map<GitRepository, GitSuccessfulRebase> successful,
-                             final MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
+                             @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
     String rebasedBranch = getCommonCurrentBranchNameIfAllTheSame(myRebaseSpec.getAllRepositories());
     List<SuccessType> successTypes = map(successful.values(), GitSuccessfulRebase::getSuccessType);
     SuccessType commonType = getItemIfAllTheSame(successTypes, SuccessType.REBASED);
@@ -537,7 +537,7 @@ public class GitRebaseProcess {
     });
   }
 
-  private void retry(@NotNull final String processTitle) {
+  private void retry(@NotNull String processTitle) {
     myProgressManager.run(new Task.Backgroundable(myProject, processTitle, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -546,7 +546,7 @@ public class GitRebaseProcess {
     });
   }
 
-  private void handlePossibleCommitLinks(@NotNull String href, MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
+  private void handlePossibleCommitLinks(@NotNull String href, @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
     GitRepository repository = findRootBySkippedCommit(href, skippedCommits);
     if (repository != null) {
       GitUtil.showSubmittedFiles(myProject, href, repository.getRoot(), true, false);
@@ -555,8 +555,7 @@ public class GitRebaseProcess {
 
   @Nullable
   private static GitRepository findRootBySkippedCommit(@NotNull final String hash,
-                                                       final MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
-    return find(skippedCommits.keySet(),
-                repository -> exists(skippedCommits.get(repository), info -> info.revision.asString().equals(hash)));
+                                                       @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
+    return find(skippedCommits.keySet(),  repository-> exists(skippedCommits.get(repository),  info-> info.revision.asString().equals(hash)));
   }
 }

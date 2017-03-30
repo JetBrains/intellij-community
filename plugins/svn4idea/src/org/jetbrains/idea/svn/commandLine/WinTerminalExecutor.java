@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessWrapper;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -139,12 +138,7 @@ public class WinTerminalExecutor extends TerminalExecutor {
   @NotNull
   @Override
   protected List<String> escapeArguments(@NotNull List<String> arguments) {
-    return ContainerUtil.map(arguments, new Function<String, String>() {
-      @Override
-      public String fun(String argument) {
-        return needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument;
-      }
-    });
+    return ContainerUtil.map(arguments, argument -> needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument);
   }
 
   @NotNull

@@ -23,8 +23,8 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 
 public class RefreshLogAction extends RefreshAction {
@@ -42,13 +42,14 @@ public class RefreshLogAction extends RefreshAction {
 
     // diagnostic for possible refresh problems
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui instanceof VcsLogUiImpl) {
-      VisiblePackRefresher refresher = ((VcsLogUiImpl)ui).getRefresher();
+    if (ui instanceof AbstractVcsLogUi) {
+      VisiblePackRefresher refresher = ((AbstractVcsLogUi)ui).getRefresher();
       if (!refresher.isValid()) {
         String message = "Trying to refresh invalid log tab.";
         if (!logManager.getDataManager().getProgress().isRunning()) {
           LOG.error(message);
-        } else {
+        }
+        else {
           LOG.warn(message);
         }
         refresher.setValid(true);

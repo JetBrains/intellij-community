@@ -15,12 +15,15 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -36,7 +39,7 @@ class GradleProjectContributor : GradleMethodContextContributor {
     val copySpecClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "copy", "copySpec"))
     val fileTreeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
     val filesClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
-
+    val taskClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "task"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
@@ -48,6 +51,20 @@ class GradleProjectContributor : GradleMethodContextContributor {
     }
     if (filesClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION, closure), Closure.DELEGATE_FIRST)
+    }
+    if (taskClosure.accepts(closure)) {
+      var taskType: PsiType? = null
+      val parent = closure.parent
+      if (parent is GrMethodCallExpression) {
+        val typeTakArgument = parent.namedArguments.find { "type" == it.labelName }?.expression?.type
+        if (typeTakArgument is PsiClassType && "Class" == typeTakArgument.className) {
+          taskType = typeTakArgument.parameters.first()
+        }
+      }
+      if (taskType == null) {
+        taskType = TypesUtil.createType(GRADLE_API_TASK, closure)
+      }
+      return DelegatesToInfo(taskType, Closure.DELEGATE_FIRST)
     }
     return null
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,14 +87,10 @@ public class GradleRunnerConfigurable extends BaseConfigurable {
     return !settings.equals(uiSettings);
   }
 
-  @Override
-  public void disposeUIResources() {
-  }
-
   private void createUIComponents() {
     myGradleAwareMakeCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.use.gradle.aware.make"));
     myGradleAwareMakeCheckBox.addActionListener(e -> enableGradleMake(myGradleAwareMakeCheckBox.isSelected()));
-    myPreferredTestRunner = new ComboBox<TestRunnerItem>(getItems());
+    myPreferredTestRunner = new ComboBox<>(getItems());
   }
 
   private void enableGradleMake(boolean enable) {

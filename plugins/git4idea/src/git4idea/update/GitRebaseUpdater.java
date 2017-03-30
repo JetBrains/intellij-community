@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Collections.singletonList;
 
@@ -54,10 +53,10 @@ public class GitRebaseUpdater extends GitUpdater {
   public GitRebaseUpdater(@NotNull Project project,
                           @NotNull Git git,
                           @NotNull VirtualFile root,
-                          @NotNull final Map<VirtualFile, GitBranchPair> trackedBranches,
+                          @NotNull GitBranchPair branchAndTracked,
                           @NotNull ProgressIndicator progressIndicator,
                           @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+    super(project, git, root, branchAndTracked, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -86,10 +85,9 @@ public class GitRebaseUpdater extends GitUpdater {
 
   @NotNull
   private String getRemoteBranchToMerge() {
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    GitBranch dest = gitBranchPair.getDest();
+    GitBranch dest = myBranchPair.getDest();
     LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
-                                               gitBranchPair.getBranch().getName(), myRoot));
+                                               myBranchPair.getBranch().getName(), myRoot));
     return dest.getName();
   }
 

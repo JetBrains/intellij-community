@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -56,23 +58,28 @@ class RegistrationCheckerUtil {
 
     if (module == null) return null;
 
-    if (PluginModuleType.isOfType(module)) {
+    if (PluginModuleType.isOfType(module) || PsiUtil.isPluginModule(module)) {
       return checkModule(module, psiClass, null, includeActions);
     }
-    else {
-      Set<PsiClass> types = null;
-      final List<Module> modules = PluginModuleType.getCandidateModules(module);
-      for (Module m : modules) {
-        types = checkModule(m, psiClass, types, includeActions);
-      }
-      return types;
+    
+    Set<PsiClass> types = null;
+    final List<Module> modules = PluginModuleType.getCandidateModules(module);
+    for (Module m : modules) {
+      types = checkModule(m, psiClass, types, includeActions);
     }
+    return types;
   }
 
   @Nullable
   private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, @Nullable Set<PsiClass> types, boolean includeActions) {
     final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (pluginXml == null) return null;
+    if (pluginXml == null) {
+      if (PsiUtil.isIdeaProject(module.getProject())) {
+        return Collections.emptySet();
+      }
+      return null;
+    }
+
     final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
     if (fileElement == null) return null;
 

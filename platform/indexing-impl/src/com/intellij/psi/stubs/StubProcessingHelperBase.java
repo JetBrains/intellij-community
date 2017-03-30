@@ -17,6 +17,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -113,6 +114,7 @@ public abstract class StubProcessingHelperBase {
           break;
         }
 
+        ProgressManager.checkCanceled(); // potentially list can be very-very large
         final StubElement<?> stub = plained.get(stubTreeIndex);
         PsiUtilCore.ensureValid(psiFile);
         final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/inspection/redundantCast/lambda";
+  private static final String BASE_PATH = "/inspection/redundantCast/lambda/";
 
   @NotNull
   @Override
@@ -32,14 +31,14 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    doTest(BASE_PATH + getTestName(false) + ".java", true, false);
   }
 
-  public void testLambdaContext() throws Exception { doTest(); }
-  public void testMethodRefContext() throws Exception { doTest(); }
-  public void testExpectedSupertype() throws Exception { doTest(); }
-  public void testForeachValue() throws Exception { doTest(); }
-  public void testConditional() throws Exception { doTest(); }
-  public void testInferApplicabilityError() throws Exception { doTest(); }
-  public void testCastToRawType() throws Exception { doTest(); }
+  public void testLambdaContext() { doTest(); }
+  public void testMethodRefContext() { doTest(); }
+  public void testExpectedSupertype() { doTest(); }
+  public void testForeachValue() { doTest(); }
+  public void testConditional() { doTest(); }
+  public void testInferApplicabilityError() { doTest(); }
+  public void testCastToRawType() { doTest(); }
 }

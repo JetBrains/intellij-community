@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class FindUIHelper implements Disposable {
+public class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private  FindModel myModel;
    FindModel myPreviousModel;
@@ -44,38 +44,25 @@ class FindUIHelper implements Disposable {
     myModel = model;
     myOkHandler = okHandler;
     myUI = getOrCreateUI();
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        if (!Disposer.isDisposed(myUI.getDisposable())) {
-          Disposer.dispose(myUI.getDisposable());
-        }
-      }
-    });
-    Disposer.register(myUI.getDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        if (!Disposer.isDisposed(this)) {
-          Disposer.dispose(FindUIHelper.this);
-        }
-      }
-    });
   }
 
   protected FindUI getOrCreateUI() {
-    if (Registry.is("ide.find.as.popup")) {
-      if (myUI instanceof FindPopupPanel) {
-        return myUI;
+    boolean newInstanceRequired = (myUI instanceof FindPopupPanel && !Registry.is("ide.find.as.popup")) ||
+                                  (myUI instanceof FindDialog && Registry.is("ide.find.as.popup")) ||
+                                  (myUI == null);
+    if (newInstanceRequired) {
+      if (Registry.is("ide.find.as.popup")) {
+        myUI = new FindPopupPanel(this);
       }
-      return myUI = new FindPopupPanel(this);
+      else {
+        FindDialog findDialog = new FindDialog(this);
+        registerAction("ReplaceInPath", true, findDialog);
+        registerAction("FindInPath", false, findDialog);
+        myUI = findDialog;
+      }
+      Disposer.register(myUI.getDisposable(), this);
     }
-    else {
-      
-      FindDialog findDialog = new FindDialog(this);
-      registerAction("ReplaceInPath", true, findDialog);
-      registerAction("FindInPath", false, findDialog);
-      return findDialog;
-    }
+    return myUI;
   }
 
   private void registerAction(String actionName, boolean replace, FindDialog findDialog) {
@@ -120,7 +107,7 @@ class FindUIHelper implements Disposable {
   }
 
   @NotNull
-   FindModel getModel() {
+  public FindModel getModel() {
     return myModel;
   }
 
@@ -142,8 +129,8 @@ class FindUIHelper implements Disposable {
   @Override
   public void dispose() {
     myUI = null;
-    //todo
   }
+
   void updateFindSettings() {
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.setCaseSensitive(myModel.isCaseSensitive());

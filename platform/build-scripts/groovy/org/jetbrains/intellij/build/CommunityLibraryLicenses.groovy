@@ -302,7 +302,7 @@ class CommunityLibraryLicenses {
                        libraryName: 'maven-aether-provider-3.3.9-all.jar', licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Plexus Utils", libraryName: "plexus-utils-1.5.5.jar", version: "1.5.5", license: "Apache 2.0",
                        url: "http://plexus.codehaus.org/plexus-utils"),
-    new LibraryLicense(name: "pockets", attachedTo: "python-helpers", version: "0.2.4", license: "BSD", url: "http://pockets.readthedocs.org/"),
+    new LibraryLicense(name: "pockets", attachedTo: "python-helpers", version: "0.3.2", license: "BSD", url: "http://pockets.readthedocs.org/"),
     new LibraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
     new LibraryLicense(name: "proxy-vole", libraryName: "proxy-vole", version: "20131209", license: "New BSD License",

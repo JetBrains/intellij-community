@@ -56,7 +56,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(range);
   }
 
-  protected void switchToAnchor(@NotNull PsiElement element) {
+  void switchToAnchor(@NotNull PsiElement element) {
     Pair<Identikit.ByAnchor, PsiElement> pair = Identikit.withAnchor(element, myIdentikit.getFileLanguage());
     if (pair != null) {
       assert pair.first.hashCode() == myIdentikit.hashCode();
@@ -192,12 +192,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                && range1.getEndOffset() == range2.getEndOffset();
       });
     }
-    return areRestoredElementsEqual(other);
-  }
-
-  protected boolean areRestoredElementsEqual(@NotNull final SmartPointerElementInfo other) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> Comparing.equal(restoreElement(), other.restoreElement()));
+    return false;
   }
 
   @Override

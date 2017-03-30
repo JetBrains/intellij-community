@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -200,7 +199,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     }
 
     if (myDetailView == null) {
-      myDetailView = new DetailViewImpl(myProject);
+      setDetailView(new DetailViewImpl(myProject));
     }
 
     myPathLabel = new JLabel(" ");

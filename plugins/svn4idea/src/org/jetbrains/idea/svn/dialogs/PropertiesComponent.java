@@ -46,14 +46,14 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -96,19 +96,17 @@ public class PropertiesComponent extends JPanel {
     myTable.setModel(model);
     myTable.setShowVerticalLines(true);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        int index = myTable.getSelectedRow();
-        if (index >= 0) {
-          Object value = myTable.getValueAt(index, 1);
-          if (value instanceof String) {
-            myTextArea.setText(((String) value));
-          } else {
-            myTextArea.setText("");
-          }
+    myTable.getSelectionModel().addListSelectionListener(e -> {
+      int index = myTable.getSelectedRow();
+      if (index >= 0) {
+        Object value = myTable.getValueAt(index, 1);
+        if (value instanceof String) {
+          myTextArea.setText(((String) value));
         } else {
           myTextArea.setText("");
         }
+      } else {
+        myTextArea.setText("");
       }
     });
     myPopupActionGroup = createPopup();
@@ -404,7 +402,7 @@ public class PropertiesComponent extends JPanel {
       }
       VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (vf != null) {
-        File f = new File(vf.getPath());
+        File f = virtualToIoFile(vf);
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
           Project p = e.getProject();

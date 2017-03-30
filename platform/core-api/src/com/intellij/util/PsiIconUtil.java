@@ -49,6 +49,7 @@ public class PsiIconUtil {
     private static final IconProvider[] ourIconProviders = Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME);
   }
 
+  @NotNull
   private static IconProvider[] getIconProviders() {
     return IconProviderHolder.ourIconProviders;
   }

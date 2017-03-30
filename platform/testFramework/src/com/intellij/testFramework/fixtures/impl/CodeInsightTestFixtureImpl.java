@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
+import com.intellij.codeInsight.hints.InlayInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -126,6 +127,7 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.File;
@@ -167,10 +169,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static void addGutterIconRenderer(GutterMark renderer, int offset, @NotNull SortedMap<Integer, List<GutterMark>> result) {
     if (renderer == null) return;
 
-    List<GutterMark> renderers = result.get(offset);
-    if (renderers == null) {
-      result.put(offset, renderers = new SmartList<>());
-    }
+    List<GutterMark> renderers = result.computeIfAbsent(offset, k -> new SmartList<>());
     renderers.add(renderer);
   }
 
@@ -194,10 +193,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
+  @TestOnly
   public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
                                                       @NotNull Editor editor,
                                                       @NotNull int[] toIgnore,
                                                       boolean canChangeDocument) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
@@ -1703,6 +1704,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     finally {
       checker.tearDown();
     }
+  }
+
+  @Override
+  public void checkResultWithInlays(String text) {
+    Document checkDocument = new DocumentImpl(text);
+    InlayHintsChecker checker = new InlayHintsChecker(this);
+    List<InlayInfo> inlayInfos = checker.extractInlays(checkDocument);
+    checkResult(checkDocument.getText());
+    checker.verifyInlays(inlayInfos, text);
   }
 
   @Override

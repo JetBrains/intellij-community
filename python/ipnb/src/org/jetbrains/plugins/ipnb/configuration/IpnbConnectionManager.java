@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -59,7 +60,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class IpnbConnectionManager implements ProjectComponent {
+public final class IpnbConnectionManager implements ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbConnectionManager.class);
   private final Project myProject;
   private final Map<String, IpnbConnection> myKernels = new HashMap<>();
@@ -105,7 +106,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                @NotNull final String path) {
     final String url = getURL();
     if (connectToIpythonServer(codePanel, fileEditor, path, url)) return;
-    final boolean isRemote = IpnbSettings.getInstance(myProject).isRemote(myProject.getLocationHash());
+    final boolean isRemote = IpnbSettings.getInstance(myProject).isRemote();
     if (!isRemote) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final boolean serverStarted = startIpythonServer(url, fileEditor);
@@ -122,7 +123,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                          @NotNull final String path,
                                          @NotNull final String url) {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
-    final boolean isRemote = ipnbSettings.isRemote(myProject.getLocationHash());
+    final boolean isRemote = ipnbSettings.isRemote();
     if (!isRemote) {
       if (myToken != null) return startConnection(codePanel, path, url, true);
       final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
@@ -539,11 +540,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
       return null;
     }
   }
-
-  public void projectOpened() {
-  }
-
-
+  
+  @Override
   public void projectClosed() {
     shutdownKernels();
   }
@@ -562,15 +560,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
     myKernels.clear();
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "IpnbConnectionManager";
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+  @Override
+  public void dispose() {
     shutdownKernels();
   }
 

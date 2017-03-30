@@ -24,6 +24,7 @@ import org.jetbrains.java.generate.config.FilterPattern;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -60,9 +61,27 @@ public class GenerateToStringUtils {
                                                    FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
         List<PsiField> availableFields = new ArrayList<>();
+        collectAvailableFields(clazz, includeSuperClass, pattern, availableFields, new HashSet<>());
+        return availableFields.toArray(new PsiField[availableFields.size()]);
+    }
+
+    private static void collectAvailableFields(PsiClass clazz,
+                                               boolean includeSuperClass,
+                                               FilterPattern pattern,
+                                               List<PsiField> availableFields,
+                                               HashSet<PsiClass> visited) {
+
+        int sortElements = GenerateToStringContext.getConfig().getSortElements();
+
+        if (includeSuperClass && sortElements == 3) {
+            PsiClass superClass = clazz.getSuperClass();
+            if (superClass != null && visited.add(superClass)) {
+                collectAvailableFields(superClass, true, pattern, availableFields, visited);
+            }
+        }
 
         // performs til filtering process
-        PsiField[] fields = includeSuperClass ? clazz.getAllFields() : clazz.getFields();
+        PsiField[] fields = includeSuperClass && sortElements != 3 ? clazz.getAllFields() : clazz.getFields();
         for (PsiField field : fields) {
             if (!JavaResolveUtil.isAccessible(field, field.getContainingClass(), field.getModifierList(), clazz, null, null)) {
                 continue;
@@ -72,8 +91,6 @@ public class GenerateToStringUtils {
                 availableFields.add(field);
             }
         }
-
-        return availableFields.toArray(new PsiField[availableFields.size()]);
     }
 
     /**
@@ -93,7 +110,21 @@ public class GenerateToStringUtils {
     public static PsiMethod[] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<>();
-        PsiMethod[] methods = clazz.getAllMethods();
+        collectAvailableMethods(clazz, pattern, availableMethods, new HashSet<>());
+        return availableMethods.toArray(new PsiMethod[availableMethods.size()]);
+    }
+
+    private static void collectAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern,
+                                                List<PsiMethod> availableMethods,
+                                                HashSet<PsiClass> visited) {
+        int sortElements = GenerateToStringContext.getConfig().getSortElements();
+        if (sortElements == 3) {
+            PsiClass superClass = clazz.getSuperClass();
+            if (superClass != null && visited.add(superClass)) {
+                collectAvailableMethods(superClass, pattern, availableMethods, visited);
+            }
+        }
+        PsiMethod[] methods = sortElements != 3 ? clazz.getAllMethods() : clazz.getMethods();
         for (PsiMethod method : methods) {
             // the method should be a getter
             if (!PsiAdapter.isGetterMethod(method)) {
@@ -133,6 +164,5 @@ public class GenerateToStringUtils {
                 log.debug("Adding the method " + methodName + " as there is not a field for this getter");
             availableMethods.add(method);
         }
-        return availableMethods.toArray(new PsiMethod[availableMethods.size()]);
     }
 }

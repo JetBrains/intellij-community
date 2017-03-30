@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   private static boolean isActionRegistered(PsiClass psiClass) {
     final Set<PsiClass> registrationTypes = RegistrationCheckerUtil.getRegistrationTypes(psiClass, true);
     if (registrationTypes != null) {
+      if (registrationTypes.isEmpty()) return true;
       for (PsiClass type : registrationTypes) {
         if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
         if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
@@ -160,6 +161,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     Module module = ModuleUtilCore.findModuleForFile(psiFile.getVirtualFile(), project);
-    return PluginModuleType.isPluginModuleOrDependency(module);
+    return PluginModuleType.isPluginModuleOrDependency(module) ||
+           module != null && org.jetbrains.idea.devkit.util.PsiUtil.isPluginModule(module);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-19.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-19.0.jar");
-    moduleBuilder.addLibraryJars("guava-19.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-19.0.jar");
+    moduleBuilder.addLibraryJars("guava-21.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
+                                 "guava-21.0.jar");
+    moduleBuilder.addLibraryJars("guava-21.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
+                                 "guava-21.0.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 

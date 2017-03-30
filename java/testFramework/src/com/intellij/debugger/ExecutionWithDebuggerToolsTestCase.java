@@ -138,11 +138,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    ThreadTracker.awaitThreadTerminationWithParentParentGroup("JDI main", 100, TimeUnit.SECONDS);
+    ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
     try {
       myDebugProcess = null;
       myPauseScriptListener = null;
       myRatherLaterRequests.clear();
+      myScriptRunnables.clear();
       super.tearDown();
     }
     finally {

@@ -180,7 +180,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   private fun createTestStartedIndicator(): String {
-    return "Starting " + javaClass.name + "." + getTestName(false) + Math.random()
+    return "Starting " + javaClass.name + "." + super.getTestName(false) + Math.random()
   }
 
 

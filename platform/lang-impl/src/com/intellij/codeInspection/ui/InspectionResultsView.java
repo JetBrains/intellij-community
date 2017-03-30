@@ -64,6 +64,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -109,6 +110,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfileImpl myInspectionProfile;
+  private final boolean mySettingsEnabled;
   @NotNull
   private final AnalysisScope myScope;
   @NonNls
@@ -262,6 +264,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
     }, this);
+
+    if (!isSingleInspectionRun()) {
+      mySettingsEnabled = true;
+    } else {
+      InspectionProfileImpl profile = getCurrentProfile();
+      String toolId = ObjectUtils.notNull(profile.getSingleTool());
+      InspectionToolWrapper tool = ObjectUtils.notNull(profile.getInspectionTool(toolId, getProject()));
+      JComponent toolPanel = tool.getTool().createOptionsPanel();
+      mySettingsEnabled = toolPanel != null;
+    }
   }
 
   public void profileChanged() {
@@ -967,17 +979,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (psiElement == null) return null;
 
       final CommonProblemDescriptor problem = refElementNode.getDescriptor();
-      if (problem != null) {
-        if (problem instanceof ProblemDescriptor) {
-          PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();
-          if (elementFromDescriptor == null) {
-            final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
-            if (node.isValid()) {
-              return InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
-            }
-          } else {
-            psiElement = elementFromDescriptor;
+      if (problem instanceof ProblemDescriptor) {
+        PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();
+        if (elementFromDescriptor == null && CommonDataKeys.NAVIGATABLE.is(dataId) && refElementNode.getChildCount() != 0) {
+          final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
+          if (node.isValid()) {
+            return InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
           }
+        }
+        else {
+          psiElement = elementFromDescriptor;
         }
       }
 
@@ -985,7 +996,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         return getSelectedNavigatable(problem, psiElement);
       }
       else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return psiElement.isValid() ? psiElement : null;
+        return psiElement != null && psiElement.isValid() ? psiElement : null;
       }
     }
     else if (selectedNode instanceof ProblemDescriptionNode && CommonDataKeys.NAVIGATABLE.is(dataId)) {
@@ -1043,6 +1054,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
+  @NotNull
   private PsiElement[] collectPsiElements() {
     RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<>();
@@ -1079,6 +1091,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     boolean rerun = myRerun;
     myRerun = false;
     return rerun;
+  }
+
+  public boolean areSettingsEnabled() {
+    return mySettingsEnabled;
   }
 
   public boolean isSingleInspectionRun() {
@@ -1120,7 +1136,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     for (Tools currentTools : tools) {
       for (ScopeToolState state : contentProvider.getTools(currentTools)) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        if (contentProvider.checkReportedProblems(context, toolWrapper)) {
+        if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
           return true;
         }
       }

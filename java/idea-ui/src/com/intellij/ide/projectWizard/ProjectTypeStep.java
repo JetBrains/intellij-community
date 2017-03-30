@@ -560,6 +560,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   @Override
   public void dispose() {
+    myLastSelectedGroup = null;
+    mySettingsStep = null;
+    myTemplatesMap.clear();
+    myBuilders.clear();
+    myCustomSteps.clear();
   }
 
   @Override

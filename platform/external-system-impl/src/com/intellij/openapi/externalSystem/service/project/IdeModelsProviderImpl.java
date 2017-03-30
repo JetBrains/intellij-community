@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
@@ -95,7 +94,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     if (modulePath.getParentFile() != null) {
       prefix = modulePath.getParentFile().getName();
     }
-    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '_';
+    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '-';
     return new String[]{
       module.getInternalName(),
       prefix + delimiter + module.getInternalName(),
@@ -103,11 +102,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
-    if (ideModule.getProject().getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE) {
-      for (VirtualFile root : ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-        if (pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
-          return true;
-        }
+    for (VirtualFile root : ModuleRootManager.getInstance(ideModule).getContentRoots()) {
+      if (pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+        return true;
       }
     }
     return isExternalSystemAwareModule(moduleData.getOwner(), ideModule) &&

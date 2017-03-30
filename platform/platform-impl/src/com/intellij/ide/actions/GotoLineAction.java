@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.EditorGotoLineNumberDialog;
 import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,14 +34,14 @@ public class GotoLineAction extends AnAction implements DumbAware {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
-      GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
+      GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
       dialog.show();
     }
     else {
       CommandProcessor processor = CommandProcessor.getInstance();
       processor.executeCommand(
         project, () -> {
-          GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
+          GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
           dialog.show();
           IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
         },

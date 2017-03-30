@@ -39,7 +39,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -257,12 +256,7 @@ public class JBTabsImpl extends JComponent
       }
     };
 
-    // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
-    // in the interest of backward compatibility, we only do so when a
-    // screen reader is active.
-    // See https://github.com/JetBrains/intellij-community/commit/aa93e5f4cf7f4fd25538164ba04a7e532dc18d2e
-    // why "true" was introduced, although it seems not necessary anymore.
-    setFocusCycleRoot(!ScreenReader.isActive());
+    setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
       @Override
       public Component getDefaultComponent(final Container aContainer) {
@@ -1374,7 +1368,12 @@ public class JBTabsImpl extends JComponent
 
   private void resetPopup() {
 //todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
-    SwingUtilities.invokeLater(() -> myPopupInfo = null);
+    SwingUtilities.invokeLater(() -> {
+      // No need to reset popup info if a new popup has been already opened and myPopupInfo refers to the corresponding info.
+      if (myActivePopup == null) {
+        myPopupInfo = null;
+      }
+    });
   }
 
   @Override

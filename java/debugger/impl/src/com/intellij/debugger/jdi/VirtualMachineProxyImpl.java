@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
@@ -57,7 +58,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
   @NotNull
-  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
+  private final Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
@@ -83,6 +84,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     try {
       // this will cache classes inside JDI and enable faster search of classes later
       virtualMachine.allClasses();
+    }
+    catch (VMDisconnectedException e) {
+      throw e;
     }
     catch (Throwable e) {
       // catch all exceptions in order not to break vm attach process
@@ -214,23 +218,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    */
   public Collection<ThreadReferenceProxyImpl> allThreads() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(myAllThreadsDirty) {
+    if (myAllThreadsDirty) {
       myAllThreadsDirty = false;
 
-      final List<ThreadReference> currentThreads = myVirtualMachine.allThreads();
-      final Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<>();
-
-      for (final ThreadReference threadReference : currentThreads) {
-        ThreadReferenceProxyImpl proxy = myAllThreads.get(threadReference);
-        if(proxy == null) {
-          proxy = new ThreadReferenceProxyImpl(this, threadReference);
-        }
-        result.put(threadReference, proxy);
+      for (ThreadReference threadReference : myVirtualMachine.allThreads()) {
+        getThreadReferenceProxy(threadReference); // add a proxy
       }
-      myAllThreads = result;
     }
 
-    return myAllThreads.values();
+    return new ArrayList<>(myAllThreads.values());
   }
 
   public void threadStarted(ThreadReference thread) {

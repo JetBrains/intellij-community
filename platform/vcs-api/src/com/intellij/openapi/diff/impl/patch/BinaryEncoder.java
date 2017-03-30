@@ -45,7 +45,7 @@ public class BinaryEncoder {
   }
 
   private static void checkLenIsValid(int len, @NotNull String errorMessage) throws BinaryPatchException {
-    if (len < 0 && len > 52) {
+    if (len < 0 || len > 52) {
       throw new BinaryPatchException(errorMessage);
     }
   }
@@ -97,7 +97,7 @@ public class BinaryEncoder {
       }
       int count = output.size();
       if (count != size) {
-        throw new BinaryPatchException(String.format("Length of decoded binary patch mismatches: expected %d, received %d", size, count));
+        throw new BinaryPatchException(String.format("%s binary content was decoded than expected", size > count ? "Less" : "More"));
       }
     }
     catch (Base85x.Base85FormatException e) {

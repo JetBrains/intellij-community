@@ -33,6 +33,7 @@ public class ConfigImportSettings {
     return getProductName(ThreeState.NO);
   }
 
+  @NotNull
   public String[] getMainJarNames() {
     return new String[]{getProductName(ThreeState.NO)};
   }

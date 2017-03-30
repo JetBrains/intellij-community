@@ -88,10 +88,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
   @NotNull
   public SimpleGraphInfo<CommitId> buildSimpleGraphInfo() {
-    return SimpleGraphInfo
-      .build(myGraphController.getCompiledGraph(), myPermanentGraph.getPermanentGraphLayout(), myPermanentGraph.getPermanentCommitsInfo(),
-             myPermanentGraph.getLinearGraph().nodesCount(),
-             myPermanentGraph.getBranchNodeIds());
+    return SimpleGraphInfo.build(myGraphController.getCompiledGraph(),
+                                 myPermanentGraph.getPermanentGraphLayout(),
+                                 myPermanentGraph.getPermanentCommitsInfo(),
+                                 myPermanentGraph.getLinearGraph().nodesCount(),
+                                 myPermanentGraph.getBranchNodeIds());
   }
 
   public int getRecommendedWidth() {

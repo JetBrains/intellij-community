@@ -179,6 +179,7 @@ public class CompressedAppendableFile {
 
   private static final FileChunkReadCache ourDecompressedCache = new FileChunkReadCache();
 
+  @NotNull
   private synchronized byte[] loadChunk(int chunkNumber) throws IOException {
     try {
       if (myChunkLengthTable == null) initChunkLengthTable();
@@ -356,6 +357,7 @@ public class CompressedAppendableFile {
     }
   }
 
+  @NotNull
   private static short[] reallocShortTable(short[] table) {
     short[] newTable = new short[Math.max(table.length * 8 / 5, table.length + 1)];
     System.arraycopy(table, 0, newTable, 0, table.length);
@@ -366,6 +368,7 @@ public class CompressedAppendableFile {
     return CompressionUtil.writeCompressedWithoutOriginalBufferLength(compressedDataOut, buffer, myAppendBufferLength);
   }
 
+  @NotNull
   protected byte[] decompress(DataInputStream keysStream) throws IOException {
     return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream);
   }

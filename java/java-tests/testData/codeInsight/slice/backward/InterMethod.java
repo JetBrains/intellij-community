@@ -1,20 +1,20 @@
 class WW {
-    void f(String <flown11111>ddd) {
+    void f(String ddd) {
         if (hashCode() == 0)
-            ddd = <flown11112>"dd";
-        foo(<flown1111>ddd);
+            ddd = "dd";
+        foo(ddd);
     }
 
     {
-        f(<flown111111>"xxx");
+        f("xxx");
     }
 
     {
-        x(<flown111211>"zzz");
+        x(<flown111111>"zzz");
     }
 
-    String x(String <flown11121>g) {
-        String d = <flown1>foo(<flown1112>g);
+    String x(String <flown11111>g) {
+        String d = <flown1>foo(<flown1111>g);
         return <caret>d;
     }
 

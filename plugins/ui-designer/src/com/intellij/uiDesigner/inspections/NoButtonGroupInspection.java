@@ -52,7 +52,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     if (FormInspectionUtil.isComponentClass(module, component, JRadioButton.class)) {
       final IRootContainer root = FormEditingUtil.getRoot(component);
       if (root == null) return;
@@ -68,21 +68,11 @@ public class NoButtonGroupInspection extends BaseFormInspection {
             if (areCellsAdjacent(parent, c1, c2)) {
               final String groupName = root.getButtonGroupName(child);
               if (groupName == null) {
-                quickFixProvider = new EditorQuickFixProvider() {
-                   @Override
-                   public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                     return new CreateGroupQuickFix(editor, component, c1.getColumn() == c2.getColumn());
-                   }
-                 };
+                quickFixProvider = (editor, component1) -> new CreateGroupQuickFix(editor, component1, c1.getColumn() == c2.getColumn());
                 break;
               }
               else {
-                quickFixProvider = new EditorQuickFixProvider() {
-                  @Override
-                  public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                    return new AddToGroupQuickFix(editor, component, groupName);
-                  }
-                };
+                quickFixProvider = (editor, component12) -> new AddToGroupQuickFix(editor, component12, groupName);
               }
             }
           }

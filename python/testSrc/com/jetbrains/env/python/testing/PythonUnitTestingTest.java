@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
@@ -47,9 +48,45 @@ import static org.junit.Assert.assertEquals;
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
+  @EnvTestTagsRequired(tags = "python3") // No subtest in py2
+  @Test
+  public void testSubtest() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py") {
+      @Override
+      protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all) {
+        final String expectedResult = "Test tree:\n" +
+                                      "[root]\n" +
+                                      ".test_subtest\n" +
+                                      "..SpamTest\n" +
+                                      "...test_test\n" +
+                                      "....(i=0)(-)\n" +
+                                      "....(i=1)(+)\n" +
+                                      "....(i=2)(-)\n" +
+                                      "....(i=3)(+)\n" +
+                                      "....(i=4)(-)\n" +
+                                      "....(i=5)(+)\n" +
+                                      "....(i=6)(-)\n" +
+                                      "....(i=7)(+)\n" +
+                                      "....(i=8)(-)\n" +
+                                      "....(i=9)(+)\n";
+        Assert.assertEquals("", expectedResult, runner.getFormattedTestTree());
+
+      }
+    });
+  }
+
+  @Test
+  public void testMultipleCases() throws Exception {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class));
+  }
+
   @Test
   public void testConfigurationProducer() throws Exception {
-    new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
   }
 
   /**
@@ -58,11 +95,17 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyUnitTestProcessRunner>("test_metheggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyUnitTestProcessRunner>("test_metheggs", "test_first") {
         @NotNull
         @Override
         protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-          return new PyUnitTestProcessRunner("tests", 0);
+          return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -73,11 +116,17 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyUnitTestProcessRunner>("test_metheggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyUnitTestProcessRunner>("test_metheggs", "test_first") {
         @NotNull
         @Override
         protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-          return new PyUnitTestProcessRunner("tests", 0);
+          return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -106,14 +155,14 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                                                  PyUniversalUnitTestConfiguration.class));
   }
 
   @Test
   public void testRenameClass() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
         PyUniversalUnitTestConfiguration.class));
   }

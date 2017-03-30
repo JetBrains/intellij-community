@@ -102,7 +102,7 @@ public class RootsChangedTest extends ModuleTestCase {
     assertNotNull(vSubdir);
 
     move(vDir2, vSubdir);
-    assertEventsCount(0);
+    assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }
 
@@ -139,7 +139,7 @@ public class RootsChangedTest extends ModuleTestCase {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-      ProjectJdkTable.getInstance().addJdk(jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(0);
 
       ModuleRootModificationUtil.setModuleSdk(a, jdk);
@@ -167,7 +167,7 @@ public class RootsChangedTest extends ModuleTestCase {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-      ProjectJdkTable.getInstance().addJdk(jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(0);
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
@@ -199,7 +199,7 @@ public class RootsChangedTest extends ModuleTestCase {
       final Sdk jdkBBB;
       try {
         jdk = (Sdk)IdeaTestUtil.getMockJdk17("AAA").clone();
-        ProjectJdkTable.getInstance().addJdk(jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
         assertEventsCount(0);
 
         jdkBBB = (Sdk)IdeaTestUtil.getMockJdk17("BBB").clone();
@@ -207,7 +207,7 @@ public class RootsChangedTest extends ModuleTestCase {
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
-      ProjectJdkTable.getInstance().addJdk(jdk);
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(0);
 
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
@@ -229,9 +229,6 @@ public class RootsChangedTest extends ModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      assertEventsCount(1);
-
-      ProjectJdkTable.getInstance().removeJdk(jdk);
       assertEventsCount(1);
     });
   }

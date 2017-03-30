@@ -32,10 +32,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.io.DataOutputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CompilerBackwardReferenceIndex {
   private final static Logger LOG = Logger.getInstance(CompilerBackwardReferenceIndex.class);
@@ -48,6 +46,7 @@ public class CompilerBackwardReferenceIndex {
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myIndicesDir;
+  private final boolean myReadOnly;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
@@ -65,8 +64,9 @@ public class CompilerBackwardReferenceIndex {
   });
   private volatile Exception myRebuildRequestCause;
 
-  public CompilerBackwardReferenceIndex(File buildDir) {
+  public CompilerBackwardReferenceIndex(File buildDir, boolean readOnly) {
     myIndicesDir = getIndexDir(buildDir);
+    myReadOnly = readOnly;
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
       throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
     }
@@ -74,6 +74,8 @@ public class CompilerBackwardReferenceIndex {
       if (versionDiffers(buildDir)) {
         saveVersion(buildDir);
       }
+      if (myReadOnly) logModification("open");
+
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(@Nullable String value) throws IOException {
@@ -84,7 +86,7 @@ public class CompilerBackwardReferenceIndex {
       myIndices = new HashMap<>();
       for (IndexExtension<LightRef, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices()) {
         //noinspection unchecked
-        myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir));
+        myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
 
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
@@ -123,6 +125,7 @@ public class CompilerBackwardReferenceIndex {
     for (InvertedIndex<?, ?, CompiledFileData> index : myIndices.values()) {
       close(index, exceptionProc);
     }
+    if (myReadOnly) logModification("close");
     final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
       removeIndexFiles(myIndicesDir);
@@ -199,6 +202,20 @@ public class CompilerBackwardReferenceIndex {
     myRebuildRequestCause = e;
   }
 
+  private void logModification(String state) {
+    try {
+      File[] files = myIndicesDir.listFiles();
+      if (files != null) {
+        LOG.info("indices state on " +
+                 state +
+                 ": " +
+                 Arrays.stream(files).map(f -> f.getName() + ":" + f.lastModified()).collect(Collectors.joining(", ")));
+      }
+    }
+    catch (Exception ignored) {
+    }
+  }
+
   private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
     try {
       index.dispose();
@@ -222,11 +239,12 @@ public class CompilerBackwardReferenceIndex {
 
   class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, CompiledFileData> {
     public CompilerMapReduceIndex(@NotNull final IndexExtension<Key, Value, CompiledFileData> extension,
-                                  @NotNull final File indexDir)
+                                  @NotNull final File indexDir,
+                                  boolean readOnly)
       throws IOException {
       super(extension,
-            createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir),
-            new MapBasedForwardIndex<Key, Value>(extension) {
+            createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
+            readOnly ? null : new MapBasedForwardIndex<Key, Value>(extension) {
               @NotNull
               @Override
               public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
@@ -253,12 +271,15 @@ public class CompilerBackwardReferenceIndex {
   private static <Key, Value> IndexStorage<Key, Value> createIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                                                                           @NotNull DataExternalizer<Value> valueExternalizer,
                                                                           @NotNull ID<Key, Value> indexId,
-                                                                          @NotNull File indexDir) throws IOException {
+                                                                          @NotNull File indexDir,
+                                                                          boolean readOnly) throws IOException {
     return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.toString()),
                                            keyDescriptor,
                                            valueExternalizer,
                                            16 * 1024,
-                                           false) {
+                                           false,
+                                           true,
+                                           readOnly) {
       @Override
       public void checkCanceled() {
         //TODO

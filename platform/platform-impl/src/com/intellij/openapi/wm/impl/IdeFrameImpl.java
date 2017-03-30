@@ -23,7 +23,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.impl.IdeNotificationArea;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -65,7 +64,6 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -93,7 +91,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
-  private PropertyChangeListener myWindowsBorderUpdater = null;
+  private PropertyChangeListener myWindowsBorderUpdater;
   private boolean myRestoreFullScreen;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx,
@@ -136,12 +134,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
     });
     if (SystemInfo.isWindows) {
-      myWindowsBorderUpdater = new PropertyChangeListener() {
-        @Override
-        public void propertyChange(@NotNull PropertyChangeEvent evt) {
-          updateBorder();
-        }
-      };
+      myWindowsBorderUpdater = __ -> updateBorder();
       Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
       if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
         final Ref<Dimension> myDimensionRef = new Ref<>(new Dimension());
@@ -242,8 +235,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   /**
    * This is overridden to get rid of strange Alloy LaF customization of frames. For unknown reason it sets the maxBounds rectangle
-   * and it does it plain wrong. Setting bounds to <code>null</code> means default value should be taken from the underlying OS.
+   * and it does it plain wrong. Setting bounds to {@code null} means default value should be taken from the underlying OS.
    */
+  @Override
   public synchronized void setMaximizedBounds(Rectangle bounds) {
     super.setMaximizedBounds(null);
   }
@@ -252,6 +246,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     addWindowListener(
       new WindowAdapter() {
+        @Override
         public void windowClosing(@NotNull final WindowEvent e) {
           if (isTemporaryDisposed())
             return;
@@ -272,10 +267,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     );
   }
 
+  @Override
   public StatusBar getStatusBar() {
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
+  @Override
   public void setTitle(final String title) {
     if (myUpdatingTitle) {
       super.setTitle(title);
@@ -286,6 +283,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     updateTitle();
   }
 
+  @Override
   public void setFrameTitle(final String text) {
     super.setTitle(text);
   }
@@ -294,6 +292,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setFileTitle(fileTitle, null);
   }
 
+  @Override
   public void setFileTitle(@Nullable final String fileTitle, @Nullable File file) {
     myFileTitle = fileTitle;
     myCurrentFile = file;
@@ -350,13 +349,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     public StringBuilder sb = new StringBuilder();
 
     public Builder append(@Nullable final String s) {
-      if (s == null || s.length() == 0) return this;
+      if (s == null || s.isEmpty()) return this;
       if (sb.length() > 0) sb.append(" - ");
       sb.append(s);
       return this;
     }
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
@@ -443,24 +443,24 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     statusBar.addWidget(insertOverwritePanel, "after Encoding");
     statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
 
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        statusBar.removeWidget(encodingPanel.ID());
-        statusBar.removeWidget(lineSeparatorPanel.ID());
-        statusBar.removeWidget(positionPanel.ID());
-        statusBar.removeWidget(notificationArea.ID());
-        statusBar.removeWidget(readOnlyAttributePanel.ID());
-        statusBar.removeWidget(insertOverwritePanel.ID());
+    Disposer.register(project, () -> {
+      statusBar.removeWidget(encodingPanel.ID());
+      statusBar.removeWidget(lineSeparatorPanel.ID());
+      statusBar.removeWidget(positionPanel.ID());
+      statusBar.removeWidget(notificationArea.ID());
+      statusBar.removeWidget(readOnlyAttributePanel.ID());
+      statusBar.removeWidget(insertOverwritePanel.ID());
 
-        ((StatusBarEx)statusBar).removeCustomIndicationComponents();
-      }
+      ((StatusBarEx)statusBar).removeCustomIndicationComponents();
     });
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public void dispose() {
     if (SystemInfo.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
@@ -502,7 +502,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     return myRootPane != null && myRootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
   }
 
-  public void storeFullScreenStateIfNeeded() {
+  void storeFullScreenStateIfNeeded() {
     if (myFrameDecorator != null) {
       storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
     }
@@ -517,20 +517,20 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
-  public static boolean shouldRestoreFullScreen(@Nullable Project project) {
+  private static boolean shouldRestoreFullScreen(@Nullable Project project) {
     return WindowManager.getInstance().isFullScreenSupportedInCurrentOS() &&
            project != null &&
            (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN));
   }
 
-  final static ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Windows.Shadow.Top,
-                                                                  AllIcons.Windows.Shadow.TopRight,
-                                                                  AllIcons.Windows.Shadow.Right,
-                                                                  AllIcons.Windows.Shadow.BottomRight,
-                                                                  AllIcons.Windows.Shadow.Bottom,
-                                                                  AllIcons.Windows.Shadow.BottomLeft,
-                                                                  AllIcons.Windows.Shadow.Left,
-                                                                  AllIcons.Windows.Shadow.TopLeft);
+  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Windows.Shadow.Top,
+                                                                          AllIcons.Windows.Shadow.TopRight,
+                                                                          AllIcons.Windows.Shadow.Right,
+                                                                          AllIcons.Windows.Shadow.BottomRight,
+                                                                          AllIcons.Windows.Shadow.Bottom,
+                                                                          AllIcons.Windows.Shadow.BottomLeft,
+                                                                          AllIcons.Windows.Shadow.Left,
+                                                                          AllIcons.Windows.Shadow.TopLeft);
 
   @Override
   public void paint(@NotNull Graphics g) {
@@ -560,6 +560,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
+  @Override
   public Rectangle suggestChildFrameBounds() {
     //todo [kirillk] a dummy implementation
     final Rectangle b = getBounds();
@@ -570,6 +571,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     return b;
   }
 
+  @Override
   public final BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
@@ -603,9 +605,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         modalBlockerField.setAccessible(true);
         final Window modalBlocker = (Window)modalBlockerField.get(this);
         if (modalBlocker != null) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            toggleFullScreen(state);
-          }, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
           return true;
         }
       }

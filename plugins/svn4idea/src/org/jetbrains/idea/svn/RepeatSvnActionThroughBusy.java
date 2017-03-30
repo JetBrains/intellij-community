@@ -32,24 +32,20 @@ import org.tmatesoft.svn.core.SVNException;
 public abstract class RepeatSvnActionThroughBusy {
   public static final int REPEAT = 10;
 
-  public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    @Override
-    public boolean process(Exception e) {
-      if (e instanceof SVNException) {
-        final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
-        if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
-          return true;
-        }
-        else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
-          Throwable cause = ((SVNException)e).getErrorMessage().getCause();
-          if (cause instanceof SqlJetException) {
-            return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
-          }
+  public static final Processor<Exception> ourBusyExceptionProcessor = e -> {
+    if (e instanceof SVNException) {
+      final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
+      if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
+        return true;
+      }
+      else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
+        Throwable cause = ((SVNException)e).getErrorMessage().getCause();
+        if (cause instanceof SqlJetException) {
+          return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
         }
       }
-      return false;
     }
+    return false;
   };
 
   protected int myCnt = REPEAT;

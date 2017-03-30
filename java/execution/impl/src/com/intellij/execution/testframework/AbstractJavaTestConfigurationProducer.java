@@ -30,9 +30,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -42,10 +44,7 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
   protected AbstractJavaTestConfigurationProducer(ConfigurationFactory configurationFactory) {
@@ -193,6 +192,24 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
           }
           else {
             element = editorFile.findElementAt(editor.getCaretModel().getOffset());
+
+            SelectionModel selectionModel = editor.getSelectionModel();
+            if (selectionModel.hasSelection()) {
+              int selectionStart = selectionModel.getSelectionStart();
+              PsiClass psiClass = PsiTreeUtil.getParentOfType(editorFile.findElementAt(selectionStart), PsiClass.class);
+              if (psiClass != null) {
+                TextRange selectionRange = new TextRange(selectionStart, selectionModel.getSelectionEnd());
+                PsiMethod[] methodsInSelection = Arrays.stream(psiClass.getMethods())
+                  .filter(method -> {
+                    TextRange methodTextRange = method.getTextRange();
+                    return methodTextRange != null && selectionRange.contains(methodTextRange);
+                  })
+                  .toArray(PsiMethod[]::new);
+                if (methodsInSelection.length > 0) {
+                  return collectTestMembers(methodsInSelection, checkAbstract, checkIsTest, processor, classes);
+                }
+              }
+            }
           }
         }
       }
@@ -276,7 +293,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       return ClassUtil.getJVMClassName(containingClass) + "," + getMethodPresentation((PsiMember)psiMember);
     }
     else if (psiMember instanceof PsiPackage) {
-      return ((PsiPackage)psiMember).getQualifiedName();
+      return ((PsiPackage)psiMember).getQualifiedName() + ".*";
     }
     assert false;
     return null;
