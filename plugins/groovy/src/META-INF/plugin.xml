@@ -327,6 +327,9 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings"
                     serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.grape.GrabService"/>
+
+
     <spellchecker.support language="Groovy"
                           implementationClass="org.jetbrains.plugins.groovy.codeInspection.spellchecker.GroovySpellcheckingStrategy"/>
     <lang.inspectionSuppressor language="Groovy"
@@ -497,6 +500,7 @@
     <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.plugins.groovy.debugger.GroovySmartStepIntoHandler"/>
 
     <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>
+    <resolveScopeEnlarger implementation="org.jetbrains.plugins.groovy.grape.GrabScopeEnlarger"/>
 
     <debuggerEditorTextProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.debugger.GroovyEditorTextProvider"/>
 
@@ -607,6 +611,7 @@
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.grape.GrabClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
@@ -640,6 +645,7 @@
     <generation.topLevelFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFactoryProvider"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcProjectWithoutLibraryNotificator"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.grape.GrabStartupActivity"/>
 
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyStubNotificationProvider"/>
 
