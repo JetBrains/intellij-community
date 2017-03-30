@@ -380,11 +380,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public boolean reportsIgnoredDirectories() {
-    return false;
-  }
-
-  @Override
   public List<CommitExecutor> getCommitExecutors() {
     return Arrays.asList(myCommitAndPushExecutor, myMqNewExecutor);
   }
