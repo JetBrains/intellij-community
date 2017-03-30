@@ -238,7 +238,7 @@ public class GeneralCommandLineTest {
       GeneralCommandLine commandLine = createCommandLine(script.getPath());
       commandLine.withInputRedirect(ProcessBuilder.Redirect.from(input));
       String output = execAndGetOutput(commandLine);
-      assertEquals(content, StringUtil.convertLineSeparators(output.trim()));
+      assertEquals(content, StringUtil.convertLineSeparators(output));
     }
     finally {
       FileUtil.delete(script);
