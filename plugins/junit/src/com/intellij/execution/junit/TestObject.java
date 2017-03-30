@@ -52,12 +52,7 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.engine.JupiterTestEngine;
-import org.junit.platform.commons.JUnitException;
-import org.junit.platform.engine.TestEngine;
-import org.junit.platform.launcher.TestExecutionListener;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.vintage.engine.VintageTestEngine;
+import org.opentest4j.MultipleFailuresError;
 
 import java.io.File;
 import java.io.IOException;
@@ -168,20 +163,24 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
 
       final PathsList classPath = javaParameters.getClassPath();
-      classPath.add(PathUtil.getJarPathForClass(TestExecutionListener.class));
-      classPath.add(PathUtil.getJarPathForClass(JUnitException.class));
-      classPath.add(PathUtil.getJarPathForClass(TestEngine.class));
-      classPath.add(PathUtil.getJarPathForClass(JUnitPlatform.class));
-
-      if (JavaPsiFacade.getInstance(project).findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope) != null) {
-        classPath.add(PathUtil.getJarPathForClass(JupiterTestEngine.class));
-      }
-
-      try {
-        JUnitUtil.getTestCaseClass(sourceScope);
-        classPath.add(PathUtil.getJarPathForClass(VintageTestEngine.class));
-      }
-      catch (JUnitUtil.NoJUnitException ignore) {
+      File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
+      File[] files = lib.listFiles();
+      if (files != null) {
+        for (File file : files) {
+          String fileName = file.getName();
+          if (fileName.startsWith("junit-platform-") ||
+              fileName.startsWith("junit-jupiter-engine-") && JavaPsiFacade.getInstance(project).findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope) != null) {
+            classPath.add(file.getAbsolutePath());
+          }
+          else if (fileName.startsWith("junit-vintage-engine-")) {
+            try {
+              JUnitUtil.getTestCaseClass(sourceScope);
+              classPath.add(file.getAbsolutePath());
+            }
+            catch (JUnitUtil.NoJUnitException ignore) {
+            }
+          }
+        }
       }
     }
     
