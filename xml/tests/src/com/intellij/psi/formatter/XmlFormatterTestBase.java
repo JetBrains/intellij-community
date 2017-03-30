@@ -16,7 +16,7 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
@@ -39,6 +39,6 @@ public abstract class XmlFormatterTestBase extends FormatterTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/community/xml/tests/testData";
+    return PathManagerEx.getCommunityHomePath() + "/xml/tests/testData";
   }
 }
