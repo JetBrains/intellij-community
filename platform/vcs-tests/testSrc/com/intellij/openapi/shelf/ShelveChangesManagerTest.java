@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.shelf;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +54,7 @@ public class ShelveChangesManagerTest extends PlatformTestCase {
   }
 
   private void doTest(boolean migrateResources) throws Exception {
-    String testDataPath = PathManagerEx.getTestDataPath() + "/shelf/" + getTestName(true);
+    String testDataPath = VcsTestUtil.getTestDataPath() + "/shelf/" + getTestName(true);
     File beforeFile = new File(testDataPath, "before");
     File afterFile = new File(testDataPath, "after");
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(afterFile);

@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public abstract class BaseLineStatusTrackerTestCase extends LightIdeaTestCase {
+public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCase {
   protected VirtualFile myFile;
   protected Document myDocument;
   protected Document myUpToDateDocument;

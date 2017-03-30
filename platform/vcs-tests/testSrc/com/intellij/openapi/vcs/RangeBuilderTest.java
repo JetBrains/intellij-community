@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.Arrays;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class RangeBuilderTest extends LightIdeaTestCase {
+public class RangeBuilderTest extends LightPlatformTestCase {
 
   public void testIdenticalContents() throws FilesTooBigForDiffException {
     String upToDateContent = "a\na\na\na\n";

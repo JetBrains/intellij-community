@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.checkin.StepIntersection;
 import com.intellij.util.containers.Convertor;

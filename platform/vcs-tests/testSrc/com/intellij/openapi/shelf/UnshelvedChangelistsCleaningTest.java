@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.shelf;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.assertj.core.util.DateUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
 
 import java.io.File;
@@ -71,7 +71,7 @@ public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
   }
 
   private void doTest() throws Exception {
-    String testDataPath = PathManagerEx.getTestDataPath() + "/shelf/" + getTestName(true);
+    String testDataPath = VcsTestUtil.getTestDataPath() + "/shelf/" + getTestName(true);
     File beforeFile = new File(testDataPath, "before");
     File afterFile = new File(testDataPath, "after");
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(afterFile);
@@ -91,7 +91,7 @@ public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
 
     assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());
     Date calendarTime = myCalendar.getTime();
-    String datePresentation = DateUtil.formatAsDatetime(calendarTime);
+    String datePresentation = DateFormatUtil.formatDate(calendarTime);
     assertTrue("Calendar date is: " + datePresentation, myCalendar.get(Calendar.YEAR) < TEST_YEAR);
     debug(datePresentation);
     shelveChangesManager.cleanUnshelved(false, myCalendar.getTimeInMillis());

@@ -21,7 +21,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.*;
@@ -92,7 +92,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     myFilesToDelete.add(moduleFile);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
     ApplicationManager.getApplication().runWriteAction(() -> {
-      myOutsideModule = myModuleManager.newModule(virtualFile.getPath(), StdModuleTypes.JAVA.getId());
+      myOutsideModule = myModuleManager.newModule(virtualFile.getPath(), ModuleTypeId.JAVA_MODULE);
       myOutsideModule.getModuleFile();
     });
   }

@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.Processor;
 import org.junit.Before;
 
 import java.io.IOException;

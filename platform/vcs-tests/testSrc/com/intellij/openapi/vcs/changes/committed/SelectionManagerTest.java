@@ -20,9 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
+import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 

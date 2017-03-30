@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,7 +27,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -42,7 +41,7 @@ import java.util.Arrays;
 /**
  * @author yole
  */
-public class DirectoryMappingListTest extends ModuleTestCase {
+public class DirectoryMappingListTest extends PlatformTestCase {
   @NonNls private static final String BASE_PATH = "/vcs/directoryMappings/";
   private NewMappings myMappings;
   private VirtualFile myProjectRoot;
@@ -51,7 +50,7 @@ public class DirectoryMappingListTest extends ModuleTestCase {
 
   @Override
   protected void setUpProject() throws Exception {
-    final String root = PathManagerEx.getTestDataPath() + BASE_PATH;
+    final String root = VcsTestUtil.getTestDataPath() + BASE_PATH;
 
     myProjectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true),null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
     VirtualFile projectFile = myProjectRoot.findChild("directoryMappings.ipr");

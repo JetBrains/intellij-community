@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2017 JetBrains s.r.o.
  *

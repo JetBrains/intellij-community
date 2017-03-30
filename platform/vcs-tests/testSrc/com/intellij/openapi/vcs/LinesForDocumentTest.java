@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.Arrays;
 
@@ -27,7 +27,7 @@ import java.util.Arrays;
  */
 
 
-public class LinesForDocumentTest extends LightIdeaTestCase {
+public class LinesForDocumentTest extends PlatformTestCase {
   public void test() {
     doTest("", new String[]{""});
     doTest(" ", new String[]{" "});
