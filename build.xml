@@ -75,7 +75,7 @@
   </target>
 
   <target name="test" depends="init">
-    <call_gant script="${project.home}/build/scripts/tests.gant"/>
+    <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
   <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->
