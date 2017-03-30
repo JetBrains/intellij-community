@@ -542,7 +542,7 @@ public class StudySerializationUtils {
         return stepOptions;
       }
 
-      private JsonObject convertToThirdVersion(JsonObject stepOptionsJson) {
+      private static JsonObject convertToThirdVersion(JsonObject stepOptionsJson) {
         if (!stepOptionsJson.has(LAST_SUBTASK)) return stepOptionsJson;
         final int lastSubtaskIndex = stepOptionsJson.get(LAST_SUBTASK).getAsInt();
         if (lastSubtaskIndex == 0) return stepOptionsJson;
@@ -554,7 +554,7 @@ public class StudySerializationUtils {
           }
         }
         final JsonArray descriptions = stepOptionsJson.getAsJsonArray(TEXTS);
-        if (descriptions.size() > 0) {
+        if (descriptions != null && descriptions.size() > 0) {
           final JsonObject fileWrapper = descriptions.get(0).getAsJsonObject();
           if (fileWrapper.has(NAME)) {
             replaceWithSubtask(fileWrapper);
@@ -563,7 +563,7 @@ public class StudySerializationUtils {
         return stepOptionsJson;
       }
 
-      private void replaceWithSubtask(JsonObject fileWrapper) {
+      private static void replaceWithSubtask(JsonObject fileWrapper) {
         final String file = fileWrapper.get(NAME).getAsString();
         final String extension = FileUtilRt.getExtension(file);
         final String name = FileUtil.getNameWithoutExtension(file);
