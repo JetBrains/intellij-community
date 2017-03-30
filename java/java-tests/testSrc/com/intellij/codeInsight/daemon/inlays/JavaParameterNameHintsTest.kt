@@ -802,6 +802,43 @@ class Test {
 """)
   }
 
+  
+  fun `test multiple hints on same offset lives without exception`() {
+    myFixture.configureByText(JavaFileType.INSTANCE, 
+"""
+class Test {
+    void main() {
+        check(<selection>0, </selection>200);
+    }
+
+    void check(int qas, int b) {
+    }
+}
+""")
+
+    myFixture.doHighlighting()
+
+    var inlays = getHints()
+    assert(inlays.size == 2)
+    
+    myFixture.type('\b')
+    myFixture.doHighlighting()
+    
+    inlays = getHints()
+    assert(inlays.size == 1 && inlays.first() == "qas:", { "Real inlays ${inlays.size}" })
+  }
+
+  
+  fun getHints(): List<String> {
+    val document = myFixture.getDocument(myFixture.file)
+    val manager = ParameterHintsPresentationManager.getInstance()
+    return myFixture.editor
+      .inlayModel
+      .getInlineElementsInRange(0, document.textLength)
+      .mapNotNull { manager.getHintText(it) }
+  }
+  
+  
   fun assertSingleInlayWithText(expectedText: String) {
     val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
     assertThat(inlays).hasSize(1)

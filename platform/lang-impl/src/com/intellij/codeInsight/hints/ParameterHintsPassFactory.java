@@ -135,19 +135,18 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     @Override
     public void doApplyInformationToEditor() {
       CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
-      ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, getAllHints(), myHints, myShowOnlyIfExistedBeforeHints);
+      ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
+      List<Inlay> hints = getParameterHints(manager);
+      ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints);
       updater.update();
       keeper.restoreOriginalLocation();
     }
 
-    private Map<Integer, Inlay> getAllHints() {
+    @NotNull
+    private List<Inlay> getParameterHints(ParameterHintsPresentationManager manager) {
       assert myDocument != null;
-      ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
-      return myEditor.getInlayModel()
-        .getInlineElementsInRange(0, myDocument.getTextLength())
-        .stream()
-        .filter((inlay) -> manager.isParameterHint(inlay))
-        .collect(Collectors.toMap((inlay) -> inlay.getOffset(), (inlay) -> inlay));
+      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength());
+      return ContainerUtil.filter(inlays, (hint) -> manager.isParameterHint(hint));
     }
   }
 }

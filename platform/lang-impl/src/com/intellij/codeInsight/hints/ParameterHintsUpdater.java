@@ -27,17 +27,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ParameterHintsUpdater {
-  
-  private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
-  
-  private final ParameterHintsPresentationManager myHintsManager;
-  private final TIntObjectHashMap<Caret> myCaretMap;
 
-  private final Map<Integer, Inlay> myExistingHints;
+  private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
+
+  private final ParameterHintsPresentationManager myHintsManager = ParameterHintsPresentationManager.getInstance();
+  private final TIntObjectHashMap<Caret> myCaretMap;
+  
   private final Map<Integer, String> myNewHints;
   private final Map<Integer, String> myHintsToPreserve;
 
@@ -45,35 +43,35 @@ public class ParameterHintsUpdater {
   private final List<InlayUpdateInfo> myUpdateList;
 
   public ParameterHintsUpdater(@NotNull Editor editor,
-                               @NotNull Map<Integer, Inlay> existingHints, 
+                               @NotNull List<Inlay> inlays,
                                @NotNull Map<Integer, String> newHints,
                                @NotNull Map<Integer, String> hintsToPreserve) {
     myEditor = editor;
-    myExistingHints = existingHints;
     myNewHints = newHints;
     myHintsToPreserve = hintsToPreserve;
-    myHintsManager = ParameterHintsPresentationManager.getInstance();
 
     myCaretMap = new TIntObjectHashMap<>();
     List<Caret> allCarets = myEditor.getCaretModel().getAllCarets();
     allCarets.forEach((caret) -> myCaretMap.put(caret.getOffset(), caret));
 
-    Set<Integer> toUpdate = getOffsetsToUpdate();
-    myUpdateList = getSortedByOffsetUpdateList(toUpdate);
+    myUpdateList = getInlayUpdates(inlays);
   }
   
   
-  private Set<Integer> getOffsetsToUpdate() {
-    Set<Integer> offsets = ContainerUtil.newHashSet(myExistingHints.keySet());
-    offsets.addAll(myNewHints.keySet());
+  private List<InlayUpdateInfo> getInlayUpdates(List<Inlay> editorHints) {
+    List<InlayUpdateInfo> updates = ContainerUtil.newArrayList();
     
-    for (Inlay hint : myExistingHints.values()) {
-      if (delayRemoval(hint) || myHintsManager.isPinned(hint) || isPreserveHint(hint)) {
-        offsets.remove(hint.getOffset());
-      }
-    }
+    editorHints.forEach(editorHint -> {
+      int offset = editorHint.getOffset();
+      String newText = myNewHints.remove(offset);
+      if (delayRemoval(editorHint) || myHintsManager.isPinned(editorHint) || isPreserveHint(editorHint)) return;
+      updates.add(new InlayUpdateInfo(offset, editorHint, newText));
+    });
     
-    return offsets;
+    myNewHints.keySet().forEach((offset) -> updates.add(new InlayUpdateInfo(offset, null, myNewHints.get(offset))));
+    
+    updates.sort(Comparator.comparing((update) -> update.offset));
+    return updates;
   }
 
   
@@ -86,14 +84,6 @@ public class ParameterHintsUpdater {
     
     String oldText = myHintsManager.getHintText(inlay);
     return Objects.equals(newText, oldText);
-  }
-
-
-  private List<InlayUpdateInfo> getSortedByOffsetUpdateList(Set<Integer> offsetsToUpdate) {
-    return offsetsToUpdate.stream()
-      .sorted()
-      .map((offset) -> new InlayUpdateInfo(offset, myExistingHints.get(offset), myNewHints.get(offset)))
-      .collect(Collectors.toList());
   }
   
 
@@ -117,20 +107,20 @@ public class ParameterHintsUpdater {
         myHintsManager.replaceHint(myEditor, info.inlay, newText);
       }
     }
-    
+
     myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
   }
 
-  
+
   private boolean isSameHintRemovedNear(@NotNull String text, int index) {
     return getInfosNear(index).anyMatch((info) -> text.equals(info.oldText));
   }
 
-  
+
   private boolean isSameHintAddedNear(@NotNull String text, int index) {
     return getInfosNear(index).anyMatch((info) -> text.equals(info.newText));
   }
-
+  
   
   private Stream<InlayUpdateInfo> getInfosNear(int index) {
     List<InlayUpdateInfo> result = ContainerUtil.newArrayList();
@@ -143,7 +133,7 @@ public class ParameterHintsUpdater {
     return result.stream();
   }
 
-  
+
   private boolean delayRemoval(Inlay inlay) {
     int offset = inlay.getOffset();
     Caret caret = myCaretMap.get(offset);
