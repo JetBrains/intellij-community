@@ -57,7 +57,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       def futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
-      for(i in 1..N/2) {
+      for(i in 1.. N/2) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           sameStartCondition.countDown()
           sameStartCondition.await()
@@ -153,7 +153,8 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       def futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
-      for(j in 1..N/2) {
+      def halfN = N / 2
+      for(j in 1..halfN) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           ApplicationManager.application.runReadAction {
             sameStartCondition.countDown()
@@ -163,7 +164,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         })
       }
 
-      for(j in 1..N/2) {
+      for(j in 1..(N - halfN)) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           ApplicationManager.application.runReadAction {
             sameStartCondition.countDown()
