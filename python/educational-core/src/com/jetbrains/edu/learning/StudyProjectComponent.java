@@ -78,39 +78,18 @@ public class StudyProjectComponent implements ProjectComponent {
     }
 
     if (course != null && !course.isAdaptive() && !course.isUpToDate()) {
-      final Notification notification =
-        new Notification("Update.course", "Course Updates", "Course is ready to <a href=\"update\">update</a>", NotificationType.INFORMATION,
-                         new NotificationListener() {
-                           @Override
-                           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                             FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles();
-
-                             ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-                               ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-                               return execCancelable(() -> {
-                                 updateCourse();
-                                 return true;
-                               });
-                             }, "Updating Course", true, myProject);
-                             EduUtils.synchronize();
-                             course.setUpdated();
-
-                           }
-                         });
-      notification.notify(myProject);
-
+      updateAvailable(course);
     }
 
     StudyUtils.registerStudyToolWindow(course, myProject);
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
-        Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
-        if (course1 != null) {
+        if (course != null) {
           UISettings instance = UISettings.getInstance();
           instance.setHideToolStripes(false);
           instance.fireUISettingsChanged();
           registerShortcuts();
-          EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
+          EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
         }
       })));
 
@@ -124,6 +103,29 @@ public class StudyProjectComponent implements ProjectComponent {
         }
       }
     });
+  }
+
+  private void updateAvailable(Course course) {
+    final Notification notification =
+      new Notification("Update.course", "Course Updates", "Course is ready to <a href=\"update\">update</a>", NotificationType.INFORMATION,
+                       new NotificationListener() {
+                         @Override
+                         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                           FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles();
+
+                           ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+                             ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                             return execCancelable(() -> {
+                               updateCourse();
+                               return true;
+                             });
+                           }, "Updating Course", true, myProject);
+                           EduUtils.synchronize();
+                           course.setUpdated();
+
+                         }
+                       });
+    notification.notify(myProject);
   }
 
   private void registerShortcuts() {
