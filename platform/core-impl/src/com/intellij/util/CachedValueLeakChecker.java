@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
@@ -48,7 +49,9 @@ class CachedValueLeakChecker {
     if (!DO_CHECKS) return;
     if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
 
-    findReferencedPsi(provider, userDataHolder, 5);
+    if (!SystemInfo.isJavaVersionAtLeast("9")) {
+      findReferencedPsi(provider, userDataHolder, 5);
+    }
   }
 
   private static synchronized void findReferencedPsi(@NotNull final Object root,
