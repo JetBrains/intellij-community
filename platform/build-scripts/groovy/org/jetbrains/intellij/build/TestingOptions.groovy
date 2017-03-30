@@ -28,43 +28,43 @@ class TestingOptions {
    * <p> Test groups are defined in testGroups.properties files and there is an implicit 'ALL_EXCLUDE_DEFINED' group for tests which aren't
    * included into any group and 'ALL' group for all tests. By default 'ALL_EXCLUDE_DEFINED' group is used. </p>
    */
-  String testGroup = System.getProperty("intellij.build.test.groups", oldTestGroup)
+  String testGroup = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported.
    */
-  String testPatterns = System.getProperty("intellij.build.test.patterns", oldTestPatterns)
+  String testPatterns = System.getProperty("intellij.build.test.patterns", OLD_TEST_PATTERNS)
 
   /**
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
    */
-  String platformPrefix = System.getProperty("intellij.build.test.platform.prefix", oldPlatformPrefix)
+  String platformPrefix = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
 
   /**
    * Specifies port on which the testing process will listen for connections, by default a random port will be used.
    */
-  int debugPort = SystemProperties.getIntProperty("intellij.build.test.debug.port", oldDebugPort)
+  int debugPort = SystemProperties.getIntProperty("intellij.build.test.debug.port", OLD_DEBUG_PORT)
 
   /**
    * If {@code true} to suspend the testing process until a debugger connects to it.
    */
-  boolean suspendDebugProcess = SystemProperties.getBooleanProperty("intellij.build.test.debug.suspend", oldSuspendDebugProcess)
+  boolean suspendDebugProcess = SystemProperties.getBooleanProperty("intellij.build.test.debug.suspend", OLD_SUSPEND_DEBUG_PROCESS)
 
   /**
    * Custom JVM memory options (e.g. -Xmx) for the testing process.
    */
-  String jvmMemoryOptions = System.getProperty("intellij.build.test.jvm.memory.options", oldJvmMemoryOptions)
+  String jvmMemoryOptions = System.getProperty("intellij.build.test.jvm.memory.options", OLD_JVM_MEMORY_OPTIONS)
 
   /**
    * Specifies a module which classpath will be used to search the test classes.
    */
-  String mainModule = System.getProperty("intellij.build.test.main.module", oldMainModule)
+  String mainModule = System.getProperty("intellij.build.test.main.module", OLD_MAIN_MODULE)
 
-  private String oldTestGroup = System.getProperty("idea.test.group", "ALL_EXCLUDE_DEFINED")
-  private String oldTestPatterns = System.getProperty("idea.test.patterns")
-  private String oldPlatformPrefix = System.getProperty("idea.platform.prefix")
-  private int oldDebugPort = SystemProperties.getIntProperty("debug.port", -1)
-  private boolean oldSuspendDebugProcess = System.getProperty("debug.suspend", "n") == "y"
-  private String oldJvmMemoryOptions = System.getProperty("test.jvm.memory")
-  private String oldMainModule = System.getProperty("module.to.make")
+  private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", "ALL_EXCLUDE_DEFINED")
+  private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
+  private static final String OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
+  private static final int OLD_DEBUG_PORT = SystemProperties.getIntProperty("debug.port", -1)
+  private static final boolean OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n") == "y"
+  private static final String OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
+  private static final String OLD_MAIN_MODULE = System.getProperty("module.to.make")
 }
