@@ -111,7 +111,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;
 
     // e.g. PsiTypeParameterImpl doesn't have modifier list
-    return myModifierListOwner.getModifierList() != null
+    return myModifierListOwner.isWritable() &&
+           myModifierListOwner.getModifierList() != null
            && !AnnotationUtil.isAnnotated(myModifierListOwner, myAnnotation, false, false);
   }
 
