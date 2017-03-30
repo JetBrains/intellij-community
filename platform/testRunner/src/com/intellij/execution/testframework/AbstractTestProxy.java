@@ -162,12 +162,4 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public String getLocationUrl() {
     return null;
   }
-
-  @Deprecated
-  public interface AssertEqualsDiffChain {
-    DiffHyperlink getPrevious();
-    DiffHyperlink getCurrent();
-    DiffHyperlink getNext();
-    void setCurrent(DiffHyperlink provider);
-  }
 }

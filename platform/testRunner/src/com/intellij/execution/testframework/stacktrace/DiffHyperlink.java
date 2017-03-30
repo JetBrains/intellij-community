@@ -23,7 +23,6 @@ package com.intellij.execution.testframework.stacktrace;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
@@ -75,23 +74,6 @@ public class DiffHyperlink implements Printable {
 
   private static String normalizeSeparators(String filePath) {
     return filePath == null ? null : filePath.replace(File.separatorChar, '/');
-  }
-
-  /**
-   * Use {@link ViewAssertEqualsDiffAction#openDiff(DataContext, DiffHyperlink)} 
-   */
-  @Deprecated
-  public void openDiff(Project project) {
-    ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext(), this);
-  }
-
-  /**
-   * Use {@link ViewAssertEqualsDiffAction#openDiff(DataContext, DiffHyperlink)}
-   */
-  @Deprecated
-  public void openMultiDiff(final Project project,
-                            final AbstractTestProxy.AssertEqualsDiffChain chain) {
-    ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext(), this);
   }
 
   protected String getTitle() {
