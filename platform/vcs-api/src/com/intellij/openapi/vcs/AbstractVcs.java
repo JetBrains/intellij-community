@@ -409,14 +409,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(VirtualFile)}),
-   * it should return {@code false}. Otherwise return {@code true}
-   */
-  public boolean supportsVersionedStateDetection() {
-    return true;
-  }
-
-  /**
    * Returns the configurable to be shown in the VCS directory mapping dialog which should be displayed
    * for configuring VCS-specific settings for the specified root, or null if no such configuration is required.
    * The VCS-specific settings are stored in {@link VcsDirectoryMapping#getRootSettings()}.
