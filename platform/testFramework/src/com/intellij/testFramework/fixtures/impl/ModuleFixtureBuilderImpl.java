@@ -35,10 +35,10 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,8 +48,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   private static int ourIndex;
 
   private final NotNullProducer<? extends ModuleType> myModuleTypeProducer;
-  protected final List<String> myContentRoots = new ArrayList<>();
-  protected final List<String> mySourceRoots = new ArrayList<>();
+  protected final List<String> myContentRoots = new SmartList<>();
+  protected final List<String> mySourceRoots = new SmartList<>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
   protected String myOutputPath;
