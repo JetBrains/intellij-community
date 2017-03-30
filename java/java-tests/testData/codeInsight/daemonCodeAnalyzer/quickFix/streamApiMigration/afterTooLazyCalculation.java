@@ -5,9 +5,7 @@ class A {
   public static void main(String[] args) {
     List<String> names = Arrays.asList("Bob", "Alice", "Bob", "Carol");
     Set<String> uniqNames = new HashSet<>(names.size());
-    for (String name : na<caret>mes){
-      uniqNames.add(makeNameUnique(name, uniqNames));
-    }
+      names.forEach(name -> uniqNames.add(makeNameUnique(name, uniqNames)));
     uniqNames.forEach(System.out::println);
   }
 

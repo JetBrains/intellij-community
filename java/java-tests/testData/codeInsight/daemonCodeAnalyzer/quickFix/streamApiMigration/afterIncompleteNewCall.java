@@ -6,9 +6,7 @@ import java.util.*;
 
 class A {
   public void foo(final Set<String> strings) throws FileNotFoundException {
-    for (String s : str<caret>ings) {
-      new FileInputStream();
-    }
+      strings.forEach(s -> new FileInputStream());
 
   }
 

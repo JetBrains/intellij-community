@@ -28,9 +28,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Tagir Valeev
  */
 abstract class BaseStreamApiMigration {
+  private final boolean myShouldWarn;
   private final String myReplacement;
 
-  protected BaseStreamApiMigration(String replacement) {
+  protected BaseStreamApiMigration(boolean shouldWarn, String replacement) {
+    myShouldWarn = shouldWarn;
     myReplacement = replacement;
   }
 
@@ -39,6 +41,10 @@ abstract class BaseStreamApiMigration {
   }
 
   abstract PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb);
+
+  public boolean isShouldWarn() {
+    return myShouldWarn;
+  }
 
   static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
                                                PsiVariable var,

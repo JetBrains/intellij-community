@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Tagir Valeev
  */
 class FindFirstMigration extends BaseStreamApiMigration {
-  FindFirstMigration() {super("findFirst()");}
+  FindFirstMigration(boolean shouldWarn) {super(shouldWarn, "findFirst()");}
 
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {

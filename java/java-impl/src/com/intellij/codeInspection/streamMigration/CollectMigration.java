@@ -63,8 +63,8 @@ class CollectMigration extends BaseStreamApiMigration {
     "java.util.TreeSet", ".distinct().sorted()"
   ).toMap();
 
-  protected CollectMigration(String methodName) {
-    super(methodName);
+  protected CollectMigration(boolean shouldWarn, String methodName) {
+    super(shouldWarn, methodName);
   }
 
   @Nullable

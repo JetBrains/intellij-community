@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 class MatchMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance("#" + MatchMigration.class.getName());
 
-  public MatchMigration(String methodName) {
-    super(methodName+"()");
+  public MatchMigration(boolean shouldWarn, String methodName) {
+    super(shouldWarn, methodName+"()");
   }
 
   @Override
