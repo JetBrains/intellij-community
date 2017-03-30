@@ -96,10 +96,6 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun <T : CommittedChangeList, U : ChangeBrowserSettings> chooseCommittedChangeList(provider: CommittedChangesProvider<T, U>, location: RepositoryLocation): T? {
-    throw UnsupportedOperationException()
-  }
-
   override fun showRollbackChangesDialog(changes: List<Change>) {
     throw UnsupportedOperationException()
   }

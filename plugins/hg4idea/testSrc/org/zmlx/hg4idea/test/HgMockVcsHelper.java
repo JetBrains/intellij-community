@@ -101,12 +101,6 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(@NotNull CommittedChangesProvider<T, U> provider,
-                                                                                                      RepositoryLocation location) {
-    return null;
-  }
-
-  @Override
   public void openCommittedChangesTab(AbstractVcs vcs, VirtualFile root, ChangeBrowserSettings settings, int maxCount, String title) {
   }
 

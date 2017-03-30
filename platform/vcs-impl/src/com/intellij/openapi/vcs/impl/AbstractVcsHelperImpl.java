@@ -544,27 +544,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  @Nullable
-  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(@NotNull CommittedChangesProvider<T, U> provider,
-                                                                                                      RepositoryLocation location) {
-    final List<T> changes;
-    try {
-      changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, 0);
-    }
-    catch (VcsException e) {
-      return null;
-    }
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, new CommittedChangesTableModel((List<CommittedChangeList>)changes,
-                                                                                                        provider.getColumns(), false),
-                                                              ChangesBrowserDialog.Mode.Choose, null);
-    if (dlg.showAndGet()) {
-      return (T)dlg.getSelectedChangeList();
-    }
-    else {
-      return null;
-    }
-  }
-
   @Override
   @NotNull
   public List<VirtualFile> showMergeDialog(@NotNull List<VirtualFile> files,
