@@ -258,7 +258,7 @@ public class JUnitUtil {
       return aPackage != null && aPackage.getDirectories(scope).length > 0;
     };
 
-    return foundCondition.value(TEST5_PACKAGE_FQN) || foundCondition.value("org.junit.platform.engine");
+    return foundCondition.value(TEST5_PACKAGE_FQN);
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {
