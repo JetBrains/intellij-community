@@ -97,6 +97,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         archiveFolder.refresh(false, true);
         Course courseCopy = course.copy();
         replaceAnswerFilesWithTaskFiles(courseCopy);
+        courseCopy.sortLessons();
         additionalFiles(courseCopy);
         generateJson(archiveFolder, courseCopy);
         VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);

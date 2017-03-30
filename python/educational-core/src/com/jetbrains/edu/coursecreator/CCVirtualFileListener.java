@@ -68,7 +68,7 @@ public class CCVirtualFileListener implements VirtualFileListener {
       return;
     }
 
-    task.addTaskFile(taskRelativePath, 1);
+    task.addTaskFile(taskRelativePath, task.getTaskFiles().size()+1);
   }
 
   @Override
