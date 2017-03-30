@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
@@ -61,11 +62,23 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private boolean myShowConsoleOnStdErr = false;
   private String myFileOutputPath = null;
 
+  private List<BeforeRunTask> myBeforeRunTasks;
+
   protected RunConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, final String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
     myIcon = factory.getIcon();
+  }
+
+  @Nullable
+  @Transient
+  public List<BeforeRunTask> getBeforeRunTasks() {
+    return myBeforeRunTasks;
+  }
+
+  public void setBeforeRunTasks(@Nullable List<BeforeRunTask> value) {
+    myBeforeRunTasks = value;
   }
 
   @Override

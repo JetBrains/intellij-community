@@ -41,7 +41,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -69,13 +68,12 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
   protected final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new ConcurrentSkipListMap<>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<>(); // template configurations are not included here
-  private final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
-  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<>();
+  protected final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
   @Nullable private String myLoadedSelectedConfigurationUniqueName = null;
-  @Nullable private String mySelectedConfigurationId = null;
+  @Nullable protected String mySelectedConfigurationId = null;
 
   private final TimedIconCache myIconCache = new TimedIconCache();
 
@@ -93,10 +91,10 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
 
   private List<Element> myUnknownElements = null;
   private final JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
-  private final ArrayList<RunConfiguration> myRecentlyUsedTemporaries = new ArrayList<>();
+  protected final ArrayList<RunConfiguration> myRecentlyUsedTemporaries = new ArrayList<>();
   private boolean myOrdered = true;
 
-  private final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
+  protected final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
 
   public RunManagerImpl(@NotNull Project project, @NotNull PropertiesComponent propertiesComponent) {
     myConfig = new RunManagerConfig(propertiesComponent);
@@ -432,40 +430,6 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
   }
 
   @Override
-  public void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings == null) return;
-
-    for (Iterator<RunnerAndConfigurationSettings> it = getSortedConfigurations().iterator(); it.hasNext(); ) {
-      final RunnerAndConfigurationSettings configuration = it.next();
-      if (configuration.equals(settings)) {
-        if (mySelectedConfigurationId != null && mySelectedConfigurationId == settings.getUniqueID()) {
-          setSelectedConfiguration(null);
-        }
-
-        it.remove();
-        mySharedConfigurations.remove(settings.getUniqueID());
-        myConfigurationToBeforeTasksMap.remove(settings.getConfiguration());
-        myRecentlyUsedTemporaries.remove(settings.getConfiguration());
-        myDispatcher.getMulticaster().runConfigurationRemoved(configuration);
-        break;
-      }
-    }
-    for (Map.Entry<RunConfiguration, List<BeforeRunTask>> entry : myConfigurationToBeforeTasksMap.entrySet()) {
-      for (Iterator<BeforeRunTask> iterator = entry.getValue().iterator(); iterator.hasNext(); ) {
-        BeforeRunTask task = iterator.next();
-        if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask &&
-            settings.equals(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task).getSettings())) {
-          iterator.remove();
-          RunnerAndConfigurationSettings changedSettings = getSettings(entry.getKey());
-          if (changedSettings != null) {
-            myDispatcher.getMulticaster().runConfigurationChanged(changedSettings, null);
-          }
-        }
-      }
-    }
-  }
-
-  @Override
   @Nullable
   public RunnerAndConfigurationSettings getSelectedConfiguration() {
     if (mySelectedConfigurationId == null && myLoadedSelectedConfigurationUniqueName != null) {
@@ -648,9 +612,17 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
   void doWriteConfiguration(@NotNull RunnerAndConfigurationSettings settings, @NotNull Element configurationElement) {
     List<BeforeRunTask> tasks = new ArrayList<>(getBeforeRunTasks(settings.getConfiguration()));
     Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new THashMap<>();
-    List<BeforeRunTask> beforeRunTasks = settings.isTemplate()
-                                         ? getHardcodedBeforeRunTasks(settings.getConfiguration())
-                                         : getBeforeRunTasks(getConfigurationTemplate(settings.getFactory()).getConfiguration());
+    List<BeforeRunTask> beforeRunTasks;
+    if (settings.isTemplate()) {
+      beforeRunTasks = getHardcodedBeforeRunTasks(settings.getConfiguration());
+    }
+    else {
+      RunConfigurationBase configurationTemplate = (RunConfigurationBase)getConfigurationTemplate(settings.getFactory()).getConfiguration();
+      beforeRunTasks = configurationTemplate.getBeforeRunTasks();
+      if (beforeRunTasks == null) {
+        beforeRunTasks = Collections.emptyList();
+      }
+    }
     for (BeforeRunTask templateTask : beforeRunTasks) {
       templateTasks.put(templateTask.getProviderId(), templateTask);
       if (templateTask.isEnabled()) {
@@ -786,7 +758,6 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
     if (allConfigurations) {
       myConfigurations.clear();
       mySharedConfigurations.clear();
-      myConfigurationToBeforeTasksMap.clear();
       mySelectedConfigurationId = null;
       configurations = new ArrayList<>(myConfigurations.values());
     }
@@ -798,8 +769,6 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
           iterator.remove();
 
           mySharedConfigurations.remove(configuration.getUniqueID());
-          myConfigurationToBeforeTasksMap.remove(configuration.getConfiguration());
-
           configurations.add(configuration);
         }
       }
@@ -1099,10 +1068,10 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer(), taskProviderID);
     }
-    List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
+
+    List<BeforeRunTask> tasks = ((RunConfigurationBase)settings).getBeforeRunTasks();
     if (tasks == null) {
-      tasks = getBeforeRunTasks(settings);
-      myConfigurationToBeforeTasksMap.put(settings, tasks);
+      tasks = getTemplateBeforeRunTasks(settings);
     }
     List<T> result = new SmartList<>();
     for (BeforeRunTask task : tasks) {
@@ -1116,18 +1085,24 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
 
   @Override
   @NotNull
-  public List<BeforeRunTask> getBeforeRunTasks(final RunConfiguration settings) {
+  public List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration settings) {
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer());
     }
 
-    List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
+    List<BeforeRunTask> tasks = ((RunConfigurationBase)settings).getBeforeRunTasks();
     return tasks == null ? getTemplateBeforeRunTasks(settings) : getCopies(tasks);
   }
 
+  @NotNull
   private List<BeforeRunTask> getTemplateBeforeRunTasks(@NotNull RunConfiguration settings) {
-    final RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
-    final List<BeforeRunTask> templateTasks = myConfigurationToBeforeTasksMap.get(template.getConfiguration());
+    RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
+    RunConfiguration configuration = template.getConfiguration();
+    if (configuration instanceof UnknownRunConfiguration) {
+      return Collections.emptyList();
+    }
+
+    List<BeforeRunTask> templateTasks = ((RunConfigurationBase)configuration).getBeforeRunTasks();
     return templateTasks == null ? getHardcodedBeforeRunTasks(settings) : getCopies(templateTasks);
   }
 
@@ -1171,7 +1146,11 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
   }
 
   @Override
-  public final void setBeforeRunTasks(final RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
+  public final void setBeforeRunTasks(@NotNull RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
+    if (runConfiguration instanceof UnknownRunConfiguration) {
+      return;
+    }
+
     List<BeforeRunTask> result = new SmartList<>(tasks);
     if (addEnabledTemplateTasksIfAbsent) {
       List<BeforeRunTask> templates = getTemplateBeforeRunTasks(runConfiguration);
@@ -1187,7 +1166,8 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
         }
       }
     }
-    myConfigurationToBeforeTasksMap.put(runConfiguration, result);
+
+    ((RunConfigurationBase)runConfiguration).setBeforeRunTasks(ContainerUtil.notNullize(result));
     fireBeforeRunTasksUpdated();
   }
 

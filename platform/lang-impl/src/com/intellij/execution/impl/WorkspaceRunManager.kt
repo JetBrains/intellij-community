@@ -18,6 +18,7 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.*
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.UnknownRunConfiguration
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.Scheme
@@ -88,6 +89,7 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
     val element = Element("state")
 
     schemeManager.save()
+    // backward compatibility - write templates in the end
     schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
       val w1 = if (n1.startsWith("<template> of ")) 1 else 0
       val w2 = if (n2.startsWith("<template> of ")) 1 else 0
@@ -130,6 +132,34 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
       myTemplateConfigurationsMap.put(key, template)
     }
     return template
+  }
+
+  override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {
+    if (settings == null) {
+      return
+    }
+
+    val it = sortedConfigurations.iterator()
+    for (configuration in it) {
+      if (configuration === settings) {
+        if (mySelectedConfigurationId != null && mySelectedConfigurationId === settings.uniqueID) {
+          selectedConfiguration = null
+        }
+
+        it.remove()
+        mySharedConfigurations.remove(settings.uniqueID)
+        myRecentlyUsedTemporaries.remove(settings.configuration)
+        myDispatcher.multicaster.runConfigurationRemoved(configuration)
+      }
+
+      val beforeRunTaskIterator = (configuration.configuration as? RunConfigurationBase)?.beforeRunTasks?.iterator() ?: continue
+      for (task in beforeRunTaskIterator) {
+        if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && task.settings === settings) {
+          beforeRunTaskIterator.remove()
+          myDispatcher.multicaster.runConfigurationChanged(configuration, null)
+        }
+      }
+    }
   }
 }
 
