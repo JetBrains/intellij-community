@@ -27,20 +27,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -77,9 +77,7 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
   @Nullable private String myLoadedSelectedConfigurationUniqueName = null;
   @Nullable private String mySelectedConfigurationId = null;
 
-  private final Map<String, Icon> myIdToIcon = new HashMap<>();
-  private final Map<String, Long> myIconCheckTimes = new HashMap<>();
-  private final Map<String, Long> myIconCalcTime = Collections.synchronizedMap(new HashMap<String, Long>());
+  private final TimedIconCache myIconCache = new TimedIconCache();
 
   @NonNls
   protected static final String CONFIGURATION = "configuration";
@@ -110,7 +108,7 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       public void rootsChanged(ModuleRootEvent event) {
         RunnerAndConfigurationSettings configuration = getSelectedConfiguration();
         if (configuration != null) {
-          myIconCheckTimes.remove(configuration.getUniqueID());//cache will be expired
+          myIconCache.remove(configuration.getUniqueID());
         }
       }
     });
@@ -814,9 +812,7 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
     myUnknownElements = null;
     myTemplateConfigurationsMap.clear();
     myLoadedSelectedConfigurationUniqueName = null;
-    myIdToIcon.clear();
-    myIconCheckTimes.clear();
-    myIconCalcTime.clear();
+    myIconCache.clear();
     myRecentlyUsedTemporaries.clear();
     fireRunConfigurationsRemoved(configurations);
   }
@@ -1057,53 +1053,9 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
     RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
     String selectedId = selectedConfiguration != null ? selectedConfiguration.getUniqueID() : "";
     if (selectedId.equals(uniqueID)) {
-      Long lastCheckTime = myIconCheckTimes.get(uniqueID);
-      Long calcTime = myIconCalcTime.get(uniqueID);
-      if (calcTime == null || calcTime<150) calcTime = 150L;
-      if (lastCheckTime == null || System.currentTimeMillis() - lastCheckTime > calcTime*10) {
-        myIdToIcon.remove(uniqueID);//cache has expired
-      }
+      myIconCache.checkValidity(uniqueID);
     }
-    Icon icon = myIdToIcon.get(uniqueID);
-    if (icon == null) {
-      icon = IconDeferrer.getInstance().deferAutoUpdatable(settings.getConfiguration().getIcon(), myProject.hashCode() ^ settings.hashCode(),
-                                                           param -> {
-                                                             if (myProject.isDisposed()) return null;
-
-                                                             myIconCalcTime.remove(uniqueID);
-                                                             long startTime = System.currentTimeMillis();
-
-                                                             Icon icon1;
-                                                             if (DumbService.isDumb(myProject) && !Registry.is("dumb.aware.run.configurations")) {
-                                                               icon1 =
-                                                                 IconLoader.getDisabledIcon(ProgramRunnerUtil.getRawIcon(settings));
-                                                               if (settings.isTemporary()) {
-                                                                 icon1 = ProgramRunnerUtil.getTemporaryIcon(icon1);
-                                                               }
-                                                             }
-                                                             else {
-                                                               try {
-                                                                 DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
-                                                                 settings.checkSettings();
-                                                                 icon1 = ProgramRunnerUtil.getConfigurationIcon(settings, false);
-                                                               }
-                                                               catch (IndexNotReadyException e) {
-                                                                 icon1 = ProgramRunnerUtil.getConfigurationIcon(settings, !Registry.is("dumb.aware.run.configurations"));
-                                                               }
-                                                               catch (RuntimeConfigurationException ignored) {
-                                                                 icon1 = ProgramRunnerUtil.getConfigurationIcon(settings, true);
-                                                               }
-                                                               finally {
-                                                                 DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-                                                               }
-                                                             }
-                                                             myIconCalcTime.put(uniqueID, System.currentTimeMillis() - startTime);
-                                                             return icon1;
-                                                           });
-
-      myIdToIcon.put(uniqueID, icon);
-      myIconCheckTimes.put(uniqueID, System.currentTimeMillis());
-    }
+    Icon icon = myIconCache.get(uniqueID, settings, myProject);
     if (withLiveIndicator) {
       List<RunContentDescriptor> runningDescriptors = ExecutionManagerImpl.getInstance(myProject).getRunningDescriptors(s -> s == settings);
       if (runningDescriptors.size() == 1) {
@@ -1236,11 +1188,6 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       }
     }
     myConfigurationToBeforeTasksMap.put(runConfiguration, result);
-    fireBeforeRunTasksUpdated();
-  }
-
-  public final void resetBeforeRunTasks(final RunConfiguration runConfiguration) {
-    myConfigurationToBeforeTasksMap.remove(runConfiguration);
     fireBeforeRunTasksUpdated();
   }
 
