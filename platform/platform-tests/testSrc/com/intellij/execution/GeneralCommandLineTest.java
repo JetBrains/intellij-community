@@ -228,7 +228,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void redirectInput() throws Exception {
-    String content = "Line 1\nLine 2";
+    String content = "Line 1\nLine 2\n";
     File input = FileUtil.createTempFile("input", null);
     FileUtil.writeToFile(input, content);
     File script = createTempScript("print-stdin",
