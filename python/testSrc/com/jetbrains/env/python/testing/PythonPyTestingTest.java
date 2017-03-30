@@ -31,6 +31,39 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "pytest")
 public final class PythonPyTestingTest extends PyEnvTestCase {
 
+  // Ensure slow test is not run when -m "not slow" is provided
+  @Test
+  public void testMarkerWithSpaces() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/test_with_markers", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_with_markers.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setAdditionalArguments("-m 'not slow'");
+            }
+          };
+        }
+
+
+        @Override
+        protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                        @NotNull String stdout,
+                                        @NotNull String stderr,
+                                        @NotNull String all) {
+          Assert.assertEquals("Marker support broken", "Test tree:\n" +
+                                  "[root]\n" +
+                                  ".test_with_markers\n" +
+                                  "..test_fast(+)\n",
+                              runner.getFormattedTestTree());
+        }
+      });
+  }
+
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
@@ -49,7 +82,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs",
+                                                                                                 "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
@@ -110,7 +144,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testProduceConfigurationOnFile() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "spam.py") {
+      new CreateConfigurationByFileTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                        PyUniversalPyTestConfiguration.class, "spam.py") {
         @NotNull
         @Override
         protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
@@ -246,7 +281,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         if (getLevelForSdk().isPy3K()) {
           return new PyTestTestProcessRunner("folder_no_init_py/test_test.py", 2);
         }
-         else {
+        else {
           return new PyTestTestProcessRunner(toFullPath("folder_no_init_py/test_test.py"), 2) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
