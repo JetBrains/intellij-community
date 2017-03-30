@@ -74,14 +74,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     myKey = new VcsKey(myName);
   }
 
-  // for tests only
-  protected AbstractVcs(@NotNull Project project, String name, VcsKey key) {
-    super();
-    myProject = project;
-    myName = name;
-    myKey = key;
-  }
-
   // acts as adapter
   @Override
   protected void start() throws VcsException {
