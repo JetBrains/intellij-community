@@ -16,6 +16,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -62,6 +63,7 @@ public class StudySerializationUtils {
   public static class Xml {
     public final static String COURSE_ELEMENT = "courseElement";
     public final static String MAIN_ELEMENT = "StudyTaskManager";
+    public final static String REMOTE_COURSE = "RemoteCourse";
     public static final String MAP = "map";
     public static final String KEY = "key";
     public static final String VALUE = "value";
@@ -498,7 +500,7 @@ public class StudySerializationUtils {
             }
           }
         }
-        return new GsonBuilder().registerTypeAdapter(Task.class, new TaskDeserializer()).create().fromJson(json, Course.class);
+        return new GsonBuilder().registerTypeAdapter(Task.class, new TaskAdapter()).create().fromJson(json, Course.class);
       }
 
       private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
@@ -676,7 +678,23 @@ public class StudySerializationUtils {
       subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
     }
 
-    public static class TaskSerializer implements JsonSerializer<Task> {
+    public static class StepikCourseSerializer implements JsonSerializer<Course>, JsonDeserializer<Course> {
+
+      @Override
+      public Course deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        return null;
+      }
+
+      @Override
+      public JsonElement serialize(Course src, Type typeOfSrc, JsonSerializationContext context) {
+        if (src instanceof RemoteCourse) {
+          context.serialize(src, RemoteCourse.class);
+        }
+        return context.serialize(src);
+      }
+    }
+
+    public static class TaskAdapter implements JsonSerializer<Task>, JsonDeserializer<Task> {
 
       @Override
       public JsonElement serialize(Task src, Type typeOfSrc, JsonSerializationContext context) {
@@ -686,9 +704,6 @@ public class StudySerializationUtils {
         task.add(TASK_TYPE, new JsonPrimitive(src.getTaskType()));
         return task;
       }
-    }
-
-    public static class TaskDeserializer implements JsonDeserializer<Task> {
 
       @Override
       public Task deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

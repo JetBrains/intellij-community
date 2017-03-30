@@ -23,7 +23,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -41,12 +41,11 @@ import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  private List<CourseInfo> myCourses = new ArrayList<>();
-  private List<Course> myLocalCourses = new ArrayList<>();
+  private List<Course> myCourses = new ArrayList<>();
   private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
-  protected CourseInfo mySelectedCourseInfo;
+  protected Course mySelectedCourse;
 
-  public void setCourses(List<CourseInfo> courses) {
+  public void setCourses(List<Course> courses) {
     myCourses = courses;
   }
 
@@ -64,12 +63,12 @@ public class StudyProjectGenerator {
     return myEnrolledCoursesIds;
   }
 
-  public void setSelectedCourse(@NotNull final CourseInfo courseName) {
-    mySelectedCourseInfo = courseName;
+  public void setSelectedCourse(@NotNull final Course course) {
+    mySelectedCourse = course;
   }
 
-  public CourseInfo getSelectedCourseInfo() {
-    return mySelectedCourseInfo;
+  public Course getSelectedCourse() {
+    return mySelectedCourse;
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
@@ -94,22 +93,18 @@ public class StudyProjectGenerator {
 
   @Nullable
   public Course getCourse(@NotNull final Project project) {
-    final CourseInfo info = mySelectedCourseInfo;
-    for (Course course : myLocalCourses) {
-      if (course.getName().equals(info.getName())){
-        course.initCourse(false);
-        return course;
-      }
-
+    if (mySelectedCourse instanceof RemoteCourse) {
+      return getCourseFromStepic(project, (RemoteCourse)mySelectedCourse);
     }
-    return getCourseFromStepic(project);
+    mySelectedCourse.initCourse(false);
+    return mySelectedCourse;
   }
 
-  private Course getCourseFromStepic(@NotNull Project project) {
+  private static RemoteCourse getCourseFromStepic(@NotNull Project project, RemoteCourse selectedCourse) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
       return execCancelable(() -> {
-        final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+        final RemoteCourse course = EduStepicConnector.getCourse(project, selectedCourse);
         if (StudyUtils.isCourseValid(course)) {
           course.initCourse(false);
         }
@@ -119,25 +114,25 @@ public class StudyProjectGenerator {
   }
 
   // Supposed to be called under progress
-  public List<CourseInfo> getCourses(boolean force) {
+  public List<Course> getCourses(boolean force) {
     if (force) {
       myCourses = execCancelable(() -> EduStepicConnector.getCourses(StepicUpdateSettings.getInstance().getUser()));
     }
-    if (myCourses == null || myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {
+    if (myCourses == null || myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(Course.INVALID_COURSE))) {
       myCourses = Collections.singletonList(getBundledIntro());
     }
     sortCourses(myCourses);
     return myCourses;
   }
 
-  public void sortCourses(List<CourseInfo> result) {
+  public void sortCourses(List<Course> result) {
     // sort courses so as to have non-adaptive courses in the beginning of the list
     Collections.sort(result, (c1, c2) -> {
-      if (mySelectedCourseInfo != null) {
-        if (mySelectedCourseInfo.equals(c1)) {
+      if (mySelectedCourse != null) {
+        if (mySelectedCourse.equals(c1)) {
           return -1;
         }
-        if (mySelectedCourseInfo.equals(c2)) {
+        if (mySelectedCourse.equals(c2)) {
           return 1;
         }
       }
@@ -149,7 +144,7 @@ public class StudyProjectGenerator {
   }
 
   @NotNull
-  public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
+  public List<Course> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(() -> {
@@ -158,7 +153,7 @@ public class StudyProjectGenerator {
         }, progressTitle, true, project);
     }
     catch (RuntimeException e) {
-      return Collections.singletonList(CourseInfo.INVALID_COURSE);
+      return Collections.singletonList(Course.INVALID_COURSE);
     }
   }
 
@@ -177,21 +172,21 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  public CourseInfo getBundledIntro() {
+  public Course getBundledIntro() {
     final LanguageExtensionPoint<EduPluginConfigurator>[] extensions = Extensions.getExtensions(EduPluginConfigurator.EP_NAME, null);
     for (LanguageExtensionPoint<EduPluginConfigurator> extension : extensions) {
       final EduPluginConfigurator configurator = extension.getInstance();
       final String path = configurator.getBundledCoursePath();
       if (path != null) {
-        return getCourseInfo(path);
+        return getCourse(path);
       }
     }
     return null;
   }
 
   @Nullable
-  public CourseInfo addLocalCourse(String zipFilePath) {
-    final CourseInfo courseInfo = getCourseInfo(zipFilePath);
+  public Course addLocalCourse(String zipFilePath) {
+    final Course courseInfo = getCourse(zipFilePath);
     if (courseInfo != null) {
       myCourses.add(0, courseInfo);
     }
@@ -199,22 +194,17 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  public CourseInfo getCourseInfo(String zipFilePath) {
+  public Course getCourse(String zipFilePath) {
     try {
       final JBZipFile zipFile = new JBZipFile(zipFilePath);
       final JBZipEntry entry = zipFile.getEntry(EduNames.COURSE_META_FILE);
       byte[] bytes = entry.getData();
       final String jsonText = new String(bytes, CharsetToolkit.UTF8_CHARSET);
       Gson gson = new GsonBuilder()
-        .registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskDeserializer())
+        .registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskAdapter())
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create();
-      Course course = gson.fromJson(jsonText, Course.class);
-      final CourseInfo courseInfo = CourseInfo.fromCourse(course);
-      if (courseInfo != null) {
-        myLocalCourses.add(course);
-      }
-      return courseInfo;
+      return gson.fromJson(jsonText, Course.class);
     }
     catch (IOException e) {
       LOG.error("Failed to unzip course archive");

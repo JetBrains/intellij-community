@@ -15,8 +15,8 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.stepik.CCStepicConnector;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class CCPushLesson extends DumbAwareAction {
       return;
     }
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || !(course instanceof RemoteCourse)) {
       return;
     }
     if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
@@ -45,7 +45,7 @@ public class CCPushLesson extends DumbAwareAction {
       return;
     }
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && course.getId() > 0) {
+    if (lesson != null && ((RemoteCourse)course).getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
       if (lesson.getId() <= 0) {
         e.getPresentation().setText("Upload Lesson to Stepik");
@@ -61,7 +61,7 @@ public class CCPushLesson extends DumbAwareAction {
       return;
     }
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || !(course instanceof RemoteCourse)) {
       return;
     }
     PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
@@ -80,9 +80,8 @@ public class CCPushLesson extends DumbAwareAction {
           CCStepicConnector.updateLesson(project, lesson);
         }
         else {
-          final CourseInfo info = CourseInfo.fromCourse(course);
           final int lessonId = CCStepicConnector.postLesson(project, lesson);
-          final List<Integer> sections = info.getSections();
+          final List<Integer> sections = ((RemoteCourse)course).getSections();
           final Integer sectionId = sections.get(sections.size()-1);
           CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
         }

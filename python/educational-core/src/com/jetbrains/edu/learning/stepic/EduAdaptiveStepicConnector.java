@@ -67,11 +67,12 @@ public class EduAdaptiveStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
   private static final String CODE_TASK_TYPE = "code";
+  private static final String CODE_TASK_NAME = "code.py";
   private static final String CHOICE_TYPE_TEXT = "choice";
   private static final String TEXT_STEP_TYPE = "text";
 
   @Nullable
-  public static Task getNextRecommendation(@NotNull Project project, @NotNull Course course) {
+  public static Task getNextRecommendation(@NotNull Project project, @NotNull RemoteCourse course) {
     try {
       final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
       if (client == null) {
@@ -204,8 +205,8 @@ public class EduAdaptiveStepicConnector {
   private static void createMockTaskFile(@NotNull Task task, String editorText) {
     final TaskFile taskFile = new TaskFile();
     taskFile.text = editorText;
-    taskFile.name = "code.py";
-    task.taskFiles.put("code.py", taskFile);
+    taskFile.name = CODE_TASK_NAME;
+    task.taskFiles.put(CODE_TASK_NAME, taskFile);
   }
 
   @Nullable
@@ -297,7 +298,7 @@ public class EduAdaptiveStepicConnector {
                                             int reaction) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null || editor == null || editor.getTaskFile() == null) {
+    if (course == null || editor == null || editor.getTaskFile() == null || !(course instanceof RemoteCourse)) {
       return;
     }
     indicator.checkCanceled();
@@ -314,7 +315,7 @@ public class EduAdaptiveStepicConnector {
                                                                       String.valueOf(user.getId()), reaction);
     if (recommendationReaction) {
       indicator.checkCanceled();
-      final Task task = getNextRecommendation(project, course);
+      final Task task = getNextRecommendation(project, (RemoteCourse)course);
 
       if (task != null) {
         task.initTask(lesson, false);
@@ -438,11 +439,9 @@ public class EduAdaptiveStepicConnector {
       }
     }
     else {
-      final TaskFile taskFile = new TaskFile();
-      taskFile.name = CODE_TASK_TYPE;
       final String templateForTask = getCodeTemplateForTask(project, task, step.options.codeTemplates);
-      taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-      task.taskFiles.put("code.py", taskFile);
+      String text = templateForTask == null ? "# write your answer here \n" : templateForTask;
+      createMockTaskFile(task, text);
     }
     return task;
   }
@@ -662,11 +661,11 @@ public class EduAdaptiveStepicConnector {
   public static List<Integer> getEnrolledCoursesIds(@NotNull StepicUser stepicUser) {
     try {
       final URI enrolledCoursesUri = new URIBuilder(EduStepicNames.COURSES).addParameter("enrolled", "true").build();
-      final List<CourseInfo> courses = EduStepicAuthorizedClient.getFromStepic(enrolledCoursesUri.toString(),
+      final List<RemoteCourse> courses = EduStepicAuthorizedClient.getFromStepic(enrolledCoursesUri.toString(),
                                                                                StepicWrappers.CoursesContainer.class,
                                                                                stepicUser).courses;
       final ArrayList<Integer> ids = new ArrayList<>();
-      for (CourseInfo course : courses) {
+      for (RemoteCourse course : courses) {
         ids.add(course.getId());
       }
       return ids;

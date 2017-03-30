@@ -11,7 +11,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.jetbrains.edu.learning.StudySettings;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,13 +51,14 @@ public class EduStepicUpdater {
   private static ActionCallback updateCourseList() {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<CourseInfo> courses = EduStepicConnector.getCourses(null);
-      StudySettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
+      final List<Course> courses = EduStepicConnector.getCourses(null);
+      StepicSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
       if (!courses.isEmpty()) {
-        List<CourseInfo> updated = new ArrayList<>();
-        for (CourseInfo course : courses) {
-          if (course.getUpdateDate().after(new Date(StepicUpdateSettings.getInstance().getLastTimeChecked()))) {
+        List<Course> updated = new ArrayList<>();
+        for (Course course : courses) {
+          if (course instanceof RemoteCourse && ((RemoteCourse)course).getUpdateDate().
+                                                after(new Date(StepicUpdateSettings.getInstance().getLastTimeChecked()))) {
             updated.add(course);
           }
         }
@@ -69,7 +71,7 @@ public class EduStepicUpdater {
         }
         else {
           title = "New courses available";
-          message = StringUtil.join(updated, CourseInfo::getName, ", ");
+          message = StringUtil.join(updated, Course::getName, ", ");
         }
         final Notification notification = new Notification("New.course", title, message, NotificationType.INFORMATION);
         notification.notify(null);

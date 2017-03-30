@@ -10,7 +10,6 @@ import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.python.newProject.steps.PyCharmNewProjectStep;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +43,10 @@ class CreateFromArchiveProjectStep extends PyCharmNewProjectStep {
     @NotNull
     @Override
     protected DirectoryProjectGenerator createEmptyProjectGenerator() {
-      Course course = StudyTaskManager.getInstance(myProject).getCourse();
-      if (course != null) {
+      Course currentCourse = StudyTaskManager.getInstance(myProject).getCourse();
+      if (currentCourse != null) {
         VirtualFile folder = CCUtils.getGeneratedFilesFolder(myProject, myModule);
-        String zipName = FileUtil.sanitizeFileName(course.getName());
+        String zipName = FileUtil.sanitizeFileName(currentCourse.getName());
         if (zipName.isEmpty()) {
           zipName = EduNames.COURSE;
         }
@@ -55,9 +54,9 @@ class CreateFromArchiveProjectStep extends PyCharmNewProjectStep {
         CCCreateCourseArchive.createCourseArchive(myProject, myModule, zipName, locationDir, false);
         String path = FileUtil.join(FileUtil.toSystemDependentName(folder.getPath()), zipName + ".zip");
         StudyProjectGenerator generator = myGenerator.getGenerator();
-        CourseInfo info = generator.addLocalCourse(path);
-        assert info != null;
-        generator.setSelectedCourse(info);
+        Course course = generator.addLocalCourse(path);
+        assert course != null;
+        generator.setSelectedCourse(course);
       }
       return myGenerator;
     }
