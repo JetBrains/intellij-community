@@ -15,15 +15,14 @@
  */
 package com.intellij.vcs.log.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -37,17 +36,18 @@ import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.visible.CommitCountStage;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 class FileHistoryFilterer extends VcsLogFilterer {
+  private static final Logger LOG = Logger.getInstance(FileHistoryFilterer.class);
+
   @NotNull private final FilePath myFilePath;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final VirtualFile myRoot;
@@ -65,17 +65,14 @@ class FileHistoryFilterer extends VcsLogFilterer {
                                           @NotNull PermanentGraph.SortType sortType,
                                           @NotNull VcsLogFilterCollection filters,
                                           @Nullable Set<Integer> matchingHeads,
-                                          @Nullable Set<Integer> matchingCommits,
-                                          boolean canRequestMore) {
-    if (!myIndex.isIndexed(myRoot) || matchingCommits == null) {
-      return super.createVisiblePack(dataPack, sortType, filters, matchingHeads, matchingCommits, canRequestMore);
+                                          @NotNull FilterByDetailsResult filterResult) {
+    if (!(filterResult instanceof FilteredByFileResult) || filterResult.matchingCommits == null) {
+      return super.createVisiblePack(dataPack, sortType, filters, matchingHeads, filterResult);
     }
 
-    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits);
 
-    // I realize, I'm calculating this data for the second time.
-    // No worries! It's going to be fine later!
-    IndexDataGetter.FileNamesData namesData = myIndexDataGetter.buildFileNamesData(myFilePath);
+    IndexDataGetter.FileNamesData namesData = ((FilteredByFileResult)filterResult).fileNamesData;
     if (namesData.hasRenames() && visibleGraph.getVisibleCommitCount() > 0) {
       if (visibleGraph instanceof VisibleGraphImpl) {
 
@@ -90,7 +87,33 @@ class FileHistoryFilterer extends VcsLogFilterer {
       }
     }
 
-    return new FileHistoryVisiblePack(dataPack, visibleGraph, canRequestMore, filters, namesData);
+    return new FileHistoryVisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters, namesData);
+  }
+
+  @NotNull
+  @Override
+  protected FilterByDetailsResult filterByDetails(@NotNull DataPack dataPack,
+                                                  @NotNull VcsLogFilterCollection filters,
+                                                  @NotNull CommitCountStage commitCount,
+                                                  @NotNull Collection<VirtualFile> visibleRoots,
+                                                  @Nullable Set<Integer> matchingHeads) {
+    List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
+
+    if (myIndex.isIndexed(myRoot)) {
+      // checking our assumptions:
+      // we have one file filter here
+
+      LOG.assertTrue(detailsFilters.size() == 1);
+
+      VcsLogDetailsFilter filter = ObjectUtils.notNull(ContainerUtil.getFirstItem(detailsFilters));
+      LOG.assertTrue(filter instanceof VcsLogStructureFilter);
+      LOG.assertTrue(((VcsLogStructureFilter)filter).getFiles().equals(Collections.singleton(myFilePath)));
+
+      IndexDataGetter.FileNamesData data = myIndexDataGetter.buildFileNamesData(myFilePath);
+      return new FilteredByFileResult(data, data.getCommits(), false, commitCount);
+    }
+
+    return super.filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads);
   }
 
   private int getCurrentRow(@NotNull DataPack pack,
@@ -187,6 +210,18 @@ class FileHistoryFilterer extends VcsLogFilterer {
       if (myMatchingCommits.contains(commit)) {
         myPaths.pop();
       }
+    }
+  }
+
+  private static class FilteredByFileResult extends FilterByDetailsResult {
+    @NotNull public final IndexDataGetter.FileNamesData fileNamesData;
+
+    public FilteredByFileResult(@NotNull IndexDataGetter.FileNamesData data,
+                                @Nullable Set<Integer> commits,
+                                boolean more,
+                                @NotNull CommitCountStage count) {
+      super(commits, more, count);
+      fileNamesData = data;
     }
   }
 }
