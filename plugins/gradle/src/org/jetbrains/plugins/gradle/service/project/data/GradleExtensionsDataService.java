@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
@@ -25,7 +24,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
@@ -33,7 +31,6 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -60,15 +57,7 @@ public class GradleExtensionsDataService extends AbstractProjectDataService<Grad
     if (projectData == null || toImport.isEmpty()) {
       return;
     }
-    Map<String, GradleExtensions> extensionMap = ContainerUtil.newHashMap();
-    for (DataNode<GradleExtensions> node : toImport) {
-      DataNode<?> parent = node.getParent();
-      if (parent == null) continue;
-      if (!(parent.getData() instanceof ModuleData)) continue;
-      String projectPath = ((ModuleData)parent.getData()).getLinkedExternalProjectPath();
-      extensionMap.put(projectPath, node.getData());
-    }
 
-    GradleExtensionsSettings.getInstance(project).add(projectData.getLinkedExternalProjectPath(), extensionMap);
+    GradleExtensionsSettings.getInstance(project).add(projectData.getLinkedExternalProjectPath(), toImport);
   }
 }
