@@ -29,6 +29,7 @@ import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 public class PyStudyIntroductionCourseAction extends AnAction {
 
@@ -46,7 +47,8 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       return;
     }
     final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
-    if (configurator.getBundledCoursePath() != null) {
+    final List<String> paths = configurator.getBundledCoursePaths();
+    if (paths.isEmpty()) {
       return;
     }
     Presentation presentation = e.getPresentation();
@@ -63,7 +65,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     else {
       final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator(true);
       final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
-      final String bundledCoursePath = configurator.getBundledCoursePath();
+      final String bundledCoursePath = configurator.getBundledCoursePaths().get(0);
       Course introCourse = generator.getGenerator().getCourse(bundledCoursePath);
       if (introCourse == null) {
         return;

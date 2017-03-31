@@ -119,7 +119,7 @@ public class StudyProjectGenerator {
       myCourses = execCancelable(() -> EduStepicConnector.getCourses(StepicUpdateSettings.getInstance().getUser()));
     }
     if (myCourses == null || myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(Course.INVALID_COURSE))) {
-      myCourses = Collections.singletonList(getBundledIntro());
+      myCourses = getBundledCourses();
     }
     sortCourses(myCourses);
     return myCourses;
@@ -172,16 +172,17 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  public Course getBundledIntro() {
+  public List<Course> getBundledCourses() {
+    final ArrayList<Course> courses = new ArrayList<>();
     final LanguageExtensionPoint<EduPluginConfigurator>[] extensions = Extensions.getExtensions(EduPluginConfigurator.EP_NAME, null);
     for (LanguageExtensionPoint<EduPluginConfigurator> extension : extensions) {
       final EduPluginConfigurator configurator = extension.getInstance();
-      final String path = configurator.getBundledCoursePath();
-      if (path != null) {
-        return getCourse(path);
+      final List<String> paths = configurator.getBundledCoursePaths();
+      for (String path : paths) {
+        courses.add(getCourse(path));
       }
     }
-    return null;
+    return courses;
   }
 
   @Nullable
