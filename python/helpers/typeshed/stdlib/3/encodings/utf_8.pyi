@@ -9,6 +9,6 @@ class StreamWriter(codecs.StreamWriter):
 class StreamReader(codecs.StreamReader):
     pass
 
-def getregentry() -> codecs.CodecInfo: pass
-def encode(input: str, errors: str = ...) -> bytes: pass
-def decode(input: bytes, errors: str = ...) -> str: pass
+def getregentry() -> codecs.CodecInfo: ...
+def encode(input: str, errors: str = ...) -> bytes: ...
+def decode(input: bytes, errors: str = ...) -> str: ...
