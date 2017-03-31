@@ -1413,15 +1413,20 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         classLikeType = (PyClassLikeType)type;
       }
       else {
-        final PsiReference ref = expression.getReference();
-        if (ref != null) {
-          final PsiElement resolved = ref.resolve();
-          if (resolved instanceof PyClass) {
-            final PyType resolvedType = context.getType((PyClass)resolved);
-            if (resolvedType instanceof PyClassLikeType) {
-              classLikeType = (PyClassLikeType)resolvedType;
-            }
-         }
+        final PyReferenceExpression referenceExpr = as(expression, PyReferenceExpression.class);
+        final PsiElement resolved;
+        if (referenceExpr != null) {
+          resolved = referenceExpr.followAssignmentsChain(PyResolveContext.noImplicits().withTypeEvalContext(context)).getElement();
+        }
+        else {
+          final PsiReference ref = expression.getReference();
+          resolved = ref != null ? ref.resolve() : null;
+        }
+        if (resolved instanceof PyClass) {
+          final PyType resolvedType = context.getType((PyClass)resolved);
+          if (resolvedType instanceof PyClassLikeType) {
+            classLikeType = (PyClassLikeType)resolvedType;
+          }
         }
       }
       result.add(classLikeType);
