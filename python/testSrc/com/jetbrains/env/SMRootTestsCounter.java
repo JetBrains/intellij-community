@@ -64,6 +64,10 @@ final class SMRootTestsCounter {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
   }
 
+  int getIgnoredTestsCount() {
+    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.IGNORED)).size();
+  }
+
 
   /**
    * @return number of all tests
