@@ -1,4 +1,5 @@
 from __future__ import nested_scopes
+import os
 
 def set_trace_in_qt():
     from _pydevd_bundle import pydevd_tracing
@@ -19,6 +20,9 @@ def patch_qt(qt_support_mode):
     if qt_support_mode is True or qt_support_mode == 'True':
         # do not break backward compatibility
         qt_support_mode = 'auto'
+
+    if qt_support_mode == 'auto':
+        qt_support_mode = os.getenv('PYDEVD_PYQT_MODE', 'auto')
 
     # Avoid patching more than once
     global _patched_qt
