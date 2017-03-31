@@ -16,6 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -28,11 +29,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
-import com.intellij.refactoring.changeSignature.inplace.ApplyChangeSignatureAction;
 import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 
 /**
  * User: anna
@@ -50,7 +49,8 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
       ChangeSignatureHandler.REFACTORING_NAME, null);
     run.run();
 
-    myFixture.launchAction(ContainerUtil.findInstance(myFixture.getAvailableIntentions(), ApplyChangeSignatureAction.class));
+    IntentionAction action = myFixture.findSingleIntention("Changing signature of ");
+    myFixture.launchAction(action);
     myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
   }
 

@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -113,18 +112,9 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + "/test.java");
     myFixture.enableInspections(new StaticPseudoFunctionalStyleMethodInspection());
-    boolean isQuickFixFound = false;
-    for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof QuickFixWrapper) {
-        final LocalQuickFix fix = ((QuickFixWrapper)action).getFix();
-        if (fix instanceof StaticPseudoFunctionalStyleMethodInspection.ReplacePseudoLambdaWithLambda) {
-          myFixture.launchAction(action);
-          isQuickFixFound = true;
-          break;
-        }
-      }
-    }
-    assertTrue("Quick fix isn't found", isQuickFixFound);
+    IntentionAction action = myFixture.getAvailableIntention("Replace with Java Stream API pipeline");
+    assertNotNull("Quick fix isn't found", action);
+    myFixture.launchAction(action);
     myFixture.checkResultByFile(getTestName(true) + "/test_after.java");
   }
 }
