@@ -24,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
-import java.util.zip.ZipEntry;
+import java.util.function.Consumer;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -149,7 +149,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+    assertAppliedAndRevertedCorrectly(patch, preparationResult, expected -> expected.remove("bin/idea.bat"));
   }
 
   @Test
@@ -269,7 +269,8 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+    long hash = myPatchSpec.isBinary() ? CHECKSUMS.BOOTSTRAP_JAR_BIN : CHECKSUMS.BOOTSTRAP_JAR;
+    assertAppliedAndRevertedCorrectly(patch, preparationResult, expected -> expected.put("lib/boot.jar", hash));
   }
 
   @Test
@@ -292,11 +293,11 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
   public void testApplyWhenNewFileExists() throws Exception {
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
 
-    FileUtil.writeToFile(new File(myOlderDir, "new_file.txt"), "hello");
+    FileUtil.copy(new File(myOlderDir, "Readme.txt"), new File(myOlderDir, "new_file.txt"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+    assertAppliedAndRevertedCorrectly(patch, preparationResult, expected -> expected.put("new_file.txt", CHECKSUMS.README_TXT));
   }
 
   @Test
@@ -517,8 +518,15 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
   }
 
   private void assertAppliedAndRevertedCorrectly(Patch patch, PatchFileCreator.PreparationResult preparationResult) throws Exception {
-    Map<String, Long> original = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
-    Map<String, Long> target = patch.digestFiles(myNewerDir, Collections.emptyList(), false, TEST_UI);
+    assertAppliedAndRevertedCorrectly(patch, preparationResult, expected -> {});
+  }
+
+  private void assertAppliedAndRevertedCorrectly(Patch patch,
+                                                 PatchFileCreator.PreparationResult preparationResult,
+                                                 Consumer<Map<String, Long>> corrector) throws Exception {
+    Map<String, Long> original = digest(patch, myOlderDir);
+    Map<String, Long> target = digest(patch, myNewerDir);
+    corrector.accept(target);
     File backup = getTempFile("backup");
 
     Map<String, ValidationResult.Option> options = new HashMap<>();
@@ -534,66 +542,16 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     }
 
     List<PatchAction> appliedActions = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI).appliedActions;
-    Map<String, Long> patched = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
-
-    if (patch.isStrict()) {
-      assertEquals(patched, target);
-    }
-    else {
-      assertAppliedCorrectly();
-    }
-
-    assertNotEquals(original, patched);
+    Map<String, Long> patched = digest(patch, myOlderDir);
+    assertEquals(target, patched);
 
     PatchFileCreator.revert(preparationResult, appliedActions, backup, TEST_UI);
-    Map<String, Long> reverted = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
+    Map<String, Long> reverted = digest(patch, myOlderDir);
     assertEquals(original, reverted);
   }
 
-  protected void assertAppliedCorrectly() throws IOException {
-    File newFile = new File(myOlderDir, "newDir/newFile.txt");
-    assertTrue(newFile.exists());
-    assertEquals("hello", FileUtil.loadFile(newFile));
-
-    File changedFile = new File(myOlderDir, "Readme.txt");
-    assertTrue(changedFile.exists());
-    assertEquals("hello", FileUtil.loadFile(changedFile));
-
-    assertFalse(new File(myOlderDir, "bin/idea.bat").exists());
-
-    // do not remove unchanged
-    checkZipEntry("lib/annotations.jar", "org/jetbrains/annotations/Nls.class", 502);
-    // add new
-    checkZipEntry("lib/annotations.jar", "org/jetbrains/annotations/NewClass.class", 453);
-    // update changed
-    checkZipEntry("lib/annotations.jar", "org/jetbrains/annotations/Nullable.class", 546);
-    // remove obsolete
-    checkNoZipEntry("lib/annotations.jar", "org/jetbrains/annotations/TestOnly.class");
-
-    // test for archives with only deleted files
-    checkNoZipEntry("lib/bootstrap.jar", "com/intellij/ide/ClassloaderUtil.class");
-
-    // packing directories too
-    checkZipEntry("lib/annotations.jar", "org/", 0);
-    checkZipEntry("lib/annotations.jar", "org/jetbrains/", 0);
-    checkZipEntry("lib/annotations.jar", "org/jetbrains/annotations/", 0);
-    checkZipEntry("lib/bootstrap.jar", "com/", 0);
-    checkZipEntry("lib/bootstrap.jar", "com/intellij/", 0);
-    checkZipEntry("lib/bootstrap.jar", "com/intellij/ide/", 0);
-  }
-
-  private void checkZipEntry(String jar, String entryName, int expectedSize) throws IOException {
-    try (ZipFile zipFile = new ZipFile(new File(myOlderDir, jar))) {
-      ZipEntry entry = zipFile.getEntry(entryName);
-      assertNotNull(entry);
-      assertEquals(expectedSize, entry.getSize());
-    }
-  }
-
-  private void checkNoZipEntry(String jar, String entryName) throws IOException {
-    try (ZipFile zipFile = new ZipFile(new File(myOlderDir, jar))) {
-      assertNull(zipFile.getEntry(entryName));
-    }
+  private static Map<String, Long> digest(Patch patch, File dir) throws IOException, OperationCancelledException {
+    return new TreeMap<>(patch.digestFiles(dir, Collections.emptyList(), false, TEST_UI));
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {
