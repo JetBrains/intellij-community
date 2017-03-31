@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 public class PyEduPluginConfigurator implements EduPluginConfigurator {
   public static final String PYTHON_3 = "3.x";
@@ -129,15 +131,15 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public String getBundledCoursePath() {
+  public List<String> getBundledCoursePaths() {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PyEduPluginConfigurator.class);
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
 
       File pluginBaseDir = jarFile.getParentFile();
-      return new File(new File(pluginBaseDir, "courses"), "Introduction to Python.zip").getPath();
+      return Collections.singletonList(new File(new File(pluginBaseDir, "courses"), "Introduction to Python.zip").getPath());
     }
 
-    return new File(new File(jarPath, "courses"), "Introduction to Python.zip").getPath();
+    return Collections.singletonList(new File(new File(jarPath, "courses"), "Introduction to Python.zip").getPath());
   }
 }
