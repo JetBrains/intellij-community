@@ -333,10 +333,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyShadowingNamesInspection.class);
   }
 
-  public void testPyDunderSlotsInspection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
-  }
-
   // PY-21645
   public void testInspectionsDisabledInFunctionTypeComments() {
     myFixture.enableInspections(PyIncorrectDocstringInspection.class); 
