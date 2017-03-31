@@ -988,7 +988,7 @@ public class ExpectedTypesProvider {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
           substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false,
                                                                                    () -> info.inferSubstitutorFromArgs(policy, args));
-          if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
+          if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
         }
         else {
           substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, candidateInfo::getSubstitutor);

@@ -184,8 +184,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.registerIncompatibleErrorMessage(message);
           }
         }
+        return null;
       }
-      return null;
+      else {
+        session.registerIncompatibleErrorMessage("Failed to resolve argument");
+        return null;
+      }
     }
     return session;
   }
