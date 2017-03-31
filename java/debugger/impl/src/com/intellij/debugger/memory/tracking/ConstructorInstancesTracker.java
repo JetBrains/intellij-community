@@ -170,6 +170,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   @Override
   public void dispose() {
     Disposer.dispose(myBreakpoint);
+    myTrackedObjects.clear();
+    myNewObjects = null;
   }
 
   @Override
