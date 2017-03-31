@@ -4,7 +4,7 @@ from typing import IO, Union
 import sys
 
 
-if sys.version_info <= (3, 2):
+if sys.version_info < (3, 3):
     _encodable = bytes
     _decodable = bytes
 elif sys.version_info[:2] == (3, 3):
