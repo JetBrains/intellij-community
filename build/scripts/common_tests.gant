@@ -107,5 +107,5 @@ target('run_tests': 'Run java tests') {
 }
 
 target('default' : "Run all tests") {
-  depends([compile, run_tests, run_cucumber_tests])
+  depends([compile, run_tests])
 }
