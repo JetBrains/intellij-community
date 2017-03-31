@@ -68,6 +68,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author nik
@@ -162,8 +163,9 @@ public class XValueHint extends AbstractValueHint {
 
   @Override
   protected void evaluateAndShowHint() {
+    AtomicBoolean showEvaluating = new AtomicBoolean(true);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-      if (myCurrentHint == null) {
+      if (myCurrentHint == null && showEvaluating.get()) {
         SimpleColoredComponent component = HintUtil.createInformationComponent();
         component.append(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE);
         showHint(component);
@@ -181,6 +183,7 @@ public class XValueHint extends AbstractValueHint {
           public void applyPresentation(@Nullable Icon icon,
                                         @NotNull XValuePresentation valuePresenter,
                                         boolean hasChildren) {
+            showEvaluating.set(false);
             if (isHintHidden()) {
               return;
             }
@@ -230,6 +233,10 @@ public class XValueHint extends AbstractValueHint {
 
       @Override
       public void errorOccurred(@NotNull final String errorMessage) {
+        showEvaluating.set(false);
+        if (myCurrentHint != null) {
+          myCurrentHint.hide();
+        }
         if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
           ApplicationManager.getApplication().invokeLater(() -> showHint(HintUtil.createErrorLabel(errorMessage)));
         }
