@@ -385,7 +385,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   private fun generateRawArguments(): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString()
     if (rawArguments.isNotBlank()) {
-      return listOf("--") + getParsedAdditionalArguments(project, additionalArguments)
+      return listOf("--") + getParsedAdditionalArguments(project, rawArguments)
     }
     return emptyList()
   }

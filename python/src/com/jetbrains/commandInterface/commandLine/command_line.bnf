@@ -27,16 +27,16 @@
     EQ = '='
     LITERAL_STARTS_FROM_LETTER='regexp:\p{Alpha}(\w|:|\\|/|\.|-|\!)*'
     LITERAL_STARTS_FROM_DIGIT='regexp:\p{Digit}(\w|:|\\|/|\.|-|\!)*'
-    LITERAL_STARTS_FROM_SYMBOL='regexp:([/\~\.!](\w|:|\\|/|\.|-|\!)*)'
+    LITERAL_STARTS_FROM_SYMBOL='regexp:([/\~\.!*](\w|:|\\|/|\.|-|\!)*)'
 
     SPACED_LITERAL_STARTS_FROM_LETTER='regexp:"\p{Alpha}(\w|:|\\|/|\.|-|\s|\!)*"'
     SPACED_LITERAL_STARTS_FROM_DIGIT='regexp:"\p{Digit}(\w|:|\\|/|\.|-|\s|\!)*"'
-    SPACED_LITERAL_STARTS_FROM_SYMBOL='regexp:"([/\~\.!](\w|:|\\|/|\.|-|\s|\!)*)"'
+    SPACED_LITERAL_STARTS_FROM_SYMBOL='regexp:"([/\~\.!*](\w|:|\\|/|\.|-|\s|\!)*)"'
 
 
     SINGLE_Q_SPACED_LITERAL_STARTS_FROM_LETTER="regexp:'\p{Alpha}(\w|:|\\|/|\.|-|\s|\!)*'"
     SINGLE_Q_SPACED_LITERAL_STARTS_FROM_DIGIT="regexp:'\p{Digit}(\w|:|\\|/|\.|-|\s|\!)*'"
-    SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL="regexp:'([/\~\.!](\w|:|\\|/|\.|-|\s|\!)*)'"
+    SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL="regexp:'([/\~\.!*](\w|:|\\|/|\.|-|\s|\!)*)'"
 
 
 
