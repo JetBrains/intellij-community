@@ -12,8 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -617,22 +615,6 @@ public class StudySerializationUtils {
       subtaskInfo.add(INDEX, new JsonPrimitive(0));
       subtaskInfo.add(HINTS, hintsArray);
       subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
-    }
-
-    public static class StepikCourseSerializer implements JsonSerializer<Course>, JsonDeserializer<Course> {
-
-      @Override
-      public Course deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        return null;
-      }
-
-      @Override
-      public JsonElement serialize(Course src, Type typeOfSrc, JsonSerializationContext context) {
-        if (src instanceof RemoteCourse) {
-          context.serialize(src, RemoteCourse.class);
-        }
-        return context.serialize(src);
-      }
     }
 
     public static class TaskAdapter implements JsonSerializer<Task>, JsonDeserializer<Task> {
