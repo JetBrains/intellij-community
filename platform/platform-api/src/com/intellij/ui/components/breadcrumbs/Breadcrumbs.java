@@ -1,0 +1,388 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.ui.components.breadcrumbs;
+
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.Gray;
+import com.intellij.ui.paint.EffectPainter;
+import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.RegionPainter;
+import org.intellij.lang.annotations.JdkConstants.FontStyle;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import javax.swing.JComponent;
+import javax.swing.border.AbstractBorder;
+
+/**
+ * @author Sergey.Malenkov
+ */
+public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
+  @Deprecated
+  public final boolean above = Registry.is("editor.breadcrumbs.above");
+
+  @SuppressWarnings("FieldCanBeLocal")
+  private final MouseHandler containerMouseHandler = new MouseHandler(event -> getCrumb(event.getX(), event.getY()));
+  private final MouseHandler componentMouseHandler = new MouseHandler(event -> getCrumb(event.getComponent()));
+
+  private BiConsumer<Crumb, InputEvent> hover = ((crumb, event) -> hovered = crumb);
+  private BiConsumer<Crumb, InputEvent> select = ((crumb, event) -> selected = crumb);
+
+  private Crumb last;
+  private Crumb hovered;
+  private Crumb selected;
+
+  public Breadcrumbs() {
+    addMouseListener(containerMouseHandler);
+    addMouseMotionListener(containerMouseHandler);
+    setLayout(STATELESS_LAYOUT);
+    setForeground(Gray.x92);
+  }
+
+  public void onHover(BiConsumer<Crumb, InputEvent> consumer) {
+    hover = hover.andThen(consumer);
+  }
+
+  public void onSelect(BiConsumer<Crumb, InputEvent> consumer) {
+    select = select.andThen(consumer);
+  }
+
+  public boolean isHovered(Crumb crumb) {
+    return hovered == crumb;
+  }
+
+  public boolean isSelected(Crumb crumb) {
+    return selected == crumb;
+  }
+
+  public boolean isAfterSelected(Crumb crumb) {
+    if (last == null || isSelected(last)) return false;
+    for (Crumb current : getCrumbs()) {
+      if (current == crumb) return false;
+      if (isSelected(current)) break;
+    }
+    return true;
+  }
+
+  public Iterable<Crumb> getCrumbs() {
+    return getComponents(this, Breadcrumbs::getCrumb);
+  }
+
+  public void setCrumbs(Iterable<? extends Crumb> crumbs) {
+    ArrayList<CrumbLabel> labels = getComponents(this, Breadcrumbs::toCrumbLabel);
+    last = null;
+    int index = 0;
+    if (crumbs != null) {
+      for (Crumb crumb : crumbs) {
+        if (crumb != null) {
+          last = crumb;
+          if (index < labels.size()) {
+            labels.get(index++).setCrumb(crumb);
+          }
+          else {
+            CrumbLabel label = new CrumbLabel();
+            label.setCrumb(crumb);
+            label.setBorder(STATELESS_BORDER);
+            label.addMouseListener(componentMouseHandler);
+            label.addMouseMotionListener(componentMouseHandler);
+            add(label);
+            index++;
+          }
+        }
+      }
+    }
+    while (index < labels.size()) {
+      labels.get(index++).setCrumb(null);
+    }
+    select.accept(last, null);
+    revalidate();
+    repaint();
+  }
+
+  @Override
+  public void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb) {
+    int scale = getScale(this);
+    EffectType type = getEffectType(crumb);
+    Color color = getEffectColor(crumb);
+    Color background = getBackground(crumb);
+    if (color != null && type != null) {
+      EffectPainter painter = getEffectPainter(type);
+      if (painter != null) {
+        if (background != null) {
+          g.setColor(background);
+          g.fillRect(x + 2 * scale, y + 2 * scale, width - 4 * scale, height - 4 * scale);
+        }
+        Font font = getFont(crumb);
+        if (font != null) {
+          FontMetrics metrics = g.getFontMetrics(font);
+          if (metrics != null) {
+            int descent = metrics.getDescent();
+            int baseline = y + height - 2 * scale - descent;
+            if (painter == EffectPainter.STRIKE_THROUGH) descent = metrics.getAscent();
+
+            g.setColor(color);
+            painter.paint(g, x + 5 * scale, baseline, width - 10 * scale, descent, font);
+          }
+        }
+      }
+      else if (type == EffectType.ROUNDED_BOX) {
+        RectanglePainter.paint(g, x + scale, y + scale, width - 2 * scale, height - 2 * scale, height / 2, background, color);
+      }
+      else if (type == EffectType.BOXED) {
+        RectanglePainter.paint(g, x + scale, y + scale, width - 2 * scale, height - 2 * scale, 0, background, color);
+      }
+    }
+    else if (background != null) {
+      g.setColor(background);
+      g.fillRect(x + scale, y, width - 2 * scale, height);
+    }
+    else {
+      int thickness = scale * getThickness(crumb);
+      if (thickness > 0) {
+        g.setColor(getForeground(crumb));
+        //noinspection deprecation
+        g.fillRect(x + 5 * scale, above ? y + height - thickness : y, width - 10 * scale, thickness);
+      }
+    }
+  }
+
+  protected Font getFont(Crumb crumb) {
+    Font font = getFont();
+    if (font == null) return null;
+
+    int style = getFontStyle(crumb);
+    if (style == font.getStyle()) return font;
+
+    return font.deriveFont(style);
+  }
+
+  @FontStyle
+  protected int getFontStyle(Crumb crumb) {
+    TextAttributes attributes = getAttributes(crumb);
+    return attributes == null ? Font.PLAIN : attributes.getFontType();
+  }
+
+  protected Color getForeground(Crumb crumb) {
+    TextAttributes attributes = getAttributes(crumb);
+    Color foreground = attributes == null ? null : attributes.getForegroundColor();
+    return foreground != null ? foreground : getForeground();
+  }
+
+  protected Color getBackground(Crumb crumb) {
+    TextAttributes attributes = getAttributes(crumb);
+    return attributes == null ? null : attributes.getBackgroundColor();
+  }
+
+  protected Color getEffectColor(Crumb crumb) {
+    TextAttributes attributes = getAttributes(crumb);
+    return attributes == null ? null : attributes.getEffectColor();
+  }
+
+  protected EffectType getEffectType(Crumb crumb) {
+    TextAttributes attributes = getAttributes(crumb);
+    return attributes == null ? null : attributes.getEffectType();
+  }
+
+  protected EffectPainter getEffectPainter(EffectType type) {
+    if (type == EffectType.STRIKEOUT) return EffectPainter.STRIKE_THROUGH;
+    if (type == EffectType.WAVE_UNDERSCORE) return EffectPainter.WAVE_UNDERSCORE;
+    if (type == EffectType.LINE_UNDERSCORE) return EffectPainter.LINE_UNDERSCORE;
+    if (type == EffectType.BOLD_LINE_UNDERSCORE) return EffectPainter.BOLD_LINE_UNDERSCORE;
+    if (type == EffectType.BOLD_DOTTED_LINE) return EffectPainter.BOLD_DOTTED_UNDERSCORE;
+    return null;
+  }
+
+  protected TextAttributes getAttributes(Crumb crumb) {
+    TextAttributesKey key = getKey(crumb);
+    return key == null ? null : EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+  }
+
+  protected TextAttributesKey getKey(Crumb crumb) {
+    if (isHovered(crumb)) return EditorColors.BREADCRUMBS_HOVERED;
+    if (isSelected(crumb)) return EditorColors.BREADCRUMBS_CURRENT;
+    if (isAfterSelected(crumb)) return EditorColors.BREADCRUMBS_INACTIVE;
+    return EditorColors.BREADCRUMBS_DEFAULT;
+  }
+
+  protected int getThickness(Crumb crumb) {
+    if (isSelected(crumb)) return 2;
+    if (isHovered(crumb)) return 1;
+    return 0;
+  }
+
+  private Crumb getCrumb(int x, int y) {
+    return getCrumb(getComponentAt(x, y));
+  }
+
+  private static Crumb getCrumb(Component component) {
+    CrumbLabel label = toCrumbLabel(component);
+    return label == null ? null : label.crumb;
+  }
+
+  private static CrumbLabel toCrumbLabel(Component component) {
+    return component instanceof CrumbLabel ? (CrumbLabel)component : null;
+  }
+
+  private static Component toVisible(Component component) {
+    return component.isVisible() ? component : null;
+  }
+
+  private static Component toVisibleAndValid(Component component) {
+    return component.isVisible() && component.isValid() ? component : null;
+  }
+
+  private static <T> ArrayList<T> getComponents(Container container, Function<Component, T> function) {
+    synchronized (container.getTreeLock()) {
+      int count = container.getComponentCount();
+      ArrayList<T> components = new ArrayList<>(count);
+      for (int i = 0; i < count; i++) {
+        T component = function.apply(container.getComponent(i));
+        if (component != null) components.add(component);
+      }
+      return components;
+    }
+  }
+
+  private static Dimension getPreferredSize(Iterable<Component> components) {
+    Dimension size = new Dimension();
+    for (Component component : components) {
+      Dimension preferred = component.getPreferredSize();
+      size.width += preferred.width;
+      if (size.height < preferred.height) {
+        size.height = preferred.height;
+      }
+    }
+    return size;
+  }
+
+  private static int getScale(Component component) {
+    return component == null ? 1 : getScale(component.getFont());
+  }
+
+  private static int getScale(Font font) {
+    return font == null ? 1 : getScale(font.getSize());
+  }
+
+  private static int getScale(int height) {
+    return height <= 10 ? 1 : (height / 10);
+  }
+
+  private static final AbstractBorder STATELESS_BORDER = new AbstractBorder() {
+    @Override
+    @SuppressWarnings("UseDPIAwareInsets")
+    public Insets getBorderInsets(Component component, Insets insets) {
+      if (insets == null) insets = new Insets(0, 0, 0, 0);
+      int scale = component == null ? 1 : getScale(component.getParent());
+      insets.top += 2 * scale;
+      insets.left += 5 * scale;
+      insets.right += 5 * scale;
+      insets.bottom += 2 * scale;
+      return insets;
+    }
+  };
+
+  private static final AbstractLayoutManager STATELESS_LAYOUT = new AbstractLayoutManager() {
+    @Override
+    public void invalidateLayout(Container container) {
+      getComponents(container, Breadcrumbs::toVisibleAndValid).forEach(Component::invalidate);
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container container) {
+      Dimension size = getPreferredSize(getComponents(container, Breadcrumbs::toVisible));
+      JBInsets.addTo(size, container.getInsets());
+      return size;
+    }
+
+    @Override
+    public void layoutContainer(Container container) {
+      ArrayList<Component> components = getComponents(container, Breadcrumbs::toVisible);
+      if (!components.isEmpty()) {
+        Dimension size = getPreferredSize(components);
+        Rectangle bounds = new Rectangle(container.getWidth(), container.getHeight());
+        JBInsets.removeFrom(bounds, container.getInsets());
+        int count = components.size();
+        if (count == 1) {
+          if (bounds.width > size.width) bounds.width = size.width;
+          components.get(0).setBounds(bounds);
+        }
+        else /*if (bounds.width < size.width) {
+            }
+            else*/ {
+          int gap = Math.max(0, Math.min(10 * getScale(container), (bounds.width - size.width) / (count - 1)));
+          for (Component component : components) {
+            Dimension preferred = component.getPreferredSize();
+            component.setBounds(bounds.x, bounds.y, preferred.width, bounds.height);
+            bounds.x += preferred.width + gap;
+          }
+        }
+      }
+    }
+  };
+
+  private final class MouseHandler extends MouseEventHandler {
+    private final Function<MouseEvent, Crumb> function;
+
+    MouseHandler(Function<MouseEvent, Crumb> function) {
+      this.function = function;
+    }
+
+    @Override
+    protected void handle(MouseEvent event) {
+      if (!event.isConsumed()) {
+        Crumb crumb = null;
+        BiConsumer<Crumb, InputEvent> consumer = null;
+        switch (event.getID()) {
+          case MouseEvent.MOUSE_MOVED:
+          case MouseEvent.MOUSE_ENTERED:
+            crumb = function.apply(event);
+          case MouseEvent.MOUSE_EXITED:
+            if (!isHovered(crumb)) consumer = hover;
+            break;
+          case MouseEvent.MOUSE_CLICKED:
+            crumb = function.apply(event);
+            if (crumb != null) consumer = select;
+            break;
+        }
+        if (consumer != null) {
+          consumer.accept(crumb, event);
+          event.consume();
+          repaint();
+        }
+      }
+    }
+  }
+}
