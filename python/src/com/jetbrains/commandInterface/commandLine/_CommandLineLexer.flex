@@ -26,15 +26,15 @@ EOL=\R
 WHITE_SPACE=\s+
 
 SPACE=[ \t\n\x0B\f\r]+
-LITERAL_STARTS_FROM_LETTER=[:letter:]([a-zA-Z_0-9]|:|\\|"/"|\.|-)*
-LITERAL_STARTS_FROM_DIGIT=[:digit:]([a-zA-Z_0-9]|:|\\|"/"|\.|-)*
-LITERAL_STARTS_FROM_SYMBOL=([/\~\.]([a-zA-Z_0-9]|:|\\|"/"|\.|-)*)
-SPACED_LITERAL_STARTS_FROM_LETTER=\"[:letter:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r])*\"
-SPACED_LITERAL_STARTS_FROM_DIGIT=\"[:digit:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r])*\"
-SPACED_LITERAL_STARTS_FROM_SYMBOL=\"([/\~\.]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r])*)\"
-SINGLE_Q_SPACED_LITERAL_STARTS_FROM_LETTER='[:letter:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r])*'
-SINGLE_Q_SPACED_LITERAL_STARTS_FROM_DIGIT='[:digit:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r])*'
-SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL='([/\~\.]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r])*)'
+LITERAL_STARTS_FROM_LETTER=[:letter:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|\!)*
+LITERAL_STARTS_FROM_DIGIT=[:digit:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|\!)*
+LITERAL_STARTS_FROM_SYMBOL=([/\~\.!]([a-zA-Z_0-9]|:|\\|"/"|\.|-|\!)*)
+SPACED_LITERAL_STARTS_FROM_LETTER=\"[:letter:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r]|\!)*\"
+SPACED_LITERAL_STARTS_FROM_DIGIT=\"[:digit:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r]|\!)*\"
+SPACED_LITERAL_STARTS_FROM_SYMBOL=\"([/\~\.!]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r]|\!)*)\"
+SINGLE_Q_SPACED_LITERAL_STARTS_FROM_LETTER='[:letter:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r]|\!)*'
+SINGLE_Q_SPACED_LITERAL_STARTS_FROM_DIGIT='[:digit:]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r]|\!)*'
+SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL='([/\~\.!]([a-zA-Z_0-9]|:|\\|"/"|\.|-|[ \t\n\x0B\f\r]|\!)*)'
 SHORT_OPTION_NAME_TOKEN=-[:letter:]
 LONG_OPTION_NAME_TOKEN=--[:letter:](-|[a-zA-Z_0-9])*
 

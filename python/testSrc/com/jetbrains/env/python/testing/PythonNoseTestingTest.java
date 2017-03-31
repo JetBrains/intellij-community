@@ -6,11 +6,14 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
+import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestFactory;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -22,6 +25,41 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
+
+
+  // Ensure slow test is not run when --attr="!slow"  is provided
+  @Test
+  public void testMarkerWithSlow() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose/test_with_slow", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+          return new PyNoseTestProcessRunner("test_with_slow.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalNoseTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setAdditionalArguments("--attr=\"!slow\"");
+            }
+          };
+        }
+
+
+        @Override
+        protected void checkTestResults(@NotNull PyNoseTestProcessRunner runner,
+                                        @NotNull String stdout,
+                                        @NotNull String stderr,
+                                        @NotNull String all) {
+          Assert.assertEquals("--slow runner borken", "Test tree:\n" +
+                                                       "[root]\n" +
+                                                       ".test_with_slow\n" +
+                                                       "..test_fast(+)\n",
+                              runner.getFormattedTestTree());
+        }
+      });
+  }
+
 
   @Test
   public void testMultipleCases() throws Exception {
