@@ -11,9 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgConfig {
 
   @NotNull private final Map<String, Map<String, String>> myConfigMap;
@@ -53,5 +50,10 @@ public class HgConfig {
   public Collection<String> getPaths() {
     Map<String, String> pathOptions = myConfigMap.get("paths");
     return pathOptions != null ? pathOptions.values() : Collections.<String>emptyList();
+  }
+
+  public boolean isMqUsed() {
+    String value = getNamedConfig("extensions", "mq");
+    return (value != null && !value.trim().startsWith("!"));
   }
 }

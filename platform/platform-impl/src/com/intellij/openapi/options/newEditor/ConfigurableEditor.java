@@ -187,7 +187,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     }
   }
 
-  private void requestUpdate() {
+  void requestUpdate() {
     final Configurable configurable = myConfigurable;
     myQueue.queue(new Update(this) {
       @Override

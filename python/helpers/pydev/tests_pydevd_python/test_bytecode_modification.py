@@ -114,3 +114,68 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    def test_offset_overflow(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            def foo():
+                a = 1  # breakpoint
+                b = 2
+                c = 3
+                a1 = 1 if a > 1 else 2
+                a2 = 1 if a > 1 else 2
+                a3 = 1 if a > 1 else 2
+                a4 = 1 if a > 1 else 2
+                a5 = 1 if a > 1 else 2
+                a6 = 1 if a > 1 else 2
+                a7 = 1 if a > 1 else 2
+                a8 = 1 if a > 1 else 2
+                a9 = 1 if a > 1 else 2
+                a10 = 1 if a > 1 else 2
+                a11 = 1 if a > 1 else 2
+                a12 = 1 if a > 1 else 2
+                a13 = 1 if a > 1 else 2
+
+                for i in range(1):
+                    if a > 0:
+                        print("111")
+                        # a = 1
+                    else:
+                        print("222")
+                return b
+
+            self.check_insert_to_line(foo, tracing, foo.__code__.co_firstlineno + 2)
+
+        finally:
+            sys.stdout = self.original_stdout
+
+    def test_long_lines(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            def foo():
+                a = 1
+                b = 1 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23
+                c = 1 if b > 1 else 2 if b > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23
+                d = 1 if c > 1 else 2 if c > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23 if a > 1 else 2 if a > 0 else 3 if a > 4 else 23
+                e = d + 1
+                return e
+
+            self.check_insert_to_line(foo, tracing, foo.__code__.co_firstlineno + 2)
+
+
+        finally:
+            sys.stdout = self.original_stdout
+
+    def test_many_names(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            from tests_pydevd_python._many_names_example import foo
+            self.check_insert_to_line(foo, tracing, foo.__code__.co_firstlineno + 2)
+
+        finally:
+            sys.stdout = self.original_stdout

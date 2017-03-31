@@ -40,9 +40,9 @@ import static org.junit.Assert.fail;
  * @author Tagir Valeev
  */
 public class ActionHint {
-  final String myExpectedText;
-  final boolean myShouldPresent;
-  final ProblemHighlightType myHighlightType;
+  private final String myExpectedText;
+  private final boolean myShouldPresent;
+  private final ProblemHighlightType myHighlightType;
 
   private ActionHint(String expectedText, boolean shouldPresent, ProblemHighlightType severity) {
     myExpectedText = expectedText;
@@ -67,7 +67,7 @@ public class ActionHint {
    * @return true if this ActionHint checks that some action should be present
    * or false if it checks that some action should be absent
    */
-  public boolean shouldPresent() {
+  boolean shouldPresent() {
     return myShouldPresent;
   }
 

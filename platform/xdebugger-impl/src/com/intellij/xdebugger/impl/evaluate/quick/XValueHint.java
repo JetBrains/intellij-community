@@ -40,6 +40,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -66,6 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author nik
@@ -160,6 +162,14 @@ public class XValueHint extends AbstractValueHint {
 
   @Override
   protected void evaluateAndShowHint() {
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      if (myCurrentHint == null) {
+        SimpleColoredComponent component = HintUtil.createInformationComponent();
+        component.append(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE);
+        showHint(component);
+      }
+    }, 200, TimeUnit.MILLISECONDS);
+
     myEvaluator.evaluate(myExpression, new XEvaluationCallbackBase() {
       @Override
       public void evaluated(@NotNull final XValue result) {
@@ -229,6 +239,9 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private void showTree(@NotNull XValue value) {
+    if (myCurrentHint != null) {
+      myCurrentHint.hide();
+    }
     XValueMarkers<?,?> valueMarkers = ((XDebugSessionImpl)myDebugSession).getValueMarkers();
     XDebuggerTreeCreator creator = new XDebuggerTreeCreator(myDebugSession.getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
                                                             myDebugSession.getCurrentPosition(), valueMarkers);

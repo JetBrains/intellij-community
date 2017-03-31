@@ -162,7 +162,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myUpdateQueue.queue(new MyUpdater("hgrepositoryUpdate"));
     }
     if (configHgrcChanged) {
-      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"));
+      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"){
+        @Override
+        public void run() {
+          myRepository.updateConfig();
+        }
+      });
     }
     if (dirstateFileChanged || hgIgnoreChanged) {
       myRepository.getLocalIgnoredHolder().startRescan();

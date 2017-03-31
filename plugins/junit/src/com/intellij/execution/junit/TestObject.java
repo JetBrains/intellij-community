@@ -169,13 +169,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
       File[] files = lib.listFiles();
       if (files != null) {
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         for (File file : files) {
           String fileName = file.getName();
-          if (fileName.startsWith("junit-platform-") ||
-              fileName.startsWith("junit-jupiter-engine-") && JavaPsiFacade.getInstance(project).findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope) != null) {
+          if (fileName.startsWith("junit-platform-launcher-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope) ||
+
+              fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
+
+              fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
+                                                               hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
             classPath.add(file.getAbsolutePath());
           }
-          else if (fileName.startsWith("junit-vintage-engine-")) {
+          else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
             try {
               JUnitUtil.getTestCaseClass(sourceScope);
               classPath.add(file.getAbsolutePath());
@@ -188,6 +193,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     
     return javaParameters;
+  }
+
+  private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
+                                                   String packageQName,
+                                                   GlobalSearchScope globalSearchScope) {
+    PsiPackage aPackage = psiFacade.findPackage(packageQName);
+    return aPackage != null && aPackage.getDirectories(globalSearchScope).length > 0;
   }
 
   public static boolean isJUnit5(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {

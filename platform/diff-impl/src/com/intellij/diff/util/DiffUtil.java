@@ -858,16 +858,7 @@ public class DiffUtil {
 
   @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
-    if (line1 == line2) {
-      int lineStartOffset = line1 < getLineCount(document) ? document.getLineStartOffset(line1) : document.getTextLength();
-      return new TextRange(lineStartOffset, lineStartOffset);
-    }
-    else {
-      int startOffset = document.getLineStartOffset(line1);
-      int endOffset = document.getLineEndOffset(line2 - 1);
-      if (includeNewline && endOffset < document.getTextLength()) endOffset++;
-      return new TextRange(startOffset, endOffset);
-    }
+    return getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
   }
 
   @NotNull

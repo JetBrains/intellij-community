@@ -80,18 +80,9 @@ public class ProgressManagerQueue {
     }
   }
 
-  private static void runStuff(final Runnable stuff) {
-    try {
-      stuff.run();
-    }
-    catch (ProcessCanceledException e) {
-      //
-    }
-  }
-
   public void run(@NotNull final Runnable stuff) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runStuff(stuff);
+      stuff.run();
       return;
     }
     synchronized (myLock) {
@@ -122,7 +113,11 @@ public class ProgressManagerQueue {
           }
           if (stuff != null) {
             // each task is executed only once, once it has been taken from the queue..
-            runStuff(stuff);
+            try {
+              stuff.run();
+            }
+            catch (ProcessCanceledException ignored) {
+            }
           }
         }
         catch (Throwable t) {

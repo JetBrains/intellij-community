@@ -262,6 +262,13 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTestPerformance("html reformat with range", 5000, null);
   }
 
+  public void testQuotesReplacementPerformance() throws Exception {
+    doTestPerformance("Quotes replacement", 1500, (settings)->{
+      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
+      settings.HTML_ENFORCE_QUOTES = true;
+    });
+  }
+
   public void doTestPerformance(@NotNull String message, int expectedTime, OptionsSetup optionsSetup) throws Exception {
     CodeStyleSettings settings = new CodeStyleSettings();
     if (optionsSetup != null) optionsSetup.setupOptions(settings);
@@ -505,13 +512,6 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
   
-  public void testQuotesReplacementPerformance() throws Exception {
-    doTestPerformance("Quotes replacement", 1500, (settings)->{
-      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
-      settings.HTML_ENFORCE_QUOTES = true;
-    });
-  }
-
   public void testWeb18213() {
     doTextTest(
       "<div class=\"s\">\n" +

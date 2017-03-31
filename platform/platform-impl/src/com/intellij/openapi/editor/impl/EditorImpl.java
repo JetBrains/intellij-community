@@ -4265,7 +4265,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         editor.putUserData(LAST_PASTED_REGION, null);
 
         EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-        LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler);
+        LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler, String.valueOf(pasteHandler));
         ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), () -> t);
 
         TextRange range = editor.getUserData(LAST_PASTED_REGION);

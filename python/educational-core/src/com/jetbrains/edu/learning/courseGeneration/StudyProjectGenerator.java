@@ -28,12 +28,12 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.stepic.StepicUser;
@@ -291,24 +291,7 @@ public class StudyProjectGenerator {
       }
     }
     createFiles(taskDirectory, task.getTestsText());
-    if (task.getTaskTexts().isEmpty()) {
-      createTaskHtml(task, taskDirectory);
-      return;
-    }
-    task.setText(null);
     createFiles(taskDirectory, task.getTaskTexts());
-
-  }
-
-  private static void createTaskHtml(@NotNull Task task, @NotNull File taskDirectory) {
-    final File taskText = new File(taskDirectory, EduNames.TASK_HTML);
-    FileUtil.createIfDoesntExist(taskText);
-    try {
-      FileUtil.writeToFile(taskText, task.getText());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
   }
 
   private static void createFiles(@NotNull File taskDirectory, Map<String, String> files) {

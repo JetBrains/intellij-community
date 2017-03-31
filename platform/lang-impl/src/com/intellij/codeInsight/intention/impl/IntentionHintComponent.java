@@ -66,8 +66,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
@@ -142,12 +140,12 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   }
 
   @NotNull
-  public static IntentionHintComponent showIntentionHint(@NotNull final Project project,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull final Editor editor,
-                                                         @NotNull ShowIntentionsPass.IntentionsInfo intentions,
-                                                         boolean showExpanded,
-                                                         @NotNull Point position) {
+  private static IntentionHintComponent showIntentionHint(@NotNull final Project project,
+                                                          @NotNull PsiFile file,
+                                                          @NotNull final Editor editor,
+                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
+                                                          boolean showExpanded,
+                                                          @NotNull Point position) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions);
 
@@ -466,31 +464,28 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
         myPopupShown = false;
       }
     });
-    myPopup.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(@NotNull ListSelectionEvent e) {
-        final Object source = e.getSource();
-        highlighter.dropHighlight();
-        injectionHighlighter.dropHighlight();
-        
-        if (source instanceof DataProvider) {
-          final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
-          if (selectedItem instanceof IntentionActionWithTextCaching) {
-            final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
-            if (action instanceof SuppressIntentionActionFromFix) {
-              if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-                final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-                if (container != null) {
-                  injectionHighlighter.highlight(container, Collections.singletonList(container));
-                }
+    myPopup.addListSelectionListener(e -> {
+      final Object source = e.getSource();
+      highlighter.dropHighlight();
+      injectionHighlighter.dropHighlight();
+
+      if (source instanceof DataProvider) {
+        final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+        if (selectedItem instanceof IntentionActionWithTextCaching) {
+          final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
+          if (action instanceof SuppressIntentionActionFromFix) {
+            if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+              final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
+              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+              if (container != null) {
+                injectionHighlighter.highlight(container, Collections.singletonList(container));
               }
-              else {
-                final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-                if (container != null) {
-                  highlighter.highlight(container, Collections.singletonList(container));
-                }
+            }
+            else {
+              final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+              if (container != null) {
+                highlighter.highlight(container, Collections.singletonList(container));
               }
             }
           }
@@ -515,12 +510,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     }
 
     Disposer.register(this, myPopup);
-    Disposer.register(myPopup, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-      }
-    });
+    Disposer.register(myPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
   }
 
   void canceled(@NotNull ListPopupStep intentionListStep) {
@@ -592,9 +582,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     @Override
     @NotNull
     public String getText() {
-      return mySettings.isEnabled(myAction) ?
-             CodeInsightBundle.message("disable.intention.action", myFamilyName) :
-             CodeInsightBundle.message("enable.intention.action", myFamilyName);
+      return CodeInsightBundle.message(mySettings.isEnabled(myAction) ? "disable.intention.action" : "enable.intention.action", myFamilyName);
     }
 
     @Override

@@ -58,7 +58,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
-  private final AtomicBoolean isInitializationWasStarted = new AtomicBoolean();
+  private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
   @NotNull
   private ExternalProjectsState myState = new ExternalProjectsState();
@@ -118,7 +118,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   }
 
   public void init() {
-    if (isInitializationWasStarted.getAndSet(true)) return;
+    if (isInitializationStarted.getAndSet(true)) return;
 
     myWatcher = new ExternalSystemProjectsWatcher(myProject);
     myWatcher.start();

@@ -42,7 +42,6 @@ class CompilationTasksImpl extends CompilationTasks {
 
     ensureKotlinCompilerAddedToClassPath()
 
-    context.projectBuilder.cleanOutput()
     context.messages.progress("Compiling project")
     try {
       if (moduleNames == null) {
