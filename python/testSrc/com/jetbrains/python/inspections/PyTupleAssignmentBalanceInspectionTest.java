@@ -59,7 +59,7 @@ public class PyTupleAssignmentBalanceInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    final String path = "inspections/PyTupleAssignmentBalanceInspectionTest/" + getTestName(true) + ".py";
+    final String path = "inspections/PyTupleAssignmentBalanceInspection/" + getTestName(true) + ".py";
 
     myFixture.configureByFile(path);
     myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
