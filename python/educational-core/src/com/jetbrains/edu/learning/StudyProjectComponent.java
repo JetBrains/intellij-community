@@ -162,7 +162,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final ArrayList<Lesson> updatedLessons = new ArrayList<>();
 
     int lessonIndex = 0;
-    for (Lesson lesson : course.getLessons()) {
+    for (Lesson lesson : course.getLessons(true)) {
       lessonIndex += 1;
       Lesson studentLesson = currentCourse.getLesson(lesson.getId());
       final String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex);
