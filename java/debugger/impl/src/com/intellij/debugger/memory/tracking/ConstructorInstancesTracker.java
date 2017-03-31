@@ -55,7 +55,7 @@ import java.util.List;
 
 public class ConstructorInstancesTracker implements TrackerForNewInstances, Disposable, BackgroundTracker {
   private static final int TRACKED_INSTANCES_LIMIT = 2000;
-  private final ReferenceType myReference;
+  private final String myClassName;
   private final Project myProject;
   private final MyConstructorBreakpoints myBreakpoint;
 
@@ -71,10 +71,10 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
                                      @NotNull XDebugSession debugSession,
                                      @NotNull InstancesTracker instancesTracker) {
-    myReference = ref;
     myProject = debugSession.getProject();
     myIsBackgroundTrackingEnabled = instancesTracker.isBackgroundTrackingEnabled();
 
+    myClassName = ref.name();
     final DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
       .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
 
@@ -107,7 +107,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
                                                       new LineBreakpointState<>());
 
     myBreakpoint = new MyConstructorBreakpoints(myProject, bpn);
-    myBreakpoint.createRequestForPreparedClass(debugProcess, myReference);
+    myBreakpoint.createRequestForPreparedClass(debugProcess, ref);
     Disposer.register(myBreakpoint, () -> debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
@@ -240,7 +240,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         if (suspendContext != null) {
           final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
           ObjectReference thisRef = getThisObject(suspendContext, event);
-          if (myReference.equals(thisRef.referenceType()) && data != null) {
+          if (thisRef.referenceType().name().equals(myClassName) && data != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
             data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
