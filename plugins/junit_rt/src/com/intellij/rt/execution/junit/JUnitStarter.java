@@ -252,12 +252,13 @@ public class JUnitStarter {
     return Class.forName(agentName);
   }
 
-  public static void printClassesList(List classNames, String packageName, String category, File tempFile) throws IOException {
+  public static void printClassesList(List classNames, String packageName, String category, String filters, File tempFile) throws IOException {
     final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
 
     try {
       writer.println(packageName); //package name
       writer.println(category); //category
+      writer.println(filters); //patterns
       for (int i = 0; i < classNames.size(); i++) {
         writer.println(classNames.get(i));
       }

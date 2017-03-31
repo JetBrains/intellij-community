@@ -238,7 +238,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getForkMode();
   }
 
-  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
+  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
+                                                    Function<T, String> nameFunction,
+                                                    String packageName,
                                                     boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
     try {
       if (createTempFile) {
@@ -284,7 +286,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
 
       final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory() : "";
-      JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
+      final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
+      JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
 
       writeClassesPerModule(packageName, javaParameters, perModule);
     }
