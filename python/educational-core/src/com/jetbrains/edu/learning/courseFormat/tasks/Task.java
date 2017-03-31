@@ -233,7 +233,7 @@ public class Task implements StudyItem {
 
   public Task copy() {
     Element element = XmlSerializer.serialize(this);
-    Task copy = XmlSerializer.deserialize(element, Task.class);
+    Task copy = XmlSerializer.deserialize(element, getClass());
     copy.initTask(null, true);
     return copy;
   }
