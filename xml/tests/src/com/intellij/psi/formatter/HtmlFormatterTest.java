@@ -16,25 +16,14 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 public class HtmlFormatterTest extends XmlFormatterTestBase {
   @Override
@@ -47,10 +36,6 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     return "html";
   }
   
-  private interface OptionsSetup {
-    void setupOptions(@NotNull CodeStyleSettings settings);
-  }
-
   public void test1() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.HTML_KEEP_BLANK_LINES = 0;
@@ -237,7 +222,6 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       bodyTag,
       bodyTag.getTextRange().getStartOffset(),
       bodyTag.getTextRange().getEndOffset());
-
   }
 
   public void testXhtmlReformatDoesntProduceAssertion() throws Exception {
@@ -258,53 +242,6 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   }
   
-  public void testPerformance() throws Exception {
-    doTestPerformance("html reformat with range", 5000, null);
-  }
-
-  public void testQuotesReplacementPerformance() throws Exception {
-    doTestPerformance("Quotes replacement", 1500, (settings)->{
-      settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
-      settings.HTML_ENFORCE_QUOTES = true;
-    });
-  }
-
-  public void doTestPerformance(@NotNull String message, int expectedTime, OptionsSetup optionsSetup) throws Exception {
-    CodeStyleSettings settings = new CodeStyleSettings();
-    if (optionsSetup != null) optionsSetup.setupOptions(settings);
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-    final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    String text = loadFile(getTestName(true) + ".html", null);
-    // Cache injectors beforehand
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject()))
-      .processInjectableElements(Arrays.asList(PsiElement.EMPTY_ARRAY), null);
-    final PsiFile file = createFileFromText(text, "before.html", PsiFileFactory.getInstance(getProject()));
-    try {
-      PlatformTestUtil.startPerformanceTest(
-        message, expectedTime, () -> {
-          try {
-            WriteCommandAction.runWriteCommandAction(getProject(), () ->
-              CodeStyleManager.getInstance(getProject())
-                .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset()));
-          }
-          catch (Exception ex) {
-            throw new RuntimeException(ex);
-          }
-          finally {
-            doReformatRangeTest = false;
-          }
-        }
-      ).cpuBound().useLegacyScaling().assertTiming();
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-      final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
-      if (selectedFiles.length > 0) editorManager.closeFile(selectedFiles[0]);
-    }
-    String expected = loadFile(getTestName(true) + "_after.html", null);
-    assertEquals(expected, file.getText());
-  }
-
   public void testInvalidChar() throws Exception {
     doTest();
   }
