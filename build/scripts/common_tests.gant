@@ -16,7 +16,6 @@
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
-includeTargets << new File("${guessHome(this)}/build/scripts/cucumber-tests.gant")
 
 requireProperty("out", "$home/out")
 
