@@ -56,45 +56,28 @@ public abstract class UpdaterTestCase {
     return new File(tempDir.getRoot(), fileName);
   }
 
+  @SuppressWarnings("FieldMayBeStatic")
   protected static class CheckSums {
     public final long README_TXT;
     public final long IDEA_BAT;
-    public final long ANNOTATIONS_JAR;
-    public final long ANNOTATIONS_JAR_BIN;
-    public final long BOOTSTRAP_JAR;
-    public final long BOOTSTRAP_JAR_BINARY;
-    public final long FOCUS_KILLER_DLL;
-    public final long ANNOTATIONS_JAR_NORM;
-    public final long ANNOTATIONS_CHANGED_JAR_BIN;
-    public final long ANNOTATIONS_CHANGED_JAR_NORM;
-    public final long BOOT_JAR_NORM;
-    public final long BOOT2_JAR_NORM;
-    public final long BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM;
-    public final long BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM;
-    public final long BOOTSTRAP_JAR_NORM;
-    public final long BOOTSTRAP_DELETED_JAR_NORM;
-    public final long LINK_TO_README_TXT;
-    public final long LINK_TO_DOT_README_TXT;
+    public final long ANNOTATIONS_JAR = 2119442657L;
+    public final long ANNOTATIONS_JAR_BIN = 2525796836L;
+    public final long ANNOTATIONS_CHANGED_JAR = 4088078858L;
+    public final long ANNOTATIONS_CHANGED_JAR_BIN = 2587736223L;
+    public final long BOOT_JAR = 3018038682L;
+    public final long BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR = 1972168924;
+    public final long BOOT2_JAR = 2406818996L;
+    public final long BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR = 2406818996L;
+    public final long BOOTSTRAP_JAR = 2082851308L;
+    public final long BOOTSTRAP_JAR_BIN = 2745721972L;
+    public final long BOOTSTRAP_DELETED_JAR = 544883981L;
+    public final long FOCUS_KILLER_DLL = 1991212227L;
+    public final long LINK_TO_README_TXT = 2305843011042707672L;
+    public final long LINK_TO_DOT_README_TXT = 2305843009503057206L;
 
     public CheckSums(boolean windowsLineEnds) {
       README_TXT = windowsLineEnds ? 1272723667L : 7256327L;
       IDEA_BAT = windowsLineEnds ? 3088608749L : 1493936069L;
-      ANNOTATIONS_JAR = 2119442657L;
-      ANNOTATIONS_JAR_BIN = 2525796836L;
-      BOOTSTRAP_JAR = 2082851308L;
-      BOOTSTRAP_JAR_BINARY = 2745721972L;
-      FOCUS_KILLER_DLL = 1991212227L;
-      ANNOTATIONS_JAR_NORM = 2119442657L;
-      ANNOTATIONS_CHANGED_JAR_BIN = 2587736223L;
-      ANNOTATIONS_CHANGED_JAR_NORM = 4088078858L;
-      BOOT_JAR_NORM = 3018038682L;
-      BOOT2_JAR_NORM = 2406818996L;
-      BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM = 2406818996L;
-      BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM = 1972168924;
-      BOOTSTRAP_JAR_NORM = 2082851308;
-      BOOTSTRAP_DELETED_JAR_NORM = 544883981L;
-      LINK_TO_README_TXT = 2305843011042707672L;
-      LINK_TO_DOT_README_TXT = 2305843009503057206L;
     }
   }
 }
