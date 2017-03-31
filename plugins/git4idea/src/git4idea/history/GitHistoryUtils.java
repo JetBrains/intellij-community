@@ -51,11 +51,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
-import git4idea.history.browser.SymbolicRefs;
-import git4idea.history.browser.SymbolicRefsI;
-import git4idea.history.wholeTree.AbstractHash;
 import git4idea.i18n.GitBundle;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
@@ -907,74 +903,6 @@ public class GitHistoryUtils {
   @NotNull
   private static List<Hash> getParentHashes(@NotNull VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
     return ContainerUtil.map(record.getParentsHashes(), factory::createHash);
-  }
-
-  @NotNull
-  private static GitHeavyCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
-                                             @NotNull GitLogRecord record) throws VcsException {
-    final Collection<String> currentRefs = record.getRefs();
-    List<String> locals = new ArrayList<>();
-    List<String> remotes = new ArrayList<>();
-    List<String> tags = new ArrayList<>();
-    final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
-
-    GitHeavyCommit
-      gitCommit = new GitHeavyCommit(root, AbstractHash.create(record.getHash()), new SHAHash(record.getHash()), record.getAuthorName(),
-                                     record.getCommitterName(),
-                                     record.getDate(), record.getSubject(), record.getFullMessage(),
-                                     new HashSet<>(Arrays.asList(record.getParentsHashes())), record.getFilePaths(root),
-                                     record.getAuthorEmail(),
-                                     record.getCommitterEmail(), tags, locals, remotes,
-                                     record.parseChanges(project, root), record.getAuthorTimeStamp());
-    gitCommit.setCurrentBranch(s);
-    return gitCommit;
-  }
-
-  @Nullable
-  private static String parseRefs(@Nullable SymbolicRefsI refs, @NotNull Collection<String> currentRefs, @NotNull List<String> locals,
-                                  @NotNull List<String> remotes, @NotNull List<String> tags) {
-    if (refs == null) {
-      return null;
-    }
-    for (String ref : currentRefs) {
-      final SymbolicRefs.Kind kind = refs.getKind(ref);
-      if (SymbolicRefs.Kind.LOCAL.equals(kind)) {
-        locals.add(ref);
-      }
-      else if (SymbolicRefs.Kind.REMOTE.equals(kind)) {
-        remotes.add(ref);
-      }
-      else {
-        tags.add(ref);
-      }
-    }
-    if (refs.getCurrent() != null && currentRefs.contains(refs.getCurrent().getName())) {
-      return refs.getCurrent().getName();
-    }
-    return null;
-  }
-
-  @Deprecated
-  @NotNull
-  public static List<GitHeavyCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
-                                                    @NotNull Collection<String> commitsIds) throws VcsException {
-    path = getLastCommitName(project, path);     // adjust path using change manager
-    VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setSilent(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<>(commitsIds));
-
-    String output = h.run();
-    final List<GitHeavyCommit> rc = new ArrayList<>();
-    for (GitLogRecord record : parser.parse(output)) {
-      final GitHeavyCommit gitCommit = createCommit(project, refs, root, record);
-      rc.add(gitCommit);
-    }
-    return rc;
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {
