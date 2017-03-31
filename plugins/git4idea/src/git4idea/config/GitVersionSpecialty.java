@@ -47,6 +47,10 @@ public enum GitVersionSpecialty {
     }
   },
 
+  /**
+   * @deprecated on Windows, quotes are now added automatically whenever necessary on the GeneralCommandLine level
+   */
+  @Deprecated
   NEEDS_QUOTES_IN_STASH_NAME {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

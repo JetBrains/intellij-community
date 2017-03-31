@@ -24,7 +24,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +42,9 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class GeneralCommandLineTest {
-  private static final String[] ARGUMENTS = {
+  public static final String[] ARGUMENTS = {
     "with space",
+    "  leading and trailing  spaces  ",
     "\"quoted\"",
     "\"quoted with spaces\"",
     "",
@@ -55,8 +55,52 @@ public class GeneralCommandLineTest {
     "space \"and \"quotes\" inside",
     "\"space \"and \"quotes\" inside\"",
     "param2",
+    "\\backslash",
     "trailing slash\\",
-    (SystemInfo.isWindows ? "windows_sucks" : "two trailing slashes\\\\")
+    "two trailing slashes\\\\",
+    "trailing-slash\\",
+    "two-trailing-slashes\\\\",
+    "\"quoted slash\\\"",
+    "\"quoted two slashes\\\\\"",
+    "\"quoted-slash\\\"",
+    "\"quoted-two-slashes\\\\\"",
+    "some\ttab",
+    "^% % %%% %\"%%",
+    //"%PATH%",
+    "^",
+    "\\^",
+    "^ ^^",
+    "specials \\  &  |  >  <  ^",
+    "carets: ^ ^^ ^^^ ^^^^",
+    "caret escape ^\\  ^&  ^|  ^>  ^<  ^^",
+    "caret escape2 ^^\\  ^^&  ^^|  ^^>  ^^<  ^^^",
+    "&<>()@^|",
+    "\"^\"",
+    "\"^\"^\"",
+    "\"^\"\"^^\"^^^",
+    "\"^&<>(\")@^|\"",
+    " < \" > ",
+    " \" ^ \" ",
+    " \" ^ \" ^ \" ",
+    " \" ^ \" \" ^ ^\" ^^^ ",
+    " \" ^ &< >( \" ) @ ^ | \" ",
+    " < \" > ",
+    "*",
+    "\\*",
+    "\"*\"",
+    "*.*",
+    "?",
+    "???",
+    "??????",
+    "????????",    // testData
+    "??????????",
+    "????????????",
+    "??????????????",
+    "????????????????",
+    "??????????????????",    // platform-tests.iml
+    "\\?",
+    "\"?\"",
+    "*.???", // ^ the Xmas tree above is to catch at least one file matching those globs
   };
 
   @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_RU = "Юникоде";
@@ -141,10 +185,9 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaApp() throws Exception {
-    String[] args = ArrayUtil.mergeArrays(ARGUMENTS, "&<>()@^|", "\"&<>()@^|\"");
-    Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, args);
+    Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String output = execHelper(command);
-    checkParamPassing(output, args);
+    checkParamPassing(output, ARGUMENTS);
   }
 
   @Test(timeout = 60000)
@@ -155,6 +198,21 @@ public class GeneralCommandLineTest {
     String javaPath = command.first.getExePath();
     command.first.setExePath(ExecUtil.getWindowsShellName());
     command.first.getParametersList().prependAll("/D", "/C", "call", javaPath);
+    String output = execHelper(command);
+    checkParamPassing(output, ARGUMENTS);
+  }
+
+  @Test(timeout = 60000)
+  public void passingArgumentsToJavaAppThroughNestedWinShell() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+
+    Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
+    String javaPath = command.first.getExePath();
+    command.first.setExePath(ExecUtil.getWindowsShellName());
+    command.first.getParametersList().prependAll("/D", "/C", "call",
+                                                 ExecUtil.getWindowsShellName(), "/D", "/C", "call",
+                                                 ExecUtil.getWindowsShellName(), "/D", "/C", "@call",
+                                                 javaPath);
     String output = execHelper(command);
     checkParamPassing(output, ARGUMENTS);
   }
@@ -177,6 +235,38 @@ public class GeneralCommandLineTest {
   }
 
   @Test(timeout = 60000)
+  public void passingArgumentsToJavaAppThroughCmdScriptAndNestedWinShell() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+
+    Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
+    File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
+    try {
+      GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "call",
+                                                         ExecUtil.getWindowsShellName(), "/D", "/C", "@call",
+                                                         ExecUtil.getWindowsShellName(), "/D", "/C", "call",
+                                                         script.getAbsolutePath());
+      commandLine.addParameters(ARGUMENTS);
+      String output = execHelper(pair(commandLine, command.second));
+      checkParamPassing(output, ARGUMENTS);
+    }
+    finally {
+      FileUtil.delete(script);
+    }
+  }
+
+  @Test(timeout = 60000)
+  public void passingArgumentsToEchoThroughWinShell() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+
+    for (String argument : ARGUMENTS) {
+      if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
+      GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
+      String output = execAndGetOutput(commandLine);
+      assertEquals(commandLine.getPreparedCommandLine(), argument + "\n", output);
+    }
+  }
+
+  @Test(timeout = 60000)
   public void unicodeParameters() throws Exception {
     assumeTrue(UNICODE != null);
 
@@ -192,7 +282,7 @@ public class GeneralCommandLineTest {
 
     String string = "http://localhost/wtf?a=b&c=d";
     String echo = ExecUtil.execAndReadLine(createCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
-    assertEquals('"' + string + '"', echo);
+    assertEquals(string, echo);
   }
 
   @Test(timeout = 60000)
@@ -201,14 +291,13 @@ public class GeneralCommandLineTest {
 
     String scriptPrefix = "my_script";
     for (String scriptExt : new String[]{".cmd", ".bat"}) {
-      File script = ExecUtil.createTempExecutableScript(scriptPrefix, scriptExt, "@echo %1\n");
-      String param = "a&b";
-      GeneralCommandLine commandLine = createCommandLine(script.getAbsolutePath(), param);
-      String text = commandLine.getPreparedCommandLine(Platform.WINDOWS);
-      assertEquals(commandLine.getExePath() + "\n" + StringUtil.wrapWithDoubleQuote(param), text);
+      File script = ExecUtil.createTempExecutableScript(scriptPrefix, scriptExt, "@echo %*\n");
       try {
-        String output = execAndGetOutput(commandLine);
-        assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+        for (String argument : ARGUMENTS) {
+          GeneralCommandLine commandLine = createCommandLine(script.getAbsolutePath(), GeneralCommandLine.inescapableQuote(argument));
+          String output = execAndGetOutput(commandLine);
+          assertEquals(commandLine.getPreparedCommandLine(), StringUtil.wrapWithDoubleQuote(argument), output.trim());
+        }
       }
       finally {
         FileUtil.delete(script);
@@ -223,7 +312,7 @@ public class GeneralCommandLineTest {
     String param = "a&b";
     GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
     String output = execAndGetOutput(commandLine);
-    assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+    assertEquals(param, output.trim());
   }
 
   @Test(timeout = 60000)
@@ -301,8 +390,11 @@ public class GeneralCommandLineTest {
     ProcessOutput output = ExecUtil.execAndGetOutput(commandLine);
     int ec = output.getExitCode();
     if (ec != 0) {
-      fail("Command:\n" + commandLine.getCommandLineString() + "\nStdOut:\n" + output.getStdout() + "\nStdErr:\n" + output.getStderr());
+      fail("Command:\n" + commandLine.getPreparedCommandLine() +
+           "\nStdOut:\n" + output.getStdout() +
+           "\nStdErr:\n" + output.getStderr());
     }
+    assertTrue(output.getStderr(), output.getStderr().isEmpty());
     return output.getStdout();
   }
 
