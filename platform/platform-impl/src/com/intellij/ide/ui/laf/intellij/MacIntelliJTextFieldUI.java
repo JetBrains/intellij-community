@@ -19,8 +19,9 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
-import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,9 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -160,15 +163,34 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      RectanglePainter.paint(g2, r.x + JBUI.scale(3), r.y + JBUI.scale(3),
-                             r.width - JBUI.scale(6), r.height - JBUI.scale(6),
-                             JBUI.scale(8), c.getBackground(), Gray.xBC);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.translate(r.x, r.y);
+
+      int arc = JBUI.scale(6);
+      double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+      Shape outerShape = new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
+                                                     r.width - JBUI.scale(6),
+                                                     r.height - JBUI.scale(6),
+                                                     arc, arc);
+      g2.setColor(c.getBackground());
+      g2.fill(outerShape);
+
+      Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      path.append(outerShape, false);
+      path.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
+                                              r.width - JBUI.scale(6) - lw*2,
+                                              r.height - JBUI.scale(6) - lw*2,
+                                              arc-lw, arc-lw), false);
+
+      g2.setColor(Gray.xBC);
+      g2.fill(path);
 
       if (c.hasFocus() && c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
-        g2.translate(r.x, r.y);
-        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, JBUI.scale(4), JBUI.scale(6));
-        g2.translate(-r.x, -r.y);
+        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc);
       }
+
+      g2.translate(-r.x, -r.y);
 
       boolean withHistoryPopup = isSearchFieldWithHistoryPopup(c);
       Icon label = getSearchIcon(c);
@@ -234,12 +256,31 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   public static void paintAquaSearchFocusRing(Graphics2D g, Rectangle r, Component c) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      RectanglePainter.paint(g, r.x + JBUI.scale(3), r.y + JBUI.scale(3),
-                             r.width - JBUI.scale(6), r.height - JBUI.scale(6),
-                             JBUI.scale(8), c.getBackground(), Gray.xBC);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.translate(r.x, r.y);
+
+      int arc = JBUI.scale(6);
+      double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+      Shape outerShape = new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
+                                                     r.width - JBUI.scale(6),
+                                                     r.height - JBUI.scale(6),
+                                                     arc, arc);
+      g2.setColor(c.getBackground());
+      g2.fill(outerShape);
+
+      Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      path.append(outerShape, false);
+      path.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
+                                              r.width - JBUI.scale(6) - lw*2,
+                                              r.height - JBUI.scale(6) - lw*2,
+                                              arc-lw, arc-lw), false);
+
+      g2.setColor(Gray.xBC);
+      g2.fill(path);
+
       if (c.hasFocus()) {
-        g.translate(r.x, r.y);
-        DarculaUIUtil.paintFocusBorder(g, r.width, r.height, JBUI.scale(4), JBUI.scale(6));
+        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc);
       }
     }
     finally {
