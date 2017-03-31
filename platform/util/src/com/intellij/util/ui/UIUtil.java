@@ -397,7 +397,7 @@ public class UIUtil {
     } catch (Throwable ignore) {
     }
     if (SystemInfo.isMac) {
-      return jreHiDPI = (SystemInfo.isAppleJvm ? false : true);
+      return jreHiDPI = (!SystemInfo.isAppleJvm);
     }
     return jreHiDPI;
   }
@@ -1226,7 +1226,7 @@ public class UIUtil {
   }
 
   public static Color getTextFieldBackground() {
-    return isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIManager.getColor("TextField.background");
+    return UIManager.getColor(isUnderGTKLookAndFeel() ? "EditorPane.background" : "TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -1679,15 +1679,15 @@ public class UIUtil {
       drawLine(g, i1, y, i1, y);
     }
 
-    for (i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2) {
+    for (i1 = y + (i1 != x1 + 1 ? 2 : 1); i1 <= y1; i1 += 2) {
       drawLine(g, x1, i1, x1, i1);
     }
 
-    for (i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2) {
+    for (i1 = x1 - (i1 != y1 + 1 ? 2 : 1); i1 >= x; i1 -= 2) {
       drawLine(g, i1, y1, i1, y1);
     }
 
-    for (i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2) {
+    for (i1 = y1 - (i1 != x - 1 ? 2 : 1); i1 >= y; i1 -= 2) {
       drawLine(g, x, i1, x, i1);
     }
   }
@@ -2532,6 +2532,13 @@ public class UIUtil {
         return style;
       }
     };
+  }
+  //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
+  public static Object htmlInjectionGuard(Object toRender) {
+    if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
+      toRender = "<html>" + StringUtil.escapeXml((String)toRender);
+    }
+    return toRender;
   }
 
   public static void removeScrollBorder(final Component c) {
