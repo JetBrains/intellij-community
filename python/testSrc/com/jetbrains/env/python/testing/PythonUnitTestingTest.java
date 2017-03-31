@@ -74,7 +74,21 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       "....(i=8)(-)\n" +
                                       "....(i=9)(+)\n";
         Assert.assertEquals("", expectedResult, runner.getFormattedTestTree());
+      }
+    });
+  }
 
+  @EnvTestTagsRequired(tags = "python3") // No subtest in py2
+  @Test
+  public void testSubtestSkipped() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py") {
+      @Override
+      protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all) {
+        Assert.assertEquals(runner.getFormattedTestTree(), 8, runner.getPassedTestsCount());
+        Assert.assertEquals(runner.getFormattedTestTree(), 2, runner.getIgnoredTestsCount());
       }
     });
   }
