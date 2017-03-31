@@ -40,6 +40,7 @@ import java.beans.PropertyChangeListener;
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   private static final Border ourDefaultEditorBorder = JBUI.Borders.empty(1, 0);
 
+  static final int VALUE_OFFSET = JBUI.scale(5);
   private Icon DEFAULT_ICON;
 
   private PropertyChangeListener myEditorChangeListener;
@@ -243,8 +244,8 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
-    rect.x += JBUI.scale(5);
-    rect.width -= JBUI.scale(5);
+    rect.x += VALUE_OFFSET;
+    rect.width -= VALUE_OFFSET;
     return rect;
   }
 

@@ -156,6 +156,22 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return null;
   }
 
+  /**
+   * Returns tooltip text for the given list item or null if no tooltip is available.
+   *
+   * <p>This method is invoked by panel's list cell render in order to set a tooltip text for the list cell render component.
+   * It is invoked before {@link #doCustomizeCellRenderer(SimpleColoredComponent, JList, Object, int, boolean, boolean)},
+   * thus the tooltip may still be reset in {@code doCustomizeCellRenderer}.
+   *
+   * @param t the list item
+   * @return the text to display in a tooltip for the given list item
+   * @since 2017.2
+   */
+  @Nullable
+  protected String getItemTooltipText(T t) {
+    return null;
+  }
+
   protected abstract boolean hasChildren(T t);
 
   /**
@@ -190,7 +206,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       ScrollPaneFactory.createScrollPane(myList,
                                          ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    return ListWithFilter.wrap(myList, pane, (Function<T, String>)o -> getItemText(o));
+    return ListWithFilter.wrap(myList, pane, o -> getItemText(o));
   }
 
   protected JBList<T> createList() {
@@ -298,13 +314,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private void installSpeedSearch(JBList list) {
-    final ListSpeedSearch search = new ListSpeedSearch(list, new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        //noinspection unchecked
-        return getItemText((T)o);
-      }
-    });
+    //noinspection unchecked
+    final ListSpeedSearch search = new ListSpeedSearch(list, (Function<Object, String>)o -> getItemText((T)o));
     search.setComparator(new SpeedSearchComparator(false));
   }
 
@@ -346,6 +357,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         try {
           setIcon(getItemIcon(t));
           append(getItemText(t));
+          setToolTipText(getItemTooltipText(t));
         }
         catch (IndexNotReadyException e) {
           append("loading...");
@@ -379,6 +391,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
                                            : AllIcons.Icons.Ide.NextStepGrayed);
           result.add(this, BorderLayout.CENTER);
           result.add(childrenLabel, BorderLayout.EAST);
+          result.setToolTipText(getToolTipText());
           return result;
         }
         return this;

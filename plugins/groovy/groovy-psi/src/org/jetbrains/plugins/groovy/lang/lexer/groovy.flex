@@ -34,12 +34,25 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 %type IElementType
 
 %{
+  @Override
   protected int getInitialState() {
     return YYINITIAL;
+  }
+
+  @Override
+  protected int getDivisionExpectedState() {
+    return DIVISION_EXPECTED;
+  }
+
+  @Override
+  protected int[] getDivisionStates() {
+    return new int[] {YYINITIAL, IN_INNER_BLOCK};
   }
 %}
 
 %state IN_INNER_BLOCK
+
+%xstate DIVISION_EXPECTED
 
 %xstate IN_SINGLE_GSTRING
 %xstate IN_TRIPLE_GSTRING
@@ -407,22 +420,32 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+<DIVISION_EXPECTED> {
+  {WHITE_SPACE} {
+    return TokenType.WHITE_SPACE;
+  }
+  "/"/[^/*=] {
+    yyendstate(DIVISION_EXPECTED);
+    return storeToken(mDIV);
+  }
+  "$/" {
+    yypushback(1);
+    yyendstate(DIVISION_EXPECTED);
+    return storeToken(mDOLLAR);
+  }
+  [^] {
+    yypushback(1);
+    yyendstate(DIVISION_EXPECTED);
+  }
+}
+
 "/"                                       {
-                                            if (isRegexExpected()) {
-                                               yybeginstate(IN_SLASHY_STRING);
-                                               return storeToken(mREGEX_BEGIN);
-                                            } else {
-                                               return storeToken(mDIV);
-                                            }
+                                            yybeginstate(IN_SLASHY_STRING);
+                                            return storeToken(mREGEX_BEGIN);
                                           }
 "$/"                                      {
-                                            if (isRegexExpected()) {
-                                              yybeginstate(IN_DOLLAR_SLASH_STRING);
-                                              return storeToken(mDOLLAR_SLASH_REGEX_BEGIN);
-                                            } else {
-                                              yypushback(1);
-                                              return storeToken(mDOLLAR);
-                                            }
+                                            yybeginstate(IN_DOLLAR_SLASH_STRING);
+                                            return storeToken(mDOLLAR_SLASH_REGEX_BEGIN);
                                           }
 "{"                                       {
                                             yybeginstate(YYINITIAL, NLS_AFTER_LBRACE);

@@ -16,7 +16,6 @@
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
-includeTargets << new File("${guessHome(this)}/build/scripts/cucumber-tests.gant")
 
 requireProperty("out", "$home/out")
 
@@ -108,5 +107,5 @@ target('run_tests': 'Run java tests') {
 }
 
 target('default' : "Run all tests") {
-  depends([compile, run_tests, run_cucumber_tests])
+  depends([compile, run_tests])
 }
