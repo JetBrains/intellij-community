@@ -194,7 +194,7 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  public Course getCourse(String zipFilePath) {
+  public static Course getCourse(String zipFilePath) {
     try {
       final JBZipFile zipFile = new JBZipFile(zipFilePath);
       final JBZipEntry entry = zipFile.getEntry(EduNames.COURSE_META_FILE);
