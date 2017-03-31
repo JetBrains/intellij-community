@@ -46,6 +46,7 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -367,7 +368,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     final Application app = ApplicationManager.getApplication();
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+      public void appStarting(@Nullable Project projectFromCommandLine) {
         app.invokeLater(() -> {
           JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
           if (component != null) {
