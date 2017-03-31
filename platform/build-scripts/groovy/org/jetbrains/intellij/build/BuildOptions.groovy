@@ -93,4 +93,12 @@ class BuildOptions {
    * change the output directory.
    */
   String outputRootPath = System.getProperty("intellij.build.output.root")
+
+  /**
+   * If {@code true} the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
+   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
+   * <p>By default 'development mode' is enabled if build is not running under continuous integration server (TeamCity).</p>
+   */
+  boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
+                                                                    System.getProperty("teamcity.buildType.id") == null)
 }

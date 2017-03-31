@@ -122,12 +122,24 @@ class BundledJreManager {
     String suffix = arch == JvmArchitecture.x32 ? "_x86" : "_x64"
     String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     Collection<File> jdkFiles = jdkDir.listFiles()?.findAll { it.name.startsWith(prefix) && it.name.endsWith("${suffix}.tar.gz") } ?: [] as List<File>
+    String errorMessage;
     if (jdkFiles.size() > 1) {
-      buildContext.messages.warning("Cannot extract $osDirName JRE: several matching files are found ($jdkFiles)")
-      return null
+      errorMessage = "Cannot extract $osDirName JRE: several matching files are found ($jdkFiles)"
     }
-    if (jdkFiles.isEmpty()) {
-      buildContext.messages.warning("Cannot extract $osDirName JRE: no '${prefix}...${suffix}.tar.gz' files found in $jdkDir")
+    else if (jdkFiles.isEmpty()) {
+      errorMessage = "Cannot extract $osDirName JRE: no '${prefix}...${suffix}.tar.gz' files found in $jdkDir"
+    }
+    else {
+      errorMessage = null
+    }
+
+    if (errorMessage != null) {
+      if (buildContext.options.isInDevelopmentMode) {
+        buildContext.messages.warning(errorMessage)
+      }
+      else {
+        buildContext.messages.error(errorMessage)
+      }
       return null
     }
     return jdkFiles.first()
