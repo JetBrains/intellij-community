@@ -29,8 +29,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -42,8 +40,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
-  private static final RegistryValue ABOVE = Registry.get("editor.breadcrumbs.above");
-
   @Override
   public void runActivity(@NotNull Project project) {
     if (project.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -144,7 +140,8 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   private static void registerWrapper(@NotNull FileEditorManager fileEditorManager,
                                       @NotNull FileEditor fileEditor,
                                       @NotNull BreadcrumbsXmlWrapper wrapper) {
-    if (ABOVE.asBoolean()) {
+    //noinspection deprecation
+    if (wrapper.breadcrumbs.above) {
       fileEditorManager.addTopComponent(fileEditor, wrapper.getComponent());
     }
     else {
@@ -156,7 +153,8 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   private static void disposeWrapper(@NotNull FileEditorManager fileEditorManager,
                                      @NotNull FileEditor fileEditor,
                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
-    if (ABOVE.asBoolean()) {
+    //noinspection deprecation
+    if (wrapper.breadcrumbs.above) {
       fileEditorManager.removeTopComponent(fileEditor, wrapper.getComponent());
     }
     else {
