@@ -30,7 +30,6 @@ import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -108,14 +107,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     myBreakpoint = new MyConstructorBreakpoints(myProject, bpn);
     myBreakpoint.createRequestForPreparedClass(debugProcess, ref);
-    Disposer.register(myBreakpoint, () -> debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() throws Exception {
-        disable();
-        debugProcess.getRequestsManager().deleteRequest(myBreakpoint);
-        myBreakpoint.delete();
-      }
-    }));
   }
 
   public void obsolete() {
@@ -169,7 +160,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   @Override
   public void dispose() {
-    Disposer.dispose(myBreakpoint);
+    myBreakpoint.delete();
     myTrackedObjects.clear();
     myNewObjects = null;
   }
@@ -199,7 +190,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
   }
 
-  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> implements Disposable {
+  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> {
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
     private volatile boolean myIsEnabled = false;
     private volatile boolean myIsDeleted = false;
@@ -227,11 +218,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     void delete() {
+      disable();
       myIsDeleted = true;
-    }
-
-    @Override
-    public void dispose() {
     }
 
     @Override
