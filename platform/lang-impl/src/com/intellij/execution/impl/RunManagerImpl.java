@@ -14,1257 +14,1143 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.impl;
+package com.intellij.execution.impl
 
-import com.intellij.ProjectTopics;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.IconUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ProjectTopics
+import com.intellij.configurationStore.*
+import com.intellij.execution.*
+import com.intellij.execution.configurations.*
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMExternalizableStringList
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.EventDispatcher
+import com.intellij.util.IconUtil
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import org.jdom.Element
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
+import java.util.function.Function
+import javax.swing.Icon
+import kotlin.properties.Delegates
 
-import javax.swing.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
+private val LOG = logger<RunManagerImpl>()
 
-@State(
-  name = "RunManager",
-  defaultStateAsResource = true,
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
-public abstract class RunManagerImpl extends RunManagerEx implements PersistentStateComponent<Element>, NamedComponent, Disposable {
-  protected static final Logger LOG = Logger.getInstance(RunManagerImpl.class);
+@State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
+abstract class RunManagerImpl(internal val project: Project, propertiesComponent: PropertiesComponent) : RunManagerEx(), PersistentStateComponent<Element>, NamedComponent, Disposable {
+  companion object {
+    @JvmField
+    val CONFIGURATION = "configuration"
+    protected val RECENT = "recent_temporary"
+    @JvmField
+    val NAME_ATTR = "name"
+    protected val SELECTED_ATTR = "selected"
+    private val METHOD = "method"
+    private val OPTION = "option"
 
-  final Project myProject;
+    @JvmStatic
+    fun getInstanceImpl(project: Project) = RunManager.getInstance(project) as RunManagerImpl
 
-  private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<>();
+    @JvmStatic
+    fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
+      return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
+    }
 
-  protected final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new ConcurrentSkipListMap<>();
-  private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
-    new LinkedHashMap<>(); // template configurations are not included here
-  protected final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
+    @JvmStatic
+    fun canRunConfiguration(configuration: RunnerAndConfigurationSettings, executor: Executor): Boolean {
+      try {
+        configuration.checkSettings(executor)
+      }
+      catch (ignored: IndexNotReadyException) {
+        return Registry.`is`("dumb.aware.run.configurations")
+      }
+      catch (ignored: RuntimeConfigurationError) {
+        return false
+      }
+      catch (ignored: RuntimeConfigurationException) {
+      }
+      return true
+    }
+  }
+
+  private val myTypesByName = LinkedHashMap<String, ConfigurationType>()
+
+  protected val myTemplateConfigurationsMap = ConcurrentSkipListMap<String, RunnerAndConfigurationSettingsImpl>()
+  private val myConfigurations = LinkedHashMap<String, RunnerAndConfigurationSettings>() // template configurations are not included here
+  protected val mySharedConfigurations: MutableMap<String, Boolean> = ConcurrentHashMap()
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
-  @Nullable private String myLoadedSelectedConfigurationUniqueName = null;
-  @Nullable protected String mySelectedConfigurationId = null;
+  private var myLoadedSelectedConfigurationUniqueName: String? = null
+  protected var mySelectedConfigurationId: String? = null
 
-  private final TimedIconCache myIconCache = new TimedIconCache();
+  private val myIconCache = TimedIconCache()
+  private var myTypes: Array<ConfigurationType> by Delegates.notNull()
+  private val myConfig = RunManagerConfig(propertiesComponent)
 
-  @NonNls
-  protected static final String CONFIGURATION = "configuration";
-  protected static final String RECENT = "recent_temporary";
-  private ConfigurationType[] myTypes;
-  private final RunManagerConfig myConfig;
-  @NonNls
-  protected static final String NAME_ATTR = "name";
-  @NonNls
-  protected static final String SELECTED_ATTR = "selected";
-  @NonNls private static final String METHOD = "method";
-  @NonNls private static final String OPTION = "option";
+  private var myUnknownElements: List<Element>? = null
+  private val myOrder = JDOMExternalizableStringList()
+  protected val myRecentlyUsedTemporaries = ArrayList<RunConfiguration>()
+  private var myOrdered = true
 
-  private List<Element> myUnknownElements = null;
-  private final JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
-  protected final ArrayList<RunConfiguration> myRecentlyUsedTemporaries = new ArrayList<>();
-  private boolean myOrdered = true;
+  protected val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
 
-  protected final EventDispatcher<RunManagerListener> myDispatcher = EventDispatcher.create(RunManagerListener.class);
+  protected val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
-  public RunManagerImpl(@NotNull Project project, @NotNull PropertiesComponent propertiesComponent) {
-    myConfig = new RunManagerConfig(propertiesComponent);
-    myProject = project;
+  protected val schemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
+    object : LazySchemeProcessor<RunConfigurationScheme, RunConfigurationScheme>() {
+      override fun createScheme(dataHolder: SchemeDataHolder<RunConfigurationScheme>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunConfigurationScheme {
+        val settings = RunnerAndConfigurationSettingsImpl(this@RunManagerImpl)
+        val element = dataHolder.read()
+        try {
+          settings.readExternal(element)
+        }
+        catch (e: InvalidDataException) {
+          LOG.error(e)
+        }
 
-    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        RunnerAndConfigurationSettings configuration = getSelectedConfiguration();
+        val factory = settings.factory ?: return UnknownRunConfigurationScheme(name)
+        doLoadConfiguration(element, false, settings, factory)
+        return settings
+      }
+
+      override fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
+        var name = attributeProvider.apply("name")
+        if (name == "<template>" || name == null) {
+          attributeProvider.apply("type")?.let {
+            if (name == null) {
+              name = "<template>"
+            }
+            name += " of type ${it}"
+          }
+        }
+        return name ?: throw IllegalStateException("name is missed in the scheme data")
+      }
+    }, streamProvider = schemeManagerProvider, autoSave = false)
+
+  init {
+    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
+    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        val configuration = selectedConfiguration
         if (configuration != null) {
-          myIconCache.remove(configuration.getUniqueID());
+          myIconCache.remove(configuration.uniqueID)
         }
       }
-    });
-  }
-
-  public static RunManagerImpl getInstanceImpl(@NotNull Project project) {
-    return (RunManagerImpl)RunManager.getInstance(project);
+    })
   }
 
   // separate method needed for tests
-  public final void initializeConfigurationTypes(@NotNull final ConfigurationType[] factories) {
-    Arrays.sort(factories, Comparator.comparing(ConfigurationType::getDisplayName));
+  fun initializeConfigurationTypes(factories: Array<ConfigurationType>) {
+    factories.sortBy { it.displayName }
 
-    final ArrayList<ConfigurationType> types = new ArrayList<>(Arrays.asList(factories));
-    types.add(UnknownConfigurationType.INSTANCE);
-    myTypes = types.toArray(new ConfigurationType[types.size()]);
+    val types = factories.toMutableList()
+    types.add(UnknownConfigurationType.INSTANCE)
+    myTypes = types.toTypedArray()
 
-    for (final ConfigurationType type : factories) {
-      myTypesByName.put(type.getId(), type);
+    for (type in factories) {
+      myTypesByName.put(type.id, type)
     }
 
-    final UnknownConfigurationType broken = UnknownConfigurationType.INSTANCE;
-    myTypesByName.put(broken.getId(), broken);
+    val broken = UnknownConfigurationType.INSTANCE
+    myTypesByName.put(broken.id, broken)
   }
 
-  @Override
-  @NotNull
-  public RunnerAndConfigurationSettings createConfiguration(@NotNull final String name, @NotNull final ConfigurationFactory factory) {
-    return createConfiguration(doCreateConfiguration(name, factory, true), factory);
+  @Suppress("OverridingDeprecatedMember")
+  override fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
+    return createConfiguration(doCreateConfiguration(name, factory, true), factory)
   }
 
-  protected RunConfiguration doCreateConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory, final boolean fromTemplate) {
+  internal fun doCreateConfiguration(name: String, factory: ConfigurationFactory, fromTemplate: Boolean): RunConfiguration {
     if (fromTemplate) {
-      return factory.createConfiguration(name, getConfigurationTemplate(factory).getConfiguration());
+      return factory.createConfiguration(name, getConfigurationTemplate(factory).configuration)
     }
     else {
-      final RunConfiguration configuration = factory.createTemplateConfiguration(myProject, this);
-      configuration.setName(name);
-      return configuration;
+      val configuration = factory.createTemplateConfiguration(project, this)
+      configuration.name = name
+      return configuration
     }
   }
 
-  @Override
-  @NotNull
-  public RunnerAndConfigurationSettings createConfiguration(@NotNull final RunConfiguration runConfiguration,
-                                                            @NotNull final ConfigurationFactory factory) {
-    RunnerAndConfigurationSettings template = getConfigurationTemplate(factory);
-    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
-    settings.importRunnerAndConfigurationSettings((RunnerAndConfigurationSettingsImpl)template);
-    if (!mySharedConfigurations.containsKey(settings.getUniqueID())) {
-      shareConfiguration(settings, isConfigurationShared(template));
+  override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
+    val template = getConfigurationTemplate(factory)
+    val settings = RunnerAndConfigurationSettingsImpl(this, runConfiguration, false)
+    settings.importRunnerAndConfigurationSettings(template)
+    if (!mySharedConfigurations.containsKey(settings.uniqueID)) {
+      shareConfiguration(settings, isConfigurationShared(template))
     }
-    return settings;
+    return settings
   }
 
-  @Override
-  public void dispose() {
-    myTemplateConfigurationsMap.clear();
+  override fun dispose() {
+    myTemplateConfigurationsMap.clear()
   }
 
-  @Override
-  public RunManagerConfig getConfig() {
-    return myConfig;
-  }
+  override fun getConfig() = myConfig
 
-  @Override
-  @NotNull
-  public ConfigurationType[] getConfigurationFactories() {
-    return myTypes.clone();
-  }
+  override fun getConfigurationFactories() = myTypes.clone()
 
-  public ConfigurationType[] getConfigurationFactories(final boolean includeUnknown) {
-    final ConfigurationType[] configurationTypes = myTypes.clone();
+  fun getConfigurationFactories(includeUnknown: Boolean): Array<ConfigurationType> {
     if (!includeUnknown) {
-      final List<ConfigurationType> types = new ArrayList<>();
-      for (ConfigurationType configurationType : configurationTypes) {
-        if (!(configurationType instanceof UnknownConfigurationType)) {
-          types.add(configurationType);
-        }
-      }
-
-      return types.toArray(new ConfigurationType[types.size()]);
+      return myTypes.filter { it !is UnknownConfigurationType }.toTypedArray()
     }
-
-    return configurationTypes;
+    return myTypes.clone()
   }
 
   /**
    * Template configuration is not included
    */
-  @Override
-  @NotNull
-  public List<RunConfiguration> getConfigurationsList(@NotNull ConfigurationType type) {
-    List<RunConfiguration> result = null;
-    for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
-      RunConfiguration configuration = settings.getConfiguration();
-      if (type.getId().equals(configuration.getType().getId())) {
+  override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> {
+    var result: MutableList<RunConfiguration>? = null
+    for (settings in sortedConfigurations) {
+      val configuration = settings.configuration
+      if (type.id == configuration.type.id) {
         if (result == null) {
-          result = new SmartList<>();
+          result = SmartList<RunConfiguration>()
         }
-        result.add(configuration);
+        result.add(configuration)
       }
     }
-    return ContainerUtil.notNullize(result);
+    return ContainerUtil.notNullize(result)
   }
 
-  @Override
-  @NotNull
-  public List<RunConfiguration> getAllConfigurationsList() {
-    Collection<RunnerAndConfigurationSettings> sortedConfigurations = getSortedConfigurations();
+  override fun getAllConfigurationsList(): List<RunConfiguration> {
+    val sortedConfigurations = sortedConfigurations
     if (sortedConfigurations.isEmpty()) {
-      return Collections.emptyList();
+      return emptyList()
     }
 
-    List<RunConfiguration> result = new ArrayList<>(sortedConfigurations.size());
-    for (RunnerAndConfigurationSettings settings : sortedConfigurations) {
-      result.add(settings.getConfiguration());
+    val result = ArrayList<RunConfiguration>(sortedConfigurations.size)
+    for (settings in sortedConfigurations) {
+      result.add(settings.configuration)
     }
-    return result;
+    return result
   }
 
-  @NotNull
-  @Override
-  public RunConfiguration[] getAllConfigurations() {
-    List<RunConfiguration> list = getAllConfigurationsList();
-    return list.toArray(new RunConfiguration[list.size()]);
-  }
+  @Suppress("OverridingDeprecatedMember")
+  override fun getAllConfigurations() = allConfigurationsList.toTypedArray()
 
-  @NotNull
-  @Override
-  public List<RunnerAndConfigurationSettings> getAllSettings() {
-    return new ArrayList<>(getSortedConfigurations());
-  }
+  override fun getAllSettings() = sortedConfigurations.toList()
 
-  @Nullable
-  public RunnerAndConfigurationSettings getSettings(@Nullable RunConfiguration configuration) {
-    if (configuration == null) {
-      return null;
-    }
-
-    for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
-      if (settings.getConfiguration() == configuration) {
-        return settings;
-      }
-    }
-    return null;
-  }
+  fun getSettings(configuration: RunConfiguration) = sortedConfigurations.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
   /**
    * Template configuration is not included
    */
-  @Override
-  @NotNull
-  public List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull ConfigurationType type) {
-    List<RunnerAndConfigurationSettings> result = new SmartList<>();
-    for (RunnerAndConfigurationSettings configuration : getSortedConfigurations()) {
-      ConfigurationType configurationType = configuration.getType();
-      if (configurationType != null && type.getId().equals(configurationType.getId())) {
-        result.add(configuration);
+  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> {
+    val result = SmartList<RunnerAndConfigurationSettings>()
+    for (configuration in sortedConfigurations) {
+      val configurationType = configuration.type
+      if (configurationType != null && type.id == configurationType.id) {
+        result.add(configuration)
       }
     }
-    return result;
+    return result
   }
 
-  @NotNull
-  @Override
-  public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type) {
-    List<RunnerAndConfigurationSettings> list = getConfigurationSettingsList(type);
-    return list.toArray(new RunnerAndConfigurationSettings[list.size()]);
-  }
+  @Suppress("OverridingDeprecatedMember")
+  override fun getConfigurationSettings(type: ConfigurationType) = getConfigurationSettingsList(type).toTypedArray()
 
-  @NotNull
-  @Override
-  public RunConfiguration[] getConfigurations(@NotNull ConfigurationType type) {
-    RunnerAndConfigurationSettings[] settings = getConfigurationSettings(type);
-    RunConfiguration[] result = new RunConfiguration[settings.length];
-    for (int i = 0; i < settings.length; i++) {
-      result[i] = settings[i].getConfiguration();
-    }
-    return result;
-  }
+  @Suppress("OverridingDeprecatedMember")
+  override fun getConfigurations(type: ConfigurationType) = getConfigurationSettingsList(type).map { it.configuration }.toTypedArray()
 
-  @NotNull
-  @Override
-  public Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type) {
-    LinkedHashMap<String, List<RunnerAndConfigurationSettings>> map = new LinkedHashMap<>();
-    List<RunnerAndConfigurationSettings> typeList = new ArrayList<>();
-    List<RunnerAndConfigurationSettings> settings = getConfigurationSettingsList(type);
-    for (RunnerAndConfigurationSettings setting : settings) {
-      String folderName = setting.getFolderName();
+  fun getConfigurationSettings() = myConfigurations.values.toTypedArray()
+
+  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
+    val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
+    val typeList = SmartList<RunnerAndConfigurationSettings>()
+    val settings = getConfigurationSettingsList(type)
+    for (setting in settings) {
+      val folderName = setting.folderName
       if (folderName == null) {
-        typeList.add(setting);
+        typeList.add(setting)
       }
       else {
-        List<RunnerAndConfigurationSettings> list = map.get(folderName);
-        if (list == null) {
-          map.put(folderName, list = new ArrayList<>());
-        }
-        list.add(setting);
+        result.getOrPut(folderName) { SmartList() }.add(setting)
       }
     }
-    LinkedHashMap<String, List<RunnerAndConfigurationSettings>> result = new LinkedHashMap<>();
-    for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : map.entrySet()) {
-      result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
-    }
-    result.put(null, Collections.unmodifiableList(typeList));
-    return Collections.unmodifiableMap(result);
+    result.put(null, Collections.unmodifiableList(typeList))
+    return Collections.unmodifiableMap(result)
   }
 
-  @Override
-  @NotNull
-  public RunnerAndConfigurationSettings getConfigurationTemplate(@NotNull ConfigurationFactory factory) {
-    RunnerAndConfigurationSettings template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
+  override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
+    val key = "${factory.type.id}.${factory.name}"
+    var template = myTemplateConfigurationsMap.get(key)
     if (template == null) {
-      template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject, this), true);
-      template.setSingleton(factory.isConfigurationSingletonByDefault());
-      if (template.getConfiguration() instanceof UnknownRunConfiguration) {
-        ((UnknownRunConfiguration)template.getConfiguration()).setDoNotStore(true);
+      template = RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(project, this), true)
+      template.isSingleton = factory.isConfigurationSingletonByDefault
+      (template.configuration as? UnknownRunConfiguration)?.let {
+        it.isDoNotStore = true
       }
 
-      myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), template);
+      schemeManager.addScheme(template)
+
+      myTemplateConfigurationsMap.put(key, template)
     }
-    return template;
+    return template
   }
 
-  @Override
-  public void addConfiguration(RunnerAndConfigurationSettings settings, boolean shared, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    String existingId = findExistingConfigurationId(settings);
-    String newId = settings.getUniqueID();
-    RunnerAndConfigurationSettings existingSettings = null;
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings, shared: Boolean, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
+    val existingId = findExistingConfigurationId(settings)
+    val newId = settings.uniqueID
+    var existingSettings: RunnerAndConfigurationSettings? = null
 
     if (existingId != null) {
-      existingSettings = myConfigurations.remove(existingId);
-      mySharedConfigurations.remove(existingId);
+      existingSettings = myConfigurations.remove(existingId)
+      mySharedConfigurations.remove(existingId)
     }
 
-    if (mySelectedConfigurationId != null && mySelectedConfigurationId.equals(existingId)) {
-      setSelectedConfigurationId(newId);
+    if (mySelectedConfigurationId != null && mySelectedConfigurationId == existingId) {
+      setSelectedConfigurationId(newId)
     }
-    myConfigurations.put(newId, settings);
+    myConfigurations.put(newId, settings)
 
-    RunConfiguration configuration = settings.getConfiguration();
+    val configuration = settings.configuration
     if (existingId == null) {
-      refreshUsagesList(configuration);
+      refreshUsagesList(configuration)
     }
-    checkRecentsLimit();
+    checkRecentsLimit()
 
-    mySharedConfigurations.put(newId, shared);
+    mySharedConfigurations.put(newId, shared)
     if (shared) {
-      settings.setTemporary(false);
+      settings.isTemporary = false
     }
-    setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent);
+    setBeforeRunTasks(configuration, tasks, addEnabledTemplateTasksIfAbsent)
 
-    if (existingSettings == settings) {
-      myDispatcher.getMulticaster().runConfigurationChanged(settings, existingId);
+    if (existingSettings === settings) {
+      myDispatcher.multicaster.runConfigurationChanged(settings, existingId)
     }
     else {
-      runConfigurationAdded(settings, shared);
+      runConfigurationAdded(settings, shared)
     }
   }
 
-  protected void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings, boolean shared) {
-    myDispatcher.getMulticaster().runConfigurationAdded(settings);
+  protected open fun runConfigurationAdded(settings: RunnerAndConfigurationSettings, shared: Boolean) {
+    myDispatcher.multicaster.runConfigurationAdded(settings)
   }
 
-  @Override
-  public void refreshUsagesList(RunProfile profile) {
-    if (!(profile instanceof RunConfiguration)) return;
-    RunnerAndConfigurationSettings settings = getSettings((RunConfiguration)profile);
-    if (settings != null && settings.isTemporary()) {
-      myRecentlyUsedTemporaries.remove((RunConfiguration)profile);
-      myRecentlyUsedTemporaries.add(0, (RunConfiguration)profile);
-      trimUsagesListToLimit();
+  override fun refreshUsagesList(profile: RunProfile) {
+    if (profile !is RunConfiguration) return
+    val settings = getSettings(profile)
+    if (settings != null && settings.isTemporary) {
+      myRecentlyUsedTemporaries.remove(profile)
+      myRecentlyUsedTemporaries.add(0, profile)
+      trimUsagesListToLimit()
     }
   }
 
-  private void trimUsagesListToLimit() {
-    while(myRecentlyUsedTemporaries.size() > getConfig().getRecentsLimit()) {
-      myRecentlyUsedTemporaries.remove(myRecentlyUsedTemporaries.size() - 1);
+  private fun trimUsagesListToLimit() {
+    while (myRecentlyUsedTemporaries.size > config.recentsLimit) {
+      myRecentlyUsedTemporaries.removeAt(myRecentlyUsedTemporaries.size - 1)
     }
   }
 
-  void checkRecentsLimit() {
-    trimUsagesListToLimit();
-    List<RunnerAndConfigurationSettings> removed = new SmartList<>();
-    while (getTempConfigurationsList().size() > getConfig().getRecentsLimit()) {
-      for (Iterator<RunnerAndConfigurationSettings> it = myConfigurations.values().iterator(); it.hasNext(); ) {
-        RunnerAndConfigurationSettings configuration = it.next();
-        if (configuration.isTemporary() && !myRecentlyUsedTemporaries.contains(configuration.getConfiguration())) {
-          removed.add(configuration);
-          it.remove();
-          break;
+  fun checkRecentsLimit() {
+    trimUsagesListToLimit()
+    val removed = SmartList<RunnerAndConfigurationSettings>()
+    while (tempConfigurationsList.size > config.recentsLimit) {
+      val it = myConfigurations.values.iterator()
+      while (it.hasNext()) {
+        val configuration = it.next()
+        if (configuration.isTemporary && !myRecentlyUsedTemporaries.contains(configuration.configuration)) {
+          removed.add(configuration)
+          it.remove()
+          break
         }
       }
     }
-    fireRunConfigurationsRemoved(removed);
+    fireRunConfigurationsRemoved(removed)
   }
 
-  public void setOrdered(boolean ordered) {
-    myOrdered = ordered;
+  fun setOrdered(ordered: Boolean) {
+    myOrdered = ordered
   }
 
-  public void saveOrder() {
-    setOrder(null);
+  fun saveOrder() {
+    setOrder(null)
   }
 
-  private void doSaveOrder(@Nullable Comparator<RunnerAndConfigurationSettings> comparator) {
-    List<RunnerAndConfigurationSettings> sorted = new ArrayList<>(
-      ContainerUtil.filter(myConfigurations.values(), o -> !(o.getType() instanceof UnknownConfigurationType)));
-    if (comparator != null) sorted.sort(comparator);
-    
-    myOrder.clear();
-    for (RunnerAndConfigurationSettings each : sorted) {
-      myOrder.add(each.getUniqueID());
+  private fun doSaveOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
+    val sorted = myConfigurations.values.filter { it.type !is UnknownConfigurationType }
+    if (comparator != null) {
+      sorted.sortedWith(comparator)
     }
+
+    myOrder.clear()
+    sorted.mapTo(myOrder) { it.uniqueID}
   }
 
-  public void setOrder(@Nullable Comparator<RunnerAndConfigurationSettings> comparator) {
-    doSaveOrder(comparator);
-    setOrdered(false);// force recache of configurations list
+  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
+    doSaveOrder(comparator)
+    // force recache of configurations list
+    setOrdered(false)
   }
 
-  @Override
-  @Nullable
-  public RunnerAndConfigurationSettings getSelectedConfiguration() {
+  override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
     if (mySelectedConfigurationId == null && myLoadedSelectedConfigurationUniqueName != null) {
-      setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName);
+      setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName)
     }
-    return mySelectedConfigurationId == null ? null : myConfigurations.get(mySelectedConfigurationId);
+    return mySelectedConfigurationId?.let { myConfigurations.get(it) }
   }
 
-  @Override
-  public void setSelectedConfiguration(@Nullable RunnerAndConfigurationSettings settings) {
-    setSelectedConfigurationId(settings == null ? null : settings.getUniqueID());
-    fireRunConfigurationSelected();
+  override fun setSelectedConfiguration(settings: RunnerAndConfigurationSettings?) {
+    setSelectedConfigurationId(settings?.uniqueID)
+    fireRunConfigurationSelected()
   }
 
-  private void setSelectedConfigurationId(@Nullable String id) {
-    mySelectedConfigurationId = id;
-    if (mySelectedConfigurationId != null) myLoadedSelectedConfigurationUniqueName = null;
+  private fun setSelectedConfigurationId(id: String?) {
+    mySelectedConfigurationId = id
+    if (mySelectedConfigurationId != null) {
+      myLoadedSelectedConfigurationUniqueName = null
+    }
   }
 
-  @Override
-  @NotNull
-  public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
+  override fun getSortedConfigurations(): MutableCollection<RunnerAndConfigurationSettings> {
     if (myOrdered) {
-      return myConfigurations.values();
+      return myConfigurations.values
     }
 
-    List<Pair<String, RunnerAndConfigurationSettings>> order
-      = new ArrayList<>(myConfigurations.size());
-    final List<String> folderNames = new SmartList<>();
-    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-      order.add(Pair.create(each.getUniqueID(), each));
-      String folderName = each.getFolderName();
+    val order = ArrayList<Pair<String, RunnerAndConfigurationSettings>>(myConfigurations.size)
+    val folderNames = SmartList<String>()
+    for (each in myConfigurations.values) {
+      order.add(Pair.create(each.uniqueID, each))
+      val folderName = each.folderName
       if (folderName != null && !folderNames.contains(folderName)) {
-        folderNames.add(folderName);
+        folderNames.add(folderName)
       }
     }
-    folderNames.add(null);
-    myConfigurations.clear();
+    folderNames.add(null)
+    myConfigurations.clear()
 
     if (myOrder.isEmpty()) {
       // IDEA-63663 Sort run configurations alphabetically if clean checkout
-      Collections.sort(order, (o1, o2) -> {
-        boolean temporary1 = o1.getSecond().isTemporary();
-        boolean temporary2 = o2.getSecond().isTemporary();
-        if (temporary1 == temporary2) {
-          return o1.first.compareTo(o2.first);
+      order.sort { o1, o2 ->
+        val temporary1 = o1.getSecond().isTemporary
+        val temporary2 = o2.getSecond().isTemporary
+        when {
+          temporary1 == temporary2 -> o1.first.compareTo(o2.first)
+          temporary1 -> 1
+          else -> -1
         }
-        else {
-          return temporary1 ? 1 : -1;
-        }
-      });
+      }
     }
     else {
-      Collections.sort(order, (o1, o2) -> {
-        int i1 = folderNames.indexOf(o1.getSecond().getFolderName());
-        int i2 = folderNames.indexOf(o2.getSecond().getFolderName());
+      order.sort { o1, o2 ->
+        val i1 = folderNames.indexOf(o1.getSecond().folderName)
+        val i2 = folderNames.indexOf(o2.getSecond().folderName)
         if (i1 != i2) {
-          return i1 - i2;
+          return@sort i1 -i2
         }
-        boolean temporary1 = o1.getSecond().isTemporary();
-        boolean temporary2 = o2.getSecond().isTemporary();
-        if (temporary1 == temporary2) {
-          int index1 = myOrder.indexOf(o1.first);
-          int index2 = myOrder.indexOf(o2.first);
-          if (index1 == -1 && index2 == -1) {
-            return o1.second.getName().compareTo(o2.second.getName());
+
+        val temporary1 = o1.getSecond().isTemporary
+        val temporary2 = o2.getSecond().isTemporary
+        when {
+          temporary1 == temporary2 -> {
+            val index1 = myOrder.indexOf(o1.first)
+            val index2 = myOrder.indexOf(o2.first)
+            if (index1 == -1 && index2 == -1) {
+              o1.second.name.compareTo(o2.second.name)
+            }
+            else {
+              index1 - index2
+            }
           }
-          return index1 - index2;
+          temporary1 -> 1
+          else -> -1
         }
-        else {
-          return temporary1 ? 1 : -1;
-        }
-      });
+      }
     }
 
-    for (Pair<String, RunnerAndConfigurationSettings> each : order) {
-      RunnerAndConfigurationSettings setting = each.second;
-      myConfigurations.put(setting.getUniqueID(), setting);
+    for (each in order) {
+      val setting = each.second
+      myConfigurations.put(setting.uniqueID, setting)
     }
 
-    myOrdered = true;
-    return myConfigurations.values();
+    myOrdered = true
+    return myConfigurations.values
   }
 
-  public static boolean canRunConfiguration(@NotNull ExecutionEnvironment environment) {
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
-    return runnerAndConfigurationSettings != null && canRunConfiguration(runnerAndConfigurationSettings, environment.getExecutor());
-  }
+  @Suppress("DEPRECATION")
+  override fun getState(): Element {
+    val element = Element("state")
 
-  public static boolean canRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
-    try {
-      configuration.checkSettings(executor);
-    }
-    catch (IndexNotReadyException ignored) {
-      return Registry.is("dumb.aware.run.configurations");
-    }
-    catch (RuntimeConfigurationError ignored) {
-      return false;
-    }
-    catch (RuntimeConfigurationException ignored) {
-      return true;
-    }
-    return true;
-  }
+    schemeManager.save()
+    // backward compatibility - write templates in the end
+    schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
+      val w1 = if (n1.startsWith("<template> of ")) 1 else 0
+      val w2 = if (n2.startsWith("<template> of ")) 1 else 0
+      if (w1 != w2) {
+        w1 - w2
+      }
+      else {
+        n1.compareTo(n2)
+      }
+    })
 
-  @Nullable
-  public Element getState(@NotNull Element parentNode) {
-    if (myConfigurations.size() > 1) {
-      JDOMExternalizableStringList order = null;
-      for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-        if (each.getType() instanceof UnknownConfigurationType) {
-          continue;
+    selectedConfiguration?.let {
+      element.setAttribute(SELECTED_ATTR, it.uniqueID)
+    }
+
+    if (myConfigurations.size > 1) {
+      var order: JDOMExternalizableStringList? = null
+      for (each in myConfigurations.values) {
+        if (each.type is UnknownConfigurationType) {
+          continue
         }
 
         if (order == null) {
-          order = new JDOMExternalizableStringList();
+          order = JDOMExternalizableStringList()
         }
-        order.add(each.getUniqueID());
+        order.add(each.uniqueID)
       }
       if (order != null) {
-        order.writeExternal(parentNode);
+        order.writeExternal(element)
       }
     }
 
-    final JDOMExternalizableStringList recentList = new JDOMExternalizableStringList();
-    for (RunConfiguration each : myRecentlyUsedTemporaries) {
-      if (each.getType() instanceof UnknownConfigurationType) {
-        continue;
+    val recentList = JDOMExternalizableStringList()
+    for (each in myRecentlyUsedTemporaries) {
+      if (each.type is UnknownConfigurationType) {
+        continue
       }
-      RunnerAndConfigurationSettings settings = getSettings(each);
-      if (settings == null) {
-        continue;
-      }
-      recentList.add(settings.getUniqueID());
+      val settings = getSettings(each) ?: continue
+      recentList.add(settings.uniqueID)
     }
     if (!recentList.isEmpty()) {
-      Element recent = new Element(RECENT);
-      parentNode.addContent(recent);
-      recentList.writeExternal(recent);
+      val recent = Element(RECENT)
+      element.addContent(recent)
+      recentList.writeExternal(recent)
     }
 
     if (myUnknownElements != null) {
-      for (Element unloadedElement : myUnknownElements) {
-        parentNode.addContent(unloadedElement.clone());
+      for (unloadedElement in myUnknownElements!!) {
+        element.addContent(unloadedElement.clone())
       }
     }
-    return parentNode;
+    return element
   }
 
-  public void writeContext(@NotNull Element element) {
-    Collection<RunnerAndConfigurationSettings> values = new ArrayList<>(myConfigurations.values());
-    for (RunnerAndConfigurationSettings configurationSettings : values) {
-      if (configurationSettings.isTemporary()) {
-        addConfigurationElement(element, configurationSettings, CONFIGURATION);
+  fun writeContext(element: Element) {
+    val values = ArrayList(myConfigurations.values)
+    for (configurationSettings in values) {
+      if (configurationSettings.isTemporary) {
+        addConfigurationElement(element, configurationSettings, CONFIGURATION)
       }
     }
 
-    RunnerAndConfigurationSettings selected = getSelectedConfiguration();
-    if (selected != null) {
-      element.setAttribute(SELECTED_ATTR, selected.getUniqueID());
+    selectedConfiguration?.let {
+      element.setAttribute(SELECTED_ATTR, it.uniqueID)
     }
   }
 
-  void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings template) {
-    addConfigurationElement(parentNode, template, CONFIGURATION);
+  fun addConfigurationElement(parentNode: Element, template: RunnerAndConfigurationSettings) {
+    addConfigurationElement(parentNode, template, CONFIGURATION)
   }
 
-  private void addConfigurationElement(@NotNull Element parentNode, RunnerAndConfigurationSettings settings, String elementType) {
-    Element configurationElement = new Element(elementType);
-    parentNode.addContent(configurationElement);
-    ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
+  private fun addConfigurationElement(parentNode: Element, settings: RunnerAndConfigurationSettings, elementType: String) {
+    val configurationElement = Element(elementType)
+    parentNode.addContent(configurationElement)
+    (settings as RunnerAndConfigurationSettingsImpl).writeExternal(configurationElement)
 
-    if (settings.getConfiguration() instanceof UnknownRunConfiguration) {
-      return;
+    if (settings.configuration !is UnknownRunConfiguration) {
+      doWriteConfiguration(settings, configurationElement)
     }
-
-    doWriteConfiguration(settings, configurationElement);
   }
 
-  void doWriteConfiguration(@NotNull RunnerAndConfigurationSettings settings, @NotNull Element configurationElement) {
-    List<BeforeRunTask> tasks = new ArrayList<>(getBeforeRunTasks(settings.getConfiguration()));
-    Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new THashMap<>();
-    List<BeforeRunTask> beforeRunTasks;
-    if (settings.isTemplate()) {
-      beforeRunTasks = getHardcodedBeforeRunTasks(settings.getConfiguration());
+  internal fun doWriteConfiguration(settings: RunnerAndConfigurationSettings, configurationElement: Element) {
+    val tasks = ArrayList(getBeforeRunTasks(settings.configuration))
+    val templateTasks = THashMap<Key<BeforeRunTask<*>>, BeforeRunTask<*>>()
+    val beforeRunTasks: List<BeforeRunTask<*>>?
+    if (settings.isTemplate) {
+      beforeRunTasks = getHardcodedBeforeRunTasks(settings.configuration)
     }
     else {
-      RunConfigurationBase configurationTemplate = (RunConfigurationBase)getConfigurationTemplate(settings.getFactory()).getConfiguration();
-      beforeRunTasks = configurationTemplate.getBeforeRunTasks();
-      if (beforeRunTasks == null) {
-        beforeRunTasks = Collections.emptyList();
-      }
+      val configurationTemplate = getConfigurationTemplate(settings.factory!!)
+      beforeRunTasks = configurationTemplate.beforeRunTasks ?: emptyList()
     }
-    for (BeforeRunTask templateTask : beforeRunTasks) {
-      templateTasks.put(templateTask.getProviderId(), templateTask);
-      if (templateTask.isEnabled()) {
-        boolean found = false;
-        for (BeforeRunTask realTask : tasks) {
-          if (realTask.getProviderId() == templateTask.getProviderId()) {
-            found = true;
-            break;
+    for (templateTask in beforeRunTasks) {
+      @Suppress("UNCHECKED_CAST")
+      templateTasks.put(templateTask.providerId as Key<BeforeRunTask<*>>?, templateTask)
+      if (templateTask.isEnabled) {
+        var found = false
+        for (realTask in tasks) {
+          if (realTask.providerId === templateTask.providerId) {
+            found = true
+            break
           }
         }
         if (!found) {
-          BeforeRunTask clone = templateTask.clone();
-          clone.setEnabled(false);
-          tasks.add(0, clone);
+          val clone = templateTask.clone()
+          clone.isEnabled = false
+          tasks.add(0, clone)
         }
       }
     }
 
     // we have to always write empty method element otherwise no way to indicate that
-    Element methodsElement = settings.isTemplate() ? new Element(METHOD) : null;
-    for (int i = 0, size = tasks.size(); i < size; i++) {
-      BeforeRunTask task = tasks.get(i);
-      int j = 0;
-      BeforeRunTask templateTask = null;
-      for (Map.Entry<Key<BeforeRunTask>, BeforeRunTask> entry : templateTasks.entrySet()) {
-        if (entry.getKey() == task.getProviderId()) {
-          templateTask = entry.getValue();
-          break;
+    var methodsElement: Element? = if (settings.isTemplate) Element(METHOD) else null
+    var i = 0
+    val size = tasks.size
+    while (i < size) {
+      val task = tasks.get(i)
+      var j = 0
+      var templateTask: BeforeRunTask<*>? = null
+      for ((key, value) in templateTasks) {
+        if (key === task.providerId) {
+          templateTask = value
+          break
         }
-        j++;
+        j++
       }
-      if (task.equals(templateTask) && i == j) {
+      if (task == templateTask && i == j) {
         // not necessary saving if the task is the same as template and on the same place
-        continue;
+        i++
+        continue
       }
-      Element child = new Element(OPTION);
-      child.setAttribute(NAME_ATTR, task.getProviderId().toString());
-      task.writeExternal(child);
+      val child = Element(OPTION)
+      child.setAttribute(NAME_ATTR, task.providerId.toString())
+      task.writeExternal(child)
 
       if (methodsElement == null) {
-        methodsElement = new Element(METHOD);
+        methodsElement = Element(METHOD)
       }
-      methodsElement.addContent(child);
+      methodsElement.addContent(child)
+      i++
     }
 
     if (methodsElement != null) {
-      configurationElement.addContent(methodsElement);
+      configurationElement.addContent(methodsElement)
     }
   }
 
-  @Override
-  public void loadState(@NotNull Element parentNode) {
-    myOrder.readExternal(parentNode);
+  override fun loadState(parentNode: Element) {
+    myOrder.readExternal(parentNode)
 
     // migration (old ids to UUIDs)
-    readList(myOrder);
+    readList(myOrder)
 
-    myRecentlyUsedTemporaries.clear();
-    Element recentNode = parentNode.getChild(RECENT);
+    myRecentlyUsedTemporaries.clear()
+    val recentNode = parentNode.getChild(RECENT)
     if (recentNode != null) {
-      JDOMExternalizableStringList list = new JDOMExternalizableStringList();
-      list.readExternal(recentNode);
-      readList(list);
-      for (String name : list) {
-        RunnerAndConfigurationSettings settings = myConfigurations.get(name);
+      val list = JDOMExternalizableStringList()
+      list.readExternal(recentNode)
+      readList(list)
+      for (name in list) {
+        val settings = myConfigurations[name]
         if (settings != null) {
-          myRecentlyUsedTemporaries.add(settings.getConfiguration());
+          myRecentlyUsedTemporaries.add(settings.configuration)
         }
       }
     }
-    myOrdered = false;
+    myOrdered = false
 
-    myLoadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR);
-    setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName);
+    myLoadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
+    setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName)
 
-    fireBeforeRunTasksUpdated();
-    fireRunConfigurationSelected();
+    fireBeforeRunTasksUpdated()
+    fireRunConfigurationSelected()
   }
 
-  private void readList(@NotNull JDOMExternalizableStringList list) {
-    for (int i = 0; i < list.size(); i++) {
-      for (RunnerAndConfigurationSettings settings : myConfigurations.values()) {
-        RunConfiguration configuration = settings.getConfiguration();
-        //noinspection deprecation
-        if (configuration != null && list.get(i).equals(configuration.getType().getDisplayName() + "." + configuration.getName() +
-                                                        (configuration instanceof UnknownRunConfiguration ? configuration.getUniqueID() : ""))) {
-          list.set(i, settings.getUniqueID());
-          break;
+  private fun readList(list: JDOMExternalizableStringList) {
+    for (i in list.indices) {
+      for (settings in myConfigurations.values) {
+        val configuration = settings.configuration
+        if (configuration != null && list.get(i) == "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}") {
+          list.set(i, settings.uniqueID)
+          break
         }
       }
     }
   }
 
-  public void readContext(Element parentNode) throws InvalidDataException {
-    myLoadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR);
+  fun readContext(parentNode: Element) {
+    myLoadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
 
-    for (Object aChildren : parentNode.getChildren()) {
-      Element element = (Element)aChildren;
-      RunnerAndConfigurationSettings config = loadConfiguration(element, false);
+    for (aChildren in parentNode.children) {
+      val element = aChildren
+      val config = loadConfiguration(element, false)
       if (myLoadedSelectedConfigurationUniqueName == null
           && config != null
-          && Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
-        myLoadedSelectedConfigurationUniqueName = config.getUniqueID();
+          && java.lang.Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
+        myLoadedSelectedConfigurationUniqueName = config.uniqueID
       }
     }
 
-    setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName);
+    setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName)
 
-    fireRunConfigurationSelected();
+    fireRunConfigurationSelected()
   }
 
-  @Nullable
-  String findExistingConfigurationId(@Nullable RunnerAndConfigurationSettings settings) {
+  fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings?): String? {
     if (settings != null) {
-      for (Map.Entry<String, RunnerAndConfigurationSettings> entry : myConfigurations.entrySet()) {
-        if (entry.getValue() == settings) {
-          return entry.getKey();
+      for ((key, value) in myConfigurations) {
+        if (value === settings) {
+          return key
         }
       }
     }
-    return null;
+    return null
   }
 
   // used by MPS, don't delete
-  public void clearAll() {
-    clear(true);
-    myTypesByName.clear();
-    initializeConfigurationTypes(new ConfigurationType[0]);
+  fun clearAll() {
+    clear(true)
+    myTypesByName.clear()
+    initializeConfigurationTypes(emptyArray())
   }
 
-  protected void clear(boolean allConfigurations) {
-    List<RunnerAndConfigurationSettings> configurations;
+  protected fun clear(allConfigurations: Boolean) {
+    val configurations: MutableList<RunnerAndConfigurationSettings>
     if (allConfigurations) {
-      myConfigurations.clear();
-      mySharedConfigurations.clear();
-      mySelectedConfigurationId = null;
-      configurations = new ArrayList<>(myConfigurations.values());
+      myConfigurations.clear()
+      mySharedConfigurations.clear()
+      mySelectedConfigurationId = null
+      configurations = ArrayList(myConfigurations.values)
     }
     else {
-      configurations = new SmartList<>();
-      for (Iterator<RunnerAndConfigurationSettings> iterator = myConfigurations.values().iterator(); iterator.hasNext(); ) {
-        RunnerAndConfigurationSettings configuration = iterator.next();
-        if (configuration.isTemporary() || !isConfigurationShared(configuration)) {
-          iterator.remove();
+      configurations = SmartList<RunnerAndConfigurationSettings>()
+      val iterator = myConfigurations.values.iterator()
+      while (iterator.hasNext()) {
+        val configuration = iterator.next()
+        if (configuration.isTemporary || !isConfigurationShared(configuration)) {
+          iterator.remove()
 
-          mySharedConfigurations.remove(configuration.getUniqueID());
-          configurations.add(configuration);
+          mySharedConfigurations.remove(configuration.uniqueID)
+          configurations.add(configuration)
         }
       }
 
-      if (mySelectedConfigurationId != null && myConfigurations.containsKey(mySelectedConfigurationId)) {
-        mySelectedConfigurationId = null;
+      if (mySelectedConfigurationId != null && myConfigurations.containsKey(mySelectedConfigurationId!!)) {
+        mySelectedConfigurationId = null
       }
     }
 
-    myUnknownElements = null;
-    myTemplateConfigurationsMap.clear();
-    myLoadedSelectedConfigurationUniqueName = null;
-    myIconCache.clear();
-    myRecentlyUsedTemporaries.clear();
-    fireRunConfigurationsRemoved(configurations);
+    myUnknownElements = null
+    myTemplateConfigurationsMap.clear()
+    myLoadedSelectedConfigurationUniqueName = null
+    myIconCache.clear()
+    myRecentlyUsedTemporaries.clear()
+    fireRunConfigurationsRemoved(configurations)
   }
 
-  @Nullable
-  public RunnerAndConfigurationSettings loadConfiguration(@NotNull Element element, boolean isShared) {
-    RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this);
-    try {
-      settings.readExternal(element);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
+  fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings? {
+    val settings = RunnerAndConfigurationSettingsImpl(this)
+    LOG.catchAndLog {
+      settings.readExternal(element)
     }
 
-    ConfigurationFactory factory = settings.getFactory();
-    if (factory == null) {
-      return null;
-    }
-
-    doLoadConfiguration(element, isShared, settings, factory);
-    return settings;
+    val factory = settings.factory ?: return null
+    doLoadConfiguration(element, isShared, settings, factory)
+    return settings
   }
 
-  protected void doLoadConfiguration(@NotNull Element element,
-                                     boolean isShared,
-                                     RunnerAndConfigurationSettingsImpl settings,
-                                     ConfigurationFactory factory) {
-    List<BeforeRunTask> tasks = readStepsBeforeRun(element.getChild(METHOD), settings);
-    if (settings.isTemplate()) {
-      myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), settings);
-      setBeforeRunTasks(settings.getConfiguration(), tasks, true);
+  protected fun doLoadConfiguration(element: Element, isShared: Boolean, settings: RunnerAndConfigurationSettingsImpl, factory: ConfigurationFactory) {
+    val tasks = readStepsBeforeRun(element.getChild(METHOD), settings)
+    if (settings.isTemplate) {
+      myTemplateConfigurationsMap.put("${factory.type.id}.${factory.name}", settings)
+      setBeforeRunTasks(settings.configuration, tasks, true)
     }
     else {
-      addConfiguration(settings, isShared, tasks, true);
-      if (Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
+      addConfiguration(settings, isShared, tasks, true)
+      if (java.lang.Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
         // to support old style
-        setSelectedConfiguration(settings);
+        selectedConfiguration = settings
       }
     }
   }
 
-  @NotNull
-  private List<BeforeRunTask> readStepsBeforeRun(@Nullable Element child, @NotNull RunnerAndConfigurationSettings settings) {
-    List<BeforeRunTask> result = null;
+  private fun readStepsBeforeRun(child: Element?, settings: RunnerAndConfigurationSettings): List<BeforeRunTask<*>> {
+    var result: MutableList<BeforeRunTask<*>>? = null
     if (child != null) {
-      for (Element methodElement : child.getChildren(OPTION)) {
-        Key<? extends BeforeRunTask> id = getProviderKey(methodElement.getAttributeValue(NAME_ATTR));
-        BeforeRunTask beforeRunTask = getProvider(id).createTask(settings.getConfiguration());
+      for (methodElement in child.getChildren(OPTION)) {
+        val id = getProviderKey(methodElement.getAttributeValue(NAME_ATTR))
+        val beforeRunTask = getProvider(id).createTask(settings.configuration)
         if (beforeRunTask != null) {
-          beforeRunTask.readExternal(methodElement);
+          beforeRunTask.readExternal(methodElement)
           if (result == null) {
-            result = new SmartList<>();
+            result = SmartList()
           }
-          result.add(beforeRunTask);
+          result.add(beforeRunTask)
         }
       }
     }
-    return ContainerUtil.notNullize(result);
+    return result ?: emptyList()
   }
 
-  @Nullable
-  public ConfigurationType getConfigurationType(final String typeName) {
-    return myTypesByName.get(typeName);
-  }
+  fun getConfigurationType(typeName: String) = myTypesByName.get(typeName)
 
-  @Nullable
-  public ConfigurationFactory getFactory(final String typeName, String factoryName) {
-    return getFactory(typeName, factoryName, false);
-  }
-
-  @Nullable
-  public ConfigurationFactory getFactory(final String typeName, String factoryName, boolean checkUnknown) {
-    final ConfigurationType type = myTypesByName.get(typeName);
+  @JvmOverloads fun getFactory(typeName: String?, factoryName: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
+    val type = myTypesByName.get(typeName)
     if (type == null && checkUnknown && typeName != null) {
-      UnknownFeaturesCollector.getInstance(myProject).registerUnknownRunConfiguration(typeName);
+      UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeName)
     }
-    if (factoryName == null) {
-      factoryName = type != null ? type.getConfigurationFactories()[0].getName() : null;
-    }
-    return findFactoryOfTypeNameByName(typeName, factoryName);
+    return findFactoryOfTypeNameByName(typeName!!, factoryName ?: type?.configurationFactories?.get(0)?.name)
   }
 
-
-  @Nullable
-  private ConfigurationFactory findFactoryOfTypeNameByName(final String typeName, final String factoryName) {
-    ConfigurationType type = myTypesByName.get(typeName);
-    if (type == null) {
-      type = myTypesByName.get(UnknownConfigurationType.NAME);
-    }
-
-    return findFactoryOfTypeByName(type, factoryName);
+  private fun findFactoryOfTypeNameByName(typeName: String, factoryName: String?): ConfigurationFactory? {
+    return findFactoryOfTypeByName(myTypesByName.get(typeName) ?: myTypesByName.get(UnknownConfigurationType.NAME)!!, factoryName)
   }
 
-  @Nullable
-  private static ConfigurationFactory findFactoryOfTypeByName(final ConfigurationType type, final String factoryName) {
-    if (factoryName == null) return null;
+  override fun getComponentName() = "RunManager"
 
-    if (type instanceof UnknownConfigurationType) {
-      return type.getConfigurationFactories()[0];
+  override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {
+    if (tempConfiguration == null) {
+      return
     }
 
-    final ConfigurationFactory[] factories = type.getConfigurationFactories();
-    for (final ConfigurationFactory factory : factories) {
-      if (factoryName.equals(factory.getName())) return factory;
-    }
+    tempConfiguration.isTemporary = true
 
-    return null;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "RunManager";
-  }
-
-  @Override
-  public void setTemporaryConfiguration(@Nullable final RunnerAndConfigurationSettings tempConfiguration) {
-    if (tempConfiguration == null) return;
-
-    tempConfiguration.setTemporary(true);
-
-    addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration),
-                     getBeforeRunTasks(tempConfiguration.getConfiguration()), false);
-    if (Registry.is("select.run.configuration.from.context")) {
-      setSelectedConfiguration(tempConfiguration);
+    addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration), getBeforeRunTasks(tempConfiguration.configuration), false)
+    if (Registry.`is`("select.run.configuration.from.context")) {
+      selectedConfiguration = tempConfiguration
     }
   }
 
-  @NotNull
-  Collection<RunnerAndConfigurationSettings> getStableConfigurations(boolean shared) {
-    List<RunnerAndConfigurationSettings> result = null;
-    for (RunnerAndConfigurationSettings configuration : myConfigurations.values()) {
-      if (!configuration.isTemporary() && isConfigurationShared(configuration) == shared) {
+  fun getStableConfigurations(shared: Boolean): Collection<RunnerAndConfigurationSettings> {
+    var result: MutableList<RunnerAndConfigurationSettings>? = null
+    for (configuration in myConfigurations.values) {
+      if (!configuration.isTemporary && isConfigurationShared(configuration) == shared) {
         if (result == null) {
-          result = new SmartList<>();
+          result = SmartList<RunnerAndConfigurationSettings>()
         }
-        result.add(configuration);
+        result.add(configuration)
       }
     }
-    return ContainerUtil.notNullize(result);
+    return ContainerUtil.notNullize(result)
   }
 
-  @NotNull
-  Collection<? extends RunnerAndConfigurationSettings> getConfigurationSettings() {
-    return myConfigurations.values();
-  }
+  internal val configurationSettings: Collection<RunnerAndConfigurationSettings>
+    get() = myConfigurations.values
 
-  @Override
-  public boolean isTemporary(@NotNull final RunConfiguration configuration) {
-    return Arrays.asList(getTempConfigurations()).contains(configuration);
-  }
+  override fun getTempConfigurationsList() = myConfigurations.values.filter { it.isTemporary }
 
-  @Override
-  @NotNull
-  public List<RunnerAndConfigurationSettings> getTempConfigurationsList() {
-    List<RunnerAndConfigurationSettings> configurations =
-      ContainerUtil.filter(myConfigurations.values(), RunnerAndConfigurationSettings::isTemporary);
-    return Collections.unmodifiableList(configurations);
-  }
-
-  @NotNull
-  @Override
-  public RunConfiguration[] getTempConfigurations() {
-    List<RunnerAndConfigurationSettings> list = getTempConfigurationsList();
-    RunConfiguration[] result = new RunConfiguration[list.size()];
-    for (int i = 0; i < list.size(); i++) {
-      result[i] = list.get(i).getConfiguration();
+  override fun makeStable(settings: RunnerAndConfigurationSettings) {
+    settings.isTemporary = false
+    myRecentlyUsedTemporaries.remove(settings.configuration)
+    if (!myOrder.isEmpty()) {
+      setOrdered(false)
     }
-    return result;
+    fireRunConfigurationChanged(settings)
   }
 
-  @Override
-  public void makeStable(@NotNull RunnerAndConfigurationSettings settings) {
-      settings.setTemporary(false);
-      myRecentlyUsedTemporaries.remove(settings.getConfiguration());
-      if (!myOrder.isEmpty()) {
-        setOrdered(false);
-      }
-      fireRunConfigurationChanged(settings);
-  }
-
-  @Override
-  public void makeStable(@NotNull RunConfiguration configuration) {
-    RunnerAndConfigurationSettings settings = getSettings(configuration);
-    if (settings != null) {
-      makeStable(settings);
+  override fun makeStable(configuration: RunConfiguration) {
+    getSettings(configuration)?.let {
+      makeStable(it)
     }
   }
 
-  @Override
-  @NotNull
-  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory) {
-    return createConfiguration(name, factory);
-  }
+  override fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
 
-  @Override
-  public boolean isConfigurationShared(final RunnerAndConfigurationSettings settings) {
-    Boolean shared = mySharedConfigurations.get(settings.getUniqueID());
+  override fun isConfigurationShared(settings: RunnerAndConfigurationSettings): Boolean {
+    var shared: Boolean? = mySharedConfigurations.get(settings.uniqueID)
     if (shared == null) {
-      final RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
-      shared = mySharedConfigurations.get(template.getUniqueID());
+      val template = getConfigurationTemplate(settings.factory!!)
+      shared = mySharedConfigurations.get(template.uniqueID)
     }
-    return shared != null && shared.booleanValue();
+    return shared != null && shared
   }
 
-  @Override
-  @NotNull
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID) {
-    final List<T> tasks = new ArrayList<>();
-    final List<RunnerAndConfigurationSettings> checkedTemplates = new ArrayList<>();
-    List<RunnerAndConfigurationSettings> settingsList = new ArrayList<>(myConfigurations.values());
-    for (RunnerAndConfigurationSettings settings : settingsList) {
-      final List<BeforeRunTask> runTasks = getBeforeRunTasks(settings.getConfiguration());
-      for (BeforeRunTask task : runTasks) {
-        if (task != null && task.isEnabled() && task.getProviderId() == taskProviderID) {
-          tasks.add((T)task);
+  override fun <T : BeforeRunTask<*>> getBeforeRunTasks(taskProviderID: Key<T>): List<T> {
+    val tasks = ArrayList<T>()
+    val checkedTemplates = ArrayList<RunnerAndConfigurationSettings>()
+    val settingsList = ArrayList(myConfigurations.values)
+    for (settings in settingsList) {
+      val runTasks = getBeforeRunTasks(settings.configuration)
+      for (task in runTasks) {
+        if (task != null && task.isEnabled && task.providerId === taskProviderID) {
+          tasks.add(task as T)
         }
         else {
-          final RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
+          val template = getConfigurationTemplate(settings.factory!!)
           if (!checkedTemplates.contains(template)) {
-            checkedTemplates.add(template);
-            final List<BeforeRunTask> templateTasks = getBeforeRunTasks(template.getConfiguration());
-            for (BeforeRunTask templateTask : templateTasks) {
-              if (templateTask != null && templateTask.isEnabled() && templateTask.getProviderId() == taskProviderID) {
-                tasks.add((T)templateTask);
+            checkedTemplates.add(template)
+            val templateTasks = getBeforeRunTasks(template.configuration)
+            for (templateTask in templateTasks) {
+              if (templateTask != null && templateTask.isEnabled && templateTask.providerId === taskProviderID) {
+                tasks.add(templateTask as T)
               }
             }
           }
         }
       }
     }
-    return tasks;
+    return tasks
   }
 
-  @Override
-  public Icon getConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings, boolean withLiveIndicator) {
-    final String uniqueID = settings.getUniqueID();
-    RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
-    String selectedId = selectedConfiguration != null ? selectedConfiguration.getUniqueID() : "";
-    if (selectedId.equals(uniqueID)) {
-      myIconCache.checkValidity(uniqueID);
+  override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
+    val uniqueID = settings.uniqueID
+    val selectedConfiguration = selectedConfiguration
+    val selectedId = if (selectedConfiguration != null) selectedConfiguration.uniqueID else ""
+    if (selectedId == uniqueID) {
+      myIconCache.checkValidity(uniqueID)
     }
-    Icon icon = myIconCache.get(uniqueID, settings, myProject);
+    var icon = myIconCache.get(uniqueID, settings, project)
     if (withLiveIndicator) {
-      List<RunContentDescriptor> runningDescriptors = ExecutionManagerImpl.getInstance(myProject).getRunningDescriptors(s -> s == settings);
-      if (runningDescriptors.size() == 1) {
-        icon = ExecutionUtil.getLiveIndicator(icon);
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === settings }
+      if (runningDescriptors.size == 1) {
+        icon = ExecutionUtil.getLiveIndicator(icon)
       }
-      if (runningDescriptors.size() > 1) {
-        icon = IconUtil.addText(icon, String.valueOf(runningDescriptors.size()));
-      }
-    }
-    return icon;
-  }
-
-  public RunnerAndConfigurationSettings getConfigurationById(@NotNull final String id) {
-    return myConfigurations.get(id);
-  }
-
-  @Override
-  @Nullable
-  public RunnerAndConfigurationSettings findConfigurationByName(@Nullable String name) {
-    if (name == null) return null;
-    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-      if (name.equals(each.getName())) return each;
-    }
-    return null;
-  }
-
-  @Nullable
-  public RunnerAndConfigurationSettings findConfigurationByTypeAndName(@NotNull String typeId, @NotNull String name) {
-    for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
-      ConfigurationType t = settings.getType();
-      if (t != null && typeId.equals(t.getId()) && name.equals(settings.getName())) {
-        return settings;
+      if (runningDescriptors.size > 1) {
+        icon = IconUtil.addText(icon, runningDescriptors.size.toString())
       }
     }
-    return null;
+    return icon
   }
 
-  @NotNull
-  @Override
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderID) {
-    if (settings instanceof WrappingRunConfiguration) {
-      return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer(), taskProviderID);
+  fun getConfigurationById(id: String) = myConfigurations.get(id)
+
+  override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
+    if (name == null) {
+      return null
+    }
+    return myConfigurations.values.firstOrNull { it.name == name }
+  }
+
+  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? {
+    return sortedConfigurations.firstOrNull {
+      val t = it.type
+      t != null && typeId == t.id && name == it.name
+    }
+  }
+
+  override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderID: Key<T>): List<T> {
+    if (settings is WrappingRunConfiguration<*>) {
+      return getBeforeRunTasks(settings.peer, taskProviderID)
     }
 
-    List<BeforeRunTask> tasks = ((RunConfigurationBase)settings).getBeforeRunTasks();
-    if (tasks == null) {
-      tasks = getTemplateBeforeRunTasks(settings);
-    }
-    List<T> result = new SmartList<>();
-    for (BeforeRunTask task : tasks) {
-      if (task.getProviderId() == taskProviderID) {
-        //noinspection unchecked
-        result.add((T)task);
+    val tasks = getSettings(settings)?.beforeRunTasks ?: getTemplateBeforeRunTasks(settings)
+    val result = SmartList<T>()
+    for (task in tasks) {
+      if (task.providerId === taskProviderID) {
+        @Suppress("UNCHECKED_CAST")
+        result.add(task as T)
       }
     }
-    return result;
+    return result
   }
 
-  @Override
-  @NotNull
-  public List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration settings) {
-    if (settings instanceof WrappingRunConfiguration) {
-      return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer());
+  override fun getBeforeRunTasks(settings: RunConfiguration): List<BeforeRunTask<*>> {
+    if (settings is WrappingRunConfiguration<*>) {
+      return getBeforeRunTasks(settings.peer)
     }
 
-    List<BeforeRunTask> tasks = ((RunConfigurationBase)settings).getBeforeRunTasks();
-    return tasks == null ? getTemplateBeforeRunTasks(settings) : getCopies(tasks);
+    val tasks = getSettings(settings)?.beforeRunTasks ?: getTemplateBeforeRunTasks(settings)
+    return getCopies(tasks)
   }
 
-  @NotNull
-  private List<BeforeRunTask> getTemplateBeforeRunTasks(@NotNull RunConfiguration settings) {
-    RunnerAndConfigurationSettings template = getConfigurationTemplate(settings.getFactory());
-    RunConfiguration configuration = template.getConfiguration();
-    if (configuration instanceof UnknownRunConfiguration) {
-      return Collections.emptyList();
+  private fun getTemplateBeforeRunTasks(settings: RunConfiguration): List<BeforeRunTask<*>> {
+    val template = getConfigurationTemplate(settings.factory)
+    val configuration = template.configuration
+    if (configuration is UnknownRunConfiguration) {
+      return emptyList()
     }
 
-    List<BeforeRunTask> templateTasks = ((RunConfigurationBase)configuration).getBeforeRunTasks();
-    return templateTasks == null ? getHardcodedBeforeRunTasks(settings) : getCopies(templateTasks);
+    val templateTasks = template.beforeRunTasks ?: getHardcodedBeforeRunTasks(settings)
+    return getCopies(templateTasks)
   }
 
-  @NotNull
-  private List<BeforeRunTask> getHardcodedBeforeRunTasks(@NotNull RunConfiguration settings) {
-    List<BeforeRunTask> _tasks = new SmartList<>();
-    for (BeforeRunTaskProvider<? extends BeforeRunTask> provider : Extensions
-      .getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
-      BeforeRunTask task = provider.createTask(settings);
-      if (task != null && task.isEnabled()) {
-        Key<? extends BeforeRunTask> providerID = provider.getId();
-        settings.getFactory().configureBeforeRunTaskDefaults(providerID, task);
-        if (task.isEnabled()) {
-          _tasks.add(task);
+  fun getHardcodedBeforeRunTasks(settings: RunConfiguration): List<BeforeRunTask<*>> {
+    val _tasks = SmartList<BeforeRunTask<*>>()
+    for (provider in Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project)) {
+      val task = provider.createTask(settings)
+      if (task != null && task.isEnabled) {
+        val providerID = provider.id
+        settings.factory.configureBeforeRunTaskDefaults(providerID, task)
+        if (task.isEnabled) {
+          _tasks.add(task)
         }
       }
     }
-    return _tasks;
+    return _tasks
   }
 
-  @NotNull
-  private static List<BeforeRunTask> getCopies(@NotNull List<BeforeRunTask> original) {
-    List<BeforeRunTask> result = new SmartList<>();
-    for (BeforeRunTask task : original) {
-      if (task.isEnabled()) {
-        result.add(task.clone());
-      }
+  fun shareConfiguration(settings: RunnerAndConfigurationSettings?, shareConfiguration: Boolean) {
+    val shouldFire = settings != null && isConfigurationShared(settings) != shareConfiguration
+    if (shareConfiguration && settings!!.isTemporary) {
+      makeStable(settings)
     }
-    return result;
-  }
-
-  public void shareConfiguration(final RunnerAndConfigurationSettings settings, final boolean shareConfiguration) {
-    boolean shouldFire = settings != null && isConfigurationShared(settings) != shareConfiguration;
-    if (shareConfiguration && settings.isTemporary()) {
-      makeStable(settings);
-    }
-    mySharedConfigurations.put(settings.getUniqueID(), shareConfiguration);
+    mySharedConfigurations.put(settings!!.uniqueID, shareConfiguration)
     if (shouldFire) {
-      fireRunConfigurationChanged(settings);
+      fireRunConfigurationChanged(settings)
     }
   }
 
-  @Override
-  public final void setBeforeRunTasks(@NotNull RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    if (runConfiguration instanceof UnknownRunConfiguration) {
-      return;
+  override fun setBeforeRunTasks(runConfiguration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
+    if (runConfiguration is UnknownRunConfiguration) {
+      return
     }
 
-    List<BeforeRunTask> result = new SmartList<>(tasks);
+    val result = SmartList(tasks)
     if (addEnabledTemplateTasksIfAbsent) {
-      List<BeforeRunTask> templates = getTemplateBeforeRunTasks(runConfiguration);
-      Set<Key<BeforeRunTask>> idsToSet = new THashSet<>();
-      for (BeforeRunTask task : tasks) {
-        idsToSet.add(task.getProviderId());
+      val templates = getTemplateBeforeRunTasks(runConfiguration)
+      val idsToSet = THashSet<Key<BeforeRunTask<*>>>()
+      for (task in tasks) {
+        @Suppress("UNCHECKED_CAST")
+        idsToSet.add(task.getProviderId() as Key<BeforeRunTask<*>>?)
       }
-      int i = 0;
-      for (BeforeRunTask template : templates) {
-        if (!idsToSet.contains(template.getProviderId())) {
-          result.add(i, template);
-          i++;
+      var i = 0
+      for (template in templates) {
+        if (!idsToSet.contains(template.providerId)) {
+          result.add(i, template)
+          i++
         }
       }
     }
 
-    ((RunConfigurationBase)runConfiguration).setBeforeRunTasks(ContainerUtil.notNullize(result));
-    fireBeforeRunTasksUpdated();
+    (getSettings(runConfiguration)!!).beforeRunTasks = result
+    fireBeforeRunTasksUpdated()
   }
 
-  @Override
-  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
-    addConfiguration(settings, isShared, getTemplateBeforeRunTasks(settings.getConfiguration()), false);
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
+    addConfiguration(settings, isShared, getTemplateBeforeRunTasks(settings.configuration), false)
   }
 
-  void removeNotExistingSharedConfigurations(@NotNull Set<String> existing) {
-    List<RunnerAndConfigurationSettings> removed = null;
-    for (Iterator<Map.Entry<String, RunnerAndConfigurationSettings>> it = myConfigurations.entrySet().iterator(); it.hasNext(); ) {
-      Map.Entry<String, RunnerAndConfigurationSettings> entry = it.next();
-      final RunnerAndConfigurationSettings settings = entry.getValue();
-      if (!settings.isTemplate() && isConfigurationShared(settings) && !existing.contains(settings.getUniqueID())) {
+  fun removeNotExistingSharedConfigurations(existing: Set<String>) {
+    var removed: MutableList<RunnerAndConfigurationSettings>? = null
+    val it = myConfigurations.entries.iterator()
+    while (it.hasNext()) {
+      val entry = it.next()
+      val settings = entry.value
+      if (!settings.isTemplate && isConfigurationShared(settings) && !existing.contains(settings.uniqueID)) {
         if (removed == null) {
-          removed = new SmartList<>();
+          removed = SmartList<RunnerAndConfigurationSettings>()
         }
-        removed.add(settings);
-        it.remove();
+        removed.add(settings)
+        it.remove()
       }
     }
-    fireRunConfigurationsRemoved(removed);
+    fireRunConfigurationsRemoved(removed)
   }
 
-  public void fireBeginUpdate() {
-    myDispatcher.getMulticaster().beginUpdate();
+  fun fireBeginUpdate() {
+    myDispatcher.multicaster.beginUpdate()
   }
 
-  public void fireEndUpdate() {
-    myDispatcher.getMulticaster().endUpdate();
-  }
-  
-  public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-    myDispatcher.getMulticaster().runConfigurationChanged(settings, null);
+  fun fireEndUpdate() {
+    myDispatcher.multicaster.endUpdate()
   }
 
-  private void fireRunConfigurationsRemoved(@Nullable List<RunnerAndConfigurationSettings> removed) {
-    if (!ContainerUtil.isEmpty(removed)) {
-      myRecentlyUsedTemporaries.removeAll(removed);
-      for (RunnerAndConfigurationSettings settings : removed) {
-        myDispatcher.getMulticaster().runConfigurationRemoved(settings);
+  fun fireRunConfigurationChanged(settings: RunnerAndConfigurationSettings) {
+    myDispatcher.multicaster.runConfigurationChanged(settings, null)
+  }
+
+  private fun fireRunConfigurationsRemoved(removed: List<RunnerAndConfigurationSettings>?) {
+    if (removed != null && !removed.isEmpty()) {
+      myRecentlyUsedTemporaries.removeAll(removed.map { it.configuration })
+      for (settings in removed) {
+        myDispatcher.multicaster.runConfigurationRemoved(settings)
       }
     }
   }
 
-  private void fireRunConfigurationSelected() {
-    myDispatcher.getMulticaster().runConfigurationSelected();
+  private fun fireRunConfigurationSelected() {
+    myDispatcher.multicaster.runConfigurationSelected()
   }
 
-  @Override
-  public void addRunManagerListener(RunManagerListener listener) {
-    myDispatcher.addListener(listener);
+  override fun addRunManagerListener(listener: RunManagerListener) {
+    myDispatcher.addListener(listener)
   }
 
-  @Override
-  public void removeRunManagerListener(RunManagerListener listener) {
-    myDispatcher.removeListener(listener);
+  override fun removeRunManagerListener(listener: RunManagerListener) {
+    myDispatcher.removeListener(listener)
   }
 
-  public void fireBeforeRunTasksUpdated() {
-    myDispatcher.getMulticaster().beforeRunTasksChanged();
+  fun fireBeforeRunTasksUpdated() {
+    myDispatcher.multicaster.beforeRunTasksChanged()
   }
 
-  private Map<Key<? extends BeforeRunTask>, BeforeRunTaskProvider> myBeforeStepsMap;
-  private Map<String, Key<? extends BeforeRunTask>> myProviderKeysMap;
+  private var myBeforeStepsMap: MutableMap<Key<out BeforeRunTask<*>>, BeforeRunTaskProvider<*>>? = null
+  private var myProviderKeysMap: MutableMap<String, Key<out BeforeRunTask<*>>>? = null
 
-  @NotNull
-  private synchronized BeforeRunTaskProvider getProvider(Key<? extends BeforeRunTask> providerId) {
+  @Synchronized private fun getProvider(providerId: Key<out BeforeRunTask<*>>): BeforeRunTaskProvider<*> {
     if (myBeforeStepsMap == null) {
-      initProviderMaps();
+      initProviderMaps()
     }
-    return myBeforeStepsMap.get(providerId);
+    return myBeforeStepsMap!!.get(providerId)!!
   }
 
-  @NotNull
-  private synchronized Key<? extends BeforeRunTask> getProviderKey(String keyString) {
+  @Synchronized private fun getProviderKey(keyString: String): Key<out BeforeRunTask<*>> {
     if (myProviderKeysMap == null) {
-      initProviderMaps();
+      initProviderMaps()
     }
-    Key<? extends BeforeRunTask> id = myProviderKeysMap.get(keyString);
+    var id: Key<out BeforeRunTask<*>>? = myProviderKeysMap!![keyString]
     if (id == null) {
-      final UnknownBeforeRunTaskProvider provider = new UnknownBeforeRunTaskProvider(keyString);
-      id = provider.getId();
-      myProviderKeysMap.put(keyString, id);
-      myBeforeStepsMap.put(id, provider);
+      val provider = UnknownBeforeRunTaskProvider(keyString)
+      id = provider.id!!
+      myProviderKeysMap!!.put(keyString, id)
+      myBeforeStepsMap!!.put(id, provider)
     }
-    return id;
+    return id
   }
 
-  private void initProviderMaps() {
-    myBeforeStepsMap = new LinkedHashMap<>();
-    myProviderKeysMap = new LinkedHashMap<>();
-    for (BeforeRunTaskProvider<? extends BeforeRunTask> provider : Extensions
-      .getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
-      final Key<? extends BeforeRunTask> id = provider.getId();
-      myBeforeStepsMap.put(id, provider);
-      myProviderKeysMap.put(id.toString(), id);
+  private fun initProviderMaps() {
+    myBeforeStepsMap = LinkedHashMap()
+    myProviderKeysMap = LinkedHashMap()
+    for (provider in Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project)) {
+      val id = provider.id
+      myBeforeStepsMap!!.put(id, provider)
+      myProviderKeysMap!!.put(id.toString(), id)
     }
   }
+}
+
+private fun findFactoryOfTypeByName(type: ConfigurationType, factoryName: String?): ConfigurationFactory? {
+  if (factoryName == null) {
+    return null
+  }
+
+  if (type is UnknownConfigurationType) {
+    return type.getConfigurationFactories()[0]
+  }
+
+  val factories = type.configurationFactories
+  for (factory in factories) {
+    if (factoryName == factory.name) {
+      return factory
+    }
+  }
+
+  return null
+}
+
+private fun getCopies(original: List<BeforeRunTask<*>>): List<BeforeRunTask<*>> {
+  val result = SmartList<BeforeRunTask<*>>()
+  for (task in original) {
+    if (task.isEnabled) {
+      result.add(task.clone())
+    }
+  }
+  return result
+}
+
+
+interface RunConfigurationScheme : Scheme
+
+private class UnknownRunConfigurationScheme(private val name: String) : RunConfigurationScheme, SerializableScheme {
+  override fun getSchemeState() = SchemeState.UNCHANGED
+
+  override fun writeScheme() = throw AssertionError("Must be not called")
+
+  override fun getName() = name
 }
