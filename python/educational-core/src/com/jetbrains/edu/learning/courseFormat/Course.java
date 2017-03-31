@@ -48,8 +48,8 @@ public class Course {
     return getLessons(false);
   }
 
-  public List<Lesson> getLessons(boolean withAadditional) {
-    return withAadditional ? lessons
+  public List<Lesson> getLessons(boolean withAdditional) {
+    return withAdditional ? lessons
            : lessons.stream().filter(lesson -> !EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())).collect(Collectors.toList());
   }
 

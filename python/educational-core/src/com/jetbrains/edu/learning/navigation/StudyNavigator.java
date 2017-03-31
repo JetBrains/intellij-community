@@ -64,11 +64,7 @@ public class StudyNavigator {
     if (nextLessonIndex >= lessons.size()) {
       return null;
     }
-    final Lesson nextLesson = lessons.get(nextLessonIndex);
-    if (EduNames.PYCHARM_ADDITIONAL.equals(nextLesson.getName())) {
-      return null;
-    }
-    return nextLesson;
+    return lessons.get(nextLessonIndex);
   }
 
   public static Lesson previousLesson(@NotNull final Lesson lesson) {
