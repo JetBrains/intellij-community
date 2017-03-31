@@ -65,10 +65,10 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `explicit select event`() {
-        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 2)
+        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 2, 2)
         serializeDeserializeAndCheck(event)
         
-        event = ExplicitSelectEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2)
+        event = ExplicitSelectEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2, 2)
         serializeDeserializeAndCheck(event)
     }
     
