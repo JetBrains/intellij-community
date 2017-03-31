@@ -218,6 +218,20 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self.testFinished(test_name)
         self._latest_subtest_result = None
 
+
+    def testIgnored(self, testName, message='', flowId=None):
+        import re
+        # Skipped subtest of unittest in format "test_name.test_name (subtestInfo)" should be processed as special case:
+        # start, ignore like test_name.test_name.(subtestInfo), stop
+        match_result = re.match(r"^([^(]+\s)*([(][^)]+[)])$", str(testName))
+        if match_result:
+            test_to_skip = ".".join(TREE_MANAGER.current_branch + [match_result.group(2)])
+            self.testStarted(test_to_skip)
+            super(NewTeamcityServiceMessages, self).testIgnored(test_to_skip, message, flowId)
+            self.testFinished(test_to_skip)
+        else:
+            super(NewTeamcityServiceMessages, self).testIgnored(testName, message, flowId) # For all other cases leave same behaviour
+
     def subTestBlockOpened(self, name, subTestResult, flowId=None):
         self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
         self._latest_subtest_result = subTestResult
