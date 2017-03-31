@@ -1,5 +1,6 @@
 package com.intellij.stats.completion.validator
 
+import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.stats.completion.events.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -28,9 +29,9 @@ object LogEventFixtures {
     val backspace_event_pos_0_left_0_1_2 = BackspaceEvent("1", sessionId, listOf(0, 1, 2), emptyList(), 0)
     val backspace_event_pos_0_left_1 = BackspaceEvent("1", sessionId, listOf(1), emptyList(), 0)
 
-    val explicit_select_position_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0)
-    val explicit_select_position_2 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 2)
-    val explicit_select_position_1 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 1)
+    val explicit_select_position_0 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 0, 0)
+    val explicit_select_position_2 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 2, 2)
+    val explicit_select_position_1 = ExplicitSelectEvent("1", sessionId, emptyList(), emptyList(), 1, 1)
 
     val selected_by_typing_0 = TypedSelectEvent("1", sessionId, 0)
     val selected_by_typing_1 = TypedSelectEvent("1", sessionId, 1)

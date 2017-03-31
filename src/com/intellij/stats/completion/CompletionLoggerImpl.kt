@@ -63,8 +63,7 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun logEvent(event: LogEvent) {
         val line = LogEventSerializer.toString(event)
-        //logFileManager.println(line)
-        println(line)
+        logFileManager.println(line)
     }
 
     private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
