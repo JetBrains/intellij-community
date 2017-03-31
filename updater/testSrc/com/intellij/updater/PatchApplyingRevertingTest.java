@@ -264,8 +264,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   public void testApplyWhenCommonFileChanges() throws Exception {
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
 
-    FileUtil.copy(new File(myOlderDir, "/lib/bootstrap.jar"),
-                  new File(myOlderDir, "/lib/boot.jar"));
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/boot.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
@@ -278,7 +277,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myPatchSpec.setStrict(true);
     PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
 
-    FileUtil.copy(new File(myOlderDir, "/lib/bootstrap.jar"), new File(myOlderDir, "/lib/boot.jar"));
+    FileUtil.copy(new File(myOlderDir, "lib/bootstrap.jar"), new File(myOlderDir, "lib/boot.jar"));
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).containsExactly(
