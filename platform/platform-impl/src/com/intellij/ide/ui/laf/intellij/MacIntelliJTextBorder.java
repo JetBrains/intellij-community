@@ -77,9 +77,9 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
 
     Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
     if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-      DarculaUIUtil.paintErrorBorder(g2, width, height, arc, isFocused(c));
+      DarculaUIUtil.paintErrorBorder(g2, width, height, arc, isSymmetric(), isFocused(c));
     } else if (isFocused(c)) {
-      DarculaUIUtil.paintFocusBorder(g2, width, height, arc);
+      DarculaUIUtil.paintFocusBorder(g2, width, height, arc, isSymmetric());
     }
   }
 
@@ -95,5 +95,9 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
                                                   height - JBUI.scale(6) - lw * 2)));
     area.intersect(new Area(g2.getClip()));
     g2.setClip(area);
+  }
+
+  boolean isSymmetric() {
+    return true;
   }
 }

@@ -114,18 +114,18 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
-  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean hasFocus) {
+  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
     g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
-    doPaint(g, width, height, arc);
+    doPaint(g, width, height, arc, symmetric);
   }
 
-  public static void paintFocusBorder(Graphics2D g, int width, int height, int arc) {
+  public static void paintFocusBorder(Graphics2D g, int width, int height, int arc, boolean symmetric) {
     g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
-    doPaint(g, width, height, arc);
+    doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
-  private static void doPaint(Graphics2D g, int width, int height, int arc) {
+  private static void doPaint(Graphics2D g, int width, int height, int arc, boolean symmetric) {
     double bw = UIUtil.isRetina(g) ? 0.5 : 1.0;
     double lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
 
@@ -133,7 +133,7 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
     double outerArc = arc > 0 ? arc + lw - JBUI.scale(2) : lw;
-    double rightOuterArc = JBUI.scale(6);
+    double rightOuterArc = symmetric ? outerArc : JBUI.scale(6);
     Path2D outerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
     outerRect.moveTo(width - rightOuterArc, 0);
     outerRect.quadTo(width, 0, width, rightOuterArc);
@@ -146,7 +146,7 @@ public class DarculaUIUtil {
     outerRect.closePath();
 
     lw += bw;
-    double rightInnerArc = JBUI.scale(7);
+    double rightInnerArc = symmetric ? outerArc : JBUI.scale(7);
     Path2D innerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
     innerRect.moveTo(width - rightInnerArc, lw);
     innerRect.quadTo(width - lw, lw , width - lw, rightInnerArc);

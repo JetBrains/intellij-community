@@ -187,7 +187,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.fill(path);
 
       if (c.hasFocus() && c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
-        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc);
+        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
       }
 
       g2.translate(-r.x, -r.y);
@@ -280,7 +280,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.fill(path);
 
       if (c.hasFocus()) {
-        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc);
+        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
       }
     }
     finally {

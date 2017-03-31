@@ -148,4 +148,8 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
     area.intersect(clip);
     g2.setClip(area);
   }
+
+  boolean isSymmetric() {
+    return false;
+  }
 }
