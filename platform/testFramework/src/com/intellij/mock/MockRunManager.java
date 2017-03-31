@@ -13,219 +13,138 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.mock;
+package com.intellij.mock
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import com.intellij.execution.*
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunProfile
+import com.intellij.openapi.util.Key
+import javax.swing.Icon
 
 /**
  * @author gregsh
  */
-public class MockRunManager extends RunManagerEx {
-  @NotNull
-  @Override
-  public ConfigurationType[] getConfigurationFactories() {
-    return new ConfigurationType[0];
+class MockRunManager : RunManagerEx() {
+  override fun getConfigurationFactories() = emptyArray<ConfigurationType>()
+
+  override fun getConfigurations(type: ConfigurationType) = emptyArray<RunConfiguration>()
+
+  override fun getConfigurationsList(type: ConfigurationType) = emptyList<RunConfiguration>()
+
+  override fun getAllConfigurations() = emptyArray<RunConfiguration>()
+
+  override fun getAllConfigurationsList(): List<RunConfiguration> {
+    return emptyList()
   }
 
-  @NotNull
-  @Override
-  public RunConfiguration[] getConfigurations(@NotNull ConfigurationType type) {
-    return new RunConfiguration[0];
+  val tempConfigurations: Array<RunConfiguration>
+    get() = emptyArray<RunConfiguration>()
+
+  override fun getTempConfigurationsList(): List<RunnerAndConfigurationSettings> {
+    return emptyList()
   }
 
-  @NotNull
-  @Override
-  public List<RunConfiguration> getConfigurationsList(@NotNull ConfigurationType type) {
-    return Collections.emptyList();
+  fun isTemporary(configuration: RunConfiguration): Boolean {
+    return false
   }
 
-  @NotNull
-  @Override
-  public RunConfiguration[] getAllConfigurations() {
-    return new RunConfiguration[0];
+  override fun makeStable(configuration: RunConfiguration) {}
+
+  override fun makeStable(settings: RunnerAndConfigurationSettings) {}
+
+  override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+    return null
   }
 
-  @NotNull
-  @Override
-  public List<RunConfiguration> getAllConfigurationsList() {
-    return Collections.emptyList();
+  override fun createRunConfiguration(name: String, type: ConfigurationFactory): RunnerAndConfigurationSettings {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public RunConfiguration[] getTempConfigurations() {
-    return new RunConfiguration[0];
+  override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public List<RunnerAndConfigurationSettings> getTempConfigurationsList() {
-    return Collections.emptyList();
+  override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettings {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isTemporary(@NotNull RunConfiguration configuration) {
-    return false;
+  override fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> {
+    return emptyArray()
   }
 
-  @Override
-  public void makeStable(@NotNull RunConfiguration configuration) {
+  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> {
+    return emptyList()
   }
 
-  @Override
-  public void makeStable(@NotNull RunnerAndConfigurationSettings settings) {
+  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
+    return emptyMap()
   }
 
-  @Override
-  public RunnerAndConfigurationSettings getSelectedConfiguration() {
-    return null;
+  override fun getAllSettings(): List<RunnerAndConfigurationSettings> {
+    return emptyList()
   }
 
-  @NotNull
-  @Override
-  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type) {
-    throw new UnsupportedOperationException();
+  override fun setSelectedConfiguration(configuration: RunnerAndConfigurationSettings?) {}
+
+  override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}
+
+  override fun getConfig(): RunManagerConfig? {
+    return null
   }
 
-  @NotNull
-  @Override
-  public RunnerAndConfigurationSettings createConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull ConfigurationFactory factory) {
-    throw new UnsupportedOperationException();
+  override fun createConfiguration(name: String, type: ConfigurationFactory): RunnerAndConfigurationSettings {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public RunnerAndConfigurationSettings getConfigurationTemplate(ConfigurationFactory factory) {
-    throw new UnsupportedOperationException();
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings,
+                                isShared: Boolean,
+                                tasks: List<BeforeRunTask<*>>,
+                                addTemplateTasksIfAbsent: Boolean) {
   }
 
-  @Override
-  @NotNull
-  public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type) {
-    return new RunnerAndConfigurationSettings[0];
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {}
+
+  override fun isConfigurationShared(settings: RunnerAndConfigurationSettings): Boolean {
+    return false
   }
 
-  @Override
-  @NotNull
-  public List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull ConfigurationType type) {
-    return Collections.emptyList();
+  override fun getBeforeRunTasks(settings: RunConfiguration): List<BeforeRunTask<*>> {
+    return emptyList()
   }
 
-  @NotNull
-  @Override
-  public Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type) {
-    return Collections.emptyMap();
+  override fun <T : BeforeRunTask<*>> getBeforeRunTasks(taskProviderID: Key<T>): List<T> {
+    return emptyList()
   }
 
-  @NotNull
-  @Override
-  public List<RunnerAndConfigurationSettings> getAllSettings() {
-    return Collections.emptyList();
+  override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderID: Key<T>): List<T> {
+    return emptyList()
   }
 
-  @Override
-  public void setSelectedConfiguration(RunnerAndConfigurationSettings configuration) {
+  override fun setBeforeRunTasks(runConfiguration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {}
+
+  override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
+    return null
   }
 
-  @Override
-  public void setTemporaryConfiguration(RunnerAndConfigurationSettings tempConfiguration) {
+  override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings): Icon? {
+    return null
   }
 
-  @Override
-  public RunManagerConfig getConfig() {
-    return null;
+  override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon? {
+    return null
   }
 
-  @NotNull
-  @Override
-  public RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type) {
-    return null;
+  override fun getSortedConfigurations(): Collection<RunnerAndConfigurationSettings> {
+    return emptyList()
   }
 
-  @Override
-  public void addConfiguration(RunnerAndConfigurationSettings settings,
-                               boolean isShared,
-                               List<BeforeRunTask> tasks,
-                               boolean addTemplateTasksIfAbsent) {
-  }
+  override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {}
 
-  @Override
-  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
-  }
+  override fun addRunManagerListener(listener: RunManagerListener) {}
 
-  @Override
-  public boolean isConfigurationShared(RunnerAndConfigurationSettings settings) {
-    return false;
-  }
+  override fun removeRunManagerListener(listener: RunManagerListener) {}
 
-  @NotNull
-  @Override
-  public List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings) {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID) {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public void setBeforeRunTasks(RunConfiguration runConfiguration, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-  }
-
-  @Override
-  public RunnerAndConfigurationSettings findConfigurationByName(@NotNull String name) {
-    return null;
-  }
-
-  @Override
-  public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
-    return null;
-  }
-
-  @Override
-  public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator) {
-    return null;
-  }
-
-  @Override
-  @NotNull
-  public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public void removeConfiguration(RunnerAndConfigurationSettings settings) {
-  }
-
-  @Override
-  public void addRunManagerListener(RunManagerListener listener) {
-  }
-
-  @Override
-  public void removeRunManagerListener(RunManagerListener listener) {
-  }
-
-  @Override
-  public void refreshUsagesList(RunProfile profile) {
-  }
+  override fun refreshUsagesList(profile: RunProfile) {}
 }
