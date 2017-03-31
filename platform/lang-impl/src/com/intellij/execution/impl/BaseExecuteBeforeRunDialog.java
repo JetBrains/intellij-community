@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,10 +225,11 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
-    List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(config);
+    List<BeforeRunTask<?>> tasks = runManager.getBeforeRunTasks(config);
     BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
-    if (provider == null)
+    if (provider == null) {
       return;
+    }
     T task = provider.createTask(config);
     update(task);
     task.setEnabled(true);
@@ -366,6 +367,5 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
       return this;
     }
-
   }
 }

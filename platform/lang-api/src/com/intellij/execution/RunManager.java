@@ -117,16 +117,6 @@ public abstract class RunManager {
   public abstract List<RunnerAndConfigurationSettings> getAllSettings();
 
   /**
-   * Returns the list of all temporary run configurations.
-   *
-   * @return the list of all temporary run configurations.
-   * @see RunnerAndConfigurationSettings#isTemporary()
-   */
-  @NotNull
-  @Deprecated
-  public abstract RunConfiguration[] getTempConfigurations();
-
-  /**
    * Returns the list of all temporary run configurations settings.
    *
    * @return the list of all temporary run configurations settings.
@@ -134,15 +124,6 @@ public abstract class RunManager {
    */
   @NotNull
   public abstract List<RunnerAndConfigurationSettings> getTempConfigurationsList();
-
-  /**
-   * Checks if the specified run configuration is temporary and will be deleted when the temporary configurations limit is exceeded.
-   *
-   * @return true if the configuration is temporary, false otherwise.
-   * @see RunnerAndConfigurationSettings#isTemporary()
-   */
-  @Deprecated
-  public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
 
   /**
    * Saves the specified temporary run configuration and makes it a permanent one.

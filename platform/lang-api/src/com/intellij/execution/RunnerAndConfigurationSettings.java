@@ -66,7 +66,6 @@ public interface RunnerAndConfigurationSettings {
    * Marks the configuration as temporary or permanent.
    *
    * @param temporary true if the configuration is temporary, false if it's permanent.
-   * @see RunManager#makeStable(com.intellij.execution.configurations.RunConfiguration)
    */
   void setTemporary(boolean temporary);
 
@@ -167,9 +166,9 @@ public interface RunnerAndConfigurationSettings {
   /**
    * Sets the "Before launch: Activate tool window" flag (for activation tool window Run/Debug etc.)
    *
-   * @param b if true, the tool window will be activated before launching this configuration.
+   * @param value if true, the tool window will be activated before launching this configuration.
    */
-  void setActivateToolWindowBeforeRun(boolean activate);
+  void setActivateToolWindowBeforeRun(boolean value);
 
   /**
    * Returns the "Before launch: Activate tool window" flag (for activation tool window Run/Debug etc.)

@@ -23,7 +23,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
@@ -33,7 +33,7 @@ import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
 
-private val LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings")
+private val LOG = logger<RunnerAndConfigurationSettings>()
 
 private val RUNNER_ID = "RunnerId"
 
@@ -47,20 +47,13 @@ private val EDIT_BEFORE_RUN = "editBeforeRun"
 private val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 
 private val TEMP_CONFIGURATION = "tempConfiguration"
+internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
-class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
-  companion object {
-    @JvmField
-    val SINGLETON = "singleton"
+val SINGLETON = "singleton"
 
-    @JvmField
-    internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
-  }
-
-  private val manager: RunManagerImpl
-  private var configuration: RunConfiguration? = null
-  private var isTemplate = false
-
+class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
+                                                                   private var configuration: RunConfiguration? = null,
+                                                                   private var isTemplate: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -69,23 +62,14 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     override fun createSettings(runner: ProgramRunner<*>) = configuration!!.createRunnerSettings(InfoProvider(runner))
   }
 
-  private var isTemporary: Boolean = false
-  private var isEditBeforeRun: Boolean = false
+  private var isTemporary = false
+  private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
-  private var singleton: Boolean = false
-  private var wasSingletonSpecifiedExplicitly: Boolean = false
+  private var singleton = false
+  private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
-  constructor(manager: RunManagerImpl) {
-    this.manager = manager
-  }
-
-  @JvmOverloads
-  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean = false) {
-    this.manager = manager
-    this.configuration = configuration
-    this.isTemplate = isTemplate
-  }
+  var beforeRunTasks: List<BeforeRunTask<*>>? = null
 
   override fun getFactory() = configuration?.factory
 
@@ -118,6 +102,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
 
   override fun getUniqueID(): String {
     val configuration = configuration!!
+    @Suppress("DEPRECATION")
     return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 
@@ -176,7 +161,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     }
 
     val configuration = if (isTemplate) {
-      manager.getConfigurationTemplate(factory).configuration
+      manager.getConfigurationTemplate(factory).configuration!!
     }
     else {
       // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
@@ -360,7 +345,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     }
     
     if (isTemplate && configuration != null) {
-      val templateConfiguration = configuration.factory.createTemplateConfiguration(manager.myProject, manager)
+      val templateConfiguration = configuration.factory.createTemplateConfiguration(manager.project, manager)
 
       val templateState = Element("state")
       serializeConfigurationInto(templateConfiguration, templateState)
@@ -471,7 +456,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     }
 
     fun getOrCreateSettings(runner: ProgramRunner<*>): T {
-      var result: T? = settings[runner]
+      var result: T? = settings.get(runner)
       if (result == null) {
         try {
           result = createSettings(runner)
@@ -480,7 +465,6 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
         catch (ignored: AbstractMethodError) {
           LOG.error("Update failed for: ${configuration!!.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
         }
-
       }
       return result!!
     }

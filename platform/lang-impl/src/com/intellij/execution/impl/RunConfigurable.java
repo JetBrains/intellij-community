@@ -1672,7 +1672,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public RunConfigurationBean(final RunnerAndConfigurationSettings settings,
                                 final boolean shared,
-                                final List<BeforeRunTask> stepsBeforeLaunch) {
+                                final List<BeforeRunTask<?>> stepsBeforeLaunch) {
       mySettings = settings;
       myShared = shared;
       myStepsBeforeLaunch = Collections.unmodifiableList(stepsBeforeLaunch);
