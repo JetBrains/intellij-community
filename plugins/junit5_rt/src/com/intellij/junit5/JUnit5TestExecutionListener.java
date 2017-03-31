@@ -50,7 +50,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private long myCurrentTestStart;
   private int myFinishCount;
   private String myRootName;
-  private Set<TestIdentifier> myRoots;
+  private Set<TestIdentifier> myRoots = new HashSet<>();
   private boolean mySuccessful;
 
   public JUnit5TestExecutionListener() {
