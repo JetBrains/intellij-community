@@ -312,10 +312,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
 
       try {
-        ModifiableModelCommitter.multiCommit(models, myModuleModel);
         for (ModuleEditor editor : myModuleEditors.values()) {
           editor.resetModifiableModel();
         }
+        ModifiableModelCommitter.multiCommit(models, myModuleModel);
         myModuleModelCommitted = true;
         myFacetsConfigurator.commitFacets();
 
