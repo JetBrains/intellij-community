@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.google.common.collect.Multimap;
+import com.google.common.io.InputSupplier;
 import com.google.gson.GsonBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -609,7 +609,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
-      Multimap.class,
+      // guava-jdk5-17.0.jar, removed (in future guava versions) class has to be used
+      // to prevent populating gradle daemon classpath with incompatible guava
+      InputSupplier.class,
       GsonBuilder.class,
       ShortTypeHandling.class
     );
