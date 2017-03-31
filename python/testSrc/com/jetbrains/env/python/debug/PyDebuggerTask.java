@@ -15,6 +15,7 @@
  */
 package com.jetbrains.env.python.debug;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunProfile;
@@ -42,6 +43,7 @@ import org.junit.Assert;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -66,6 +68,12 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   protected void init() {
 
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getTagsToCover() {
+    return Sets.newHashSet("python2.6", "python2.7", "python3.5", "python3.6", "jython", "IronPython", "pypy");
   }
 
   public void runTestOn(String sdkHome) throws Exception {
