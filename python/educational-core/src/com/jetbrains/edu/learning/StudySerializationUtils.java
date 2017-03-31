@@ -5,12 +5,9 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -27,7 +24,6 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -458,61 +454,6 @@ public class StudySerializationUtils {
     public static final String LAST_SUBTASK = "last_subtask_index";
 
     private Json() {
-    }
-
-    public static class CourseTypeAdapter implements JsonDeserializer<Course> {
-
-      private final File myCourseFile;
-
-      public CourseTypeAdapter(File courseFile) {
-        myCourseFile = courseFile;
-      }
-
-      @Override
-      public Course deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        JsonObject courseObject = json.getAsJsonObject();
-        JsonArray lessons = courseObject.getAsJsonArray(LESSONS);
-        for (int lessonIndex = 1; lessonIndex <= lessons.size(); lessonIndex++) {
-          JsonObject lessonObject = lessons.get(lessonIndex - 1).getAsJsonObject();
-          JsonArray tasks = lessonObject.getAsJsonArray(TASK_LIST);
-          for (int taskIndex = 1; taskIndex <= tasks.size(); taskIndex++) {
-            JsonObject taskObject = tasks.get(taskIndex - 1).getAsJsonObject();
-            for (Map.Entry<String, JsonElement> taskFile : taskObject.getAsJsonObject(TASK_FILES).entrySet()) {
-              String name = taskFile.getKey();
-              String filePath = FileUtil.join(myCourseFile.getParent(), EduNames.LESSON + lessonIndex, EduNames.TASK + taskIndex, name);
-              VirtualFile resourceFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
-              if (resourceFile == null) {
-                continue;
-              }
-              Document document = FileDocumentManager.getInstance().getDocument(resourceFile);
-              if (document == null) {
-                continue;
-              }
-              JsonObject taskFileObject = taskFile.getValue().getAsJsonObject();
-              JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-              for (JsonElement placeholder : placeholders) {
-                convertToAbsoluteOffset(document, placeholder);
-                if (placeholder.getAsJsonObject().getAsJsonObject(SUBTASK_INFOS) == null) {
-                  convertToSubtaskInfo(placeholder.getAsJsonObject());
-                  removeIndexFromSubtaskInfos(placeholder.getAsJsonObject());
-                }
-              }
-            }
-          }
-        }
-        return new GsonBuilder().registerTypeAdapter(Task.class, new TaskAdapter()).create().fromJson(json, Course.class);
-      }
-
-      private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
-        JsonObject placeholderObject = placeholder.getAsJsonObject();
-        if (placeholderObject.getAsJsonPrimitive(OFFSET) != null) {
-          return;
-        }
-        int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
-        int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
-        int offset = document.getLineStartOffset(line) + start;
-        placeholderObject.addProperty(OFFSET, offset);
-      }
     }
 
     public static class StepicStepOptionsAdapter implements JsonDeserializer<StepicWrappers.StepOptions> {
