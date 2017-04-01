@@ -26,5 +26,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="http-client" level="project" />
+    <orderEntry type="library" exported="" name="commons-codec" level="project" />
+    <orderEntry type="library" exported="" name="commons-logging" level="project" />
   </component>
 </module>

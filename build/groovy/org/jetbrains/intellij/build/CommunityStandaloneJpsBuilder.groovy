@@ -106,6 +106,10 @@ class CommunityStandaloneJpsBuilder {
           include(name: "snappy-in-java-*.jar")
           include(name: "aether-*.jar")
           include(name: "maven-aether-provider-*.jar")
+          include(name: "commons-codec-*.jar")
+          include(name: "commons-logging-*.jar")
+          include(name: "httpclient-*.jar")
+          include(name: "httpcore-*.jar")
         }
         ant.fileset(dir: "$home/jps/lib") {
           include(name: "optimizedFileManager.jar")

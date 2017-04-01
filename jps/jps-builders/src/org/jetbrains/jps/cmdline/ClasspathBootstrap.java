@@ -27,6 +27,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
+import org.apache.http.HttpConnection;
+import org.apache.http.client.HttpClient;
 import org.eclipse.aether.artifact.Artifact;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
@@ -79,6 +81,12 @@ public class ClasspathBootstrap {
     final String aetherPath = getResourcePath(Artifact.class); // aether-1.1.0-all.jar
     cp.add(aetherPath);
     cp.add(FileUtil.toSystemIndependentName(new File(new File(aetherPath).getParentFile(), "maven-aether-provider-3.3.9-all.jar").getAbsolutePath()));  // aether-1.1.0-all.jar
+    cp.add(getResourcePath(HttpClient.class));  // httpclient
+    cp.add(getResourcePath(HttpConnection.class));  // httpcore
+    //noinspection UnnecessaryFullyQualifiedName
+    cp.add(getResourcePath(org.apache.commons.codec.binary.Base64.class));  // commons-codec
+    //noinspection UnnecessaryFullyQualifiedName
+    cp.add(getResourcePath(org.apache.commons.logging.LogFactory.class));  // commons-logging
 
     cp.addAll(getJavac8RefScannerClasspath());
     //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly
