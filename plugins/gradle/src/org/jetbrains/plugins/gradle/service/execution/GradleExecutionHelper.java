@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -33,9 +32,7 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
-import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
-import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +49,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -307,33 +303,17 @@ public class GradleExecutionHelper {
     int ttl = -1;
 
     if (settings != null) {
+      File gradleHome = settings.getGradleHome() == null ? null : new File(settings.getGradleHome());
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (settings.getDistributionType()) {
         case LOCAL:
-          String gradleHome = settings.getGradleHome();
           if (gradleHome != null) {
-            try {
-              // There were problems with symbolic links processing at the gradle side.
-              connector.useInstallation(new File(gradleHome).getCanonicalFile());
-            }
-            catch (IOException e) {
-              connector.useInstallation(new File(settings.getGradleHome()));
-            }
+            connector.useInstallation(gradleHome);
           }
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            File propertiesFile = new File(settings.getWrapperPropertyFile());
-            if (propertiesFile.exists()) {
-              Distribution distribution =
-                new DistributionFactoryExt(new DefaultExecutorServiceFactory()).getWrappedDistribution(propertiesFile);
-              try {
-                setField(connector, "distribution", distribution);
-              }
-              catch (Exception e) {
-                throw new ExternalSystemException(e);
-              }
-            }
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), gradleHome);
           }
           break;
       }
@@ -367,29 +347,6 @@ public class GradleExecutionHelper {
       ));
     }
     return connection;
-  }
-
-  /**
-   * Utility to set field in object if there is no public setter for it.
-   * It's not recommended to use this method.
-   * FIXME: remove this workaround after gradle API changed
-   *
-   * @param obj        Object to be modified
-   * @param fieldName  name of object's field
-   * @param fieldValue value to be set for field
-   * @throws SecurityException
-   * @throws NoSuchFieldException
-   * @throws IllegalArgumentException
-   * @throws IllegalAccessException
-   */
-  public static void setField(Object obj, String fieldName, Object fieldValue)
-    throws SecurityException, NoSuchFieldException,
-           IllegalArgumentException, IllegalAccessException {
-    final Field field = obj.getClass().getDeclaredField(fieldName);
-    final boolean isAccessible = field.isAccessible();
-    field.setAccessible(true);
-    field.set(obj, fieldValue);
-    field.setAccessible(isAccessible);
   }
 
   @Nullable

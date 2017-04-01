@@ -58,22 +58,22 @@
     <orderEntry type="module-library">
       <library name="GradleNative">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-native-3.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libcpp-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libstdcpp-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libcpp-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libstdcpp-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses5-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses6-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses5-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses6-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-amd64-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-i386-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.12.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-3.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libstdcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libstdcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses5-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses6-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses5-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses6-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-amd64-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-i386-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.14.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/jansi-1.14.jar!/" />
         </CLASSES>
         <JAVADOC />
