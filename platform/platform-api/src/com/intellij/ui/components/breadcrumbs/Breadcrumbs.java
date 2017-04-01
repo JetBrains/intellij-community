@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
@@ -51,9 +50,6 @@ import javax.swing.border.AbstractBorder;
  * @author Sergey.Malenkov
  */
 public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
-  @Deprecated
-  public final boolean above = Registry.is("editor.breadcrumbs.above");
-
   @SuppressWarnings("FieldCanBeLocal")
   private final MouseHandler containerMouseHandler = new MouseHandler(event -> getCrumb(event.getX(), event.getY()));
   private final MouseHandler componentMouseHandler = new MouseHandler(event -> getCrumb(event.getComponent()));
@@ -173,10 +169,14 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
       int thickness = scale * getThickness(crumb);
       if (thickness > 0) {
         g.setColor(getForeground(crumb));
-        //noinspection deprecation
-        g.fillRect(x + 5 * scale, above ? y + height - thickness : y, width - 10 * scale, thickness);
+        paint(g, x, y, width, height, thickness);
       }
     }
+  }
+
+  protected void paint(Graphics2D g, int x, int y, int width, int height, int thickness) {
+    int offset = 4 * getScale(this);
+    g.fillRect(x + offset, y + height - thickness, width - offset - offset, thickness);
   }
 
   protected Font getFont(Crumb crumb) {

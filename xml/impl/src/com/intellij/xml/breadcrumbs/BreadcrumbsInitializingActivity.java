@@ -141,7 +141,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
                                       @NotNull FileEditor fileEditor,
                                       @NotNull BreadcrumbsXmlWrapper wrapper) {
     //noinspection deprecation
-    if (wrapper.breadcrumbs.above) {
+    if (wrapper.above) {
       fileEditorManager.addTopComponent(fileEditor, wrapper.getComponent());
     }
     else {
@@ -154,7 +154,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
                                      @NotNull FileEditor fileEditor,
                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
     //noinspection deprecation
-    if (wrapper.breadcrumbs.above) {
+    if (wrapper.above) {
       fileEditorManager.removeTopComponent(fileEditor, wrapper.getComponent());
     }
     else {

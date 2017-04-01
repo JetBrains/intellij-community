@@ -93,7 +93,14 @@ public class BreadcrumbsXmlWrapper implements Disposable {
     }
   }
 
-  final Breadcrumbs breadcrumbs = new Breadcrumbs() {
+  final boolean above = Registry.is("editor.breadcrumbs.above");
+
+  private final Breadcrumbs breadcrumbs = new Breadcrumbs() {
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height, int thickness) {
+      super.paint(g, x, y, width, above ? height : thickness, thickness);
+    }
+
     @Override
     public void setFont(Font font) {
       super.setFont(RelativeFont.SMALL.derive(font));
