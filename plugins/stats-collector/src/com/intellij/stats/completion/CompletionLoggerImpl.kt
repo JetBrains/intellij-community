@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
 import com.jetbrains.completion.ranker.CompletionRanker
@@ -45,7 +44,7 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun LookupElement.toIdString(): String {
         val p = LookupElementPresentation()
-        this.renderElement(p)
+        renderElement(p)
         return "${p.itemText} ${p.tailText} ${p.typeText}"
     }
 
