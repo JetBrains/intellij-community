@@ -26,7 +26,7 @@ class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInf
         }
         else if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper, project)
+            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
             lookupActionsTracker.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
@@ -121,16 +121,19 @@ class LookupActionsListener : AnActionListener.Adapter() {
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger,
-                               private val experimentHelper: StatusInfoProvider, 
-                               private val project: Project) 
+                               private val experimentHelper: StatusInfoProvider) 
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {
-
+    
+    companion object {
+        private val DO_NOTHING: () -> Unit = { }
+    }
+    
     private var completionStarted = false
     private var selectedByDotTyping = false
 
-    private var lastAction: () -> Unit = { }
+    private var lastAction: () -> Unit = DO_NOTHING
     
     private fun isCompletionActive(): Boolean {
         return completionStarted && !lookup.isLookupDisposed
@@ -140,10 +143,9 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun lookupCanceled(event: LookupEvent) {
         if (!completionStarted) return
 
-        logLastAction()
-        
         val items = lookup.items
         if (lookup.currentItem == null) {
+            lastAction = DO_NOTHING
             logger.completionCancelled()
             return
         }
@@ -151,16 +153,18 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val prefix = lookup.itemPattern(lookup.currentItem!!)
         val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
         if (wasTyped || selectedByDotTyping) {
+            logLastAction()
             logger.itemSelectedByTyping(lookup)
         }
         else {
+            lastAction = DO_NOTHING
             logger.completionCancelled()
         }
     }
 
     fun logLastAction() {
         lastAction()
-        lastAction = {}
+        lastAction = DO_NOTHING
     }
 
     fun setLastAction(block: () -> Unit) {
