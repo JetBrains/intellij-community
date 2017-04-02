@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import java.beans.PropertyChangeListener
@@ -25,7 +26,7 @@ class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInf
         }
         else if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
+            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper, project)
             lookupActionsTracker.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
@@ -119,8 +120,9 @@ class LookupActionsListener : AnActionListener.Adapter() {
 }
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
-                               private val logger: CompletionLogger, 
-                               private val experimentHelper: StatusInfoProvider) 
+                               private val logger: CompletionLogger,
+                               private val experimentHelper: StatusInfoProvider, 
+                               private val project: Project) 
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {
@@ -239,7 +241,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
                 return
             }
             val text = lookup.itemPattern(item)
-            if (item.lookupString.equals(text)) {
+            if (item.lookupString == text) {
                 selectedByDotTyping = true
             }
         }
