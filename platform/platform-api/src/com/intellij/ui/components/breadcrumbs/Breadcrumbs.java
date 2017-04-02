@@ -57,6 +57,8 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
   private BiConsumer<Crumb, InputEvent> hover = ((crumb, event) -> hovered = crumb);
   private BiConsumer<Crumb, InputEvent> select = ((crumb, event) -> selected = crumb);
 
+  private final Font[] cache = new Font[4];
+
   private Crumb last;
   private Crumb hovered;
   private Crumb selected;
@@ -183,10 +185,21 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     Font font = getFont();
     if (font == null) return null;
 
+    int old = font.getStyle();
+    if (font != cache[old]) {
+      for (int i = 0; i < cache.length; i++) {
+        cache[i] = i == old ? font : null;
+      }
+    }
     int style = getFontStyle(crumb);
-    if (style == font.getStyle()) return font;
+    if (style == old) return font;
 
-    return font.deriveFont(style);
+    Font cached = cache[style];
+    if (cached != null) return cached;
+
+    font = font.deriveFont(style);
+    cache[style] = font;
+    return font;
   }
 
   @FontStyle
