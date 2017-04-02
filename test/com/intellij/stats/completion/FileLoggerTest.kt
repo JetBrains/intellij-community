@@ -28,10 +28,13 @@ class FileLoggerTest : PlatformTestCase() {
     }
 
     override fun tearDown() {
-        dir.deleteRecursively()
-        super.tearDown()
+        try {
+            dir.deleteRecursively()
+        }
+        finally {
+            super.tearDown()
+        }
     }
-    
     
     @Test
     fun testLogging() {
@@ -41,11 +44,11 @@ class FileLoggerTest : PlatformTestCase() {
         val loggerProvider = CompletionFileLoggerProvider(logFileManager)
         val logger = loggerProvider.newCompletionLogger()
         
-        val mockedEditor = mock<Editor>()
         val lookup = mock<LookupImpl> {
             on { getRelevanceObjects(Matchers.any(), Matchers.anyBoolean()) }.thenReturn(emptyMap())
             on { items }.thenReturn(emptyList())
-            on { editor }.thenReturn(mockedEditor)
+            on { psiFile }.thenReturn(null)
+            on { editor }.thenReturn(mock<Editor>())
         }
         
         logger.completionStarted(lookup, true, 2)
