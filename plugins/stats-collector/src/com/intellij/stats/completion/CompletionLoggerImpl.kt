@@ -122,7 +122,9 @@ class CompletionFileLogger(private val installationUID: String,
     private fun getLanguage(lookup: LookupImpl): Language? {
         val editor = lookup.editor
         val offset = editor.caretModel.offset
-        val file = PsiDocumentManager.getInstance(lookup.project).getPsiFile(editor.document) ?: return null
+        val project = lookup.project
+        val document = editor.document
+        val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
         return  PsiUtilCore.getLanguageAtOffset(file, offset)
     }
 

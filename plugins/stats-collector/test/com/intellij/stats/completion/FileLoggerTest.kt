@@ -1,12 +1,12 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.editor.Editor
 import com.intellij.testFramework.PlatformTestCase
+import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Matchers
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
 import java.io.File
 
 
@@ -21,9 +21,10 @@ class FileLoggerTest : PlatformTestCase() {
         dir = createTempDirectory()
         logFile = File(dir, "unique_1")
         
-        pathProvider = mock(FilePathProvider::class.java)
-        `when`(pathProvider.getStatsDataDirectory()).thenReturn(dir)
-        `when`(pathProvider.getUniqueFile()).thenReturn(logFile)
+        pathProvider = mock<FilePathProvider> {
+            on { getStatsDataDirectory() }.thenReturn(dir)
+            on { getUniqueFile() }.thenReturn(logFile)
+        }
     }
 
     override fun tearDown() {
@@ -39,10 +40,14 @@ class FileLoggerTest : PlatformTestCase() {
         val logFileManager = LogFileManagerImpl(pathProvider)
         val loggerProvider = CompletionFileLoggerProvider(logFileManager)
         val logger = loggerProvider.newCompletionLogger()
-        val lookup = mock(LookupImpl::class.java)
         
-        `when`(lookup.getRelevanceObjects(Matchers.any(), Matchers.anyBoolean())).thenReturn(emptyMap())
-        `when`(lookup.items).thenReturn(emptyList())
+        val mockedEditor = mock<Editor>()
+        val lookup = mock<LookupImpl> {
+            on { getRelevanceObjects(Matchers.any(), Matchers.anyBoolean()) }.thenReturn(emptyMap())
+            on { items }.thenReturn(emptyList())
+            on { editor }.thenReturn(mockedEditor)
+        }
+        
         logger.completionStarted(lookup, true, 2)
         
         logger.completionCancelled()

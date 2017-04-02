@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.45</version>
+  <version>0.0.46</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -9,7 +9,7 @@
     ]]></description>
   
   <change-notes><![CDATA[
-      - completion reranking initial
+      - improved logging
     ]]>
   </change-notes>
   
@@ -46,18 +46,23 @@
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.sorting.Ranker"
-                        serviceImplementation="com.intellij.sorting.MLRanker">
-    </applicationService>
+    <!--<applicationService serviceInterface="com.intellij.sorting.Ranker"-->
+                        <!--serviceImplementation="com.intellij.sorting.MLRanker">-->
+    <!--</applicationService>-->
+    
+    <!--<applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory" -->
+                        <!--serviceImplementation="com.intellij.sorting.MLSorterFactory">-->
+    <!--</applicationService>-->
+    
     
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
     <applicationConfigurable instance="com.intellij.plugin.PluginSettingsConfigurable"/>
 
   </extensions>
 
-  <actions>
-    <action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>
-  </actions>
+  <!--<actions>-->
+    <!--<action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>-->
+  <!--</actions>-->
 
   <project-components>
     <component>
@@ -70,9 +75,11 @@
     <component>
       <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>
-    </component>
+    
+    <!--<component>-->
+      <!--<implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>-->
+    <!--</component>-->
+    
   </application-components>
 
 </idea-plugin>
