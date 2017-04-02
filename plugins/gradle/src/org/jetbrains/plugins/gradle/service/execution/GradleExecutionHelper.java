@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -107,9 +108,10 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardError) {
     Set<String> jvmArgs = settings.getVmOptions();
 
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
+    String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
       // merge gradle args e.g. defined in gradle.properties
-      BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
       Collection<String> merged = buildEnvironment != null
                                   ? mergeJvmArgs(settings.getServiceDirectory(), buildEnvironment.getJava().getJvmArguments(), jvmArgs)
                                   : jvmArgs;
@@ -141,6 +143,7 @@ public class GradleExecutionHelper {
       replaceTestCommandOptionWithInitScript(filteredArgs);
       operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
+    setupEnvironment(operation, settings, gradleVersion, id, listener);
 
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
@@ -160,6 +163,30 @@ public class GradleExecutionHelper {
     });
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
+  }
+
+  private static void setupEnvironment(@NotNull LongRunningOperation operation,
+                                       @NotNull GradleExecutionSettings settings,
+                                       @Nullable String gradleVersion,
+                                       ExternalSystemTaskId taskId,
+                                       ExternalSystemTaskNotificationListener listener) {
+    boolean isEnvironmentCustomizationSupported =
+      gradleVersion != null && GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("3.5")) >= 0;
+    if (!isEnvironmentCustomizationSupported) {
+      if (!settings.isPassParentEnvs() || !settings.getEnv().isEmpty()) {
+        listener.onTaskOutput(taskId, String.format(
+          "The version of Gradle you are using%s does not support the environment variables customization feature. " +
+          "Support for this is available in Gradle 3.5 and all later versions.",
+          gradleVersion == null ? "" : (" (" + gradleVersion + ")")), false);
+      }
+      return;
+    }
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.withEnvironment(settings.getEnv());
+    commandLine.withParentEnvironmentType(
+      settings.isPassParentEnvs() ? GeneralCommandLine.ParentEnvironmentType.CONSOLE : GeneralCommandLine.ParentEnvironmentType.NONE);
+    Map<String, String> effectiveEnvironment = commandLine.getEffectiveEnvironment();
+    operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
   public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {
@@ -420,24 +447,18 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection) {
-    try {
-      final BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-      if (LOG.isDebugEnabled()) {
-        try {
-          LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-          LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
-          LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
-        }
-        catch (Throwable t) {
-          LOG.debug(t);
-        }
+    final BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
+    if (LOG.isDebugEnabled()) {
+      try {
+        LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+        LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
+        LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
       }
-      return buildEnvironment;
+      catch (Throwable t) {
+        LOG.debug(t);
+      }
     }
-    catch (Exception e) {
-      LOG.warn("can not get BuildEnvironment model", e);
-      return null;
-    }
+    return buildEnvironment;
   }
 
   private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
