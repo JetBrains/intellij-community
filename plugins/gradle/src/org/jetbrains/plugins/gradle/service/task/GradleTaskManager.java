@@ -125,7 +125,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           }
         }
 
-        GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection);
+        GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener);
         if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
           listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
             id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
