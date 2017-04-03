@@ -48,6 +48,7 @@ public abstract class SerializationManager {
       for (StubElementTypeHolderEP holderEP : Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
         holderEP.initialize();
       }
+      IStubElementType.markStubInitializationComplete();
       final IElementType[] stubElementTypes = IElementType.enumerate(new IElementType.Predicate() {
         @Override
         public boolean matches(@NotNull final IElementType type) {
