@@ -301,6 +301,27 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     return size;
   }
 
+  private static int getPreferredHeight(Component component) {
+    Font font = component.getFont();
+    if (font == null) return 0;
+
+    FontMetrics metrics = component.getFontMetrics(font);
+    int height = metrics != null ? metrics.getHeight() : font.getSize();
+
+    Insets insets = getCrumbInsets(null, getScale(font));
+    return insets.top + insets.bottom + height;
+  }
+
+  @SuppressWarnings("UseDPIAwareInsets")
+  private static Insets getCrumbInsets(Insets insets, int scale) {
+    if (insets == null) insets = new Insets(0, 0, 0, 0);
+    insets.top += 2 * scale;
+    insets.left += 5 * scale;
+    insets.right += 5 * scale;
+    insets.bottom += 2 * scale;
+    return insets;
+  }
+
   private static int getScale(Component component) {
     return component == null ? 1 : getScale(component.getFont());
   }
@@ -315,15 +336,8 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
 
   private static final AbstractBorder STATELESS_BORDER = new AbstractBorder() {
     @Override
-    @SuppressWarnings("UseDPIAwareInsets")
     public Insets getBorderInsets(Component component, Insets insets) {
-      if (insets == null) insets = new Insets(0, 0, 0, 0);
-      int scale = component == null ? 1 : getScale(component.getParent());
-      insets.top += 2 * scale;
-      insets.left += 5 * scale;
-      insets.right += 5 * scale;
-      insets.bottom += 2 * scale;
-      return insets;
+      return getCrumbInsets(insets, component == null ? 1 : getScale(component.getParent()));
     }
   };
 
@@ -336,6 +350,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     @Override
     public Dimension preferredLayoutSize(Container container) {
       Dimension size = getPreferredSize(getComponents(container, Breadcrumbs::toVisible));
+      if (size.height == 0) size.height = getPreferredHeight(container);
       JBInsets.addTo(size, container.getInsets());
       return size;
     }
