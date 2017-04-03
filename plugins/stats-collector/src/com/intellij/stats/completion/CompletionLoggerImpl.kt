@@ -61,7 +61,6 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun logEvent(event: LogEvent) {
         val line = LogEventSerializer.toString(event)
-        println(line) //todo remove
         logFileManager.println(line)
     }
 
