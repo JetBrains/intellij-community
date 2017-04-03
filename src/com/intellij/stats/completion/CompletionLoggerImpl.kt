@@ -62,7 +62,8 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun logEvent(event: LogEvent) {
         val line = LogEventSerializer.toString(event)
-        logFileManager.println(line)
+        println(line)
+        //logFileManager.println(line)
     }
 
     private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
@@ -98,7 +99,7 @@ class CompletionFileLogger(private val installationUID: String,
 
         val ideVersion = PluginManager.BUILD_NUMBER ?: "ideVersion"
         val pluginVersion = calcPluginVersion() ?: "pluginVersion"
-        val mlRankingVersion = CompletionRanker.rankerVersion
+        val mlRankingVersion: String = "NONE"
 
         val event = CompletionStartedEvent(
                 ideVersion, pluginVersion, mlRankingVersion,
