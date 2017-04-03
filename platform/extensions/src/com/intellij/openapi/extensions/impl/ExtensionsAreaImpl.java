@@ -277,13 +277,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                       @NotNull PluginDescriptor descriptor,
                                       @NotNull ExtensionPoint.Kind kind) {
     if (hasExtensionPoint(extensionPointName)) {
+      final String message =
+        "Duplicate registration for EP: " + extensionPointName + ": original plugin " + getExtensionPoint(extensionPointName).getDescriptor().getPluginId() +
+        ", new plugin " + descriptor.getPluginId();
       if (DEBUG_REGISTRATION) {
-        final ExtensionPointImpl oldEP = getExtensionPoint(extensionPointName);
-        myLogger.error("Duplicate registration for EP: " + extensionPointName + ": original plugin " + oldEP.getDescriptor().getPluginId() +
-                       ", new plugin " + descriptor.getPluginId(),
-                       myEPTraces.get(extensionPointName));
+        myLogger.error(message, myEPTraces.get(extensionPointName));
       }
-      throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
+      throw new PicoPluginExtensionInitializationException(message, null, descriptor.getPluginId());
     }
 
     registerExtensionPoint(new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, kind, this, myAreaInstance, descriptor));
