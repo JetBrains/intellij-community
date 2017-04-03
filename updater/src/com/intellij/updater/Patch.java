@@ -317,6 +317,8 @@ public class Patch {
     boolean shouldRevert = false;
     boolean cancelled = false;
     try {
+      List<File> createdDirectories = new ArrayList<>();
+
       forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
         if ((action instanceof CreateAction) &&
             !new File(toDir, action.getPath()).getParentFile().exists()) {
@@ -328,8 +330,22 @@ public class Patch {
         } else {
           appliedActions.add(action);
           action.apply(patchFile, backupDir, toDir);
+
+          if (action instanceof CreateAction) {
+            File file = action.getFile(toDir);
+            if (file.isDirectory()) {
+              createdDirectories.add(0, file);
+            }
+          }
         }
       });
+
+      for (File directory : createdDirectories) {
+        if (Utils.isEmptyDirectory(directory)) {
+          Runner.logger().info("Pruning empty directory: " + directory);
+          Utils.delete(directory);
+        }
+      }
     }
     catch (OperationCancelledException e) {
       Runner.printStackTrace(e);

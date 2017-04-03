@@ -489,9 +489,38 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     assertAppliedAndRevertedCorrectly();
   }
 
-  private void assertAppliedAndRevertedCorrectly() throws Exception {
-    assertAppliedAndRevertedCorrectly(createPatch(), PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+  @Test
+  public void testDoNotLeaveEmptyDirectories() throws Exception {
+    FileUtil.createDirectory(new File(myNewerDir, "new_empty_dir/sub_dir"));
+    assertAppliedAndRevertedCorrectly(expected -> {
+      expected.remove("new_empty_dir/");
+      expected.remove("new_empty_dir/sub_dir/");
+    });
   }
+
+  @Test
+  public void testUpdatingMissingOptionalDirectory() throws Exception {
+    FileUtil.copy(new File(myOlderDir, "bin/idea.bat"), new File(myOlderDir, "jre/bin/java"));
+    FileUtil.copy(new File(myOlderDir, "bin/focuskiller.dll"), new File(myOlderDir, "jre/bin/jvm.dll"));
+    FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), new File(myOlderDir, "jre/lib/rt.jar"));
+    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "jre/lib/tools.jar"));
+    resetNewerDir();
+    FileUtil.rename(new File(myNewerDir, "jre"), new File(myNewerDir, "jre32"));
+
+    myPatchSpec.setOptionalFiles(Arrays.asList(
+      "jre/bin/java", "jre/bin/jvm.dll", "jre/lib/rt.jar", "jre/lib/tools.jar",
+      "jre32/bin/java", "jre32/bin/jvm.dll", "jre32/lib/rt.jar", "jre32/lib/tools.jar"));
+    Patch patch = createPatch();
+
+    FileUtil.delete(new File(myOlderDir, "jre"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertAppliedAndRevertedCorrectly(patch, preparationResult, expected -> {
+      List<String> keys = ContainerUtil.findAll(expected.keySet(), k -> k.startsWith("jre32/"));
+      keys.forEach(expected::remove);
+    });
+  }
+
 
   protected PatchAction getAction(Patch patch, String path) {
     return ContainerUtil.find(patch.getActions(), a -> a.getPath().equals(path));
@@ -514,6 +543,14 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     assertTrue(diff.filesToCreate.isEmpty());
     assertTrue(diff.filesToDelete.isEmpty());
     assertTrue(diff.filesToUpdate.isEmpty());
+  }
+
+  private void assertAppliedAndRevertedCorrectly() throws Exception {
+    assertAppliedAndRevertedCorrectly(expected -> {});
+  }
+
+  private void assertAppliedAndRevertedCorrectly(Consumer<Map<String, Long>> corrector) throws Exception {
+    assertAppliedAndRevertedCorrectly(createPatch(), PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI), corrector);
   }
 
   private void assertAppliedAndRevertedCorrectly(Patch patch, PatchFileCreator.PreparationResult preparationResult) throws Exception {
