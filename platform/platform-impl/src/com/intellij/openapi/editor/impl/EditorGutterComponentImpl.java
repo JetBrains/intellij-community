@@ -809,7 +809,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    int minWidth = areIconsShown() ? (int)(START_ICON_AREA_WIDTH * myEditor.getScale()) : 0;
+    int minWidth = areIconsShown() ? scaleWidth(START_ICON_AREA_WIDTH) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     processGutterRenderers((line, renderers) -> {
@@ -987,6 +987,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
     return icon;
+  }
+
+  private int scaleWidth(int width) {
+    if (Registry.is("editor.scale.gutter.icons")) {
+      float scale = myEditor.getScale();
+      if (Math.abs(1f - scale) > 0.10f) {
+        return (int) (scale * width);
+      }
+    }
+    return width;
   }
 
   private void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
