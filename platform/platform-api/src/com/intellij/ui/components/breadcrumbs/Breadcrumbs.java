@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
@@ -170,8 +172,12 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     else {
       int thickness = scale * getThickness(crumb);
       if (thickness > 0) {
-        g.setColor(getForeground(crumb));
-        paint(g, x, y, width, height, thickness);
+        Color foreground = getForeground(crumb);
+        if (foreground != null) {
+          double alpha = Registry.doubleValue("editor.breadcrumbs.alpha");
+          g.setColor(ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha())));
+          paint(g, x, y, width, height, thickness);
+        }
       }
     }
   }
