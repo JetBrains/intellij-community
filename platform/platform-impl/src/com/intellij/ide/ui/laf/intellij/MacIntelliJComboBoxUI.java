@@ -279,7 +279,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
         Dimension size = cb.getMinimumSize();
         Rectangle bounds = cb.getBounds();
-        bounds.width = bounds.width < size.width ? size.width : bounds.width;
         bounds.height = bounds.height < size.height ? size.height : bounds.height;
 
         size = cb.getPreferredSize();
