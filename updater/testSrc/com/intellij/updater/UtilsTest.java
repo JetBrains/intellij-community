@@ -49,6 +49,17 @@ public class UtilsTest {
   }
 
   @Test
+  public void testDeleteReadonlyFile() throws Exception {
+    File f = tempDir.newFile("temp_dir/temp_file");
+    assertTrue(f.setWritable(false, false));
+    File d = f.getParentFile();
+    assertTrue(d.exists());
+
+    Utils.delete(d);
+    assertFalse(d.exists());
+  }
+
+  @Test
   public void testDeleteLockedFileOnWindows() throws Exception {
     assumeTrue(IS_WINDOWS);
 

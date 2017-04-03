@@ -84,6 +84,7 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                       : "$tempDir/system".toString(),
       "idea.test.patterns"                     : options.testPatterns,
       "idea.test.group"                        : options.testGroup,
+      "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "bootstrap.testcases"                    : "com.intellij.AllTests",
       "java.io.tmpdir"                         : tempDir,

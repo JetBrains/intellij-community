@@ -18,7 +18,11 @@ package com.intellij.updater;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -95,6 +99,16 @@ public class Utils {
           return;
         }
       }
+      catch (AccessDeniedException e) {
+        try {
+          DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
+          if (view != null && view.readAttributes().isReadOnly()) {
+            view.setReadOnly(false);
+            continue;
+          }
+        }
+        catch (IOException ignore) { }
+      }
       catch (IOException ignore) { }
 
       try { Thread.sleep(10); }
@@ -127,6 +141,14 @@ public class Utils {
     Path path = link.toPath();
     Files.deleteIfExists(path);
     Files.createSymbolicLink(path, Paths.get(target));
+  }
+
+  public static boolean isEmptyDirectory(File file) {
+    if (file.isDirectory()) {
+      String[] children = file.list();
+      return children != null && children.length == 0;
+    }
+    return false;
   }
 
   public static void copy(File from, File to) throws IOException {
