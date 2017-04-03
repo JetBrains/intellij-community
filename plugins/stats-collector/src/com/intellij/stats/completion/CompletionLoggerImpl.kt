@@ -10,8 +10,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
-import com.jetbrains.completion.ranker.CompletionRanker
-import sun.plugin.dom.exception.InvalidStateException
 import java.util.*
 
 
@@ -62,8 +60,8 @@ class CompletionFileLogger(private val installationUID: String,
 
     private fun logEvent(event: LogEvent) {
         val line = LogEventSerializer.toString(event)
-        println(line)
-        //logFileManager.println(line)
+        println(line) //todo remove
+        logFileManager.println(line)
     }
 
     private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
@@ -170,20 +168,21 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
-        val current = lookup.currentItem ?: throw InvalidStateException("lookup.currentItem is null")
-        val id = getElementId(current) ?: throw InvalidStateException("id is null")
+        val current = lookup.currentItem
+        val id = if (current != null) getElementId(current)!! else -1
         
         val event = TypedSelectEvent(installationUID, completionUID, id)
         logEvent(event)
     }
 
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
-        val current = lookup.currentItem ?: throw InvalidStateException("lookup.currentItem is null")
-        val index = lookup.items.indexOf(current)
-        if (index < 0) {
-            throw InvalidStateException("index is $index")
+        val current = lookup.currentItem
+        
+        val (index, id) = if (current != null) {
+            lookup.items.indexOf(current) to (getElementId(current) ?: -1)
+        } else {
+            -1 to -1
         }
-        val id = getElementId(current) ?: throw InvalidStateException("element id is null")
         
         val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id)
         logEvent(event)
