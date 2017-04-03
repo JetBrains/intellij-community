@@ -90,7 +90,7 @@ if [ "$JDK" = "" ] && [ "$OS_TYPE" = "Linux" ] &&
   JDK="$IDE_HOME/jre64"
 fi
 
-if [ "$JDK" = "" ] && [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+if [ "$JDK" = "" ] && isJDK $JDK_HOME; then
   JDK="$JDK_HOME"
 fi
 
