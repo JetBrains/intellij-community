@@ -90,7 +90,7 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static final boolean isXWindow = isUnix && !isMac;
-  public static final boolean isWayland = !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
+  public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
   public static final boolean isGNOME = isXWindow && ObjectUtils.notNull(System.getenv("GDMSESSION"), "").startsWith("gnome");
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
