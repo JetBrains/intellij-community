@@ -174,7 +174,15 @@ public class AnsiEscapeDecoder {
 
   /**
    * Returns end index of all consecutive escape sequences started at {@code firstEscSeqBeginInd}, or
-   * negative number if not found: -1 - (length of string suffix to keep in case of an incomplete last escape sequence).
+   * a negative number if not found. Since an escape sequence could be split among several subsequent output chunks
+   * (e.g. because of automatic flushing of standard stream when its buffer is full), it should be parsed
+   * when all the needed output chunks are available. To achieve that, the return value encodes
+   * the length of the passed string suffix to keep in case of an incomplete last escape sequence:
+   *  {@code -1 - (length of string suffix to keep in case of an incomplete last escape sequence)}.  </p>
+   * If the return value is -1, no string suffix should be kept => a malformed escape sequence has been encountered.
+   * If the return value is less than -1, no actual handing of the incomplete escape sequence should be performed,
+   * the string suffix length should be decoded with {@code #decodeUnhandledSuffixLength(the return value)} and the suffix
+   * should be preserved until the next output chunks is available.
    */
   private static int findConsecutiveEscSequencesEndIndex(@NotNull String text, int firstEscSeqBeginInd) {
     int escSeqBeginInd = firstEscSeqBeginInd;
