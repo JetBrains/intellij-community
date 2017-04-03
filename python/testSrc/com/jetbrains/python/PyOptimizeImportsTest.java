@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -102,32 +103,51 @@ public class PyOptimizeImportsTest extends PyTestCase {
     myFixture.copyDirectoryToProject(testName, "");
     final VirtualFile libDir = myFixture.findFileInTempDir("lib");
     assertNotNull(libDir);
+    
+    runWithAdditionalClassEntryInSdkRoots(libDir, () -> {
+      myFixture.configureByFile("main.py");
+      OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
+      myFixture.checkResultByFile(testName + "/main.after.py");
+    });
+  }
+  
+  // PY-22656
+  public void testPyiStubInInterpreterPaths() {
+    final String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    final VirtualFile stubDir = myFixture.findFileInTempDir("stubs");
+    assertNotNull(stubDir);
 
+    runWithAdditionalClassEntryInSdkRoots(stubDir, () -> {
+      myFixture.configureByFile("main.py");
+      OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
+      myFixture.checkResultByFile(testName + "/main.after.py");
+    });
+  }
+
+  private void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
     final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
     WriteAction.run(() -> {
       final SdkModificator modificator = sdk.getSdkModificator();
       assertNotNull(modificator);
-      modificator.addRoot(libDir, OrderRootType.CLASSES);
+      modificator.addRoot(directory, OrderRootType.CLASSES);
       modificator.commitChanges();
     });
-
     try {
-      myFixture.configureByFile("main.py");
-      OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
-      myFixture.checkResultByFile(testName + "/main.after.py");
+      runnable.run();
     }
     finally {
       //noinspection ThrowFromFinallyBlock
       WriteAction.run(() -> {
         final SdkModificator modificator = sdk.getSdkModificator();
         assertNotNull(modificator);
-        modificator.removeRoot(libDir, OrderRootType.CLASSES);
+        modificator.removeRoot(directory, OrderRootType.CLASSES);
         modificator.commitChanges();
       });
     }
   }
-  
+
   // PY-18792
   public void testDisableAlphabeticalOrder() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = false;
