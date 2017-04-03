@@ -296,13 +296,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   public void clean() {
-    if (!myItems.isEmpty()) {
-      clearSelection();
-      myItems = Collections.emptyList();
-      myCounts.clear();
-      myModel.mySelectedClassWhenHidden = null;
-      fireTableDataChanged();
-    }
+    clearSelection();
+    myItems = Collections.emptyList();
+    myCounts.clear();
+    myModel.mySelectedClassWhenHidden = null;
+    fireTableDataChanged();
   }
 
   @Override
