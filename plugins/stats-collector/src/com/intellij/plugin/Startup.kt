@@ -16,18 +16,21 @@ class NotificationManager : StartupActivity {
         
         private val MESSAGE_SHOWN_KEY = "completion.stats.allow.message.shown"
     }
+    
+    private fun isMessageShown() = PropertiesComponent.getInstance().getBoolean(MESSAGE_SHOWN_KEY, false)
 
+    private fun setMessageShown(value: Boolean) = PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, value)
+    
     override fun runActivity(project: Project) {
-        val isMessageShown = PropertiesComponent.getInstance().getBoolean(MESSAGE_SHOWN_KEY, false)
-        if (!isMessageShown) {
+        if (!isMessageShown()) {
             notify(project)
+            setMessageShown(true)
         }
     }
     
     private fun notify(project: Project) {
         val notification = Notification(PLUGIN_NAME, PLUGIN_NAME, MESSAGE_TEXT, NotificationType.INFORMATION)
         notification.notify(project)
-        PropertiesComponent.getInstance().setValue(MESSAGE_SHOWN_KEY, true)
     }
 
 }
