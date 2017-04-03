@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -454,6 +455,8 @@ public class ExternalSystemUtil {
         ExternalSystemNotificationManager.getInstance(project).processExternalProjectRefreshError(error, projectName, externalSystemId);
       }
     };
+
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
 
     final String title;
     switch (progressExecutionMode) {
