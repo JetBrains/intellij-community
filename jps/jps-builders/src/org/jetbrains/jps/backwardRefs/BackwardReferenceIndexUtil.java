@@ -83,14 +83,25 @@ public class BackwardReferenceIndexUtil {
       }
 
       Map<LightRef, Integer> convertedRefs = new THashMap<>();
+      IOException[] exception = new IOException[]{null};
       refs.forEachEntry((ref, count) -> {
-        final LightRef lightRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
-        if (lightRef != null) {
-          convertedRefs.put(lightRef, count);
+        final LightRef lightRef;
+        try {
+          lightRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
+          if (lightRef != null) {
+            convertedRefs.put(lightRef, count);
+          }
+        }
+        catch (IOException e) {
+          exception[0] = e;
+          return false;
         }
         return true;
       });
-      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
+      if (exception[0] != null) {
+        throw exception[0];
+      }
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions, signatureData));
     }
     catch (IOException e) {
       writer.setRebuildCause(e);
