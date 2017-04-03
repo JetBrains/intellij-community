@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import java.awt.event.ItemEvent;
  * @author spleaner
  */
 public class ThreeStateCheckBox extends JCheckBox {
+  public static final String THREE_STATE_CHECKBOX_STATE = "ThreeStateCheckbox.state";
+
   private State myState;
   private boolean myThirdStateEnabled = true;
 
@@ -107,10 +109,13 @@ public class ThreeStateCheckBox extends JCheckBox {
   }
 
   public void setState(State state) {
+    State oldState = myState;
     myState = state;
 
     String value = state == State.DONT_CARE ? "indeterminate" : null;
     putClientProperty("JButton.selectedState", value);
+
+    firePropertyChange(THREE_STATE_CHECKBOX_STATE, oldState, state);
 
     repaint();
   }
