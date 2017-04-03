@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.AbstractProjectComponent
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import java.beans.PropertyChangeListener
@@ -88,10 +88,18 @@ class LookupActionsListener : AnActionListener.Adapter() {
         try {
             block()
         } catch (e: Throwable) {
+            logIfNotControlFlow(e)
+        }
+    }
+
+    private fun logIfNotControlFlow(e: Throwable) {
+        if (e is ControlFlowException) {
+            throw e
+        } else {
             LOG.error(e)
         }
     }
-    
+
     override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
         logThrowables {
             when (action) {
