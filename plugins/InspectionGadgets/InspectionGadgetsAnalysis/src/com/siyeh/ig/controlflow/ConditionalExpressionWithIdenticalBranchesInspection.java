@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,10 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final EquivalenceChecker.Decision decision = (EquivalenceChecker.Decision)infos[1];
-    return InspectionGadgetsBundle.message(decision.isExact()
-                                           ? "conditional.expression.with.identical.branches.problem.descriptor"
-                                           : "conditional.expression.with.similar.branches.problem.descriptor");
+    final EquivalenceChecker.Match decision = (EquivalenceChecker.Match)infos[1];
+    return InspectionGadgetsBundle.message(decision.isPartialMatch()
+                                           ? "conditional.expression.with.similar.branches.problem.descriptor"
+                                           : "conditional.expression.with.identical.branches.problem.descriptor");
   }
 
   @Override
@@ -71,7 +71,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(getEquivalenceDecision().getExactlyMatches()
+      return InspectionGadgetsBundle.message(getEquivalenceDecision().isExactMatch()
                                              ? "conditional.expression.with.identical.branches.collapse.quickfix"
                                              : "conditional.expression.with.identical.branches.push.inside.quickfix");
     }
@@ -86,22 +86,22 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       return myConditionalExpression.getElement();
     }
 
-    private EquivalenceChecker.Decision getEquivalenceDecision() {
+    private EquivalenceChecker.Match getEquivalenceDecision() {
       return EquivalenceChecker.getCanonicalPsiEquivalence()
-        .expressionsAreEquivalentDecision(getConditionalExpression().getThenExpression(), getConditionalExpression().getElseExpression());
+        .expressionsMatch(getConditionalExpression().getThenExpression(), getConditionalExpression().getElseExpression());
     }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final EquivalenceChecker.Decision decision = getEquivalenceDecision();
+      final EquivalenceChecker.Match decision = getEquivalenceDecision();
       final PsiConditionalExpression conditionalExpression = getConditionalExpression();
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       assert thenExpression != null;
-      if (decision.getExactlyMatches()) {
+      if (decision.isExactMatch()) {
         final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
         final String bodyText = thenExpression.getText();
         PsiReplacementUtil.replaceExpression(expression, bodyText);
-      } else if (!decision.isExactUnMatches()) {
+      } else if (!decision.isExactMismatch()) {
         final PsiElement leftDiff = decision.getLeftDiff();
         final PsiElement rightDiff = decision.getRightDiff();
 
@@ -128,9 +128,9 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       super.visitConditionalExpression(expression);
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
-      final EquivalenceChecker.Decision decision = EquivalenceChecker.getCanonicalPsiEquivalence()
-        .expressionsAreEquivalentDecision(thenExpression, elseExpression);
-      if (thenExpression != null && (myReportOnlyExactlyIdentical ? decision.getExactlyMatches() : !decision.isExactUnMatches())) {
+      final EquivalenceChecker.Match decision = EquivalenceChecker.getCanonicalPsiEquivalence()
+        .expressionsMatch(thenExpression, elseExpression);
+      if (thenExpression != null && (myReportOnlyExactlyIdentical ? decision.isExactMatch() : !decision.isExactMismatch())) {
         registerError(expression, expression, decision);
       }
     }
