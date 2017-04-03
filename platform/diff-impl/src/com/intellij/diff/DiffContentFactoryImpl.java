@@ -306,6 +306,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       file = new BinaryLightVirtualFile(fileName, type, content);
       file.setWritable(false);
     }
+    file.putUserData(DiffUtil.TEMP_FILE_KEY, Boolean.TRUE);
 
     return new FileContentImpl(project, file, highlightFile);
   }
