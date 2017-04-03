@@ -71,7 +71,6 @@ public class Course {
 
   public Lesson getLesson(@NotNull final String name) {
     int lessonIndex = EduUtils.getIndex(name, EduNames.LESSON);
-    List<Lesson> lessons = getLessons();
     if (!EduUtils.indexIsValid(lessonIndex, lessons)) {
       return null;
     }
