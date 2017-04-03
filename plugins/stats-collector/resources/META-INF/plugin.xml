@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.46</version>
+  <version>0.0.47</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -10,10 +10,11 @@
   
   <change-notes><![CDATA[
       - improved logging
+      - fixed couple exceptions
     ]]>
   </change-notes>
   
-  <idea-version since-build="144.0"/>
+  <idea-version since-build="171.0"/>
 
   <extensions defaultExtensionNs="com.intellij">
     
