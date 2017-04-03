@@ -18,7 +18,11 @@ package com.intellij.updater;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -94,6 +98,16 @@ public class Utils {
           Runner.logger().info("deleted: " + path);
           return;
         }
+      }
+      catch (AccessDeniedException e) {
+        try {
+          DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
+          if (view != null && view.readAttributes().isReadOnly()) {
+            view.setReadOnly(false);
+            continue;
+          }
+        }
+        catch (IOException ignore) { }
       }
       catch (IOException ignore) { }
 
