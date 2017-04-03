@@ -21,6 +21,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -259,10 +260,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
-      final List<GitRepository> preselectedRepositories = newArrayList(repositories);
-      GuiUtils.invokeLaterIfNeeded(() ->
-        new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
-        ModalityState.defaultModalityState());
+      ModalityState modality = ModalityState.defaultModalityState();
+      TransactionGuard.getInstance().assertWriteSafeContext(modality);
+
+      List<GitRepository> preselectedRepositories = newArrayList(repositories);
+      GuiUtils.invokeLaterIfNeeded(
+        () -> new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
+        modality);
     }
     return exceptions;
   }
