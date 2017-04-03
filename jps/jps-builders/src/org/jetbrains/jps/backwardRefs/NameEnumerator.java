@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 
 public class NameEnumerator extends PersistentStringEnumerator {
   public NameEnumerator(@NotNull File file) throws IOException {

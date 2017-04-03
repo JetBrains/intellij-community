@@ -84,7 +84,7 @@ public class CompilerBackwardReferenceIndex {
       };
 
       myIndices = new HashMap<>();
-      for (IndexExtension<LightRef, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices()) {
+      for (IndexExtension<?, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices()) {
         //noinspection unchecked
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }

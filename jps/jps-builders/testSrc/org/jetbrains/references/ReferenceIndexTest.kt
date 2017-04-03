@@ -128,5 +128,17 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testStaticallyImportedConstant() {
     assertIndexOnRebuild("pack/Foo.java", "pack/Bar.java")
   }
+
+  fun testOccurrences() {
+    assertIndexOnRebuild("Foo.java", "Bar.java")
+  }
+
+  fun testConstructors() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testAnnotation() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 
