@@ -30,15 +30,15 @@ import java.util.stream.LongStream;
  */
 public class CpuTimings {
   final long[] rawData;
-  long average;
-  private final double myStandardDeviation;
-  private final int attempt;
+  final long average;
+  final double stdDev;
+  final int attempt;
 
   private CpuTimings(long[] rawData, int attempt) {
     this.rawData = rawData;
     this.attempt = attempt;
     average = ArrayUtil.averageAmongMedians(rawData, 2);
-    myStandardDeviation = standardDeviation(rawData);
+    stdDev = standardDeviation(rawData);
   }
 
   private static double standardDeviation(long[] elapsed) {
@@ -53,7 +53,7 @@ public class CpuTimings {
 
   @Override
   public String toString() {
-    return average + "[sd=" + myStandardDeviation + ", attempt=" + attempt + "]";
+    return average + ", sd=" + stdDev + ", attempt=" + attempt;
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -61,15 +61,17 @@ public class CpuTimings {
     int maxIterations = UsefulTestCase.IS_UNDER_TEAMCITY ? 100 : 10;
     for (int i = 0;; i++) {
       CpuTimings timings = calcCpuTiming(20, CpuTimings::addBigIntegers, i);
-      if (timings.myStandardDeviation < 1.8) {
+      if (timings.stdDev < 1.8) {
+        //System.out.printf("CPU Timings: %d, sd=%.2f; attempt=%d%n", timings.average, timings.stdDev, i);
         return timings;
       }
       if (i == maxIterations) {
-        System.out.println("Cannot calculate timings that are stable enough, giving up");
+        System.out.printf("CPU Timings: %d, sd=%.2f; not stable enough, giving up", timings.average, timings.stdDev);
         return timings;
       }
       if (i > 3) {
-        System.out.println(i + ": Unstable timings: " + timings+" (getProcessCpuLoad() = " + getProcessCpuLoad()+"; getSystemCpuLoad() = " + getSystemCpuLoad()+")");
+        System.out.printf("CPU Timings: %d, sd=%.2f; unstable (getProcessCpuLoad() = %s; getSystemCpuLoad() = %s)%n",
+                          timings.average, timings.stdDev, getProcessCpuLoad(), getSystemCpuLoad());
       }
       System.gc();
       PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
