@@ -53,7 +53,8 @@ val SINGLETON = "singleton"
 
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
                                                                    private var configuration: RunConfiguration? = null,
-                                                                   private var isTemplate: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
+                                                                   private var isTemplate: Boolean = false,
+                                                                   private var singleton: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -65,11 +66,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   private var isTemporary = false
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
-  private var singleton = false
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
-  var beforeRunTasks: List<BeforeRunTask<*>>? = null
+  //var beforeRunTasks: List<BeforeRunTask<*>>? = null
 
   override fun getFactory() = configuration?.factory
 
@@ -130,12 +130,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getFolderName() = folderName
 
-  private fun getFactory(element: Element): ConfigurationFactory? {
-    val typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE)
-    val factoryName = element.getAttributeValue(FACTORY_NAME_ATTRIBUTE)
-    return manager.getFactory(typeName, factoryName, !isTemplate)
-  }
-
   fun readExternal(element: Element) {
     isTemplate = element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE).toBoolean()
     isTemporary = element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name
@@ -143,7 +137,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
-    val factory = getFactory(element) ?: return
+    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
 
     wasSingletonSpecifiedExplicitly = false
     if (isTemplate) {
@@ -151,7 +145,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
     else {
       val singletonStr = element.getAttributeValue(SINGLETON)
-      if (StringUtil.isEmpty(singletonStr)) {
+      if (singletonStr.isNullOrEmpty()) {
         singleton = factory.isConfigurationSingletonByDefault
       }
       else {
@@ -166,7 +160,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     else {
       // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
       // may not be loaded yet. This creates initialization order issue.
-      manager.doCreateConfiguration(element.getAttributeValue(NAME_ATTR), factory, false)
+      val configuration = factory.createTemplateConfiguration(manager.project, manager)
+      configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
+      configuration
     }
 
     this.configuration = configuration
@@ -421,11 +417,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
           runnerSettings.add(state)
         }
       }
-      if (unloadedSettings != null) {
-        for (unloadedSetting in unloadedSettings!!) {
-          runnerSettings.add(unloadedSetting.clone())
-        }
-      }
+      unloadedSettings?.mapTo(runnerSettings) { it.clone() }
       runnerSettings.sort { o1, o2 ->
         val attributeValue1 = o1.getAttributeValue(RUNNER_ID)
         if (attributeValue1 == null) 1 else StringUtil.compare(attributeValue1, o2.getAttributeValue(RUNNER_ID), false)

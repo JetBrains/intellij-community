@@ -34,8 +34,6 @@ public abstract class RunManagerEx extends RunManager {
     return (RunManagerEx)project.getComponent(RunManager.class);
   }
 
-  //public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
-
   /**
    * @deprecated use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
    */
@@ -57,6 +55,10 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
 
+  public void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks) {
+    addConfiguration(settings, isShared, tasks, false);
+  }
+
   public abstract void addConfiguration(RunnerAndConfigurationSettings settings,
                                         boolean isShared,
                                         List<BeforeRunTask> tasks,
@@ -65,7 +67,7 @@ public abstract class RunManagerEx extends RunManager {
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
 
   @NotNull
-  public abstract List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
+  public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration settings);
 
   public abstract void setBeforeRunTasks(@NotNull RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
 

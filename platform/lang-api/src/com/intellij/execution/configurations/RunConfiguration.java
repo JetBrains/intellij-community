@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
@@ -22,6 +23,9 @@ import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Interface for run configurations which can be managed by a user and displayed in the UI.
@@ -128,11 +132,19 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * @throws RuntimeConfigurationError     if the configuration settings contain a fatal problem which makes it impossible
    *                                       to execute the run configuration.
    */
-  void checkConfiguration() throws RuntimeConfigurationException;
+  default void checkConfiguration() throws RuntimeConfigurationException {
+  }
 
   default void readExternal(Element element) {
   }
 
   default void writeExternal(Element element) {
+  }
+
+  default List<BeforeRunTask> getBeforeRunTasks() {
+    return Collections.emptyList();
+  }
+
+  default void setBeforeRunTasks(@Nullable List<BeforeRunTask> value) {
   }
 }

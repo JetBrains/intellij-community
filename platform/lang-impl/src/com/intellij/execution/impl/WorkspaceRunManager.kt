@@ -21,7 +21,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 
-internal class WorkspaceRunManager(project: Project, propertiesComponent: PropertiesComponent) : RunManagerImpl(project, propertiesComponent) {
+class WorkspaceRunManager(project: Project, propertiesComponent: PropertiesComponent) : RunManagerImpl(project, propertiesComponent) {
   override fun loadState(parentNode: Element) {
     clear(false)
 
@@ -41,13 +41,6 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
     schemeManager.reload()
 
     super.loadState(parentNode)
-  }
-
-  override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings, shared: Boolean) {
-    if (!shared) {
-      schemeManager.addScheme(settings as RunConfigurationScheme)
-    }
-    super.runConfigurationAdded(settings, shared)
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {

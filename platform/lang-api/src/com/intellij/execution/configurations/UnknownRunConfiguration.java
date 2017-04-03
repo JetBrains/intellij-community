@@ -92,9 +92,9 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
   @Override
   public RunConfiguration clone() {
     try {
-      final UnknownRunConfiguration cloned = (UnknownRunConfiguration) super.clone();
-      return cloned;
-    } catch (CloneNotSupportedException e) {
+      return (UnknownRunConfiguration)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
       return null;
     }
   }
