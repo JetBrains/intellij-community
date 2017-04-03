@@ -218,31 +218,19 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     void delete() {
-      disable();
+      // unable to disable all requests here because VMDisconnectedException can be thrown
+      myRequests.clear();
       myIsDeleted = true;
     }
 
     @Override
     public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
       throws EventProcessingException {
-      try {
-        SuspendContextImpl suspendContext = action.getSuspendContext();
-        if (suspendContext != null) {
-          final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
-          ObjectReference thisRef = getThisObject(suspendContext, event);
-          if (thisRef.referenceType().name().equals(myClassName) && data != null) {
-            thisRef.disableCollection();
-            myTrackedObjects.add(thisRef);
-            data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
-          }
-        }
+      if (myIsDeleted) {
+        event.request().disable();
       }
-      catch (EvaluateException e) {
-        return false;
-      }
-
-      if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
-        disable();
+      else {
+        handleEvent(action, event);
       }
 
       return false;
@@ -259,6 +247,27 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       if (myIsEnabled && !myIsDeleted) {
         myRequests.forEach(EventRequest::disable);
         myIsEnabled = false;
+      }
+    }
+
+    private void handleEvent(@NotNull SuspendContextCommandImpl action, @NotNull LocatableEvent event) {
+      try {
+        SuspendContextImpl suspendContext = action.getSuspendContext();
+        if (suspendContext != null) {
+          final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
+          ObjectReference thisRef = getThisObject(suspendContext, event);
+          if (thisRef.referenceType().name().equals(myClassName) && data != null) {
+            thisRef.disableCollection();
+            myTrackedObjects.add(thisRef);
+            data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
+          }
+        }
+      }
+      catch (EvaluateException ignored) {
+      }
+
+      if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
+        disable();
       }
     }
   }
