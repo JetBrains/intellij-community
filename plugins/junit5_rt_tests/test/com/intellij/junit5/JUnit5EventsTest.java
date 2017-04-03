@@ -16,6 +16,7 @@
 package com.intellij.junit5;
 
 import com.intellij.openapi.util.text.StringUtil;
+import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
 import org.junit.jupiter.engine.descriptor.MethodTestDescriptor;
@@ -31,6 +32,7 @@ import org.opentest4j.MultipleFailuresError;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -72,12 +74,13 @@ class JUnit5EventsTest {
                                                              TestClass.class.getDeclaredMethod("test1"));
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     myExecutionListener.executionStarted(identifier);
-    MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors");
-    multipleFailuresError.addFailure(new AssertionFailedError("message1", "expected1", "actual1"));
-    multipleFailuresError.addFailure(new AssertionFailedError("message2", "expected2", "actual2"));
+    MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
+      (new AssertionFailedError("message1", "expected1", "actual1"),
+       new AssertionFailedError("message2", "expected2", "actual2")));
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(multipleFailuresError));
 
 
+    String lineSeparator = MapSerializerUtil.escapeStr(System.getProperty("line.separator"), MapSerializerUtil.STD_ESCAPER);
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "\n" +
                             "##teamcity[testStarted id='|[engine:engine|]' name='test1()' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.test1']\n" +
@@ -86,7 +89,7 @@ class JUnit5EventsTest {
                             "\n" +
                             "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='' message='' expected='expected2' actual='actual2']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='TRACE' message='2 errors (2 failures)|n\tmessage1|n\tmessage2']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='TRACE' message='2 errors (2 failures)" + lineSeparator + "\tmessage1" + lineSeparator + "\tmessage2']\n" +
                             "\n" +
                             "##teamcity[testFinished id='|[engine:engine|]' name='test1()']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
