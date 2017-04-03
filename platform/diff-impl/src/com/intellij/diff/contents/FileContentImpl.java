@@ -35,7 +35,7 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
   @Nullable private final VirtualFile myHighlightFile;
 
   public FileContentImpl(@Nullable Project project, @NotNull VirtualFile file) {
-    this(project, file, getHighlightFile(file));
+    this(project, file, file);
   }
 
   public FileContentImpl(@Nullable Project project,
@@ -51,15 +51,8 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
   @Nullable
   @Override
   public Navigatable getNavigatable() {
-    if (myProject == null || myProject.isDefault()) return null;
-    if (myHighlightFile == null || !myHighlightFile.isValid()) return null;
+    if (!DiffUtil.canNavigateToFile(myProject, myHighlightFile)) return null;
     return new OpenFileDescriptor(myProject, myHighlightFile);
-  }
-
-  @Nullable
-  private static VirtualFile getHighlightFile(@NotNull VirtualFile file) {
-    if (file.isInLocalFileSystem()) return file;
-    return null;
   }
 
   @NotNull

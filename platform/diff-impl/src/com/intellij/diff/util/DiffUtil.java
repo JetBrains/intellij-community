@@ -112,6 +112,7 @@ import java.util.List;
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
+  public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUI.scale(2);
 
@@ -238,6 +239,7 @@ public class DiffUtil {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
     if (DiffPsiFileSupport.isDiffFile(file)) return false;
+    if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
 
