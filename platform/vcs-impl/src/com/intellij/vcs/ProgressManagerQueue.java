@@ -54,7 +54,9 @@ public class ProgressManagerQueue {
 
   public void start() {
     myIsStarted = true;
-    runMe();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      runMe();
+    }
   }
 
   /**
