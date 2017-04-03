@@ -85,6 +85,12 @@ public class MemoryViewDebugProcessData {
       myType2Reference2Stack.clear();
     }
 
+    @Override
+    public void clear() {
+      release();
+      myPinnedType2Reference2Stack.clear();
+    }
+
     @Nullable
     private static List<StackFrameItem> extract(@NotNull Map<ReferenceType, Map<ObjectReference, List<StackFrameItem>>> map,
                                                 @NotNull ObjectReference ref) {

@@ -374,6 +374,13 @@ public class JavaDebugProcess extends XDebugProcess {
 
         final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
         process.putUserData(MemoryViewDebugProcessData.KEY, data);
+        session.addSessionListener(new XDebugSessionListener() {
+          @Override
+          public void sessionStopped() {
+            session.removeSessionListener(this);
+            data.getTrackedStacks().clear();
+          }
+        }, memoryViewContent);
 
         ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
         ui.addListener(new ContentManagerAdapter() {
