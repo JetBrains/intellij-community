@@ -21,15 +21,6 @@ message()
   fi
 }
 
-isJDK()
-{
-  if [ -z $1 ] || [ ! -x "$1/bin/java" ]; then
-    return 1
-  else
-    return 0
-  fi
-}
-
 UNAME=`which uname`
 GREP=`which egrep`
 GREP_OPTIONS=""
@@ -68,82 +59,79 @@ fi
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
-JDK=""
-if isJDK $@@product_uc@@_JDK; then
-  JDK="$@@product_uc@@_JDK"
+if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
+  JAVA_BIN="$@@product_uc@@_JDK/bin/java"
 fi
 
-if [ "$JDK" = "" ] && [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
-  JDK=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
-  if [ ! -d "$JDK" ]; then
-    JDK="$IDE_HOME/$JDK"
+if [ -z "$JAVA_BIN" -a -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+  USER_JRE=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
+  if [ ! -d "$USER_JRE" ]; then
+    USER_JRE="$IDE_HOME/$USER_JRE"
   fi
-  if ! isJDK $JDK; then
-    JDK=""
+  if [ -x "$USER_JRE/bin/java" ]; then
+    JAVA_BIN="$USER_JRE/bin/java"
   fi
 fi
 
-if [ "$JDK" = "" ] && [ "$OS_TYPE" = "Linux" ] &&
-   [ -x "$IDE_HOME/jre64/bin/java" ] && "$IDE_HOME/jre64/bin/java" -version > /dev/null 2>&1 ; then
-  JDK="$IDE_HOME/jre64"
+if [ -z "$JAVA_BIN" -a "$OS_TYPE" = "Linux" ] ; then
+  BUNDLED_JRE_BIN="$IDE_HOME/jre64/bin/java"
+  if [ -x "$BUNDLED_JRE_BIN" ] && "$BUNDLED_JRE_BIN" -version > /dev/null 2>&1 ; then
+    JAVA_BIN="$BUNDLED_JRE_BIN"
+  fi
 fi
 
-if [ "$JDK" = "" ] && isJDK $JDK_HOME; then
-  JDK="$JDK_HOME"
+if [ -z "$JAVA_BIN" -a -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+  JAVA_BIN="$JDK_HOME/bin/java"
 fi
 
-if [ "$JDK" = "" ]; then
-  if isJDK $JAVA_HOME; then
-    JDK="$JAVA_HOME"
-  else
-    JAVA_BIN_PATH=`which java`
-    if [ -n "$JAVA_BIN_PATH" ]; then
-      if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
-        JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
-        if [ -x "$JAVA_LOCATION/bin/java" ]; then
-          JDK="$JAVA_LOCATION"
-        fi
-      elif [ "$OS_TYPE" = "SunOS" ]; then
-        JAVA_LOCATION="/usr/jdk/latest"
-        if [ -x "$JAVA_LOCATION/bin/java" ]; then
-          JDK="$JAVA_LOCATION"
-        fi
-      elif [ "$OS_TYPE" = "Darwin" ]; then
-        JAVA_LOCATION=`/usr/libexec/java_home`
-        if [ -x "$JAVA_LOCATION/bin/java" ]; then
-          JDK="$JAVA_LOCATION"
-        fi
-      fi
-    fi
+if [ -z "$JAVA_BIN" -a  -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
+  JAVA_BIN="$JAVA_HOME/bin/java"
+fi
 
-    if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
-      JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
-      case "$JAVA_LOCATION" in
-        */jre/bin/java)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
-          if [ ! -d "$JAVA_LOCATION/bin" ]; then
-            JAVA_LOCATION="$JAVA_LOCATION/jre"
-          fi
-          ;;
-        *)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
-          ;;
-      esac
+if [ -z "$JAVA_BIN" ]; then
+  JAVA_BIN_PATH=`which java`
+
+  if [ -n "$JAVA_BIN_PATH" ]; then
+    if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
+      JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
+        JAVA_BIN="$JAVA_LOCATION/bin/java"
       fi
+    elif [ "$OS_TYPE" = "SunOS" ]; then
+      JAVA_LOCATION="/usr/jdk/latest"
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
+        JAVA_BIN="$JAVA_LOCATION/bin/java"
+      fi
+    elif [ "$OS_TYPE" = "Darwin" ]; then
+      JAVA_LOCATION=`/usr/libexec/java_home`
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
+        JAVA_BIN="$JAVA_LOCATION/bin/java"
+      fi
+    fi
+  fi
+
+  if [ -z "$JAVA_BIN" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
+    JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
+    case "$JAVA_LOCATION" in
+      */jre/bin/java)
+        JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+        if [ ! -d "$JAVA_LOCATION/bin" ]; then
+          JAVA_LOCATION="$JAVA_LOCATION/jre"
+        fi
+        ;;
+      *)
+        JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+        ;;
+    esac
+    if [ -x "$JAVA_LOCATION/bin/java" ]; then
+      JAVA_BIN="$JAVA_LOCATION/bin/java"
     fi
   fi
 fi
 
-JAVA_BIN="$JDK/bin/java"
-if [ ! -x "$JAVA_BIN" ]; then
-  JAVA_BIN="$JDK/jre/bin/java"
-fi
-
-if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
+if [ -z "$JAVA_BIN" -o ! -x "$JAVA_BIN" ]; then
   message "No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
   exit 1
 fi
