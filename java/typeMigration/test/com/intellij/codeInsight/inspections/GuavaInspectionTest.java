@@ -40,7 +40,6 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-@Bombed(user = "develar", month = Calendar.MAY, day = 1)
 public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   private GuavaInspection myInspection;
 
@@ -59,7 +58,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-21.0.jar");
+    moduleBuilder.addLibraryJars("guava", getTestDataPath() + "/", "guava-stubs.jar");
     moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }

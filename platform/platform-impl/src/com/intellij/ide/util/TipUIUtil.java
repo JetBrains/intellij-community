@@ -113,19 +113,11 @@ public class TipUIUtil {
         if (succeed) LOG.warn(message);
         else LOG.error(message);
       }
-      adjustFontSize(((HTMLEditorKit)browser.getEditorKit()).getStyleSheet());
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
       setCantReadText(browser, tip);
     }
-  }
-
-  private static final String TIP_HTML_TEXT_TAGS = "h1, p, pre, ul";
-
-  private static void adjustFontSize(StyleSheet styleSheet) {
-    int size = (int)UIUtil.getFontSize(UIUtil.FontSize.MINI);
-    styleSheet.addRule(TIP_HTML_TEXT_TAGS + " {font-size: " + size + "px;}");
   }
 
   private static void setCantReadText(JEditorPane browser, TipAndTrickBean bean) {
@@ -240,13 +232,8 @@ public class TipUIUtil {
       }
     );
     URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-    final StyleSheet styleSheet = UIUtil.loadStyleSheet(resource);
-    HTMLEditorKit kit = new HTMLEditorKit() {
-      @Override
-      public StyleSheet getStyleSheet() {
-        return styleSheet != null ? styleSheet : super.getStyleSheet();
-      }
-    };
+    HTMLEditorKit kit = UIUtil.getHTMLEditorKit(false);
+    kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
     browser.setEditorKit(kit);
     return browser;
   }

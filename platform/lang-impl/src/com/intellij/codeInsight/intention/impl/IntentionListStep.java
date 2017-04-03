@@ -20,9 +20,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.*;
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -190,7 +188,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                                             @Nullable PsiElement element,
                                             @Nullable PsiFile containingFile,
                                             @Nullable Editor containingEditor) {
-    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor);
+    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor, (cached, action)->{
+      removeActionFromCached(cached);
+      markInvoked(action);
+    });
     if (element == null) return cachedAction;
     final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
     if (options == null) return cachedAction;
@@ -274,6 +275,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     };
   }
 
+  private void markInvoked(@NotNull IntentionAction action) {
+    ShowIntentionsPass.markActionInvoked(myFile.getProject(), myEditor, action);
+  }
+
+  private void removeActionFromCached(@NotNull IntentionActionWithTextCaching action) {
+    // remove from the action from the list after invocation to make it appear unavailable sooner.
+    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it's may be too long)
+    myCachedErrorFixes.remove(action);
+    myCachedGutters.remove(action);
+    myCachedInspectionFixes.remove(action);
+    myCachedIntentions.remove(action);
+    myCachedNotifications.remove(action);
+  }
+
   @NotNull
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
@@ -345,11 +360,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private int getWeight(IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
     int group = getGroup(action);
-    if (a instanceof IntentionActionWrapper) {
-      a = ((IntentionActionWrapper)a).getDelegate();
-    }
-    if (a instanceof IntentionWrapper) {
-      a = ((IntentionWrapper)a).getAction();
+    if (a instanceof IntentionActionDelegate) {
+      a = ((IntentionActionDelegate)a).getDelegate();
     }
     if (a instanceof HighPriorityAction) {
       return group + 3;
@@ -415,8 +427,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     //custom icon
     if (action instanceof QuickFixWrapper) {
       iconable = ((QuickFixWrapper)action).getFix();
-    } else if (action instanceof IntentionActionWrapper) {
-      iconable = ((IntentionActionWrapper)action).getDelegate();
+    }
+    else if (action instanceof IntentionActionDelegate) {
+      iconable = ((IntentionActionDelegate)action).getDelegate();
     }
 
     if (iconable instanceof Iconable) {

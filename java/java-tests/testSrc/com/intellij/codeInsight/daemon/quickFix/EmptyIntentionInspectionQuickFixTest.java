@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.defUse.DefUseInspection;
@@ -69,6 +70,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     List<IntentionAction> emptyActions = getAvailableActions();
     for (int i = emptyActions.size()-1; i>=0; i--) {
       IntentionAction action = emptyActions.get(i);
+      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
       if (!(action instanceof EmptyIntentionAction)) emptyActions.remove(i);
     }
     assertEquals(emptyActions.toString(), 1, emptyActions.size());
@@ -79,17 +81,20 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     List<IntentionAction> emptyActions = getAvailableActions();
     int i = 0;
     for(;i < emptyActions.size(); i++) {
-      final IntentionAction intentionAction = emptyActions.get(i);
-      if ("Make 'i' not final".equals(intentionAction.getText())) {
+      IntentionAction action = emptyActions.get(i);
+      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      if ("Make 'i' not final".equals(action.getText())) {
         break;
       }
-      if (intentionAction instanceof EmptyIntentionAction) {
+      if (action instanceof EmptyIntentionAction) {
         fail("Low priority action prior to quick fix");
       }
     }
     assertTrue(i < emptyActions.size());
     for (; i < emptyActions.size(); i++) {
-      if (emptyActions.get(i) instanceof EditInspectionToolsSettingsAction) {
+      IntentionAction action = emptyActions.get(i);
+      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      if (action instanceof EditInspectionToolsSettingsAction) {
         return;
       }
     }

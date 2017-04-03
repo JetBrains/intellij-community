@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.jetbrains.edu.learning.StudySettings;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -36,13 +37,12 @@ public class EduStepicAuthorizedClient {
       return ourClient;
     }
 
-    StepicUpdateSettings stepicUpdateSettings = StepicUpdateSettings.getInstance();
+    StudySettings studySettings = StudySettings.getInstance();
 
-
-    if (stepicUpdateSettings.getUser() == null) {
+    if (studySettings.getUser() == null) {
       final StepicUser user = showLoginDialog();
       if (user != null) {
-        stepicUpdateSettings.setUser(user);
+        studySettings.setUser(user);
       }
       else {
         LOG.warn("Unable to login");
@@ -50,7 +50,7 @@ public class EduStepicAuthorizedClient {
       }
     }
 
-    StepicUser stepicUser = stepicUpdateSettings.getUser();
+    StepicUser stepicUser = studySettings.getUser();
     assert stepicUser != null;
 
     if (!EduStepicClient.isTokenUpToDate(stepicUser.getAccessToken())) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
@@ -259,7 +260,7 @@ public class EduStepicConnector {
   }
 
   private static <T> T getFromStepic(String link, final Class<T> container) throws IOException{
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final StepicUser user = StudySettings.getInstance().getUser();
     final boolean isAuthorized = user != null;
     if (isAuthorized) {
       return EduStepicAuthorizedClient.getFromStepic(link, container, user);
@@ -355,7 +356,7 @@ public class EduStepicConnector {
 
   public static String postAttempt(int id) throws IOException {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
-    if (client == null || StepicUpdateSettings.getInstance().getUser() == null) return "";
+    if (client == null || StudySettings.getInstance().getUser() == null) return "";
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(id));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));

@@ -26,11 +26,15 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.*;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
+import com.jetbrains.edu.learning.stepic.LoginDialog;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -361,7 +365,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         if (stepicUser != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
-          StepicUpdateSettings.getInstance().setUser(stepicUser);
+          StudySettings.getInstance().setUser(stepicUser);
           myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {

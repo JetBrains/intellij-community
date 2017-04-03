@@ -74,7 +74,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
@@ -616,7 +615,7 @@ public class StudyUtils {
   public static File getCourseDirectory(Course course) {
     final File courseDirectory;
     if (course.isAdaptive()) {
-      StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      StepicUser user = StudySettings.getInstance().getUser();
       String email = user == null ? "" : user.getEmail();
 
       courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
