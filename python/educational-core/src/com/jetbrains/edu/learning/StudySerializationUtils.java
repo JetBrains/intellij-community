@@ -646,7 +646,7 @@ public class StudySerializationUtils {
             }
           }
         }
-        LOG.warn("No task type found in json " + json.getAsString());
+        LOG.warn("No task type found in json " + json.toString());
         return null;
       }
     }

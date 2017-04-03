@@ -53,6 +53,10 @@ public class StudyGenerator {
 
   public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir) throws IOException {
     VirtualFile taskDir = lessonDir.createChildDirectory(lessonDir, EduNames.TASK + Integer.toString(task.getIndex()));
+    createTaskContent(task, taskDir);
+  }
+
+  public static void createTaskContent(@NotNull Task task, VirtualFile taskDir) throws IOException {
     int i = 0;
     for (Map.Entry<String, TaskFile> taskFile : task.getTaskFiles().entrySet()) {
       TaskFile taskFileContent = taskFile.getValue();
@@ -97,7 +101,7 @@ public class StudyGenerator {
   }
 
 
-  private static void createChildFile(@NotNull VirtualFile taskDir, String name, String text) throws IOException {
+  public static void createChildFile(@NotNull VirtualFile taskDir, String name, String text) throws IOException {
     String newDirectories = null;
     String fileName = name;
     VirtualFile dir = taskDir;
