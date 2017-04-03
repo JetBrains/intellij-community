@@ -91,7 +91,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   // tick on each session paused event
   private final AtomicInteger myTime = new AtomicInteger(0);
-  
+
   private final AtomicInteger myLastUpdatingTime = new AtomicInteger(Integer.MIN_VALUE);
 
   /**
@@ -312,7 +312,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         tracker.disable();
       }
 
-      Disposer.register(this, tracker);
       myConstructorTrackedClasses.put(ref, tracker);
     }
   }
@@ -572,6 +571,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     @Override
     public void sessionStopped() {
+      myConstructorTrackedClasses.values().forEach(Disposer::dispose);
+      myConstructorTrackedClasses.clear();
       mySingleAlarm.cancelAllRequests();
       ApplicationManager.getApplication().invokeLater(() -> {
         myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_STOPPED);
