@@ -200,6 +200,23 @@ public interface LightRef extends RW.Savable {
         throw new BuildDataCorruptedException(e);
       }
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      JavaLightAnonymousClassRef ref = (JavaLightAnonymousClassRef)o;
+
+      if (myName != ref.myName) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myName;
+    }
   }
 
   class JavaLightClassRef implements LightClassHierarchyElementDef {

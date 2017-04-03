@@ -13,3 +13,4 @@ java.lang.Runnable.run(0) in Anonymous occurrences = 2
 
 Class Definitions:
 Anonymous in Anonymous
+anonymous(id=0) in Anonymous
