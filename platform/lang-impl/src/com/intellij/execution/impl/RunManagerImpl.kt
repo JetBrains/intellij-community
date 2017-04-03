@@ -50,7 +50,6 @@ import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentSkipListMap
 import java.util.function.Function
 import javax.swing.Icon
 import kotlin.properties.Delegates
@@ -96,7 +95,7 @@ abstract class RunManagerImpl(internal val project: Project, propertiesComponent
 
   private val typeByName = LinkedHashMap<String, ConfigurationType>()
 
-  protected val myTemplateConfigurationsMap = ConcurrentSkipListMap<String, RunnerAndConfigurationSettingsImpl>()
+  protected val templateConfigurationMap = ContainerUtil.newConcurrentMap<String, RunnerAndConfigurationSettingsImpl>()
   private val myConfigurations = LinkedHashMap<String, RunnerAndConfigurationSettings>() // template configurations are not included here
   protected val mySharedConfigurations: MutableMap<String, Boolean> = ConcurrentHashMap()
 
@@ -196,7 +195,7 @@ abstract class RunManagerImpl(internal val project: Project, propertiesComponent
   }
 
   override fun dispose() {
-    myTemplateConfigurationsMap.clear()
+    templateConfigurationMap.clear()
   }
 
   override fun getConfig() = myConfig
@@ -288,7 +287,7 @@ abstract class RunManagerImpl(internal val project: Project, propertiesComponent
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
     val key = "${factory.type.id}.${factory.name}"
-    var template = myTemplateConfigurationsMap.get(key)
+    var template = templateConfigurationMap.get(key)
     if (template == null) {
       template = RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(project, this), true)
       template.isSingleton = factory.isConfigurationSingletonByDefault
@@ -298,7 +297,7 @@ abstract class RunManagerImpl(internal val project: Project, propertiesComponent
 
       schemeManager.addScheme(template)
 
-      myTemplateConfigurationsMap.put(key, template)
+      templateConfigurationMap.put(key, template)
     }
     return template
   }
@@ -744,7 +743,7 @@ abstract class RunManagerImpl(internal val project: Project, propertiesComponent
     }
 
     myUnknownElements = null
-    myTemplateConfigurationsMap.clear()
+    templateConfigurationMap.clear()
     myLoadedSelectedConfigurationUniqueName = null
     myIconCache.clear()
     myRecentlyUsedTemporaries.clear()
@@ -765,7 +764,7 @@ abstract class RunManagerImpl(internal val project: Project, propertiesComponent
   private fun doLoadConfiguration(element: Element, isShared: Boolean, settings: RunnerAndConfigurationSettingsImpl, factory: ConfigurationFactory) {
     val tasks = element.getChild(METHOD)?.let { readStepsBeforeRun(it, settings) } ?: emptyList()
     if (settings.isTemplate) {
-      myTemplateConfigurationsMap.put("${factory.type.id}.${factory.name}", settings)
+      templateConfigurationMap.put("${factory.type.id}.${factory.name}", settings)
       settings.configuration.beforeRunTasks = tasks
     }
     else {
