@@ -24,10 +24,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -190,7 +189,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
           return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(),
-                                                                                   StepicUpdateSettings.getInstance().getUser()));
+                                                                                   StudySettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

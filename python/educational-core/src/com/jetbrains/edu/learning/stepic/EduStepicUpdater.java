@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class EduStepicUpdater {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
 
-        long timeToNextCheck = StepicUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+        long timeToNextCheck = StudySettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
         if (timeToNextCheck <= 0) {
           myCheckRunnable.run();
         }
@@ -51,7 +52,7 @@ public class EduStepicUpdater {
       final List<CourseInfo> courses = EduStepicConnector.getCourses(null);
       final List<CourseInfo> cachedCourses = StudyProjectGenerator.getCoursesFromCache();
       StudyProjectGenerator.flushCache(courses);
-      StepicUpdateSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
+      StudySettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
       courses.removeAll(cachedCourses);
       if (!courses.isEmpty() && !cachedCourses.isEmpty()) {
@@ -79,7 +80,7 @@ public class EduStepicUpdater {
 
   private static boolean checkNeeded() {
     final List<CourseInfo> courses = StudyProjectGenerator.getCoursesFromCache();
-    long timeToNextCheck = StepicUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+    long timeToNextCheck = StudySettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
     return courses.isEmpty() || timeToNextCheck <= 0;
   }
 }

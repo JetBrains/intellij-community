@@ -1,19 +1,21 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
-public class StepicUpdateSettings implements PersistentStateComponent<StepicUpdateSettings> {
+public class StudySettings implements PersistentStateComponent<StudySettings> {
   private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
   private boolean myEnableTestingFromSamples = false;
+  private boolean isCourseCreatorEnabled = false;
 
-  public StepicUpdateSettings() {
+  public StudySettings() {
   }
 
   public long getLastTimeChecked() {
@@ -26,17 +28,17 @@ public class StepicUpdateSettings implements PersistentStateComponent<StepicUpda
 
   @Nullable
   @Override
-  public StepicUpdateSettings getState() {
+  public StudySettings getState() {
     return this;
   }
 
   @Override
-  public void loadState(StepicUpdateSettings state) {
+  public void loadState(StudySettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public static StepicUpdateSettings getInstance() {
-    return ServiceManager.getService(StepicUpdateSettings.class);
+  public static StudySettings getInstance() {
+    return ServiceManager.getService(StudySettings.class);
   }
 
   @Nullable
@@ -54,5 +56,13 @@ public class StepicUpdateSettings implements PersistentStateComponent<StepicUpda
 
   public void setEnableTestingFromSamples(boolean enableTestingFromSamples) {
     myEnableTestingFromSamples = enableTestingFromSamples;
+  }
+
+  public boolean isCourseCreatorEnabled() {
+    return isCourseCreatorEnabled;
+  }
+
+  public void setCourseCreatorEnabled(boolean courseCreatorEnabled) {
+    isCourseCreatorEnabled = courseCreatorEnabled;
   }
 }
