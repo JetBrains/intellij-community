@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StartupProgress;
@@ -25,6 +26,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
@@ -1362,6 +1364,9 @@ public class PluginManagerCore {
     long start = System.currentTimeMillis();
     try {
       initializePlugins(progress);
+    }
+    catch (PicoPluginExtensionInitializationException e) {
+      throw new PluginException(e, e.getPluginId());
     }
     catch (RuntimeException e) {
       getLogger().error(e);
