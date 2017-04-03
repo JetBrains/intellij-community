@@ -21,6 +21,15 @@ message()
   fi
 }
 
+isJDK()
+{
+  if [ -z $1 ] || [ ! -x "$1/bin/java" ]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
 UNAME=`which uname`
 GREP=`which egrep`
 GREP_OPTIONS=""
@@ -61,30 +70,32 @@ fi
 # Locate a JDK installation directory which will be used to run the IDE.
 # Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
-if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
+JDK=""
+if isJDK $@@product_uc@@_JDK; then
   JDK="$@@product_uc@@_JDK"
 fi
 
-if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ] &&
-   [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+if [ "$JDK" = "" ] && [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
   JDK=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
   if [ ! -d "$JDK" ]; then
     JDK="$IDE_HOME/$JDK"
   fi
+  if ! isJDK $JDK; then
+    JDK=""
+  fi
 fi
 
-if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ] &&
-   [ "$OS_TYPE" = "Linux" ] && [ -x "$IDE_HOME/jre64/bin/java" ] && "$IDE_HOME/jre64/bin/java" -version > /dev/null 2>&1 ; then
+if [ "$JDK" = "" ] && [ "$OS_TYPE" = "Linux" ] &&
+   [ -x "$IDE_HOME/jre64/bin/java" ] && "$IDE_HOME/jre64/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre64"
 fi
 
-if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ] &&
-   [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+if [ "$JDK" = "" ] && [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
 fi
 
-if [ -z "$JDK" ] || [ ! -x "$JDK/bin/java" ]; then
-  if [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
+if [ "$JDK" = "" ]; then
+  if isJDK $JAVA_HOME; then
     JDK="$JAVA_HOME"
   else
     JAVA_BIN_PATH=`which java`
