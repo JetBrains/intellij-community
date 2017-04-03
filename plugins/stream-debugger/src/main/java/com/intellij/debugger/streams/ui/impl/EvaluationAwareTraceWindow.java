@@ -139,8 +139,12 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
+
     final FlatView flatView = new FlatView(controllers, context);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
+    final JComponent panel = getContentPanel();
+    panel.revalidate();
+    panel.repaint();
   }
 
   public void setFailMessage(@NotNull String reason) {

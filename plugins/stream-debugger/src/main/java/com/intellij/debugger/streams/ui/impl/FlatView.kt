@@ -54,7 +54,11 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
             prevMapping.repaint()
           }
         })
+
+        prevMapping.addMouseWheelListener { e -> view.instancesTree.dispatchEvent(e) }
       }
+
+      mappingPane.addMouseWheelListener { e -> view.instancesTree.dispatchEvent(e) }
 
       add(view)
       add(mappingPane)
@@ -71,6 +75,8 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
           prevMappingPane?.repaint()
         }
       })
+
+      prevMappingPane?.let { it.addMouseWheelListener { e -> view.instancesTree.dispatchEvent(e) } }
 
       add(view)
     }
