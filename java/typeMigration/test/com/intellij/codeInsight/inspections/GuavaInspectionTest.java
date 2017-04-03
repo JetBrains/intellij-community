@@ -18,7 +18,6 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
@@ -34,7 +33,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.junit.Assert;
 
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -304,7 +302,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
+      if (GuavaInspection.MigrateGuavaTypeFix.FAMILY_NAME.equals(action.getFamilyName())) {
         final PsiElement element = ((GuavaInspection.MigrateGuavaTypeFix)action).getStartElement();
         if (PsiTreeUtil.instanceOf(element, highlightedElements)) {
           fail("Quick fix is found but not expected for types " + Arrays.toString(highlightedElements));
@@ -319,7 +317,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
+      if (GuavaInspection.MigrateGuavaTypeFix.FAMILY_NAME.equals(action.getFamilyName())) {
         myFixture.launchAction(action);
         actionFound = true;
         break;
