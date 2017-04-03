@@ -364,9 +364,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    text.setEditorKit(new HTMLEditorKit() {
-      final HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
-
+    text.setEditorKit(new UIUtil.JBHtmlEditorKit() {
       final HTMLFactory factory = new HTMLFactory() {
         public View create(Element e) {
           View view = super.create(e);
@@ -388,11 +386,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
           return view;
         }
       };
-
-      @Override
-      public StyleSheet getStyleSheet() {
-        return kit.getStyleSheet();
-      }
 
       @Override
       public ViewFactory getViewFactory() {

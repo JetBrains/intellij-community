@@ -50,6 +50,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
@@ -67,6 +68,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -2514,25 +2516,50 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
-    Font font = getLabelFont();
-    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    final int size = font != null ? font.getSize() : JBUI.scale(11);
+    return new JBHtmlEditorKit(noGapsBetweenParagraphs);
+  }
 
-    String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
-    if (noGapsBetweenParagraphs) {
-      customCss += " p { margin-top: 0; }";
+  public static class JBHtmlEditorKit extends HTMLEditorKit {
+    private StyleSheet style = new StyleSheet();
+
+    public JBHtmlEditorKit() {
+      this(true);
     }
 
-    final StyleSheet style = new StyleSheet();
-    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
-    style.addRule(customCss);
+    public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
+      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+      if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+    }
 
-    return new HTMLEditorKit() {
-      @Override
-      public StyleSheet getStyleSheet() {
-        return style;
+    @Override
+    public StyleSheet getStyleSheet() {
+      return style;
+    }
+
+    @Override
+    public void install(final JEditorPane pane) {
+      super.install(pane);
+      if (pane != null) {
+        // JEditorPane.HONOR_DISPLAY_PROPERTIES must be set after HTMLEditorKit is completely installed
+        pane.addPropertyChangeListener("editorKit", new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent e) {
+            Font font = getLabelFont();
+            assert font instanceof FontUIResource;
+            if (SystemInfo.isWindows) {
+              font = new FontUIResource("Tahoma", font.getStyle(), font.getSize());
+            }
+            // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
+            // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
+            pane.setFont(font);
+
+            // let CSS font properties inherit from the pane's font
+            pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+            pane.removePropertyChangeListener(this);
+          }
+        });
       }
-    };
+    }
   }
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static Object htmlInjectionGuard(Object toRender) {
