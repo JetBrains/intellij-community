@@ -610,20 +610,25 @@ public class PlatformTestUtil {
         }
 
         // Allow 10% more in case of test machine is busy.
-        int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-        String logMessage = String.format(
-          "%s took \u001B[31;1m%d%% %s time\u001B[0m than expected" +
-          "\n  Expected: %s" +
-          "\n  Actual: %s" +
-          "\n %s\n  GC stats: %s" +
-          "\n  Most active threads: %s",
-          message, Math.abs(percentage), percentage > 0 ? "more" : "less",
-          StringUtil.formatDuration(expectedOnMyMachine),
-          StringUtil.formatDuration(duration),
-          Timings.getStatistics(),
-          data.getGcStats(), data.getThreadStats());
-
         double acceptableChangeFactor = 1.1;
+        int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
+        String colorCode = duration < expectedOnMyMachine ? "32;1m" : // green
+                        duration < expectedOnMyMachine * acceptableChangeFactor ? "33;1m" : // yellow
+                        "31;1m"; // red
+        String logMessage = String.format(
+          "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
+          "\n  Expected: %sms (%s)" +
+          "\n  Actual:   %sms (%s)" +
+          "\n  Timings:  %s" +
+          "\n  Threads:  %s" +
+          "\n  GC stats: %s",
+          message, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
+          expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
+          duration, StringUtil.formatDuration(duration),
+          Timings.getStatistics(),
+          data.getThreadStats(),
+          data.getGcStats());
+
         if (duration < expectedOnMyMachine) {
           TeamCityLogger.info(logMessage);
           System.out.println("\nSUCCESS: " + logMessage);
