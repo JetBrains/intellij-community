@@ -603,6 +603,10 @@
                      key="conditional.expression.with.identical.branches.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ConditionalExpressionWithIdenticalBranchesInspection" cleanupTool="true"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ConditionalCanBePushedInsideExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="conditional.can.be.pushed.inside.expression.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.controlflow.ConditionalCanBePushedInsideExpressionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ConfusingElseBranch" shortName="ConfusingElse" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="redundant.else.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      enabledByDefault="true" level="INFORMATION" implementationClass="com.siyeh.ig.controlflow.ConfusingElseInspection"/>
