@@ -113,6 +113,9 @@
     <localInspection language="XML" shortName="MavenRedundantGroupId" bundle="MavenDomBundle" key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
+    <localInspection language="XML" shortName="MavenPropertyInParent" bundle="MavenDomBundle" key="inspection.property.in.parent.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection"/>
 
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>

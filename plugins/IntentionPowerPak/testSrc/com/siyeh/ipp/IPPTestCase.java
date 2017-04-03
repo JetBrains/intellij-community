@@ -16,7 +16,7 @@
 package com.siyeh.ipp;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -79,9 +79,8 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
       if (intentionClass.isInstance(intention)) {
         result.add(intention);
       }
-      else if (intention instanceof IntentionActionWrapper) {
-        final IntentionActionWrapper wrapper = (IntentionActionWrapper)intention;
-        if (intentionClass.isInstance(wrapper.getDelegate())) {
+      else if (intention instanceof IntentionActionDelegate) {
+        if (intentionClass.isInstance(((IntentionActionDelegate)intention).getDelegate())) {
           result.add(intention);
         }
       }

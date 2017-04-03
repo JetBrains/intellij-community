@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.Commenter;
@@ -88,7 +89,9 @@ public class ActionHint {
         fail("Action with text '" + myExpectedText + "' not found\nAvailable actions: " +
              actions.stream().map(IntentionAction::getText).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
-      } else if(myHighlightType != null) {
+      }
+      else if(myHighlightType != null) {
+        if (result instanceof IntentionActionDelegate) result = ((IntentionActionDelegate)result).getDelegate();
         if(!(result instanceof QuickFixWrapper)) {
           fail("Action with text '" + myExpectedText + "' is not a LocalQuickFix, but " + result.getClass().getName() +
                "\nExpected LocalQuickFix with ProblemHighlightType=" + myHighlightType + "\n" +
@@ -144,8 +147,7 @@ public class ActionHint {
     String state = matcher.group(2);
     if(state.equals("true") || state.equals("false")) {
       return new ActionHint(text, Boolean.parseBoolean(state), null);
-    } else {
-      return new ActionHint(text, true, ProblemHighlightType.valueOf(state));
     }
+    return new ActionHint(text, true, ProblemHighlightType.valueOf(state));
   }
 }

@@ -2,6 +2,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.inheritance.ChangeSuperClassFix;
 import com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection;
@@ -11,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCodeInsightFixtureTestCase {
@@ -65,7 +67,13 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
     myFixture.enableInspections(SuperClassHasFrequentlyUsedInheritorsInspection.class);
 
     final Set<Pair<String, Integer>> actualSet = new HashSet<Pair<String, Integer>>();
-    for (IntentionAction intentionAction : myFixture.getAvailableIntentions()) {
+
+    for (Pair<String, Integer> pair : expectedResults) {
+      IntentionAction action = myFixture.findSingleIntention("Make extends '" + pair.getFirst() +
+                                                             "' - " + pair.getSecond() +
+                                                             "%");
+
+      IntentionAction intentionAction = ((IntentionActionDelegate)action).getDelegate();
       if (intentionAction instanceof QuickFixWrapper) {
         ChangeSuperClassFix changeSuperClassFix = getQuickFixFromWrapper((QuickFixWrapper)intentionAction);
         if (changeSuperClassFix != null) {
@@ -73,7 +81,6 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
         }
       }
     }
-
     final Set<Pair<String, Integer>> expectedSet = ContainerUtil.newHashSet(expectedResults);
     assertEquals(actualSet, expectedSet);
   }
@@ -82,18 +89,9 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.enableInspections(SuperClassHasFrequentlyUsedInheritorsInspection.class);
 
+    List<IntentionAction> actions = myFixture.filterAvailableIntentions("Make extends '");
 
-    final Set<Pair<String, Integer>> actualSet = new HashSet<Pair<String, Integer>>();
-    for (IntentionAction intentionAction : myFixture.getAvailableIntentions()) {
-      if (intentionAction instanceof QuickFixWrapper) {
-        ChangeSuperClassFix changeSuperClassFix = getQuickFixFromWrapper((QuickFixWrapper)intentionAction);
-        if (changeSuperClassFix != null) {
-          actualSet.add(Pair.create(changeSuperClassFix.getNewSuperClass().getQualifiedName(), changeSuperClassFix.getPercent()));
-        }
-      }
-    }
-
-    assertSize(expectedSize, actualSet);
+    assertEquals(expectedSize, actions.size());
   }
 
   @Nullable
