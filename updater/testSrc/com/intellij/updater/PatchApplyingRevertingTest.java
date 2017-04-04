@@ -510,6 +510,18 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     });
   }
 
+  @Test
+  public void testReadOnlyFilesAreDeletable() throws Exception {
+    File file = new File(myOlderDir, "bin/read_only_to_delete");
+    FileUtil.writeToFile(file, "bye");
+    assertTrue(file.setWritable(false, false));
+
+    Patch patch = createPatch();
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).isEmpty();
+    assertAppliedAndRevertedCorrectly(patch, preparationResult);
+  }
+
 
   protected PatchAction getAction(Patch patch, String path) {
     return ContainerUtil.find(patch.getActions(), a -> a.getPath().equals(path));

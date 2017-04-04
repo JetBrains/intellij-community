@@ -58,7 +58,7 @@ public class CreateAction extends PatchAction {
   @Override
   public ValidationResult validate(File toDir) {
     File toFile = getFile(toDir);
-    ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
+    ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE, true);
     if (result != null) return result;
 
     if (toFile.exists()) {
