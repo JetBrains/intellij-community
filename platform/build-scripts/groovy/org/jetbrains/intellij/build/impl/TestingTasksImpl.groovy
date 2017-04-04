@@ -43,7 +43,13 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, String excludedSourceDirectory) {
-    CompilationTasks.create(context).compileAllModulesAndTests()
+    def compilationTasks = CompilationTasks.create(context)
+    if (options.mainModule != null) {
+      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule])
+    }
+    else {
+      compilationTasks.compileAllModulesAndTests()
+    }
 
     def mainModule = options.mainModule ?: defaultMainModule
     List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
