@@ -253,7 +253,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
    * where P(ref) is a probability that ref is occurred in a file.
    */
   @Override
-  public boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int correlationThreshold) {
+  public boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
@@ -264,7 +264,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         //if ((ids1.size() - intersection.size()) * correlationThreshold < ids1.size()) {
         //  return true;
         //} do not use symmetric formula
-        if ((ids2.size() - intersection.size()) * correlationThreshold < ids2.size()) {
+        if ((ids2.size() - intersection.size()) * probabilityThreshold < ids2.size()) {
           return true;
         }
         return false;
