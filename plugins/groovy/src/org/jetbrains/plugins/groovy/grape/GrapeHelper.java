@@ -54,8 +54,9 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 
 public class GrapeHelper {
@@ -63,14 +64,7 @@ public class GrapeHelper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrapeRunner");
   public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
 
-  public static void processProject(Project project) {
-    GrabService grabService = GrabService.getInstance(project);
-    grabService.clearState();
-    processGrabs(project, GlobalSearchScope.allScope(project), (grabText, handler) -> {
-      if (handler.getJarFiles().size() != 0)
-        grabService.addDependencies(grabText, handler.getJarFiles().stream().map(VirtualFile::getPath).collect(Collectors.toList()));
-    });
-  }
+
   public static void processGrabs(Project project, SearchScope scope, ResultHandler resultHandler) {
 
     if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", GlobalSearchScope.allScope(project)) ==
@@ -81,47 +75,51 @@ public class GrapeHelper {
           "Ivy Missing");
       return;
     }
+    runDownload(project, findGrabAnnotations(project, scope), resultHandler);
+  }
 
-    findGrabAnnotations(project, scope).forEach(annotation -> {
-      try {
-        run(annotation, resultHandler);
+  public static void runDownload(Project project, List<PsiAnnotation> annotations, ResultHandler resultHandler) {
+    Map<String, GeneralCommandLine> commandLines = new HashMap<>();
+    try {
+      for (PsiAnnotation annotation : annotations) {
+        String grabQuery = grabQuery(annotation);
+        commandLines.put(grabQuery, getDownloadCommandLine(annotation));
       }
-      catch (CantRunException e) {
-        String title = "Can't run @Grab: " + ExceptionUtil.getMessage(e);
-        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+    } catch (CantRunException e) {
+      String title = "Can't run @Grab: " + ExceptionUtil.getMessage(e);
+      NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+      return;
+    }
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading @Grab Annotation") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        commandLines.forEach((grabQuery, commandLine) -> {
+          try {
+            indicator.setText2(grabQuery);
+            final GrapeProcessHandler handler = new GrapeProcessHandler(commandLine);
+            handler.startNotify();
+            handler.waitFor();
+            resultHandler.accept(grabQuery, handler);
+          }
+           catch (ExecutionException e) {
+            LOG.error(e);
+          }
+        });
       }
     });
   }
 
-  public static void run(PsiAnnotation annotation, ResultHandler resultHandler) throws CantRunException {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
+  public static GeneralCommandLine getDownloadCommandLine(PsiAnnotation annotation) throws CantRunException {
+    Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
     assert module != null;
-    String grabQuery = grabQuery(annotation);
-
     final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
 
     DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true);
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
-    javaParameters.getProgramParametersList().add(grabQuery);
+    javaParameters.getProgramParametersList().add(grabQuery(annotation));
     javaParameters.setUseDynamicClasspath(true);
-    GeneralCommandLine commandLine = javaParameters.toCommandLine();
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(annotation.getProject(), "Processing @Grab Annotation") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-
-        indicator.setText2(grabQuery);
-        try {
-          final GrapeProcessHandler handler = new GrapeProcessHandler(commandLine);
-          handler.startNotify();
-          handler.waitFor();
-          resultHandler.accept(grabQuery, handler);
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-        }
-      }
-    });
+    return javaParameters.toCommandLine();
   }
 
   public static String grabQuery(@NotNull PsiAnnotation anno) {
@@ -206,14 +204,19 @@ public class GrapeHelper {
 
     public String getMessages() {
       int jarCount = jarFiles.size();
-      String messages = jarCount + " jar";
+      StringBuilder messages = new StringBuilder(jarCount + " jar");
       if (jarCount != 1) {
-        messages += "s";
+        messages.append("s");
+      }
+      messages.append(": ");
+      for (VirtualFile file : jarFiles) {
+        messages.append(file.getCanonicalPath()).append("; ");
       }
       if (jarCount == 0) {
-        messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
+        messages.append("<br>").append(myStdOut.toString().replaceAll("\n", "<br>")).append("<p>")
+          .append(myStdErr.toString().replaceAll("\n", "<br>"));
       }
-      return messages;
+      return messages.toString();
     }
   }
 
@@ -236,5 +239,6 @@ public class GrapeHelper {
 
   interface ResultHandler {
     void accept(String grabText, GrapeProcessHandler handler);
+    void finish();
   }
 }

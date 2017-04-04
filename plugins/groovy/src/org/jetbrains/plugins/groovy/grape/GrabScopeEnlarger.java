@@ -27,21 +27,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.util.List;
+
 
 public class GrabScopeEnlarger extends ResolveScopeEnlarger {
   @Override
   @Nullable
   public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
-    String fileExtension = file.getExtension();
-    if (GroovyFileType.DEFAULT_EXTENSION.equals(fileExtension)) {
+    if (file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) {
       Module module = ModuleUtilCore.findModuleForFile(file, project);
-      SearchScope scope;
+      List<VirtualFile> roots;
       if (module == null) {
-        scope = GlobalSearchScope.fileScope(project, file);
+        roots =  GrabService.getInstance(project).getDependencies(file);
       } else {
-        scope = GlobalSearchScope.moduleScope(module);
+        roots = GrabService.getInstance(project).getDependencies(GlobalSearchScope.moduleScope(module));
       }
-      return NonClasspathDirectoriesScope.compose(GrabService.getRootsByScope(project, scope));
+      return NonClasspathDirectoriesScope.compose(roots);
     }
     return null;
   }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class GrabClassFinder extends NonClasspathClassFinder {
 
   @Override
   protected List<VirtualFile> calcClassRoots() {
-    return GrabService.getRoots(myProject);
+    return GrabService.getInstance(myProject).getDependencies(GlobalSearchScope.allScope(myProject));
   }
 }
 

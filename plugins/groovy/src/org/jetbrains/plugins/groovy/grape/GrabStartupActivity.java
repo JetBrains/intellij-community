@@ -30,28 +30,13 @@ public class GrabStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if(project.isDisposed()) return;
+    //if(project.isDisposed()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    DumbService myDumbService = DumbService.getInstance(project);
-    myDumbService.runReadActionInSmartMode(() -> {
-      performActivity(project);
-      return null;
-    });
+    performActivity(project);
   }
 
   private static void performActivity(@NotNull Project project) {
-    List<PsiAnnotation> annotations = GrapeHelper.findGrabAnnotations(project, GlobalSearchScope.allScope(project));
     GrabService grabService = GrabService.getInstance(project);
-    List<String> unprocessedGrabs = new ArrayList<>();
-    for (PsiAnnotation annotation : annotations) {
-      String grab = GrapeHelper.grabQuery(annotation);
-      if (!grab.isEmpty()) {
-        if (grabService.getPaths(grab) == null) {
-          unprocessedGrabs.add(grab);
-        }
-      }
-    }
-    if (unprocessedGrabs.size() == 0) return;
-    GrabService.showNotification(project);
+    grabService.updateGrabsInScope(project, GlobalSearchScope.allScope(project));
   }
 }
