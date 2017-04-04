@@ -64,7 +64,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
-    def test_if_else(self):
+    def test_if(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
 
@@ -78,6 +78,68 @@ class TestInsertCode(unittest.TestCase):
 
             self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 2)
             self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 5)
+
+        finally:
+            sys.stdout = self.original_stdout
+
+    def test_else(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            def original():
+                if False:
+                    a = 1
+                else:
+                    a = 0
+                print(a)
+
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 4)
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 5)
+
+        finally:
+            sys.stdout = self.original_stdout
+
+    def test_for_else(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            def original():
+                sum = 0
+                for i in range(3):
+                    sum += i
+                else:
+                    print(sum)
+
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 1)
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 3)
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 5)
+
+        finally:
+            sys.stdout = self.original_stdout
+
+    def test_elif(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            def original():
+                a = 5
+                b = 0
+                if a < 0:
+                    print("a < 0")
+                elif a < 3:
+                    print("a < 3")
+                else:
+                    print("a >= 3")
+                    b = a
+                return b
+
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 1)
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 2)
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 8)
+            self.check_insert_to_line(original, tracing, original.__code__.co_firstlineno + 9)
 
         finally:
             sys.stdout = self.original_stdout
