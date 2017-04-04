@@ -117,12 +117,12 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       if (match.isExactMismatch() || match.isExactMatch()) {
         return;
       }
-      registerError(expression, ignoreSingleArgument && isOnlyArgumentOfMethodCall(match.getLeftDiff())
+      registerError(expression, ignoreSingleArgument && isOnlyArgumentOfMethodCall(match.getLeftDiff(), expression)
                                 ? ProblemHighlightType.INFORMATION
                                 : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
-    private boolean isOnlyArgumentOfMethodCall(PsiElement element) {
+    private boolean isOnlyArgumentOfMethodCall(PsiElement element, PsiConditionalExpression conditional) {
       if (element == null) {
         return false;
       }
@@ -135,7 +135,11 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         return false;
       }
       final PsiElement grandParent = expressionList.getParent();
-      return grandParent instanceof PsiMethodCallExpression;
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiElement greatGrandParent = ParenthesesUtils.getParentSkipParentheses(grandParent);
+      return greatGrandParent == conditional;
     }
   }
 }

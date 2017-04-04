@@ -1065,10 +1065,6 @@
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.PushConditionInCallAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
       <category>Java/Declaration</category>
     </intentionAction>

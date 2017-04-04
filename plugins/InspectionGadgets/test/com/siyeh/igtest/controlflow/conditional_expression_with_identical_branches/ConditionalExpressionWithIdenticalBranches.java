@@ -35,6 +35,11 @@ class ConditionalExpressionWithIdenticalBranches {
   static class WithFunctionalExpression {
     private void foo(boolean b) {
       Runnable r = b ? (Runnable) () -> {} : (Runnable) () -> {};
+      IntSupplier s = <warning descr="Conditional expression 'b ? () -> 1 : () -> { return 1; }' with identical branches">b ? () -> 1 : () -> { return 1; }</warning>;
     }
+  }
+
+  interface IntSupplier {
+    int getAsInt();
   }
 }

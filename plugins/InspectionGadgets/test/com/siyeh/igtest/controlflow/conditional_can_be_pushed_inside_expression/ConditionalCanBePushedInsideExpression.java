@@ -53,4 +53,16 @@ class ConditionalCanBePushedInsideExpression {
     }
   }
 
+  void bar(boolean b){
+    String s = <warning descr="Conditional expression can be pushed inside branch">b ? foo(bar("true"), true).substring(1) : foo(bar("false"), true).substring(1)</warning>;
+    String t = <warning descr="Conditional expression can be pushed inside branch">b ? foo("true", true).substring(1).substring(0) : foo("true", true).substring(2).substring(0)</warning>;
+    String u = <warning descr="Conditional expression can be pushed inside branch">b ? foo("true", true).substring(0) : foo("false", true).substring(0)</warning>;
+    String v = <warning descr="Conditional expression can be pushed inside branch">b ? bar(bar("one")) : bar(bar("two"))</warning>;
+  }
+
+  String foo(String p, boolean b) {return p;}
+  String bar(String s) {
+    return s;
+  }
+
 }
