@@ -77,6 +77,9 @@ fi
 
 if [ -z "$JDK" -a "$OS_TYPE" = "Linux" ] ; then
   BUNDLED_JRE="$IDE_HOME/jre64"
+  if [ ! -d "$BUNDLED_JRE" ]; then
+    BUNDLED_JRE="$IDE_HOME/jre"
+  fi
   if [ -x "$BUNDLED_JRE/bin/java" ] && "$BUNDLED_JRE/bin/java" -version > /dev/null 2>&1 ; then
     JDK="$BUNDLED_JRE"
   fi
