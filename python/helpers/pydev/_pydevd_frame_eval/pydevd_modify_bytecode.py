@@ -96,7 +96,7 @@ def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
                         offsets_for_modification.append(offset)
                 elif op in dis.hasjabs:
                     # change label for absolute jump if code was inserted before it
-                    if current_offset <= arg:
+                    if current_offset < arg:
                         offsets_for_modification.append(offset)
         for i in range(0, len(code_list), 2):
             op = code_list[i]
