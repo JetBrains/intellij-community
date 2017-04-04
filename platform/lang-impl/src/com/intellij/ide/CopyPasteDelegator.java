@@ -150,7 +150,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
         final Module module = LangDataKeys.MODULE.getData(dataContext);
         PsiElement target = getPasteTarget(dataContext, module);
         if (isCopied[0]) {
-          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCopy(elements, module, target));
+          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCopy(elements, module, target, true));
         }
         else if (MoveHandler.canMove(elements, target)) {
           TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCut(dataContext, elements, target));
@@ -197,13 +197,13 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       return targetDirectory;
     }
 
-    private void pasteAfterCopy(PsiElement[] elements, Module module, PsiElement target) {
+    private void pasteAfterCopy(PsiElement[] elements, Module module, PsiElement target, boolean tryFromFiles) {
       PsiDirectory targetDirectory = getTargetDirectory(module, target);
       try {
         if (CopyHandler.canCopy(elements)) {
           CopyHandler.doCopy(elements, targetDirectory);
         }
-        else {
+        else if (tryFromFiles) {
           List<File> files = PsiCopyPasteManager.asFileList(elements);
           if (files != null) {
             PsiManager manager = elements[0].getManager();
@@ -218,7 +218,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
               })
               .filter(file -> file != null)
               .toArray(PsiFileSystemItem[]::new);
-            pasteAfterCopy(items, module, target);
+            pasteAfterCopy(items, module, target, false);
           }
         }
       }
