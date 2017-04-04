@@ -34,8 +34,19 @@ import org.jetbrains.annotations.NotNull;
 public interface ImplicitUsageProvider {
   ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<>("com.intellij.implicitUsageProvider");
 
+  /**
+   * @return true if element should not be reported as unused
+   */
   boolean isImplicitUsage(PsiElement element);
+
+  /**
+   * @return true if element should not be reported as "assigned but not used"
+   */
   boolean isImplicitRead(PsiElement element);
+
+  /**
+   * @return true if element should not be reported as "referenced but never assigned"
+   */
   boolean isImplicitWrite(PsiElement element);
 
   /**
