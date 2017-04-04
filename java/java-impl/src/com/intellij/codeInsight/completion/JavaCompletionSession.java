@@ -20,10 +20,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,10 +35,22 @@ import java.util.Set;
 public class JavaCompletionSession {
   private final Set<String> myAddedClasses = new HashSet<>();
   private Set<String> myKeywords = new HashSet<>();
+  private final MultiMap<CompletionResultSet, LookupElement> myBatchItems = MultiMap.create(); 
   private final CompletionResultSet myResult;
 
   public JavaCompletionSession(CompletionResultSet result) {
     myResult = result;
+  }
+
+  void registerBatchItems(CompletionResultSet result, Collection<LookupElement> elements) {
+    myBatchItems.putValues(result, elements);
+  }
+
+  void flushBatchItems() {
+    for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : myBatchItems.entrySet()) {
+      entry.getKey().addAllElements(entry.getValue());
+    }
+    myBatchItems.clear();
   }
 
   public void addClassItem(LookupElement lookupElement) {

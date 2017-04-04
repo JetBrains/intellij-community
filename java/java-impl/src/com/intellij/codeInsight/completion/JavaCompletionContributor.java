@@ -58,6 +58,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,7 +240,13 @@ public class JavaCompletionContributor extends CompletionContributor {
       addIdentifierVariants(parameters, position, result, session, matcher);
     }
 
-    Set<String> usedWords = addReferenceVariants(parameters, result, session);
+    MultiMap<CompletionResultSet, LookupElement> referenceVariants = addReferenceVariants(parameters, result, session);
+    Set<String> usedWords = ContainerUtil.map2Set(referenceVariants.values(), LookupElement::getLookupString);
+    for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : referenceVariants.entrySet()) {
+      session.registerBatchItems(entry.getKey(), entry.getValue());
+    }
+    
+    session.flushBatchItems();
 
     if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
       PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
@@ -273,9 +280,10 @@ public class JavaCompletionContributor extends CompletionContributor {
                                             PsiElement position,
                                             CompletionResultSet result,
                                             JavaCompletionSession session, PrefixMatcher matcher) {
-    result.addAllElements(getFastIdentifierVariants(parameters, position, matcher, position.getParent(), session));
+    session.registerBatchItems(result, getFastIdentifierVariants(parameters, position, matcher, position.getParent(), session));
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
+      session.flushBatchItems();
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, session::addClassItem);
     }
 
@@ -284,6 +292,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<LookupElement> result) {
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
+      session.flushBatchItems();
       SmartCastProvider.addCastVariants(parameters, session.getMatcher(), element -> {
         registerClassFromTypeElement(element, session);
         result.consume(PrioritizedLookupElement.withPriority(element, 1));
@@ -380,8 +389,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
-    final Set<String> usedWords = new HashSet<>();
+  private static MultiMap<CompletionResultSet, LookupElement> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
+    MultiMap<CompletionResultSet, LookupElement> items = MultiMap.create();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
     final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
@@ -412,7 +421,7 @@ public class JavaCompletionContributor extends CompletionContributor {
             }
 
             if (isSwitchLabel) {
-              result1.addElement(new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
+              items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
             }
             else {
               final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
@@ -434,14 +443,14 @@ public class JavaCompletionContributor extends CompletionContributor {
                 }
               }
 
-              result1.addElement(element);
+              items.putValue(result1, element);
             }
           }
         }
         return;
       }
       if (reference instanceof PsiLabelReference) {
-        LabelReferenceCompletion.processLabelReference(result1, (PsiLabelReference)reference);
+        items.putValues(result1, LabelReferenceCompletion.processLabelReference((PsiLabelReference)reference));
         return;
       }
 
@@ -455,30 +464,25 @@ public class JavaCompletionContributor extends CompletionContributor {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
         }
         if (completion instanceof LookupElement && !session.alreadyProcessed((LookupElement)completion)) {
-          usedWords.add(((LookupElement)completion).getLookupString());
-          result1.addElement((LookupElement)completion);
+          items.putValue(result1, (LookupElement)completion);
         }
         else if (completion instanceof PsiClass) {
           Condition<PsiClass> condition = psiClass -> !session.alreadyProcessed(psiClass) &&
                                                       JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
-          for (JavaPsiClassReferenceElement item : JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
-                                                                                                             isAfterNew,
-                                                                                                             JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                                                             condition)) {
-            usedWords.add(item.getLookupString());
-            result1.addElement(item);
-          }
+          items.putValues(result1, JavaClassNameCompletionContributor.createClassLookupItems(
+            (PsiClass)completion,
+            isAfterNew,
+            JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+            condition));
 
         }
         else {
           //noinspection deprecation
-          LookupElement element = LookupItemUtil.objectToLookupItem(completion);
-          usedWords.add(element.getLookupString());
-          result1.addElement(element);
+          items.putValue(result1, LookupItemUtil.objectToLookupItem(completion));
         }
       }
     });
-    return usedWords;
+    return items;
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
