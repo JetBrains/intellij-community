@@ -62,58 +62,58 @@ fi
 # Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
-  JAVA_BIN="$@@product_uc@@_JDK/bin/java"
+  JDK="$@@product_uc@@_JDK"
 fi
 
-if [ -z "$JAVA_BIN" -a -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+if [ -z "$JDK" -a -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
   USER_JRE=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
   if [ ! -d "$USER_JRE" ]; then
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi
   if [ -x "$USER_JRE/bin/java" ]; then
-    JAVA_BIN="$USER_JRE/bin/java"
+    JDK="$USER_JRE"
   fi
 fi
 
-if [ -z "$JAVA_BIN" -a "$OS_TYPE" = "Linux" ] ; then
-  BUNDLED_JRE_BIN="$IDE_HOME/jre64/bin/java"
-  if [ -x "$BUNDLED_JRE_BIN" ] && "$BUNDLED_JRE_BIN" -version > /dev/null 2>&1 ; then
-    JAVA_BIN="$BUNDLED_JRE_BIN"
+if [ -z "$JDK" -a "$OS_TYPE" = "Linux" ] ; then
+  BUNDLED_JRE="$IDE_HOME/jre64"
+  if [ -x "$BUNDLED_JRE/bin/java" ] && "$BUNDLED_JRE/bin/java" -version > /dev/null 2>&1 ; then
+    JDK="$BUNDLED_JRE"
   fi
 fi
 
-if [ -z "$JAVA_BIN" -a -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
-  JAVA_BIN="$JDK_HOME/bin/java"
+if [ -z "$JDK" -a -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+  JDK="$JDK_HOME"
 fi
 
-if [ -z "$JAVA_BIN" -a  -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
-  JAVA_BIN="$JAVA_HOME/bin/java"
+if [ -z "$JDK" -a  -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
+  JDK="$JAVA_HOME"
 fi
 
-if [ -z "$JAVA_BIN" ]; then
-  JAVA_BIN_PATH=`which java`
+if [ -z "$JDK" ]; then
+  JDK_PATH=`which java`
 
-  if [ -n "$JAVA_BIN_PATH" ]; then
+  if [ -n "$JDK_PATH" ]; then
     if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
       JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JAVA_BIN="$JAVA_LOCATION/bin/java"
+        JDK="$JAVA_LOCATION"
       fi
     elif [ "$OS_TYPE" = "SunOS" ]; then
       JAVA_LOCATION="/usr/jdk/latest"
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JAVA_BIN="$JAVA_LOCATION/bin/java"
+        JDK="$JAVA_LOCATION"
       fi
     elif [ "$OS_TYPE" = "Darwin" ]; then
       JAVA_LOCATION=`/usr/libexec/java_home`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JAVA_BIN="$JAVA_LOCATION/bin/java"
+        JDK="$JAVA_LOCATION"
       fi
     fi
   fi
 
-  if [ -z "$JAVA_BIN" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
-    JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
+  if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
+    JAVA_LOCATION=`"$READLINK" -f "$JDK_PATH"`
     case "$JAVA_LOCATION" in
       */jre/bin/java)
         JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
@@ -126,12 +126,13 @@ if [ -z "$JAVA_BIN" ]; then
         ;;
     esac
     if [ -x "$JAVA_LOCATION/bin/java" ]; then
-      JAVA_BIN="$JAVA_LOCATION/bin/java"
+      JDK="$JAVA_LOCATION"
     fi
   fi
 fi
 
-if [ -z "$JAVA_BIN" -o ! -x "$JAVA_BIN" ]; then
+JAVA_BIN="$JDK/bin/java"
+if [ -z "$JDK" -o ! -x "$JAVA_BIN" ]; then
   message "No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
   exit 1
 fi

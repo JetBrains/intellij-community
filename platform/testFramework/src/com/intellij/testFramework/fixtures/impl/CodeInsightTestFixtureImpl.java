@@ -1805,7 +1805,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(file.getProject());
-    setReadOnly(file, true);
+    VirtualFile vFile = InjectedLanguageUtil.getTopLevelFile(file).getVirtualFile();
+    setReadOnly(vFile, true);
     handler.setClearReadOnlyInTests(true);
     AtomicBoolean result = new AtomicBoolean();
     try {
@@ -1819,14 +1820,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       handler.setClearReadOnlyInTests(false);
-      setReadOnly(file, false);
+      setReadOnly(vFile, false);
     }
     return result.get();
   }
 
-  private static void setReadOnly(PsiFile file, boolean readOnlyStatus) {
+  private static void setReadOnly(VirtualFile vFile, boolean readOnlyStatus) {
     try {
-      WriteAction.run(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(InjectedLanguageUtil.getTopLevelFile(file).getVirtualFile(), readOnlyStatus));
+      WriteAction.run(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(vFile, readOnlyStatus));
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);

@@ -174,9 +174,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Test
   public void testApplyingWithCriticalFiles() throws Exception {
     myPatchSpec.setCriticalFiles(Collections.singletonList("lib/annotations.jar"));
-    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
-
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    assertAppliedAndRevertedCorrectly();
   }
 
   @Test
@@ -212,10 +210,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Test
   public void testApplyingWithCaseChangedNames() throws Exception {
     FileUtil.rename(new File(myOlderDir, "Readme.txt"), new File(myOlderDir, "README.txt"));
-
-    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
-
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    assertAppliedAndRevertedCorrectly();
   }
 
   @Test
@@ -229,9 +224,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "lib/boot_with_directory_becomes_file.jar"));
 
-    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
-
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    assertAppliedAndRevertedCorrectly();
   }
 
   @Test
@@ -242,9 +235,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     FileUtil.copy(new File(myOlderDir, "lib/boot_with_directory_becomes_file.jar"), new File(myOlderDir, "lib/boot.jar"));
 
-    Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
-
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    assertAppliedAndRevertedCorrectly();
   }
 
   @Test
@@ -472,7 +463,6 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testZipFileMove() throws Exception {
-    myPatchSpec.setStrict(true);
     resetNewerDir();
     FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
 
@@ -481,7 +471,6 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testZipFileMoveWithUpdate() throws Exception {
-    myPatchSpec.setStrict(true);
     resetNewerDir();
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
     FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));

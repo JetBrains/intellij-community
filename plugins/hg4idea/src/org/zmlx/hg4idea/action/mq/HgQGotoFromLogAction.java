@@ -34,7 +34,6 @@ import org.zmlx.hg4idea.command.mq.HgQGotoCommand;
 import org.zmlx.hg4idea.command.mq.HgQPopCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-import java.util.Set;
 import java.util.List;
 
 public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
@@ -92,6 +91,6 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
 
         actionPerformed(repository, fullCommitDetails);
       }
-    }, null);
+    });
   }
 }

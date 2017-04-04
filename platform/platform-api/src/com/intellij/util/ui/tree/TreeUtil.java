@@ -95,7 +95,7 @@ public final class TreeUtil {
 
   @NotNull
   public static List<TreePath> collectExpandedPaths(@NotNull JTree tree, @NotNull TreePath path) {
-    return treePathTraverser(tree).expand(tree::isExpanded).withRoot(path).toList();
+    return treePathTraverser(tree).expandAndFilter(tree::isExpanded).withRoot(path).toList();
   }
 
   /**

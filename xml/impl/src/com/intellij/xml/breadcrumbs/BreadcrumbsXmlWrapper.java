@@ -225,6 +225,7 @@ public class BreadcrumbsXmlWrapper implements Disposable {
     breadcrumbs.onSelect(this::itemSelected);
     breadcrumbs.setFont(getEditorFont(myEditor));
 
+    myComponent.setOpaque(false);
     myComponent.add(BorderLayout.CENTER, breadcrumbs);
 
     final EditorGutterComponentEx gutterComponent = ((EditorImpl)editor).getGutterComponentEx();

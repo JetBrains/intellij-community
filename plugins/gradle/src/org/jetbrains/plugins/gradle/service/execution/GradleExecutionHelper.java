@@ -175,7 +175,7 @@ public class GradleExecutionHelper {
       if (!settings.isPassParentEnvs() || !settings.getEnv().isEmpty()) {
         listener.onTaskOutput(taskId, String.format(
           "The version of Gradle you are using%s does not support the environment variables customization feature. " +
-          "Support for this is available in Gradle 3.5 and all later versions.",
+          "Support for this is available in Gradle 3.5 and all later versions.\n",
           gradleVersion == null ? "" : (" (" + gradleVersion + ")")), false);
       }
       return;

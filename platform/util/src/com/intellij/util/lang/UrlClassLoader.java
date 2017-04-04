@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -292,7 +291,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   private Resource _getResource(final String name) {
-    String n = StringUtil.trimStart(FileUtil.toCanonicalUriPath(name), "/");
+    String n = FileUtil.toCanonicalUriPath(name);
     return getClassPath().getResource(n, true);
   }
 

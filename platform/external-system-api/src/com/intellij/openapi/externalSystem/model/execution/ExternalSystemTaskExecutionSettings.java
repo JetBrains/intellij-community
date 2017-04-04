@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +49,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myExternalProjectPath;
   private String myVmOptions;
   private String myScriptParameters;
-  private Map<String, String> myEnv;
+  private Map<String, String> myEnv = ContainerUtilRt.newHashMap();
   private boolean myPassParentEnvs = true;
 
   @Nullable
@@ -116,11 +115,11 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @NotNull
   public Map<String, String> getEnv() {
-    return myEnv == null ? Collections.emptyMap() : myEnv;
+    return myEnv;
   }
 
   public void setEnv(Map<String, String> env) {
-    myEnv = env;
+    myEnv = env == null ? ContainerUtilRt.newHashMap() : env;
   }
 
   public boolean isPassParentEnvs() {

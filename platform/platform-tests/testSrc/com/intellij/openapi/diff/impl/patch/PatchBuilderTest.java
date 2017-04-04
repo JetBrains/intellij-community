@@ -153,8 +153,7 @@ public class PatchBuilderTest extends PlatformTestCase {
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths, @Nullable String forceLSeparator) throws IOException, VcsException {
-    String testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
-    String testDataPath = testDataRoot + "diff/patch/" + getTestName(true);
+    String testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patch/" + getTestName(true);
     assertTrue(new File(testDataPath).isDirectory());
     String beforePath = testDataPath + "/before";
     String afterPath = testDataPath + "/after";

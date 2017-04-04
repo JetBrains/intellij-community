@@ -82,7 +82,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private CodeStyleSchemesModel myModel;
+  private @Nullable CodeStyleSchemesModel myModel;
   private boolean mySomethingChanged = false;
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
@@ -127,7 +127,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return mySomethingChanged;
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@Nullable final CodeStyleSchemesModel model) {
     myModel = model;
   }
 
@@ -558,7 +558,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings);
     resetImpl(mySettings);
-    myModel.fireAfterCurrentSettingsChanged();
+    if (myModel != null) {
+      myModel.fireAfterCurrentSettingsChanged();
+    }
   }
 
   /**

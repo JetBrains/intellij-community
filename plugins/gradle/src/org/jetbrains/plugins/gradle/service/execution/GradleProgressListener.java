@@ -78,10 +78,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
                 offset = offset < 0 ? 0 : offset;
                 myListener.onTaskOutput(
                   myTaskId,
-                  "[" + StringUtil.repeat(" ", offset) + (int)(fraction * 100) + "%" + ']' + " " +
+                  "\r[" + StringUtil.repeat(" ", offset) + (int)(fraction * 100) + "%" + ']' + " " +
                   "[ " + StringUtil.repeat("=", progress * 4 - 3) + ">" + StringUtil.repeat(" ", remaining * 4) + " ] " +
-                  formatFileSize(progressEvent.getProgress()) +
-                  "\n", true);
+                  formatFileSize(progressEvent.getProgress()), true);
               }
               else {
                 myListener.onTaskOutput(myTaskId, formatFileSize(progressEvent.getProgress()) + "\n", true);
