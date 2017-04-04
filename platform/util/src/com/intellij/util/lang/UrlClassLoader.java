@@ -292,7 +292,11 @@ public class UrlClassLoader extends ClassLoader {
   @Nullable
   private Resource _getResource(final String name) {
     String n = FileUtil.toCanonicalUriPath(name);
-    return getClassPath().getResource(n, true);
+    Resource resource = getClassPath().getResource(n, true);
+    if (resource == null && n.startsWith("/")) { // compatibility with existing code, nonstd classloader behavior
+      resource = getClassPath().getResource(n.substring(1), true);
+    }
+    return resource;
   }
 
   @Nullable

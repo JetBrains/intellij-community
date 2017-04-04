@@ -72,11 +72,11 @@ public class UrlClassLoaderTest {
       assertNotNull(etalonCL.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
-      assertNull(loader.getResourceAsStream(absolutePathToFile));
+      assertNotNull(loader.getResourceAsStream(absolutePathToFile)); // nonstd CL behavior
       assertNull(etalonCL.findResource(absolutePathToFile));
 
       String absoluteNoncanonicalPathToFile = "/dir/a.txt/../a.txt";
-      assertNull(loader.getResourceAsStream(absoluteNoncanonicalPathToFile));
+      assertNotNull(loader.getResourceAsStream(absoluteNoncanonicalPathToFile));  // nonstd CL behavior
       assertNull(etalonCL.findResource(absoluteNoncanonicalPathToFile));
     }
     finally {
@@ -185,7 +185,7 @@ public class UrlClassLoaderTest {
       assertNull(findResource(flat, resourceDirNameWithSlash, false));
       assertNull(findResource(flat, resourceDirNameWithSlash_, false));
       assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
-      assertNull(findResource(flat, resourceDirNameWithSlash2_, false));
+      assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // nonstd CL behavior
 
       URLClassLoader recursive2 = new URLClassLoader(new URL[] {theGood.toURI().toURL()});
       try {
