@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,27 +60,27 @@ public class UrlClassLoaderTest {
     createTestFile(subDir, "a.txt");
 
     URL url = root.toURI().toURL();
-    UrlClassLoader loader = UrlClassLoader.build().urls(url).get();
-    URLClassLoader etalonCL = new URLClassLoader(new URL[] {url});
+    UrlClassLoader customCl = UrlClassLoader.build().urls(url).get();
+    URLClassLoader standardCl = new URLClassLoader(new URL[] {url});
     try {
       String relativePathToFile = "dir/a.txt";
-      assertNotNull(loader.getResourceAsStream(relativePathToFile));
-      assertNotNull(etalonCL.findResource(relativePathToFile));
+      assertNotNull(customCl.getResourceAsStream(relativePathToFile));
+      assertNotNull(standardCl.findResource(relativePathToFile));
 
       String nonCanonicalPathToFile = "dir/a.txt/../a.txt";
-      assertNotNull(loader.getResourceAsStream(nonCanonicalPathToFile));
-      assertNotNull(etalonCL.findResource(nonCanonicalPathToFile));
+      assertNotNull(customCl.getResourceAsStream(nonCanonicalPathToFile));
+      assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
-      assertNotNull(loader.getResourceAsStream(absolutePathToFile)); // nonstd CL behavior
-      assertNull(etalonCL.findResource(absolutePathToFile));
+      assertNotNull(customCl.getResourceAsStream(absolutePathToFile)); // non-standard CL behavior
+      assertNull(standardCl.findResource(absolutePathToFile));
 
-      String absoluteNoncanonicalPathToFile = "/dir/a.txt/../a.txt";
-      assertNotNull(loader.getResourceAsStream(absoluteNoncanonicalPathToFile));  // nonstd CL behavior
-      assertNull(etalonCL.findResource(absoluteNoncanonicalPathToFile));
+      String absoluteNonCanonicalPathToFile = "/dir/a.txt/../a.txt";
+      assertNotNull(customCl.getResourceAsStream(absoluteNonCanonicalPathToFile));  // non-standard CL behavior
+      assertNull(standardCl.findResource(absoluteNonCanonicalPathToFile));
     }
     finally {
-      etalonCL.close();
+      standardCl.close();
     }
   }
 
@@ -185,7 +185,7 @@ public class UrlClassLoaderTest {
       assertNull(findResource(flat, resourceDirNameWithSlash, false));
       assertNull(findResource(flat, resourceDirNameWithSlash_, false));
       assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
-      assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // nonstd CL behavior
+      assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // non-standard CL behavior
 
       URLClassLoader recursive2 = new URLClassLoader(new URL[] {theGood.toURI().toURL()});
       try {
