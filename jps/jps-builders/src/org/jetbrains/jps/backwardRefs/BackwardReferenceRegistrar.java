@@ -20,7 +20,6 @@ import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
-import java.util.Collection;
 import java.util.List;
 
 public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar {

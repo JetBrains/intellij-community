@@ -19,9 +19,9 @@ public class SignatureData {
   private final int myRawReturnType;
   private final boolean myStatic;
 
-  public SignatureData(int type, boolean aStatic) {
-    myRawReturnType = type;
-    myStatic = aStatic;
+  public SignatureData(int rawReturnType, boolean isStatic) {
+    myRawReturnType = rawReturnType;
+    myStatic = isStatic;
   }
 
   public int getRawReturnType() {

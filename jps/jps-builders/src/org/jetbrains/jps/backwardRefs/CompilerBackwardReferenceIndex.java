@@ -21,11 +21,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexExtension;
+import com.intellij.util.indexing.InvertedIndex;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -78,7 +79,7 @@ public class CompilerBackwardReferenceIndex {
 
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
-        public int enumerate(@Nullable String value) throws IOException {
+        public int enumerate(String value) throws IOException {
           return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : value.toLowerCase(Locale.ROOT));
         }
       };
