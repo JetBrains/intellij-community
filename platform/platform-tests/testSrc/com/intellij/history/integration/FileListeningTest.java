@@ -167,7 +167,7 @@ public class FileListeningTest extends IntegrationTestCase {
     rename(f, "file.txt");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(3, getRevisionsFor(f).size());
   }
 
   public void testRenamingNonFilteredFileToFiltered() throws Exception {
@@ -189,7 +189,7 @@ public class FileListeningTest extends IntegrationTestCase {
     rename(f, "not_filtered");
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
 
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(3, getRevisionsFor(f).size());
   }
 
   public void testRenamingNonFilteredDirectoriesToFiltered() throws Exception {
@@ -294,7 +294,7 @@ public class FileListeningTest extends IntegrationTestCase {
     LocalFileSystem.getInstance().refresh(false);
 
     List<Revision> revs = getRevisionsFor(myRoot);
-    assertEquals(4, revs.size());
+    assertEquals(5, revs.size());
     assertNotNull(revs.get(0).findEntry().findEntry("dir/subDir/file.txt"));
     assertNull(revs.get(1).findEntry().findEntry("dir/subDir/file.txt"));
     assertNotNull(revs.get(2).findEntry().findEntry("dir/subDir/file.txt"));
@@ -317,7 +317,7 @@ public class FileListeningTest extends IntegrationTestCase {
     LocalFileSystem.getInstance().refresh(false);
 
     List<Revision> revs = getRevisionsFor(myRoot);
-    assertEquals(4, revs.size());
+    assertEquals(5, revs.size());
     assertNotNull(revs.get(0).findEntry().findEntry("dir/subDir/file.txt"));
     assertNull(revs.get(1).findEntry().findEntry("dir/subDir"));
     assertNotNull(revs.get(2).findEntry().findEntry("dir/subDir/file.txt"));
