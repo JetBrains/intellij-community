@@ -78,6 +78,11 @@ public class ServiceManagerImpl implements Disposable {
           }
         }
 
+        if ("org.jetbrains.uast.UastContext".equals(descriptor.serviceInterface) &&
+            picoContainer.getComponentInstance(descriptor.getInterface()) != null) {
+          return;
+        }
+
         if (!Extensions.isComponentSuitableForOs(descriptor.os)) {
           return;
         }
