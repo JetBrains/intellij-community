@@ -2,30 +2,30 @@ package pkg;
 
 public class TestIffSimplification {
    public int simpleIff(boolean status, int[] values) {
-      return status?values[0]:values[1];// 7
+      return status ? values[0] : values[1];// 7
    }
 
    public int simpleIf(boolean status, int[] values) {
-      return status?values[0]:values[1];// 11 12 15
+      return status ? values[0] : values[1];// 11 12 15
    }
 
    public int nestedIf(boolean status, boolean condition, int[] values) {
-      if(status) {// 20
-         return condition?values[2]:values[0];// 21 22 25
+      if (status) {// 20
+         return condition ? values[2] : values[0];// 21 22 25
       } else {
          return values[1];// 29
       }
    }
 
    public int compareTo(int mc1, int mc2, byte csg1, byte csg2, double score1, double score2, int doc1, int doc2) {
-      if(mc1 != mc2) {// 34
-         return mc1 < mc2?1:-1;// 35
-      } else if(csg1 != csg2) {// 38
-         return csg1 < csg2?1:-1;// 39
-      } else if(Math.abs(score1 - score2) < 1.0E-6D) {// 42
-         return doc1 < doc2?-1:1;// 43
+      if (mc1 != mc2) {// 34
+         return mc1 < mc2 ? 1 : -1;// 35
+      } else if (csg1 != csg2) {// 38
+         return csg1 < csg2 ? 1 : -1;// 39
+      } else if (Math.abs(score1 - score2) < 1.0E-6D) {// 42
+         return doc1 < doc2 ? -1 : 1;// 43
       } else {
-         return score1 < score2?1:-1;// 46
+         return score1 < score2 ? 1 : -1;// 46
       }
    }
 }
