@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.sdk
+package com.jetbrains.python.minor.sdk
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
@@ -23,9 +23,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
-import com.jetbrains.python.facet.PythonFacet
-import com.jetbrains.python.facet.PythonFacetType
 import com.jetbrains.python.facet.PythonFacetUtil
+import com.jetbrains.python.minor.facet.PythonFacet
+import com.jetbrains.python.minor.facet.PythonFacetType
 
 /**
  * @author traff
