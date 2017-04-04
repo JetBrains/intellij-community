@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
@@ -59,8 +60,8 @@ public class UrlClassLoaderTest {
     createTestFile(subDir, "a.txt");
 
     UrlClassLoader loader = UrlClassLoader.build().urls(root.toURI().toURL()).get();
-    assertNotNull(loader.getResourceAsStream("/dir/a.txt"));
-    assertNotNull(loader.getResourceAsStream("/dir/a.txt/../a.txt"));
+    assertNotNull(loader.getResourceAsStream("dir/a.txt"));
+    assertNotNull(loader.getResourceAsStream("dir/a.txt/../a.txt"));
   }
 
   @Test
@@ -128,18 +129,54 @@ public class UrlClassLoaderTest {
   public void testInvalidJarsInClassPath() throws IOException {
     File sadHill = createTestDir("testInvalidJarsInClassPath");
     try {
-      File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), "test_res_dir/test_res.txt", "-");
+      String entryName = "test_res_dir/test_res.txt";
+      File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), entryName, "-");
       File theBad = createTestFile(sadHill, "2_broken.jar", new String(new char[1024]));
 
       UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).get();
-      assertNotNull(findResource(flat, "/test_res_dir/test_res.txt", false));
+      assertNotNull(findResource(flat, entryName, false));
 
       String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
                        Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
       File theUgly = createTestJar(createTestFile(sadHill, "3_classpath.jar"), JarFile.MANIFEST_NAME, content);
 
       UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).get();
-      assertNotNull(findResource(recursive, "/test_res_dir/test_res.txt", false));
+      assertNotNull(findResource(recursive, entryName, false));
+    }
+    finally {
+      FileUtil.delete(sadHill);
+    }
+  }
+
+  @Test
+  public void testDirEntry() throws IOException {
+    File sadHill = createTestDir("testDirEntry");
+    try {
+      String resourceDirName = "test_res_dir";
+      String resourceDirName2 = "test_res_dir2";
+      File theGood = createTestJar(createTestFile(sadHill, "1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
+      UrlClassLoader flat = UrlClassLoader.build().urls(theGood.toURI().toURL()).get();
+
+      String resourceDirNameWithSlash = resourceDirName + "/";
+      String resourceDirNameWithSlash_ = "/" + resourceDirNameWithSlash;
+      String resourceDirNameWithSlash2 = resourceDirName2 + "/";
+      String resourceDirNameWithSlash2_ = "/" + resourceDirNameWithSlash2;
+
+      assertNull(findResource(flat, resourceDirNameWithSlash, false));
+      assertNull(findResource(flat, resourceDirNameWithSlash_, false));
+      assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
+      assertNull(findResource(flat, resourceDirNameWithSlash2_, false));
+
+      URLClassLoader recursive2 = new URLClassLoader(new URL[] {theGood.toURI().toURL()});
+      try {
+        assertNotNull(recursive2.findResource(resourceDirNameWithSlash2));
+        assertNull(recursive2.findResource(resourceDirNameWithSlash2_));
+        assertNull(recursive2.findResource(resourceDirNameWithSlash));
+        assertNull(recursive2.findResource(resourceDirNameWithSlash_));
+      }
+      finally {
+        recursive2.close();
+      }
     }
     finally {
       FileUtil.delete(sadHill);
