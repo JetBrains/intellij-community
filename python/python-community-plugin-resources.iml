@@ -17,6 +17,5 @@
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="python-community-configure" />
-    <orderEntry type="module" module-name="python-community-plugin-minor" />
   </component>
 </module>
