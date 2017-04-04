@@ -231,12 +231,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    if (position instanceof PsiIdentifier) {
-      addIdentifierVariants(parameters, position, result, session, matcher);
+    if (JavaKeywordCompletion.addWildcardExtendsSuper(result, position)) {
+      return;
     }
 
-    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
-      return;
+    if (position instanceof PsiIdentifier) {
+      addIdentifierVariants(parameters, position, result, session, matcher);
     }
 
     Set<String> usedWords = addReferenceVariants(parameters, result, session);

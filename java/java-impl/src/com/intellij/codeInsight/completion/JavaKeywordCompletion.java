@@ -286,10 +286,6 @@ public class JavaKeywordCompletion {
       return;
     }
 
-    if (addWildcardExtendsSuper()) {
-      return;
-    }
-
     addFinal();
 
     boolean statementPosition = isStatementPosition(myPosition);
@@ -324,10 +320,13 @@ public class JavaKeywordCompletion {
     addExtendsImplements();
   }
 
-  private boolean addWildcardExtendsSuper() {
-    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(myPosition)) {
-      addKeyword(new OverrideableSpace(createKeyword(PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      addKeyword(new OverrideableSpace(createKeyword(PsiKeyword.SUPER), TailType.HUMBLE_SPACE_BEFORE_WORD));
+  static boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
+    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+      for (String keyword : ContainerUtil.ar(PsiKeyword.EXTENDS, PsiKeyword.SUPER)) {
+        if (keyword.startsWith(result.getPrefixMatcher().getPrefix())) {
+          result.addElement(new OverrideableSpace(BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        }
+      }
       return true;
     }
     return false;
