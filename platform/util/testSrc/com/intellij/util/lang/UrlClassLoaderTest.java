@@ -59,9 +59,29 @@ public class UrlClassLoaderTest {
     File subDir = createTestDir(root, "dir");
     createTestFile(subDir, "a.txt");
 
-    UrlClassLoader loader = UrlClassLoader.build().urls(root.toURI().toURL()).get();
-    assertNotNull(loader.getResourceAsStream("dir/a.txt"));
-    assertNotNull(loader.getResourceAsStream("dir/a.txt/../a.txt"));
+    URL url = root.toURI().toURL();
+    UrlClassLoader loader = UrlClassLoader.build().urls(url).get();
+    URLClassLoader etalonCL = new URLClassLoader(new URL[] {url});
+    try {
+      String relativePathToFile = "dir/a.txt";
+      assertNotNull(loader.getResourceAsStream(relativePathToFile));
+      assertNotNull(etalonCL.findResource(relativePathToFile));
+
+      String nonCanonicalPathToFile = "dir/a.txt/../a.txt";
+      assertNotNull(loader.getResourceAsStream(nonCanonicalPathToFile));
+      assertNotNull(etalonCL.findResource(nonCanonicalPathToFile));
+
+      String absolutePathToFile = "/dir/a.txt";
+      assertNull(loader.getResourceAsStream(absolutePathToFile));
+      assertNull(etalonCL.findResource(absolutePathToFile));
+
+      String absoluteNoncanonicalPathToFile = "/dir/a.txt/../a.txt";
+      assertNull(loader.getResourceAsStream(absoluteNoncanonicalPathToFile));
+      assertNull(etalonCL.findResource(absoluteNoncanonicalPathToFile));
+    }
+    finally {
+      etalonCL.close();
+    }
   }
 
   @Test
