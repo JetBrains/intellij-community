@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -54,10 +55,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
@@ -74,6 +72,7 @@ public class EduAdaptiveStepicConnector {
   private static final String CODE_TASK_TYPE = "code";
   private static final String CHOICE_TYPE_TEXT = "choice";
   private static final String TEXT_STEP_TYPE = "text";
+  private static final String DEFAULT_TASK_NAME = "code.py";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull Project project, @NotNull Course course) {
@@ -210,7 +209,7 @@ public class EduAdaptiveStepicConnector {
     final TaskFile taskFile = new TaskFile();
     taskFile.text = editorText;
     taskFile.name = "code";
-    task.taskFiles.put("code.py", taskFile);
+    task.taskFiles.put(DEFAULT_TASK_NAME, taskFile);
   }
 
   @Nullable
@@ -326,6 +325,17 @@ public class EduAdaptiveStepicConnector {
             task.setLesson(unsolvedTask.getLesson());
             task.setIndex(unsolvedTask.getIndex());
             adaptive.getTaskList().set(adaptive.getTaskList().size() - 1, task);
+
+            final Map<String, TaskFile> taskFiles = task.getTaskFiles();
+            if (taskFiles.size() == 1) {
+              TaskFile newTaskFile = (TaskFile)taskFiles.values().toArray()[0];
+              setTaskFileParameters(editor, task, newTaskFile);
+              updateEditorText(editor, newTaskFile);
+            }
+            else {
+              LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
+            }
+
             ApplicationManager.getApplication().invokeLater(()->StudyNavigator.navigateToTask(project, task));
 
             final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
@@ -386,6 +396,22 @@ public class EduAdaptiveStepicConnector {
         ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project, "Couldn't post your reaction"));
       }
     }
+  }
+
+  private static void updateEditorText(@NotNull StudyEditor editor, @NotNull TaskFile newTaskFile) {
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final Document document = editor.getEditor().getDocument();
+      document.setText(newTaskFile.text);
+    }));
+  }
+
+  private static void setTaskFileParameters(@NotNull StudyEditor editor, @NotNull Task task, @NotNull TaskFile newTaskFile) {
+    TaskFile currentTaskFile = editor.getTaskFile();
+    currentTaskFile.text = newTaskFile.text;
+    currentTaskFile.name = newTaskFile.name;
+    currentTaskFile.setTask(task);
+    task.getTaskFiles().clear();
+    task.taskFiles.put(DEFAULT_TASK_NAME, currentTaskFile);
   }
 
   private static void createTestFiles(@NotNull Course course, @NotNull Project project,
@@ -472,7 +498,7 @@ public class EduAdaptiveStepicConnector {
       taskFile.name = CODE_TASK_TYPE;
       final String templateForTask = getCodeTemplateForTask(project, task, step.options.codeTemplates);
       taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-      task.taskFiles.put("code.py", taskFile);
+      task.taskFiles.put(DEFAULT_TASK_NAME, taskFile);
     }
     return task;
   }
