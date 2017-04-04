@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -27,8 +31,10 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -45,7 +51,6 @@ import java.util.List;
  * @author Dmitry Batkovich
  */
 public class LongLineInspection extends LocalInspectionTool {
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
@@ -53,18 +58,15 @@ public class LongLineInspection extends LocalInspectionTool {
     codeStyleHyperlink.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-          @Override
-          public void consume(DataContext context) {
-            if (context != null) {
-              final Settings settings = Settings.KEY.getData(context);
-              if (settings != null) {
-                settings.select(settings.find(CodeStyleSchemesConfigurable.class));
-              }
-              else {
-                ShowSettingsUtil.getInstance()
-                  .showSettingsDialog(CommonDataKeys.PROJECT.getData(context), CodeStyleSchemesConfigurable.class);
-              }
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+          if (context != null) {
+            final Settings settings = Settings.KEY.getData(context);
+            if (settings != null) {
+              settings.select(settings.find(CodeStyleSchemesConfigurable.class));
+            }
+            else {
+              ShowSettingsUtil.getInstance()
+                .showSettingsDialog(CommonDataKeys.PROJECT.getData(context), CodeStyleSchemesConfigurable.class);
             }
           }
         });
@@ -93,7 +95,9 @@ public class LongLineInspection extends LocalInspectionTool {
     for (int idx = 0; idx < document.getLineCount(); idx++) {
       final int startOffset = document.getLineStartOffset(idx);
       final int endOffset = document.getLineEndOffset(idx);
-      if (endOffset - startOffset > codeStyleRightMargin) {
+      if (endOffset - startOffset > codeStyleRightMargin && !ignoreFor(findElementInRange(file,
+                                                                                          startOffset + codeStyleRightMargin - 1,
+                                                                                          endOffset - 1))) {
         final int maxOffset = startOffset + codeStyleRightMargin;
         descriptors.add(
           manager.createProblemDescriptor(file, new TextRange(maxOffset, endOffset),
@@ -103,5 +107,24 @@ public class LongLineInspection extends LocalInspectionTool {
       }
     }
     return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+  }
+
+  @Nullable
+  private static PsiElement findElementInRange(@NotNull PsiFile file, int leftOffset, int rightOffset) {
+    PsiElement leftElement = file.findElementAt(leftOffset);
+    if (leftElement == null) return null;
+    PsiElement rightElement = file.findElementAt(rightOffset);
+    if (rightElement == null) return null;
+    return PsiTreeUtil.findCommonParent(leftElement, rightElement);
+  }
+
+  private static boolean ignoreFor(@Nullable PsiElement element) {
+    if (element == null) return false;
+    for (LongLineInspectionPolicy policy : LongLineInspectionPolicy.EP_NAME.getExtensions()) {
+      if (policy.ignoreLongLineFor(element)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

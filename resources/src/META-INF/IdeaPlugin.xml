@@ -1918,6 +1918,8 @@
     <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>
     <applicationService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibrarySynchronizer"/>
+
+    <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
   </extensions>
 
   <actions>
