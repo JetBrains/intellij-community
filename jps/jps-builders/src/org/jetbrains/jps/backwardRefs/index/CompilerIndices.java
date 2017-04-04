@@ -37,7 +37,7 @@ import java.util.List;
 
 public class CompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 3;
+  public final static int VERSION = 4;
 
   public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
   public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
