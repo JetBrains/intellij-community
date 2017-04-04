@@ -263,8 +263,8 @@ class CompilerReferenceReader {
     });
     if (result[0] == DefCount.NONE) {
       //diagnostic
-      String baseHierarchyElement = getNameEnumerator().getName(def.getName());
-      LOG.error("Can't get definition files for: " + baseHierarchyElement + ", class: " + def.getClass());
+      String name = def instanceof LightRef.LightAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
+      LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
     }
     return result[0] == DefCount.MANY;
   }
