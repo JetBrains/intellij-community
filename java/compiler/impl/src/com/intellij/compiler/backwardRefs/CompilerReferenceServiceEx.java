@@ -32,7 +32,7 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
   }
 
   @NotNull
-  public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType, boolean onlyStatic)
+  public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType)
     throws ReferenceIndexUnavailableException;
 
   public abstract boolean mayHappen(@NotNull LightRef ref1, @NotNull LightRef ref2, int correlationThreshold)

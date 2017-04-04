@@ -56,7 +56,7 @@ public class ChainsSearcher {
   private static SearchInitializer createInitializer(TargetType target,
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), false);
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName());
     return new SearchInitializer(methods, context);
   }
 
@@ -80,14 +80,6 @@ public class ChainsSearcher {
       .filter(Objects::nonNull)
       .collect(Collectors.toCollection(LinkedList::new));
 
-
-    int maxWeight = 0;
-    for (MethodsChain methodsChain : knownDistance.values()) {
-      if (methodsChain.getChainWeight() > maxWeight) {
-        maxWeight = methodsChain.getChainWeight();
-      }
-    }
-
     ResultHolder result = new ResultHolder(context.getPsiManager());
     while (!q.isEmpty()) {
       ProgressManager.checkCanceled();
@@ -104,7 +96,7 @@ public class ChainsSearcher {
         continue;
       }
       String currentReturnType = headSignature.getOwner();
-      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethodReferenceOccurrences(currentReturnType, false);
+      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethodReferenceOccurrences(currentReturnType);
       MaxSizeTreeSet<OccurrencesAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<>(maxResultSize);
       for (OccurrencesAware<MethodIncompleteSignature> indexValue : nextMethods) {

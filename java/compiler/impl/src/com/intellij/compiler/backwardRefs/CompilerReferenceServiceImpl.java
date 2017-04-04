@@ -222,17 +222,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType, boolean onlyStatic) {
+  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
       try {
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
-        Stream.Builder<SignatureData> builder = Stream.<SignatureData>builder().add(new SignatureData(type, true));
-        if (!onlyStatic) {
-          builder.accept(new SignatureData(type, false));
-        }
-        return builder.build()
+        if (type == 0) return Collections.emptySortedSet();
+        return Stream.of(new SignatureData(type, true), new SignatureData(type, false))
           .flatMap(sd -> myReader.getMembersFor(sd)
           .stream()
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
