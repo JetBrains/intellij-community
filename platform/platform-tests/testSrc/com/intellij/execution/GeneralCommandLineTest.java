@@ -122,6 +122,11 @@ public class GeneralCommandLineTest {
     return new GeneralCommandLine(command);
   }
 
+  @NotNull
+  protected String filterExpectedOutput(@NotNull String output) {
+    return output;
+  }
+
   @Test(timeout = 60000)
   public void printCommandLine() {
     GeneralCommandLine commandLine = createCommandLine();
@@ -291,7 +296,7 @@ public class GeneralCommandLineTest {
         for (String argument : ARGUMENTS) {
           GeneralCommandLine commandLine = createCommandLine(script.getAbsolutePath(), GeneralCommandLine.inescapableQuote(argument));
           String output = execAndGetOutput(commandLine);
-          assertEquals(commandLine.getPreparedCommandLine(), StringUtil.wrapWithDoubleQuote(argument), output.trim());
+          assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput(StringUtil.wrapWithDoubleQuote(argument)), output.trim());
         }
       }
       finally {
