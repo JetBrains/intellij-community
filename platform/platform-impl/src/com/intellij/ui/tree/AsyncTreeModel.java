@@ -332,15 +332,24 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       Object object = entry.getNode();
       if (model.isLeaf(object)) return null;
 
+      if (model instanceof ChildrenProvider) {
+        //noinspection unchecked
+        ChildrenProvider<Object> provider = (ChildrenProvider)model;
+        ArrayList<Pair<Object, Boolean>> children = new ArrayList<>();
+        provider.getChildren(object).forEach(child -> add(children, child));
+        return unmodifiableList(children);
+      }
+
       int count = model.getChildCount(object);
       if (count <= 0) return emptyList();
 
       ArrayList<Pair<Object, Boolean>> children = new ArrayList<>(count);
-      for (int i = 0; i < count; i++) {
-        Object child = model.getChild(object, i);
-        children.add(Pair.create(child, model.isLeaf(child)));
-      }
+      for (int i = 0; i < count; i++) add(children, model.getChild(object, i));
       return unmodifiableList(children);
+    }
+
+    private void add(List<Pair<Object, Boolean>> children, Object child) {
+      if (child != null) children.add(Pair.create(child, model.isLeaf(child)));
     }
 
     @Override
