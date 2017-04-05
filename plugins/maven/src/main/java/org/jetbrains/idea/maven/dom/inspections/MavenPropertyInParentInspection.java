@@ -86,7 +86,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     String unresolvedValue = domValue.getRawText();
     if (unresolvedValue != null && unresolvedValue.contains("${")) {
       LocalQuickFix fix = null;
-      String resolvedValue = domValue.getValue();
+      String resolvedValue = domValue.getStringValue();
       if (!unresolvedValue.equals(resolvedValue)) {
         fix = new LocalQuickFixBase(MavenDomBundle.message("refactoring.inline.property")) {
           @Override
