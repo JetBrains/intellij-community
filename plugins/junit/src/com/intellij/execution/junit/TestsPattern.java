@@ -72,15 +72,15 @@ public class TestsPattern extends TestPackage {
     if (classNames.size() == data.getPatterns().size()) {
       return new SearchForTestsTask(project, myServerSocket) {
         @Override
-        protected void search() throws ExecutionException {
+        protected void search() throws ExecutionException { }
+
+        @Override
+        protected void onFound() throws ExecutionException {
           final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME)
                                                         ? FunctionUtil.<String>id()
                                                         : (Function<String, String>)className -> className;
           addClassesListToJavaParameters(classNames, nameFunction, "", false, getJavaParameters());
         }
-
-        @Override
-        protected void onFound() {}
       };
     }
 

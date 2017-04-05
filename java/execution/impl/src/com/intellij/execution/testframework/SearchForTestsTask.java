@@ -52,7 +52,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
 
   protected abstract void search() throws ExecutionException;
-  protected abstract void onFound();
+  protected abstract void onFound() throws ExecutionException;
 
   public void ensureFinished() {
     if (myProcessIndicator != null && !myProcessIndicator.isCanceled()) {
@@ -68,7 +68,12 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       catch (Throwable e) {
         LOG.error(e);
       }
-      onFound();
+      try {
+        onFound();
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
     }
     else {
       myProcessIndicator = new BackgroundableProcessIndicator(this);
@@ -131,7 +136,12 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   @Override
   public void onSuccess() {
     DumbService.getInstance(getProject()).runWhenSmart(() -> {
-      onFound();
+      try {
+        onFound();
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
       finish();
     });
   }
