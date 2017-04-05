@@ -21,8 +21,10 @@ import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.*;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -87,6 +89,9 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   public Tree visitMemberSelect(MemberSelectTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null && element.getKind() != ElementKind.PACKAGE) {
+      ExecutableElement memberCall = (ExecutableElement)element;
+      Element qualifier = memberCall.getEnclosingElement();
+      traverseTypeDown(qualifier, refCollector);
       refCollector.sinkReference(refCollector.asJavacRef(element));
     }
     return super.visitMemberSelect(node, refCollector);
@@ -151,5 +156,19 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
   private static boolean isStatic(Element element) {
     return element.getModifiers().contains(Modifier.STATIC);
+  }
+
+  private static void traverseTypeDown(Element element, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    TypeMirror type = element.asType();
+    JavacRef classRef = collector.asJavacRef(element);
+    List<JavacRef> superRefs = new ArrayList<JavacRef>();
+    for (TypeMirror mirror : collector.getTypeUtility().directSupertypes(type)) {
+      if (mirror.getKind() != TypeKind.NONE) {
+        Element subElement = ((DeclaredType)mirror).asElement();
+        superRefs.add(collector.asJavacRef(subElement));
+        traverseTypeDown(subElement, collector);
+      }
+    }
+    collector.sinkDeclarationClarification(new JavacDef.JavacClassDef(classRef, superRefs.toArray(new JavacRef[superRefs.size()])));
   }
 }

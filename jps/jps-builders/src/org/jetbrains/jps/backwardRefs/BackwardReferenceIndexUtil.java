@@ -39,6 +39,7 @@ public class BackwardReferenceIndexUtil {
 
       final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
       final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
+      final Map<LightRef, Collection<LightRef>> backwardHierarchyMap2 = new HashMap<>();
       final Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
@@ -101,7 +102,7 @@ public class BackwardReferenceIndexUtil {
       if (exception[0] != null) {
         throw exception[0];
       }
-      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions, signatureData));
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, backwardHierarchyMap2, convertedRefs, definitions, signatureData));
     }
     catch (IOException e) {
       writer.setRebuildCause(e);

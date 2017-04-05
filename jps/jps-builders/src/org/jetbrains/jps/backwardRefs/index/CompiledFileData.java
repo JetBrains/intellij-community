@@ -28,7 +28,8 @@ public class CompiledFileData {
   private final Map<LightRef, Void> myDefinitions;
   private final Map<SignatureData, Collection<LightRef>> mySignatureData;
 
-  public CompiledFileData(@NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
+  public CompiledFileData(Map<LightRef, Collection<LightRef>> map,
+                          @NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
                           @NotNull Map<LightRef, Integer> references,
                           @NotNull Map<LightRef, Void> definitions,
                           @NotNull Map<SignatureData, Collection<LightRef>> signatureData) {

@@ -229,6 +229,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
       myFileData = new JavacFileData(filePath,
                                      createReferenceHolder(),
                                      myDivideImportRefs ? createReferenceHolder() : EMPTY_T_OBJ_INT_MAP,
+                                     createDefinitionHolder(),
                                      createDefinitionHolder());
       myTreeHelper = new JavacTreeHelper(unitTree, myTreeUtility);
     }
@@ -239,6 +240,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     void sinkDeclaration(JavacDef def) {
      myFileData.getDefs().add(def);
+    }
+
+    void sinkDeclarationClarification(JavacDef def) {
+      myFileData.getDefCalifications().add(def);
     }
 
     @Nullable

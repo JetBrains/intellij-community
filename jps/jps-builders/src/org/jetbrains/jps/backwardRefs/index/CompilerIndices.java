@@ -41,6 +41,7 @@ public class CompilerIndices {
 
   public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
   public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
+  public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY2 = ID.create("back.hierarchy2");
   public final static ID<LightRef, Void> BACK_CLASS_DEF = ID.create("back.class.def");
   public final static ID<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = ID.create("back.member.sign");
 
@@ -48,6 +49,7 @@ public class CompilerIndices {
     return Arrays.asList(createBackwardClassDefinitionExtension(),
                          createBackwardUsagesExtension(),
                          createBackwardHierarchyExtension(),
+                         createBackwardHierarchyExtension2(),
                          createBackwardSignatureExtension());
   }
 
@@ -106,6 +108,35 @@ public class CompilerIndices {
       @NotNull
       public ID<LightRef, Collection<LightRef>> getName() {
         return BACK_HIERARCHY;
+      }
+
+      @NotNull
+      public DataIndexer<LightRef, Collection<LightRef>, CompiledFileData> getIndexer() {
+        return CompiledFileData::getBackwardHierarchy;
+      }
+
+      @NotNull
+      public KeyDescriptor<LightRef> getKeyDescriptor() {
+        return LightRefDescriptor.INSTANCE;
+      }
+
+      @NotNull
+      public DataExternalizer<Collection<LightRef>> getValueExternalizer() {
+        return createLightRefSeqExternalizer();
+      }
+    };
+  }
+
+  private static IndexExtension<LightRef, Collection<LightRef>, CompiledFileData> createBackwardHierarchyExtension2() {
+    return new IndexExtension<LightRef, Collection<LightRef>, CompiledFileData>() {
+      @Override
+      public int getVersion() {
+        return VERSION;
+      }
+
+      @NotNull
+      public ID<LightRef, Collection<LightRef>> getName() {
+        return BACK_HIERARCHY2;
       }
 
       @NotNull

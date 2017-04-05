@@ -36,15 +36,18 @@ public class JavacFileData {
   private final TObjectIntHashMap<JavacRef> myRefs;
   private final TObjectIntHashMap<JavacRef> myImportRefs;
   private final List<JavacDef> myDefs;
+  private List<JavacDef> myDefCalifications;
 
   public JavacFileData(@NotNull String path,
                        @NotNull TObjectIntHashMap<JavacRef> refs,
                        @NotNull TObjectIntHashMap<JavacRef> importRefs,
-                       @NotNull List<JavacDef> defs) {
+                       @NotNull List<JavacDef> defs,
+                       @NotNull  List<JavacDef> defCalifications) {
     myFilePath = path;
     myRefs = refs;
     myImportRefs = importRefs;
     myDefs = defs;
+    myDefCalifications = defCalifications;
   }
 
   @NotNull
@@ -83,14 +86,19 @@ public class JavacFileData {
     return os.toByteArray();
   }
 
+  public List<JavacDef> getDefCalifications() {
+    return myDefCalifications;
+  }
+
   @NotNull
   public static JavacFileData fromBytes(byte[] bytes) {
     final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
     try {
+      //TODO
       return new JavacFileData(in.readUTF(),
                                readRefs(in),
                                readRefs(in),
-                               readDefs(in));
+                               readDefs(in), Collections.<JavacDef>emptyList());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
