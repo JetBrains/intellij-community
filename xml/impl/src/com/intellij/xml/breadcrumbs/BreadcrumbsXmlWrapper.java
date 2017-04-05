@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -33,7 +34,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -71,10 +71,12 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+
 /**
  * @author spleaner
  */
-public class BreadcrumbsXmlWrapper implements Disposable {
+public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private static final class PsiCrumb extends Crumb.Impl {
     private final PsiElement element;
     private CrumbPresentation presentation;
@@ -131,7 +133,6 @@ public class BreadcrumbsXmlWrapper implements Disposable {
 
   private final static Logger LOG = Logger.getInstance(BreadcrumbsXmlWrapper.class);
 
-  private final JComponent myComponent = new JPanel(new BorderLayout());
   private final Project myProject;
   private Editor myEditor;
   private Collection<RangeHighlighter> myHighlighed;
@@ -224,25 +225,42 @@ public class BreadcrumbsXmlWrapper implements Disposable {
     breadcrumbs.onHover(this::itemHovered);
     breadcrumbs.onSelect(this::itemSelected);
     breadcrumbs.setFont(getEditorFont(myEditor));
-    breadcrumbs.setBorder(BorderFactory.createEmptyBorder(above ? 2 : 0, 0, above ? 0 : 2, 0));
 
-    myComponent.setOpaque(false);
-    myComponent.add(BorderLayout.CENTER, breadcrumbs);
+    JScrollPane pane = createScrollPane(breadcrumbs, true);
+    pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    pane.getHorizontalScrollBar().setEnabled(false);
+    setLayout(new BorderLayout());
+    add(BorderLayout.CENTER, pane);
 
-    final EditorGutterComponentEx gutterComponent = ((EditorImpl)editor).getGutterComponentEx();
-    final ComponentAdapter resizeListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(final ComponentEvent e) {
-        myComponent.setBorder(BorderFactory.createEmptyBorder(0, gutterComponent.getWhitespaceSeparatorOffset(), 0, 0));
-      }
-    };
+    EditorGutter gutter = editor.getGutter();
+    if (gutter instanceof EditorGutterComponentEx) {
+      EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)gutter;
+      ComponentAdapter resizeListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent event) {
+          updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+        }
+      };
 
-    gutterComponent.addComponentListener(resizeListener);
-    Disposer.register(this, () -> gutterComponent.removeComponentListener(resizeListener));
+      addComponentListener(resizeListener);
+      gutterComponent.addComponentListener(resizeListener);
+      Disposer.register(this, () -> {
+        removeComponentListener(resizeListener);
+        gutterComponent.removeComponentListener(resizeListener);
+      });
+      updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+    }
+    else {
+      updateBorder(0);
+    }
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
     queueUpdate();
+  }
+
+  private void updateBorder(int offset) {
+    breadcrumbs.setBorder(BorderFactory.createEmptyBorder(above ? 2 : 0, offset, above ? 0 : 2, 0));
   }
 
   private void updateCrumbs() {
@@ -426,8 +444,9 @@ public class BreadcrumbsXmlWrapper implements Disposable {
     return null;
   }
 
+  @Deprecated
   public JComponent getComponent() {
-    return myComponent;
+    return this;
   }
 
   private void itemSelected(Crumb crumb, InputEvent event) {

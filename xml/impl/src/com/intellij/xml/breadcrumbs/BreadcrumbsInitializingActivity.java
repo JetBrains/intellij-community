@@ -142,10 +142,10 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
                                       @NotNull BreadcrumbsXmlWrapper wrapper) {
     //noinspection deprecation
     if (wrapper.above) {
-      fileEditorManager.addTopComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.addTopComponent(fileEditor, wrapper);
     }
     else {
-      fileEditorManager.addBottomComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.addBottomComponent(fileEditor, wrapper);
     }
     Disposer.register(fileEditor, () -> disposeWrapper(fileEditorManager, fileEditor, wrapper));
   }
@@ -155,10 +155,10 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
     //noinspection deprecation
     if (wrapper.above) {
-      fileEditorManager.removeTopComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.removeTopComponent(fileEditor, wrapper);
     }
     else {
-      fileEditorManager.removeBottomComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.removeBottomComponent(fileEditor, wrapper);
     }
     Disposer.dispose(wrapper);
   }
