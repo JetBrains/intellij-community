@@ -16,13 +16,18 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.text.EditDistance;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
@@ -32,6 +37,8 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
@@ -44,7 +51,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   public HtmlUnknownAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
   }
-  
+
   @Override
   @Nls
   @NotNull
@@ -92,17 +99,61 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
         final String name = attribute.getName();
         if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
-          LocalQuickFix[] quickfixes = new LocalQuickFix[maySwitchToHtml5 ? 3 : 2];
-          quickfixes[0] = new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name));
-          quickfixes[1] = new RemoveAttributeIntentionAction(name);
+          ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
+          quickfixes
+            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name)));
+          quickfixes.add(new RemoveAttributeIntentionAction(name));
           if (maySwitchToHtml5) {
-            quickfixes[2] = new SwitchToHtml5WithHighPriorityAction();
+            quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
+          addSimilarAttributesQuickFixes(tag, name, quickfixes);
 
           registerProblemOnAttributeName(attribute, XmlErrorMessages.message("attribute.is.not.allowed.here", attribute.getName()), holder,
-                                         quickfixes);
+                                         quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
+    }
+  }
+
+  private static void addSimilarAttributesQuickFixes(XmlTag tag, String name, ArrayList<LocalQuickFix> quickfixes) {
+    XmlElementDescriptor descriptor = tag.getDescriptor();
+    if (descriptor == null) return;
+    XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
+    int initialSize = quickfixes.size();
+    for (XmlAttributeDescriptor attr : descriptors) {
+      if (EditDistance.optimalAlignment(name, attr.getName(), false) <= 1) {
+        quickfixes.add(new RenameAttributeFix(attr));
+      }
+      if (quickfixes.size() >= initialSize + 3) break;
+    }
+  }
+
+  private static class RenameAttributeFix implements LocalQuickFix, HighPriorityAction {
+    private String name;
+
+    public RenameAttributeFix(XmlAttributeDescriptor attr) {
+      name = attr.getName();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Rename attribute";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return "Rename attribute to " + name;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
+      if (attribute == null) return;
+      attribute.setName(name);
     }
   }
 }
