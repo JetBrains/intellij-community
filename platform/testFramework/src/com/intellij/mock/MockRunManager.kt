@@ -58,10 +58,6 @@ class MockRunManager : RunManagerEx() {
     return null
   }
 
-  override fun createRunConfiguration(name: String, type: ConfigurationFactory): RunnerAndConfigurationSettings {
-    throw UnsupportedOperationException()
-  }
-
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
   }
@@ -90,8 +86,8 @@ class MockRunManager : RunManagerEx() {
 
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}
 
-  override fun getConfig(): RunManagerConfig? {
-    return null
+  override fun getConfig(): RunManagerConfig {
+    throw UnsupportedOperationException()
   }
 
   override fun createConfiguration(name: String, type: ConfigurationFactory): RunnerAndConfigurationSettings {
@@ -104,13 +100,11 @@ class MockRunManager : RunManagerEx() {
                                 addTemplateTasksIfAbsent: Boolean) {
   }
 
-  override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {}
-
   override fun isConfigurationShared(settings: RunnerAndConfigurationSettings): Boolean {
     return false
   }
 
-  override fun getBeforeRunTasks(settings: RunConfiguration): List<BeforeRunTask<*>> {
+  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
     return emptyList()
   }
 

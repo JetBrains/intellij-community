@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.impl.WorkspaceRunManager;
 import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
@@ -30,7 +29,6 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
-import com.intellij.ide.util.AppPropertiesComponentImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -262,7 +260,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration oldRc = createConfiguration(findTestA(module));
     oldRc.setWorkingDirectory(module.getModuleFilePath());
 
-    RunManagerImpl runManager = new WorkspaceRunManager(myProject, new AppPropertiesComponentImpl());
+    RunManagerImpl runManager = new RunManagerImpl(myProject);
     Element element = new Element("configuration");
     new RunnerAndConfigurationSettingsImpl(runManager, oldRc, false).writeExternal(element);
 

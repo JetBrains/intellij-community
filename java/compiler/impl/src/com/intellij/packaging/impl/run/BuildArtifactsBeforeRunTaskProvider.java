@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BuildArtifactsBeforeRun
       buildArtifactsTasks.add(task);
       List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration);
       tasks.add(task);
-      runManager.setBeforeRunTasks(configuration, tasks, false);
+      runManager.setBeforeRunTasks(configuration, tasks);
     }
 
     for (BuildArtifactsBeforeRunTask task : buildArtifactsTasks) {

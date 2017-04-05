@@ -15,7 +15,6 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
@@ -44,19 +43,15 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
 
+  @NotNull
   public abstract RunManagerConfig getConfig();
 
-  /**
-   * @deprecated use {@link RunManager#createRunConfiguration(String, ConfigurationFactory)} instead
-   * @param name
-   * @param type
-   * @return
-   */
-  @NotNull
-  public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
+  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings) {
+    addConfiguration(settings, isConfigurationShared(settings), null, false);
+  }
 
-  public void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks) {
-    addConfiguration(settings, isShared, tasks, false);
+  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
+    addConfiguration(settings, isShared, null, false);
   }
 
   public abstract void addConfiguration(RunnerAndConfigurationSettings settings,
@@ -67,15 +62,19 @@ public abstract class RunManagerEx extends RunManager {
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
 
   @NotNull
-  public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration settings);
+  public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration configuration);
 
-  public abstract void setBeforeRunTasks(@NotNull RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
+  public void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks) {
+    setBeforeRunTasks(configuration, tasks, false);
+  }
+
+  public abstract void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderID);
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderId);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID);
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderId);
 
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable String name);
 

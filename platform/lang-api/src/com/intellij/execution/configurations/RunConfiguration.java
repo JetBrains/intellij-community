@@ -141,10 +141,11 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   default void writeExternal(Element element) {
   }
 
+  @NotNull
   default List<BeforeRunTask> getBeforeRunTasks() {
     return Collections.emptyList();
   }
 
-  default void setBeforeRunTasks(@Nullable List<BeforeRunTask> value) {
+  default void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
   }
 }

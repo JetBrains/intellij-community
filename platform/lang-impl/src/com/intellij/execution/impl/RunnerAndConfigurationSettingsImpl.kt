@@ -81,7 +81,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     isTemporary = temporary
   }
 
-  override fun getConfiguration(): RunConfiguration = configuration!!
+  override fun getConfiguration(): RunConfiguration? = configuration
 
   override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
     val configuration = configuration!!
@@ -237,8 +237,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     val element = Element("configuration")
     writeExternal(element)
 
-    if (configuration !is UnknownRunConfiguration) {
-      manager.doWriteConfiguration(this, element)
+    configuration?.let {
+      manager.writeBeforeRunTasks(it, isTemplate, element)
     }
 
     return element

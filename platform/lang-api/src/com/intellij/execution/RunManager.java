@@ -165,7 +165,11 @@ public abstract class RunManager {
    * @see RunManager#suggestUniqueName(String, Collection)
    */
   @NotNull
-  public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory);
+  public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory);
+
+  public final RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory) {
+    return createConfiguration(name, factory);
+  }
 
   /**
    * Creates a configuration settings object based on a specified {@link RunConfiguration}. Note that you need to call

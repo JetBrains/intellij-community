@@ -17,9 +17,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.junit.JUnitConfigurationType;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.testFramework.LightIdeaTestCase;
@@ -197,9 +195,8 @@ public class RunConfigurableTest extends LightIdeaTestCase {
 
   private static RunManagerImpl createRunManager(Element element) {
     Project project = getProject();
-    RunManagerImpl runManager = new WorkspaceRunManager(project, PropertiesComponent.getInstance(project));
-    runManager.initializeConfigurationTypes(new ConfigurationType[]{ApplicationConfigurationType.getInstance(),
-      JUnitConfigurationType.getInstance(), UnknownConfigurationType.INSTANCE});
+    RunManagerImpl runManager = new RunManagerImpl(project);
+    runManager.initializeConfigurationTypes(new ConfigurationType[]{ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()});
     runManager.loadState(element);
     return runManager;
   }

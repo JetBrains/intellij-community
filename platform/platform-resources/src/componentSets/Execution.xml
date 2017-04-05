@@ -9,7 +9,7 @@
   <project-components>
     <component>
       <interface-class>com.intellij.execution.RunManager</interface-class>
-      <implementation-class>com.intellij.execution.impl.WorkspaceRunManager</implementation-class>
+      <implementation-class>com.intellij.execution.impl.RunManagerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>

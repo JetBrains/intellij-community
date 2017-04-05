@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,7 +63,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private boolean myShowConsoleOnStdErr = false;
   private String myFileOutputPath = null;
 
-  private List<BeforeRunTask> myBeforeRunTasks;
+  private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
 
   protected RunConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, final String name) {
     myProject = project;
@@ -71,13 +72,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myIcon = factory.getIcon();
   }
 
-  @Nullable
+  @NotNull
   @Transient
   public List<BeforeRunTask> getBeforeRunTasks() {
     return myBeforeRunTasks;
   }
 
-  public void setBeforeRunTasks(@Nullable List<BeforeRunTask> value) {
+  public void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
     myBeforeRunTasks = value;
   }
 
@@ -145,6 +146,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
     runConfiguration.myShowConsoleOnStdErr = myShowConsoleOnStdErr;
     copyCopyableDataTo(runConfiguration);
+
+    myBeforeRunTasks = myBeforeRunTasks.isEmpty() ? Collections.emptyList() : new SmartList<>(myBeforeRunTasks);
     return runConfiguration;
   }
 
