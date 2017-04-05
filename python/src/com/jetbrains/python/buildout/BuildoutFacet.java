@@ -99,7 +99,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
             bin.refresh(false, false);
           }
           final String exe;
-          if (SystemInfo.isWindows || SystemInfo.isOS2) {
+          if (SystemInfo.isWindows) {
             exe = "buildout.exe";
           }
           else {
