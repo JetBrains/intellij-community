@@ -109,6 +109,20 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
 
     @Override
+    public Color getForeground() {
+      return isForegroundSet()
+             ? super.getForeground()
+             : EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
+    }
+
+    @Override
+    public Color getBackground() {
+      return isForegroundSet()
+             ? super.getForeground()
+             : EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+    }
+
+    @Override
     protected Color getForeground(Crumb crumb) {
       CrumbPresentation presentation = PsiCrumb.getPresentation(crumb);
       if (presentation == null) return super.getForeground(crumb);

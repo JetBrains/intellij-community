@@ -20,9 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -69,7 +67,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     addMouseListener(containerMouseHandler);
     addMouseMotionListener(containerMouseHandler);
     setLayout(STATELESS_LAYOUT);
-    setForeground(Gray.x92);
+    setOpaque(true);
   }
 
   public void onHover(BiConsumer<Crumb, InputEvent> consumer) {
@@ -174,8 +172,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
       if (thickness > 0) {
         Color foreground = getForeground(crumb);
         if (foreground != null) {
-          double alpha = Registry.doubleValue("editor.breadcrumbs.alpha");
-          g.setColor(ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha())));
+          g.setColor(ColorUtil.toAlpha(foreground, (int)(.6 * foreground.getAlpha())));
           paint(g, x, y, width, height, thickness);
         }
       }
