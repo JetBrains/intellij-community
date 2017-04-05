@@ -32,7 +32,6 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.*;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
@@ -1007,22 +1006,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   public void setParent(@NotNull EditorColorsScheme newParent) {
     assert newParent instanceof ReadOnlyColorsScheme : "New parent scheme must be read-only";
     myParentScheme = newParent;
-  }
-
-  private volatile Map<TextAttributesKey, TextAttributes> myAttributesCacheMap;
-
-  @NotNull
-  @Override
-  public Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache() {
-    if (myAttributesCacheMap == null) {
-      myAttributesCacheMap = ContainerUtil.newConcurrentMap();
-    }
-    return myAttributesCacheMap;
-  }
-
-  @Override
-  public void dropGeneratedTextAttributesCache() {
-    myAttributesCacheMap = null;
   }
 
   void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {

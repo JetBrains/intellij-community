@@ -332,7 +332,6 @@ public class SimpleEditorPreview implements PreviewPanel {
   public void setupRainbow(@NotNull EditorColorsScheme colorsScheme, @NotNull RainbowColorSettingsPage page) {
     final List<HighlightData> initialMarkup = new ArrayList<>();
     myHighlightsExtractor.extractHighlights(page.getDemoText(), initialMarkup);
-    colorsScheme.dropGeneratedTextAttributesCache();
     final List<HighlightData> rainbowMarkup = setupRainbowHighlighting(
       page,
       initialMarkup,
