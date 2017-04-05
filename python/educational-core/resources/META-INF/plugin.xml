@@ -40,14 +40,16 @@
   </application-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Edu.eduIntelliJProjectTemplate" interface="com.jetbrains.edu.learning.intellij.EduIntelliJProjectTemplate"/>
+    <extensionPoint qualifiedName="Edu.eduIntelliJProjectTemplate"
+                    interface="com.jetbrains.edu.learning.intellij.EduIntelliJProjectTemplate"/>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Edu.pluginConfigurator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.EduPluginConfigurator"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
+    <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator"
+                    interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
     <extensionPoint qualifiedName="Edu.checkListener" interface="com.jetbrains.edu.learning.StudyCheckListener"/>
     <extensionPoint qualifiedName="Edu.optionsProvider" beanClass="com.jetbrains.edu.learning.settings.StudyOptionsProviderEP">
       <with attribute="instance" implements="com.jetbrains.edu.learning.settings.StudyOptionsProvider"/>
@@ -70,8 +72,9 @@
             description="Navigate to the next task"/>
     <action id="RefreshTaskAction" class="com.jetbrains.edu.learning.actions.StudyRefreshTaskFileAction" text="Reset Task File"
             description="Refresh current task"/>
-    <action id="RefreshAnswerPlaceholder" class="com.jetbrains.edu.learning.actions.StudyRefreshAnswerPlaceholder" text="Refresh Answer Placeholder">
-        <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    <action id="RefreshAnswerPlaceholder" class="com.jetbrains.edu.learning.actions.StudyRefreshAnswerPlaceholder"
+            text="Refresh Answer Placeholder">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
     <action id="WatchInputAction" class="com.jetbrains.edu.learning.actions.StudyEditInputAction" text="Watch Test Input"
             description="Watch test input "/>
@@ -157,13 +160,15 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
-                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
+                    serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              id="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              displayName="Education"/>
 
-    <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
-    <toolWindow id="Test Results" anchor="bottom" factoryClass="com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory" conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
+    <toolWindow id="Task Description" anchor="right" factoryClass="com.jetbrains.edu.learning.ui.StudyToolWindowFactory"
+                conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
+    <toolWindow id="Test Results" anchor="bottom" factoryClass="com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory"
+                conditionClass="com.jetbrains.edu.learning.ui.StudyCondition"/>
     <fileEditorProvider implementation="com.jetbrains.edu.learning.editor.StudyFileEditorProvider"/>
     <treeStructureProvider implementation="com.jetbrains.edu.learning.projectView.StudyTreeStructureProvider"/>
     <highlightErrorFilter implementation="com.jetbrains.edu.learning.editor.StudyHighlightErrorFilter"/>
@@ -177,6 +182,7 @@
     <applicationService serviceImplementation="com.jetbrains.edu.learning.StudySettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>
+    <httpRequestHandler implementation="com.jetbrains.edu.learning.builtInServer.StepikRestService"/>
 
     <!--course creator-->
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
