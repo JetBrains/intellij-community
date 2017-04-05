@@ -30,7 +30,6 @@ import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -55,7 +54,7 @@ import java.util.List;
 
 public class ConstructorInstancesTracker implements TrackerForNewInstances, Disposable, BackgroundTracker {
   private static final int TRACKED_INSTANCES_LIMIT = 2000;
-  private final ReferenceType myReference;
+  private final String myClassName;
   private final Project myProject;
   private final MyConstructorBreakpoints myBreakpoint;
 
@@ -71,10 +70,10 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
                                      @NotNull XDebugSession debugSession,
                                      @NotNull InstancesTracker instancesTracker) {
-    myReference = ref;
     myProject = debugSession.getProject();
     myIsBackgroundTrackingEnabled = instancesTracker.isBackgroundTrackingEnabled();
 
+    myClassName = ref.name();
     final DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
       .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
 
@@ -107,15 +106,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
                                                       new LineBreakpointState<>());
 
     myBreakpoint = new MyConstructorBreakpoints(myProject, bpn);
-    myBreakpoint.createRequestForPreparedClass(debugProcess, myReference);
-    Disposer.register(myBreakpoint, () -> debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() throws Exception {
-        disable();
-        debugProcess.getRequestsManager().deleteRequest(myBreakpoint);
-        myBreakpoint.delete();
-      }
-    }));
+    myBreakpoint.createRequestForPreparedClass(debugProcess, ref);
   }
 
   public void obsolete() {
@@ -169,7 +160,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   @Override
   public void dispose() {
-    Disposer.dispose(myBreakpoint);
+    myBreakpoint.delete();
+    myTrackedObjects.clear();
+    myNewObjects = null;
   }
 
   @Override
@@ -197,7 +190,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
   }
 
-  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> implements Disposable {
+  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> {
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
     private volatile boolean myIsEnabled = false;
     private volatile boolean myIsDeleted = false;
@@ -225,34 +218,19 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     void delete() {
+      // unable disable all requests here because VMDisconnectedException can be thrown
+      myRequests.clear();
       myIsDeleted = true;
-    }
-
-    @Override
-    public void dispose() {
     }
 
     @Override
     public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
       throws EventProcessingException {
-      try {
-        SuspendContextImpl suspendContext = action.getSuspendContext();
-        if (suspendContext != null) {
-          final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
-          ObjectReference thisRef = getThisObject(suspendContext, event);
-          if (myReference.equals(thisRef.referenceType()) && data != null) {
-            thisRef.disableCollection();
-            myTrackedObjects.add(thisRef);
-            data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
-          }
-        }
+      if (myIsDeleted) {
+        event.request().disable();
       }
-      catch (EvaluateException e) {
-        return false;
-      }
-
-      if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
-        disable();
+      else {
+        handleEvent(action, event);
       }
 
       return false;
@@ -269,6 +247,27 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       if (myIsEnabled && !myIsDeleted) {
         myRequests.forEach(EventRequest::disable);
         myIsEnabled = false;
+      }
+    }
+
+    private void handleEvent(@NotNull SuspendContextCommandImpl action, @NotNull LocatableEvent event) {
+      try {
+        SuspendContextImpl suspendContext = action.getSuspendContext();
+        if (suspendContext != null) {
+          final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
+          ObjectReference thisRef = getThisObject(suspendContext, event);
+          if (thisRef.referenceType().name().equals(myClassName) && data != null) {
+            thisRef.disableCollection();
+            myTrackedObjects.add(thisRef);
+            data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
+          }
+        }
+      }
+      catch (EvaluateException ignored) {
+      }
+
+      if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
+        disable();
       }
     }
   }

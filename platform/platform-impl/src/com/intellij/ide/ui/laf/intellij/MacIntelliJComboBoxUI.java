@@ -147,7 +147,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Insets i = comboBox.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + 7, iconWidth), Math.max(d.height, iconHeight));
+    return new Dimension(Math.max(d.width + 7, iconWidth), iconHeight);
   }
 
   @Override
@@ -279,7 +279,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
         Dimension size = cb.getMinimumSize();
         Rectangle bounds = cb.getBounds();
-        bounds.width = bounds.width < size.width ? size.width : bounds.width;
         bounds.height = bounds.height < size.height ? size.height : bounds.height;
 
         size = cb.getPreferredSize();
@@ -354,6 +353,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
         }
       }
 
+      @SuppressWarnings("unchecked")
       private void wrapRenderer() {
         ListCellRenderer<Object> renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {

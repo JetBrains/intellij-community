@@ -37,16 +37,13 @@
   <target name="init">
     <mkdir dir="${out.dir}"/>
     <mkdir dir="${tmp.dir}"/>
-    <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
-      <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
-      <classpath>
-        <fileset dir="${project.home}/lib/ant/lib">
-          <include name="*.jar"/>
-        </fileset>
-      </classpath>
-      <arg value="-f"/>
-      <arg value="${project.home}/build/gant.xml"/>
-    </java>
+    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
+               else="${project.home}/build/dependencies/gradlew">
+      <os family="windows"/>
+    </condition>
+    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+      <arg value="setupKotlin"/>
+    </exec>
   </target>
 
   <macrodef name="call_gant">

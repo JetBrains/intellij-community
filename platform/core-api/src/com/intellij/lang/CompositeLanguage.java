@@ -48,7 +48,7 @@ public class CompositeLanguage extends Language {
   }
 
   @NotNull
-  public Language[] getLanguageExtensionsForFile(final PsiFile psi) {
+  public Language[] getLanguageExtensionsForFile(@NotNull PsiFile psi) {
     final List<Language> extensions = new ArrayList<>(1);
     for (LanguageFilter filter : myFilters) {
       if (filter.isRelevantForFile(psi)) extensions.add(filter.getLanguage());

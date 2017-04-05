@@ -15,12 +15,30 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
 public class MavenDomElementDescriptorProvider implements XmlElementDescriptorProvider {
   public XmlElementDescriptor getDescriptor(XmlTag tag) {
+    DomElement domElement = DomManagerImpl.getDomManager(tag.getProject()).getDomElement(tag);
+    if (domElement == null) {
+      PsiElement configuration =
+        PsiTreeUtil.findFirstParent(tag, element -> element instanceof XmlTag && "configuration".equals(((XmlTag)element).getName()));
+      if (configuration instanceof XmlTag) {
+        DomElement configurationElement = DomManagerImpl.getDomManager(tag.getProject()).getDomElement((XmlTag)configuration);
+        if (configurationElement instanceof MavenDomConfiguration &&
+            configurationElement.getGenericInfo().getFixedChildrenDescriptions().isEmpty()) {
+          return new AnyXmlElementDescriptor(null, null);
+        }
+      }
+    }
     return MavenDomElementDescriptorHolder.getInstance(tag.getProject()).getDescriptor(tag);
   }
 }

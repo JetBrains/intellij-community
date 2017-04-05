@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
@@ -56,6 +58,8 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
 
   private BiConsumer<Crumb, InputEvent> hover = ((crumb, event) -> hovered = crumb);
   private BiConsumer<Crumb, InputEvent> select = ((crumb, event) -> selected = crumb);
+
+  private final Font[] cache = new Font[4];
 
   private Crumb last;
   private Crumb hovered;
@@ -168,8 +172,12 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     else {
       int thickness = scale * getThickness(crumb);
       if (thickness > 0) {
-        g.setColor(getForeground(crumb));
-        paint(g, x, y, width, height, thickness);
+        Color foreground = getForeground(crumb);
+        if (foreground != null) {
+          double alpha = Registry.doubleValue("editor.breadcrumbs.alpha");
+          g.setColor(ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha())));
+          paint(g, x, y, width, height, thickness);
+        }
       }
     }
   }
@@ -183,10 +191,21 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     Font font = getFont();
     if (font == null) return null;
 
+    int old = font.getStyle();
+    if (font != cache[old]) {
+      for (int i = 0; i < cache.length; i++) {
+        cache[i] = i == old ? font : null;
+      }
+    }
     int style = getFontStyle(crumb);
-    if (style == font.getStyle()) return font;
+    if (style == old) return font;
 
-    return font.deriveFont(style);
+    Font cached = cache[style];
+    if (cached != null) return cached;
+
+    font = font.deriveFont(style);
+    cache[style] = font;
+    return font;
   }
 
   @FontStyle
@@ -288,6 +307,27 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     return size;
   }
 
+  private static int getPreferredHeight(Component component) {
+    Font font = component.getFont();
+    if (font == null) return 0;
+
+    FontMetrics metrics = component.getFontMetrics(font);
+    int height = metrics != null ? metrics.getHeight() : font.getSize();
+
+    Insets insets = getCrumbInsets(null, getScale(font));
+    return insets.top + insets.bottom + height;
+  }
+
+  @SuppressWarnings("UseDPIAwareInsets")
+  private static Insets getCrumbInsets(Insets insets, int scale) {
+    if (insets == null) insets = new Insets(0, 0, 0, 0);
+    insets.top += 2 * scale;
+    insets.left += 5 * scale;
+    insets.right += 5 * scale;
+    insets.bottom += 2 * scale;
+    return insets;
+  }
+
   private static int getScale(Component component) {
     return component == null ? 1 : getScale(component.getFont());
   }
@@ -302,15 +342,8 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
 
   private static final AbstractBorder STATELESS_BORDER = new AbstractBorder() {
     @Override
-    @SuppressWarnings("UseDPIAwareInsets")
     public Insets getBorderInsets(Component component, Insets insets) {
-      if (insets == null) insets = new Insets(0, 0, 0, 0);
-      int scale = component == null ? 1 : getScale(component.getParent());
-      insets.top += 2 * scale;
-      insets.left += 5 * scale;
-      insets.right += 5 * scale;
-      insets.bottom += 2 * scale;
-      return insets;
+      return getCrumbInsets(insets, component == null ? 1 : getScale(component.getParent()));
     }
   };
 
@@ -323,6 +356,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     @Override
     public Dimension preferredLayoutSize(Container container) {
       Dimension size = getPreferredSize(getComponents(container, Breadcrumbs::toVisible));
+      if (size.height == 0) size.height = getPreferredHeight(container);
       JBInsets.addTo(size, container.getInsets());
       return size;
     }

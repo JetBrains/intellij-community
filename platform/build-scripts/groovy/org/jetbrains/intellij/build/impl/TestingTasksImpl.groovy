@@ -43,7 +43,13 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, String excludedSourceDirectory) {
-    CompilationTasks.create(context).compileAllModulesAndTests()
+    def compilationTasks = CompilationTasks.create(context)
+    if (options.mainModule != null) {
+      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule])
+    }
+    else {
+      compilationTasks.compileAllModulesAndTests()
+    }
 
     def mainModule = options.mainModule ?: defaultMainModule
     List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
@@ -146,7 +152,10 @@ class TestingTasksImpl extends TestingTasks {
   private void runJUnitTask(List<String> jvmArgs, Map<String, String> systemProperties, List<String> bootstrapClasspath) {
     defineJunitTask(context.ant, "$context.paths.communityHome/lib")
 
-    context.ant.junit(fork: true, showoutput: true, logfailedtests: false) {
+    String junitTemp = "$context.paths.temp/junit"
+    context.ant.mkdir(dir: junitTemp)
+
+    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {

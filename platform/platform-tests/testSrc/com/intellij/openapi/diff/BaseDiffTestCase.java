@@ -77,8 +77,7 @@ public abstract class BaseDiffTestCase extends PlatformTestCase {
   }
 
   public static File getDirectory() {
-    String testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
-    return new File(testDataRoot, "diff");
+    return new File(PlatformTestUtil.getPlatformTestDataPath(), "diff");
   }
 
   protected void setFile1(String file1) { myFile1 = getFile(file1); }

@@ -38,6 +38,7 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
@@ -137,15 +138,68 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return model instanceof Navigatable ? resolve(((Navigatable)model).prevTreePath(path, object)) : rejectedPromise();
   }
 
-  private Promise<TreePath> resolve(Promise<TreePath> promise) {
+  @NotNull
+  public Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    promise.rejected(error -> processor.foreground.invokeLaterIfNeeded(() -> async.setError(error)));
-    promise.done(result -> processor.foreground.invokeLaterIfNeeded(() -> sync(async, result)));
+    processor.foreground.invokeLaterIfNeeded(() -> resolve(async, path, entry -> async.setResult(entry)));
     return async;
   }
 
-  private void sync(AsyncPromise<TreePath> promise, TreePath path) {
-    promise.setResult(path);//todo load
+  private Promise<TreePath> resolve(Promise<TreePath> promise) {
+    AsyncPromise<TreePath> async = new AsyncPromise<>();
+    promise.rejected(error -> processor.foreground.invokeLaterIfNeeded(() -> async.setError(error)));
+    promise.done(result -> processor.foreground.invokeLaterIfNeeded(() -> resolve(async, result, entry -> async.setResult(entry))));
+    return async;
+  }
+
+  private void resolve(AsyncPromise<TreePath> async, TreePath path, Consumer<Entry<Object>> consumer) {
+    if (path == null) {
+      async.setError("path is null");
+      return;
+    }
+    Object object = path.getLastPathComponent();
+    if (object == null) {
+      async.setError("path is wrong");
+      return;
+    }
+    if (!consume(consumer, tree.findEntry(object))) {
+      TreePath parent = path.getParentPath();
+      if (parent == null) {
+        promiseRootEntry().done(entry -> {
+          if (entry == null) {
+            async.setError("root is null");
+          }
+          else if (object != entry.getNode()) {
+            async.setError("root is wrong");
+          }
+          else {
+            consumer.accept(entry);
+          }
+        });
+      }
+      else {
+        resolve(async, parent, entry -> processor.process(new Command<List<Pair<Object, Boolean>>>() {
+          private CmdGetChildren command = new CmdGetChildren("Sync children", entry, false);
+
+          @Override
+          public List<Pair<Object, Boolean>> get() {
+            return command.get();
+          }
+
+          @Override
+          public void accept(List<Pair<Object, Boolean>> children) {
+            command.accept(children);
+            if (!consume(consumer, tree.findEntry(object))) async.setError("path not found");
+          }
+        }));
+      }
+    }
+  }
+
+  private static boolean consume(Consumer<Entry<Object>> consumer, Entry<Object> entry) {
+    if (entry == null) return false;
+    consumer.accept(entry);
+    return true;
   }
 
   @Override
@@ -278,15 +332,24 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       Object object = entry.getNode();
       if (model.isLeaf(object)) return null;
 
+      if (model instanceof ChildrenProvider) {
+        //noinspection unchecked
+        ChildrenProvider<Object> provider = (ChildrenProvider)model;
+        ArrayList<Pair<Object, Boolean>> children = new ArrayList<>();
+        provider.getChildren(object).forEach(child -> add(children, child));
+        return unmodifiableList(children);
+      }
+
       int count = model.getChildCount(object);
       if (count <= 0) return emptyList();
 
       ArrayList<Pair<Object, Boolean>> children = new ArrayList<>(count);
-      for (int i = 0; i < count; i++) {
-        Object child = model.getChild(object, i);
-        children.add(Pair.create(child, model.isLeaf(child)));
-      }
+      for (int i = 0; i < count; i++) add(children, model.getChild(object, i));
       return unmodifiableList(children);
+    }
+
+    private void add(List<Pair<Object, Boolean>> children, Object child) {
+      if (child != null) children.add(Pair.create(child, model.isLeaf(child)));
     }
 
     @Override

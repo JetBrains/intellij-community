@@ -195,8 +195,7 @@ public class ApplyPatchTest extends PlatformTestCase {
     ApplicationManager.getApplication()
       .runWriteAction(() -> FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old")));
 
-    String testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
-    String testDataPath = testDataRoot + "/diff/applyPatch/" + getTestName(true);
+    String testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/applyPatch/" + getTestName(true);
     String beforePath = testDataPath + "/before";
     String afterPath = testDataPath + "/after";
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterPath.replace(File.separatorChar, '/'));

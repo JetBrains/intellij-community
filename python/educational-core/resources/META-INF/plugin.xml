@@ -83,6 +83,10 @@
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
+    <action id="CCEnablePluginAction" class="com.jetbrains.edu.coursecreator.actions.CCPluginToggleAction"
+            text="Enable Course Creator Features">
+      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
+    </action>
     <action id="StudySwitchPanel" class="com.jetbrains.edu.learning.actions.StudySwitchTaskPanelAction"
             text="Switch Task Description Panel">
     </action>
@@ -170,7 +174,7 @@
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
-    <applicationService serviceImplementation="com.jetbrains.edu.learning.stepic.StepicUpdateSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.edu.learning.StudySettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>
 

@@ -35,8 +35,9 @@ IF NOT "%JDK%" == "" (
 
 IF EXIST "%IDE_HOME%\jre64" SET JDK=%IDE_HOME%\jre64
 IF EXIST "%JDK%" GOTO check
-
 IF EXIST "%IDE_HOME%\jre32" SET JDK=%IDE_HOME%\jre32
+IF EXIST "%JDK%" GOTO check
+IF EXIST "%IDE_HOME%\jre" SET JDK=%IDE_HOME%\jre
 IF EXIST "%JDK%" GOTO check
 
 IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
@@ -49,7 +50,7 @@ SET JAVA_EXE=%JDK%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
   ECHO ERROR: cannot start IntelliJ IDEA.
-  ECHO No JDK found. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+  ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
   ECHO
   EXIT /B
 )

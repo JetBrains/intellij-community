@@ -29,8 +29,7 @@ public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
     createChildDataWithContent(myRoot, "f1.txt");
     createChildDataWithContent(myRoot, "f2.txt");
     createChildDataWithContent(myRoot, "f3.txt");
-
-    assertSize(6, m.getRevisions());
+    assertSize(7, m.getRevisions());
 
     m.selectRevisions(0, 5);
     m.createPatch(patchFilePath, myProject.getBasePath(), false, Charset.defaultCharset());

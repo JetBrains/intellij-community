@@ -94,10 +94,9 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
             processMerge(condition, existsBranch, noneBranch);
           }
           if(condition.hasVariable()) return;
-          EquivalenceChecker.Decision decision =
-            EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalentDecision(noneBranch, existsBranch);
+          EquivalenceChecker.Match match = EquivalenceChecker.getCanonicalPsiEquivalence().statementsMatch(noneBranch, existsBranch);
 
-          processGetPut(condition, existsBranch, decision.getRightDiff(), decision.getLeftDiff());
+          processGetPut(condition, existsBranch, match.getRightDiff(), match.getLeftDiff());
         }
       }
 

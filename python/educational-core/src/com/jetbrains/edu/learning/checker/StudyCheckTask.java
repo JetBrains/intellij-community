@@ -19,14 +19,16 @@ import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +111,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        StepicUser user = StepicUpdateSettings.getInstance().getUser();
+        StepicUser user = StudySettings.getInstance().getUser();
         if (user != null) {
           EduStepicConnector.postSolution(myTask, testsOutput.isSuccess(), myProject);
         }
@@ -149,7 +151,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final StepicUser user = StudySettings.getInstance().getUser();
     if (user == null) {
       LOG.warn("User is null");
       ApplicationManager.getApplication().invokeLater(() ->
@@ -185,7 +187,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (testOutput != null) {
         // As tests in adaptive courses are created from
         // samples and stored in task, to disable it we should ignore local testing results
-        if (StepicUpdateSettings.getInstance().isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+        if (StudySettings.getInstance().isEnableTestingFromSamples() && !testOutput.isSuccess()) {
           onTaskFailed(testOutput.getMessage());
         }
         else {

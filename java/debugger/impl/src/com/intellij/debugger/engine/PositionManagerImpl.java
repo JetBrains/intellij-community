@@ -25,6 +25,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -203,15 +204,23 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 
-  private static class JavaSourcePosition extends RemappedSourcePosition {
+  public static class JavaSourcePosition extends RemappedSourcePosition {
     private final String myExpectedClassName;
     private final String myExpectedMethodName;
     private final int myLambdaOrdinal;
 
-    public JavaSourcePosition(SourcePosition delegate, ReferenceType declaringType, Method method, int lambdaOrdinal) {
+    public JavaSourcePosition(@NotNull SourcePosition delegate, ReferenceType declaringType, Method method, int lambdaOrdinal) {
       super(delegate);
       myExpectedClassName = declaringType != null ? declaringType.name() : null;
       myExpectedMethodName = method != null ? method.name() : null;
+      myLambdaOrdinal = lambdaOrdinal;
+    }
+
+    public JavaSourcePosition(@NotNull SourcePosition delegate, int lambdaOrdinal) {
+      super(delegate);
+      assert lambdaOrdinal > -1;
+      myExpectedClassName = null;
+      myExpectedMethodName = "lambda$"; // fake lambda name
       myLambdaOrdinal = lambdaOrdinal;
     }
 
@@ -244,37 +253,34 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     @Override
     public SourcePosition mapDelegate(final SourcePosition original) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-        @Override
-        public SourcePosition compute() {
-          PsiFile file = original.getFile();
-          int line = original.getLine();
-          if (DebuggerUtilsEx.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
-            List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, true);
+      return ReadAction.compute(() -> {
+        PsiFile file = original.getFile();
+        int line = original.getLine();
+        if (DebuggerUtilsEx.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
+          List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, true);
 
-            Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-            if (document == null || line >= document.getLineCount()) {
-              return original;
-            }
-            if (myLambdaOrdinal < lambdas.size()) {
-              PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambdas.get(myLambdaOrdinal), document, line);
-              if (firstElem != null) {
-                return SourcePosition.createFromElement(firstElem);
-              }
+          Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+          if (document == null || line >= document.getLineCount()) {
+            return original;
+          }
+          if (myLambdaOrdinal < lambdas.size()) {
+            PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambdas.get(myLambdaOrdinal), document, line);
+            if (firstElem != null) {
+              return SourcePosition.createFromElement(firstElem);
             }
           }
-          else {
-            // There may be more than one class/method code on the line, so we need to find out the correct place
-            for (PsiElement elem : getLineElements(file, line)) {
-              PsiElement remappedElement = remapElement(elem);
-              if (remappedElement != null) {
-                if (remappedElement.getTextOffset() <= original.getOffset()) break;
-                return SourcePosition.createFromElement(remappedElement);
-              }
-            }
-          }
-          return original;
         }
+        else {
+          // There may be more than one class/method code on the line, so we need to find out the correct place
+          for (PsiElement elem : getLineElements(file, line)) {
+            PsiElement remappedElement = remapElement(elem);
+            if (remappedElement != null) {
+              if (remappedElement.getTextOffset() <= original.getOffset()) break;
+              return SourcePosition.createFromElement(remappedElement);
+            }
+          }
+        }
+        return original;
       });
     }
   }

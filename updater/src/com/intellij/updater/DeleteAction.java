@@ -38,7 +38,7 @@ public class DeleteAction extends PatchAction {
   @Override
   public ValidationResult validate(File toDir) throws IOException {
     File toFile = getFile(toDir);
-    ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE);
+    ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE, false);
     if (result != null) return result;
 
     if (myPatch.validateDeletion(getPath()) && toFile.exists() && isModified(toFile)) {

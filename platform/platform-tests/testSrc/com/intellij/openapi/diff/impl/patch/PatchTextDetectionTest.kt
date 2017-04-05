@@ -50,8 +50,7 @@ class PatchTextDetectionTest : PlatformTestCase() {
 
 
   private fun doTest(expected: Boolean) {
-    val testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/"
-    val testDataPath = testDataRoot + "/diff/patchTextDetection/" + getTestName(true)
+    val testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patchTextDetection/" + getTestName(true)
     PsiTestUtil.createTestProjectStructure(myProject, myModule, testDataPath, PlatformTestCase.myFilesToDelete)
     val patchPath = testDataPath + "/test.patch"
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))

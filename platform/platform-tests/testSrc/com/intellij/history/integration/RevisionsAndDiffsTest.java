@@ -363,13 +363,13 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     createFile("bar.txt");
     LocalHistory.getInstance().putSystemLabel(myProject, "2", -1);
 
-    assertEquals(5, getRevisionsFor(myRoot).size());
+    assertEquals(6, getRevisionsFor(myRoot).size());
     assertEquals(3, getRevisionsFor(myRoot, "*.txt").size());
   }
 
   public void testFilteredRevisionsIfNothingFound() throws Exception {
     createFile("foo.txt");
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
     assertEquals(1, getRevisionsFor(myRoot, "xxx").size());
   }
 

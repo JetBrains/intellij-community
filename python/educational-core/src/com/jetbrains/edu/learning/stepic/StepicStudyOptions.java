@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void reset() {
-    final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
+    final StudySettings stepikSettings = StudySettings.getInstance();
     myEnableTestingFromSamples.setSelected(stepikSettings.isEnableTestingFromSamples());
     final StepicUser user = stepikSettings.getUser();
     if (user != null) {
@@ -95,7 +96,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
+    final StudySettings stepikSettings = StudySettings.getInstance();
     if (isTestingFromSamplesEnabled() != stepikSettings.isEnableTestingFromSamples()) {
       stepikSettings.setEnableTestingFromSamples(isTestingFromSamplesEnabled());
     }
@@ -131,7 +132,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   }
 
   private static void removeCredentials() {
-    StepicUpdateSettings.getInstance().setUser(null);
+    StudySettings.getInstance().setUser(null);
     EduStepicAuthorizedClient.invalidateClient();
   }
 
@@ -142,7 +143,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   }
 
   public boolean isModified() {
-    final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
+    final StudySettings stepikSettings = StudySettings.getInstance();
     boolean isTestOptionModified = !isTestingFromSamplesEnabled() == stepikSettings.isEnableTestingFromSamples();
     final StepicUser user = stepikSettings.getUser();
 

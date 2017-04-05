@@ -23,7 +23,7 @@ public final class TestKotlinConstructorKt {
          Object item$iv$iv = var4.next();
          String it = (String)item$iv$iv;// 12
          Mapping var10000 = new Mapping;
-         if(it == null) {// 3
+         if (it == null) {// 3
             throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
          }
 

@@ -30,7 +30,7 @@ public class VisitingTest extends IntegrationTestCase {
   public void testSimpleVisit() throws Exception {
     createFile("f.txt");
     createFile("dir");
-    assertVisitorLog("begin create end begin create end finished ");
+    assertVisitorLog("begin create end begin create end begin create end finished ");
   }
 
   @Test
@@ -40,7 +40,7 @@ public class VisitingTest extends IntegrationTestCase {
     createFile("dir");
     getVcs().endChangeSet(null);
 
-    assertVisitorLog("begin create create end finished ");
+    assertVisitorLog("begin create create end begin create end finished ");
   }
 
   @Test
@@ -49,7 +49,7 @@ public class VisitingTest extends IntegrationTestCase {
     createFile("f.txt");
     createFile("dir");
 
-    assertVisitorLog("begin create create end finished ");
+    assertVisitorLog("begin create create end begin create end finished ");
   }
 
   @Test
@@ -61,7 +61,7 @@ public class VisitingTest extends IntegrationTestCase {
     getVcs().beginChangeSet();
     rename(dir, "newDir");
 
-    assertVisitorLog("begin rename end begin create end begin create end finished ");
+    assertVisitorLog("begin rename end begin create end begin create end begin create end finished ");
   }
 
   @Test
@@ -104,8 +104,8 @@ public class VisitingTest extends IntegrationTestCase {
       }
     };
 
-    assertVisitorLog("begin create create end finished ", visitor);
-    assertEquals(2, count[0]);
+    assertVisitorLog("begin create create end begin create end finished ", visitor);
+    assertEquals(3, count[0]);
   }
 
   @Test
@@ -122,7 +122,7 @@ public class VisitingTest extends IntegrationTestCase {
 
     TestVisitor visitor = new TestVisitor();
     getVcs().accept(visitor);
-    assertEquals("begin create end begin create end finished ", visitor.log);
+    assertEquals("begin create end begin create end begin create end finished ", visitor.log);
 
     visitor = new TestVisitor() {
       @Override

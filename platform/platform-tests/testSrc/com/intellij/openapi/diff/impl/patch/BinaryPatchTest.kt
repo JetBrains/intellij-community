@@ -28,7 +28,7 @@ class BinaryPatchTest : PlatformTestCase() {
 
   var dataFileName = "data.bin"
   var filePatchName = "file.patch"
-  
+
   fun testAddedPng() {
     doTest()
   }
@@ -53,7 +53,7 @@ class BinaryPatchTest : PlatformTestCase() {
   fun testLen3() {
     doTest()
   }
-  
+
   fun testLetterXasLen() {
     doTest()
   }
@@ -63,8 +63,7 @@ class BinaryPatchTest : PlatformTestCase() {
   }
 
   private fun doTest(reverse: Boolean = false) {
-    val testDataRoot = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/"
-    val testDataPath = "${testDataRoot}/diff/binaryPatch/${getTestName(true)}"
+    val testDataPath = "${PlatformTestUtil.getPlatformTestDataPath()}diff/binaryPatch/${getTestName(true)}"
     val dataFile = File(testDataPath, dataFileName)
     dataFile.setExecutable(false)
     val decodedContentBytes = FileUtil.loadFileBytes(dataFile)

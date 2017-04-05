@@ -161,7 +161,7 @@ public interface JavacRef {
       else if (element instanceof ExecutableElement) {
         return new JavacElementMethodImpl(element, nameTableCache);
       }
-      else if (element == null || element.getKind() == ElementKind.OTHER) {
+      else if (element == null || element.getKind() == ElementKind.OTHER || element.getKind() == ElementKind.TYPE_PARAMETER) {
         // javac reserved symbol kind (e.g: com.sun.tools.javac.comp.Resolve.ResolveError)
         return null;
       }

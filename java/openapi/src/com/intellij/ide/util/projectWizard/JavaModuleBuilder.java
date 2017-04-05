@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.JavaModuleBuilder");
   private String myCompilerOutputPath;
   // Pair<Source Path, Package Prefix>
   private List<Pair<String,String>> mySourcePaths;
@@ -163,8 +165,10 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     else {
       //setup language level according to jdk, then setup default flag
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      LOG.debug("commit: projectSdk=" + sdk);
       if (sdk != null) {
         JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+        LOG.debug("commit: sdk.version=" + version);
         if (version != null) {
           instance.setLanguageLevel(version.getMaxLanguageLevel());
           instance.setDefault(true);

@@ -17,6 +17,9 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -24,6 +27,13 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
   @Override
   public void redirectInput() {
     assumeTrue(false);
+  }
+
+  @NotNull
+  @Override
+  protected String filterExpectedOutput(@NotNull String output) {
+    if (SystemInfo.isWindows) output = expandTabs(output, 8);
+    return output;
   }
 
   @Override
@@ -39,5 +49,25 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
     }
 
     return cmd;
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  @NotNull
+  private static String expandTabs(@NotNull String s, int tabSize) {
+    StringBuilder sb = new StringBuilder();
+    int col = 0;
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (c == '\t') {
+        int tabWidth = tabSize - col % tabSize;
+        StringUtil.repeatSymbol(sb, ' ', tabWidth);
+        col += tabWidth;
+      }
+      else {
+        sb.append(c);
+        col = StringUtil.isLineBreak(c) ? 0 : (col + 1);
+      }
+    }
+    return sb.toString();
   }
 }

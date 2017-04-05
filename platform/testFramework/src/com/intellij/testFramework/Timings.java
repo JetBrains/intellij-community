@@ -96,9 +96,8 @@ public class Timings {
   }
 
   public static String getStatistics() {
-    return
-      " Timings: CPU=" + CPU_TIMING_DATA + " (" + (int)(CPU_TIMING * 1.0 / REFERENCE_CPU_TIMING * 100) + "% of the reference CPU)" +
-      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING * 1.0 / REFERENCE_IO_TIMING * 100) + "% of the reference IO)" +
-      ", " + Runtime.getRuntime().availableProcessors() + " cores.";
+    return String.format("CPU=%d (%d%% reference CPU, sd=%.2f), I/O=%d (%d%% reference IO), %d cores",
+                         CPU_TIMING_DATA.average, CPU_TIMING * 100 / REFERENCE_CPU_TIMING, CPU_TIMING_DATA.stdDev,
+                         IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors());
   }
 }

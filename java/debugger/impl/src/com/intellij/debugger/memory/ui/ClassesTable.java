@@ -241,7 +241,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private void updateCountsInternal(@NotNull Map<ReferenceType, Long> class2Count) {
-    final ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
+    final ReferenceType selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
     myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
@@ -296,12 +296,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   public void clean() {
-    if (!myItems.isEmpty()) {
-      clearSelection();
-      myItems = Collections.emptyList();
-      myCounts.clear();
-      fireTableDataChanged();
-    }
+    clearSelection();
+    myItems = Collections.emptyList();
+    myCounts.clear();
+    myModel.mySelectedClassWhenHidden = null;
+    fireTableDataChanged();
   }
 
   @Override
@@ -325,7 +324,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     final static int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
-    private ReferenceType mySelectedClassWhenHided = null;
+    private ReferenceType mySelectedClassWhenHidden = null;
     private boolean myIsWithContent = false;
 
     DiffViewTableModel() {
@@ -351,13 +350,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       });
     }
 
-    ReferenceType getSelectedClassBeforeHided() {
-      return mySelectedClassWhenHided;
+    ReferenceType getSelectedClassBeforeHide() {
+      return mySelectedClassWhenHidden;
     }
 
     void hide() {
       if (myIsWithContent) {
-        mySelectedClassWhenHided = getSelectedClass();
+        mySelectedClassWhenHidden = getSelectedClass();
         myIsWithContent = false;
         clearSelection();
         fireTableDataChanged();

@@ -88,6 +88,10 @@ public class JavaCompletionSorting {
     Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[afterStats.size()]));
+    final PreferMostUsedWeigher preferMostUsedWeigher = PreferMostUsedWeigher.create(position);
+    if (preferMostUsedWeigher != null) {
+      sorter = sorter.weighAfter("stats", preferMostUsedWeigher);
+    }
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
     return result.withRelevanceSorter(sorter);
   }

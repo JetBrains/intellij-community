@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudySerializationUtils;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -35,7 +36,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class StudyProjectGenerator {
   }
 
   public boolean isLoggedIn() {
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final StepicUser user = StudySettings.getInstance().getUser();
     return user != null;
   }
 
@@ -121,7 +121,7 @@ public class StudyProjectGenerator {
       return getCourseFromStepic(project);
     }
     else {
-      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      final StepicUser user = StudySettings.getInstance().getUser();
       if (user != null) {
         final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
                                                                            mySelectedCourseInfo.getName() + "_" +
@@ -405,7 +405,7 @@ public class StudyProjectGenerator {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = execCancelable(() -> EduStepicConnector.getCourses(StepicUpdateSettings.getInstance().getUser()));
+      myCourses = execCancelable(() -> EduStepicConnector.getCourses(StudySettings.getInstance().getUser()));
       flushCache(myCourses);
     }
     if (myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {

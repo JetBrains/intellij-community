@@ -268,6 +268,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
   }
 
   public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
+    public static final String FAMILY_NAME = "Migrate Guava's type to Java";
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -310,7 +311,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Migrate Guava's type to Java";
+      return FAMILY_NAME;
     }
 
     @Override
