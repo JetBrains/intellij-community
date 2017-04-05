@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.ProjectBuilderConfiguration;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -32,11 +33,20 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   }
 
   @Override
+  public Model interpolate(Model model, File projectDir, ProjectBuilderConfiguration config, boolean debugEnabled)
+      throws ModelInterpolationException {
+    this.interpolateObject(ContainerUtil.ar(model.getParent(), model), model, projectDir, config, debugEnabled);
+    return model;
+  }
+
+  @Override
   protected void interpolateObject(Object obj,
                                                 Model model,
                                                 File projectDir,
                                                 ProjectBuilderConfiguration config,
                                                 boolean debugEnabled) throws ModelInterpolationException {
+    if (obj == null) return;
+
     // IDEA-74131 avoid concurrent access to the static cache in StringSearchModelInterpolator
     synchronized (CustomMaven3ModelInterpolator.class) {
       try {
