@@ -56,12 +56,16 @@ class CompilerReferenceReader {
 
   @Nullable
   TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
-    LightRef.LightClassHierarchyElementDef hierarchyElement = ref instanceof LightRef.LightClassHierarchyElementDef ?
-                                                              (LightRef.LightClassHierarchyElementDef)ref :
-                                                              ((LightRef.LightMember)ref).getOwner();
-    TIntHashSet set = new TIntHashSet();
-    final LightRef.NamedLightRef[] hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+    LightRef.NamedLightRef[] hierarchy;
+    if (ref instanceof LightRef.LightClassHierarchyElementDef) {
+      hierarchy = new LightRef.NamedLightRef[]{(LightRef.NamedLightRef)ref};
+    }
+    else {
+      LightRef.LightClassHierarchyElementDef hierarchyElement = ((LightRef.LightMember)ref).getOwner();
+      hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+    }
     if (hierarchy == null) return null;
+    TIntHashSet set = new TIntHashSet();
     for (LightRef.NamedLightRef aClass : hierarchy) {
       final LightRef overriderUsage = ref.override(aClass.getName());
       addUsages(overriderUsage, set);
