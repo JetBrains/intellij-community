@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -204,13 +205,11 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
     }
     catch (IncorrectOperationException e) {
-      final String message = e.getMessage();
-      final int index = message != null ? message.indexOf("java.io.IOException") : -1;
-      if (index >= 0 && message != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          String cause = message.substring(index + "java.io.IOException".length());
-          Messages.showMessageDialog(myProject, cause, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-        });
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        LOG.info(e);
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showMessageDialog(myProject, cause.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
       }
       else {
         LOG.error(e);
