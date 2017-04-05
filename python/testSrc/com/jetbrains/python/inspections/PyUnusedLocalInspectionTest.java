@@ -67,6 +67,16 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   private void doTest() {
     final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
 
