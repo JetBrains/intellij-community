@@ -224,6 +224,7 @@ public class BreadcrumbsXmlWrapper implements Disposable {
     breadcrumbs.onHover(this::itemHovered);
     breadcrumbs.onSelect(this::itemSelected);
     breadcrumbs.setFont(getEditorFont(myEditor));
+    breadcrumbs.setBorder(BorderFactory.createEmptyBorder(above ? 2 : 0, 0, above ? 0 : 2, 0));
 
     myComponent.setOpaque(false);
     myComponent.add(BorderLayout.CENTER, breadcrumbs);
