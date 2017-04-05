@@ -27,7 +27,6 @@ package com.intellij;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.*;
@@ -141,10 +140,11 @@ public class TestAll implements Test {
     }
     List<File> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
-      if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
-        System.out.println("Skipping community tests");
+      List<File> excludeRoots = ExternalClasspathClassLoader.getExcludeRoots();
+      if (excludeRoots != null) {
+        System.out.println("Skipping tests from " + excludeRoots.size() + " roots");
         roots = new ArrayList<>(roots);
-        roots.removeAll(new THashSet<>(ExternalClasspathClassLoader.getExcludeRoots(), FileUtil.FILE_HASHING_STRATEGY));
+        roots.removeAll(new THashSet<>(excludeRoots, FileUtil.FILE_HASHING_STRATEGY));
       }
 
       System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
