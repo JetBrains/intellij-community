@@ -50,9 +50,9 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "qwe", "asd(0)", "zxc(0)");
   }
 
-  public void testOverloads() {
-    doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
-  }
+  //public void testOverloads() {
+  //  doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
+  //}
 
   public void testConstructor() {
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "LinkedList", "ArrayList");
