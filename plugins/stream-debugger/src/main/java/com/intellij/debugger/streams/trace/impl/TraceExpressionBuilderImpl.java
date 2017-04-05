@@ -23,7 +23,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   private static final Logger LOG = Logger.getInstance(TraceExpressionBuilderImpl.class);
 
   public static final String LINE_SEPARATOR = "\n";
-  private static final String RESULT_EXPRESSION = "new java.lang.Object[]{ info, streamResult, elapsedTime };" + LINE_SEPARATOR;
+  private static final String RESULT_VARIABLE_DECLARATION = "Object myResult = null;" + LINE_SEPARATOR;
+  private static final String RESULT_EXPRESSION = "myResult = new java.lang.Object[]{ info, streamResult, elapsedTime };" + LINE_SEPARATOR;
 
   @NotNull
   @Override
@@ -40,7 +41,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
     final String tracingCall = buildStreamExpression(traceChain);
 
-    final String result = declarations + tracingCall + fillingInfoArray;
+    final String result = RESULT_VARIABLE_DECLARATION +
+                          String.format("{" + LINE_SEPARATOR + "%s" + LINE_SEPARATOR + " }" + LINE_SEPARATOR + "myResult;",
+                                        declarations + tracingCall + fillingInfoArray);
     LOG.info("stream expression to trace:" + LINE_SEPARATOR + result);
     return result;
   }
