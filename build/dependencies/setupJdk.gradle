@@ -132,7 +132,7 @@ def intellijProjectDir() {
 static def jdk16Version() {
   def os = org.gradle.internal.os.OperatingSystem.current()
   if (os.isWindows()) {
-    def suffix = os.nativePrefix.endsWith('x86') ? "_i586" : "x64"
+    def suffix = os.nativePrefix.endsWith('x86') ? "i586" : "x64"
     return "6.45:windows_$suffix"
   }
   else if (os.isMacOsX()) {
