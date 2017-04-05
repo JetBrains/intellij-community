@@ -35,8 +35,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -435,7 +435,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyCommandListener extends CommandAdapter {
+  private class MyCommandListener implements CommandListener {
     private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     @Override

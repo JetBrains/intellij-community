@@ -17,8 +17,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -426,7 +426,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  private class MyCommandAdapter extends CommandAdapter {
+  private class MyCommandAdapter implements CommandListener {
     private int myCommandLevel;
 
     @Override

@@ -17,7 +17,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
@@ -78,7 +77,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private final CommandListener myCommandListener = new CommandAdapter() {
+  private final CommandListener myCommandListener = new CommandListener() {
     @Override
     public void commandStarted(CommandEvent event) {
       onCommandStarted();
