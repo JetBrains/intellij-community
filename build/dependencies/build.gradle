@@ -23,6 +23,13 @@ buildscript {
   }
 }
 
+apply plugin: 'idea'
+idea {
+  module {
+    inheritOutputDirs true
+  }
+}
+
 apply plugin: "de.undercouch.download"
 apply plugin: 'base'
 
