@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.StatusBar;
@@ -286,7 +286,7 @@ public class DaemonListeners implements Disposable {
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
     actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
-    virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
+    virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         String propertyName = event.getPropertyName();

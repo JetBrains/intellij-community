@@ -11,8 +11,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.configmanagement.EditorSettingsManager;
@@ -34,7 +34,7 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         updateOpenEditors(event);

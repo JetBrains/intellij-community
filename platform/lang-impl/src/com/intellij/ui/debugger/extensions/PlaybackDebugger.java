@@ -80,7 +80,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private final JTextField myCurrentScript = new JTextField();
 
-  private VirtualFileAdapter myVfsListener;
+  private VirtualFileListener myVfsListener;
 
   private boolean myChanged;
 
@@ -156,7 +156,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myComponent.add(script2Log, BorderLayout.CENTER);
 
-    myVfsListener = new VirtualFileAdapter() {
+    myVfsListener = new VirtualFileListener() {
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         final VirtualFile file = pathToFile();
@@ -341,13 +341,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
 
     if (c != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(c, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
     } else {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(frame, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
     }
 
     //noinspection SSBasedInspection
@@ -355,7 +351,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   }
 
-  private IdeFrameImpl getFrame() {
+  private static IdeFrameImpl getFrame() {
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
       if (each instanceof IdeFrame) {

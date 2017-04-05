@@ -559,7 +559,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         }
     }
 
-    private final class VFSListener extends VirtualFileAdapter {
+    private final class VFSListener implements VirtualFileListener {
         public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {

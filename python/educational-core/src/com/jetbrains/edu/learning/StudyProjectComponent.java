@@ -25,8 +25,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -41,7 +41,6 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
@@ -333,7 +332,7 @@ public class StudyProjectComponent implements ProjectComponent {
     return module.getComponent(StudyProjectComponent.class);
   }
 
-  private class FileCreatedByUserListener extends VirtualFileAdapter {
+  private class FileCreatedByUserListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       if (myProject.isDisposed()) return;

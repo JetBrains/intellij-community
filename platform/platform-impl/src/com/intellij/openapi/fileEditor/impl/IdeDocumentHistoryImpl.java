@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -44,7 +45,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 @State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
+public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");
 
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
@@ -133,7 +134,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       }
     });
 
-    VirtualFileListener fileListener = new VirtualFileAdapter() {
+    VirtualFileListener fileListener = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         onFileDeleted();
@@ -236,11 +237,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     else if (myCurrentCommandHasMoves) {
       pushCurrentChangePlace();
     }
-  }
-
-
-  @Override
-  public final void projectClosed() {
   }
 
   @Override
@@ -549,7 +545,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   @Override
-  public final void disposeComponent() {
+  public final void dispose() {
     myLastGroupId = null;
   }
 

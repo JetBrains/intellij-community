@@ -305,14 +305,6 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
   public Artifact[] getSortedArtifacts() {
     return myModel.getSortedArtifacts();
   }

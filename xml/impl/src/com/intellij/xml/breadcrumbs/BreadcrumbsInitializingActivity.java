@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -66,7 +66,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     }
   }
 
-  private static class MyVirtualFileListener extends VirtualFileAdapter {
+  private static class MyVirtualFileListener implements VirtualFileListener {
     private final Project myProject;
 
     public MyVirtualFileListener(@NotNull Project project) {
