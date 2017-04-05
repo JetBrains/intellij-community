@@ -86,7 +86,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   }
 
   private static void reinitBreadcrumbsInAllEditors(@NotNull Project project) {
-    if (!project.isDisposed()) return;
+    if (project.isDisposed()) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
       reinitBreadcrumbsComponent(fileEditorManager, virtualFile);
