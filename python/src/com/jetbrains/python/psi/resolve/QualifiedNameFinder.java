@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -90,16 +91,14 @@ public class QualifiedNameFinder {
   @Nullable
   public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final List<QualifiedName> names = cache.getNames(vfile);
-    if (names != null) {
-      return names.toString();
+    List<QualifiedName> names = cache.getNames(vfile);
+    if (names == null) {
+      final PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
+      RootVisitorHost.visitRoots(module, false, visitor);
+      names = visitor.getResults();
+      cache.putNames(vfile, names);
     }
-    PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    RootVisitorHost.visitRoots(module, false, visitor);
-    final List<QualifiedName> results = visitor.getResults();
-    cache.putNames(vfile, results);
-    final QualifiedName qName = shortestQName(results);
-    return qName == null ? null : qName.toString();
+    return Objects.toString(shortestQName(names), null);
   }
 
   /**
