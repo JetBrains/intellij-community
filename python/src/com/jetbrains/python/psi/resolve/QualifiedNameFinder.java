@@ -155,14 +155,21 @@ public class QualifiedNameFinder {
     }
     final QualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
-      for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-        final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
-        if (restored != null) {
-          return restored;
-        }
-      }
+      final QualifiedName restored = canonizeQualifiedName(qname, foothold);
+      if (restored != null) return restored;
     }
     return qname;
+  }
+
+  @Nullable
+  public static QualifiedName canonizeQualifiedName(QualifiedName qname, PsiElement foothold) {
+    for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+      final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
+      if (restored != null) {
+        return restored;
+      }
+    }
+    return null;
   }
 
   @Nullable
