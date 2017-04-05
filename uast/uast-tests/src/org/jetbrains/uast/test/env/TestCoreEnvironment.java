@@ -22,6 +22,7 @@ import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreJavaFileManager;
 import com.intellij.core.JavaCoreApplicationEnvironment;
 import com.intellij.core.JavaCoreProjectEnvironment;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -168,6 +169,8 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
                 Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
         CoreApplicationEnvironment.registerExtensionPoint(
                 Extensions.getRootArea(), ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
+        CoreApplicationEnvironment.registerExtensionPoint(
+          Extensions.getRootArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
     }
 
     private class TestJavaCoreProjectEnvironment extends JavaCoreProjectEnvironment {
