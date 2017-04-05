@@ -34,7 +34,9 @@ import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import gnu.trove.THashSet;
 import junit.framework.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.runner.Description;
@@ -48,7 +50,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr", "TestOnlyProblems", "BusyWait"})
 public class TestAll implements Test {
@@ -108,11 +111,11 @@ public class TestAll implements Test {
   
   private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
 
-  public TestAll(String packageRoot) throws Throwable {
-    this(packageRoot, getClassRoots());
+  public TestAll(String rootPackage) throws Throwable {
+    this(rootPackage, getClassRoots());
   }
 
-  public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
+  public TestAll(String rootPackage, List<File> classesRoots) throws IOException, ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     if (Boolean.getBoolean("idea.ignore.predefined.groups") || (ourMode & FILTER_CLASSES) == 0) {
       classFilterName = "";
@@ -121,7 +124,7 @@ public class TestAll implements Test {
     myTestCaseLoader = new TestCaseLoader(classFilterName);
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
-    fillTestCases(myTestCaseLoader, packageRoot, classRoots);
+    fillTestCases(myTestCaseLoader, rootPackage, classesRoots);
   
     outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
   }
@@ -130,22 +133,21 @@ public class TestAll implements Test {
     return outClassLoadingProblems;
   }
 
-  public static String[] getClassRoots() {
+  public static List<File> getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
-      return testRoots.split(";");
+      return StreamEx.of(testRoots.split(";")).map(File::new).toList();
     }
-    String[] roots = ExternalClasspathClassLoader.getRoots();
+    List<File> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
       if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
         System.out.println("Skipping community tests");
-        Set<String> set = normalizePaths(roots);
-        set.removeAll(normalizePaths(ExternalClasspathClassLoader.getExcludeRoots()));
-        roots = ArrayUtil.toStringArray(set);
+        roots = new ArrayList<>(roots);
+        roots.removeAll(new THashSet<>(ExternalClasspathClassLoader.getExcludeRoots(), FileUtil.FILE_HASHING_STRATEGY));
       }
 
-      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
+      System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
       return roots;
     }
     else {
@@ -162,37 +164,25 @@ public class TestAll implements Test {
         }
         catch (Throwable ignore) {}
       }
-      return System.getProperty("java.class.path").split(File.pathSeparator);
+      return StreamEx.of(System.getProperty("java.class.path").split(File.pathSeparator)).map(File::new).toList();
     }
   }
 
-  private static String[] getClassRoots(URL[] urls) {
-    final String[] classLoaderRoots = new String[urls.length];
-    for (int i = 0; i < urls.length; i++) {
-      classLoaderRoots[i] = VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(urls[i]));
-    }
-    System.out.println("Collecting tests from " + Arrays.toString(classLoaderRoots));
+  private static List<File> getClassRoots(URL[] urls) {
+    final List<File> classLoaderRoots = StreamEx.of(urls).map(url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url)))).toList();
+    System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
   }
 
-  private static Set<String> normalizePaths(String[] array) {
-    Set<String> answer = new LinkedHashSet<>(array.length);
-    for (String path : array) {
-      answer.add(path.replace('\\', '/'));
-    }
-    return answer;
-  }
-
-  public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
+  public static void fillTestCases(TestCaseLoader testCaseLoader, String rootPackage, List<File> classesRoots) throws IOException {
     long before = System.currentTimeMillis();
-    for (String classRoot : classRoots) {
+    for (File classesRoot : classesRoots) {
       int oldCount = testCaseLoader.getClasses().size();
-      File classRootFile = new File(FileUtil.toSystemDependentName(classRoot));
-      ClassFinder classFinder = new ClassFinder(classRootFile, packageRoot, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      testCaseLoader.loadTestCases(classRootFile.getName(), classFinder.getClasses());
+      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      testCaseLoader.loadTestCases(classesRoot.getName(), classFinder.getClasses());
       int newCount = testCaseLoader.getClasses().size();
       if (newCount != oldCount) {
-        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
+        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classesRoot);
       }
     }
 
