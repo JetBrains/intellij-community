@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myUpdatePending = true;
         ApplicationManager.getApplication().invokeLater(() -> updateChangesContent(), ModalityState.NON_MODAL);
@@ -154,6 +155,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }.installOn(myTree);
 
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(TreePath o) {
         final Object lc = o.getLastPathComponent();
         final Object lastComponent = lc == null ? null : ((DefaultMutableTreeNode) lc).getUserObject();
@@ -174,6 +176,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }, true);
   }
 
+  @Override
   public void projectOpened() {
     StartupManager startupManager = StartupManager.getInstance(myProject);
     if (startupManager == null) {
@@ -183,18 +186,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> updateChangesContent());
   }
 
-  public void projectClosed() {
-  }
-
+  @Override
   @NonNls @NotNull
   public String getComponentName() {
     return "ShelvedChangesViewManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private void updateChangesContent() {
@@ -457,6 +452,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       return ourInstance;
     }
 
+    @Override
     public int compare(final Object o1, final Object o2) {
       final String path1 = getPath(o1);
       final String path2 = getPath(o2);
@@ -503,6 +499,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
 
+    @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       Object nodeValue = node.getUserObject();
@@ -563,6 +560,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyShelveDeleteProvider implements DeleteProvider {
 
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
@@ -662,6 +660,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       return !getShelvedLists(dataContext).isEmpty();
     }
