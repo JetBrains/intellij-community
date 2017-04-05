@@ -761,6 +761,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
+  @Nullable
+  public static SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
+    if (position != null) {
+      if (position instanceof JavaXSourcePosition) {
+        return ((JavaXSourcePosition)position).mySourcePosition;
+      }
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
+      if (psiFile != null) {
+        return SourcePosition.createFromLine(psiFile, position.getLine());
+      }
+    }
+    return null;
+  }
+
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;

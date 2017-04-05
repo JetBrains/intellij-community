@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -235,14 +236,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void reload() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    PsiFile psiFile = getPsiFile();
-    if (position != null && psiFile != null) {
-      mySourcePosition = SourcePosition.createFromLine(psiFile, position.getLine());
-      reload(psiFile);
-    }
-    else {
-      mySourcePosition = null;
+    mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
+    if (mySourcePosition != null) {
+      reload(mySourcePosition.getFile());
     }
   }
 
