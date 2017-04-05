@@ -78,7 +78,7 @@ public class InProcessRefCollectorCompilerToolExtension extends AbstractRefColle
     public void consume(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
         if (registrar.isEnabled()) {
-          registrar.registerFile(data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs());
+          registrar.registerFile(data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs(), data.getDefCalifications());
         }
       }
     }

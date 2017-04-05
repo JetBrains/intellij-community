@@ -26,5 +26,5 @@ public interface JavacFileReferencesRegistrar {
 
   boolean onlyImports();
 
-  void registerFile(String filePath, TObjectIntHashMap<JavacRef> refs, List<JavacDef> defs);
+  void registerFile(String filePath, TObjectIntHashMap<JavacRef> refs, List<JavacDef> defs, List<JavacDef> defs2);
 }

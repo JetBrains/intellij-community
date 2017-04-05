@@ -41,7 +41,7 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
   }
 
   @Override
-  public void registerFile(String filePath, TObjectIntHashMap<JavacRef> refs, List<JavacDef> defs) {
-    BackwardReferenceIndexUtil.registerFile(filePath, refs, defs, myWriter);
+  public void registerFile(String filePath, TObjectIntHashMap<JavacRef> refs, List<JavacDef> defs, List<JavacDef> defs2) {
+    BackwardReferenceIndexUtil.registerFile(filePath, refs, defs, defs2, myWriter);
   }
 }

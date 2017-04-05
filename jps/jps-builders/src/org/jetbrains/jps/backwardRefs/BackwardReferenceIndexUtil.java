@@ -31,6 +31,7 @@ public class BackwardReferenceIndexUtil {
   static void registerFile(String filePath,
                            TObjectIntHashMap<? extends JavacRef> refs,
                            List<JavacDef> defs,
+                           List<JavacDef> defs2,
                            final BackwardReferenceIndexWriter writer) {
 
     try {
@@ -43,6 +44,27 @@ public class BackwardReferenceIndexUtil {
       final Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
+
+      for (JavacDef def : defs2) {
+        JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
+
+        final LightRef.LightClassHierarchyElementDef aClass;
+        if (sym.isAnonymous()) {
+          final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
+          aClass = anonymousClassEnumerator.addAnonymous(sym.getName(), writer.asClassUsage(classes[0]));
+        } else {
+          aClass = writer.asClassUsage(sym);
+        }
+        definitions.put(aClass, null);
+
+        final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
+        for (JavacRef superClass : superClasses) {
+          LightRef.JavaLightClassRef superClassRef = writer.asClassUsage(superClass);
+
+          backwardHierarchyMap2.computeIfAbsent(superClassRef, k -> new SmartList<>()).add(aClass);
+        }
+      }
+
 
       for (JavacDef def : defs) {
         if (def instanceof JavacDef.JavacClassDef) {

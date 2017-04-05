@@ -89,9 +89,16 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   public Tree visitMemberSelect(MemberSelectTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null && element.getKind() != ElementKind.PACKAGE) {
-      ExecutableElement memberCall = (ExecutableElement)element;
-      Element qualifier = memberCall.getEnclosingElement();
-      traverseTypeDown(qualifier, refCollector);
+      Element qualifier = element.getKind() == ElementKind.METHOD ? ((ExecutableElement)element).getEnclosingElement() :
+                          element.getKind() == ElementKind.FIELD ? ((VariableElement) element).getEnclosingElement() : null;
+      if (qualifier != null) {
+        try {
+          traverseTypeDown(qualifier, refCollector);
+        }
+        catch (RuntimeException e) {
+
+        }
+      }
       refCollector.sinkReference(refCollector.asJavacRef(element));
     }
     return super.visitMemberSelect(node, refCollector);

@@ -24,19 +24,26 @@ import java.util.Map;
 
 public class CompiledFileData {
   private final Map<LightRef, Collection<LightRef>> myBackwardHierarchyMap;
+  private Map<LightRef, Collection<LightRef>> myMap;
   private final Map<LightRef, Integer> myReferences;
   private final Map<LightRef, Void> myDefinitions;
   private final Map<SignatureData, Collection<LightRef>> mySignatureData;
 
-  public CompiledFileData(Map<LightRef, Collection<LightRef>> map,
-                          @NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
+  public CompiledFileData(
+    @NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
+    Map<LightRef, Collection<LightRef>> map,
                           @NotNull Map<LightRef, Integer> references,
                           @NotNull Map<LightRef, Void> definitions,
                           @NotNull Map<SignatureData, Collection<LightRef>> signatureData) {
     myBackwardHierarchyMap = backwardHierarchyMap;
+    myMap = map;
     myReferences = references;
     myDefinitions = definitions;
     mySignatureData = signatureData;
+  }
+
+  public Map<LightRef, Collection<LightRef>> getMap() {
+    return myMap;
   }
 
   @NotNull

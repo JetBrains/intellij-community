@@ -141,7 +141,7 @@ public class CompilerIndices {
 
       @NotNull
       public DataIndexer<LightRef, Collection<LightRef>, CompiledFileData> getIndexer() {
-        return CompiledFileData::getBackwardHierarchy;
+        return CompiledFileData::getMap;
       }
 
       @NotNull
