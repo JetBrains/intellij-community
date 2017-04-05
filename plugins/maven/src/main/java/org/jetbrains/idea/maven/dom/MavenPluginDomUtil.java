@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +59,7 @@ public class MavenPluginDomUtil {
     String groupId = pluginElement.getGroupId().getStringValue();
     String artifactId = pluginElement.getArtifactId().getStringValue();
     String version = pluginElement.getVersion().getStringValue();
-    if (version == null) {
+    if (StringUtil.isEmpty(version)) {
       MavenProject mavenProject = findMavenProject(element);
       if (mavenProject != null) {
         for (MavenPlugin plugin : mavenProject.getPlugins()) {
