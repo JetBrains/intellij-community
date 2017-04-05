@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -1026,11 +1027,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
     if (customArgs != null) {
-      final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
       boolean skip = false;
       boolean targetOptionFound = false;
-      while (customOptsTokenizer.hasMoreTokens()) {
-        final String userOption = customOptsTokenizer.nextToken();
+      for (final String userOption : ParametersListUtil.parse(customArgs)) {
         if (FILTERED_OPTIONS.contains(userOption)) {
           skip = true;
           targetOptionFound = "-target".equals(userOption);
