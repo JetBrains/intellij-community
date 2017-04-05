@@ -152,7 +152,10 @@ class TestingTasksImpl extends TestingTasks {
   private void runJUnitTask(List<String> jvmArgs, Map<String, String> systemProperties, List<String> bootstrapClasspath) {
     defineJunitTask(context.ant, "$context.paths.communityHome/lib")
 
-    context.ant.junit(fork: true, showoutput: true, logfailedtests: false) {
+    String junitTemp = "$context.paths.temp/junit"
+    context.ant.mkdir(dir: junitTemp)
+
+    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {
