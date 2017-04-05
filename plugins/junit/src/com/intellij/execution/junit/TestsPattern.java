@@ -76,9 +76,7 @@ public class TestsPattern extends TestPackage {
 
         @Override
         protected void onFound() throws ExecutionException {
-          final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME)
-                                                        ? FunctionUtil.<String>id()
-                                                        : (Function<String, String>)className -> className;
+          final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME) ? FunctionUtil.id() : className -> className;
           addClassesListToJavaParameters(classNames, nameFunction, "", false, getJavaParameters());
         }
       };
