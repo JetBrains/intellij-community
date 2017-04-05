@@ -51,9 +51,9 @@ public abstract class DiffPreviewProvider {
                                             @NotNull String right,
                                             @NotNull FileType fileType) {
     return new DiffContent[]{
-      createContent(left, StdFileTypes.JAVA),
-      createContent(center, StdFileTypes.JAVA),
-      createContent(right, StdFileTypes.JAVA)};
+      createContent(left, fileType),
+      createContent(center, fileType),
+      createContent(right, fileType)};
   }
 
   @NotNull
