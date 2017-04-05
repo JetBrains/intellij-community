@@ -30,7 +30,8 @@ target(default: "Unpack JDKs") {
 
 private File getDependenciesProjectDir() {
   String home = guessHome(this)
-  return new File(home, new File(home).name == "community" ? "build/dependencies" : "community/build/dependencies")
+  File community = new File(home, 'community')
+  return new File(community.exists() ? community : new File(home), "build/dependencies")
 }
 
 static String guessHome(Script script) {
