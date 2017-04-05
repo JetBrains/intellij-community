@@ -61,12 +61,13 @@ def createTarJbreTask(String taskName, String untarTaskName, String platform, St
   if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
     task(taskName, type: Tar) {
       def untarOutputs = tasks[untarTaskName].outputs.files
+      inputs.file(untarOutputs)
       from "$untarOutputs.singleFile/$dirToTar"
       if (!includeToolsJar) {
         exclude "**/tools.jar"
       }
       compression = Compression.GZIP
-      archiveName = "${archiveName}.tar.gz"
+      setArchiveName("${archiveName}.tar.gz")
       destinationDir = untarOutputs.singleFile.parentFile
     }
   }
