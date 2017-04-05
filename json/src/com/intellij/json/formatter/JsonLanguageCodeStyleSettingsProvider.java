@@ -2,13 +2,18 @@ package com.intellij.json.formatter;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OTHER;
 
@@ -16,12 +21,21 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.SPACES_OT
  * @author Mikhail Golubev
  */
 public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  private static String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
+    .map(alignment -> alignment.getDescription())
+    .toArray(value -> new String[value]);
+
+  private static int[] ALIGN_VALUES =
+    ArrayUtil.toIntArray(Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
+                           .map(alignment -> alignment.getId())
+                           .collect(Collectors.toList()));
+
   private static final String SAMPLE = "{\n" +
                                        "    \"json literals are\": {\n" +
                                        "        \"strings\": [\"foo\", \"bar\", \"\\u0062\\u0061\\u0072\"],\n" +
                                        "        \"numbers\": [42, 6.62606975e-34],\n" +
-                                       "        \"boolean values\": [true, false],\n" +
-                                       "        \"and\": {\"null\": null}\n" +
+                                       "        \"boolean values\": [true, false,],\n" +
+                                       "        \"objects\": {\"null\": null,\"another\": null,}\n" +
                                        "    }\n" +
                                        "}";
 
@@ -45,6 +59,11 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WRAP_ON_TYPING",
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES");
+      
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "KEEP_TRAILING_COMMA",
+                                "Trailing comma",
+                                CodeStyleSettingsCustomizable.WRAPPING_KEEP);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "ARRAY_WRAPPING",
@@ -59,6 +78,13 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 null,
                                 CodeStyleSettingsCustomizable.WRAP_OPTIONS,
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "PROPERTY_ALIGNMENT",
+                                JsonBundle.message("formatter.align.properties.caption"),
+                                "Objects",
+                                ALIGN_OPTIONS,
+                                ALIGN_VALUES);
 
     }
   }
