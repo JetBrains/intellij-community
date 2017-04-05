@@ -60,17 +60,23 @@ task setupJdk18(dependsOn: downloadJdk18) {
 def unpackJdk(jdkArchive, outputDir) {
   logger.info("Unpacking $jdkArchive to ${outputDir}")
   file(outputDir).deleteDir()
-  copy {
-    from tarTree(jdkArchive)
-    into outputDir
+  if (!org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+    exec { commandLine 'mkdir', '-p', outputDir }
+    exec { commandLine 'tar', 'xpf', "${jdkArchive.absolutePath}", '--directory', outputDir }
+    def jdkContents = file("${outputDir}/jdk/Contents")
+    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX() && jdkContents.exists()) {
+      copy {
+        from fileTree(jdkContents)
+        into outputDir
+      }
+      jdkContents.deleteDir()
+    }
   }
-  def jdkContents = file("${outputDir}/jdk/Contents")
-  if (org.gradle.internal.os.OperatingSystem.current().isMacOsX() && jdkContents.exists()) {
+  else {
     copy {
-      from fileTree(jdkContents)
+      from tarTree(jdkArchive)
       into outputDir
     }
-    jdkContents.deleteDir()
   }
 }
 
