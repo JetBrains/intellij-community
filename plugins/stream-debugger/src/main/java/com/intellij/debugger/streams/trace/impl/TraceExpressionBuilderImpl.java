@@ -23,7 +23,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   private static final Logger LOG = Logger.getInstance(TraceExpressionBuilderImpl.class);
 
   public static final String LINE_SEPARATOR = "\n";
-  private static final String RETURN_EXPRESSION = "new java.lang.Object[]{ info, streamResult, elapsedTime };" + LINE_SEPARATOR;
+  private static final String RESULT_EXPRESSION = "new java.lang.Object[]{ info, streamResult, elapsedTime };" + LINE_SEPARATOR;
 
   @NotNull
   @Override
@@ -129,7 +129,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     }
 
     builder.append("final long[] elapsedTime = new long[]{ java.lang.System.nanoTime() - startTime };" + LINE_SEPARATOR);
-    builder.append(RETURN_EXPRESSION);
+    builder.append(RESULT_EXPRESSION);
 
     return builder.toString();
   }
