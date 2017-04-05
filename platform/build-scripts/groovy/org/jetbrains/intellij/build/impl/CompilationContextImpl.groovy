@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -122,16 +121,9 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static void setupDependencies(BuildMessages messages, String communityHome) {
-    messages.info("Setting up dependencies")
-    def workingDirectory = new File(communityHome, 'build/dependencies/')
-    def gradleScript = SystemInfo.isWindows ? "gradlew.bat" : "gradlew"
-    def process = new ProcessBuilder("${workingDirectory.absolutePath}/$gradleScript", 'cleanSetupJbre', 'setupDependencies')
-      .directory(workingDirectory)
-      .start()
-    process.consumeProcessOutputStream((OutputStream)System.out)
-    process.consumeProcessErrorStream((OutputStream)System.err)
-    if (process.waitFor() != 0) {
-      messages.error("Cannot setup dependencies")
+    messages.info("Setting up compilation dependencies")    
+    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupJdks', 'setupKotlin')) {
+      messages.error("Cannot setup compilation dependencies")
     }
   }
 
