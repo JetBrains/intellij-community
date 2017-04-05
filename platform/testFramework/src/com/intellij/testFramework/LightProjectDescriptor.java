@@ -46,7 +46,7 @@ import java.io.IOException;
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
-  protected static final String TEST_MODULE_NAME = "light_idea_test_case";
+  public static final String TEST_MODULE_NAME = "light_idea_test_case";
 
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
     WriteAction.run(() -> {
