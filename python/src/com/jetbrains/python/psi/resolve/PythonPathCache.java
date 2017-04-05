@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +54,7 @@ public abstract class PythonPathCache {
       // At least one element is invalid
       return null;
     }
-    return elements;
+    return elements != null ? Collections.unmodifiableList(elements) : null;
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {
@@ -67,7 +68,8 @@ public abstract class PythonPathCache {
     if (vFile == null) {
       return null;
     }
-    return myQNameCache.get(vFile.getUrl());
+    final List<QualifiedName> names = myQNameCache.get(vFile.getUrl());
+    return names != null ? Collections.unmodifiableList(names) : null;
   }
 
   public void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
