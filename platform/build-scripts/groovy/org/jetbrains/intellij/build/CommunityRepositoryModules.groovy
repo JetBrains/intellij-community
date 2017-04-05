@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ class CommunityRepositoryModules {
     "xml-analysis-api",
     "xml-openapi",
     "xml-psi-api",
-    "xml-structure-view-api"
+    "xml-structure-view-api",
+    "uast-common",
   ]
 
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
