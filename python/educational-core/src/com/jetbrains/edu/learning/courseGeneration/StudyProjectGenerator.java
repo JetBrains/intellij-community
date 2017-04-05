@@ -294,7 +294,7 @@ public class StudyProjectGenerator {
     createFiles(taskDirectory, task.getTaskTexts());
   }
 
-  private static void createFiles(@NotNull File taskDirectory, Map<String, String> files) {
+  public static void createFiles(@NotNull File taskDirectory, Map<String, String> files) {
     for (Map.Entry<String, String> entry : files.entrySet()) {
       final File file = new File(taskDirectory, entry.getKey());
       if (file.exists()) {

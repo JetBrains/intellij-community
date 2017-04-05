@@ -16,9 +16,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudySettings;
@@ -343,10 +341,13 @@ public class EduAdaptiveStepicConnector {
             final File taskDirectory = new File(lessonDirectory, taskName);
             StudyProjectGenerator.flushTask(task, taskDirectory);
             StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-            final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
 
+            final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
             if (lessonDir != null) {
-              createTestFiles(course, project, unsolvedTask, lessonDir);
+              final File taskResourceRoot = new File(lessonDir.getCanonicalPath(), EduNames.TASK + unsolvedTask.getIndex());
+
+              StudyProjectGenerator.createFiles(taskResourceRoot, task.getTaskTexts());
+              StudyProjectGenerator.createFiles(taskResourceRoot, task.getTestsText());
             }
             final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
             if (window != null) {
@@ -412,38 +413,6 @@ public class EduAdaptiveStepicConnector {
     currentTaskFile.setTask(task);
     task.getTaskFiles().clear();
     task.taskFiles.put(DEFAULT_TASK_NAME, currentTaskFile);
-  }
-
-  private static void createTestFiles(@NotNull Course course, @NotNull Project project,
-                                      @NotNull Task unsolvedTask, @NotNull VirtualFile lessonDir) {
-    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        final VirtualFile taskDir = VfsUtil
-          .findFileByIoFile(new File(lessonDir.getCanonicalPath(), EduNames.TASK + unsolvedTask.getIndex()), true);
-        final File resourceRoot = new File(course.getCourseDirectory(), lessonDir.getName());
-
-        if (taskDir != null) {
-          final File newResourceRoot = new File(resourceRoot, taskDir.getName());
-          File[] filesInTask = newResourceRoot.listFiles();
-          if (filesInTask != null) {
-            for (File file : filesInTask) {
-              final String taskRelativePath = FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
-              if (taskRelativePath != null && StudyUtils.isTestsFile(project, taskDir.getName())) {
-                final File resourceFile = new File(newResourceRoot, taskRelativePath);
-                final File fileInProject = new File(taskDir.getCanonicalPath(), taskRelativePath);
-                FileUtil.copy(resourceFile, fileInProject);
-              }
-            }
-          }
-        }
-        else {
-          LOG.warn("Task directory is null");
-        }
-      }
-      catch (IOException e) {
-        LOG.warn(e.getMessage());
-      }
-    }));
   }
 
   @NotNull
