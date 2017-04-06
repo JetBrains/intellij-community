@@ -40,7 +40,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -135,15 +135,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
 
-    AtomicReference<ProgressWindowWithNotification> indicatorRef = new AtomicReference<>();
+    AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(
       () -> {
-        ProgressWindowWithNotification progress =
-          new ProgressWindowWithNotification(true, false, debugProcess.getProject(), "Cancel emulation");
+        ProgressWindow progress =
+          new ProgressWindow(true, false, debugProcess.getProject(), "Cancel emulation");
         progress.setDelayInMillis(2000);
         indicatorRef.set(progress);
       });
-    ProgressWindowWithNotification indicator = indicatorRef.get();
+    ProgressWindow indicator = indicatorRef.get();
 
     AtomicBoolean changed = new AtomicBoolean();
     XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
