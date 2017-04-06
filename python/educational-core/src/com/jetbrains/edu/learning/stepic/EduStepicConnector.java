@@ -11,10 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
@@ -65,9 +62,9 @@ public class EduStepicConnector {
   }
 
   @NotNull
-  public static List<CourseInfo> getCourses(@Nullable StepicUser user) {
+  public static List<Course> getCourses(@Nullable StepicUser user) {
     try {
-      List<CourseInfo> result = new ArrayList<>();
+      List<Course> result = new ArrayList<>();
       int pageNumber = 1;
       while (addCoursesFromStepic(user, result, pageNumber)) {
         pageNumber += 1;
@@ -77,13 +74,13 @@ public class EduStepicConnector {
     catch (IOException e) {
       LOG.warn("Cannot load course list " + e.getMessage());
     }
-    return Collections.singletonList(CourseInfo.INVALID_COURSE);
+    return Collections.emptyList();
   }
 
   public static Date getCourseUpdateDate(final int courseId) {
     final String url = EduStepicNames.COURSES + "/" + courseId;
     try {
-      final List<CourseInfo> courses = EduStepicClient.getFromStepic(url, StepicWrappers.CoursesContainer.class).courses;
+      final List<RemoteCourse> courses = EduStepicClient.getFromStepic(url, StepicWrappers.CoursesContainer.class).courses;
       if (!courses.isEmpty()) {
         return courses.get(0).getUpdateDate();
       }
@@ -125,7 +122,7 @@ public class EduStepicConnector {
     return null;
   }
 
-  private static boolean addCoursesFromStepic(@Nullable StepicUser user, List<CourseInfo> result, int pageNumber) throws IOException {
+  private static boolean addCoursesFromStepic(@Nullable StepicUser user, List<Course> result, int pageNumber) throws IOException {
     final URI url;
     try {
       url = new URIBuilder(EduStepicNames.COURSES).addParameter("is_idea_compatible", "true").
@@ -146,27 +143,28 @@ public class EduStepicConnector {
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
 
-  static void addAvailableCourses(List<CourseInfo> result, StepicWrappers.CoursesContainer coursesContainer) throws IOException {
-    final List<CourseInfo> courseInfos = coursesContainer.courses;
-    for (CourseInfo info : courseInfos) {
+  static void addAvailableCourses(List<Course> result, StepicWrappers.CoursesContainer coursesContainer) throws IOException {
+    final List<RemoteCourse> courses = coursesContainer.courses;
+    for (RemoteCourse info : courses) {
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
       if (canBeOpened(info)) {
+        final ArrayList<StepicUser> authors = new ArrayList<>();
         for (Integer instructor : info.getInstructors()) {
           final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor), 
                                                                   StepicWrappers.AuthorWrapper.class).users.get(0);
-          info.addAuthor(author);
+          authors.add(author);
         }
+        info.setAuthors(authors);
 
         if (info.isAdaptive()) {
           info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription() + ADAPTIVE_NOTE);
         }
-
         result.add(info);
       }
     }
   }
 
-  static boolean canBeOpened(CourseInfo courseInfo) {
+  static boolean canBeOpened(RemoteCourse courseInfo) {
     if (courseInfo.isAdaptive()) {
       return true;
     }
@@ -190,26 +188,19 @@ public class EduStepicConnector {
     }
   }
 
-  public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info) {
-    final Course course = new Course();
-    course.setAuthors(info.getAuthors());
-    course.setDescription(info.getDescription());
-    course.setAdaptive(info.isAdaptive());
-    course.setId(info.getId());
-    course.setUpdateDate(getCourseUpdateDate(info.getId()));
-
-    if (!course.isAdaptive()) {
-      String courseType = info.getType();
-      course.setName(info.getName());
+  public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse course) {
+    final RemoteCourse remoteCourse = (RemoteCourse)course.copy();
+    if (!remoteCourse.isAdaptive()) {
+      String courseType = remoteCourse.getType();
       final int separator = courseType.indexOf(" ");
       assert separator != -1;
       final String language = courseType.substring(separator + 1);
-      course.setLanguage(language);
+      remoteCourse.setLanguage(language);
       try {
-        for (Integer section : info.getSections()) {
-          course.addLessons(getLessons(section));
+        for (Integer section : remoteCourse.getSections()) {
+          remoteCourse.addLessons(getLessons(section));
         }
-        return course;
+        return remoteCourse;
       }
       catch (IOException e) {
         LOG.error("IOException " + e.getMessage());
@@ -218,14 +209,13 @@ public class EduStepicConnector {
     else {
       final Lesson lesson = new Lesson();
       lesson.setName("Adaptive");
-      course.addLesson(lesson);
-      course.setName(info.getName());
+      remoteCourse.addLesson(lesson);
       //TODO: more specific name?
-      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
+      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, remoteCourse);
       if (recommendation != null) {
         lesson.addTask(recommendation);
       }
-      return course;
+      return remoteCourse;
     }
     return null;
   }
@@ -299,10 +289,24 @@ public class EduStepicConnector {
     task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
     if (block.options.files != null) {
       for (TaskFile taskFile : block.options.files) {
+        addPlaceholdersTexts(taskFile);
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
     return task;
+  }
+
+  private static void addPlaceholdersTexts(TaskFile file) {
+    final String fileText = file.text;
+    final List<AnswerPlaceholder> placeholders = file.getAnswerPlaceholders();
+    for (AnswerPlaceholder placeholder : placeholders) {
+      final AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
+      final int offset = placeholder.getOffset();
+      final int length = placeholder.getLength();
+      if (fileText.length() > offset + length) {
+        info.setPlaceholderText(fileText.substring(offset, offset+length));
+      }
+    }
   }
 
   @NotNull

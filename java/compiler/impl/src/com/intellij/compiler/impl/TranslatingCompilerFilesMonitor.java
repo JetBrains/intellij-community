@@ -116,7 +116,7 @@ public class TranslatingCompilerFilesMonitor {
     return false;
   }
   
-  private static class MyVfsListener extends VirtualFileAdapter {
+  private static class MyVfsListener implements VirtualFileListener {
     @Override
     public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {

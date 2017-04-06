@@ -49,7 +49,7 @@ public final class ImageEditorImpl implements ImageEditor {
     editorUI = new ImageEditorUI(this);
     Disposer.register(this, editorUI);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         ImageEditorImpl.this.propertyChanged(event);

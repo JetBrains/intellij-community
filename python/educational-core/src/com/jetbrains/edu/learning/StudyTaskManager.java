@@ -1,5 +1,9 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -7,24 +11,30 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.REMOTE_COURSE;
 
 /**
  * Implementation of class which contains all the information
@@ -39,7 +49,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public int VERSION = 5;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
-  public List<String> myInvisibleFiles = new ArrayList<>();
 
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
@@ -118,10 +127,32 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     if (myCourse == null) {
       return null;
     }
+
+    return serialize();
+  }
+
+  @NotNull
+  private Element serialize() {
     Element el = new Element("taskManager");
-    Element courseElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
-    XmlSerializer.serializeInto(this, courseElement);
-    el.addContent(courseElement);
+    Element taskManagerElement = new Element(StudySerializationUtils.Xml.MAIN_ELEMENT);
+    XmlSerializer.serializeInto(this, taskManagerElement);
+
+    if (myCourse instanceof RemoteCourse) {
+      try {
+        Element course = new Element(REMOTE_COURSE);
+        //noinspection RedundantCast
+        XmlSerializer.serializeInto((RemoteCourse)myCourse, course);
+
+        final Element xmlCourse = StudySerializationUtils.Xml.getChildWithName(taskManagerElement, StudySerializationUtils.COURSE);
+        xmlCourse.removeContent();
+        xmlCourse.addContent(course);
+      }
+      catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
+        LOG.error("Failed to serialize remote course");
+      }
+    }
+
+    el.addContent(taskManagerElement);
     return el;
   }
 
@@ -142,20 +173,15 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
           state = StudySerializationUtils.Xml.convertToForthVersion(state);
         case 4:
           state = StudySerializationUtils.Xml.convertToFifthVersion(state);
+          updateTestHelper();
         //uncomment for future versions
         //case 5:
         //  state = StudySerializationUtils.Xml.convertToSixthVersion(state, myProject);
       }
-      XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
+      deserialize(state);
       VERSION = CURRENT_VERSION;
       if (myCourse != null) {
         myCourse.initCourse(true);
-        if (version != VERSION) {
-          final File updatedCourse = new File(StudyProjectGenerator.OUR_COURSES_DIR, myCourse.getName());
-          if (updatedCourse.exists()) {
-            myCourse.setCourseDirectory(updatedCourse.getAbsolutePath());
-          }
-        }
       }
     }
     catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
@@ -163,16 +189,42 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     }
   }
 
+  private void updateTestHelper() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile testHelper = myProject.getBaseDir().findChild(EduNames.TEST_HELPER);
+      if (testHelper != null) {
+        StudyUtils.deleteFile(testHelper);
+      }
+      final FileTemplate template =
+        FileTemplateManager.getInstance(myProject).getInternalTemplate(FileUtil.getNameWithoutExtension(EduNames.TEST_HELPER));
+      try {
+        final PsiDirectory projectDir = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
+        if (projectDir != null) {
+          FileTemplateUtil.createFromTemplate(template, EduNames.TEST_HELPER, null, projectDir);
+        }
+      }
+      catch (Exception e) {
+        LOG.warn("Failed to create new test helper");
+      }
+    }));
+  }
+
+  private void deserialize(Element state) throws StudySerializationUtils.StudyUnrecognizedFormatException {
+    final Element taskManagerElement = state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT);
+    if (taskManagerElement == null)
+      throw new StudySerializationUtils.StudyUnrecognizedFormatException();
+    XmlSerializer.deserializeInto(this, taskManagerElement);
+    final Element xmlCourse = StudySerializationUtils.Xml.getChildWithName(taskManagerElement, StudySerializationUtils.COURSE);
+    final Element remoteCourseElement = xmlCourse.getChild(REMOTE_COURSE);
+    if (remoteCourseElement != null) {
+      final RemoteCourse remoteCourse = new RemoteCourse();
+      XmlSerializer.deserializeInto(remoteCourse, remoteCourseElement);
+      myCourse = remoteCourse;
+    }
+  }
+
   public static StudyTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, StudyTaskManager.class);
-  }
-
-  public void addInvisibleFiles(String filePath) {
-    myInvisibleFiles.add(filePath);
-  }
-
-  public boolean isInvisibleFile(String path) {
-    return myInvisibleFiles.contains(path);
   }
 
   public boolean shouldUseJavaFx() {

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -141,6 +140,7 @@ public class MacUIUtil {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
       }
 
+      //noinspection UseJBColor
       g.setColor(new Color(100, 100, 100, 200));
       g.drawRect(x1, y1, width1 - 1, height1 - 1);
 
@@ -168,7 +168,7 @@ public class MacUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return new Insets(6, 7, 6, 7);
+      return new JBInsets(6, 7, 6, 7);
     }
 
     @Override
@@ -183,6 +183,7 @@ public class MacUIUtil {
       return (Color)o;
     }
 
+    //noinspection UseJBColor
     return new Color(64, 113, 167);
   }
 

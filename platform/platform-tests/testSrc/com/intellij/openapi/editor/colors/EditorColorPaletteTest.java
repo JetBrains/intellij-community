@@ -55,20 +55,34 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     final TextAttributes newColorAttrInPallete = new TextAttributes();
     newColorAttrInPallete.setForegroundColor(newColorInPalette);
     
+    // rainbow color generator can reuse LOCAL_VARIABLE or PARAM foreground color 
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, newColorAttrInPallete);
     checkUsed(colorsScheme, newColorInPalette, true);
 
-    checkUsed(colorsScheme, colorsScheme.getAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT).getForegroundColor(), false);
+    // rainbow color generator can not reuse any other foreground color
+    final TextAttributes bcOrigAttr = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+    checkUsed(colorsScheme, bcOrigAttr.getForegroundColor(), false);
+
+    final TextAttributesKey generatedRainbowKey = new RainbowHighlighter(null).getRainbowTempKeys()[0];
     
     // make BLOCK_COMMENT the same as LOCAL_VARIABLE => has conflict with non-rainbow BLOCK_COMMENT color 
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, newColorAttrInPallete);
     checkUsed(colorsScheme, newColorInPalette, false);
+    // rainbow generated colors are cached:
+    assertNotNull(colorsScheme.getAttributes(generatedRainbowKey));
+    
+    // chage in colorsScheme for non-mutable key drops generated cache      
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, bcOrigAttr);
+    // there are no rainbow generated colors:
+    assertNull(colorsScheme.getAttributes(generatedRainbowKey));  
 
+    // resolve conflict for BLACK color (checking overflow)
     final TextAttributes blackColorAttrInPallete = new TextAttributes();
     blackColorAttrInPallete.setForegroundColor(Color.BLACK);
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, blackColorAttrInPallete);
     checkUsed(colorsScheme, Color.BLACK, false);
 
+    // resolve conflict for WHITE color (checking overflow)
     final TextAttributes whiteColorAttrInPallete = new TextAttributes();
     whiteColorAttrInPallete.setForegroundColor(Color.WHITE);
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, whiteColorAttrInPallete);

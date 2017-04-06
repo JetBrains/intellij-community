@@ -117,7 +117,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
     if (!useGreclipse(context)) return ModuleLevelBuilder.ExitCode.NOTHING_DONE;
 
     try {
-      final List<File> toCompile = myHelper.collectChangedFiles(context, dirtyFilesHolder, false, true, Ref.create(false));
+      List<File> toCompile = myHelper.collectChangedFiles(context, dirtyFilesHolder, false, Ref.create(false));
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }

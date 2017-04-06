@@ -109,7 +109,7 @@ public class CCLessonMoveHandlerDelegate extends MoveHandlerDelegate {
                                  newItemIndex - 1, EduNames.LESSON, 1);
 
     sourceLesson.setIndex(newItemIndex);
-    Collections.sort(course.getLessons(), EduUtils.INDEX_COMPARATOR);
+    Collections.sort(course.getLessons(true), EduUtils.INDEX_COMPARATOR);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,14 +72,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public VirtualFile findFileByIoFile(@NotNull File file) {
-    String path = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    return findFileByPath(path);
+    return findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
   }
 
   @NotNull
   protected static File convertToIOFile(@NotNull final VirtualFile file) {
     String path = file.getPath();
-    if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && (SystemInfo.isWindows || SystemInfo.isOS2)) {
+    if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 

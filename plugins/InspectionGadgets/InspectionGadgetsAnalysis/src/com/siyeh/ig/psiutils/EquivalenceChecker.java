@@ -749,7 +749,7 @@ public class EquivalenceChecker {
     final PsiExpression[] args2 = argumentList2.getExpressions();
     match = match.combine(expressionsAreEquivalent(args1, args2));
 
-    if (match.isPartialMatch()) {
+    if (args1.length != 0 && match.isPartialMatch()) {
       final PsiElement leftDiff = match.getLeftDiff();
       final PsiExpression lastArg = args1[args1.length - 1];
       if (Comparing.equal(leftDiff, lastArg)) {

@@ -30,9 +30,8 @@ public interface BaseComponent extends NamedComponent {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.Disposable}
+   * @see {@link com.intellij.openapi.Disposable}
    */
-  @Deprecated
   default void disposeComponent() {
   }
 }

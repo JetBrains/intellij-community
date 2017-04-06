@@ -203,7 +203,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   @Override
   public boolean close() {
-    return closeActivePopup();
+    if (!closeActivePopup()) return false;
+    // try to close other popups in the stack
+    while (closeActivePopup()) {
+      // close all popups one by one
+    }
+    return true; // at least one popup was closed
   }
 
   @Override

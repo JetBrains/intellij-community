@@ -324,6 +324,7 @@ public class CommonCodeStyleSettings {
   @BraceStyleConstant public int BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int CLASS_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
+  @BraceStyleConstant public int LAMBDA_BRACE_STYLE = END_OF_LINE;
 
   /**
    * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.patterns.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,28 +82,25 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   @Override
   public synchronized ElementPattern<T> compileElementPattern(final String text) {
-    Node node = processElementPatternText(text, new Function<Frame, Object>() {
-      public Node fun(final Frame frame) {
-        final Object[] args = frame.params.toArray();
-        for (int i = 0, argsLength = args.length; i < argsLength; i++) {
-          args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
-        }
-        return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
+    Node node = processElementPatternText(text, frame -> {
+      final Object[] args = frame.params.toArray();
+      for (int i = 0, argsLength = args.length; i < argsLength; i++) {
+        args[i] = args[i] instanceof String ? myStringInterner.intern((String)args[i]) : args[i];
       }
+      return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
     });
     if (node == null) node = new Node(ERROR_NODE, text, null);
     return new LazyPresentablePattern<>(node);
   }
 
   private static Set<Method> getStaticMethods(List<Class> patternClasses) {
-    return new THashSet<>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
-      public Collection<Method> fun(final Class aClass) {
-        return ContainerUtil.findAll(aClass.getMethods(), method -> Modifier.isStatic(method.getModifiers())
-                                                                    && Modifier.isPublic(method.getModifiers())
-                                                                    && !Modifier.isAbstract(method.getModifiers())
-                                                                    && ElementPattern.class.isAssignableFrom(method.getReturnType()));
-      }
-    }));
+    return new THashSet<>(ContainerUtil.concat(
+      patternClasses,
+      aClass -> ContainerUtil.findAll(aClass.getMethods(),
+                              method -> Modifier.isStatic(method.getModifiers()) &&
+                                        Modifier.isPublic(method.getModifiers()) &&
+                                        !Modifier.isAbstract(method.getModifiers()) &&
+                                        ElementPattern.class.isAssignableFrom(method.getReturnType()))));
   }
 
   private enum State {
@@ -289,7 +285,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     try {
       return Integer.valueOf(s);
     }
-    catch (NumberFormatException e) {}
+    catch (NumberFormatException ignored) {}
     return s;
   }
 
@@ -571,7 +567,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
 
-  public class LazyPresentablePattern<T> implements ElementPattern<T> {
+  public class LazyPresentablePattern<Z> implements ElementPattern<T> {
 
     private ElementPattern<T> myCompiledPattern;
     private final Node myNode;

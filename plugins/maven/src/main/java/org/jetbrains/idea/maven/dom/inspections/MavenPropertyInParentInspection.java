@@ -19,7 +19,9 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,8 +33,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
+import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 
 import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.util.containers.ContainerUtil.findInstance;
 
 /**
  * @author ibessonov
@@ -86,17 +93,38 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     String unresolvedValue = domValue.getRawText();
     if (unresolvedValue != null && unresolvedValue.contains("${")) {
       LocalQuickFix fix = null;
-      String resolvedValue = domValue.getValue();
-      if (!unresolvedValue.equals(resolvedValue)) {
+      String resolvedValue = domValue.getStringValue();
+      if (unresolvedValue.equals(resolvedValue)) {
+        resolvedValue = resolveXmlElement(domValue.getXmlElement());
+      }
+
+      if (!unresolvedValue.equals(resolvedValue) && !isEmpty(resolvedValue)) {
+        String finalResolvedValue = resolvedValue;
         fix = new LocalQuickFixBase(MavenDomBundle.message("refactoring.inline.property")) {
           @Override
           public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-            ((XmlTag)descriptor.getPsiElement()).getValue().setText(resolvedValue);
+            ((XmlTag)descriptor.getPsiElement()).getValue().setText(finalResolvedValue);
           }
         };
       }
       problems.add(manager.createProblemDescriptor(domValue.getXmlTag(), MavenDomBundle.message("inspection.property.in.parent.description"),
                                                    fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
     }
+  }
+
+  @Nullable
+  private static String resolveXmlElement(@Nullable XmlElement xmlElement) {
+    if (xmlElement == null) return null;
+
+    MavenPropertyPsiReference psiReference = findInstance(xmlElement.getReferences(), MavenPropertyPsiReference.class);
+    if (psiReference == null) return null;
+
+    PsiElement resolvedElement = psiReference.resolve();
+    if (resolvedElement == null || !(resolvedElement instanceof MavenPsiElementWrapper)) return null;
+
+    PsiElement xmlTag = ((MavenPsiElementWrapper)resolvedElement).getWrappee();
+    if (!(xmlTag instanceof XmlTag)) return null;
+
+    return ((XmlTag)xmlTag).getValue().getTrimmedText();
   }
 }

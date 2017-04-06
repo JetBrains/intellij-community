@@ -4,21 +4,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class CCVirtualFileListener extends VirtualFileAdapter {
+public class CCVirtualFileListener implements VirtualFileListener {
 
   @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -48,7 +48,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     String taskRelativePath = StudyUtils.pathRelativeToTask(createdFile);
 
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
-    if (configurator != null && configurator.excludeFromArchive(new File(createdFile.getPath()))) {
+    if (configurator != null && configurator.excludeFromArchive(createdFile.getPath())) {
       return;
     }
 
@@ -68,9 +68,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
 
-    CCUtils.createResourceFile(createdFile, course, taskVF);
-
-    task.addTaskFile(taskRelativePath, 1);
+    task.addTaskFile(taskRelativePath, task.getTaskFiles().size()+1);
   }
 
   @Override
@@ -89,7 +87,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null || path.contains(FileUtil.toSystemIndependentName(course.getCourseDirectory()))) {
+    if (course == null) {
       return;
     }
     final TaskFile taskFile = StudyUtils.getTaskFile(project, removedFile);
@@ -112,7 +110,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
     VirtualFile courseDir = project.getBaseDir();
     CCUtils.updateHigherElements(courseDir.getChildren(), file -> course.getLesson(file.getName()), removedLesson.getIndex(), EduNames.LESSON, -1);
-    course.getLessons().remove(removedLesson);
+    course.removeLesson(removedLesson);
   }
 
   private static void deleteTask(@NotNull final Course course, @NotNull final VirtualFile removedTask) {

@@ -8,23 +8,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudySerializationUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.stepic.StepicWrappers;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -48,7 +44,7 @@ public class CCStepicConnector {
   private CCStepicConnector() {
   }
 
-  public static CourseInfo getCourseInfo(String courseId) {
+  public static RemoteCourse getCourseInfo(String courseId) {
     final String url = EduStepicNames.COURSES + "/" + courseId;
     try {
       final StepicWrappers.CoursesContainer coursesContainer =
@@ -65,13 +61,16 @@ public class CCStepicConnector {
     ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Modal(project, "Uploading Course", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        postCourse(project, course, indicator);
+        postCourse(project, course);
       }
     });
   }
 
-  private static void postCourse(final Project project, @NotNull Course course, @NotNull final ProgressIndicator indicator) {
-    indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
+  private static void postCourse(final Project project, @NotNull Course course) {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
+    }
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
 
     final StepicUser currentUser = EduStepicAuthorizedClient.getCurrentUser();
@@ -105,60 +104,33 @@ public class CCStepicConnector {
         LOG.error("Failed to push " + responseString);
         return;
       }
-      final CourseInfo postedCourse = new Gson().fromJson(responseString, StepicWrappers.CoursesContainer.class).courses.get(0);
-      course.setId(postedCourse.getId());
+      final RemoteCourse postedCourse = new Gson().fromJson(responseString, StepicWrappers.CoursesContainer.class).courses.get(0);
+      postedCourse.setLessons(course.getLessons(true));
+      postedCourse.setAuthors(course.getAuthors());
+      postedCourse.setCourseMode(CCUtils.COURSE_MODE);
       final int sectionId = postModule(postedCourse.getId(), 1, String.valueOf(postedCourse.getName()));
       int position = 1;
       for (Lesson lesson : course.getLessons()) {
-        indicator.checkCanceled();
-        final int lessonId = postLesson(project, lesson, indicator);
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+        final int lessonId = postLesson(project, lesson);
         postUnit(lessonId, position, sectionId);
         position += 1;
       }
-      ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(project, postedCourse.getId(), indicator));
+      ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(course, project, postedCourse.getId()));
+      StudyTaskManager.getInstance(project).setCourse(postedCourse);
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
   }
 
-  private static void postAdditionalFiles(@NotNull final Project project, int id, ProgressIndicator indicator) {
-    final VirtualFile baseDir = project.getBaseDir();
-    final List<VirtualFile> files = VfsUtil.getChildren(baseDir, new VirtualFileFilter() {
-      @Override
-      public boolean accept(VirtualFile file) {
-        final String name = file.getName();
-        return !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS) &&
-               !"pyc".equals(file.getExtension()) && !file.isDirectory() && !name.equals(EduNames.TEST_HELPER) && !name.startsWith(".");
-      }
-    });
-
-    if (!files.isEmpty()) {
+  private static void postAdditionalFiles(Course course, @NotNull final Project project, int id) {
+    final Lesson lesson = CCUtils.createAdditionalLesson(course, project);
+    if (lesson != null) {
       final int sectionId = postModule(id, 2, EduNames.PYCHARM_ADDITIONAL);
-      final Lesson lesson = new Lesson();
-      lesson.setName(EduNames.PYCHARM_ADDITIONAL);
-      final Task task = new Task();
-      task.setLesson(lesson);
-      task.setName(EduNames.PYCHARM_ADDITIONAL);
-      task.setIndex(1);
-      for (VirtualFile file : files) {
-        try {
-          if (file != null) {
-            if (EduUtils.isImage(file.getName())) {
-              task.addTestsTexts(file.getName(), Base64.encodeBase64URLSafeString(FileUtil.loadBytes(file.getInputStream())));
-            }
-            else {
-              task.addTestsTexts(file.getName(), FileUtil.loadTextAndClose(file.getInputStream()));
-            }
-          }
-        }
-        catch (IOException e) {
-          LOG.error("Can't find file " + file.getPath());
-        }
-      }
-      lesson.addTask(task);
-      lesson.setIndex(1);
-      final int lessonId = postLesson(project, lesson, indicator);
+      final int lessonId = postLesson(project, lesson);
       postUnit(lessonId, 1, sectionId);
     }
   }
@@ -255,7 +227,7 @@ public class CCStepicConnector {
     return -1;
   }
 
-  public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+  public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson) {
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.getId()));
 
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
@@ -273,13 +245,16 @@ public class CCStepicConnector {
         LOG.error("Failed to push " + responseString);
         return -1;
       }
-      final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
+      final Lesson postedLesson = new Gson().fromJson(responseString, RemoteCourse.class).getLessons().get(0);
       for (Integer step : postedLesson.steps) {
         deleteTask(step);
       }
 
       for (Task task : lesson.getTaskList()) {
-        indicator.checkCanceled();
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
         postTask(project, task, lesson.getId());
       }
       return lesson.getId();
@@ -290,7 +265,7 @@ public class CCStepicConnector {
     return -1;
   }
 
-  public static int postLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
+  public static int postLesson(@NotNull final Project project, @NotNull final Lesson lesson) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/lessons");
 
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
@@ -308,10 +283,13 @@ public class CCStepicConnector {
         LOG.error("Failed to push " + responseString);
         return 0;
       }
-      final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
+      final Lesson postedLesson = new Gson().fromJson(responseString, RemoteCourse.class).getLessons(true).get(0);
       lesson.setId(postedLesson.getId());
       for (Task task : lesson.getTaskList()) {
-        indicator.checkCanceled();
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
         postTask(project, task, postedLesson.getId());
       }
       return postedLesson.getId();

@@ -7,6 +7,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,8 +41,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -49,6 +51,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
@@ -72,9 +75,7 @@ import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import com.petebevin.markdown.MarkdownProcessor;
@@ -84,9 +85,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -236,20 +235,6 @@ public class StudyUtils {
     catch (IOException e) {
       LOG.error(e);
     }
-  }
-
-  public static File copyResourceFile(@NotNull final String sourceName, @NotNull final String copyName, @NotNull final Project project,
-                                      @NotNull final Task task)
-    throws IOException {
-    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    final Course course = taskManager.getCourse();
-    int taskNum = task.getIndex();
-    int lessonNum = task.getLesson().getIndex();
-    assert course != null;
-    final String pathToResource = FileUtil.join(course.getCourseDirectory(), EduNames.LESSON + lessonNum, EduNames.TASK + taskNum);
-    final File resourceFile = new File(pathToResource, copyName);
-    FileUtil.copy(new File(pathToResource, sourceName), resourceFile);
-    return resourceFile;
   }
 
   @Nullable
@@ -413,34 +398,6 @@ public class StudyUtils {
     }
   }
 
-
-  @Nullable
-  public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
-    Task task = taskFile.getTask();
-    String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
-    String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
-    Course course = task.getLesson().getCourse();
-    File resourceFile = new File(course.getCourseDirectory());
-    if (!resourceFile.exists()) {
-      return null;
-    }
-    String patternPath = FileUtil.join(resourceFile.getPath(), lessonDir, taskDir, name);
-    VirtualFile patternFile = VfsUtil.findFileByIoFile(new File(patternPath), true);
-    if (patternFile == null) {
-      return null;
-    }
-    return patternFile;
-  }
-
-  @Nullable
-  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
-    VirtualFile patternFile = getPatternFile(taskFile, name);
-    if (patternFile == null) {
-      return null;
-    }
-    return FileDocumentManager.getInstance().getDocument(patternFile);
-  }
-
   public static boolean isRenameableOrMoveable(@NotNull final Project project, @NotNull final Course course, @NotNull final PsiElement element) {
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
@@ -497,7 +454,6 @@ public class StudyUtils {
     String text = task.getTaskDescription() != null ? task.getTaskDescription() : getTaskTextByTaskName(task, taskDirectory);
 
     if (text == null) return null;
-    text = convertToHtml(text);
     if (course.isAdaptive()) text = wrapAdaptiveCourseText(task, text);
 
     return wrapTextToDisplayLatex(text);
@@ -537,20 +493,33 @@ public class StudyUtils {
   @Nullable
   private static String getTaskTextByTaskName(@NotNull Task task, @Nullable VirtualFile taskDirectory) {
     if (taskDirectory == null) return null;
-    final String taskFileNameMd = constructTaskTextFilename(task, EduNames.TASK_MD);
-    final String taskFileNameHtml = constructTaskTextFilename(task, EduNames.TASK_HTML);
 
-    VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(taskFileNameMd), taskDirectory.findChild(taskFileNameHtml));
-
-    if (taskTextFile == null) {
-      VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
-      if (srcDir != null) {
-         taskTextFile = ObjectUtils.chooseNotNull(srcDir.findChild(taskFileNameHtml), srcDir.findChild(taskFileNameMd));
-      }
+    String textFromHtmlFile = getTextByTaskFileFormat(task, taskDirectory, EduNames.TASK_HTML);
+    if (textFromHtmlFile != null) {
+      return textFromHtmlFile;
     }
+
+    String taskTextFromMd = getTextByTaskFileFormat(task, taskDirectory, EduNames.TASK_HTML);
+    return convertToHtml(taskTextFromMd);
+  }
+
+  @Nullable
+  private static String getTextByTaskFileFormat(@NotNull Task task, @NotNull VirtualFile taskDirectory, @NotNull String taskTextFileName) {
+    String textFilename = constructTaskTextFilename(task, taskTextFileName);
+    VirtualFile taskTextFile = taskDirectory.findChild(taskTextFileName);
+
     if (taskTextFile != null) {
       return String.valueOf(LoadTextUtil.loadText(taskTextFile));
     }
+
+    VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
+    if (srcDir != null) {
+      VirtualFile taskTextSrcFile = srcDir.findChild(textFilename);
+      if (taskTextSrcFile != null) {
+        return String.valueOf(LoadTextUtil.loadText(taskTextSrcFile));
+      }
+    }
+
     return null;
   }
 
@@ -609,23 +578,6 @@ public class StudyUtils {
   public static boolean isStudentProject(@NotNull Project project) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     return course != null && EduNames.STUDY.equals(course.getCourseMode());
-  }
-
-  @NotNull
-  public static File getCourseDirectory(Course course) {
-    final File courseDirectory;
-    if (course.isAdaptive()) {
-      StepicUser user = StudySettings.getInstance().getUser();
-      String email = user == null ? "" : user.getEmail();
-
-      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
-                                 StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
-                                 + "_" + email);
-    }
-    else {
-      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());
-    }
-    return courseDirectory;
   }
 
   public static boolean hasJavaFx() {
@@ -713,7 +665,9 @@ public class StudyUtils {
     return task;
   }
 
-  private static String convertToHtml(@NotNull final String content) {
+  @Nullable
+  private static String convertToHtml(@Nullable final String content) {
+    if (content == null) return null;
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
     MarkdownUtil.replaceCodeBlock(lines);
@@ -864,6 +818,50 @@ public class StudyUtils {
     }
     catch (Exception e) {
       LOG.error(e);
+    }
+  }
+  public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
+    LocalFileSystem.getInstance().refresh(false);
+    final Lesson firstLesson = getFirst(course.getLessons());
+    if (firstLesson == null) return;
+    final Task firstTask = getFirst(firstLesson.getTaskList());
+    if (firstTask == null) return;
+    final VirtualFile taskDir = firstTask.getTaskDir(project);
+    if (taskDir == null) return;
+    final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
+    VirtualFile activeVirtualFile = null;
+    for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
+      final String relativePath = entry.getKey();
+      final TaskFile taskFile = entry.getValue();
+      taskDir.refresh(false, true);
+      final VirtualFile virtualFile = taskDir.findFileByRelativePath(relativePath);
+      if (virtualFile != null) {
+        if (!taskFile.getActivePlaceholders().isEmpty()) {
+          activeVirtualFile = virtualFile;
+        }
+      }
+    }
+    if (activeVirtualFile != null) {
+      final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
+      ProjectView.getInstance(project).select(file, activeVirtualFile, false);
+      final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
+      if (editors.length == 0) {
+        return;
+      }
+      final FileEditor studyEditor = editors[0];
+      if (studyEditor instanceof StudyEditor) {
+        selectFirstAnswerPlaceholder((StudyEditor)studyEditor, project);
+      }
+      FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
+    }
+    else {
+      String first = getFirst(taskFiles.keySet());
+      if (first != null) {
+        NewVirtualFile firstFile = ((VirtualDirectoryImpl)taskDir).refreshAndFindChild(first);
+        if (firstFile != null) {
+          FileEditorManager.getInstance(project).openFile(firstFile, true);
+        }
+      }
     }
   }
 }

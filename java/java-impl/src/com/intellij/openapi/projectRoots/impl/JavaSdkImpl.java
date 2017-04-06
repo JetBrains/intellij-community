@@ -67,7 +67,7 @@ public class JavaSdkImpl extends JavaSdk {
   public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
 
-    fileManager.addVirtualFileListener(new VirtualFileAdapter() {
+    fileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         updateCache(event);

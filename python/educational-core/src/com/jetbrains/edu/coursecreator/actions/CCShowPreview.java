@@ -31,10 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -109,33 +109,24 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
 
-
     if (taskFile.getActivePlaceholders().isEmpty()) {
       Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
       return;
     }
 
-    VirtualFile generatedFilesFolder = CCUtils.getGeneratedFilesFolder(project, module);
-
-    if (generatedFilesFolder == null) {
-      return;
-    }
     final Task task = taskFile.getTask();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Pair<VirtualFile, TaskFile> pair =
-          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null,
-                                     task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
-        if (pair != null) {
-          showPreviewDialog(project, pair.getFirst(), pair.getSecond());
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      TaskFile studentTaskFile = EduUtils.createStudentFile(project, virtualFile, task.copy(),
+                                   task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
+      if (studentTaskFile != null) {
+        showPreviewDialog(project, studentTaskFile);
       }
     });
   }
 
-  private static void showPreviewDialog(@NotNull Project project, @NotNull VirtualFile userFile, @NotNull TaskFile taskFile) {
+  private static void showPreviewDialog(@NotNull Project project, @NotNull TaskFile taskFile) {
     final FrameWrapper showPreviewFrame = new FrameWrapper(project);
+    final LightVirtualFile userFile = new LightVirtualFile(taskFile.name, taskFile.text);
     showPreviewFrame.setTitle(userFile.getName());
     LabeledEditor labeledEditor = new LabeledEditor(null);
     final EditorFactory factory = EditorFactory.getInstance();

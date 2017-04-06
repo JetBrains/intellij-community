@@ -52,6 +52,10 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     doTest();
   }
 
+  public void testNewMapMethods() throws Exception {
+    doTest();
+  }
+
   public void testMethodReferenceWithCollectionCalls() throws Exception {
     doTest();
   }

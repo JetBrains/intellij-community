@@ -151,7 +151,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {
-            Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
+            Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
             final String value = getValueString();
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();

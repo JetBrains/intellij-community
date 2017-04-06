@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.eclipse.aether.transfer.TransferCancelledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
@@ -144,6 +145,9 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               }
             }
           }
+          catch (TransferCancelledException e) {
+            context.checkCanceled();
+          }
           finally {
             guard.finish();
           }
@@ -243,6 +247,11 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
       manager = new ArtifactRepositoryManager(getLocalRepoDir(context), new ProgressConsumer() {
         public void consume(String message) {
           context.processMessage(new ProgressMessage(message));
+        }
+
+        @Override
+        public boolean isCanceled() {
+          return context.getCancelStatus().isCanceled();
         }
       });
       // further init manager here

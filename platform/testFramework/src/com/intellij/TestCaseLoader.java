@@ -50,7 +50,6 @@ public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
-  public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.

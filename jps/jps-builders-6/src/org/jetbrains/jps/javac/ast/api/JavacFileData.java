@@ -158,6 +158,10 @@ public class JavacFileData {
         return new JavacDef.JavacClassDef(readJavacRef(in), superClasses);
       case FUN_EXPR_MARKER:
         return new JavacDef.JavacFunExprDef(readJavacRef(in));
+      case METHOD_MARKER:
+        JavacRef retType = readJavacRef(in);
+        boolean isStatic = in.readBoolean();
+        return new JavacDef.JavacMemberDef(readJavacRef(in), retType, isStatic);
       default:
         throw new IllegalStateException("unknown marker " + marker);
     }
@@ -174,6 +178,11 @@ public class JavacFileData {
     }
     else if (def instanceof JavacDef.JavacFunExprDef) {
       out.writeByte(FUN_EXPR_MARKER);
+    }
+    else if (def instanceof JavacDef.JavacMemberDef) {
+      out.writeByte(METHOD_MARKER);
+      writeJavacRef(out, ((JavacDef.JavacMemberDef)def).getReturnType());
+      out.writeBoolean(((JavacDef.JavacMemberDef)def).isStatic());
     }
     else {
       throw new IllegalStateException("unknown type: " + def.getClass());

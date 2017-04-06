@@ -16,14 +16,16 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
@@ -32,7 +34,7 @@ import java.awt.geom.Rectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJTextBorder extends DarculaTextBorder {
+public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
     return JBUI.insets(3, 6).asUIResource();
@@ -84,7 +86,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   }
 
   boolean isFocused(Component c) {
-    return c.hasFocus();
+    return c instanceof JScrollPane ? ((JScrollPane)c).getViewport().getView().hasFocus() :c.hasFocus();
   }
 
   void clipForBorder(Component c, Graphics2D g2, int width, int height) {

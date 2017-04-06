@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -148,7 +146,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Nullable
-  private VirtualFile getFile() {
+  public VirtualFile getFile() {
     return VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
   }
 
@@ -191,13 +189,12 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Override
   public XSourcePosition getSourcePosition() {
+    if (mySourcePosition != null) {
+      return mySourcePosition;
+    }
+    mySourcePosition = super.getSourcePosition();
     if (mySourcePosition == null) {
-      new ReadAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          mySourcePosition = XDebuggerUtil.getInstance().createPosition(getFile(), getLine());
-        }
-      }.execute();
+      mySourcePosition = XDebuggerUtil.getInstance().createPosition(getFile(), getLine());
     }
     return mySourcePosition;
   }

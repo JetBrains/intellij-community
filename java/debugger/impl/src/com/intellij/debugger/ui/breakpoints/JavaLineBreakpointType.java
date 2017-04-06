@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
@@ -33,6 +34,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,12 +101,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @NotNull
   @Override
   public List<JavaBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
-    PsiFile file = PsiManager.getInstance(project).findFile(position.getFile());
-    if (file == null) {
+    SourcePosition pos = DebuggerUtilsEx.toSourcePosition(position, project);
+    if (pos == null) {
       return Collections.emptyList();
     }
 
-    SourcePosition pos = SourcePosition.createFromLine(file, position.getLine());
     List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(pos, true);
     if (lambdas.isEmpty()) {
       return Collections.emptyList();
@@ -116,7 +117,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return Collections.emptyList();
     }
 
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    Document document = PsiDocumentManager.getInstance(project).getDocument(pos.getFile());
     if (document == null) {
       return Collections.emptyList();
     }
@@ -246,17 +247,44 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @Nullable
   @Override
   public TextRange getHighlightRange(XLineBreakpoint<JavaLineBreakpointProperties> breakpoint) {
-    JavaLineBreakpointProperties properties = breakpoint.getProperties();
-    if (properties != null) {
-      Integer ordinal = properties.getLambdaOrdinal();
-      if (ordinal != null) {
-        Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
-        if (javaBreakpoint instanceof LineBreakpoint) {
-          PsiElement method = getContainingMethod((LineBreakpoint)javaBreakpoint);
-          if (method != null) {
-            return method.getTextRange();
-          }
+    Integer ordinal = getLambdaOrdinal(breakpoint);
+    if (ordinal != null) {
+      Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
+      if (javaBreakpoint instanceof LineBreakpoint) {
+        PsiElement method = getContainingMethod((LineBreakpoint)javaBreakpoint);
+        if (method != null) {
+          return method.getTextRange();
         }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<JavaLineBreakpointProperties> breakpoint) {
+    Integer ordinal = getLambdaOrdinal(breakpoint);
+    if (ordinal != null && ordinal > -1) {
+      SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
+      if (linePosition != null) {
+        return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Integer getLambdaOrdinal(XBreakpoint<JavaLineBreakpointProperties> breakpoint) {
+    JavaLineBreakpointProperties properties = breakpoint.getProperties();
+    return properties != null ? properties.getLambdaOrdinal() : null;
+  }
+
+  @Nullable
+  private static SourcePosition createLineSourcePosition(XLineBreakpointImpl breakpoint) {
+    VirtualFile file = breakpoint.getFile();
+    if (file != null) {
+      PsiFile psiFile = PsiManager.getInstance(breakpoint.getProject()).findFile(file);
+      if (psiFile != null) {
+        return SourcePosition.createFromLine(psiFile, breakpoint.getLine());
       }
     }
     return null;

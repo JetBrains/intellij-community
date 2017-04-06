@@ -26,7 +26,7 @@ project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}
 
 task downloadJdk18 {
   def os = org.gradle.internal.os.OperatingSystem.current()
-  def arch = !os.isWindows() || !os.nativePrefix.endsWith('x86') ? 'x64' : 'x86'
+  def arch = !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
   def platform = currentPlatformName()
 
   def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
@@ -60,17 +60,22 @@ task setupJdk18(dependsOn: downloadJdk18) {
 def unpackJdk(jdkArchive, outputDir) {
   logger.info("Unpacking $jdkArchive to ${outputDir}")
   file(outputDir).deleteDir()
-  copy {
-    from tarTree(jdkArchive)
-    into outputDir
-  }
-  def jdkContents = file("${outputDir}/jdk/Contents")
-  if (org.gradle.internal.os.OperatingSystem.current().isMacOsX() && jdkContents.exists()) {
+  def currentOs = org.gradle.internal.os.OperatingSystem.current()
+  if (currentOs.isWindows()) {
     copy {
-      from fileTree(jdkContents)
+      from tarTree(jdkArchive)
       into outputDir
     }
-    jdkContents.deleteDir()
+  }
+  else {
+    exec { commandLine 'mkdir', '-p', outputDir }
+    exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
+    def jdkContents = file("${outputDir}/jdk/Contents")
+    if (currentOs.isMacOsX() && jdkContents.exists()) {
+      jdkContents.listFiles().each { file ->
+        exec { commandLine 'mv', "$file.absolutePath", outputDir }
+      }
+    }
   }
 }
 
@@ -114,9 +119,10 @@ task setupJdk16(dependsOn: configurations.jdk16) {
 
   doLast {
     logger.info("Setting up JDK 1.6 to compile")
-    unpackJdk(jdkArchive, outputDir)
+    unpackJdk(jdkArchive.call(), outputDir)
   }
 }
+setupJdk16.onlyIf { inJetBrainsNetwork }
 
 def intellijProjectDir() {
   def communityDir = project.file("../..")
@@ -126,7 +132,7 @@ def intellijProjectDir() {
 static def jdk16Version() {
   def os = org.gradle.internal.os.OperatingSystem.current()
   if (os.isWindows()) {
-    def suffix = os.nativePrefix.endsWith('x86') ? "_i586" : "x64"
+    def suffix = System.getenv("ProgramFiles(x86)") != null ? "x64" : "i586"
     return "6.45:windows_$suffix"
   }
   else if (os.isMacOsX()) {

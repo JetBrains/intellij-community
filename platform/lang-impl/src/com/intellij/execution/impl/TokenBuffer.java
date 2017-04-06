@@ -65,13 +65,8 @@ class TokenBuffer {
         TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start, crIndex), info);
         tokens.addLast(tokenInfo);
         size += tokenInfo.length();
-        removeLastLine();
       }
-      else if (size == 0) {
-        // \r at the very beginning. return CR_TOKEN to signal this
-        tokens.addLast(CR_TOKEN);
-        size ++;
-      }
+      removeLastLine();
       // text[start..crIndex) should be removed
       start = crIndex + 1;
     }
@@ -110,9 +105,15 @@ class TokenBuffer {
         TokenInfo newToken = new TokenInfo(last.contentType, text.substring(0, lfIndex + 1), last.getHyperlinkInfo());
         tokens.addLast(newToken);
         size -= text.length() - newToken.length();
-        break;
+        return;
       }
+      // remove the token entirely, move to the previous
       size -= text.length();
+    }
+    if (tokens.isEmpty()) {
+      // \r at the very beginning. return CR_TOKEN to signal this
+      tokens.addLast(CR_TOKEN);
+      size ++;
     }
   }
 

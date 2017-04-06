@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class IndexedFilesListener extends VirtualFileAdapter implements BulkFileListener {
+public abstract class IndexedFilesListener implements BulkFileListener, VirtualFileListener {
   private final ManagingFS myManagingFS = ManagingFS.getInstance();
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;

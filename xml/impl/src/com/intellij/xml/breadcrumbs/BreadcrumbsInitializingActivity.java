@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -66,7 +66,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     }
   }
 
-  private static class MyVirtualFileListener extends VirtualFileAdapter {
+  private static class MyVirtualFileListener implements VirtualFileListener {
     private final Project myProject;
 
     public MyVirtualFileListener(@NotNull Project project) {
@@ -86,7 +86,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   }
 
   private static void reinitBreadcrumbsInAllEditors(@NotNull Project project) {
-    if (!project.isDisposed()) return;
+    if (project.isDisposed()) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
       reinitBreadcrumbsComponent(fileEditorManager, virtualFile);
@@ -142,10 +142,10 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
                                       @NotNull BreadcrumbsXmlWrapper wrapper) {
     //noinspection deprecation
     if (wrapper.above) {
-      fileEditorManager.addTopComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.addTopComponent(fileEditor, wrapper);
     }
     else {
-      fileEditorManager.addBottomComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.addBottomComponent(fileEditor, wrapper);
     }
     Disposer.register(fileEditor, () -> disposeWrapper(fileEditorManager, fileEditor, wrapper));
   }
@@ -155,10 +155,10 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
     //noinspection deprecation
     if (wrapper.above) {
-      fileEditorManager.removeTopComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.removeTopComponent(fileEditor, wrapper);
     }
     else {
-      fileEditorManager.removeBottomComponent(fileEditor, wrapper.getComponent());
+      fileEditorManager.removeBottomComponent(fileEditor, wrapper);
     }
     Disposer.dispose(wrapper);
   }

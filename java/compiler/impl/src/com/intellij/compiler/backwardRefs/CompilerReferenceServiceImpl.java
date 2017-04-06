@@ -292,7 +292,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     LanguageLightRefAdapter adapter = null;
     if (isConstructorSuggestion) {
       adapter = ReadAction.compute(() -> LanguageLightRefAdapter.findAdapter(element));
-      if (!adapter.isClass(element)) {
+      if (adapter == null || !adapter.isClass(element)) {
         return null;
       }
     }

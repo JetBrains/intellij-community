@@ -284,7 +284,13 @@ public class PsiDiamondTypeUtil {
 
   private static boolean checkParentApplicability(PsiCallExpression exprCopy) {
     while (exprCopy != null){
-      final JavaResolveResult resolveResult = exprCopy.resolveMethodGenerics();
+      JavaResolveResult resolveResult = exprCopy.resolveMethodGenerics();
+      if (exprCopy instanceof PsiNewExpression) {
+        PsiDiamondType diamondType = PsiDiamondType.getDiamondType((PsiNewExpression)exprCopy);
+        if (diamondType != null) {
+          resolveResult = diamondType.getStaticFactory();
+        }
+      }
       if (resolveResult instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolveResult).isApplicable()) {
         return false;
       }

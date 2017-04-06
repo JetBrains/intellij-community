@@ -23,32 +23,25 @@ public class PyStudyShowTutorial extends AbstractProjectComponent {
 
   @Override
   public void projectOpened() {
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            if (PropertiesComponent.getInstance().getBoolean(ourShowPopup, true)) {
-              final String content = "<html>If you'd like to learn more about PyCharm Edu, " +
-                                     "click <a href=\"https://www.jetbrains.com/pycharm-edu/quickstart/\">here</a> to watch a tutorial</html>";
-              final Notification notification = new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION,
-                                                                 new NotificationListener.UrlOpeningListener(true));
-              Notifications.Bus.notify(notification);
-              Balloon balloon = notification.getBalloon();
-              if (balloon != null) {
-                balloon.addListener(new JBPopupAdapter() {
-                  @Override
-                  public void onClosed(LightweightWindowEvent event) {
-                    notification.expire();
-                  }
-                });
+    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction(
+      (DumbAwareRunnable)() -> {
+        if (PropertiesComponent.getInstance().getBoolean(ourShowPopup, true)) {
+          final String content = "<html>If you'd like to learn more about PyCharm Edu, " +
+                                 "click <a href=\"https://www.jetbrains.com/pycharm-edu/quickstart/\">here</a> to watch a tutorial</html>";
+          final Notification notification = new Notification("Watch Tutorials!", "", content, NotificationType.INFORMATION,
+                                                             new NotificationListener.UrlOpeningListener(true));
+          Notifications.Bus.notify(notification);
+          Balloon balloon = notification.getBalloon();
+          if (balloon != null) {
+            balloon.addListener(new JBPopupAdapter() {
+              @Override
+              public void onClosed(LightweightWindowEvent event) {
+                notification.expire();
               }
-              notification.whenExpired(() -> PropertiesComponent.getInstance().setValue(ourShowPopup, false, true));
-            }
+            });
           }
-        });
-      }
-    });
+          notification.whenExpired(() -> PropertiesComponent.getInstance().setValue(ourShowPopup, false, true));
+        }
+      }));
   }
 }

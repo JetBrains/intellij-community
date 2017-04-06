@@ -87,6 +87,10 @@ public class StepicUser {
 
   @NotNull
   public String getAccessToken() {
+    // for old project where authors were created with null tokens
+    if (myAccessToken == null) {
+      return "";
+    }
     return myAccessToken;
   }
 
@@ -96,6 +100,10 @@ public class StepicUser {
 
   @NotNull
   public String getRefreshToken() {
+    // for old project where authors were created with null tokens
+    if (myRefreshToken == null) {
+      return "";
+    }
     return myRefreshToken;
   }
 

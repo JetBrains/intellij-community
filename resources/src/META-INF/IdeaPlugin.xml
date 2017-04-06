@@ -1243,7 +1243,7 @@
     <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider" />
     <regExpModifierProvider language="JAVA" implementationClass="com.intellij.codeInsight.JavaRegExpModifierProvider" />
 
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="UAST" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
     <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
 
     <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
@@ -1916,6 +1916,14 @@
     <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibrarySynchronizer"/>
 
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
+
+    <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
+    <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
+    <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
   </extensions>
 
   <actions>

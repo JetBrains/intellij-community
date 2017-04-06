@@ -45,7 +45,7 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     JsonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(rootPsi.getProject())
       .getCurrentSettings()
       .getCustomSettings(JsonCodeStyleSettings.class);
-    if (!settings.REMOVE_TRAILING_COMMA) {
+    if (settings.KEEP_TRAILING_COMMA) {
       return range;
     }
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(rootPsi.getProject());

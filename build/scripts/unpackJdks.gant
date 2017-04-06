@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.apache.tools.ant.BuildException
 
 target(default: "Unpack JDKs") {
   def workingDirectory = getDependenciesProjectDir()
@@ -24,13 +25,14 @@ target(default: "Unpack JDKs") {
   process.consumeProcessErrorStream((OutputStream)System.err)
   process.waitFor()
   if (process.exitValue() != 0) {
-    projectBuilder.error("Cannot unpack JDK")
+    throw new BuildException("Cannot unpack JDK")
   }
 }
 
 private File getDependenciesProjectDir() {
   String home = guessHome(this)
-  return new File(home, new File(home).name == "community" ? "build/dependencies" : "community/build/dependencies")
+  File community = new File(home, 'community')
+  return new File(community.exists() ? community : new File(home), "build/dependencies")
 }
 
 static String guessHome(Script script) {

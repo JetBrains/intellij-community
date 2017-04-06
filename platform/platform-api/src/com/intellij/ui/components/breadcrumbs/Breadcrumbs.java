@@ -20,9 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -37,6 +35,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -69,7 +68,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     addMouseListener(containerMouseHandler);
     addMouseMotionListener(containerMouseHandler);
     setLayout(STATELESS_LAYOUT);
-    setForeground(Gray.x92);
+    setOpaque(true);
   }
 
   public void onHover(BiConsumer<Crumb, InputEvent> consumer) {
@@ -133,6 +132,17 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
   }
 
   @Override
+  protected void paintComponent(Graphics g) {
+    // this custom component does not have a corresponding UI,
+    // so we should care of painting its background
+    if (isOpaque()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
+    super.paintComponent(g);
+  }
+
+  @Override
   public void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb) {
     int scale = getScale(this);
     EffectType type = getEffectType(crumb);
@@ -174,8 +184,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
       if (thickness > 0) {
         Color foreground = getForeground(crumb);
         if (foreground != null) {
-          double alpha = Registry.doubleValue("editor.breadcrumbs.alpha");
-          g.setColor(ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha())));
+          g.setColor(ColorUtil.toAlpha(foreground, (int)(.6 * foreground.getAlpha())));
           paint(g, x, y, width, height, thickness);
         }
       }

@@ -15,20 +15,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Map;
 
 public class PyCCCommandLineState extends PythonCommandLineState {
@@ -60,7 +58,6 @@ public class PyCCCommandLineState extends PythonCommandLineState {
     assert course != null;
 
     group.addParameter(myRunConfiguration.getPathToTest());
-    group.addParameter(new File(course.getCourseDirectory()).getPath());
 
     String path = getCurrentTaskFilePath();
     if (path != null) {
@@ -97,7 +94,6 @@ public class PyCCCommandLineState extends PythonCommandLineState {
 
   @Override
   public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
-    CCUtils.updateResources(myRunConfiguration.getProject(), myTask, myTaskDir);
     ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.flushWindows(myTask, myTaskDir));
 
     return super.execute(executor, processStarter, patchers);

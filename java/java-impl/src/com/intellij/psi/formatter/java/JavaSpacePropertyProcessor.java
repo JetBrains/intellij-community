@@ -1301,12 +1301,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.ARROW) {
       if (myRole2 == ChildRole.LBRACE) {
-        switch (mySettings.BRACE_STYLE) {
+        switch (mySettings.LAMBDA_BRACE_STYLE) {
           case NEXT_LINE:
           case NEXT_LINE_SHIFTED:
           case NEXT_LINE_SHIFTED2:
             int space = spaceAroundArrow ? 1 : 0;
-            myResult = Spacing.createSpacing(space, space, 1, false, 0);
+            myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
             break;
           default:
             createSpaceInCode(spaceAroundArrow);

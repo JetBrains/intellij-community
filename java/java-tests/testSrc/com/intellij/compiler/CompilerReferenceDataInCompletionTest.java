@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+@SkipSlowTestLocally
 public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTestBase {
   @Override
   public void setUp() throws Exception {
@@ -50,9 +52,9 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "qwe", "asd(0)", "zxc(0)");
   }
 
-  public void testOverloads() {
-    doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
-  }
+  //public void testOverloads() {
+  //  doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
+  //}
 
   public void testConstructor() {
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "LinkedList", "ArrayList");
