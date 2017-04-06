@@ -154,6 +154,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "CATCH_ON_NEW_LINE",
                                    "FINALLY_ON_NEW_LINE",
                                    "INDENT_CASE_FROM_SWITCH",
+                                   "CASE_STATEMENT_ON_NEW_LINE",
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
