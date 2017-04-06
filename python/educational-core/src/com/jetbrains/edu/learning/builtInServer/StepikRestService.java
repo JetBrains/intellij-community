@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.platform.ProjectSetReader;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -89,8 +90,8 @@ public class StepikRestService extends RestService {
     String path = urlDecoder.path();
     Matcher matcher = OPEN_COURSE.matcher(path);
     if (matcher.matches()) {
-      int course_id = Integer.parseInt(matcher.group(1));
-      LOG.info("Open course: " + course_id);
+      int targetCourseId = Integer.parseInt(matcher.group(1));
+      LOG.info("Open course: " + targetCourseId);
 
       RecentProjectsManagerBase recentProjectsManager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
 
@@ -106,43 +107,55 @@ public class StepikRestService extends RestService {
 
       List<String> recentPaths = state.recentPaths;
 
-      LOG.info(recentPaths.toString());
-
       Project project = ProjectManager.getInstance().getDefaultProject();
       StudyTaskManager taskManager = new StudyTaskManager(project);
-
       SAXBuilder parser = new SAXBuilder();
-      Document xmlDoc;
 
       for (String projectPath : recentPaths) {
-        try {
-          String studyProjectXML = projectPath + STUDY_PROJECT_XML_PATH;
-          xmlDoc = parser.build(new File(studyProjectXML));
-          Element root = xmlDoc.getRootElement();
-          Element component = root.getChild("component");
-          if (component == null) {
-            continue;
-          }
-
-          taskManager.loadState(component);
-          Course course = taskManager.getCourse();
-
-          if (course == null) {
-            continue;
-          }
-
-          if (course.getId() == course_id) {
-            openProject(projectPath);
-            RestService.sendOk(request, context);
-            return null;
-          }
+        Element component = readComponent(parser, projectPath);
+        if (component == null) {
+          continue;
         }
-        catch (JDOMException | IllegalStateException | IOException ignored) {
+        int courseId = getCourseId(taskManager, component);
+
+        if (courseId == targetCourseId) {
+          openProject(projectPath);
+          RestService.sendOk(request, context);
+          return null;
         }
       }
     }
 
     RestService.sendStatus(HttpResponseStatus.NOT_FOUND, false, context.channel());
     return "Unknown command";
+  }
+
+  @Nullable
+  private static Element readComponent(@NotNull SAXBuilder parser, @NotNull String projectPath) {
+    Element component = null;
+    try {
+      String studyProjectXML = projectPath + STUDY_PROJECT_XML_PATH;
+      Document xmlDoc = parser.build(new File(studyProjectXML));
+      Element root = xmlDoc.getRootElement();
+      component = root.getChild("component");
+    }
+    catch (JDOMException | IOException ignored) {
+    }
+
+    return component;
+  }
+
+  private static int getCourseId(@NotNull StudyTaskManager taskManager, @NotNull Element component) {
+    try {
+      taskManager.loadState(component);
+      Course course = taskManager.getCourse();
+
+      if ((course instanceof RemoteCourse)) {
+        return ((RemoteCourse)course).getId();
+      }
+    }
+    catch (IllegalStateException ignored) {
+    }
+    return 0;
   }
 }
