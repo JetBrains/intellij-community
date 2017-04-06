@@ -70,6 +70,18 @@ public class ApplyPatchForBaseRevisionTexts {
 
     final List<PatchHunk> hunks = patch.getHunks();
 
+    CharSequence contents = baseContents != null ? baseContents.get() : null;
+    if (contents != null) {
+      contents = StringUtil.convertLineSeparators(contents.toString());
+      myBase = contents;
+      final GenericPatchApplier applier = new GenericPatchApplier(contents, hunks);
+      if (!applier.execute()) {
+        applier.trySolveSomehow();
+      }
+      setPatched(applier.getAfter());
+      return;
+    }
+
     if (provider != null) {
       try {
         provider.getBaseVersionContent(pathBeforeRename, text -> {
@@ -86,18 +98,6 @@ public class ApplyPatchForBaseRevisionTexts {
         myWarnings.add(e.getMessage());
       }
       if (myPatched != null) return;
-    }
-
-    CharSequence contents = baseContents.get();
-    if (contents != null) {
-      contents = StringUtil.convertLineSeparators(contents.toString());
-      myBase = contents;
-      final GenericPatchApplier applier = new GenericPatchApplier(contents, hunks);
-      if (! applier.execute()) {
-        applier.trySolveSomehow();
-      }
-      setPatched(applier.getAfter());
-      return;
     }
 
     final GenericPatchApplier applier = new GenericPatchApplier(myLocal, hunks);
