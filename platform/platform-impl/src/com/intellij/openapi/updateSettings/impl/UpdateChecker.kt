@@ -42,7 +42,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
@@ -69,7 +68,6 @@ object UpdateChecker {
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val DISABLED_UPDATE = "disabled_update.txt"
-  private val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
   private val ourAdditionalRequestOptions = hashMapOf<String, String>()
@@ -156,7 +154,7 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (SystemProperties.getBooleanProperty(NO_PLATFORM_UPDATE, false)) {
+    if (!settings.isPlatformUpdateEnabled) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
