@@ -88,6 +88,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -112,6 +113,19 @@ public class DiffUtil {
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUI.scale(2);
+
+  public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
+
+
+  @NotNull
+  private static List<Image> loadDiffFrameImages() {
+    return ContainerUtil.list(
+      ImageLoader.loadFromResource("/diff_frame16.png"),
+      ImageLoader.loadFromResource("/diff_frame32.png"),
+      ImageLoader.loadFromResource("/diff_frame64.png"),
+      ImageLoader.loadFromResource("/diff_frame128.png")
+    );
+  }
 
   //
   // Editor

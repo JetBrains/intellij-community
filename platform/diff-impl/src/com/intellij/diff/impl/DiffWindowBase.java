@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +57,7 @@ public abstract class DiffWindowBase {
         myProcessor.updateRequest();
       })
       .build();
-    myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
+    myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS);
     Disposer.register(myWrapper, myProcessor);
   }
 
