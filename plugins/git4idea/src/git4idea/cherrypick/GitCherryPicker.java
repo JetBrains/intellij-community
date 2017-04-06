@@ -262,22 +262,17 @@ public class GitCherryPicker extends VcsCherryPicker {
                                                       @NotNull final String commitMessage) {
     final CountDownLatch waiter = new CountDownLatch(1);
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        myChangeListManager.invokeAfterUpdate(new Runnable() {
-                                                public void run() {
-                                                  changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
-                                                  waiter.countDown();
-                                                }
-                                              }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Cherry-pick",
-                                              new Consumer<VcsDirtyScopeManager>() {
-                                                public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-                                                  vcsDirtyScopeManager.filePathsDirty(paths, null);
-                                                }
-                                              }, ModalityState.NON_MODAL);
-      }
-    }, ModalityState.NON_MODAL);
+    myChangeListManager.invokeAfterUpdate(new Runnable() {
+                                            public void run() {
+                                              changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
+                                              waiter.countDown();
+                                            }
+                                          }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Cherry-pick",
+                                          new Consumer<VcsDirtyScopeManager>() {
+                                            public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
+                                              vcsDirtyScopeManager.filePathsDirty(paths, null);
+                                            }
+                                          }, ModalityState.NON_MODAL);
     try {
       boolean success = waiter.await(100, TimeUnit.SECONDS);
       if (!success) {
