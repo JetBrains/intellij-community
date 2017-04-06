@@ -26,7 +26,7 @@ project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}
 
 task downloadJdk18 {
   def os = org.gradle.internal.os.OperatingSystem.current()
-  def arch = !os.isWindows() || !os.nativePrefix.endsWith('x86') ? 'x64' : 'x86'
+  def arch = !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
   def platform = currentPlatformName()
 
   def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
@@ -132,7 +132,7 @@ def intellijProjectDir() {
 static def jdk16Version() {
   def os = org.gradle.internal.os.OperatingSystem.current()
   if (os.isWindows()) {
-    def suffix = os.nativePrefix.endsWith('x86') ? "i586" : "x64"
+    def suffix = System.getenv("ProgramFiles(x86)") != null ? "x64" : "i586"
     return "6.45:windows_$suffix"
   }
   else if (os.isMacOsX()) {
