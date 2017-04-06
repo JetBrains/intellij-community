@@ -112,10 +112,6 @@ public class Task implements StudyItem {
     return name != null ? taskFiles.get(name) : null;
   }
 
-  public boolean isTaskFile(@NotNull final String fileName) {
-    return taskFiles.get(fileName) != null;
-  }
-
   public void addTaskFile(@NotNull final String name, int index) {
     TaskFile taskFile = new TaskFile();
     taskFile.setIndex(index);
