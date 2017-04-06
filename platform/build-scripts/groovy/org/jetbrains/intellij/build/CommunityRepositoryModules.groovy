@@ -238,8 +238,10 @@ class CommunityRepositoryModules {
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
-    plugin("android") {
-      withModule("android-plugin", "android.jar")
+    plugin("android-plugin") {
+      mainJarName = "android.jar"
+      directoryName = "android"
+      withModule("android", "android.jar")
       withModule("observable", "android.jar")
       withModule("wizard", "android.jar")
       withModule("sdk-updates", "android.jar")
