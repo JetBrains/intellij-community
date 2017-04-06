@@ -39,7 +39,7 @@ version '1.0'
 try {
   project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(1000)
   if (!project.ext.inJetBrainsNetwork && org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-    project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 www.google.com").waitFor() == 0
+    project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 repo.labs.intellij.net").waitFor() == 0
   }
   if (!project.ext.inJetBrainsNetwork) {
     logger.info('repo.labs.intellij.net is not reachable')
