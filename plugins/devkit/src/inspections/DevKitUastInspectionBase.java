@@ -42,7 +42,15 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
     }
 
     Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
+    if (module == null) {
+      return false;
+    }
+
     if (PluginModuleType.isPluginModuleOrDependency(module)) {
+      return true;
+    }
+
+    if (PsiUtil.isPluginModule(module)) {
       return true;
     }
 
