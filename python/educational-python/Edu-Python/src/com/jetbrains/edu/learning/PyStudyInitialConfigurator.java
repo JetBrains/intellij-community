@@ -26,6 +26,7 @@ public class PyStudyInitialConfigurator {
     if (!propertiesComponent.getBoolean(CONFIGURED_V40)) {
       final File courses = new File(PathManager.getConfigPath(), "courses");
       FileUtil.delete(courses);
+      propertiesComponent.setValue(CONFIGURED_V40, "true");
     }
   }
 }
