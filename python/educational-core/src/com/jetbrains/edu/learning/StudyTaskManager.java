@@ -1,5 +1,9 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -7,10 +11,16 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -163,6 +173,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
           state = StudySerializationUtils.Xml.convertToForthVersion(state);
         case 4:
           state = StudySerializationUtils.Xml.convertToFifthVersion(state);
+          updateTestHelper();
         //uncomment for future versions
         //case 5:
         //  state = StudySerializationUtils.Xml.convertToSixthVersion(state, myProject);
@@ -176,6 +187,26 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     catch (StudySerializationUtils.StudyUnrecognizedFormatException e) {
       LOG.error("Unexpected course format:\n", new XMLOutputter().outputString(state));
     }
+  }
+
+  private void updateTestHelper() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile testHelper = myProject.getBaseDir().findChild(EduNames.TEST_HELPER);
+      if (testHelper != null) {
+        StudyUtils.deleteFile(testHelper);
+      }
+      final FileTemplate template =
+        FileTemplateManager.getInstance(myProject).getInternalTemplate(FileUtil.getNameWithoutExtension(EduNames.TEST_HELPER));
+      try {
+        final PsiDirectory projectDir = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
+        if (projectDir != null) {
+          FileTemplateUtil.createFromTemplate(template, EduNames.TEST_HELPER, null, projectDir);
+        }
+      }
+      catch (Exception e) {
+        LOG.warn("Failed to create new test helper");
+      }
+    }));
   }
 
   private void deserialize(Element state) throws StudySerializationUtils.StudyUnrecognizedFormatException {
