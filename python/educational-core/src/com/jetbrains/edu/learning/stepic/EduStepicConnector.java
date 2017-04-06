@@ -11,10 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
@@ -292,10 +289,24 @@ public class EduStepicConnector {
     task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
     if (block.options.files != null) {
       for (TaskFile taskFile : block.options.files) {
+        addPlaceholdersTexts(taskFile);
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
     return task;
+  }
+
+  private static void addPlaceholdersTexts(TaskFile file) {
+    final String fileText = file.text;
+    final List<AnswerPlaceholder> placeholders = file.getAnswerPlaceholders();
+    for (AnswerPlaceholder placeholder : placeholders) {
+      final AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
+      final int offset = placeholder.getOffset();
+      final int length = placeholder.getLength();
+      if (fileText.length() > offset + length) {
+        info.setPlaceholderText(fileText.substring(offset, offset+length));
+      }
+    }
   }
 
   @NotNull
