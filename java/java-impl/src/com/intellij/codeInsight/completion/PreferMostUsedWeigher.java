@@ -18,12 +18,22 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.patterns.PsiMethodPattern;
+import com.intellij.patterns.StandardPatterns;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+
 class PreferMostUsedWeigher extends LookupElementWeigher {
+  static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
+    StandardPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
+    inClass(CommonClassNames.JAVA_LANG_OBJECT);
+
   private final CompilerReferenceService myCompilerReferenceService;
   private final boolean myConstructorSuggestion;
 
@@ -44,10 +54,13 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
   @Override
   public Integer weigh(@NotNull LookupElement element) {
     final PsiElement psi = ObjectUtils.tryCast(element.getObject(), PsiElement.class);
-    if (psi == null || !(psi.isPhysical())) {
+    if (!(psi instanceof PsiMember)) {
       return null;
     }
     else {
+      if (OBJECT_METHOD_PATTERN.accepts(psi)) {
+        return null;
+      }
       final Integer occurrenceCount = myCompilerReferenceService.getCompileTimeOccurrenceCount(psi, myConstructorSuggestion);
       return occurrenceCount == null ? null : - occurrenceCount;
     }

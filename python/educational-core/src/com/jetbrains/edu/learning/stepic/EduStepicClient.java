@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -70,6 +71,7 @@ public class EduStepicClient {
 
   static <T> T deserializeStepicResponse(Class<T> container, String responseString) {
     Gson gson = new GsonBuilder().registerTypeAdapter(StepicWrappers.StepOptions.class, new StudySerializationUtils.Json.StepicStepOptionsAdapter()).
+      excludeFieldsWithModifiers(Modifier.TRANSIENT).
       setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").
       setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);

@@ -78,7 +78,7 @@ class BuildContextImpl extends BuildContext {
 
   private static void setupDependencies(BuildMessages messages, String communityHome) {
     messages.info("Setting up installer dependencies")    
-    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'cleanSetupJbre', 'setupDependencies')) {
+    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupDependencies')) {
       messages.error("Cannot setup installer dependencies")
     }
   }

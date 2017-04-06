@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -28,7 +27,6 @@ public class PyStudyTestRunner extends StudyTestRunner {
 
   public Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
     final Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
-    Course course = myTask.getLesson().getCourse();
     PyEduPluginConfigurator configurator = new PyEduPluginConfigurator();
     String testsFileName = configurator.getTestFileName();
     if (myTask instanceof TaskWithSubtasks) {
@@ -50,8 +48,6 @@ public class PyStudyTestRunner extends StudyTestRunner {
       if (pythonPath != null) {
         commandLine.setExePath(pythonPath);
         commandLine.addParameter(testRunner.getPath());
-        File resourceFile = new File(course.getCourseDirectory());
-        commandLine.addParameter(resourceFile.getPath());
         commandLine.addParameter(FileUtil.toSystemDependentName(executablePath));
         return commandLine.createProcess();
       }

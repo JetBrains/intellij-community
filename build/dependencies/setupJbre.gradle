@@ -27,9 +27,15 @@ jrePlatformsToDownload(targetOs).each { platform ->
     if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
       task("untarJbrex_${platform}_$arch", type: Copy, dependsOn: "downloadJbrex_${platform}_$arch") {
         def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
-        from tarTree(downloadOutputs.singleFile)
+        from tarTree(downloadOutputs.singleFile), {
+          exclude 'lib/tools.jar'
+        }
+        from tarTree(downloadOutputs.singleFile), {
+          include 'lib/tools.jar'
+          into 'jre'
+        }
         into { "${downloadOutputs.singleFile.parent}/${downloadOutputs.singleFile.name - '.tar.gz'}/" }
-        rename('lib/tools.jar', 'jre/lib/tools.jar')
+        includeEmptyDirs = false
       }
     }
     else {
@@ -66,6 +72,7 @@ def createTarJbreTask(String taskName, String untarTaskName, String platform, St
       if (!includeToolsJar) {
         exclude "**/tools.jar"
       }
+      into dirToTar
       compression = Compression.GZIP
       setArchiveName("${archiveName}.tar.gz")
       destinationDir = untarOutputs.singleFile.parentFile

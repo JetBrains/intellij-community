@@ -14,30 +14,31 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import com.jetbrains.edu.learning.StudySerializationUtils;
-import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 public class CCCreateCourseArchive extends DumbAwareAction {
@@ -90,32 +91,25 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
 
-    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
-    if (configurator == null) {
-      return;
-    }
-    FileFilter filter = pathname -> !configurator.excludeFromArchive(pathname);
-
-    for (VirtualFile child : baseDir.getChildren()) {
-      String name = child.getName();
-      File fromFile = new File(child.getPath());
-      if (CCUtils.GENERATED_FILES_FOLDER.equals(name) || Project.DIRECTORY_STORE_FOLDER.equals(name)
-          || name.contains("iml") || configurator.excludeFromArchive(fromFile)) {
-        continue;
-      }
-      copyChild(archiveFolder, filter, child, fromFile);
-    }
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         archiveFolder.refresh(false, true);
         Course courseCopy = course.copy();
         replaceAnswerFilesWithTaskFiles(courseCopy);
+        courseCopy.sortLessons();
+        createAdditionalFiles(courseCopy);
         generateJson(archiveFolder, courseCopy);
         VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
         packCourse(archiveFolder, locationDir, zipName, showMessage);
         synchronize(project);
+      }
+
+      private void createAdditionalFiles(Course course) {
+        final Lesson lesson = CCUtils.createAdditionalLesson(course, project);
+        if (lesson != null) {
+          course.addLesson(lesson);
+        }
       }
 
       private void replaceAnswerFilesWithTaskFiles(Course courseCopy) {
@@ -126,61 +120,76 @@ public class CCCreateCourseArchive extends DumbAwareAction {
           for (Task task : lesson.getTaskList()) {
             final VirtualFile taskDir = task.getTaskDir(project);
             if (taskDir == null) continue;
-            String taskDirName = EduNames.TASK + String.valueOf(task.getIndex());
-            VirtualFile studentFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDirName, taskDirName);
-            if (studentFileDir == null) {
-              continue;
-            }
-            VirtualFile srcDir = studentFileDir.findChild(EduNames.SRC);
-            if (srcDir != null) {
-              studentFileDir = srcDir;
-            }
-            if (task instanceof TaskWithSubtasks) {
-              transformSubtaskTestsToTextFiles(studentFileDir);
-            }
-            for (String taskFile : task.getTaskFiles().keySet()) {
-              VirtualFile answerFile = taskDir.findFileByRelativePath(taskFile);
-              if (answerFile == null) {
-                continue;
-              }
-              EduUtils.createStudentFile(this, project, answerFile, studentFileDir, task, 0);
-            }
+            convertToStudentTaskFiles(task, taskDir);
+            addTestsToTask(task);
+            addDescriptions(task);
           }
         }
       }
 
-      private void transformSubtaskTestsToTextFiles(VirtualFile studentFileDir) {
-        Condition<VirtualFile> isSubtaskTestFile =
-          file -> CCUtils.isTestsFile(project, file) && file.getName().contains(EduNames.SUBTASK_MARKER);
-        List<VirtualFile> subtaskTests = ContainerUtil.filter(Arrays.asList(studentFileDir.getChildren()), isSubtaskTestFile);
-        for (VirtualFile subtaskTest : subtaskTests) {
+      private void convertToStudentTaskFiles(Task task, VirtualFile taskDir) {
+        final HashMap<String, TaskFile> studentTaskFiles = new HashMap<>();
+        for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+          VirtualFile answerFile = taskDir.findFileByRelativePath(entry.getKey());
+          if (answerFile == null) {
+            continue;
+          }
+          final TaskFile studentFile = EduUtils.createStudentFile(project, answerFile, task, 0);
+          if (studentFile != null) {
+            studentTaskFiles.put(entry.getKey(), studentFile);
+          }
+        }
+        task.taskFiles = studentTaskFiles;
+      }
+
+      private void addDescriptions(@NotNull final Task task) {
+        final List<VirtualFile> descriptions = getDescriptionFiles(task, project);
+        for (VirtualFile file : descriptions) {
           try {
-            subtaskTest.rename(this, subtaskTest.getNameWithoutExtension() + ".txt");
+            task.addTaskText(file.getName(), VfsUtilCore.loadText(file));
           }
           catch (IOException e) {
-            LOG.error(e);
+            LOG.warn("Failed to load text " + file.getName());
           }
         }
       }
-    });
-  }
 
-  private static void copyChild(VirtualFile archiveFolder, FileFilter filter, VirtualFile child, File fromFile) {
-    File toFile = new File(archiveFolder.getPath(), child.getName());
-
-    try {
-      if (child.isDirectory()) {
-        FileUtil.copyDir(fromFile, toFile, filter);
-      }
-      else {
-        if (filter.accept(fromFile)) {
-          FileUtil.copy(fromFile, toFile);
+      private void addTestsToTask(Task task) {
+        final List<VirtualFile> testFiles = getTestFiles(task, project);
+        for (VirtualFile file : testFiles) {
+          try {
+            task.addTestsTexts(file.getName(), VfsUtilCore.loadText(file));
+          }
+          catch (IOException e) {
+            LOG.warn("Failed to load text " + file.getName());
+          }
         }
       }
-    }
-    catch (IOException e) {
-      LOG.info("Failed to copy" + fromFile.getPath(), e);
-    }
+
+      private List<VirtualFile> getTestFiles(@NotNull Task task, @NotNull Project project) {
+        List<VirtualFile> testFiles = new ArrayList<>();
+        VirtualFile taskDir = task.getTaskDir(project);
+        if (taskDir == null) {
+          return testFiles;
+        }
+        testFiles.addAll(Arrays.stream(taskDir.getChildren())
+                           .filter(file -> StudyUtils.isTestsFile(project, file.getName()))
+                           .collect(Collectors.toList()));
+        return testFiles;
+      }
+
+      private List<VirtualFile> getDescriptionFiles(@NotNull Task task, @NotNull Project project) {
+        List<VirtualFile> testFiles = new ArrayList<>();
+        VirtualFile taskDir = task.getTaskDir(project);
+        if (taskDir == null) {
+          return testFiles;
+        }
+        testFiles.addAll(Arrays.stream(taskDir.getChildren())
+                           .filter(file -> StudyUtils.isTaskDescriptionFile(file.getName()))
+                           .collect(Collectors.toList()));
+        return testFiles;
+      }
+    });
   }
 
   private static void synchronize(@NotNull final Project project) {
@@ -212,7 +221,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void generateJson(VirtualFile parentDir, Course course) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
-      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskSerializer()).create();
+      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskAdapter()).create();
     final String json = gson.toJson(course);
     final File courseJson = new File(parentDir.getPath(), EduNames.COURSE_META_FILE);
     OutputStreamWriter outputStreamWriter = null;

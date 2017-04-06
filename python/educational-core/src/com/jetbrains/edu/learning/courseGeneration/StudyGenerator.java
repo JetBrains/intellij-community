@@ -1,125 +1,33 @@
 package com.jetbrains.edu.learning.courseGeneration;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class StudyGenerator {
-  private StudyGenerator() {
-
-  }
   private static final Logger LOG = Logger.getInstance(StudyGenerator.class.getName());
 
-  /**
-   * Creates task files in its task folder in project user created
-   *
-   * @param taskDir      project directory of task which task file belongs to
-   * @param resourceRoot directory where original task file stored
-   * @throws IOException
-   */
-  public static void createTaskFile(@NotNull final VirtualFile taskDir, @NotNull final File resourceRoot,
-                                    @NotNull final String name) throws IOException {
-    String systemIndependentName = FileUtil.toSystemIndependentName(name);
-    File resourceFile = new File(resourceRoot, name);
-    File fileInProject = new File(taskDir.getPath(), systemIndependentName);
-    FileUtil.copyFileOrDir(resourceFile, fileInProject);
-  }
+  private StudyGenerator() {}
 
-  /**
-   * Creates task directory in its lesson folder in project user created
-   *
-   * @param lessonDir    project directory of lesson which task belongs to
-   * @param resourceRoot directory where original task file stored
-   * @throws IOException
-   */
-  public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir, @NotNull final File resourceRoot,
-                                @NotNull final Project project) throws IOException {
-    VirtualFile taskDir = lessonDir.createChildDirectory(project, EduNames.TASK + Integer.toString(task.getIndex()));
-    File newResourceRoot = new File(resourceRoot, taskDir.getName());
-    int i = 0;
-    for (Map.Entry<String, TaskFile> taskFile : task.getTaskFiles().entrySet()) {
-      TaskFile taskFileContent = taskFile.getValue();
-      taskFileContent.setIndex(i);
-      i++;
-      createTaskFile(taskDir, newResourceRoot, taskFile.getKey());
-    }
-    File[] filesInTask = newResourceRoot.listFiles();
-    if (filesInTask != null) {
-      for (File file : filesInTask) {
-        String fileName = file.getName();
-        if (!task.isTaskFile(fileName)) {
-          File resourceFile = new File(newResourceRoot, fileName);
-          File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
-          FileUtil.copyFileOrDir(resourceFile, fileInProject);
-          if (!StudyUtils.isTestsFile(project, fileName) && !StudyUtils.isTaskDescriptionFile(fileName)) {
-            StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Creates lesson directory in its course folder in project user created
-   *
-   * @param courseDir    project directory of course
-   * @param resourceRoot directory where original lesson stored
-   * @throws IOException
-   */
-  public static void createLesson(@NotNull final Lesson lesson, @NotNull final VirtualFile courseDir, @NotNull final File resourceRoot,
-                                  @NotNull final Project project) throws IOException {
-    if (EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())) return;
-    String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex());
-    VirtualFile lessonDir = courseDir.createChildDirectory(project, lessonDirName);
-    final List<Task> taskList = lesson.getTaskList();
-    for (int i = 1; i <= taskList.size(); i++) {
-      Task task = taskList.get(i - 1);
-      task.setIndex(i);
-      createTask(task, lessonDir, new File(resourceRoot, lessonDir.getName()), project);
-    }
-  }
-
-  /**
-   * Creates course directory in project user created
-   *
-   * @param baseDir      project directory
-   * @param resourceRoot directory where original course is stored
-   */
-  public static void createCourse(@NotNull final Course course, @NotNull final VirtualFile baseDir, @NotNull final File resourceRoot,
-                                  @NotNull final Project project) {
-
+  public static void createCourse(@NotNull final Course course, @NotNull final VirtualFile baseDir) {
     try {
-      final List<Lesson> lessons = course.getLessons();
+      final List<Lesson> lessons = course.getLessons(true);
       for (int i = 1; i <= lessons.size(); i++) {
         Lesson lesson = lessons.get(i - 1);
         lesson.setIndex(i);
-        createLesson(lesson, baseDir, resourceRoot, project);
-      }
-      File[] files = resourceRoot.listFiles(
-        (dir, name) -> !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS));
-      if (files != null) {
-        for (File file : files) {
-          File dir = new File(baseDir.getPath(), file.getName());
-          if (file.isDirectory()) {
-            FileUtil.copyDir(file, dir);
-            continue;
-          }
-          FileUtil.copy(file, dir);
-        }
+        createLesson(lesson, baseDir);
       }
     }
     catch (IOException e) {
@@ -127,4 +35,92 @@ public class StudyGenerator {
     }
   }
 
+  public static void createLesson(@NotNull final Lesson lesson, @NotNull final VirtualFile courseDir) throws IOException {
+    if (EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())) {
+      createAdditionalFiles(lesson, courseDir);
+    }
+    else {
+      String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex());
+      VirtualFile lessonDir = courseDir.createChildDirectory(courseDir, lessonDirName);
+      final List<Task> taskList = lesson.getTaskList();
+      for (int i = 1; i <= taskList.size(); i++) {
+        Task task = taskList.get(i - 1);
+        task.setIndex(i);
+        createTask(task, lessonDir);
+      }
+    }
+  }
+
+  public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir) throws IOException {
+    VirtualFile taskDir = lessonDir.createChildDirectory(lessonDir, EduNames.TASK + Integer.toString(task.getIndex()));
+    createTaskContent(task, taskDir);
+  }
+
+  public static void createTaskContent(@NotNull Task task, VirtualFile taskDir) throws IOException {
+    int i = 0;
+    for (Map.Entry<String, TaskFile> taskFile : task.getTaskFiles().entrySet()) {
+      TaskFile taskFileContent = taskFile.getValue();
+      taskFileContent.setIndex(i);
+      i++;
+      createTaskFile(taskDir, taskFile.getValue());
+    }
+    createTestFiles(taskDir, task);
+    createDescriptions(taskDir, task);
+  }
+
+  public static void createTaskFile(@NotNull final VirtualFile taskDir, @NotNull final TaskFile taskFile) throws IOException {
+    final String name = taskFile.name;
+    createChildFile(taskDir, name, taskFile.text);
+  }
+
+  public static void createDescriptions(VirtualFile taskDir, Task task) throws IOException {
+    final Map<String, String> texts = task.getTaskTexts();
+    for (Map.Entry<String, String> entry : texts.entrySet()) {
+      final String name = entry.getKey();
+      final VirtualFile virtualTaskFile = taskDir.createChildData(taskDir, name);
+      VfsUtil.saveText(virtualTaskFile, entry.getValue());
+    }
+  }
+
+  public static void createTestFiles(VirtualFile taskDir, Task task) throws IOException {
+    final Map<String, String> tests = task.getTestsText();
+    for (Map.Entry<String, String> entry : tests.entrySet()) {
+      final String name = entry.getKey();
+      final VirtualFile virtualTaskFile = taskDir.createChildData(taskDir, name);
+      VfsUtil.saveText(virtualTaskFile, entry.getValue());
+    }
+  }
+
+  private static void createAdditionalFiles(Lesson lesson, VirtualFile courseDir) throws IOException {
+    final List<Task> taskList = lesson.getTaskList();
+    if (taskList.size() != 1) return;
+    final Task task = taskList.get(0);
+    for (Map.Entry<String, String> entry : task.getTestsText().entrySet()) {
+      createChildFile(courseDir, entry.getKey(), entry.getValue());
+    }
+  }
+
+
+  public static void createChildFile(@NotNull VirtualFile taskDir, String name, String text) throws IOException {
+    String newDirectories = null;
+    String fileName = name;
+    VirtualFile dir = taskDir;
+    if (name.contains("/")) {
+      int pos = name.lastIndexOf("/");
+      fileName = name.substring(pos + 1);
+      newDirectories = name.substring(0, pos);
+    }
+    if (newDirectories != null) {
+      dir = VfsUtil.createDirectoryIfMissing(taskDir, newDirectories);
+    }
+    if (dir != null) {
+      final VirtualFile virtualTaskFile = dir.createChildData(taskDir, fileName);
+      if (EduUtils.isImage(name)) {
+        virtualTaskFile.setBinaryContent(Base64.decodeBase64(text));
+      }
+      else {
+        VfsUtil.saveText(virtualTaskFile, text);
+      }
+    }
+  }
 }

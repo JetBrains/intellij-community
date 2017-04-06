@@ -456,16 +456,13 @@ public class InjectedLanguageUtil {
       DebugUtil.finishPsiModification();
     }
 
-    PsiElement context = InjectedLanguageManager.getInstance(injected.getProject()).getInjectionHost(injected);
-    PsiFile hostFile;
-    if (context != null) {
-      hostFile = context.getContainingFile();
-    }
-    else {
-      VirtualFile delegate = virtualFile.getDelegate();
-      hostFile = delegate.isValid() ? psiManagerEx.findFile(delegate) : null;
-    }
-    if (hostFile != null) {
+    VirtualFile delegate = virtualFile.getDelegate();
+    if (!delegate.isValid()) return;
+
+    FileViewProvider viewProvider = psiManagerEx.getFileManager().findCachedViewProvider(delegate);
+    if (!(viewProvider instanceof SingleRootFileViewProvider)) return;
+
+    for (PsiFile hostFile : ((SingleRootFileViewProvider)viewProvider).getCachedPsiFiles()) {
       // modification of cachedInjectedDocuments must be under PsiLock
       synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         List<DocumentWindow> cachedInjectedDocuments = getCachedInjectedDocuments(hostFile);

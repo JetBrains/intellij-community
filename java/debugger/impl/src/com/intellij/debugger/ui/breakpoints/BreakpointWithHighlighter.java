@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -242,19 +241,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
   }
 
-  @Nullable
-  public PsiFile getPsiFile() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    if (position != null) {
-      VirtualFile file = position.getFile();
-      if (file.isValid()) {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    }
-    return null;
-  }
-
   static void createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
                                               @Nullable Location location,
                                               @NotNull DebugProcessImpl debugProcess) {
@@ -380,7 +366,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   @Nullable
   public Document getDocument() {
-    PsiFile file = getPsiFile();
+    PsiFile file = DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject);
     if (file != null) {
       return PsiDocumentManager.getInstance(myProject).getDocument(file);
     }

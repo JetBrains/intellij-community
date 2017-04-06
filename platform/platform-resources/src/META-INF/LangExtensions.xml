@@ -997,7 +997,7 @@
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
       implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
     <schemeImporter
-      name="Intellij IDEA color scheme (.icls)"
+      name="Intellij IDEA color scheme (.icls) or settings (.jar)"
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
       implementationClass="com.intellij.application.options.colors.ColorSchemeImporter"/>
 

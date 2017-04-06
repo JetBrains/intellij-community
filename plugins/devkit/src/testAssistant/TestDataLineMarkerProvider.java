@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collections;
 
@@ -73,14 +76,13 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
   public static String getTestDataBasePath(@Nullable PsiClass psiClass) {
     if (psiClass == null) return null;
 
-    final PsiAnnotation annotation =
-      AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
+    final UAnnotation annotation =
+      UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)), UAnnotation.class);
     if (annotation != null) {
-      final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      if (value instanceof PsiExpression) {
-        final Project project = value.getProject();
-        final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
-        final Object constantValue = evaluationHelper.computeConstantExpression(value, false);
+      UExpression value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+      if (value != null) {
+        final Project project = psiClass.getProject();
+        final Object constantValue = value.evaluate();
         if (constantValue instanceof String) {
           String path = (String) constantValue;
           if (path.contains(CONTENT_ROOT_VARIABLE)) {

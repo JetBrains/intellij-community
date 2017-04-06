@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 
 public class CCCreateTask extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.TASK_TITLED;
@@ -100,11 +99,10 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   }
 
   @Override
-  protected List<? extends StudyItem> getSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
+  protected void sortSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
     if (parentItem instanceof Lesson) {
-      return ((Lesson)parentItem).getTaskList();
+      Collections.sort(((Lesson)parentItem).getTaskList(), EduUtils.INDEX_COMPARATOR);
     }
-    return Collections.emptyList();
   }
 
   @Override

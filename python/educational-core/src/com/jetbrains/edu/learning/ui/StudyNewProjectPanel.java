@@ -29,7 +29,6 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
@@ -52,15 +51,16 @@ import java.util.List;
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
-  private List<CourseInfo> myAvailableCourses = new ArrayList<>();
+  private List<Course> myAvailableCourses = new ArrayList<>();
   private JButton myBrowseButton;
-  private ComboBox<CourseInfo> myCoursesComboBox;
+  private ComboBox<Course> myCoursesComboBox;
   private JButton myRefreshButton;
   private JLabel myAuthorLabel;
   private JPanel myInfoPanel;
   private JTextPane myDescriptionPane;
   private JComponent myAnchor;
   private final StudyProjectGenerator myGenerator;
+  private boolean isLocal = false;
   private static final String CONNECTION_ERROR = "<html>Failed to download courses.<br>Check your Internet connection.</html>";
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
@@ -68,10 +68,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepik</u> to open the adaptive course </html>";
   private static final String LOGIN_TO_STEPIC = "Login to Stepik";
 
-  public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
+  public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator, boolean isLocal) {
     super(new VerticalFlowLayout(true, true));
     myGenerator = generator;
-
+    this.isLocal = isLocal;
     layoutPanel();
     initListeners();
   }
@@ -120,21 +120,21 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
   private void initCoursesCombobox() {
     myAvailableCourses =
-      myGenerator.getCoursesUnderProgress(false, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
-    if (myAvailableCourses.contains(CourseInfo.INVALID_COURSE)) {
+      myGenerator.getCoursesUnderProgress(!isLocal, "Getting Available Courses", ProjectManager.getInstance().getDefaultProject());
+    if (myAvailableCourses.contains(Course.INVALID_COURSE)) {
       setError(CONNECTION_ERROR);
     }
     else {
       addCoursesToCombobox(myAvailableCourses);
-      final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
+      final Course selectedCourse = StudyUtils.getFirst(myAvailableCourses);
       if (selectedCourse == null) return;
       setAuthors(selectedCourse);
       myDescriptionPane.setText(selectedCourse.getDescription());
       myDescriptionPane.setEditable(false);
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(selectedCourse);
-      if (myGenerator.getSelectedCourseInfo() != null) {
-        myCoursesComboBox.setSelectedItem(myGenerator.getSelectedCourseInfo());
+      if (myGenerator.getSelectedCourse() != null) {
+        myCoursesComboBox.setSelectedItem(myGenerator.getSelectedCourse());
       }
       if (selectedCourse.isAdaptive() && !myGenerator.isLoggedIn()) {
         setError(LOGIN_TO_STEPIC_MESSAGE);
@@ -173,7 +173,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        file -> {
                                          String fileName = file.getPath();
                                          int oldSize = myAvailableCourses.size();
-                                         CourseInfo courseInfo = myGenerator.addLocalCourse(fileName);
+                                         Course courseInfo = myGenerator.addLocalCourse(fileName);
                                          if (courseInfo != null) {
                                            if (oldSize != myAvailableCourses.size()) {
                                              myCoursesComboBox.addItem(courseInfo);
@@ -184,11 +184,11 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                          else {
                                            setError(INVALID_COURSE);
                                            myCoursesComboBox.removeAllItems();
-                                           myCoursesComboBox.addItem(CourseInfo.INVALID_COURSE);
-                                           for (CourseInfo course : myAvailableCourses) {
+                                           myCoursesComboBox.addItem(Course.INVALID_COURSE);
+                                           for (Course course : myAvailableCourses) {
                                              myCoursesComboBox.addItem(course);
                                            }
-                                           myCoursesComboBox.setSelectedItem(CourseInfo.INVALID_COURSE);
+                                           myCoursesComboBox.setSelectedItem(Course.INVALID_COURSE);
                                          }
                                        });
               }
@@ -220,8 +220,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           isComboboxInitialized = true;
           initCoursesCombobox();
         }
-        CourseInfo selectedCourse = (CourseInfo)myCoursesComboBox.getSelectedItem();
-        if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
+        Course selectedCourse = (Course)myCoursesComboBox.getSelectedItem();
+        if (selectedCourse == null || selectedCourse.equals(Course.INVALID_COURSE)) {
           setError(CONNECTION_ERROR);
         }
       }
@@ -255,9 +255,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myAnchor = anchor;
   }
 
-  public void updateInfoPanel(@NotNull CourseInfo selectedCourseInfo) {
-    setAuthors(selectedCourseInfo);
-    myDescriptionPane.setText(selectedCourseInfo.getDescription());
+  public void updateInfoPanel(@NotNull Course selectedCourse) {
+    setAuthors(selectedCourse);
+    myDescriptionPane.setText(selectedCourse.getDescription());
   }
 
   /**
@@ -268,15 +268,15 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private class RefreshActionListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      final List<CourseInfo> courses =
+      final List<Course> courses =
         myGenerator.getCoursesUnderProgress(true, "Refreshing Course List", DefaultProjectFactory.getInstance().getDefaultProject());
-      if (!courses.contains(CourseInfo.INVALID_COURSE)) {
+      if (!courses.contains(Course.INVALID_COURSE)) {
         refreshCoursesList(courses);
       }
     }
   }
 
-  private void refreshCoursesList(@NotNull final List<CourseInfo> courses) {
+  private void refreshCoursesList(@NotNull final List<Course> courses) {
     if (courses.isEmpty()) {
       setError(CONNECTION_ERROR);
       return;
@@ -284,17 +284,16 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myCoursesComboBox.removeAllItems();
 
     addCoursesToCombobox(courses);
-    final CourseInfo selectedCourse = StudyUtils.getFirst(courses);
+    final Course selectedCourse = StudyUtils.getFirst(courses);
     if (selectedCourse == null) return;
     myGenerator.setSelectedCourse(selectedCourse);
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
-    StudyProjectGenerator.flushCache(myAvailableCourses, false);
   }
 
-  private void addCoursesToCombobox(@NotNull List<CourseInfo> courses) {
-    for (CourseInfo courseInfo : courses) {
+  private void addCoursesToCombobox(@NotNull List<Course> courses) {
+    for (Course courseInfo : courses) {
       myCoursesComboBox.addItem(courseInfo);
     }
   }
@@ -309,15 +308,15 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     @Override
     public void actionPerformed(ActionEvent e) {
       JComboBox cb = (JComboBox)e.getSource();
-      CourseInfo selectedCourse = (CourseInfo)cb.getSelectedItem();
-      if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
+      Course selectedCourse = (Course)cb.getSelectedItem();
+      if (selectedCourse == null || selectedCourse.equals(Course.INVALID_COURSE)) {
         myAuthorLabel.setText("");
         myDescriptionPane.setText("");
         setError(INVALID_COURSE);
         return;
       }
       updateInfoPanel(selectedCourse);
-      myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
+      myCoursesComboBox.removeItem(Course.INVALID_COURSE);
       myGenerator.setSelectedCourse(selectedCourse);
 
       setOK();
@@ -329,12 +328,12 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     }
   }
 
-  private void setAuthors(CourseInfo selectedCourse) {
+  private void setAuthors(Course selectedCourse) {
     final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
     myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
   }
 
-  public JComboBox<CourseInfo> getCoursesComboBox() {
+  public JComboBox<Course> getCoursesComboBox() {
     return myCoursesComboBox;
   }
 
@@ -367,7 +366,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           stepicUser.setPassword(myLoginPanel.getPassword());
           StudySettings.getInstance().setUser(stepicUser);
           myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
-          final List<CourseInfo> courses = myGenerator.getCourses(true);
+          final List<Course> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }

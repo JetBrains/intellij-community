@@ -5,17 +5,13 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -26,7 +22,6 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,6 +57,7 @@ public class StudySerializationUtils {
   public static class Xml {
     public final static String COURSE_ELEMENT = "courseElement";
     public final static String MAIN_ELEMENT = "StudyTaskManager";
+    public final static String REMOTE_COURSE = "RemoteCourse";
     public static final String MAP = "map";
     public static final String KEY = "key";
     public static final String VALUE = "value";
@@ -262,14 +258,17 @@ public class StudySerializationUtils {
       final Element adaptive = getChildWithName(courseElement, ADAPTIVE);
       for (Element lesson : getChildList(courseElement, LESSONS)) {
         for (Element task : getChildList(lesson, TASK_LIST)) {
-          final Element lastSubtaskIndex = getChildWithName(task, LAST_SUBTASK_INDEX);
-          final Element theoryTask = getChildWithName(task, THEORY_TAG);
-          final Element adaptiveParams = getChildWithName(task, ADAPTIVE_TASK_PARAMETERS);
-          final boolean hasAdaptiveParams = !adaptiveParams.getChildren().isEmpty();
-          if (Integer.valueOf(lastSubtaskIndex.getAttributeValue(VALUE)) != 0) {
+          final Element lastSubtaskIndex = getChildWithName(task, LAST_SUBTASK_INDEX, true); //could be broken by 3->4 migration
+          final Element adaptiveParams = getChildWithName(task, ADAPTIVE_TASK_PARAMETERS, true);
+          Element theoryTask = getChildWithName(task, THEORY_TAG, true);
+          if (theoryTask == null && adaptiveParams != null) {
+            theoryTask = getChildWithName(adaptiveParams, THEORY_TAG, true);
+          }
+          final boolean hasAdaptiveParams = adaptiveParams != null && !adaptiveParams.getChildren().isEmpty();
+          if (lastSubtaskIndex != null && Integer.valueOf(lastSubtaskIndex.getAttributeValue(VALUE)) != 0) {
             task.setName(TASK_WITH_SUBTASKS);
           }
-          else if (Boolean.valueOf(theoryTask.getAttributeValue(VALUE))) {
+          else if (theoryTask != null && Boolean.valueOf(theoryTask.getAttributeValue(VALUE))) {
             task.setName(THEORY_TASK);
           }
           else if (hasAdaptiveParams) {
@@ -455,61 +454,6 @@ public class StudySerializationUtils {
     private Json() {
     }
 
-    public static class CourseTypeAdapter implements JsonDeserializer<Course> {
-
-      private final File myCourseFile;
-
-      public CourseTypeAdapter(File courseFile) {
-        myCourseFile = courseFile;
-      }
-
-      @Override
-      public Course deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        JsonObject courseObject = json.getAsJsonObject();
-        JsonArray lessons = courseObject.getAsJsonArray(LESSONS);
-        for (int lessonIndex = 1; lessonIndex <= lessons.size(); lessonIndex++) {
-          JsonObject lessonObject = lessons.get(lessonIndex - 1).getAsJsonObject();
-          JsonArray tasks = lessonObject.getAsJsonArray(TASK_LIST);
-          for (int taskIndex = 1; taskIndex <= tasks.size(); taskIndex++) {
-            JsonObject taskObject = tasks.get(taskIndex - 1).getAsJsonObject();
-            for (Map.Entry<String, JsonElement> taskFile : taskObject.getAsJsonObject(TASK_FILES).entrySet()) {
-              String name = taskFile.getKey();
-              String filePath = FileUtil.join(myCourseFile.getParent(), EduNames.LESSON + lessonIndex, EduNames.TASK + taskIndex, name);
-              VirtualFile resourceFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
-              if (resourceFile == null) {
-                continue;
-              }
-              Document document = FileDocumentManager.getInstance().getDocument(resourceFile);
-              if (document == null) {
-                continue;
-              }
-              JsonObject taskFileObject = taskFile.getValue().getAsJsonObject();
-              JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-              for (JsonElement placeholder : placeholders) {
-                convertToAbsoluteOffset(document, placeholder);
-                if (placeholder.getAsJsonObject().getAsJsonObject(SUBTASK_INFOS) == null) {
-                  convertToSubtaskInfo(placeholder.getAsJsonObject());
-                  removeIndexFromSubtaskInfos(placeholder.getAsJsonObject());
-                }
-              }
-            }
-          }
-        }
-        return new GsonBuilder().registerTypeAdapter(Task.class, new TaskDeserializer()).create().fromJson(json, Course.class);
-      }
-
-      private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
-        JsonObject placeholderObject = placeholder.getAsJsonObject();
-        if (placeholderObject.getAsJsonPrimitive(OFFSET) != null) {
-          return;
-        }
-        int line = placeholderObject.getAsJsonPrimitive(LINE).getAsInt();
-        int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
-        int offset = document.getLineStartOffset(line) + start;
-        placeholderObject.addProperty(OFFSET, offset);
-      }
-    }
-
     public static class StepicStepOptionsAdapter implements JsonDeserializer<StepicWrappers.StepOptions> {
       @Override
       public StepicWrappers.StepOptions deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
@@ -537,7 +481,7 @@ public class StudySerializationUtils {
         return stepOptions;
       }
 
-      private JsonObject convertToThirdVersion(JsonObject stepOptionsJson) {
+      private static JsonObject convertToThirdVersion(JsonObject stepOptionsJson) {
         if (!stepOptionsJson.has(LAST_SUBTASK)) return stepOptionsJson;
         final int lastSubtaskIndex = stepOptionsJson.get(LAST_SUBTASK).getAsInt();
         if (lastSubtaskIndex == 0) return stepOptionsJson;
@@ -549,7 +493,7 @@ public class StudySerializationUtils {
           }
         }
         final JsonArray descriptions = stepOptionsJson.getAsJsonArray(TEXTS);
-        if (descriptions.size() > 0) {
+        if (descriptions != null && descriptions.size() > 0) {
           final JsonObject fileWrapper = descriptions.get(0).getAsJsonObject();
           if (fileWrapper.has(NAME)) {
             replaceWithSubtask(fileWrapper);
@@ -558,7 +502,7 @@ public class StudySerializationUtils {
         return stepOptionsJson;
       }
 
-      private void replaceWithSubtask(JsonObject fileWrapper) {
+      private static void replaceWithSubtask(JsonObject fileWrapper) {
         final String file = fileWrapper.get(NAME).getAsString();
         final String extension = FileUtilRt.getExtension(file);
         final String name = FileUtil.getNameWithoutExtension(file);
@@ -673,7 +617,7 @@ public class StudySerializationUtils {
       subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
     }
 
-    public static class TaskSerializer implements JsonSerializer<Task> {
+    public static class TaskAdapter implements JsonSerializer<Task>, JsonDeserializer<Task> {
 
       @Override
       public JsonElement serialize(Task src, Type typeOfSrc, JsonSerializationContext context) {
@@ -683,9 +627,6 @@ public class StudySerializationUtils {
         task.add(TASK_TYPE, new JsonPrimitive(src.getTaskType()));
         return task;
       }
-    }
-
-    public static class TaskDeserializer implements JsonDeserializer<Task> {
 
       @Override
       public Task deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
@@ -705,7 +646,7 @@ public class StudySerializationUtils {
             }
           }
         }
-        LOG.warn("No task type found in json " + json.getAsString());
+        LOG.warn("No task type found in json " + json.toString());
         return null;
       }
     }

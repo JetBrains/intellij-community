@@ -767,7 +767,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (position instanceof JavaXSourcePosition) {
         return ((JavaXSourcePosition)position).mySourcePosition;
       }
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
+      PsiFile psiFile = getPsiFile(position, project);
       if (psiFile != null) {
         return SourcePosition.createFromLine(psiFile, position.getLine());
       }
@@ -811,6 +811,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     public TextRange getHighlightRange() {
       return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
+  }
+
+  @Nullable
+  public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (position != null) {
+      VirtualFile file = position.getFile();
+      if (file.isValid()) {
+        return PsiManager.getInstance(project).findFile(file);
+      }
+    }
+    return null;
   }
 
   /**
