@@ -48,7 +48,7 @@ public class CCVirtualFileListener implements VirtualFileListener {
     String taskRelativePath = StudyUtils.pathRelativeToTask(createdFile);
 
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
-    if (configurator != null && configurator.excludeFromArchive(createdFile.getName())) {
+    if (configurator != null && configurator.excludeFromArchive(createdFile.getPath())) {
       return;
     }
 
