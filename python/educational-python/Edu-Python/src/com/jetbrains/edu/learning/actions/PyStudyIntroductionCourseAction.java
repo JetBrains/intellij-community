@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep;
 import com.jetbrains.python.newProject.steps.PythonGenerateProjectCallback;
@@ -66,7 +67,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator(true);
       final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
       final String bundledCoursePath = configurator.getBundledCoursePaths().get(0);
-      Course introCourse = generator.getGenerator().getCourse(bundledCoursePath);
+      Course introCourse = StudyProjectGenerator.getCourse(bundledCoursePath);
       if (introCourse == null) {
         return;
       }
