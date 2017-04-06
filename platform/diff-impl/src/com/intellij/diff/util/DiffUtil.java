@@ -1187,6 +1187,7 @@ public class DiffUtil {
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && file.isValid() && file.isInLocalFileSystem()) {
+      if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
       // decompiled file can be writable, but Document with decompiled content is still read-only
       return !file.isWritable();
     }
