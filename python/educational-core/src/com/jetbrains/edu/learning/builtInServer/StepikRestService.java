@@ -52,8 +52,8 @@ import java.util.regex.Pattern;
 public class StepikRestService extends RestService {
   public static final String STUDY_PROJECT_XML_PATH = "/.idea/study_project.xml";
   private static final Logger LOG = Logger.getInstance(StepikRestService.class.getName());
-  private static final String SERVICE_NAME = "stepik";
-  private static final Pattern OPEN_COURSE = Pattern.compile("/stepik/course/[^/]*-(\\d+)(?:$|\\?|/.*)");
+  private static final String SERVICE_NAME = "edu/stepik";
+  private static final Pattern OPEN_COURSE = Pattern.compile("/" + SERVICE_NAME + "/course/[^/]*-(\\d+)(?:$|\\?|/.*)");
 
   private static void openProject(String path) {
     String descriptor = String.format("{\"project\": \"%s\"}", path);
