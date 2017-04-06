@@ -59,6 +59,11 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
   private StudyNewProjectPanel mySettingsPanel;
 
+  @SuppressWarnings("unused") // used on startup
+  public PyStudyDirectoryProjectGenerator() {
+    this(false);
+  }
+
   public PyStudyDirectoryProjectGenerator(boolean isLocal) {
     myGenerator = new StudyProjectGenerator();
     myGenerator.addSettingsStateListener(new StudyProjectGenerator.SettingsListener() {
