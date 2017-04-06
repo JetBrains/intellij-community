@@ -190,7 +190,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
           return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(((RemoteCourse)course).getId(),
-                                                                                   StepicSettings.getInstance().getUser()));
+                                                                                   StudySettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

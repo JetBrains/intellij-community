@@ -116,7 +116,7 @@ public class StudyProjectGenerator {
   // Supposed to be called under progress
   public List<Course> getCourses(boolean force) {
     if (force) {
-      myCourses = execCancelable(() -> EduStepicConnector.getCourses(StepicUpdateSettings.getInstance().getUser()));
+      myCourses = execCancelable(() -> EduStepicConnector.getCourses(StudySettings.getInstance().getUser()));
     }
     if (myCourses == null || myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(Course.INVALID_COURSE))) {
       myCourses = getBundledCourses();

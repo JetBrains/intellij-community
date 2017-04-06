@@ -52,13 +52,13 @@ public class EduStepicUpdater {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final List<Course> courses = EduStepicConnector.getCourses(null);
-      StepicSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
+      StudySettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
       if (!courses.isEmpty()) {
         List<Course> updated = new ArrayList<>();
         for (Course course : courses) {
           if (course instanceof RemoteCourse && ((RemoteCourse)course).getUpdateDate().
-                                                after(new Date(StepicUpdateSettings.getInstance().getLastTimeChecked()))) {
+                                                after(new Date(StudySettings.getInstance().getLastTimeChecked()))) {
             updated.add(course);
           }
         }
@@ -85,7 +85,7 @@ public class EduStepicUpdater {
   }
 
   private static boolean checkNeeded() {
-    long timeToNextCheck = StepicUpdateSettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+    long timeToNextCheck = StudySettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
     return timeToNextCheck <= 0;
   }
 }
