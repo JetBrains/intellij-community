@@ -284,7 +284,7 @@ public class CCUtils {
 
         if (StudyUtils.isTaskDescriptionFile(name) || StudyUtils.isTestsFile(project, name)) return true;
 
-        if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(name))) {
+        if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(file.getPath()))) {
           return false;
         }
         final TaskFile taskFile = StudyUtils.getTaskFile(project, file);
