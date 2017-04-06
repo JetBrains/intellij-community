@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryFinalOnLocalVariableOrParameterInspectionLightTest extends LightInspectionTestCase {
+public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test extends LightInspectionTestCase {
 
   public void testFinalWithoutInnerClass() throws Exception {
     doTest("class Issue {\n" +
