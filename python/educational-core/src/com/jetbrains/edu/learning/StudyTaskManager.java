@@ -180,6 +180,8 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   private void deserialize(Element state) throws StudySerializationUtils.StudyUnrecognizedFormatException {
     final Element taskManagerElement = state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT);
+    if (taskManagerElement == null)
+      throw new StudySerializationUtils.StudyUnrecognizedFormatException();
     XmlSerializer.deserializeInto(this, taskManagerElement);
     final Element xmlCourse = StudySerializationUtils.Xml.getChildWithName(taskManagerElement, StudySerializationUtils.COURSE);
     final Element remoteCourseElement = xmlCourse.getChild(REMOTE_COURSE);
