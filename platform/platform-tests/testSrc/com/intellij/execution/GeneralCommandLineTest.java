@@ -38,6 +38,7 @@ import java.util.*;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 public class GeneralCommandLineTest {
@@ -100,6 +101,20 @@ public class GeneralCommandLineTest {
     "\\?",
     "\"?\"",
     "*.???", // ^ the Xmas tree above is to catch at least one file matching those globs
+    "stash@{1}",
+    "{}",
+    "{1}",
+    "{1,2}{a,b}",
+    "test[Src][Src][Src]",
+    "[t]estData",
+    "~",
+    "'~'",
+    "'single-quoted'",
+    "''",
+    "C:\\cygwin*",
+    "C:\\cygwin{,64}",
+    "C:\\cygwin{,64}\\printf.e[x]e",
+    "\\\\dos\\path\\{1,2}{a,b}",
   };
 
   @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_RU = "Юникоде";
@@ -266,7 +281,21 @@ public class GeneralCommandLineTest {
     }
   }
 
-  @Test
+  @Test(timeout = 60000)
+  public void passingArgumentsToCygwinPrintf() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    File cygwinPrintf = FileUtil.findFirstThatExist("C:\\cygwin\\bin\\printf.exe",
+                                                    "C:\\cygwin64\\bin\\printf.exe");
+    assumeNotNull(cygwinPrintf);
+
+    for (String argument : ARGUMENTS) {
+      GeneralCommandLine commandLine = createCommandLine(cygwinPrintf.getPath(), "[%s]\\\\n", argument);
+      String output = execAndGetOutput(commandLine);
+      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput("[" + argument + "]\n"), output);
+    }
+  }
+
+  @Test(timeout = 60000)
   public void unicodeParameters() throws Exception {
     assumeTrue(UNICODE != null);
 
