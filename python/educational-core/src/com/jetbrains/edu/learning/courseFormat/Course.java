@@ -44,13 +44,19 @@ public class Course {
     }
   }
 
+  /**
+   * exclude service lesson containing additional files for the course. Returns lessons copy.
+   */
   public List<Lesson> getLessons() {
     return getLessons(false);
   }
 
+  /**
+   * returns service lesson as well. Meant to be used in project generation/serialization
+   */
   public List<Lesson> getLessons(boolean withAdditional) {
-    return withAdditional ? lessons
-           : lessons.stream().filter(lesson -> !EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName())).collect(Collectors.toList());
+    return withAdditional ? lessons : lessons.stream().filter(lesson -> !EduNames.PYCHARM_ADDITIONAL.equals(lesson.getName()))
+                                          .collect(Collectors.toList());
   }
 
   public void setLessons(List<Lesson> lessons) {
