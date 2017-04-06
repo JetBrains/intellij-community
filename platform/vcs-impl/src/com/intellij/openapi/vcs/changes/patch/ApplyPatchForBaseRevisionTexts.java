@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,7 @@ public class ApplyPatchForBaseRevisionTexts {
   private final CharSequence myLocal;
   private CharSequence myBase;
   private String myPatched;
-  private List<String> myWarnings;
-  private boolean myBaseRevisionLoaded;
+  private final List<String> myWarnings;
 
   @NotNull
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
@@ -75,7 +73,7 @@ public class ApplyPatchForBaseRevisionTexts {
       try {
         provider.getBaseVersionContent(pathBeforeRename, text -> {
           final GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
-          if (! applier.execute()) {
+          if (!applier.execute()) {
             return true;
           }
           myBase = text;
@@ -86,15 +84,13 @@ public class ApplyPatchForBaseRevisionTexts {
       catch (VcsException e) {
         myWarnings.add(e.getMessage());
       }
-      myBaseRevisionLoaded = myPatched != null;
-      if (myBaseRevisionLoaded) return;
+      if (myPatched != null) return;
     }
 
     CharSequence contents = baseContents.get();
     if (contents != null) {
       contents = StringUtil.convertLineSeparators(contents.toString());
       myBase = contents;
-      myBaseRevisionLoaded = true;
       final GenericPatchApplier applier = new GenericPatchApplier(contents, hunks);
       if (! applier.execute()) {
         applier.trySolveSomehow();
@@ -124,9 +120,5 @@ public class ApplyPatchForBaseRevisionTexts {
 
   public String getPatched() {
     return myPatched;
-  }
-
-  public static String getCannotLoadBaseMessage(final String filePatch) {
-    return VcsBundle.message("patch.load.base.revision.error", filePatch,"");
   }
 }
