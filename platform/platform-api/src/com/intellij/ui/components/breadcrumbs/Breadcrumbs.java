@@ -35,6 +35,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -128,6 +129,17 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     select.accept(last, null);
     revalidate();
     repaint();
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    // this custom component does not have a corresponding UI,
+    // so we should care of painting its background
+    if (isOpaque()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
+    super.paintComponent(g);
   }
 
   @Override
