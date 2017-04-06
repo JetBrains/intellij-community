@@ -374,7 +374,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
   }
   
   public void testLambdaBrace() {
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doMethodTest(
       "Runnable r = () -> {\n" +
       "};",
@@ -382,6 +382,17 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "{\n" +
       "};"
     );
+  }
+  
+  public void testLambdaBraceMoveToPrevLine() {
+    getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getSettings().KEEP_LINE_BREAKS = false;
+    doMethodTest(
+      "Runnable r = () ->\n" + 
+      "{\n" +
+      "};", 
+      "Runnable r = () -> {\n" +
+      "};");
   }
 
 }
