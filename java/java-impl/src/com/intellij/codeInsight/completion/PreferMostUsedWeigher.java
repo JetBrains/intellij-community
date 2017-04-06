@@ -22,6 +22,7 @@ import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
   @Override
   public Integer weigh(@NotNull LookupElement element) {
     final PsiElement psi = ObjectUtils.tryCast(element.getObject(), PsiElement.class);
-    if (psi == null || !(psi.isPhysical())) {
+    if (!(psi instanceof PsiMember)) {
       return null;
     }
     else {
