@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSe
   public XmlCodeFoldingOptionsProvider() {
     super(XmlFoldingSettings.getInstance().getState());
     XmlFoldingSettings settings = XmlFoldingSettings.getInstance();
-    checkBox(ApplicationBundle.message("checkbox.collapse.xml.tags"), settings::isCollapseXmlTags, value->settings.getState().COLLAPSE_XML_TAGS=value);
-    checkBox(ApplicationBundle.message("checkbox.collapse.html.style.attribute"),settings::isCollapseHtmlStyleAttribute, value->settings.getState().COLLAPSE_HTML_STYLE_ATTRIBUTE=value);
-    checkBox(ApplicationBundle.message("checkbox.collapse.entities"),settings::isCollapseEntities, value->settings.getState().COLLAPSE_ENTITIES=value);
-    checkBox(ApplicationBundle.message("checkbox.collapse.data.uri"),settings::isCollapseDataUri, value->settings.getState().COLLAPSE_DATA_URI=value);
+    checkBox(ApplicationBundle.message("checkbox.collapse.xml.tags"), settings::isCollapseXmlTags, settings::setCollapseXmlTags);
+    checkBox(ApplicationBundle.message("checkbox.collapse.html.style.attribute"),settings::isCollapseHtmlStyleAttribute, settings::setCollapseHtmlStyleAttribute);
+    checkBox(ApplicationBundle.message("checkbox.collapse.entities"),settings::isCollapseEntities, settings::setCollapseEntities);
+    checkBox(ApplicationBundle.message("checkbox.collapse.data.uri"),settings::isCollapseDataUri, settings::setCollapseDataUri);
   }
 }
