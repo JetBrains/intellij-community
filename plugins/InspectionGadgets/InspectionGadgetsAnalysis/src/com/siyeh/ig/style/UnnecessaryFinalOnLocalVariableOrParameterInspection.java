@@ -16,10 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -29,9 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
+
+import static com.siyeh.InspectionGadgetsBundle.message;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -47,7 +46,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.final.on.local.variable.or.parameter.display.name");
+    return message("unnecessary.final.on.local.variable.or.parameter.display.name");
   }
 
   @Override
@@ -56,73 +55,27 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     final PsiVariable variable = (PsiVariable)infos[0];
     final String variableName = variable.getName();
     if (variable instanceof PsiParameter) {
-      return InspectionGadgetsBundle.message("unnecessary.final.on.parameter.problem.descriptor", variableName);
+      return message("unnecessary.final.on.parameter.problem.descriptor", variableName);
     }
     else {
-      return InspectionGadgetsBundle.message("unnecessary.final.on.local.variable.problem.descriptor", variableName);
+      return message("unnecessary.final.on.local.variable.problem.descriptor", variableName);
     }
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final JCheckBox abstractOnlyCheckBox =
-      new JCheckBox(InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"), onlyWarnOnAbstractMethods) {
-        @Override
-        public void setEnabled(boolean b) {
-          // hack to display correctly on initial opening of
-          // inspection settings (otherwise it is always enabled)
-          if (b) {
-            super.setEnabled(reportParameters);
-          }
-          else {
-            super.setEnabled(false);
-          }
-        }
-      };
-    abstractOnlyCheckBox.setEnabled(true);
-    abstractOnlyCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        onlyWarnOnAbstractMethods = abstractOnlyCheckBox.isSelected();
-      }
-    });
-    final JCheckBox reportLocalVariablesCheckBox =
-      new JCheckBox(InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option"), reportLocalVariables);
-    final JCheckBox reportParametersCheckBox =
-      new JCheckBox(InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"), reportParameters);
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final JCheckBox box1 = panel.addCheckboxEx(message("unnecessary.final.report.local.variables.option"), "reportLocalVariables");
+    final JCheckBox box2 = panel.addCheckboxEx(message("unnecessary.final.report.parameters.option"), "reportParameters");
+    panel.addDependentCheckBox(message("unnecessary.final.on.parameter.only.interface.option"), "onlyWarnOnAbstractMethods", box2);
 
-    reportLocalVariablesCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        reportLocalVariables = reportLocalVariablesCheckBox.isSelected();
-        if (!reportLocalVariables) {
-          reportParametersCheckBox.setSelected(true);
-        }
-      }
+    box1.addChangeListener(e -> {
+      if (!box1.isSelected()) box2.setSelected(true);
     });
-    reportParametersCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        reportParameters = reportParametersCheckBox.isSelected();
-        if (!reportParameters) {
-          reportLocalVariablesCheckBox.setSelected(true);
-        }
-        abstractOnlyCheckBox.setEnabled(reportParameters);
-      }
+    box2.addChangeListener(e -> {
+      if (!box2.isSelected()) box1.setSelected(true);
     });
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.NORTHWEST;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.weightx = 1.0;
-    panel.add(reportLocalVariablesCheckBox, constraints);
-    constraints.gridy = 1;
-    panel.add(reportParametersCheckBox, constraints);
-    constraints.insets.left = 20;
-    constraints.gridy = 2;
-    constraints.weighty = 1.0;
-    panel.add(abstractOnlyCheckBox, constraints);
     return panel;
   }
 
