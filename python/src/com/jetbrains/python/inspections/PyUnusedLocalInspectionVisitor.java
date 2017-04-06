@@ -370,7 +370,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }
           if (canRemove) {
-            fixes.add(new PyRemoveParameterQuickFix());
+            fixes.add(new PyRemoveParameterQuickFix(myTypeEvalContext));
           }
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(new LocalQuickFix[fixes.size()]));
         }

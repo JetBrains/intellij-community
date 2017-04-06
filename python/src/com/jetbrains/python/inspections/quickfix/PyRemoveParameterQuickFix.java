@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -28,6 +29,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiTypeProvider;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +38,19 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
   @NotNull
+  private final TypeEvalContext myContext;
+
+  public PyRemoveParameterQuickFix(@NotNull TypeEvalContext context) {
+    myContext = context;
+  }
+
+  @Override
+  @NotNull
   public String getFamilyName() {
     return PyBundle.message("QFIX.NAME.remove.parameter");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement parameter = descriptor.getPsiElement();
     assert parameter instanceof PyParameter;
@@ -46,7 +58,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
     final PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
 
     if (function != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits();
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myContext);
 
       StreamEx
         .of(PyRefactoringUtil.findUsages(function, false))
@@ -63,6 +75,15 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       final String parameterName = ((PyParameter)parameter).getName();
       if (docStringExpression != null && parameterName != null) {
         PyDocstringGenerator.forDocStringOwner(function).withoutParam(parameterName).buildAndInsert();
+      }
+
+      if (parameterName != null) {
+        StreamEx
+          .of(PyiTypeProvider.getOverloads(function, myContext))
+          .map(overload -> overload.getParameterList().getParameters())
+          .map(parameters -> ContainerUtil.find(parameters, overloadParameter -> parameterName.equals(overloadParameter.getName())))
+          .nonNull()
+          .forEach(PsiElement::delete);
       }
     }
 

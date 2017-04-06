@@ -163,7 +163,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static List<PyFunction> getOverloads(@NotNull PyFunction function, final @NotNull TypeEvalContext context) {
+  public static List<PyFunction> getOverloads(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
     final String name = function.getName();
     final List<PyFunction> overloads = new ArrayList<>();
