@@ -48,6 +48,8 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import gnu.trove.THashMap;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.transfer.RepositoryOfflineException;
+import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -373,7 +375,7 @@ public class JarRepositoryManager {
   @Nullable
   private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
     final Ref<T> result = Ref.create(null);
-    new Task.Modal(project, title, false) {  // todo: is cancel  support possible with aether?
+    new Task.Modal(project, title, true) { 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -393,7 +395,7 @@ public class JarRepositoryManager {
       try {
         ourTasksInProgress++;
         final ProgressIndicator indicator = new EmptyProgressIndicator();
-        return  ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
+        return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
       }
       catch (ProcessCanceledException ignored){
       }
@@ -408,10 +410,15 @@ public class JarRepositoryManager {
   }
 
   private static Collection<String> lookupVersionsImpl(final String groupId, final String artifactId, ArtifactRepositoryManager manager) throws Exception {
-    final List<Version> result = manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT);
-    return result.stream().sorted(Comparator.reverseOrder()).map(Version::toString).collect(
-      Collectors.toCollection(() -> new ArrayList<>(result.size()))
-    );
+    try {
+      final List<Version> result = manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT);
+      return result.stream().sorted(Comparator.reverseOrder()).map(Version::toString).collect(
+        Collectors.toCollection(() -> new ArrayList<>(result.size()))
+      );
+    }
+    catch (TransferCancelledException e) {
+      throw new ProcessCanceledException(e);
+    }
   }
 
   private static abstract class AetherJob<T> implements Function<ProgressIndicator, T> {
@@ -430,6 +437,7 @@ public class JarRepositoryManager {
     public final T apply(ProgressIndicator indicator) {
       if (canStart()) {
         indicator.setText(getProgressText());
+        indicator.setIndeterminate(true);
 
         final ArrayList<RemoteRepository> remotes = new ArrayList<>();
         for (RemoteRepositoryDescription repository : myRepositories) {
@@ -441,7 +449,15 @@ public class JarRepositoryManager {
             public void consume(String message) {
               indicator.setText(message);
             }
+
+            @Override
+            public boolean isCanceled() {
+              return indicator.isCanceled();
+            }
           }));
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Exception e) {
           LOG.info(e);
@@ -536,12 +552,23 @@ public class JarRepositoryManager {
       try {
         return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds);
       }
+      catch (TransferCancelledException e) {
+        throw new ProcessCanceledException(e);
+      }
+      catch (RepositoryOfflineException e) {
+        throw e;
+      }
       catch (Exception e) {
         final String resolvedVersion = resolveVersion(manager, version);
         if (Comparing.equal(version, resolvedVersion)) { // no changes
           throw e;
         }
-        return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), resolvedVersion, myKinds);
+        try {
+          return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), resolvedVersion, myKinds);
+        }
+        catch (TransferCancelledException e1) {
+          throw new ProcessCanceledException(e1);
+        }
       }
     }
 

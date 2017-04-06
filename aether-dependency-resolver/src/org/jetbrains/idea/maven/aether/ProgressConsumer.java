@@ -11,4 +11,8 @@ public interface ProgressConsumer {
   };
 
   void consume(String message);
+
+  default boolean isCanceled() {
+    return false;
+  }
 }
