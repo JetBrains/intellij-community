@@ -56,10 +56,6 @@ binding.setVariable("includeFile", {String filePath ->
   s
 })
 
-binding.setVariable("yjpOptions", { String sessionName, String platformSuffix = "" ->
-  "-agentlib:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$sessionName".trim()
-})
-
 binding.setVariable("isDefined", {String key ->
   try {
     this[key]
@@ -239,15 +235,6 @@ private void setPathVariable(String name, String value) {
   pathVars.addPathVariable(name, value)
 }
 
-binding.setVariable("prepareOutputFolder", {
-  def targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
-  projectBuilder.targetFolder = targetFolder
-  if (projectBuilder.buildIncrementally && Boolean.parseBoolean(p("jps.build.clear.incremental.caches", "false"))) {
-    FileUtil.delete(new File(targetFolder))
-    FileUtil.delete(projectBuilder.dataStorageRoot)
-  }
-})
-
 binding.setVariable("findModule", {String name ->
   project.modules.find { it.name == name }
 })
@@ -286,47 +273,6 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   }
   projectBuilder.info("##teamcity[publishArtifacts '$relativePath']")
 })
-
-def debugPort = System.getProperty("debug.port")
-def debugSuspend = System.getProperty("debug.suspend") ?: "n"
-if (debugSuspend == 'y') {
-  println """
-
-------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
----------------------------------------^------^------^------^------^------^------^----------------------------------------
-
-"""
-}
-
-binding.setVariable("commonJvmArgsForTests", {
-  def tempDir = p("teamcity.build.tempDir", p("java.io.tmpdir"))
-  def vmOptions = [
-    "-ea",
-    "-Dfile.encoding=UTF-8",
-    "-Dio.netty.leakDetectionLevel=PARANOID",
-//    yjpOptions("junit", "64"), // uncomment to start tests with a profiling agent (e.g. in a personal build)
-    "-server",
-    "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
-    "-XX:+HeapDumpOnOutOfMemoryError",
-    "-Didea.home.path=$home",
-    "-Didea.config.path=$tempDir/config",
-    "-Didea.system.path=$tempDir/system",
-    "-XX:ReservedCodeCacheSize=300m",
-    "-XX:SoftRefLRUPolicyMSPerMB=50",
-    "-XX:+UseConcMarkSweepGC",
-    "-XX:-OmitStackTraceInFastThrow",
-  ]
-  if (shouldAddDebugOptions()) {
-    def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
-    if (debugPort != null) jdwp += ",address=$debugPort"
-    vmOptions.addAll(["-Xdebug", jdwp])
-  }
-  return vmOptions
-})
-
-private static boolean shouldAddDebugOptions() {
-  return "true" != System.getProperty("idea.performance.tests")
-}
 
 binding.setVariable("forceDelete", { String dirPath ->
   // if wasn't deleted - retry several times
