@@ -1022,10 +1022,6 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>
-
-    <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
-    <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
-    <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
   </extensions>
 </idea-plugin>
 
