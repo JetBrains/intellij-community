@@ -116,7 +116,7 @@ public class TestAll implements Test {
 
   public TestAll(String rootPackage, List<File> classesRoots) throws IOException, ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
-    if (Boolean.getBoolean("idea.ignore.predefined.groups") || (ourMode & FILTER_CLASSES) == 0) {
+    if ((ourMode & FILTER_CLASSES) == 0) {
       classFilterName = "";
     }
 
