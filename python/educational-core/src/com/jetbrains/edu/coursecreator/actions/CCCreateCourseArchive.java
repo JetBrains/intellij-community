@@ -98,14 +98,14 @@ public class CCCreateCourseArchive extends DumbAwareAction {
         Course courseCopy = course.copy();
         replaceAnswerFilesWithTaskFiles(courseCopy);
         courseCopy.sortLessons();
-        additionalFiles(courseCopy);
+        createAdditionalFiles(courseCopy);
         generateJson(archiveFolder, courseCopy);
         VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
         packCourse(archiveFolder, locationDir, zipName, showMessage);
         synchronize(project);
       }
 
-      private void additionalFiles(Course course) {
+      private void createAdditionalFiles(Course course) {
         final Lesson lesson = CCUtils.createAdditionalLesson(course, project);
         if (lesson != null) {
           course.addLesson(lesson);
