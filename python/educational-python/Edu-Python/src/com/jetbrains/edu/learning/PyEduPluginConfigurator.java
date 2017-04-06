@@ -34,6 +34,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   public static final String PYTHON_2 = "2.x";
   private static final String TESTS_PY = "tests.py";
   private static final Logger LOG = Logger.getInstance(PyEduPluginConfigurator.class);
+  private static final String COURSE_NAME = "Introduction to Python.zip";
 
   @NotNull
   @Override
@@ -133,13 +134,14 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   @Override
   public List<String> getBundledCoursePaths() {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PyEduPluginConfigurator.class);
+
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
 
       File pluginBaseDir = jarFile.getParentFile();
-      return Collections.singletonList(new File(new File(pluginBaseDir, "courses"), "Introduction to Python.zip").getPath());
+      return Collections.singletonList(new File(new File(pluginBaseDir, "courses"), COURSE_NAME).getPath());
     }
 
-    return Collections.singletonList(new File(new File(jarPath, "courses"), "Introduction to Python.zip").getPath());
+    return Collections.singletonList(new File(new File(jarPath, "courses"), COURSE_NAME).getPath());
   }
 }
