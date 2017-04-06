@@ -41,6 +41,17 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
            "}");
   }
 
+  public void testInterfaceMethods() {
+    final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
+    inspection.onlyWarnOnAbstractMethods = true;
+    myFixture.enableInspections(inspection);
+    doTest("interface X {" +
+           "  default void m(final String s) {}" +
+           "  static void n(final String s) {}" +
+           "  void o(/*Unnecessary 'final' on parameter 's'*/final/**/ String s);" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
