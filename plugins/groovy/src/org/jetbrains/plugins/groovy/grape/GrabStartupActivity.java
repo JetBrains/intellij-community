@@ -16,27 +16,20 @@
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * @author a.afanasiev
+ */
 public class GrabStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    //if(project.isDisposed()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    performActivity(project);
-  }
-
-  private static void performActivity(@NotNull Project project) {
     GrabService grabService = GrabService.getInstance(project);
-    grabService.updateGrabsInScope(project, GlobalSearchScope.allScope(project));
+    grabService.updateGrabsInScope(GlobalSearchScope.allScope(project));
   }
 }

@@ -23,10 +23,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
- * @author ven
+ * @author a.afanasiev
  */
 public class GrabClassFinder extends NonClasspathClassFinder {
 
@@ -36,7 +37,10 @@ public class GrabClassFinder extends NonClasspathClassFinder {
 
   @Override
   protected List<VirtualFile> calcClassRoots() {
-    return GrabService.getInstance(myProject).getDependencies(GlobalSearchScope.allScope(myProject));
+    List<VirtualFile> dependencies = GrabService.getInstance(myProject).getDependencies(GlobalSearchScope.allScope(myProject));
+    GrabService.LOG.trace("Grab scope finder  roots " + String.join(",", dependencies.stream().map(String::valueOf).collect(
+      Collectors.toList())));
+    return dependencies;
   }
 }
 

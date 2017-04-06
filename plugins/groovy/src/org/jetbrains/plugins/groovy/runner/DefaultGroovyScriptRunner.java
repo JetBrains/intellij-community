@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovycOutputParser;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
-import org.jetbrains.plugins.groovy.grape.GrabDependencies;
+import org.jetbrains.plugins.groovy.grape.GrapeHelper;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -127,7 +127,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
 
-    if (!GrabDependencies.GRAPE_RUNNER.equals(mainClass)) {
+    if (!GrapeHelper.GRAPE_RUNNER.equals(mainClass)) {
       addClasspathFromRootModel(module, tests, params, true);
     }
 

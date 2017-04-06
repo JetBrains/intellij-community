@@ -21,8 +21,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -63,17 +61,26 @@ import java.util.stream.Collectors;
 import static org.jetbrains.plugins.groovy.grape.GrapeHelper.NOTIFICATION_GROUP;
 import static org.jetbrains.plugins.groovy.grape.GrapeHelper.findGrabAnnotations;
 
+/**
+ * @author a.afanasiev
+ */
 @State(name = "GrabService", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GrabService implements PersistentStateComponent<GrabService.PersistentState> {
-  private static final Logger LOG = Logger.getInstance(GrabService.class);
+  @NotNull
+  public static final Logger LOG = Logger.getInstance(GrabService.class);
 
+  @NotNull
   private final GrabClassFinder grabClassFinder;
+  @NotNull
   private final Project myProject;
-  public Map<String, List<VirtualFile>> grapeState = new ConcurrentHashMap<>();
-  public HashMap<VirtualFile, List<String>> grabs = new HashMap<>();
-
-  AtomicBoolean notified = new AtomicBoolean(false);
-  private DumbService myDumbService;
+  @NotNull
+  private final DumbService myDumbService;
+  @NotNull
+  private final Map<String, List<VirtualFile>> grapeState = new ConcurrentHashMap<>();
+  @NotNull
+  private final Map<VirtualFile, List<String>> grabs = new ConcurrentHashMap<>();
+  @NotNull
+  private final AtomicBoolean notified = new AtomicBoolean(false);
 
 
   public GrabService(@NotNull Project project, @NotNull DumbService dumbService) {
@@ -86,51 +93,20 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event: events) {
           VirtualFile file = event.getFile();
-          scheduleUpdate(project, file);
+          scheduleUpdate(file);
         }
       }
     });
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-
-        scheduleUpdate(project, file);
-      }
-    });
-  }
-
-  void scheduleUpdate(@NotNull Project project, @Nullable VirtualFile file) {
-    if (file != null && file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) { //should be optimized
-      runUpdate(project, GlobalSearchScope.fileScope(project, file));
-    }
-  }
-
-  private void runUpdate(Project project, GlobalSearchScope scope) {
-    if (project.isDisposed()) return;
-    myDumbService = DumbService.getInstance(project);
-    if (myDumbService.isDumb()) {
-      myDumbService.runWhenSmart(() -> runUpdate(project, scope));
-      return;
-    }
-    LOG.trace("Scheduled");
-
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        runUpdate(project, scope);
-      }
-
-      @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        LOG.trace("Execution started");
-        updateGrabsInScope(project, scope);
-        LOG.trace("Execution finished");
+        scheduleUpdate(file);
       }
     });
   }
@@ -140,32 +116,82 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     return ObjectUtils.notNull(ServiceManager.getService(project, GrabService.class));
   }
 
-  void updateGrabsInScope(@NotNull Project project, @NotNull SearchScope scope) {
-    boolean notify = false;
-    List<PsiAnnotation> annotations = findGrabAnnotations(project, scope);
-    Map<VirtualFile, List<String>> updatedGrabQueries = new HashMap<>();
-
-    for (PsiAnnotation annotation: annotations) {
-      String grabQuery = GrapeHelper.grabQuery(annotation);
-      if (grapeState.get(grabQuery) == null) {
-        notify = true;
-      }
-      VirtualFile file = annotation.getContainingFile().getVirtualFile();
-      List<String> grabQueries = updatedGrabQueries.get(file);
-      if (grabQueries == null) {
-        grabQueries = new ArrayList<>();
-        updatedGrabQueries.put(file, grabQueries);
-      }
-      grabQueries.add(grabQuery);
-    }
-    updatedGrabQueries.forEach((file, grabQueries) -> grabs.put(file, Collections.unmodifiableList(grabQueries)));
-    updateResolve();
-    if (notify) {
-      showNotification(project);
+  private void scheduleUpdate(@Nullable VirtualFile file) {
+    if (file != null && file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) { //should be optimized
+      runUpdate(GlobalSearchScope.fileScope(myProject, file));
     }
   }
 
-  public void showNotification(@NotNull Project project) {
+  private void runUpdate(@NotNull GlobalSearchScope scope) {
+    if (myProject.isDisposed()) return;
+
+    if (myDumbService.isDumb()) {
+      myDumbService.runWhenSmart(() -> runUpdate(scope));
+      return;
+    }
+    LOG.trace("@Grab annotations update scheduled");
+
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+      @Override
+      public void onCanceled(@NotNull ProgressIndicator indicator) {
+        runUpdate(scope);
+      }
+
+      @Override
+      public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+        LOG.trace("@Grab annotations update started. Scope " + scope);
+        updateGrabsInScope(scope);
+        LOG.trace("@Grab annotations update finished");
+      }
+    });
+  }
+
+  public void updateGrabsInScope(@NotNull SearchScope scope) {
+    final boolean[] notify = {false};
+    final boolean[] updateResolve = {false};
+    Map<VirtualFile, List<String>> updateGrabQueries = collectGrabQueries(scope);
+    updateGrabQueries.forEach((file, grabQueries) -> {
+      for (String query: grabQueries) {
+        if (grapeState.get(query) == null) notify[0] = true;
+      }
+      List<String> oldGrabQueries = grabs.get(file);
+      if (oldGrabQueries == null || !oldGrabQueries.equals(grabQueries)) {
+        grabs.put(file, Collections.unmodifiableList(grabQueries));
+        updateResolve[0] = true;
+      }
+    });
+
+    if (grabs.keySet().removeIf(key -> !updateGrabQueries.containsKey(key) && scope.contains(key))) {
+      updateResolve[0] = true;
+    }
+
+    if (updateResolve[0]) {
+      updateResolve();
+    }
+    if (notify[0]) {
+      showNotification();
+    }
+  }
+
+  private  Map<VirtualFile, List<String>> collectGrabQueries(@NotNull SearchScope scope) {
+    List<PsiAnnotation> annotations = findGrabAnnotations(myProject, scope);
+    Map<VirtualFile, List<String>> updateGrabQueries = new HashMap<>();
+
+    for (PsiAnnotation annotation: annotations) {
+      String grabQuery = GrapeHelper.grabQuery(annotation);
+
+      VirtualFile file = annotation.getContainingFile().getVirtualFile();
+      List<String> grabQueries = updateGrabQueries.get(file);
+      if (grabQueries == null) {
+        grabQueries = new ArrayList<>();
+        updateGrabQueries.put(file, grabQueries);
+      }
+      grabQueries.add(grabQuery);
+    }
+    return updateGrabQueries;
+  }
+
+  private void showNotification() {
     if (!notified.compareAndSet(false, true)) return;
     String title = GroovyBundle.message("process.grab.annotations.title");
     String message = GroovyBundle.message("process.grab.annotations.message");
@@ -173,31 +199,34 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
         notification.expire();
-        downloadProjectDependencies(project);
+        downloadProjectDependencies();
         notified.compareAndSet(true, false);
       }
-    }).notify(project);
+    }).notify(myProject);
   }
 
-  public void downloadProjectDependencies(Project project) {
+  private void downloadProjectDependencies() {
     grapeState.clear();
-    GrapeHelper.processGrabs(project, GlobalSearchScope.allScope(project), new GrapeHelper.ResultHandler() {
+    GrapeHelper.processGrabs(myProject, GlobalSearchScope.allScope(myProject), new GrapeHelper.ResultHandler() {
       @Override
-      public void accept(String grabText, GrapeHelper.GrapeProcessHandler handler) {
+      public void accept(@NotNull String grabText, @NotNull GrapeHelper.GrapeProcessHandler handler) {
         int count = handler.getJarFiles().size();
         if (count != 0) {
           final String title = count + " Grape dependency jar" + (count == 1 ? "" : "s") + " added";
-          NOTIFICATION_GROUP.createNotification(title, handler.getMessages(), NotificationType.INFORMATION, null).notify(project);
+          NOTIFICATION_GROUP.createNotification(title, handler.getMessages(), NotificationType.INFORMATION, null).notify(myProject);
           addDependencies(grabText, handler.getJarFiles().stream().map(VirtualFile::getPath).collect(Collectors.toList()));
-          updateResolve();
         } else {
-          NOTIFICATION_GROUP.createNotification("Download @Grab dependency error ", handler.getMessages(), NotificationType.ERROR, null).notify(project);
+          NOTIFICATION_GROUP.createNotification(
+            "Download @Grab dependency error ",
+            handler.getMessages(),
+            NotificationType.ERROR,
+            null
+          ).notify(myProject);
         }
       }
-
       @Override
       public void finish() {
-
+        updateResolve();
       }
     });
   }
@@ -216,7 +245,7 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     }
   }
 
-  public void addDependencies(@NotNull String grabQuery, @NotNull List<String> paths) {
+  private void addDependencies(@NotNull String grabQuery, @NotNull List<String> paths) {
     List<VirtualFile> files = new ArrayList<>();
     JarFileSystem lfs = JarFileSystem.getInstance();
     paths.forEach(path -> {
@@ -230,7 +259,9 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
 
   void updateResolve() {
     grabClassFinder.clearCache();
+    ProjectRootManagerEx.getInstanceEx(myProject).clearScopesCachesForModules();
     PsiManager.getInstance(myProject).dropResolveCaches();
+    ResolveCache.getInstance(myProject).clearCache(true);
 
     ApplicationManager.getApplication().invokeLater(
       () -> DaemonCodeAnalyzer.getInstance(myProject).restart(),
@@ -238,7 +269,6 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
       myProject.getDisposed()
     );
   }
-
 
   @NotNull
   public List<VirtualFile> getDependencies(@NotNull SearchScope scope) {
@@ -257,15 +287,8 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     return strings != null ? getDependencies(strings) : Collections.emptyList();
   }
 
-  public List<VirtualFile> getDependencies(@NotNull List<String> queries) {
-    List<VirtualFile> files = new ArrayList<>();
-    for(String query: queries) {
-      if (grapeState.get(query) != null) {
-        files.addAll(grapeState.get(query));
-      }
-    }
-
-    return files;
+  private List<VirtualFile> getDependencies(@NotNull List<String> queries) {
+    return queries.stream().map(grapeState::get).filter(Objects::nonNull).flatMap(List::stream).collect(Collectors.toList());
   }
 
   public static class PersistentState {

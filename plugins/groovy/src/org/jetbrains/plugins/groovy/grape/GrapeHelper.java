@@ -58,7 +58,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * @author a.afanasiev
+ */
 public class GrapeHelper {
   public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrapeRunner");
@@ -94,18 +96,22 @@ public class GrapeHelper {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading @Grab Annotation") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        commandLines.forEach((grabQuery, commandLine) -> {
-          try {
-            indicator.setText2(grabQuery);
-            final GrapeProcessHandler handler = new GrapeProcessHandler(commandLine);
-            handler.startNotify();
-            handler.waitFor();
-            resultHandler.accept(grabQuery, handler);
-          }
-           catch (ExecutionException e) {
-            LOG.error(e);
-          }
-        });
+        try {
+          commandLines.forEach((grabQuery, commandLine) -> {
+            try {
+              indicator.setText2(grabQuery);
+              final GrapeProcessHandler handler = new GrapeProcessHandler(commandLine);
+              handler.startNotify();
+              handler.waitFor();
+              resultHandler.accept(grabQuery, handler);
+            }
+            catch (ExecutionException e) {
+              LOG.error(e);
+            }
+          });
+        } finally {
+          resultHandler.finish();
+        }
       }
     });
   }
@@ -238,7 +244,7 @@ public class GrapeHelper {
   }
 
   interface ResultHandler {
-    void accept(String grabText, GrapeProcessHandler handler);
+    void accept(@NotNull String grabText, @NotNull GrapeProcessHandler handler);
     void finish();
   }
 }
