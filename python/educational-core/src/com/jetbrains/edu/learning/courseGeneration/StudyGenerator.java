@@ -73,7 +73,7 @@ public class StudyGenerator {
     createChildFile(taskDir, name, taskFile.text);
   }
 
-  private static void createDescriptions(VirtualFile taskDir, Task task) throws IOException {
+  public static void createDescriptions(VirtualFile taskDir, Task task) throws IOException {
     final Map<String, String> texts = task.getTaskTexts();
     for (Map.Entry<String, String> entry : texts.entrySet()) {
       final String name = entry.getKey();
@@ -82,7 +82,7 @@ public class StudyGenerator {
     }
   }
 
-  private static void createTestFiles(VirtualFile taskDir, Task task) throws IOException {
+  public static void createTestFiles(VirtualFile taskDir, Task task) throws IOException {
     final Map<String, String> tests = task.getTestsText();
     for (Map.Entry<String, String> entry : tests.entrySet()) {
       final String name = entry.getKey();
