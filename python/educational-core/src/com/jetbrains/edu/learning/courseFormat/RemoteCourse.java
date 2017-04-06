@@ -2,9 +2,14 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task.Backgroundable;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,6 +23,7 @@ public class RemoteCourse extends Course {
   List<Integer> instructors = new ArrayList<>();
   @Expose private int id;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
+  private Boolean isUpToDate = true;
   @Expose private boolean isAdaptive = false;
   @SerializedName("is_public") boolean isPublic;
 
@@ -45,14 +51,24 @@ public class RemoteCourse extends Course {
   public boolean isUpToDate() {
     if (id == 0) return true;
     if (!EduNames.STUDY.equals(courseMode)) return true;
-    final Date date = EduStepicConnector.getCourseUpdateDate(id);
-    if (date == null) return true;
-    if (myUpdateDate == null) return true;
-    if (date.after(myUpdateDate)) return false;
-    for (Lesson lesson : lessons) {
-      if (!lesson.isUpToDate()) return false;
-    }
-    return true;
+
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Backgroundable(null, "Updating Course") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final Date date = EduStepicConnector.getCourseUpdateDate(id);
+        if (date == null) return;
+        if (date.after(myUpdateDate)) {
+          isUpToDate = false;
+        }
+        for (Lesson lesson : lessons) {
+          if (!lesson.isUpToDate()) {
+            isUpToDate = false;
+          }
+        }
+      }
+    }, new EmptyProgressIndicator());
+
+    return isUpToDate;
   }
 
   public void setUpdated() {
