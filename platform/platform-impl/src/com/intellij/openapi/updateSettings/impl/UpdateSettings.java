@@ -82,7 +82,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   @Nullable
-  public String getLasBuildChecked() {
+  public String getLastBuildChecked() {
     return myState.LAST_BUILD_CHECKED;
   }
 
@@ -143,7 +143,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   public List<ChannelStatus> getActiveChannels() {
     UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
     return Stream.of(ChannelStatus.values())
-      .filter((ch) -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
+      .filter(ch -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
       .collect(Collectors.toList());
   }
 
@@ -179,13 +179,13 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 2018) */
   @SuppressWarnings("unused")
   public String getUpdateChannelType() {
     return myState.UPDATE_CHANNEL_TYPE;
   }
 
-  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 2018) */
   @SuppressWarnings("unused")
   public void setUpdateChannelType(@NotNull String value) {
     myState.UPDATE_CHANNEL_TYPE = value;
