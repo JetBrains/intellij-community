@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class ApplyPatchForBaseRevisionTexts {
 
   @NotNull
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
-                                                       final TextFilePatch patch, final Getter<CharSequence> baseContents) {
+                                                       final TextFilePatch patch, @Nullable final Getter<CharSequence> baseContents) {
     assert ! patch.isNewFile();
     final String beforeVersionId = patch.getBeforeVersionId();
     DefaultPatchBaseVersionProvider provider = null;
@@ -58,7 +59,7 @@ public class ApplyPatchForBaseRevisionTexts {
                                          final FilePath pathBeforeRename,
                                          final TextFilePatch patch,
                                          final VirtualFile file,
-                                         Getter<CharSequence> baseContents) {
+                                         @Nullable Getter<CharSequence> baseContents) {
     myWarnings = new ArrayList<>();
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getDocument(file);
