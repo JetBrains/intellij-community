@@ -20,6 +20,7 @@ import com.intellij.lang.MetaLanguage;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.uast.UastLanguagePlugin;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -38,5 +39,10 @@ public class UastMetaLanguage extends MetaLanguage {
   @Override
   public boolean matchesLanguage(Language language) {
     return myLanguages.contains(language);
+  }
+
+  @Override
+  public Collection<Language> getMatchingLanguages() {
+    return myLanguages;
   }
 }
