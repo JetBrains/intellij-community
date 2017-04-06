@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,11 +120,7 @@ object UpdateChecker {
     indicator?.text = IdeBundle.message("updates.checking.platform")
 
     val result = checkPlatformUpdate(updateSettings)
-
-    if (manualCheck && result.state == UpdateStrategy.State.LOADED) {
-      UpdateSettings.getInstance().saveLastCheckedInfo()
-    }
-    else if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
+    if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
       val e = result.error
       if (e != null) LOG.debug(e)
       showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e?.message ?: "internal error"))
@@ -150,6 +146,8 @@ object UpdateChecker {
     }
 
     // show result
+
+    UpdateSettings.getInstance().saveLastCheckedInfo()
 
     ApplicationManager.getApplication().invokeLater({
       showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
