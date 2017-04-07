@@ -15,8 +15,10 @@
  */
 package com.siyeh.ipp.functional;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtractToMethodReferenceTest extends IPPTestCase {
 
@@ -40,7 +42,15 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
     doTest();
   }
 
+  public void testFieldsUsedInsideLambda() throws Exception {
+    doTest();
+  }
+
   public void testConvertableToMethodReference() throws Exception {
+    assertIntentionNotAvailable();
+  }
+
+  public void testNonDenotableParameterTypes() throws Exception {
     assertIntentionNotAvailable();
   }
 
@@ -56,6 +66,12 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
   @Override
   protected String getRelativePath() {
     return "functional/extractToMethodReference";
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }
 
