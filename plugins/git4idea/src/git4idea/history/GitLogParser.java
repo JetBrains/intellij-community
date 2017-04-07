@@ -65,6 +65,8 @@ public class GitLogParser {
   public static final String RECORD_START_GIT = "%x01%x01";
   private static final String ITEMS_SEPARATOR_GIT = "%x02";
   private static final String RECORD_END_GIT = "%x03%x03";
+  private static final int INPUT_ERROR_MESSAGE_HEAD_LIMIT = 1000000; // limit the string by ~2mb
+  private static final int INPUT_ERROR_MESSAGE_TAIL_LIMIT = 100;
 
   private final String myFormat;  // pretty custom format generated in the constructor
   private final GitLogOption[] myOptions;
@@ -201,11 +203,11 @@ public class GitLogParser {
     }
     Matcher matcher = ONE_RECORD.matcher(line);
     if (!matcher.matches()) {
-      throwGFE("ONE_RECORD didn't match", line.toString());
+      throwGFE("ONE_RECORD didn't match", line);
     }
     String commitInfo = matcher.group(1);
     if (commitInfo == null) {
-      throwGFE("No match for group#1 in", line.toString());
+      throwGFE("No match for group#1 in", line);
     }
 
     final Map<GitLogOption, String> res = parseCommitInfo(commitInfo);
@@ -217,7 +219,7 @@ public class GitLogParser {
     if (myNameStatusOption != NameStatus.NONE) {
       String pathsAndStatuses = matcher.group(2);
       if (pathsAndStatuses == null) {
-        throwGFE("No match for group#2 in", line.toString());
+        throwGFE("No match for group#2 in", line);
       }
 
       if (myNameStatusOption == NameStatus.NAME) {
@@ -274,8 +276,18 @@ public class GitLogParser {
     }
   }
 
-  private static void throwGFE(String message, String line) {
-    throw new GitFormatException(message + " [" + StringUtil.escapeStringCharacters(line) + "]");
-  }
+  private static void throwGFE(String message, @NotNull CharSequence line) {
+    String lineString;
 
+    String formatString = "%s...(%d more characters)...%s";
+    if (line.length() > INPUT_ERROR_MESSAGE_HEAD_LIMIT + INPUT_ERROR_MESSAGE_TAIL_LIMIT + formatString.length()) {
+      lineString = String.format(formatString, line.subSequence(0, INPUT_ERROR_MESSAGE_HEAD_LIMIT),
+                                 (line.length() - INPUT_ERROR_MESSAGE_HEAD_LIMIT - INPUT_ERROR_MESSAGE_TAIL_LIMIT),
+                                 line.subSequence(line.length() - INPUT_ERROR_MESSAGE_TAIL_LIMIT, line.length()));
+    }
+    else {
+      lineString = line.toString();
+    }
+    throw new GitFormatException(message + " [" + StringUtil.escapeStringCharacters(lineString) + "]");
+  }
 }
