@@ -663,6 +663,8 @@ public class GitUtil {
                   b[n++] = (byte)code;
                 }
                 if (i + 1 >= l || path.charAt(i) != '\\' || !VcsFileUtil.isOctal(path.charAt(i + 1))) {
+                  //noinspection AssignmentToForLoopParameter
+                  i--;  // We need to backtrack one char, because the outer loop will move us forward again.
                   break;
                 }
                 //noinspection AssignmentToForLoopParameter
@@ -691,7 +693,7 @@ public class GitUtil {
     }
     return rc.toString();
   }
-  
+
   public static boolean justOneGitRepository(Project project) {
     if (project.isDisposed()) {
       return true;
