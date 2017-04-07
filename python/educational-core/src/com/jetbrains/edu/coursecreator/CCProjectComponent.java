@@ -104,9 +104,11 @@ public class CCProjectComponent extends AbstractProjectComponent {
   }
 
   public void projectOpened() {
-    migrateIfNeeded();
-    VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
-    EduUsagesCollector.projectTypeOpened(CCUtils.COURSE_MODE);
+    if (CCUtils.isCourseCreator(myProject)) {
+      migrateIfNeeded();
+      VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
+      EduUsagesCollector.projectTypeOpened(CCUtils.COURSE_MODE);
+    }
   }
 
   public void projectClosed() {
