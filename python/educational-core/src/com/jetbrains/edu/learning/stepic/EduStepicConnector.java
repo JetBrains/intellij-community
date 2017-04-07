@@ -2,13 +2,16 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -33,12 +36,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.PYCHARM_PREFIX;
+
 public class EduStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
 
   public static final int CURRENT_VERSION = 2;
   //this prefix indicates that course can be opened by educational plugin
-  public static final String PYCHARM_PREFIX = "pycharm";
   private static final String ADAPTIVE_NOTE =
     "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it becomes!";
 
@@ -170,8 +174,20 @@ public class EduStepicConnector {
       return true;
     }
     String courseType = courseInfo.getType();
+
+    final ArrayList<String> supportedLanguages = new ArrayList<>();
+    final LanguageExtensionPoint[] extensions = Extensions.getExtensions(EduPluginConfigurator.EP_NAME, null);
+    for (LanguageExtensionPoint extension : extensions) {
+      String languageId = extension.getKey();
+      supportedLanguages.add(languageId);
+    }
+
     final List<String> typeLanguage = StringUtil.split(courseType, " ");
     String prefix = typeLanguage.get(0);
+    if (typeLanguage.size() > 1) {
+      final String courseLanguage = typeLanguage.get(typeLanguage.size() - 1);
+      if (!supportedLanguages.contains(courseLanguage)) return false;
+    }
     if (typeLanguage.size() < 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
       return false;
     }

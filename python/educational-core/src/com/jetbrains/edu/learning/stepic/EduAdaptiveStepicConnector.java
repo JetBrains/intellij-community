@@ -147,7 +147,7 @@ public class EduAdaptiveStepicConnector {
     else if (stepType.equals(CHOICE_TYPE_TEXT)) {
       return getChoiceTaskFromStep(name, step.block, stepId, userId);
     }
-    else if (stepType.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
+    else if (stepType.startsWith(EduStepicNames.PYCHARM_PREFIX)) {
       return EduStepicConnector.createTask(stepId);
     }
     else if (stepType.equals(TEXT_STEP_TYPE)) {
