@@ -205,21 +205,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   protected void onTaskFailed(@NotNull String message) {
-    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Failed);
-    if (course != null) {
-      if (course.isAdaptive()) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> {
-            StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), myProject);
-            StudyCheckUtils.showTestResultsToolWindow(myProject, message, false);
-          });
-      }
-      else {
-        ApplicationManager.getApplication()
-          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
-      }
-    }
+    myTask.getChecker(myProject).onTaskFailed(message);
   }
 
   protected void onTaskSolved(@NotNull String message) {

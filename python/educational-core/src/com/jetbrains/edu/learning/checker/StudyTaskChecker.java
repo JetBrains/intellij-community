@@ -19,4 +19,9 @@ public class StudyTaskChecker<T extends Task> {
     ApplicationManager.getApplication().invokeLater(
       () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
   }
+
+  public void onTaskFailed(@NotNull String message) {
+    ApplicationManager.getApplication()
+      .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
+  }
 }

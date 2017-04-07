@@ -28,8 +28,8 @@ import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory;
@@ -202,29 +202,31 @@ public class StudyCheckUtils {
   }
 
   public static void showTestResultsToolWindow(@NotNull final Project project, @NotNull final String message, boolean solved) {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
-    if (window == null) {
-      toolWindowManager.registerToolWindow(StudyTestResultsToolWindowFactoryKt.ID, true, ToolWindowAnchor.BOTTOM);
-      window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
-      new StudyTestResultsToolWindowFactory().createToolWindowContent(project, window);
-    }
-
-    final Content[] contents = window.getContentManager().getContents();
-    for (Content content : contents) {
-      final JComponent component = content.getComponent();
-      if (component instanceof ConsoleViewImpl) {
-        ((ConsoleViewImpl)component).clear();
-        if (!solved) {
-          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
-        }
-        else {
-          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
-        }
-        window.setAvailable(true, () -> {});
-        window.show(() -> {});
-        return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+      ToolWindow window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
+      if (window == null) {
+        toolWindowManager.registerToolWindow(StudyTestResultsToolWindowFactoryKt.ID, true, ToolWindowAnchor.BOTTOM);
+        window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
+        new StudyTestResultsToolWindowFactory().createToolWindowContent(project, window);
       }
-    }
+
+      final Content[] contents = window.getContentManager().getContents();
+      for (Content content : contents) {
+        final JComponent component = content.getComponent();
+        if (component instanceof ConsoleViewImpl) {
+          ((ConsoleViewImpl)component).clear();
+          if (!solved) {
+            ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
+          }
+          else {
+            ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
+          }
+          window.setAvailable(true, () -> {});
+          window.show(() -> {});
+          return;
+        }
+      }
+    });
   }
 }
