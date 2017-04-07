@@ -48,7 +48,13 @@ public class UnixProcessManager {
   static {
     try {
       if (!Platform.isWindows()) {
-        C_LIB = ((CLib)Native.loadLibrary("c", CLib.class));
+        if (Platform.isFreeBSD()) {
+          // workaround needed on FreeBSD >= 10 and JNA < 4.1.0,
+          // harmless in other cases.
+          C_LIB = ((CLib)Native.loadLibrary("/lib/libc.so.7", CLib.class));
+        } else {
+          C_LIB = ((CLib)Native.loadLibrary("c", CLib.class));
+        }
       }
     }
     catch (Throwable e) {
