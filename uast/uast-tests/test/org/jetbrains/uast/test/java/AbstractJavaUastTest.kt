@@ -27,6 +27,8 @@ abstract class AbstractJavaUastTest : AbstractUastFixtureTest() {
     }
 
     override fun getVirtualFile(testName: String): VirtualFile {
-        return LocalFileSystem.getInstance().findFileByPath(File(TEST_JAVA_MODEL_DIR, testName).canonicalPath)!!
+        val localPath = File(TEST_JAVA_MODEL_DIR, testName).path
+        val vFile = LocalFileSystem.getInstance().findFileByPath(localPath)
+        return vFile ?: throw IllegalStateException("Couldn't find virtual file for $localPath")
     }
 }
