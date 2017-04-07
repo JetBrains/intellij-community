@@ -166,7 +166,7 @@ public class GrUnresolvedAccessChecker {
             !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
             !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
           String qname = clazz.getQualifiedName();
-          LOG.assertTrue(qname != null, clazz.getText());
+          LOG.assertTrue(qname != null);
           return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
         }
       }
