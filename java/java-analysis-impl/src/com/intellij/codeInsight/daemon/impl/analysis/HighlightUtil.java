@@ -1798,13 +1798,7 @@ public class HighlightUtil extends HighlightUtilBase {
         PsiModifierList modifierList = variable.getModifierList();
         if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) return null;
 
-        PsiElement scope = null;
-        if (variable instanceof PsiParameter) scope = ((PsiParameter)variable).getDeclarationScope();
-        else if (variable instanceof PsiResourceVariable) scope = variable.getParent().getParent();
-        else if (variable instanceof PsiLocalVariable) scope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-        if (scope != null) {
-          if (HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
-        }
+        if (!(variable instanceof PsiField) && HighlightControlFlowUtil.isEffectivelyFinal(variable, resource, (PsiJavaCodeReferenceElement)expression)) return null;
       }
 
       String text = JavaErrorMessages.message("resource.variable.must.be.final");
