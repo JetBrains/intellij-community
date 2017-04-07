@@ -40,13 +40,13 @@ import java.util.regex.Pattern;
  * 1. Pass options you want to have in the output to the constructor using the {@link GitLogOption} enum constants.
  * 2. Get the custom format pattern for 'git log' by calling {@link #getPretty()}
  * 3. Call the command and retrieve the output.
- * 4. Parse the output via {@link #parse(String)} or {@link #parseOneRecord(String)} (if you want the output to be parsed line by line).</p>
+ * 4. Parse the output via {@link #parse(CharSequence)} or {@link #parseOneRecord(CharSequence)} (if you want the output to be parsed line by line).</p>
  *
  * <p>The class is package visible, since it's used only in GitHistoryUtils - the class which retrieve various pieced of history information
  * in different formats from 'git log'</p>
  *
  * <p>Note that you may pass one set of options to the GitLogParser constructor and then execute git log with other set of options.
- * In that case {@link #parse(String)} will parse only those options which you've specified in the constructor.
+ * In that case {@link #parse(CharSequence)} will parse only those options which you've specified in the constructor.
  * Others will be ignored since the parser knows nothing about them: it just gets the 'git log' output to parse.
  * Moreover you really <b>must</b> use {@link #getPretty()} to pass "--pretty=format" pattern to 'git log' - otherwise the parser won't be able
  * to parse output of 'git log' (because special separator characters are used for that).</p>
@@ -158,7 +158,7 @@ public class GitLogParser {
    *         The list is sorted as usual for git log - the first is the newest, the last is the oldest.
    */
   @NotNull
-  List<GitLogRecord> parse(@NotNull String output) {
+  List<GitLogRecord> parse(@NotNull CharSequence output) {
     // Here is what git log returns for --pretty=tformat:^%H#%s$
     // ^2c815939f45fbcfda9583f84b14fe9d393ada790#sample commit$
     //
@@ -166,20 +166,21 @@ public class GitLogParser {
     // ^b71477e9738168aa67a8d41c414f284255f81e8a#moved out$
     //
     // R100    dir/anew.txt    anew.txt
-    final List<String> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
+    final List<CharSequence> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
     String notMatchedPart = null;
     final List<GitLogRecord> res = new ArrayList<>(records.size());
-    for (String record : records) {
-      if (!record.trim().isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
+    for (CharSequence record : records) {
+      String recordString = record.toString();
+      if (!recordString.isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
         if (notMatchedPart != null) {
-          record = notMatchedPart + record;
+          recordString = notMatchedPart + recordString;
         }
-        if (ONE_RECORD.matcher(record).matches()) {
+        if (ONE_RECORD.matcher(recordString).matches()) {
           notMatchedPart = null;
-          res.add(parseOneRecord(record));
+          res.add(parseOneRecord(recordString));
         }
         else {
-          notMatchedPart = record;
+          notMatchedPart = recordString;
         }
       }
     }
@@ -194,17 +195,17 @@ public class GitLogParser {
    * @throws GitFormatException if the line is given in unexpected format.
    */
   @Nullable
-  GitLogRecord parseOneRecord(@NotNull String line) {
-    if (line.isEmpty()) {
+  GitLogRecord parseOneRecord(@NotNull CharSequence line) {
+    if (line.length() == 0) {
       return null;
     }
     Matcher matcher = ONE_RECORD.matcher(line);
     if (!matcher.matches()) {
-      throwGFE("ONE_RECORD didn't match", line);
+      throwGFE("ONE_RECORD didn't match", line.toString());
     }
     String commitInfo = matcher.group(1);
     if (commitInfo == null) {
-      throwGFE("No match for group#1 in", line);
+      throwGFE("No match for group#1 in", line.toString());
     }
 
     final Map<GitLogOption, String> res = parseCommitInfo(commitInfo);
@@ -216,7 +217,7 @@ public class GitLogParser {
     if (myNameStatusOption != NameStatus.NONE) {
       String pathsAndStatuses = matcher.group(2);
       if (pathsAndStatuses == null) {
-        throwGFE("No match for group#2 in", line);
+        throwGFE("No match for group#2 in", line.toString());
       }
 
       if (myNameStatusOption == NameStatus.NAME) {
