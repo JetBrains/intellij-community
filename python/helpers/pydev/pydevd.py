@@ -76,6 +76,7 @@ connected = False
 bufferStdOutToServer = False
 bufferStdErrToServer = False
 remote = False
+inside_fork = False
 
 file_system_encoding = getfilesystemencoding()
 
@@ -1171,7 +1172,7 @@ def _locked_settrace(
     global bufferStdOutToServer
     global bufferStdErrToServer
 
-    if not connected :
+    if not connected:
         pydevd_vm_type.setup_type()
 
         if SetupHolder.setup is None:
@@ -1218,6 +1219,11 @@ def _locked_settrace(
 
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
+
+        global inside_fork
+        if frame_eval_func is not None and not inside_fork:
+            # Disable frame evaluation for Remote Debug Server
+            debugger.frame_eval_func = None
 
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
         # is not warned to the user!
@@ -1358,6 +1364,8 @@ def settrace_forked():
     if port is not None:
         global connected
         connected = False
+        global inside_fork
+        inside_fork = True
 
         custom_frames_container_init()
 
