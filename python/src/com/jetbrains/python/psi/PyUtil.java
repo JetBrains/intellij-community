@@ -910,6 +910,25 @@ public class PyUtil {
     return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
   }
 
+  /**
+   * Retrieve the document from {@link PsiDocumentManager} using the anchor PSI element and pass it to the consumer function
+   * first releasing it from pending PSI modifications it with {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}
+   * and then committing in try/finally block, so that subsequent operations over the PSI can be performed.
+   */
+  public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<Document> consumer) {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
+    final Document document = manager.getDocument(anchor.getContainingFile());
+    if (document != null) {
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      try {
+        consumer.consume(document);
+      }
+      finally {
+        manager.commitDocument(document);
+      }
+    }
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
