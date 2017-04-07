@@ -200,6 +200,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   /**
    * make element protected/package-private/public suggestion
+   * for private method in the interface it should add default modifier as well
    */
   static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
@@ -236,6 +237,10 @@ public class HighlightUtil extends HighlightUtilBase {
         minModifier = PsiModifier.PROTECTED;
       }
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
+        minModifier = PsiModifier.PUBLIC;
+      }
+      PsiClass containingClass = refElement.getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
         minModifier = PsiModifier.PUBLIC;
       }
       String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
