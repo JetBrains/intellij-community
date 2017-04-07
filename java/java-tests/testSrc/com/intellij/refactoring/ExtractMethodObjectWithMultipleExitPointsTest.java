@@ -152,7 +152,15 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
     doTest();
   }
 
+  public void testRenameInInitializer() throws Exception {
+    doTestWithIdeaCodeStyleSettings();
+  }
+
   public void testSameFieldsWithPrefix() throws Exception {
+    doTestWithIdeaCodeStyleSettings();
+  }
+
+  private void doTestWithIdeaCodeStyleSettings() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
