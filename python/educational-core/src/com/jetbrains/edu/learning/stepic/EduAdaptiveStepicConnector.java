@@ -7,14 +7,12 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudySettings;
@@ -49,7 +47,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
@@ -320,7 +321,7 @@ public class EduAdaptiveStepicConnector {
     task.initTask(lesson, false);
     boolean replaceCurrentTask = reactionToPost == TOO_HARD_RECOMMENDATION_REACTION || reactionToPost == TOO_BORING_RECOMMENDATION_REACTION;
     if (replaceCurrentTask) {
-      replaceCurrentTask(project, editor, task, lesson);
+      replaceCurrentTask(project, task, lesson);
     }
     else {
       addAsNextTask(project, task, lesson);
@@ -361,7 +362,7 @@ public class EduAdaptiveStepicConnector {
     }
   }
 
-  private static void replaceCurrentTask(@NotNull Project project, @NotNull StudyEditor editor, @NotNull Task task, @NotNull Lesson lesson) {
+  private static void replaceCurrentTask(@NotNull Project project, @NotNull Task task, @NotNull Lesson lesson) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     assert course != null;
 
@@ -369,8 +370,6 @@ public class EduAdaptiveStepicConnector {
 
     task.setIndex(taskIndex);
     lesson.getTaskList().set(taskIndex - 1, task);
-
-    copyTaskFileParameters(editor, task);
 
     final String lessonName = EduNames.LESSON + lesson.getIndex();
     updateProjectFiles(project, task, lessonName);
@@ -380,12 +379,10 @@ public class EduAdaptiveStepicConnector {
   private static void updateProjectFiles(@NotNull Project project, @NotNull Task task, @NotNull String lessonName) {
     final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
     if (lessonDir != null) {
-      final VirtualFile taskResourceRoot = lessonDir.findChild(EduNames.TASK + task.getIndex());
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          removeOldProjectFiles(project, taskResourceRoot);
-          StudyGenerator.createTestFiles(taskResourceRoot, task);
-          StudyGenerator.createDescriptions(taskResourceRoot, task);
+          removeOldProjectFiles(lessonDir, task.getIndex());
+          StudyGenerator.createTask(task, lessonDir);
         }
         catch (IOException e) {
           LOG.warn(e.getMessage());
@@ -394,46 +391,14 @@ public class EduAdaptiveStepicConnector {
     }
   }
 
-  private static void removeOldProjectFiles(@NotNull Project project, @Nullable VirtualFile taskRecourseRoot) throws IOException {
-    if (taskRecourseRoot == null) {
+  private static void removeOldProjectFiles(@NotNull VirtualFile lessonDir, int taskIndex) throws IOException {
+    final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + taskIndex);
+    if (taskDir == null) {
       LOG.warn("Failed to update files for a new recommendation: task directory is null");
       return;
     }
 
-    VirtualFile[] children = VfsUtil.getChildren(taskRecourseRoot);
-    for (VirtualFile file : children) {
-      String name = file.getName();
-      if (StudyUtils.isTestsFile(project, name) || StudyUtils.isTaskDescriptionFile(name)) {
-        file.delete(taskRecourseRoot);
-      }
-    }
-  }
-
-  private static void copyTaskFileParameters(@NotNull StudyEditor editor, @NotNull Task task) {
-    final Map<String, TaskFile> taskFiles = task.getTaskFiles();
-    if (taskFiles.size() == 1) {
-      TaskFile newTaskFile = (TaskFile)taskFiles.values().toArray()[0];
-      setTaskFileParameters(editor, task, newTaskFile);
-      updateEditorText(editor, newTaskFile);
-    }
-    else {
-      LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
-    }
-  }
-  private static void updateEditorText(@NotNull StudyEditor editor, @NotNull TaskFile newTaskFile) {
-    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final Document document = editor.getEditor().getDocument();
-      document.setText(newTaskFile.text);
-    }));
-  }
-
-  private static void setTaskFileParameters(@NotNull StudyEditor editor, @NotNull Task task, @NotNull TaskFile newTaskFile) {
-    TaskFile currentTaskFile = editor.getTaskFile();
-    currentTaskFile.text = newTaskFile.text;
-    currentTaskFile.name = newTaskFile.name;
-    currentTaskFile.setTask(task);
-    task.getTaskFiles().clear();
-    task.taskFiles.put(CODE_TASK_NAME, currentTaskFile);
+    taskDir.delete(EduAdaptiveStepicConnector.class);
   }
 
   private static void setToolWindowText(@NotNull Project project, @NotNull Task task) {
