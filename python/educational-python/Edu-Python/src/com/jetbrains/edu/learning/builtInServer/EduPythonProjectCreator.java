@@ -15,34 +15,33 @@
  */
 package com.jetbrains.edu.learning.builtInServer;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author meanmail
  */
-public class EduProjectCreator {
-  public static final ExtensionPointName<EduProjectCreator> EP_NAME = ExtensionPointName.create("Edu.eduProjectCreator");
-
-  public static boolean createProject(@NotNull Course course) {
-    EduProjectCreator[] extensions = Extensions.getExtensions(EP_NAME);
-
-    for (EduProjectCreator projectCreator : extensions) {
-      if (projectCreator.canCreateProject(course)) {
-        return projectCreator.createCourseProject(course);
-      }
-    }
-
-    return false;
-  }
-
-  public boolean createCourseProject(@NotNull Course course) {
-    return false;
-  }
-
+public class EduPythonProjectCreator extends EduProjectCreator {
+  @Override
   public boolean canCreateProject(@NotNull Course course) {
-    return false;
+    return course.getLanguageById() == PythonLanguage.getInstance();
+  }
+
+  @Override
+  public boolean createCourseProject(@NotNull Course course) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      AbstractNewProjectDialog dlg = new AbstractNewProjectDialog() {
+        @Override
+        protected DefaultActionGroup createRootStep() {
+          return new BuiltInServerNewProjectStep(course);
+        }
+      };
+      dlg.show();
+    });
+    return true;
   }
 }
