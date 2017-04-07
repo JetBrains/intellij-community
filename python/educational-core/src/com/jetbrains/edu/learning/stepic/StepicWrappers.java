@@ -194,6 +194,7 @@ public class StepicWrappers {
     public CourseWrapper(Course course) {
       this.course = new RemoteCourse();
       this.course.setName(course.getName());
+      this.course.setLanguage(course.getLanguageID());
       this.course.setDescription(course.getDescription());
       this.course.setAuthors(course.getAuthors());
     }

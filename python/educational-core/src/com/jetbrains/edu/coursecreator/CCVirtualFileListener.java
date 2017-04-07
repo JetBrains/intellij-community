@@ -16,8 +16,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 public class CCVirtualFileListener implements VirtualFileListener {
 
   @Override
@@ -37,7 +35,7 @@ public class CCVirtualFileListener implements VirtualFileListener {
       return;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null || !CCUtils.isCourseCreator(project)) {
+    if (course == null) {
       return;
     }
     TaskFile taskFile = StudyUtils.getTaskFile(project, createdFile);

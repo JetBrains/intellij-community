@@ -2,6 +2,11 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
+import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,5 +52,23 @@ public class ChoiceTask extends Task {
   @Override
   public String getTaskType() {
     return "choice";
+  }
+
+  @Override
+  public StudyTaskChecker getChecker(@NotNull Project project) {
+    return new StudyTaskChecker<ChoiceTask>(this, project) {
+      @Override
+      public void onTaskFailed(@NotNull String message) {
+        super.onTaskFailed(message);
+        repaintChoicePanel(project, myTask);
+      }
+
+      private void repaintChoicePanel(@NotNull Project project, @NotNull ChoiceTask task) {
+        final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
+        if (toolWindow != null) {
+          toolWindow.setBottomComponent(new StudyChoiceVariantsPanel(task));
+        }
+      }
+    };
   }
 }

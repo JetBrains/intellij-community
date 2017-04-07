@@ -6,7 +6,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
@@ -15,14 +14,10 @@ import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +47,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true));
 
-      final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
+      final StudyTestRunner testRunner = new PyStudyTestRunner(task, taskDir);
       Process testProcess = null;
       String commandLine = "";
       try {
@@ -83,9 +78,9 @@ public class PyStudyCheckAction extends StudyCheckAction {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
       @Override
       protected void onTaskFailed(@NotNull String message) {
+        super.onTaskFailed(message);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myTaskDir == null) return;
-          myTask.setStatus(StudyStatus.Failed);
           for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
             final String name = entry.getKey();
             final TaskFile taskFile = entry.getValue();
@@ -99,36 +94,10 @@ public class PyStudyCheckAction extends StudyCheckAction {
                   () -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
             }
           }
-          final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
-          if (toolWindow != null) {
-            final Course course = StudyTaskManager.getInstance(project).getCourse();
-            if (course != null) {
-              if (course.isAdaptive()) {
-                if (myTask instanceof ChoiceTask) {
-                  StudyCheckUtils.showTestResultPopUp("Wrong answer", MessageType.ERROR.getPopupBackground(), project);
-                  repaintChoicePanel(project, (ChoiceTask)myTask);
-                }
-                else {
-                  StudyCheckUtils.showTestResultPopUp("Wrong answer", MessageType.ERROR.getPopupBackground(), project);
-                  StudyCheckUtils.showTestResultsToolWindow(project, message, false);
-                }
-              }
-              else {
-                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
-              }
-            }
-            StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
-          }
+          StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
         });
       }
     };
-  }
-
-  private static void repaintChoicePanel(@NotNull Project project, @NotNull ChoiceTask task) {
-    final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
-    if (toolWindow != null) {
-      toolWindow.setBottomComponent(new StudyChoiceVariantsPanel(task));
-    }
   }
 
   @Nullable

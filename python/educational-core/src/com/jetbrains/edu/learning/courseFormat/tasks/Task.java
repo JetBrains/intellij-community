@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -29,7 +30,7 @@ import java.util.Map;
  * - go to Lesson and update elementTypes in taskList AbstractCollection. Needed for proper xml serialization
  * - Update TaskSerializer and TaskDeserializer in StudySerializationUtil to handle json serialization
  */
-public class Task implements StudyItem {
+public abstract class Task implements StudyItem {
   @Expose private String name;
 
   // index is visible to user number of task from 1 to task number
@@ -268,7 +269,9 @@ public class Task implements StudyItem {
   }
 
   // used in json serialization/deserialization
-  public String getTaskType() {
-    return "pycharm";
+  public abstract String getTaskType();
+
+  public StudyTaskChecker getChecker(@NotNull Project project) {
+    return new StudyTaskChecker<>(this, project);
   }
 }

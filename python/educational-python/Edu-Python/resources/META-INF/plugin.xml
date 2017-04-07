@@ -35,7 +35,6 @@
     <importResolver implementation="com.jetbrains.edu.learning.PyStudyImportResolver"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
     <pluginConfigurator implementationClass="com.jetbrains.edu.learning.PyEduPluginConfigurator" language="Python"/>
   </extensions>
   <actions>

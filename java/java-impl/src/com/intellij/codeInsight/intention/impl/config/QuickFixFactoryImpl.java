@@ -853,6 +853,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef,
+                                                                                      JavaResolveResult result) {
+    return new AccessStaticViaInstanceFix(methodRef, result, true);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return new WrapStringWithFileFix(type, expression);
   }
