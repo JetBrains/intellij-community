@@ -22,6 +22,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A variant of {@link FoldingDescriptor} which keeps precalculated value of placeholder text. 
+ * This makes 'apply' phase of code folding pass (executed in EDT) faster. 
+ */
 public class NamedFoldingDescriptor extends FoldingDescriptor {
   private final String myPlaceholderText;
 
