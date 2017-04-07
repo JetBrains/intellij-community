@@ -39,6 +39,10 @@ class ConditionalExpressionWithIdenticalBranches {
     }
   }
 
+  void lambdaCycle(boolean b){
+    Runnable r = <warning descr="Conditional expression 'b ? () -> {if (true);} : () -> {if (true);}' with identical branches">b ? () -> {if (true);} : () -> {if (true);}</warning>;
+  }
+
   interface IntSupplier {
     int getAsInt();
   }
