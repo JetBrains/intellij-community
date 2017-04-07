@@ -16,6 +16,8 @@
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
@@ -160,6 +162,24 @@ public class StructClass extends StructMember {
 
   public VBStyleCollection<StructField, String> getFields() {
     return fields;
+  }
+
+  // XXX slow, but no lookup table available
+  public boolean containsFieldWithShortName(String shortName){
+    for(StructField f: fields) {
+      if(shortName.equals(f.getName())) {
+        return true;
+      }
+    }
+    // look into parent class, recursively
+    if(superClass!=null){
+      ClassesProcessor classesProcessor = DecompilerContext.getClassProcessor();
+      ClassesProcessor.ClassNode classNode = classesProcessor.getMapRootClasses().get(superClass.getString());
+      if(classNode!=null)
+        return classNode.classStruct.containsFieldWithShortName(shortName);
+    }
+
+    return false;
   }
 
   public boolean isOwn() {

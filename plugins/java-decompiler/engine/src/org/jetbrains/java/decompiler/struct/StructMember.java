@@ -43,6 +43,10 @@ public class StructMember {
     return (accessFlags & modifier) == modifier;
   }
 
+  public void addModifier(int modifierMask) {
+    accessFlags |= modifierMask;
+  }
+
   public boolean isSynthetic() {
     return hasModifier(CodeConstants.ACC_SYNTHETIC) || attributes.containsKey(StructGeneralAttribute.ATTRIBUTE_SYNTHETIC);
   }
