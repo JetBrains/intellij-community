@@ -46,12 +46,12 @@ import java.util.Optional;
  *
  * @author Ilya.Kazakevich
  */
-abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
+public abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
   @NotNull
-  private final Class<? extends RunConfiguration> myExpectedConfigurationType;
+  private final Class<T> myExpectedConfigurationType;
 
   /**
    * @param testRunnerName            test runner name (to set as default to make sure producer launched)
@@ -77,37 +77,47 @@ abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends P
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
 
-        final List<ConfigurationFromContext> configurationsFromContext =
-          new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
-        Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
-
-
-        final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
-          .filter(o -> myExpectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
-          .findFirst();
-        Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
-        RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
-
-
-        Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
-        final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
-        Assert.assertNotNull("No real configuration created", configuration);
-        Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
-        Assert.assertThat("Bad configuration type in " + elementToRightClickOn, configuration,
-                          Matchers.is(Matchers.instanceOf(myExpectedConfigurationType)));
-
-        RunManager.getInstance(getProject()).addConfiguration(runnerAndConfigurationSettings, false);
-
         @SuppressWarnings("unchecked") // Checked one line above
-        final T typedConfiguration = (T)configuration;
+        final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
         checkConfiguration(typedConfiguration, elementToRightClickOn);
       }
     }), ModalityState.NON_MODAL);
   }
 
+  /**
+   * Emulates right click and create configurwation
+   */
+  @NotNull
+  public static <T extends RunConfiguration> T createConfigurationByElement(@NotNull final PsiElement elementToRightClickOn,
+                                                   @NotNull Class<T> expectedConfigurationType) {
+    final List<ConfigurationFromContext> configurationsFromContext =
+      new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
+    Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
+
+
+    final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
+      .filter(o -> expectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
+      .findFirst();
+    Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
+
+
+    Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
+    final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
+    Assert.assertNotNull("No real configuration created", configuration);
+    Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
+    Assert.assertThat("Bad configuration type in " + elementToRightClickOn, configuration,
+                      Matchers.is(Matchers.instanceOf(expectedConfigurationType)));
+
+    RunManager.getInstance(elementToRightClickOn.getProject()).addConfiguration(runnerAndConfigurationSettings, false);
+
+    @SuppressWarnings("unchecked") // Checked one line above
+    final T typedConfiguration = (T)configuration;
+    return typedConfiguration;
+  }
+
   @NotNull
   protected abstract List<PsiElement> getPsiElementsToRightClickOn();
-
 
 
   protected void checkConfiguration(@NotNull final T configuration, @NotNull final PsiElement elementToRightClickOn) {
