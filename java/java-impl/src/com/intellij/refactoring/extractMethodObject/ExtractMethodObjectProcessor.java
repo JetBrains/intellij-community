@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.text.UniqueNameGenerator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,6 +88,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private PsiClass myInnerClass;
   private boolean myChangeReturnType;
   private Runnable myCopyMethodToInner;
+  private final UniqueNameGenerator myFieldNameGenerator = new UniqueNameGenerator();
 
   private static final Key<Boolean> GENERATED_RETURN = new Key<>("GENERATED_RETURN");
 
@@ -163,8 +166,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
 
         if (myExtractProcessor.generatesConditionalExit()) {
-          myInnerClass.add(myElementFactory.createField("myResult", PsiPrimitiveType.BOOLEAN));
-          myInnerClass.add(myElementFactory.createMethodFromText("boolean is(){return myResult;}", myInnerClass));
+          String resultName = uniqueFieldName(new String[]{"myResult"});
+          myInnerClass.add(myElementFactory.createField(resultName, PsiPrimitiveType.BOOLEAN));
+          myInnerClass.add(myElementFactory.createMethodFromText("boolean is(){return " + resultName + ";}", myInnerClass));
         }
 
         final PsiParameter[] parameters = getMethod().getParameterList().getParameters();
@@ -635,7 +639,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     try {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(getMethod().getProject());
-      final String fieldName = styleManager.suggestVariableName(VariableKind.FIELD, styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER), null, type).names[0];
+      String fieldName = uniqueFieldName(styleManager.suggestVariableName(
+        VariableKind.FIELD, styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER), null, type).names);
       PsiField field = myElementFactory.createField(fieldName, type);
 
       final PsiModifierList modifierList = field.getModifierList();
@@ -725,6 +730,15 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  private String uniqueFieldName(String[] candidates) {
+    String name = StreamEx.of(candidates).findFirst(myFieldNameGenerator::isUnique).orElse(null);
+    if (name == null) {
+      name = myFieldNameGenerator.generateUniqueName(candidates[0]);
+    }
+    myFieldNameGenerator.addExistingName(name);
+    return name;
+  }
+
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
     public MyExtractMethodProcessor(Project project,
@@ -767,9 +781,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       for (int i = 0; i < myOutputVariables.length; i++) {
         PsiVariable variable = myOutputVariables[i];
         if (!myInputVariables.contains(variable)) { //one field creation
-          final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-          final String fieldName =
-            styleManager.suggestVariableName(VariableKind.FIELD, getPureName(variable), null, variable.getType()).names[0];
+          String fieldName = uniqueFieldName(JavaCodeStyleManager.getInstance(myProject)
+            .suggestVariableName(VariableKind.FIELD, getPureName(variable), null, variable.getType()).names);
           try {
             myOutputFields[i] = myElementFactory.createField(fieldName, variable.getType());
           }
