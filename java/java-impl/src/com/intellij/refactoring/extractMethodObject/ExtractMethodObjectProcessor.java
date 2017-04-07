@@ -89,6 +89,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private boolean myChangeReturnType;
   private Runnable myCopyMethodToInner;
   private final UniqueNameGenerator myFieldNameGenerator = new UniqueNameGenerator();
+  private String myResultFieldName = null;
 
   private static final Key<Boolean> GENERATED_RETURN = new Key<>("GENERATED_RETURN");
 
@@ -166,9 +167,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
 
         if (myExtractProcessor.generatesConditionalExit()) {
-          String resultName = uniqueFieldName(new String[]{"myResult"});
-          myInnerClass.add(myElementFactory.createField(resultName, PsiPrimitiveType.BOOLEAN));
-          myInnerClass.add(myElementFactory.createMethodFromText("boolean is(){return " + resultName + ";}", myInnerClass));
+          myResultFieldName = uniqueFieldName(new String[]{"myResult"});
+          myInnerClass.add(myElementFactory.createField(myResultFieldName, PsiType.BOOLEAN));
+          myInnerClass.add(myElementFactory.createMethodFromText("boolean is(){return " + myResultFieldName + ";}", myInnerClass));
         }
 
         final PsiParameter[] parameters = getMethod().getParameterList().getParameters();
@@ -289,7 +290,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       for (int i = 0; i < returnStatements.size() - 1; i++) {
         final PsiReturnStatement condition = returnStatements.get(i);
         final PsiElement container = condition.getParent();
-        final PsiStatement resultStmt = myElementFactory.createStatementFromText("myResult = true;", container);
+        LOG.assertTrue(myResultFieldName != null);
+        final PsiStatement resultStmt = myElementFactory.createStatementFromText(myResultFieldName + " = true;", container);
         if (!RefactoringUtil.isLoopOrIf(container)) {
           container.addBefore(resultStmt, condition);
         } else {
@@ -300,7 +302,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(!returnStatements.isEmpty());
       final PsiReturnStatement returnStatement = returnStatements.get(returnStatements.size() - 1);
       final PsiElement container = returnStatement.getParent();
-      final PsiStatement resultStmt = myElementFactory.createStatementFromText("myResult = false;", container);
+      LOG.assertTrue(myResultFieldName != null);
+      final PsiStatement resultStmt = myElementFactory.createStatementFromText(myResultFieldName + " = false;", container);
       if (!RefactoringUtil.isLoopOrIf(container)) {
         container.addBefore(resultStmt, returnStatement);
       } else {
