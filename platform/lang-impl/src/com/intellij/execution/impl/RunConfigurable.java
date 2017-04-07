@@ -1126,10 +1126,10 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     private void showAddPopup(final boolean showApplicableTypesOnly) {
-      ConfigurationType[] allTypes = getRunManager().getConfigurationFactories(false);
+      List<ConfigurationType> allTypes = getRunManager().getConfigurationFactoriesWithoutUnknown();
       final List<ConfigurationType> configurationTypes = getTypesToShow(showApplicableTypesOnly, allTypes);
       Collections.sort(configurationTypes, (type1, type2) -> type1.getDisplayName().compareToIgnoreCase(type2.getDisplayName()));
-      final int hiddenCount = allTypes.length - configurationTypes.size();
+      final int hiddenCount = allTypes.size() - configurationTypes.size();
       if (hiddenCount > 0) {
         configurationTypes.add(null);
       }
@@ -1140,7 +1140,7 @@ class RunConfigurable extends BaseConfigurable {
       popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
     }
 
-    private List<ConfigurationType> getTypesToShow(boolean showApplicableTypesOnly, ConfigurationType[] allTypes) {
+    private List<ConfigurationType> getTypesToShow(boolean showApplicableTypesOnly, @NotNull List<ConfigurationType> allTypes) {
       if (showApplicableTypesOnly) {
         List<ConfigurationType> applicableTypes = new ArrayList<>();
         for (ConfigurationType type : allTypes) {
@@ -1148,11 +1148,11 @@ class RunConfigurable extends BaseConfigurable {
             applicableTypes.add(type);
           }
         }
-        if (applicableTypes.size() < allTypes.length - 3) {
+        if (applicableTypes.size() < allTypes.size() - 3) {
           return applicableTypes;
         }
       }
-      return new ArrayList<>(Arrays.asList(allTypes));
+      return allTypes;
     }
 
     private boolean isApplicable(ConfigurationType type) {

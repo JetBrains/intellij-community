@@ -45,7 +45,7 @@ class TimedIconCache {
   }
 
   fun get(id: String, settings: RunnerAndConfigurationSettings, project: Project): Icon {
-    return lock.read { idToIcon.get(id) } ?: IconDeferrer.getInstance().deferAutoUpdatable(settings.configuration.icon, project.hashCode() xor settings.hashCode()) { param ->
+    return lock.read { idToIcon.get(id) } ?: IconDeferrer.getInstance().deferAutoUpdatable(settings.configuration?.icon, project.hashCode() xor settings.hashCode()) { param ->
       if (project.isDisposed) {
         return@deferAutoUpdatable null
       }

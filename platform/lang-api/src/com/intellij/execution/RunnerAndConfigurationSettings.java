@@ -71,10 +71,8 @@ public interface RunnerAndConfigurationSettings {
 
   /**
    * Returns the {@link RunConfiguration} instance that will be used to execute this run configuration.
-   *
-   * @return the run configuration, or null if the settings object was loaded from disk and no plugin corresponding to the stored type
-   * of the run configuration is loaded.
    */
+  @NotNull
   RunConfiguration getConfiguration();
 
   /**

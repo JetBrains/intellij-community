@@ -69,8 +69,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
-  //var beforeRunTasks: List<BeforeRunTask<*>>? = null
-
   override fun getFactory() = configuration?.factory
 
   override fun isTemplate() = isTemplate
@@ -81,7 +79,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     isTemporary = temporary
   }
 
-  override fun getConfiguration(): RunConfiguration? = configuration
+  override fun getConfiguration() = configuration ?: UnknownConfigurationType.FACTORY.createTemplateConfiguration(manager.project)
 
   override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
     val configuration = configuration!!

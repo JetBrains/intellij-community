@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
 import java.util.regex.Pattern
@@ -56,83 +55,65 @@ abstract class RunManager {
 
   /**
    * Returns the list of all registered configuration types.
-
-   * @return all registered configuration types.
    */
   abstract val configurationFactories: Array<ConfigurationType>
 
   /**
    * Returns the list of all configurations of a specified type.
-
    * @param type a run configuration type.
-   * *
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
    */
-  @Deprecated("")
-  abstract fun getConfigurations(type: ConfigurationType): Array<RunConfiguration>
+  @Deprecated("", ReplaceWith("getConfigurationsList(type)"))
+  fun getConfigurations(type: ConfigurationType) = getConfigurationsList(type).toTypedArray()
 
   /**
    * Returns the list of all configurations of a specified type.
-
    * @param type a run configuration type.
-   * *
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   abstract fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration>
 
   /**
    * Returns the list of [RunnerAndConfigurationSettings] for all configurations of a specified type.
-
    * @param type a run configuration type.
-   * *
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("")
-  abstract fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings>
+  fun getConfigurationSettings(type: ConfigurationType) = getConfigurationSettingsList(type).toTypedArray()
 
   /**
    * Returns the list of [RunnerAndConfigurationSettings] for all configurations of a specified type.
-
+   *
+   * Template configuration is not included
    * @param type a run configuration type.
-   * *
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   abstract fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings>
 
   /**
    * Returns the list of all run configurations.
-
-   * @return the list of all run configurations.
    */
-  @get:Deprecated("")
-  abstract val allConfigurations: Array<RunConfiguration>
+  @Deprecated("", ReplaceWith("allConfigurationsList"))
+  fun getAllConfigurations() = allConfigurationsList.toTypedArray()
 
   /**
    * Returns the list of all run configurations.
-
-   * @return the list of all run configurations.
    */
   abstract val allConfigurationsList: List<RunConfiguration>
 
   /**
    * Returns the list of all run configurations settings.
-
-   * @return the list of all run configurations settings.
    */
   abstract val allSettings: List<RunnerAndConfigurationSettings>
 
   /**
    * Returns the list of all temporary run configurations settings.
-
-   * @return the list of all temporary run configurations settings.
-   * *
    * @see RunnerAndConfigurationSettings.isTemporary
    */
   abstract val tempConfigurationsList: List<RunnerAndConfigurationSettings>
 
   /**
    * Saves the specified temporary run configuration and makes it a permanent one.
-
    * @param configuration the temporary run configuration to save.
    */
   @Deprecated("")
@@ -140,67 +121,43 @@ abstract class RunManager {
 
   /**
    * Saves the specified temporary run settings and makes it a permanent one.
-
    * @param settings the temporary settings to save.
    */
   abstract fun makeStable(settings: RunnerAndConfigurationSettings)
 
   /**
-   * Returns the selected item in the run/debug configurations combobox.
-
-   * @return the selected configuration, or null if no configuration is defined or selected.
-   */
-  /**
-   * Selects a configuration in the run/debug configurations combobox.
-
-   * @param configuration the configuration to select, or null if nothing should be selected.
+   * The selected item in the run/debug configurations combobox.
    */
   abstract var selectedConfiguration: RunnerAndConfigurationSettings?
 
   /**
    * Creates a configuration of the specified type with the specified name. Note that you need to call
    * [.addConfiguration] if you want the configuration to be persisted in the project.
-
    * @param name the name of the configuration to create (should be unique and not equal to any other existing configuration)
-   * *
    * @param factory the factory instance.
-   * *
-   * @return the configuration settings object.
-   * *
    * @see RunManager.suggestUniqueName
    */
   abstract fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
-  fun createRunConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
-    return createConfiguration(name, factory)
-  }
+  fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
    * [.addConfiguration] if you want the configuration to be persisted in the project.
-
    * @param runConfiguration the run configuration
-   * *
    * @param factory the factory instance.
-   * *
-   * @return the configuration settings object.
    */
   abstract fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
   /**
    * Returns the template settings for the specified configuration type.
-
    * @param factory the configuration factory.
-   * *
-   * @return the template settings.
    */
   abstract fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
   /**
    * Adds the specified run configuration to the list of run configurations stored in the project.
-
    * @param settings the run configuration settings.
-   * *
    * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
    * *                 (stored in the workspace file).
    */
@@ -208,7 +165,6 @@ abstract class RunManager {
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
-
    * @param profile the run configuration to mark as recently used.
    */
   abstract fun refreshUsagesList(profile: RunProfile)
@@ -228,7 +184,7 @@ abstract class RunManager {
   fun setUniqueNameIfNeed(settings: RunnerAndConfigurationSettings): Boolean {
     val oldName = settings.name
     settings.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), settings.type)
-    return !Comparing.equal(oldName, settings.name)
+    return oldName != settings.name
   }
 
   /**
@@ -238,6 +194,6 @@ abstract class RunManager {
   fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean {
     val oldName = configuration.name
     configuration.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type)
-    return !Comparing.equal(oldName, configuration.name)
+    return oldName != configuration.name
   }
 }

@@ -27,36 +27,29 @@ import javax.swing.Icon
  * @author gregsh
  */
 class MockRunManager : RunManagerEx() {
-  override fun getConfigurationFactories() = emptyArray<ConfigurationType>()
-
-  override fun getConfigurations(type: ConfigurationType) = emptyArray<RunConfiguration>()
-
   override fun getConfigurationsList(type: ConfigurationType) = emptyList<RunConfiguration>()
 
-  override fun getAllConfigurations() = emptyArray<RunConfiguration>()
-
-  override fun getAllConfigurationsList(): List<RunConfiguration> {
-    return emptyList()
-  }
-
-  val tempConfigurations: Array<RunConfiguration>
-    get() = emptyArray<RunConfiguration>()
-
-  override fun getTempConfigurationsList(): List<RunnerAndConfigurationSettings> {
-    return emptyList()
-  }
-
-  fun isTemporary(configuration: RunConfiguration): Boolean {
-    return false
-  }
+  fun isTemporary(configuration: RunConfiguration) = false
 
   override fun makeStable(configuration: RunConfiguration) {}
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
 
-  override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
-    return null
-  }
+  override val configurationFactories: Array<ConfigurationType>
+    get() = emptyArray()
+
+  override val allConfigurationsList: List<RunConfiguration>
+    get() = emptyList()
+
+  override val allSettings: List<RunnerAndConfigurationSettings>
+    get() = emptyList()
+
+  override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
+    get() = emptyList()
+
+  override var selectedConfiguration: RunnerAndConfigurationSettings?
+    get() = null
+    set(value) {}
 
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
@@ -64,10 +57,6 @@ class MockRunManager : RunManagerEx() {
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
-  }
-
-  override fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> {
-    return emptyArray()
   }
 
   override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> {
@@ -78,19 +67,13 @@ class MockRunManager : RunManagerEx() {
     return emptyMap()
   }
 
-  override fun getAllSettings(): List<RunnerAndConfigurationSettings> {
-    return emptyList()
-  }
-
-  override fun setSelectedConfiguration(configuration: RunnerAndConfigurationSettings?) {}
-
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}
 
   override fun getConfig(): RunManagerConfig {
     throw UnsupportedOperationException()
   }
 
-  override fun createConfiguration(name: String, type: ConfigurationFactory): RunnerAndConfigurationSettings {
+  override fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
   }
 
