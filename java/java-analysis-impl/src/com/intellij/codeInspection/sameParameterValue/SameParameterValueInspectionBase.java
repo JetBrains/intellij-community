@@ -26,7 +26,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +40,6 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
   private static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PROTECTED;
   @PsiModifier.ModifierConstant
   public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    if (highestModifier != DEFAULT_HIGHEST_MODIFIER) {
-      super.writeSettings(node);
-    }
-  }
 
   @Override
   @Nullable
