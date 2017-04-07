@@ -141,12 +141,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                Project project,
                                                boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
-    final FilePath file;
-    if (project.isDisposed()) {
-      file = VcsUtil.getFilePath(makeAbsolutePath(vcsRoot, path, unescapePath), false);
-    } else {
-      file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
-    }
+    FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
     return createRevision(file, revisionNumber, project);
   }
   
