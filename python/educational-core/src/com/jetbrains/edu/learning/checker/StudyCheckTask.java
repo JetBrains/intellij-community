@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.checker;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.*;
-import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -47,9 +45,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
-  private boolean myRunTestFile = true;
   private static final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
-  private static final String DO_NOT_RUN_ON_CHECK = "DO_NOT_RUN_ON_CHECK";
 
   public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
     super(project, "Checking Task");
@@ -98,9 +94,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   private void checkForEduCourse(@NotNull ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testsOutput = getTestOutput(indicator);
-    if (myRunTestFile) {
-      ApplicationManager.getApplication().invokeLater(() -> runTask(myProject));
-    }
     if (testsOutput != null) {
       if (testsOutput.isSuccess()) {
         onTaskSolved(testsOutput.getMessage());
@@ -119,14 +112,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  private static void runTask(@NotNull Project project) {
-    final StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
-    if (runAction == null) {
-      return;
-    }
-    runAction.run(project);
-  }
-
   @Nullable
   private StudyTestsOutputParser.TestsOutput getTestOutput(@NotNull ProgressIndicator indicator) {
     final CapturingProcessHandler handler = new CapturingProcessHandler(myTestProcess, null, myCommandLine);
@@ -135,7 +120,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       ApplicationManager.getApplication().invokeLater(
         () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));
     }
-    myRunTestFile = !output.getStdout().contains(DO_NOT_RUN_ON_CHECK);
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course != null) {
       final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
