@@ -512,7 +512,7 @@ public class GitHistoryUtils {
     Ref<Throwable> parseError = new Ref<>();
     processHandlerOutputByLine(handler, builder -> {
       try {
-        GitLogRecord record = parser.parseOneRecord(builder.toString());
+        GitLogRecord record = parser.parseOneRecord(builder);
         if (record != null) {
           recordConsumer.consume(record);
         }
@@ -579,7 +579,7 @@ public class GitHistoryUtils {
                                                   @NotNull Consumer<VcsRef> refConsumer,
                                                   @NotNull VcsLogObjectsFactory factory,
                                                   @NotNull VirtualFile root) {
-    List<GitLogRecord> gitLogRecords = parser.parse(record.toString());
+    List<GitLogRecord> gitLogRecords = parser.parse(record);
     return ContainerUtil.mapNotNull(gitLogRecords, gitLogRecord -> {
       if (gitLogRecord == null) {
         return null;
