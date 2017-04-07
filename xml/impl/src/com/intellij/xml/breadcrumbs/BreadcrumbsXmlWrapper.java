@@ -444,6 +444,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     }
     myEditor = null;
+    breadcrumbs.setCrumbs(null);
   }
 
   @Nullable
