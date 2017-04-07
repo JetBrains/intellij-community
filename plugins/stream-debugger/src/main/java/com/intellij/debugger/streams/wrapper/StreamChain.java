@@ -1,5 +1,6 @@
 package com.intellij.debugger.streams.wrapper;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,4 +25,7 @@ public interface StreamChain {
   String getText();
 
   int length();
+
+  @NotNull
+  PsiElement getContext();
 }

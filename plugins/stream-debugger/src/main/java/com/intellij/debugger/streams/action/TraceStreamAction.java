@@ -31,7 +31,6 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
   private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
 
@@ -51,7 +50,8 @@ public class TraceStreamAction extends AnAction {
     if (chain != null) {
       final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session.getProject(), chain);
       ApplicationManager.getApplication().invokeLater(window::show);
-      final StreamTracer tracer = new EvaluateExpressionTracer(session, myExpressionBuilder, myResultInterpreter);
+      final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(session.getProject());
+      final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, myResultInterpreter);
       tracer.trace(chain, new TracingCallback() {
         @Override
         public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {

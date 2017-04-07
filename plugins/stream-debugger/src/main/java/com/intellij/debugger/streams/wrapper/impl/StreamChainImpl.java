@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.psi.PsiElement;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,13 +32,15 @@ public class StreamChainImpl implements StreamChain {
   private final ProducerStreamCall myProducer;
   private final List<IntermediateStreamCall> myIntermediateCalls;
   private final TerminatorStreamCall myTerminator;
+  private final PsiElement myContext;
 
   public StreamChainImpl(@NotNull ProducerStreamCall producer,
                          @NotNull List<IntermediateStreamCall> intermediateCalls,
-                         @NotNull TerminatorStreamCall terminator) {
+                         @NotNull TerminatorStreamCall terminator, PsiElement context) {
     myProducer = producer;
     myIntermediateCalls = intermediateCalls;
     myTerminator = terminator;
+    myContext = context;
   }
 
   @NotNull
@@ -88,6 +91,12 @@ public class StreamChainImpl implements StreamChain {
   @Override
   public int length() {
     return 2 + myIntermediateCalls.size();
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getContext() {
+    return myContext;
   }
 
   private StreamCall doGetCall(int index) {

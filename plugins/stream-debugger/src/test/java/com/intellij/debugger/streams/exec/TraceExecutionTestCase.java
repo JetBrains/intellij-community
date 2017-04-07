@@ -15,6 +15,7 @@ import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
@@ -38,9 +39,17 @@ import java.util.function.Function;
  */
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
   private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
+
+  private TraceExpressionBuilder myExpressionBuilder;
+
+  @Override
+  protected void initApplication() throws Exception {
+    super.initApplication();
+    final Project project = getProject();
+    myExpressionBuilder = new TraceExpressionBuilderImpl(project);
+  }
 
   @Override
   protected OutputChecker initOutputChecker() {

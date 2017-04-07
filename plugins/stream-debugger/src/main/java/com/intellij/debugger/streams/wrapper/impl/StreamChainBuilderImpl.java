@@ -93,7 +93,7 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
           else if (StreamCallType.TERMINATOR.equals(type)) {
             final TerminatorStreamCallImpl terminator =
               new TerminatorStreamCallImpl(callName, callArgs, prevCallType, currentType.equals(GenericType.VOID));
-            return new StreamChainImpl(producer, intermediateStreamCalls, terminator);
+            return new StreamChainImpl(producer, intermediateStreamCalls, terminator, startElement);
           }
           else {
             throw new RuntimeException("wrong operation type!");
