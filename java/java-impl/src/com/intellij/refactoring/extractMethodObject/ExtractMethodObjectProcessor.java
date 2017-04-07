@@ -339,15 +339,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
             for (PsiVariable variable : outputVariables) {
               PsiVariable var = (PsiVariable)declaredElement;
               if (Comparing.strEqual(var.getName(), variable.getName())) {
-                PsiExpression initializer = var.getInitializer();
-                if (initializer == null) {
-                  replacementMap.put(var, null);
-                }
-                else {
-                  PsiStatement assignmentStatement = myElementFactory
-                    .createStatementFromText(var2FieldNames.get(variable.getName()) + " = " + initializer.getText() + ";", statement);
-                  replacementMap.put(var, assignmentStatement);
-                }
+                replacementMap.put(var, var.getInitializer());
               }
             }
           }
@@ -412,11 +404,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           }
         }
         else if (statement instanceof PsiLocalVariable) {
-          PsiLocalVariable variable = (PsiLocalVariable)statement;
+          final PsiLocalVariable variable = (PsiLocalVariable)statement;
           variable.normalizeDeclaration();
-          PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(statement, PsiDeclarationStatement.class);
+          final PsiExpression initializer = variable.getInitializer();
+          LOG.assertTrue(initializer != null);
+          final PsiStatement assignmentStatement = myElementFactory.createStatementFromText(var2FieldNames.get(variable.getName()) + " = " + initializer.getText() + ";", statement);
+          final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(statement, PsiDeclarationStatement.class);
           LOG.assertTrue(declaration != null);
-          declaration.replace(replacement);
+          declaration.replace(assignmentStatement);
         }
         else {
           if (statement instanceof PsiReturnStatement) {
