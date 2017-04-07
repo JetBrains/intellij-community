@@ -13,7 +13,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="educational-python" />
     <orderEntry type="module" module-name="python-community-configure" />
-    <orderEntry type="module" module-name="course-creator" />
     <orderEntry type="module" module-name="educational-core" />
   </component>
 </module>
