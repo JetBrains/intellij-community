@@ -455,7 +455,7 @@ public class EduAdaptiveStepicConnector {
       }
     }
     else {
-      final String templateForTask = getCodeTemplateForTask(project, task, step.options.codeTemplates);
+      final String templateForTask = getCodeTemplateForTask(project, step.options.codeTemplates);
       String text = templateForTask == null ? "# write your answer here \n" : templateForTask;
       createMockTaskFile(task, text);
     }
@@ -463,10 +463,9 @@ public class EduAdaptiveStepicConnector {
   }
 
   private static String getCodeTemplateForTask(@NotNull Project project,
-                                               @NotNull Task task,
                                                @Nullable StepicWrappers.CodeTemplatesWrapper codeTemplates) {
     if (codeTemplates != null) {
-      final String languageString = getLanguageString(task, project);
+      final String languageString = getLanguageString(project);
       if (languageString != null) {
         return codeTemplates.getTemplateForLanguage(languageString);
       }
@@ -622,7 +621,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @Nullable
-  private static String getLanguageString(@NotNull Task task, @NotNull Project project) {
+  private static String getLanguageString(@NotNull Project project) {
     final Language pythonLanguage = Language.findLanguageByID("Python");
     if (pythonLanguage != null) {
       Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getSdk();
