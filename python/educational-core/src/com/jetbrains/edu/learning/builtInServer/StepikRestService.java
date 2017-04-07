@@ -15,15 +15,15 @@
  */
 package com.jetbrains.edu.learning.builtInServer;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.platform.ProjectSetReader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
@@ -55,14 +55,21 @@ public class StepikRestService extends RestService {
   private static final String SERVICE_NAME = "edu/stepik";
   private static final Pattern OPEN_COURSE = Pattern.compile("/" + SERVICE_NAME + "/course/[^/]*-(\\d+)(?:$|\\?|/.*)");
 
-  private static void openProject(String path) {
-    String descriptor = String.format("{\"project\": \"%s\"}", path);
-    JsonObject jsonObject = new JsonParser().parse(descriptor).getAsJsonObject();
-
+  private static boolean openProject(String projectPath) {
+    final boolean[] opened = {false};
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      new ProjectSetReader().readDescriptor(jsonObject, null);
-      activateLastFocusedFrame();
+      final Project[] project = new Project[1];
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+        project[0] = ProjectUtil.openProject(projectPath, null, true);
+        opened[0] = project[0] != null;
+      });
+      requestDefaultFocus(project[0]);
     });
+    return opened[0];
+  }
+
+  private static void requestDefaultFocus(@NotNull Project project) {
+    IdeFocusManager.getInstance(project).requestDefaultFocus(true);
   }
 
   @NotNull
@@ -93,6 +100,11 @@ public class StepikRestService extends RestService {
       int targetCourseId = Integer.parseInt(matcher.group(1));
       LOG.info("Open course: " + targetCourseId);
 
+      if (findOpenedProjectAndFocus(targetCourseId)) {
+        RestService.sendOk(request, context);
+        return null;
+      }
+
       RecentProjectsManagerBase recentProjectsManager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
 
       if (recentProjectsManager == null) {
@@ -118,16 +130,33 @@ public class StepikRestService extends RestService {
         }
         int courseId = getCourseId(taskManager, component);
 
-        if (courseId == targetCourseId) {
-          openProject(projectPath);
+        if (courseId == targetCourseId && openProject(projectPath)) {
           RestService.sendOk(request, context);
           return null;
         }
       }
+      RestService.sendStatus(HttpResponseStatus.NOT_FOUND, false, context.channel());
+      return "Didn't found or create a project";
     }
 
-    RestService.sendStatus(HttpResponseStatus.NOT_FOUND, false, context.channel());
+    RestService.sendStatus(HttpResponseStatus.BAD_REQUEST, false, context.channel());
     return "Unknown command";
+  }
+
+  private static boolean findOpenedProjectAndFocus(int targetCourseId) {
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : openProjects) {
+      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+      if (taskManager != null) {
+        Course course = taskManager.getCourse();
+        RemoteCourse remoteCourse = course != null && course instanceof RemoteCourse ? (RemoteCourse)course : null;
+        if (remoteCourse != null && remoteCourse.getId() == targetCourseId) {
+          ApplicationManager.getApplication().invokeLater(() -> requestDefaultFocus(project));
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
