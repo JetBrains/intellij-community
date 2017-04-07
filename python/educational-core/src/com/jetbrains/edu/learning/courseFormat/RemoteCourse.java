@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.Task.Backgroundable;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,7 +18,8 @@ import java.util.List;
 
 public class RemoteCourse extends Course {
   //course type in format "pycharm<version> <language>"
-  @SerializedName("course_format") private String myType = "pycharm" + EduStepicConnector.CURRENT_VERSION + " " + getLanguageID();
+  @SerializedName("course_format") private String myType =
+                        String.format("%s%d %s", EduStepicNames.PYCHARM_PREFIX, EduStepicConnector.CURRENT_VERSION, getLanguageID());
   @SerializedName("is_idea_compatible") private boolean isCompatible = true;
   List<Integer> sections;
   List<Integer> instructors = new ArrayList<>();
@@ -29,6 +31,11 @@ public class RemoteCourse extends Course {
 
   public String getType() {
     return myType;
+  }
+
+  public void setLanguage(@NotNull final String language) {
+    super.setLanguage(language);
+    updateType(language);
   }
 
   public List<Integer> getSections() {
@@ -107,8 +114,10 @@ public class RemoteCourse extends Course {
 
   public void copyCourseParameters(RemoteCourse course) {
     setName(course.getName());
-
     setUpdateDate(course.getUpdateDate());
+  }
 
+  private void updateType(String language) {
+    myType = String.format("%s%d %s", EduStepicNames.PYCHARM_PREFIX, EduStepicConnector.CURRENT_VERSION, language);
   }
 }

@@ -152,6 +152,8 @@ public class EduStepicConnector {
     final List<RemoteCourse> courses = coursesContainer.courses;
     for (RemoteCourse info : courses) {
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
+      setCourseLanguage(info);
+
       if (canBeOpened(info)) {
         final ArrayList<StepicUser> authors = new ArrayList<>();
         for (Integer instructor : info.getInstructors()) {
@@ -169,12 +171,19 @@ public class EduStepicConnector {
     }
   }
 
-  static boolean canBeOpened(RemoteCourse courseInfo) {
-    if (courseInfo.isAdaptive()) {
-      return true;
+  private static void setCourseLanguage(RemoteCourse info) {
+    if (info.isAdaptive()) {
+      info.setLanguage("Python"); // adaptive courses available only in PyCharm now
+      return;
     }
-    String courseType = courseInfo.getType();
+    String courseType = info.getType();
+    final int separator = courseType.indexOf(" ");
+    assert separator != -1;
+    final String language = courseType.substring(separator + 1);
+    info.setLanguage(language);
+  }
 
+  static boolean canBeOpened(RemoteCourse courseInfo) {
     final ArrayList<String> supportedLanguages = new ArrayList<>();
     final LanguageExtensionPoint[] extensions = Extensions.getExtensions(EduPluginConfigurator.EP_NAME, null);
     for (LanguageExtensionPoint extension : extensions) {
@@ -182,12 +191,14 @@ public class EduStepicConnector {
       supportedLanguages.add(languageId);
     }
 
+    if (courseInfo.isAdaptive()) {
+      return supportedLanguages.contains(courseInfo.getLanguageID());
+    }
+
+    String courseType = courseInfo.getType();
     final List<String> typeLanguage = StringUtil.split(courseType, " ");
     String prefix = typeLanguage.get(0);
-    if (typeLanguage.size() > 1) {
-      final String courseLanguage = typeLanguage.get(typeLanguage.size() - 1);
-      if (!supportedLanguages.contains(courseLanguage)) return false;
-    }
+    if (!supportedLanguages.contains(courseInfo.getLanguageID())) return false;
     if (typeLanguage.size() < 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
       return false;
     }
@@ -205,14 +216,8 @@ public class EduStepicConnector {
     }
   }
 
-  public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse course) {
-    final RemoteCourse remoteCourse = (RemoteCourse)course.copy();
+  public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse remoteCourse) {
     if (!remoteCourse.isAdaptive()) {
-      String courseType = remoteCourse.getType();
-      final int separator = courseType.indexOf(" ");
-      assert separator != -1;
-      final String language = courseType.substring(separator + 1);
-      remoteCourse.setLanguage(language);
       try {
         for (Integer section : remoteCourse.getSections()) {
           remoteCourse.addLessons(getLessons(section));
