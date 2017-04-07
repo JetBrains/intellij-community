@@ -191,13 +191,8 @@ public class GitContentRevision implements ByteBackedContentRevision {
 
   public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
                                                @NotNull final Project project) {
-    return createRevision(file, revisionNumber, project, null);
-  }
-
-  public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
-                                               @NotNull final Project project, @Nullable final Charset charset) {
-    final FilePath filePath = VcsUtil.getFilePath(file);
-    return createRevision(filePath, revisionNumber, project, charset);
+    FilePath filePath = VcsUtil.getFilePath(file);
+    return createRevision(filePath, revisionNumber, project, null);
   }
 
   public static ContentRevision createRevision(@NotNull final FilePath filePath, @Nullable final VcsRevisionNumber revisionNumber,
