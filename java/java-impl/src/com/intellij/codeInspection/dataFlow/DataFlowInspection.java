@@ -25,8 +25,6 @@ import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.List;
 
@@ -90,76 +88,39 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       mySuggestNullables = new JCheckBox(
         InspectionsBundle.message("inspection.data.flow.nullable.quickfix.option"));
       mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
-      mySuggestNullables.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          SUGGEST_NULLABLE_ANNOTATIONS = mySuggestNullables.isSelected();
-        }
-      });
+      mySuggestNullables.getModel().addItemListener(e -> SUGGEST_NULLABLE_ANNOTATIONS = mySuggestNullables.isSelected());
 
       myDontReportTrueAsserts = new JCheckBox(
         InspectionsBundle.message("inspection.data.flow.true.asserts.option"));
       myDontReportTrueAsserts.setSelected(DONT_REPORT_TRUE_ASSERT_STATEMENTS);
-      myDontReportTrueAsserts.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          DONT_REPORT_TRUE_ASSERT_STATEMENTS = myDontReportTrueAsserts.isSelected();
-        }
-      });
+      myDontReportTrueAsserts.getModel().addItemListener(e -> DONT_REPORT_TRUE_ASSERT_STATEMENTS = myDontReportTrueAsserts.isSelected());
       
       myIgnoreAssertions = new JCheckBox("Ignore assert statements");
       myIgnoreAssertions.setSelected(IGNORE_ASSERT_STATEMENTS);
-      myIgnoreAssertions.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          IGNORE_ASSERT_STATEMENTS = myIgnoreAssertions.isSelected();
-        }
-      });
+      myIgnoreAssertions.getModel().addItemListener(e -> IGNORE_ASSERT_STATEMENTS = myIgnoreAssertions.isSelected());
 
       myReportConstantReferences = new JCheckBox("Warn when reading a value guaranteed to be constant");
       myReportConstantReferences.setSelected(REPORT_CONSTANT_REFERENCE_VALUES);
-      myReportConstantReferences.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_CONSTANT_REFERENCE_VALUES = myReportConstantReferences.isSelected();
-        }
-      });
+      myReportConstantReferences.getModel().addItemListener(
+        e -> REPORT_CONSTANT_REFERENCE_VALUES = myReportConstantReferences.isSelected());
 
       myTreatUnknownMembersAsNullable = new JCheckBox("Treat non-annotated members and parameters as @Nullable");
       myTreatUnknownMembersAsNullable.setSelected(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE);
-      myTreatUnknownMembersAsNullable.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = myTreatUnknownMembersAsNullable.isSelected();
-        }
-      });
+      myTreatUnknownMembersAsNullable.getModel().addItemListener(
+        e -> TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = myTreatUnknownMembersAsNullable.isSelected());
 
       myReportNullArguments = new JCheckBox("Report not-null required parameter with null-literal argument usages");
       myReportNullArguments.setSelected(REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER);
-      myReportNullArguments.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myReportNullArguments.isSelected();
-        }
-      });
+      myReportNullArguments.getModel().addItemListener(e -> REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myReportNullArguments.isSelected());
 
       myReportNullableMethodsReturningNotNull = new JCheckBox("Report nullable methods that always return a non-null value");
       myReportNullableMethodsReturningNotNull.setSelected(REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL);
-      myReportNullableMethodsReturningNotNull.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = myReportNullableMethodsReturningNotNull.isSelected();
-        }
-      });
+      myReportNullableMethodsReturningNotNull.getModel().addItemListener(
+        e -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = myReportNullableMethodsReturningNotNull.isSelected());
 
       myReportUncheckedOptionals = new JCheckBox("Report Optional.get() calls without previous isPresent check");
       myReportUncheckedOptionals.setSelected(REPORT_UNCHECKED_OPTIONALS);
-      myReportUncheckedOptionals.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_UNCHECKED_OPTIONALS = myReportUncheckedOptionals.isSelected();
-        }
-      });
+      myReportUncheckedOptionals.getModel().addItemListener(e -> REPORT_UNCHECKED_OPTIONALS = myReportUncheckedOptionals.isSelected());
 
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
