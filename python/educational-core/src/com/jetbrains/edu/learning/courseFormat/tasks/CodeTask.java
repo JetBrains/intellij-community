@@ -24,7 +24,7 @@ public class CodeTask extends Task {
       @Override
       public void onTaskFailed(@NotNull String message) {
         super.onTaskFailed("Wrong solution");
-        StudyCheckUtils.showTestResultsToolWindow(myProject, message, false);
+        StudyCheckUtils.showTestResultsToolWindow(myProject, message);
       }
     };
   }

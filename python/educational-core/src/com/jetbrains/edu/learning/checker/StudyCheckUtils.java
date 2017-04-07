@@ -201,7 +201,7 @@ public class StudyCheckUtils {
     }
   }
 
-  public static void showTestResultsToolWindow(@NotNull final Project project, @NotNull final String message, boolean solved) {
+  public static void showTestResultsToolWindow(@NotNull final Project project, @NotNull final String message) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
       ToolWindow window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
@@ -216,15 +216,9 @@ public class StudyCheckUtils {
         final JComponent component = content.getComponent();
         if (component instanceof ConsoleViewImpl) {
           ((ConsoleViewImpl)component).clear();
-          if (!solved) {
-            ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
-          }
-          else {
-            ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
-          }
-          window.setAvailable(true, () -> {});
-          window.show(() -> {});
-          return;
+          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
+          window.setAvailable(true,null);
+          window.show(null);
         }
       }
     });
