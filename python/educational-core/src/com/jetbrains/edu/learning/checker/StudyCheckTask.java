@@ -173,7 +173,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (reactionPosted) {
         if (myStatusBeforeCheck != StudyStatus.Solved) {
           myTask.setStatus(StudyStatus.Solved);
-          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myTask.getLesson(), indicator,
+                                                            EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
         }
       }
       else {
@@ -203,7 +204,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (pair.getFirst()) {
         onTaskSolved("Congratulations! Remote tests passed.");
         if (myStatusBeforeCheck != StudyStatus.Solved) {
-          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myTask.getLesson(), indicator,
+                                                            EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
         }
       }
       else {

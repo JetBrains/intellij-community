@@ -26,7 +26,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.CodeTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
-import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
@@ -281,12 +280,12 @@ public class EduAdaptiveStepicConnector {
     }
   }
 
-  public static void addNextRecommendedTask(@NotNull Project project, @NotNull ProgressIndicator indicator, int reactionToPost) {
-    final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
+  public static void addNextRecommendedTask(@NotNull Project project,
+                                            @NotNull Lesson lesson,
+                                            @NotNull ProgressIndicator indicator,
+                                            int reactionToPost) {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    Task selectedTask = StudyUtils.getTaskFromSelectedEditor(project);
-    if (editor == null || editor.getTaskFile() == null || selectedTask == null || selectedTask.getLesson() == null ||
-        !(course instanceof RemoteCourse)) {
+    if (!(course instanceof RemoteCourse)) {
       LOG.warn("Course is in incorrect state");
       ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
                                                                                                "Can't get next recommendation: course is broken"));
@@ -302,7 +301,6 @@ public class EduAdaptiveStepicConnector {
       return;
     }
 
-    final Lesson lesson = selectedTask.getLesson();
     final boolean reactionPosted = postRecommendationReaction(String.valueOf(lesson.getId()), String.valueOf(user.getId()), reactionToPost);
     if (!reactionPosted) {
       LOG.warn("Recommendation reaction wasn't posted");
