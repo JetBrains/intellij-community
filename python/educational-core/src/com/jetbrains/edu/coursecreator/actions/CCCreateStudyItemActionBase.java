@@ -47,7 +47,6 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     createItem(view, project, directory, course);
   }
 
-
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
@@ -78,12 +77,10 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     presentation.setEnabledAndVisible(true);
   }
 
-
   @Nullable
   protected abstract PsiDirectory getParentDir(@NotNull final Project project,
                                                @NotNull final Course course,
                                                @NotNull final PsiDirectory directory);
-
 
   @Nullable
   public PsiDirectory createItem(@Nullable final IdeView view, @NotNull final Project project,
@@ -105,7 +102,6 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
   }
 
   protected abstract void addItem(@NotNull final Course course, @NotNull final StudyItem item);
-
 
   protected abstract Function<VirtualFile, ? extends StudyItem> getStudyOrderable(@NotNull final StudyItem item);
 

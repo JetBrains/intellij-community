@@ -17,7 +17,7 @@ import java.util.List;
 
 public class RemoteCourse extends Course {
   //course type in format "pycharm<version> <language>"
-  @SerializedName("course_format") private String myType = "pycharm" + EduStepicConnector.CURRENT_VERSION + " Python";
+  @SerializedName("course_format") private String myType = "pycharm" + EduStepicConnector.CURRENT_VERSION + " " + getLanguageID();
   @SerializedName("is_idea_compatible") private boolean isCompatible = true;
   List<Integer> sections;
   List<Integer> instructors = new ArrayList<>();
