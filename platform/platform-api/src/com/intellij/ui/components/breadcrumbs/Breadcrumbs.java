@@ -47,6 +47,8 @@ import java.util.function.Function;
 import javax.swing.JComponent;
 import javax.swing.border.AbstractBorder;
 
+import static javax.swing.SwingUtilities.isLeftMouseButton;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -416,6 +418,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
             if (!isHovered(crumb)) consumer = hover;
             break;
           case MouseEvent.MOUSE_CLICKED:
+            if (!isLeftMouseButton(event)) break;
             crumb = function.apply(event);
             if (crumb != null) consumer = select;
             break;
