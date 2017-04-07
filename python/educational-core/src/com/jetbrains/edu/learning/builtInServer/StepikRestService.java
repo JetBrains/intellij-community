@@ -23,7 +23,8 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.RestService;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -63,13 +65,16 @@ public class StepikRestService extends RestService {
         project[0] = ProjectUtil.openProject(projectPath, null, true);
         opened[0] = project[0] != null;
       });
-      requestDefaultFocus(project[0]);
+      requestFocus(project[0]);
     });
     return opened[0];
   }
 
-  private static void requestDefaultFocus(@NotNull Project project) {
-    IdeFocusManager.getInstance(project).requestDefaultFocus(true);
+  private static void requestFocus(@NotNull Project project) {
+    IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+    if (frame instanceof Window) {
+      ((Window)frame).toFront();
+    }
   }
 
   @NotNull
@@ -97,44 +102,14 @@ public class StepikRestService extends RestService {
     String path = urlDecoder.path();
     Matcher matcher = OPEN_COURSE.matcher(path);
     if (matcher.matches()) {
-      int targetCourseId = Integer.parseInt(matcher.group(1));
-      LOG.info("Open course: " + targetCourseId);
+      int courseId = Integer.parseInt(matcher.group(1));
+      LOG.info("Open course: " + courseId);
 
-      if (findOpenedProjectAndFocus(targetCourseId)) {
+      if (findOpenProjectAndFocus(courseId) || findRecentProjectAndOpen(courseId) || createProjectAndOpen(courseId)) {
         RestService.sendOk(request, context);
         return null;
       }
 
-      RecentProjectsManagerBase recentProjectsManager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
-
-      if (recentProjectsManager == null) {
-        return null;
-      }
-
-      RecentProjectsManagerBase.State state = recentProjectsManager.getState();
-
-      if (state == null) {
-        return null;
-      }
-
-      List<String> recentPaths = state.recentPaths;
-
-      Project project = ProjectManager.getInstance().getDefaultProject();
-      StudyTaskManager taskManager = new StudyTaskManager(project);
-      SAXBuilder parser = new SAXBuilder();
-
-      for (String projectPath : recentPaths) {
-        Element component = readComponent(parser, projectPath);
-        if (component == null) {
-          continue;
-        }
-        int courseId = getCourseId(taskManager, component);
-
-        if (courseId == targetCourseId && openProject(projectPath)) {
-          RestService.sendOk(request, context);
-          return null;
-        }
-      }
       RestService.sendStatus(HttpResponseStatus.NOT_FOUND, false, context.channel());
       return "Didn't found or create a project";
     }
@@ -143,17 +118,50 @@ public class StepikRestService extends RestService {
     return "Unknown command";
   }
 
-  private static boolean findOpenedProjectAndFocus(int targetCourseId) {
+  private static boolean findOpenProjectAndFocus(int courseId) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
       if (taskManager != null) {
         Course course = taskManager.getCourse();
         RemoteCourse remoteCourse = course != null && course instanceof RemoteCourse ? (RemoteCourse)course : null;
-        if (remoteCourse != null && remoteCourse.getId() == targetCourseId) {
-          ApplicationManager.getApplication().invokeLater(() -> requestDefaultFocus(project));
+        if (remoteCourse != null && remoteCourse.getId() == courseId) {
+          ApplicationManager.getApplication().invokeLater(() -> requestFocus(project));
           return true;
         }
+      }
+    }
+    return false;
+  }
+
+  private static boolean findRecentProjectAndOpen(int targetCourseId) {
+    RecentProjectsManagerBase recentProjectsManager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
+
+    if (recentProjectsManager == null) {
+      return false;
+    }
+
+    RecentProjectsManagerBase.State state = recentProjectsManager.getState();
+
+    if (state == null) {
+      return false;
+    }
+
+    List<String> recentPaths = state.recentPaths;
+
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    StudyTaskManager taskManager = new StudyTaskManager(project);
+    SAXBuilder parser = new SAXBuilder();
+
+    for (String projectPath : recentPaths) {
+      Element component = readComponent(parser, projectPath);
+      if (component == null) {
+        continue;
+      }
+      int courseId = getCourseId(taskManager, component);
+
+      if (courseId == targetCourseId && openProject(projectPath)) {
+        return true;
       }
     }
     return false;
@@ -186,5 +194,9 @@ public class StepikRestService extends RestService {
     catch (IllegalStateException ignored) {
     }
     return 0;
+  }
+
+  private static boolean createProjectAndOpen(int courseId) {
+    return false;
   }
 }
