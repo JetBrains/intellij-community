@@ -73,7 +73,7 @@ public class Utils {
 
   public static void delete(File file) throws IOException {
     Path start = file.toPath();
-    if (Files.exists(start)) {
+    if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
       Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
