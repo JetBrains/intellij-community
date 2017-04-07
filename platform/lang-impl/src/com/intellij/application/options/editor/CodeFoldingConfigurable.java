@@ -74,12 +74,14 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     EditorSettingsExternalizable.getInstance().setFoldingOutlineShown(myCbFolding.isSelected());
     super.apply();
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      EditorOptionsPanel.reinitAllEditors();
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        DaemonCodeAnalyzer.getInstance(project).restart();
-      }
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> applyCodeFoldingSettingsChanges(), ModalityState.NON_MODAL);
+  }
+
+  public static void applyCodeFoldingSettingsChanges() {
+    EditorOptionsPanel.reinitAllEditors();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
   }
 
   @Override
