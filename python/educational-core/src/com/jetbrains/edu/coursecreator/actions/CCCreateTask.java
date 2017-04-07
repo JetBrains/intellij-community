@@ -25,9 +25,6 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
     super(EduNames.TASK_TITLED, TITLE, EducationalCoreIcons.Task);
   }
 
-
-
-
   @Nullable
   @Override
   protected PsiDirectory getParentDir(@NotNull Project project, @NotNull Course course, @NotNull PsiDirectory directory) {
@@ -58,8 +55,8 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   @Override
   @Nullable
   protected PsiDirectory createItemDir(@NotNull final Project project, @NotNull final StudyItem item,
-                                     @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
-                                     @NotNull final Course course) {
+                                       @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
+                                       @NotNull final Course course) {
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator != null) {
       return configurator.createTaskContent(project, (Task)item, view, parentDirectory, course);

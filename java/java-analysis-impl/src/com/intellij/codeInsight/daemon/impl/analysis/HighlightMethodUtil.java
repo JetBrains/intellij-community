@@ -390,6 +390,7 @@ public class HighlightMethodUtil {
           if (highlightInfo != null) {
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
+            registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, (MethodCandidateInfo)resolveResult, (PsiMethod)resolved, highlightInfo);
           }
         }
       }
@@ -430,6 +431,7 @@ public class HighlightMethodUtil {
           if (highlightInfo != null) {
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, candidateInfo, methodCall);
+            registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, highlightInfo);
           }
         }
         else {
@@ -470,6 +472,36 @@ public class HighlightMethodUtil {
       highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor, javaSdkVersion);
     }
     return highlightInfo;
+  }
+
+  private static void registerTargetTypeFixesBasedOnApplicabilityInference(@NotNull PsiMethodCallExpression methodCall,
+                                                                           MethodCandidateInfo resolveResult,
+                                                                           PsiMethod resolved,
+                                                                           HighlightInfo highlightInfo) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+    PsiVariable variable = null;
+    if (parent instanceof PsiVariable) {
+      variable = (PsiVariable)parent;
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
+      PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
+      if (lExpression instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)lExpression).resolve();
+        if (resolve instanceof PsiVariable) {
+          variable = (PsiVariable)resolve;
+        }
+      }
+    }
+
+    if (variable != null) {
+      PsiType rType = methodCall.getType();
+      if (rType != null && !variable.getType().isAssignableFrom(rType)) {
+        PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
+        if (expectedTypeByApplicabilityConstraints != null && !expectedTypeByApplicabilityConstraints.equals(rType)) {
+          HighlightUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
+        }
+      }
+    }
   }
 
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */

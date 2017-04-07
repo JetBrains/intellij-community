@@ -283,7 +283,12 @@ public class EduAdaptiveStepicConnector {
   public static void addNextRecommendedTask(@NotNull Project project, @NotNull ProgressIndicator indicator, int reactionToPost) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null || editor == null || editor.getTaskFile() == null || !(course instanceof RemoteCourse)) {
+    Task selectedTask = StudyUtils.getTaskFromSelectedEditor(project);
+    if (editor == null || editor.getTaskFile() == null || selectedTask == null || selectedTask.getLesson() == null ||
+        !(course instanceof RemoteCourse)) {
+      LOG.warn("Course is in incorrect state");
+      ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
+                                                                                               "Can't get next recommendation: course is broken"));
       return;
     }
 
@@ -296,7 +301,7 @@ public class EduAdaptiveStepicConnector {
       return;
     }
 
-    final Lesson lesson = editor.getTaskFile().getTask().getLesson();
+    final Lesson lesson = selectedTask.getLesson();
     final boolean reactionPosted = postRecommendationReaction(String.valueOf(lesson.getId()), String.valueOf(user.getId()), reactionToPost);
     if (!reactionPosted) {
       LOG.warn("Recommendation reaction wasn't posted");
@@ -315,10 +320,10 @@ public class EduAdaptiveStepicConnector {
     task.initTask(lesson, false);
     boolean replaceCurrentTask = reactionToPost == TOO_HARD_RECOMMENDATION_REACTION || reactionToPost == TOO_BORING_RECOMMENDATION_REACTION;
     if (replaceCurrentTask) {
-      replaceCurrentTask(project, editor, task);
+      replaceCurrentTask(project, editor, task, lesson);
     }
     else {
-      addAsNextTask(project, editor, task);
+      addAsNextTask(project, task, lesson);
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -328,11 +333,10 @@ public class EduAdaptiveStepicConnector {
     });
   }
 
-  private static void addAsNextTask(@NotNull Project project, @NotNull StudyEditor editor, @NotNull Task task) {
+  private static void addAsNextTask(@NotNull Project project, @NotNull Task task, @NotNull Lesson lesson) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     assert course != null;
 
-    final Lesson lesson = editor.getTaskFile().getTask().getLesson();
     lesson.addTask(task);
     task.setIndex(lesson.getTaskList().size());
     lesson.initLesson(course, true);
@@ -357,14 +361,12 @@ public class EduAdaptiveStepicConnector {
     }
   }
 
-  private static void replaceCurrentTask(@NotNull Project project, @NotNull StudyEditor editor, @NotNull Task task) {
+  private static void replaceCurrentTask(@NotNull Project project, @NotNull StudyEditor editor, @NotNull Task task, @NotNull Lesson lesson) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     assert course != null;
 
-    final Lesson lesson = editor.getTaskFile().getTask().getLesson();
     int taskIndex = lesson.getTaskList().size();
 
-    task.setLesson(lesson);
     task.setIndex(taskIndex);
     lesson.getTaskList().set(taskIndex - 1, task);
 

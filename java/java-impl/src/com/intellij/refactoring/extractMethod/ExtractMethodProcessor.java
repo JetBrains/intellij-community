@@ -1616,39 +1616,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
     final Set<PsiField> fields = new LinkedHashSet<>();
-    if (!PsiUtil.isLocalOrAnonymousClass(myTargetClass) && (myTargetClass.getContainingClass() == null || myTargetClass.hasModifierProperty(PsiModifier.STATIC))) {
-      boolean canBeStatic = true;
-      if (myTargetClass.isInterface()) {
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiMethod.class, false);
-        canBeStatic = containingMethod == null || containingMethod.hasModifierProperty(PsiModifier.STATIC);
-      }
-      if (canBeStatic) {
-        ElementNeedsThis needsThis = new ElementNeedsThis(myTargetClass) {
-          @Override
-          protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
-            if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
-              final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
-              if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
-                fields.add((PsiField)classMember);
-                return;
-              }
-            }
-            super.visitClassMemberReferenceElement(classMember, classMemberReference);
-          }
-        };
-        for (int i = 0; i < myElements.length && !needsThis.usesMembers(); i++) {
-          PsiElement element = myElements[i];
-          element.accept(needsThis);
-        }
-        myCanBeStatic = !needsThis.usesMembers();
-      }
-      else {
-        myCanBeStatic = false;
-      }
-    }
-    else {
-      myCanBeStatic = false;
-    }
+    myCanBeStatic = canBeStatic(myTargetClass, myCodeFragmentMember, myElements, fields);
 
     myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
     myInputVariables.setUsedInstanceFields(fields);
@@ -1663,6 +1631,37 @@ public class ExtractMethodProcessor implements MatchProvider {
       extractPass.pass(this);
     }
     return true;
+  }
+
+  public static boolean canBeStatic(final PsiClass targetClass, final PsiElement place, final PsiElement[] elements, Set<PsiField> usedFields) {
+    if (!PsiUtil.isLocalOrAnonymousClass(targetClass) && (targetClass.getContainingClass() == null || targetClass.hasModifierProperty(PsiModifier.STATIC))) {
+      boolean canBeStatic = true;
+      if (targetClass.isInterface()) {
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(place, PsiMethod.class, false);
+        canBeStatic = containingMethod == null || containingMethod.hasModifierProperty(PsiModifier.STATIC);
+      }
+      if (canBeStatic) {
+        ElementNeedsThis needsThis = new ElementNeedsThis(targetClass) {
+          @Override
+          protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+            if (classMember instanceof PsiField && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+              final PsiExpression expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression.class, false);
+              if (expression == null || !PsiUtil.isAccessedForWriting(expression)) {
+                usedFields.add((PsiField)classMember);
+                return;
+              }
+            }
+            super.visitClassMemberReferenceElement(classMember, classMemberReference);
+          }
+        };
+        for (int i = 0; i < elements.length && !needsThis.usesMembers(); i++) {
+          PsiElement element = elements[i];
+          element.accept(needsThis);
+        }
+        return !needsThis.usesMembers();
+      }
+    }
+    return false;
   }
 
   protected boolean isFoldingApplicable() {

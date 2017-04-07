@@ -2,12 +2,14 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -167,9 +169,12 @@ public class Task implements StudyItem {
 
   @NotNull
   public String getTestsText(@NotNull final Project project) {
+    final Course course = getLesson().getCourse();
+    final Language language = course.getLanguageById();
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
+      final VirtualFile file = taskDir.findChild(configurator.getTestFileName());
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {

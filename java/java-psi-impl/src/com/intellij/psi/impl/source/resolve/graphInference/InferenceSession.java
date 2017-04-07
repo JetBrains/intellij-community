@@ -1146,9 +1146,7 @@ public class InferenceSession {
       }
     }
 
-    if (myContext != null) {
-      myContext.putUserData(ERASED, myErased);
-    }
+    setUncheckedInContext();
 
     final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
     for (PsiTypeParameter parameter : map.keySet()) {
@@ -1166,6 +1164,12 @@ public class InferenceSession {
         param = parameter;
       }
       mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
+    }
+  }
+
+  public void setUncheckedInContext() {
+    if (myContext != null) {
+      myContext.putUserData(ERASED, myErased);
     }
   }
 
