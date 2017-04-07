@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ public class GrUnresolvedAccessChecker {
             !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
             !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
           String qname = clazz.getQualifiedName();
-          LOG.assertTrue(qname != null, clazz.getText());
+          LOG.assertTrue(qname != null);
           return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
         }
       }
