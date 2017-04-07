@@ -967,7 +967,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
       if (PsiModifier.PRIVATE.equals(modifier)) {
         isAllowed &= modifierOwnerParent instanceof PsiClass &&
-                     (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner));
+                     (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType());
       }
       else if (PsiModifier.STRICTFP.equals(modifier)) {
         isAllowed &= modifierOwnerParent instanceof PsiClass && (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel8OrHigher(modifierOwner));
