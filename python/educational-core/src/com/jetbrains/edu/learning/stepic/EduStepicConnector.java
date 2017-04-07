@@ -39,7 +39,7 @@ public class EduStepicConnector {
   //this prefix indicates that course can be opened by educational plugin
   public static final String PYCHARM_PREFIX = "pycharm";
   private static final String ADAPTIVE_NOTE =
-    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it become!";
+    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it becomes!";
 
   private EduStepicConnector() {
   }
