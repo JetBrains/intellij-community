@@ -29,6 +29,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +265,7 @@ public class CCUtils {
 
     final Lesson lesson = new Lesson();
     lesson.setName(EduNames.PYCHARM_ADDITIONAL);
-    final Task task = new Task();
+    final Task task = new PyCharmTask();
     task.setLesson(lesson);
     task.setName(EduNames.PYCHARM_ADDITIONAL);
     task.setIndex(1);

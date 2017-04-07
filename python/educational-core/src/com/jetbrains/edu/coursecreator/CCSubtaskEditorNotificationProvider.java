@@ -28,6 +28,7 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
@@ -227,7 +228,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
       final Lesson lesson = myTask.getLesson();
       final List<Task> list = lesson.getTaskList();
       final int i = list.indexOf(myTask);
-      final Task task = new Task();
+      final Task task = new PyCharmTask();
       task.copyTaskParameters(myTask);
       for (TaskFile taskFile : task.getTaskFiles().values()) {
         taskFile.setTask(task);

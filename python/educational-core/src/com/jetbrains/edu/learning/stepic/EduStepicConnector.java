@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
@@ -267,7 +268,7 @@ public class EduStepicConnector {
       return null;
     }
     final int lastSubtaskIndex = block.options.lastSubtaskIndex;
-    Task task = new Task();
+    Task task = new PyCharmTask();
     if (lastSubtaskIndex != 0) {
       task = createTaskWithSubtasks(lastSubtaskIndex);
     }
