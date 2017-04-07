@@ -108,7 +108,7 @@ public class StudyCheckUtils {
   }
 
 
-  public static void showTestResultPopUp(final String text, Color color, @NotNull final Project project) {
+  public static void showTestResultPopUp(@NotNull final String text, Color color, @NotNull final Project project) {
     BalloonBuilder balloonBuilder =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, color, null);
     final Balloon balloon = balloonBuilder.createBalloon();
