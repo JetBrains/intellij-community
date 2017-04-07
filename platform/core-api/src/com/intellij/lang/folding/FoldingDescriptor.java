@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,17 @@ public class FoldingDescriptor {
     this(node, range, null);
   }
 
+  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable Object dependency) {
+    this(node, range, null, dependency);
+  }
+
   public FoldingDescriptor(@NotNull PsiElement element, @NotNull TextRange range) {
     this(ObjectUtils.assertNotNull(element.getNode()), range, null);
+  }
+
+  public FoldingDescriptor(@NotNull PsiElement element, @NotNull TextRange range, @Nullable Object dependency) {
+    this(ObjectUtils.assertNotNull(element.getNode()), range, null, 
+         dependency == null ? Collections.<Object>emptySet() : Collections.singleton(dependency));
   }
 
   /**
@@ -70,6 +79,10 @@ public class FoldingDescriptor {
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
     this(node, range, group, Collections.<Object>emptySet());
+  }
+
+  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group, @Nullable Object dependency) {
+    this(node, range, group, dependency == null ? Collections.<Object>emptySet() : Collections.singleton(dependency));
   }
 
   /**

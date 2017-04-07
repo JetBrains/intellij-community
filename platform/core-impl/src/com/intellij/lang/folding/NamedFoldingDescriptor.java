@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ public class NamedFoldingDescriptor extends FoldingDescriptor {
     this(e.getNode(), new TextRange(start, end), group, placeholderText);
   }
 
+  public NamedFoldingDescriptor(@NotNull PsiElement e, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText,
+                                @Nullable Object dependency) {
+    this(e.getNode(), new TextRange(start, end), group, placeholderText, dependency);
+  }
+
   public NamedFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
     this(node, new TextRange(start, end), group, placeholderText);
   }
@@ -37,7 +42,15 @@ public class NamedFoldingDescriptor extends FoldingDescriptor {
                          @NotNull final TextRange range,
                          @Nullable FoldingGroup group,
                          @NotNull String placeholderText) {
-    super(node, range, group);
+    this(node, range, group, placeholderText, null);
+  }
+
+  public NamedFoldingDescriptor(@NotNull ASTNode node,
+                         @NotNull final TextRange range,
+                         @Nullable FoldingGroup group,
+                         @NotNull String placeholderText,
+                         @Nullable Object dependency) {
+    super(node, range, group, dependency);
     myPlaceholderText = placeholderText;
   }
 
