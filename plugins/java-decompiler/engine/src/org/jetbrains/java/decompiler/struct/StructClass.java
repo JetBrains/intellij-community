@@ -165,7 +165,7 @@ public class StructClass extends StructMember {
   }
 
   // XXX slow, but no lookup table available
-  public boolean containsFieldWithShortName(String shortName){
+  private boolean containsFieldWithShortName(String shortName){
     for(StructField f: fields) {
       if(shortName.equals(f.getName())) {
         return true;
@@ -180,6 +180,19 @@ public class StructClass extends StructMember {
     }
 
     return false;
+  }
+
+  /**
+   * @param classToName - pkg.name.ClassName
+   * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
+   */
+  public String getShortNameInClassContext(String classToName) {
+    String shortName = DecompilerContext.getImportCollector().getShortName(classToName);
+    if(containsFieldWithShortName(shortName)) {
+      return classToName;
+    } else {
+      return shortName;
+    }
   }
 
   public boolean isOwn() {

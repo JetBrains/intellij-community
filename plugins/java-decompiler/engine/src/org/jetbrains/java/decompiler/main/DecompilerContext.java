@@ -22,7 +22,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
 import java.util.HashMap;
@@ -156,19 +155,5 @@ public class DecompilerContext {
   public static String getNewLineSeparator() {
     return getOption(IFernflowerPreferences.NEW_LINE_SEPARATOR) ?
            IFernflowerPreferences.LINE_SEPARATOR_UNX : IFernflowerPreferences.LINE_SEPARATOR_WIN;
-  }
-
-  /**
-   * @param classToName - pkg.name.ClassName
-   * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
-   */
-  public static String getShortNameInCurrentClassContext(String classToName) {
-    String shortName = getImportCollector().getShortName(classToName);
-    StructClass current_class = ((ClassesProcessor.ClassNode)getProperty(CURRENT_CLASS_NODE)).classStruct;
-    if(current_class.containsFieldWithShortName(shortName)) {
-      return classToName;
-    } else {
-      return shortName;
-    }
   }
 }
