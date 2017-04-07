@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
+import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -44,6 +45,7 @@ import org.jetbrains.ide.RestService;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -197,6 +199,19 @@ public class StepikRestService extends RestService {
   }
 
   private static boolean createProjectAndOpen(int courseId) {
+    EduProjectGenerator generator = new EduProjectGenerator();
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    String title = "Getting Available Courses";
+    List<Course> availableCourses = new ArrayList<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      List<Course> courses = generator.getCoursesUnderProgress(true, title, defaultProject);
+      availableCourses.addAll(courses);
+    });
+    for (Course course : availableCourses) {
+      if (course instanceof RemoteCourse && ((RemoteCourse)course).getId() == courseId) {
+        return EduProjectCreator.createProject(course);
+      }
+    }
     return false;
   }
 }

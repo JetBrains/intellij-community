@@ -52,6 +52,7 @@
     <extensionPoint qualifiedName="Edu.optionsProvider" beanClass="com.jetbrains.edu.learning.settings.StudyOptionsProviderEP">
       <with attribute="instance" implements="com.jetbrains.edu.learning.settings.StudyOptionsProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="Edu.eduProjectCreator" interface="com.jetbrains.edu.learning.builtInServer.EduProjectCreator"/>
   </extensionPoints>
 
   <actions>
