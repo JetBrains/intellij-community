@@ -52,7 +52,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(project).requestFocus(studyState.getEditor().getComponent(), true));
 
-      final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
+      final StudyTestRunner testRunner = new PyStudyTestRunner(task, taskDir);
       Process testProcess = null;
       String commandLine = "";
       try {

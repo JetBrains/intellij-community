@@ -41,9 +41,6 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.eduIntelliJProjectTemplate" interface="com.jetbrains.edu.learning.intellij.EduIntelliJProjectTemplate"/>
-    <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="Edu.pluginConfigurator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.EduPluginConfigurator"/>
     </extensionPoint>
@@ -77,8 +74,6 @@
             description="Watch test input "/>
     <action id="ShowHintAction" class="com.jetbrains.edu.learning.actions.StudyShowHintAction" text="Show Hint for Answer Placeholder"
             description="Show hint for answer placeholder"/>
-    <action id="StudyRunAction" class="com.jetbrains.edu.learning.actions.StudyRunAction" text="Run File With Tests"
-            description="Run your code with tests"/>
     <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyFillPlaceholdersAction"
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>

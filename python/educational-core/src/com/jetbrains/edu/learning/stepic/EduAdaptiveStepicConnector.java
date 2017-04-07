@@ -8,9 +8,11 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
@@ -624,18 +625,15 @@ public class EduAdaptiveStepicConnector {
   private static String getLanguageString(@NotNull Task task, @NotNull Project project) {
     final Language pythonLanguage = Language.findLanguageByID("Python");
     if (pythonLanguage != null) {
-      final Sdk language = StudyExecutor.INSTANCE.forLanguage(pythonLanguage).findSdk(project);
-      if (language != null) {
-        final String versionString = language.getVersionString();
+      Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getSdk();
+      if (sdk != null) {
+        final String versionString = sdk.getVersionString();
         if (versionString != null) {
           final List<String> versionStringParts = StringUtil.split(versionString, " ");
           if (versionStringParts.size() == 2) {
             return versionStringParts.get(1).startsWith("2") ? PYTHON2 : PYTHON3;
           }
         }
-      }
-      else {
-        StudyUtils.showNoSdkNotification(task, project);
       }
     }
     return null;
