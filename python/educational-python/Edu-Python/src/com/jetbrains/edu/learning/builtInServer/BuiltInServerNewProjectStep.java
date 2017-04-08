@@ -31,17 +31,17 @@ import java.util.ArrayList;
  * @author meanmail
  */
 public class BuiltInServerNewProjectStep extends PyCharmNewProjectStep {
-  public BuiltInServerNewProjectStep(@NotNull Course course, @Nullable Consumer<Project> callback) {
-    super(new BuiltInServerNewProjectStep.MyCustomization(course, callback));
+  public BuiltInServerNewProjectStep(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
+    super(new BuiltInServerNewProjectStep.MyCustomization(course, onCreated));
   }
 
   protected static class MyCustomization extends PyCharmNewProjectStep.Customization {
     private final Course myCourse;
     private final PyStudyDirectoryProjectGenerator myGenerator;
 
-    public MyCustomization(@NotNull Course course, @Nullable Consumer<Project> callback) {
+    public MyCustomization(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
       myCourse = course;
-      myGenerator = new PyStudyDirectoryProjectGenerator(true, callback);
+      myGenerator = new PyStudyDirectoryProjectGenerator(true, onCreated);
     }
 
     @NotNull

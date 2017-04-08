@@ -35,12 +35,12 @@ public class EduPythonProjectCreator extends EduProjectCreator {
   }
 
   @Override
-  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> callback) {
+  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AbstractNewProjectDialog dlg = new AbstractNewProjectDialog() {
         @Override
         protected DefaultActionGroup createRootStep() {
-          return new BuiltInServerNewProjectStep(course, callback);
+          return new BuiltInServerNewProjectStep(course, onCreated);
         }
       };
       dlg.show();

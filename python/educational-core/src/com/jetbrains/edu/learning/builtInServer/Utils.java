@@ -169,7 +169,7 @@ public class Utils {
     });
     for (Course course : availableCourses) {
       if (course instanceof RemoteCourse && ((RemoteCourse)course).getId() == courseId) {
-        Consumer<Project> callback = project ->
+        Consumer<Project> onCreated = project ->
           ApplicationManager.getApplication().invokeLater(() -> {
             StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
             Course targetCourse = taskManager.getCourse();
@@ -177,7 +177,7 @@ public class Utils {
               navigateToStep(project, targetCourse, stepId);
             }
           });
-        return EduProjectCreator.createProject(course, callback);
+        return EduProjectCreator.createProject(course, onCreated);
       }
     }
     return false;

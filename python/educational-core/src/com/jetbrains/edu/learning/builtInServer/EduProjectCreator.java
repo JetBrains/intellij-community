@@ -29,19 +29,19 @@ import org.jetbrains.annotations.Nullable;
 public class EduProjectCreator {
   public static final ExtensionPointName<EduProjectCreator> EP_NAME = ExtensionPointName.create("Edu.eduProjectCreator");
 
-  public static boolean createProject(@NotNull Course course, @Nullable Consumer<Project> callback) {
+  public static boolean createProject(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
     EduProjectCreator[] extensions = Extensions.getExtensions(EP_NAME);
 
     for (EduProjectCreator projectCreator : extensions) {
       if (projectCreator.canCreateProject(course)) {
-        return projectCreator.createCourseProject(course, callback);
+        return projectCreator.createCourseProject(course, onCreated);
       }
     }
 
     return false;
   }
 
-  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> callback) {
+  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
     return false;
   }
 

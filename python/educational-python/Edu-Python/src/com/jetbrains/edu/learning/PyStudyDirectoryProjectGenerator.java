@@ -57,7 +57,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
-  private final Consumer<Project> myCallback;
+  private final Consumer<Project> myOnCreated;
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
   private final StudyNewProjectPanel mySettingsPanel;
 
@@ -66,8 +66,8 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     this(false);
   }
 
-  public PyStudyDirectoryProjectGenerator(boolean isLocal, @Nullable Consumer<Project> callback) {
-    myCallback = callback;
+  public PyStudyDirectoryProjectGenerator(boolean isLocal, @Nullable Consumer<Project> onCreated) {
+    myOnCreated = onCreated;
     myGenerator = new StudyProjectGenerator();
     myGenerator.addSettingsStateListener(new StudyProjectGenerator.SettingsListener() {
       @Override
@@ -150,8 +150,12 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       LOG.error("Can't copy test_helper.py " + exception.getMessage());
     }
 
-    if (myCallback != null) {
-      myCallback.consume(project);
+    doCreated(project);
+  }
+
+  protected void doCreated(@NotNull Project project) {
+    if (myOnCreated != null) {
+      myOnCreated.consume(project);
     }
   }
 
