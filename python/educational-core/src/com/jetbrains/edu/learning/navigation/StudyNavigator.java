@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning.navigation;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -190,7 +191,11 @@ public class StudyNavigator {
   }
 
   private static void updateProjectView(@NotNull Project project, @NotNull VirtualFile fileToActivate) {
-    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+    AbstractProjectViewPane viewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
+    if (viewPane == null) {
+      return;
+    }
+    JTree tree = viewPane.getTree();
     ProjectView.getInstance(project).selectCB(fileToActivate, fileToActivate, false).doWhenDone(() -> {
       List<TreePath> paths = TreeUtil.collectExpandedPaths(tree);
       List<TreePath> toCollapse = new ArrayList<>();

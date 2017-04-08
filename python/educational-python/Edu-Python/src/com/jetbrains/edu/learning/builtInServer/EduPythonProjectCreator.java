@@ -18,9 +18,12 @@ package com.jetbrains.edu.learning.builtInServer;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author meanmail
@@ -32,12 +35,12 @@ public class EduPythonProjectCreator extends EduProjectCreator {
   }
 
   @Override
-  public boolean createCourseProject(@NotNull Course course) {
+  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> callback) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AbstractNewProjectDialog dlg = new AbstractNewProjectDialog() {
         @Override
         protected DefaultActionGroup createRootStep() {
-          return new BuiltInServerNewProjectStep(course);
+          return new BuiltInServerNewProjectStep(course, callback);
         }
       };
       dlg.show();

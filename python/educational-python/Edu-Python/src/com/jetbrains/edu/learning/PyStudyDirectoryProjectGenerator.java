@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
@@ -56,15 +57,17 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
+  private final Consumer<Project> myCallback;
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
-  private StudyNewProjectPanel mySettingsPanel;
+  private final StudyNewProjectPanel mySettingsPanel;
 
   @SuppressWarnings("unused") // used on startup
   public PyStudyDirectoryProjectGenerator() {
     this(false);
   }
 
-  public PyStudyDirectoryProjectGenerator(boolean isLocal) {
+  public PyStudyDirectoryProjectGenerator(boolean isLocal, @Nullable Consumer<Project> callback) {
+    myCallback = callback;
     myGenerator = new StudyProjectGenerator();
     myGenerator.addSettingsStateListener(new StudyProjectGenerator.SettingsListener() {
       @Override
@@ -111,6 +114,10 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     });
   }
 
+  public PyStudyDirectoryProjectGenerator(boolean isLocal) {
+    this(isLocal, null);
+  }
+
   @Nls
   @NotNull
   @Override
@@ -141,6 +148,10 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     }
     catch (Exception exception) {
       LOG.error("Can't copy test_helper.py " + exception.getMessage());
+    }
+
+    if (myCallback != null) {
+      myCallback.consume(project);
     }
   }
 

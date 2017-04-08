@@ -22,11 +22,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -35,11 +36,13 @@ import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTask;
 
 /**
  * @author meanmail
@@ -47,43 +50,43 @@ import java.util.List;
 public class Utils {
   public static final String STUDY_PROJECT_XML_PATH = "/.idea/study_project.xml";
 
-  public static boolean findOpenProjectAndFocus(int courseId) {
+  public static boolean focusOpenProject(int courseId, int stepId) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-      if (taskManager != null) {
-        Course course = taskManager.getCourse();
-        RemoteCourse remoteCourse = course instanceof RemoteCourse ? (RemoteCourse)course : null;
-        if (remoteCourse != null && remoteCourse.getId() == courseId) {
-          ApplicationManager.getApplication().invokeLater(() -> requestFocus(project));
-          return true;
+      if (!project.isDefault()) {
+        StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+        if (taskManager != null) {
+          Course course = taskManager.getCourse();
+          RemoteCourse remoteCourse = course instanceof RemoteCourse ? (RemoteCourse)course : null;
+          if (remoteCourse != null && remoteCourse.getId() == courseId) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              requestFocus(project);
+              navigateToStep(project, course, stepId);
+            });
+            return true;
+          }
         }
       }
     }
     return false;
   }
 
-  private static boolean openProject(@NotNull String projectPath) {
-    final boolean[] opened = {false};
+  @Nullable
+  private static Project openProject(@NotNull String projectPath) {
+    final Project[] project = {null};
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final Project[] project = new Project[1];
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        project[0] = ProjectUtil.openProject(projectPath, null, true);
-        opened[0] = project[0] != null;
-      });
+      TransactionGuard.getInstance().submitTransactionAndWait(() ->
+        project[0] = ProjectUtil.openProject(projectPath, null, true));
       requestFocus(project[0]);
     });
-    return opened[0];
+    return project[0];
   }
 
   private static void requestFocus(@NotNull Project project) {
-    IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-    if (frame instanceof Window) {
-      ((Window)frame).toFront();
-    }
+    ProjectUtil.focusProjectWindow(project, false);
   }
 
-  public static boolean findRecentProjectAndOpen(int targetCourseId) {
+  public static boolean openRecentProject(int targetCourseId, int stepId) {
     RecentProjectsManagerBase recentProjectsManager;
     recentProjectsManager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
 
@@ -99,8 +102,8 @@ public class Utils {
 
     List<String> recentPaths = state.recentPaths;
 
-    Project project = ProjectManager.getInstance().getDefaultProject();
-    StudyTaskManager taskManager = new StudyTaskManager(project);
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    StudyTaskManager taskManager = new StudyTaskManager(defaultProject);
     SAXBuilder parser = new SAXBuilder();
 
     for (String projectPath : recentPaths) {
@@ -110,8 +113,17 @@ public class Utils {
       }
       int courseId = getCourseId(taskManager, component);
 
-      if (courseId == targetCourseId && openProject(projectPath)) {
-        return true;
+      if (courseId == targetCourseId) {
+        Project project = openProject(projectPath);
+        if (project != null) {
+          Course course = taskManager.getCourse();
+          if (course != null) {
+            ApplicationManager.getApplication().invokeLater(() ->
+              navigateToStep(project, course, stepId)
+            );
+          }
+          return true;
+        }
       }
     }
     return false;
@@ -146,7 +158,7 @@ public class Utils {
     return 0;
   }
 
-  public static boolean createProjectAndOpen(int courseId) {
+  public static boolean createProject(int courseId, int stepId) {
     EduProjectGenerator generator = new EduProjectGenerator();
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     String title = "Getting Available Courses";
@@ -157,9 +169,41 @@ public class Utils {
     });
     for (Course course : availableCourses) {
       if (course instanceof RemoteCourse && ((RemoteCourse)course).getId() == courseId) {
-        return EduProjectCreator.createProject(course);
+        Consumer<Project> callback = project ->
+          ApplicationManager.getApplication().invokeLater(() -> {
+            StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+            Course targetCourse = taskManager.getCourse();
+            if (targetCourse != null) {
+              navigateToStep(project, targetCourse, stepId);
+            }
+          });
+        return EduProjectCreator.createProject(course, callback);
       }
     }
     return false;
+  }
+
+  private static void navigateToStep(@NotNull Project project, @NotNull Course course, int stepId) {
+    if (stepId == 0 || course.isAdaptive()) {
+      return;
+    }
+    Task task = getTask(course, stepId);
+    if (task != null) {
+      navigateToTask(project, task);
+    }
+  }
+
+  @Nullable
+  private static Task getTask(@NotNull Course course, int stepId) {
+    List<Lesson> lessons = course.getLessons();
+    for (Lesson lesson : lessons) {
+      Optional<Task> optionalTask = lesson.getTaskList().stream()
+        .filter(task -> task.getStepId() == stepId)
+        .findFirst();
+      if (optionalTask.isPresent()) {
+        return optionalTask.get();
+      }
+    }
+    return null;
   }
 }

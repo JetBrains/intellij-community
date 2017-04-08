@@ -17,8 +17,11 @@ package com.jetbrains.edu.learning.builtInServer;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author meanmail
@@ -26,19 +29,19 @@ import org.jetbrains.annotations.NotNull;
 public class EduProjectCreator {
   public static final ExtensionPointName<EduProjectCreator> EP_NAME = ExtensionPointName.create("Edu.eduProjectCreator");
 
-  public static boolean createProject(@NotNull Course course) {
+  public static boolean createProject(@NotNull Course course, @Nullable Consumer<Project> callback) {
     EduProjectCreator[] extensions = Extensions.getExtensions(EP_NAME);
 
     for (EduProjectCreator projectCreator : extensions) {
       if (projectCreator.canCreateProject(course)) {
-        return projectCreator.createCourseProject(course);
+        return projectCreator.createCourseProject(course, callback);
       }
     }
 
     return false;
   }
 
-  public boolean createCourseProject(@NotNull Course course) {
+  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> callback) {
     return false;
   }
 

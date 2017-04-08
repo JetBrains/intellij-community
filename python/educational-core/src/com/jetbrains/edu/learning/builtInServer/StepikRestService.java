@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.RestService;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +38,8 @@ import static com.jetbrains.edu.learning.builtInServer.Utils.*;
 public class StepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(StepikRestService.class.getName());
   private static final String SERVICE_NAME = "edu/stepik";
-  private static final Pattern OPEN_COURSE = Pattern.compile("/" + SERVICE_NAME + "/course/[^/]*-(\\d+)(?:$|\\?|/.*)");
+  public static final String STEP_ID = "step_id";
+  private static final Pattern OPEN_COURSE = Pattern.compile("/" + SERVICE_NAME + "/course/(\\d+)");
 
   @NotNull
   @Override
@@ -59,15 +61,23 @@ public class StepikRestService extends RestService {
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
     throws IOException {
-    LOG.info("Request: " + urlDecoder.path());
+    LOG.info("Request: " + urlDecoder.uri());
 
     String path = urlDecoder.path();
     Matcher matcher = OPEN_COURSE.matcher(path);
     if (matcher.matches()) {
       int courseId = Integer.parseInt(matcher.group(1));
-      LOG.info("Open course: " + courseId);
+      List<String> stepIds = urlDecoder.parameters().get(STEP_ID);
+      int stepId = 0;
+      if (stepIds != null && !stepIds.isEmpty()) {
+        try {
+          stepId = Integer.parseInt(stepIds.get(0));
+        } catch (NumberFormatException ignored) {
+        }
+      }
+      LOG.info(String.format("Try to open a course: courseId=%s, stepId=%s", courseId, stepId));
 
-      if (findOpenProjectAndFocus(courseId) || findRecentProjectAndOpen(courseId) || createProjectAndOpen(courseId)) {
+      if (focusOpenProject(courseId, stepId) || openRecentProject(courseId, stepId) || createProject(courseId, stepId)) {
         RestService.sendOk(request, context);
         LOG.info("Course opened: " + courseId);
         return null;

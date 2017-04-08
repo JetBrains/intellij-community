@@ -15,12 +15,15 @@
  */
 package com.jetbrains.edu.learning.builtInServer;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.python.newProject.steps.PyCharmNewProjectStep;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -28,17 +31,17 @@ import java.util.ArrayList;
  * @author meanmail
  */
 public class BuiltInServerNewProjectStep extends PyCharmNewProjectStep {
-  public BuiltInServerNewProjectStep(@NotNull Course course) {
-    super(new BuiltInServerNewProjectStep.MyCustomization(course));
+  public BuiltInServerNewProjectStep(@NotNull Course course, @Nullable Consumer<Project> callback) {
+    super(new BuiltInServerNewProjectStep.MyCustomization(course, callback));
   }
 
   protected static class MyCustomization extends PyCharmNewProjectStep.Customization {
     private final Course myCourse;
     private final PyStudyDirectoryProjectGenerator myGenerator;
 
-    public MyCustomization(@NotNull Course course) {
+    public MyCustomization(@NotNull Course course, @Nullable Consumer<Project> callback) {
       myCourse = course;
-      myGenerator = new PyStudyDirectoryProjectGenerator(true);
+      myGenerator = new PyStudyDirectoryProjectGenerator(true, callback);
     }
 
     @NotNull
