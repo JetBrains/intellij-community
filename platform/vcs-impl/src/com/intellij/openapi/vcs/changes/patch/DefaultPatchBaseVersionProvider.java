@@ -145,8 +145,8 @@ public class DefaultPatchBaseVersionProvider {
           found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
         }
         else {
-          final Date date = fileRevision instanceof VcsFileRevisionDvcsSpecific ?
-                            ((VcsFileRevisionDvcsSpecific) fileRevision).getDateForRevisionsOrdering() : fileRevision.getRevisionDate();
+          final Date date = fileRevision instanceof VcsFileRevisionEx ?
+                            ((VcsFileRevisionEx) fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
           found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
         }
 

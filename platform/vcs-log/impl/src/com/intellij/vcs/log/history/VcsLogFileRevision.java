@@ -33,11 +33,13 @@ import java.util.Date;
 public class VcsLogFileRevision extends VcsFileRevisionEx {
   @NotNull private final ContentRevision myRevision;
   @NotNull private final FilePath myPath;
-  private final long myAuthorTime;
-  @NotNull private final String myFullMessage;
-  @Nullable private byte[] myContent = null;
   @NotNull private final VcsUser myAuthor;
   @NotNull private final VcsUser myCommitter;
+  private final long myAuthorTime;
+  private final long myCommitTime;
+  @NotNull private final String myFullMessage;
+
+  @Nullable private byte[] myContent = null;
 
   public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @NotNull ContentRevision revision, @NotNull FilePath path) {
     myRevision = revision;
@@ -46,6 +48,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     myAuthor = details.getAuthor();
     myCommitter = details.getCommitter();
     myAuthorTime = details.getAuthorTime();
+    myCommitTime = details.getCommitTime();
     myFullMessage = details.getFullMessage();
   }
 
@@ -123,6 +126,14 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Override
   public Date getRevisionDate() {
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(myCommitTime);
+    return cal.getTime();
+  }
+
+  @Nullable
+  @Override
+  public Date getAuthorDate() {
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(myAuthorTime);
     return cal.getTime();
