@@ -57,8 +57,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -115,14 +113,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     TreeUtil.expandAll(myChangesTree);
     myChangesTree.setExpandableItemsEnabled(false);
 
-    myDetailsView = new RepositoryChangesBrowser(project, Collections.<CommittedChangeList>emptyList());
+    myDetailsView = new RepositoryChangesBrowser(project, Collections.emptyList());
     myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
-    myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        updateBySelectionChange();
-      }
-    });
+    myChangesTree.getSelectionModel().addTreeSelectionListener(e -> updateBySelectionChange());
 
     final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project, myDecorators));
     linkMouseListener.installOn(myChangesTree);
@@ -166,11 +160,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     add(mainSplitter, BorderLayout.CENTER);
 
-    myInnerSplitter = new WiseSplitter(new Runnable() {
-      public void run() {
-        filterSplitter.doLayout();
-        updateModel();
-      }
+    myInnerSplitter = new WiseSplitter(() -> {
+      filterSplitter.doLayout();
+      updateModel();
     }, filterSplitter);
     Disposer.register(this, myInnerSplitter);
 
@@ -185,16 +177,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          updateModel();
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.NON_MODAL);
     }
   }
 
   private TreeModel buildTreeModel(final List<CommittedChangeList> filteredChangeLists) {
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+    ImprovedMutableTreeNode root = new ImprovedMutableTreeNode(null);
     DefaultTreeModel model = new DefaultTreeModel(root);
     Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
     myGroupingStrategy.beforeStart();
@@ -204,11 +192,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       String groupName = StringUtil.notNullize(myGroupingStrategy.getGroupName(list));
       if (!Comparing.equal(groupName, lastGroupName)) {
         lastGroupName = groupName;
-        lastGroupNode = new DefaultMutableTreeNode(lastGroupName);
+        lastGroupNode = new ImprovedMutableTreeNode(lastGroupName);
         root.add(lastGroupNode);
       }
       assert lastGroupNode != null;
-      lastGroupNode.add(new DefaultMutableTreeNode(list));
+      lastGroupNode.add(new ImprovedMutableTreeNode(list));
     }
     return model;
   }
@@ -251,6 +239,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setModel(buildTreeModel(filteredChangeLists));
     TreeUtil.expandAll(myChangesTree);
     myChangesTree.setSelectionPaths(paths);
+    myChangesTree.scrollPathToVisible(myChangesTree.getSelectionModel().getLeadSelectionPath());
   }
 
   public void setGroupingStrategy(@NotNull ChangeListGroupingStrategy strategy) {
@@ -476,14 +465,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void reportLoadedLists(final CommittedChangeListsListener listener) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        listener.onBeforeStartReport();
-        for (CommittedChangeList list : myChangeLists) {
-          listener.report(list);
-        }
-        listener.onAfterEndReport();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      listener.onBeforeStartReport();
+      for (CommittedChangeList list : myChangeLists) {
+        listener.report(list);
       }
+      listener.onAfterEndReport();
     });
   }
 
@@ -505,10 +492,41 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myFilteringStrategy.appendFilterBase(list);
 
     myChangesTree.setModel(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
-    state.applyTo(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+    state.applyTo(myChangesTree, myChangesTree.getModel().getRoot());
     TreeUtil.expandAll(myChangesTree);
     myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
   }
+
+  /**
+   * Adds a proper <code>equals()</code> and <code>hashCode()</code> implementation to tree nodes.
+   * (used e.g. when checking if specific <code>TreePath</code> is selected)
+   * The calls are delegated to the "user object".
+   */
+  private static class ImprovedMutableTreeNode extends DefaultMutableTreeNode {
+    public ImprovedMutableTreeNode(Object userObject) {
+      super(userObject);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj instanceof DefaultMutableTreeNode) {
+        if (userObject == null) {
+          return ((DefaultMutableTreeNode)obj).getUserObject() == null;
+        }
+        return userObject.equals(((DefaultMutableTreeNode)obj).getUserObject());
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return userObject == null ? 0 : userObject.hashCode();
+    }
+  }
+
 
   public static class MoreLauncher implements Runnable {
     private final Project myProject;
@@ -529,11 +547,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       if (ApplicationManager.getApplication().isDispatchThread()) {
         updateModel();
       } else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            updateModel();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> updateModel());
       }
     }
   }
