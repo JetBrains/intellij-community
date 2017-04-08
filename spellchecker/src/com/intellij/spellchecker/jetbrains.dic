@@ -20,6 +20,7 @@ arquillian
 asensitive
 aspectj
 async
+asyncable
 atomikos
 attr
 attlist

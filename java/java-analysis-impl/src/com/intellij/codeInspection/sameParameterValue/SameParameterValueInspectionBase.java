@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,11 @@ import java.util.List;
  * @author max
  */
 public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionTool {
+  @PsiModifier.ModifierConstant
+  private static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PROTECTED;
+  @PsiModifier.ModifierConstant
+  public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
+
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
@@ -46,9 +52,9 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
-      if (refMethod.hasSuperMethods()) return null;
-
-      if (refMethod.isEntry()) return null;
+      if (refMethod.hasSuperMethods() ||
+          VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
+          refMethod.isEntry()) return null;
 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
@@ -176,7 +182,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
 
         @Override
         public void visitMethod(PsiMethod method) {
-          if (method.isConstructor()) return;
+          if (method.isConstructor() || VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), highestModifier) < 0) return;
           PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return;
 

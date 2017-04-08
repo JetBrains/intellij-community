@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -37,8 +37,6 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -118,17 +116,9 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @NotNull
   private static String toString(@NotNull final Map<GitRepository, List<VcsFullCommitDetails>> commitsInRoots) {
-    return StringUtil.join(commitsInRoots.keySet(), new Function<GitRepository, String>() {
-      @Override
-      public String fun(@NotNull GitRepository repository) {
-        String commits = StringUtil.join(commitsInRoots.get(repository), new Function<VcsFullCommitDetails, String>() {
-          @Override
-          public String fun(VcsFullCommitDetails details) {
-            return details.getId().asString();
-          }
-        }, ", ");
-        return getShortRepositoryName(repository) + ": [" + commits + "]";
-      }
+    return StringUtil.join(commitsInRoots.keySet(), repository -> {
+      String commits = StringUtil.join(commitsInRoots.get(repository), details -> details.getId().asString(), ", ");
+      return getShortRepositoryName(repository) + ": [" + commits + "]";
     }, "; ");
   }
 
@@ -260,24 +250,13 @@ public class GitCherryPicker extends VcsCherryPicker {
   @Nullable
   private LocalChangeList createChangeListAfterUpdate(@NotNull final VcsFullCommitDetails commit, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
-    final CountDownLatch waiter = new CountDownLatch(1);
-    final AtomicReference<LocalChangeList> changeList = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        myChangeListManager.invokeAfterUpdate(new Runnable() {
-                                                public void run() {
-                                                  changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
-                                                  waiter.countDown();
-                                                }
-                                              }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Cherry-pick",
-                                              new Consumer<VcsDirtyScopeManager>() {
-                                                public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-                                                  vcsDirtyScopeManager.filePathsDirty(paths, null);
-                                                }
-                                              }, ModalityState.NON_MODAL);
-      }
-    }, ModalityState.NON_MODAL);
+    CountDownLatch waiter = new CountDownLatch(1);
+    Ref<LocalChangeList> changeList = Ref.create();
+    myChangeListManager.invokeAfterUpdate(() -> {
+      changeList.set(createChangeListIfThereAreChanges(commit, commitMessage));
+      waiter.countDown();
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Cherry-pick",
+    vcsDirtyScopeManager -> vcsDirtyScopeManager.filePathsDirty(paths, null), ModalityState.NON_MODAL);
     try {
       boolean success = waiter.await(100, TimeUnit.SECONDS);
       if (!success) {
@@ -301,37 +280,34 @@ public class GitCherryPicker extends VcsCherryPicker {
                                                    @NotNull final LocalChangeList changeList, @NotNull final String commitMessage) {
     final AtomicBoolean commitSucceeded = new AtomicBoolean();
     final Semaphore sem = new Semaphore(0);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          cancelCherryPick(repository);
-          Collection<Change> changes = commit.getCommit().getChanges();
-          boolean commitNotCancelled = AbstractVcsHelper.getInstance(myProject).commitChanges(changes, changeList, commitMessage,
-                                                                                              new CommitResultHandler() {
-            @Override
-            public void onSuccess(@NotNull String commitMessage) {
-              commit.setActualSubject(commitMessage);
-              commitSucceeded.set(true);
-              sem.release();
-            }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        cancelCherryPick(repository);
+        Collection<Change> changes = commit.getCommit().getChanges();
+        boolean commitNotCancelled = AbstractVcsHelper.getInstance(myProject).commitChanges(changes, changeList, commitMessage,
+                                                                                            new CommitResultHandler() {
+          @Override
+          public void onSuccess(@NotNull String commitMessage1) {
+            commit.setActualSubject(commitMessage1);
+            commitSucceeded.set(true);
+            sem.release();
+          }
 
-            @Override
-            public void onFailure() {
-              commitSucceeded.set(false);
-              sem.release();
-            }
-          });
-
-          if (!commitNotCancelled) {
+          @Override
+          public void onFailure() {
             commitSucceeded.set(false);
             sem.release();
           }
-        } catch (Throwable t) {
-          LOG.error(t);
+        });
+
+        if (!commitNotCancelled) {
           commitSucceeded.set(false);
           sem.release();
         }
+      } catch (Throwable t) {
+        LOG.error(t);
+        commitSucceeded.set(false);
+        sem.release();
       }
     }, ModalityState.NON_MODAL);
 
@@ -417,12 +393,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   private static String formAlreadyPickedDescription(@NotNull List<GitCommitWrapper> alreadyPicked, boolean but) {
 
-    String hashes = StringUtil.join(alreadyPicked, new Function<GitCommitWrapper, String>() {
-      @Override
-      public String fun(GitCommitWrapper commit) {
-        return commit.getCommit().getId().toShortString();
-      }
-    }, ", ");
+    String hashes = StringUtil.join(alreadyPicked, commit -> commit.getCommit().getId().toShortString(), ", ");
     if (but) {
       String wasnt = alreadyPicked.size() == 1 ? "wasn't" : "weren't";
       String it = alreadyPicked.size() == 1 ? "it" : "them";
@@ -472,12 +443,7 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   private boolean noChangesAfterCherryPick(@NotNull Collection<Change> originalChanges) {
     final Collection<Change> allChanges = myChangeListManager.getAllChanges();
-    return !ContainerUtil.exists(originalChanges, new Condition<Change>() {
-      @Override
-      public boolean value(Change change) {
-        return allChanges.contains(change);
-      }
-    });
+    return !ContainerUtil.exists(originalChanges, allChanges::contains);
   }
 
   @Nullable

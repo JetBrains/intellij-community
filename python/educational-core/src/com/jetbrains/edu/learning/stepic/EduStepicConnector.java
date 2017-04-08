@@ -2,16 +2,20 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
@@ -32,14 +36,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.PYCHARM_PREFIX;
+
 public class EduStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
 
   public static final int CURRENT_VERSION = 2;
   //this prefix indicates that course can be opened by educational plugin
-  public static final String PYCHARM_PREFIX = "pycharm";
   private static final String ADAPTIVE_NOTE =
-    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it become!";
+    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it becomes!";
 
   private EduStepicConnector() {
   }
@@ -147,6 +152,8 @@ public class EduStepicConnector {
     final List<RemoteCourse> courses = coursesContainer.courses;
     for (RemoteCourse info : courses) {
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
+      setCourseLanguage(info);
+
       if (canBeOpened(info)) {
         final ArrayList<StepicUser> authors = new ArrayList<>();
         for (Integer instructor : info.getInstructors()) {
@@ -164,13 +171,34 @@ public class EduStepicConnector {
     }
   }
 
-  static boolean canBeOpened(RemoteCourse courseInfo) {
-    if (courseInfo.isAdaptive()) {
-      return true;
+  private static void setCourseLanguage(RemoteCourse info) {
+    if (info.isAdaptive()) {
+      info.setLanguage("Python"); // adaptive courses available only in PyCharm now
+      return;
     }
+    String courseType = info.getType();
+    final int separator = courseType.indexOf(" ");
+    assert separator != -1;
+    final String language = courseType.substring(separator + 1);
+    info.setLanguage(language);
+  }
+
+  static boolean canBeOpened(RemoteCourse courseInfo) {
+    final ArrayList<String> supportedLanguages = new ArrayList<>();
+    final LanguageExtensionPoint[] extensions = Extensions.getExtensions(EduPluginConfigurator.EP_NAME, null);
+    for (LanguageExtensionPoint extension : extensions) {
+      String languageId = extension.getKey();
+      supportedLanguages.add(languageId);
+    }
+
+    if (courseInfo.isAdaptive()) {
+      return supportedLanguages.contains(courseInfo.getLanguageID());
+    }
+
     String courseType = courseInfo.getType();
     final List<String> typeLanguage = StringUtil.split(courseType, " ");
     String prefix = typeLanguage.get(0);
+    if (!supportedLanguages.contains(courseInfo.getLanguageID())) return false;
     if (typeLanguage.size() < 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
       return false;
     }
@@ -188,14 +216,8 @@ public class EduStepicConnector {
     }
   }
 
-  public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse course) {
-    final RemoteCourse remoteCourse = (RemoteCourse)course.copy();
+  public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse remoteCourse) {
     if (!remoteCourse.isAdaptive()) {
-      String courseType = remoteCourse.getType();
-      final int separator = courseType.indexOf(" ");
-      assert separator != -1;
-      final String language = courseType.substring(separator + 1);
-      remoteCourse.setLanguage(language);
       try {
         for (Integer section : remoteCourse.getSections()) {
           remoteCourse.addLessons(getLessons(section));
@@ -267,7 +289,7 @@ public class EduStepicConnector {
       return null;
     }
     final int lastSubtaskIndex = block.options.lastSubtaskIndex;
-    Task task = new Task();
+    Task task = new PyCharmTask();
     if (lastSubtaskIndex != 0) {
       task = createTaskWithSubtasks(lastSubtaskIndex);
     }
@@ -301,6 +323,9 @@ public class EduStepicConnector {
     final List<AnswerPlaceholder> placeholders = file.getAnswerPlaceholders();
     for (AnswerPlaceholder placeholder : placeholders) {
       final AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
+      if (info == null) {
+        continue;
+      }
       final int offset = placeholder.getOffset();
       final int length = placeholder.getLength();
       if (fileText.length() > offset + length) {

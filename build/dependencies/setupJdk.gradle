@@ -120,8 +120,20 @@ task setupJdk16(dependsOn: configurations.jdk16) {
   doLast {
     logger.info("Setting up JDK 1.6 to compile")
     unpackJdk(jdkArchive.call(), outputDir)
+    deleteBrokenSymlink(outputDir)
   }
 }
+
+// Gradle dies on tring to process broken links: https://issues.gradle.org/browse/GRADLE-1843
+private void deleteBrokenSymlink(def outputDir) {
+  if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+    def pluginJar = file("$outputDir/Home/lib/plugin.jar")
+    if (!pluginJar.exists()) {
+      pluginJar.delete()
+    }
+  }
+}
+
 setupJdk16.onlyIf { inJetBrainsNetwork }
 
 def intellijProjectDir() {

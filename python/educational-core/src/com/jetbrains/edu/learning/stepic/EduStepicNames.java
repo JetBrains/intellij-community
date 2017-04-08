@@ -21,4 +21,6 @@ public class EduStepicNames {
   public static final String SECTIONS = "/sections/";
   public static final String ENROLLMENTS = "/enrollments";
   public static final String STEPIC_REGISTRATION_LINK = "https://stepic.org/registration?next=%2Fexplore%2Fcourses";
+
+  public static final String PYCHARM_PREFIX = "pycharm";
 }

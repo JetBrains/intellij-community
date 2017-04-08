@@ -28,7 +28,7 @@ public class Lesson implements StudyItem {
   @Expose
   @SerializedName("task_list")
   @AbstractCollection(elementTypes = {
-    Task.class,
+    PyCharmTask.class,
     ChoiceTask.class,
     TheoryTask.class,
     CodeTask.class,

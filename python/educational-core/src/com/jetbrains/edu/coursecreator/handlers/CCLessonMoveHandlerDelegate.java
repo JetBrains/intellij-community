@@ -22,14 +22,12 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCMoveStudyItemDialog;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
 
 public class CCLessonMoveHandlerDelegate extends MoveHandlerDelegate {
 
@@ -109,7 +107,7 @@ public class CCLessonMoveHandlerDelegate extends MoveHandlerDelegate {
                                  newItemIndex - 1, EduNames.LESSON, 1);
 
     sourceLesson.setIndex(newItemIndex);
-    Collections.sort(course.getLessons(true), EduUtils.INDEX_COMPARATOR);
+    course.sortLessons();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

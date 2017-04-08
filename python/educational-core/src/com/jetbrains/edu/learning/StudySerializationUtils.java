@@ -97,6 +97,7 @@ public class StudySerializationUtils {
     private static String THEORY_TAG = "theoryTask";
     private static String ADAPTIVE_TASK_PARAMETERS = "adaptiveTaskParameters";
     private static String ADAPTIVE = "adaptive";
+    public static final String PYCHARM_TASK = "PyCharmTask";
     private static String TASK_WITH_SUBTASKS = "TaskWithSubtasks";
     private static String THEORY_TASK = "TheoryTask";
     private static String CHOICE_TASK = "ChoiceTask";
@@ -284,6 +285,9 @@ public class StudySerializationUtils {
           }
           else if (Boolean.valueOf(adaptive.getAttributeValue(VALUE))) {
             task.setName(CODE_TASK);
+          }
+          else {
+            task.setName(PYCHARM_TASK);
           }
           task.removeContent(adaptiveParams);
           task.removeContent(theoryTask);
@@ -638,7 +642,7 @@ public class StudySerializationUtils {
             case "choice": return gson.fromJson(json, ChoiceTask.class);
             case "theory": return gson.fromJson(json, TheoryTask.class);
             case "code": return gson.fromJson(json, CodeTask.class);
-            case "pycharm": return gson.fromJson(json, Task.class);
+            case "pycharm": return gson.fromJson(json, PyCharmTask.class);
             case "subtasks": return gson.fromJson(json, TaskWithSubtasks.class);
             default: {
               LOG.warn("Unsupported task type " + taskType);

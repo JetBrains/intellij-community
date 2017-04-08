@@ -2,6 +2,9 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
+import com.jetbrains.edu.learning.checker.TaskWithSubtasksChecker;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
@@ -57,5 +60,10 @@ public class TaskWithSubtasks extends Task {
 
   public String getTaskType() {
     return "subtasks";
+  }
+
+  @Override
+  public StudyTaskChecker getChecker(@NotNull Project project) {
+    return new TaskWithSubtasksChecker(this, project);
   }
 }

@@ -1624,8 +1624,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private void testFoldingRegions(@NotNull String verificationFileName, @Nullable String destinationFileName, boolean doCheckCollapseStatus) {
     String expectedContent;
-    try {
-      expectedContent = FileUtil.loadFile(new File(verificationFileName));
+     final File verificationFile;
+     try {
+      verificationFile = new File(verificationFileName);
+      expectedContent = FileUtil.loadFile(verificationFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -1650,7 +1652,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     final String actual = getFoldingDescription(doCheckCollapseStatus);
-    assertEquals(expectedContent, actual);
+    if(!expectedContent.equals(actual)) {
+      throw new FileComparisonFailure(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
+    }
   }
 
   @Override

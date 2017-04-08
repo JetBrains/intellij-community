@@ -77,10 +77,10 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   @Override
   public boolean isTestFile(VirtualFile file) {
     String name = file.getName();
-    if (EduNames.TESTS_FILE.equals(name)) {
+    if (TESTS_PY.equals(name)) {
       return true;
     }
-    return name.contains(FileUtil.getNameWithoutExtension(EduNames.TESTS_FILE)) && name.contains(EduNames.SUBTASK_MARKER);
+    return name.contains(FileUtil.getNameWithoutExtension(TESTS_PY)) && name.contains(EduNames.SUBTASK_MARKER);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         PsiDirectory taskPsiDir = PsiManager.getInstance(project).findDirectory(taskDir);
-        FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate(EduNames.TESTS_FILE);
+        FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate(TESTS_PY);
         if (taskPsiDir == null || testsTemplate == null) {
           return;
         }
@@ -108,10 +108,10 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
 
   @NotNull
   public static String getSubtaskTestsFileName(int index) {
-    return index == 0 ? EduNames.TESTS_FILE : FileUtil.getNameWithoutExtension(EduNames.TESTS_FILE) +
+    return index == 0 ? TESTS_PY : FileUtil.getNameWithoutExtension(TESTS_PY) +
                                               EduNames.SUBTASK_MARKER +
                                               index + "." +
-                                              FileUtilRt.getExtension(EduNames.TESTS_FILE);
+                                              FileUtilRt.getExtension(TESTS_PY);
   }
 
   @NotNull
