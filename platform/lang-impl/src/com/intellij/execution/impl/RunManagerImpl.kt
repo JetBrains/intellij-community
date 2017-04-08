@@ -151,6 +151,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
     }, streamProvider = schemeManagerProvider, autoSave = false)
 
+  private val stringIdToBeforeRunProvider by lazy {
+    val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
+    for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
+      result.put(provider.id.toString(), provider)
+    }
+    result
+  }
+
   init {
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
     project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
@@ -705,8 +713,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private fun readStepsBeforeRun(child: Element, settings: RunnerAndConfigurationSettings): List<BeforeRunTask<*>> {
     var result: MutableList<BeforeRunTask<*>>? = null
     for (methodElement in child.getChildren(OPTION)) {
-      val id = getProviderKey(methodElement.getAttributeValue(NAME_ATTR))
-      val beforeRunTask = getProvider(id).createTask(settings.configuration)
+      val key = methodElement.getAttributeValue(NAME_ATTR)
+      val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
+      val beforeRunTask = provider.createTask(settings.configuration)
       if (beforeRunTask != null) {
         beforeRunTask.readExternal(methodElement)
         if (result == null) {
@@ -1062,40 +1071,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   fun fireBeforeRunTasksUpdated() {
     myDispatcher.multicaster.beforeRunTasksChanged()
-  }
-
-  private var myBeforeStepsMap: MutableMap<Key<out BeforeRunTask<*>>, BeforeRunTaskProvider<*>>? = null
-  private var myProviderKeysMap: MutableMap<String, Key<out BeforeRunTask<*>>>? = null
-
-  @Synchronized private fun getProvider(providerId: Key<out BeforeRunTask<*>>): BeforeRunTaskProvider<*> {
-    if (myBeforeStepsMap == null) {
-      initProviderMaps()
-    }
-    return myBeforeStepsMap!!.get(providerId)!!
-  }
-
-  @Synchronized
-  private fun getProviderKey(keyString: String): Key<out BeforeRunTask<*>> {
-    if (myProviderKeysMap == null) {
-      initProviderMaps()
-    }
-
-    return myProviderKeysMap!!.getOrPut(keyString) {
-      val provider = UnknownBeforeRunTaskProvider(keyString)
-      val id = provider.id!!
-      myBeforeStepsMap!!.put(id, provider)
-      id
-    }
-  }
-
-  private fun initProviderMaps() {
-    myBeforeStepsMap = LinkedHashMap()
-    myProviderKeysMap = LinkedHashMap()
-    for (provider in Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project)) {
-      val id = provider.id
-      myBeforeStepsMap!!.put(id, provider)
-      myProviderKeysMap!!.put(id.toString(), id)
-    }
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {
