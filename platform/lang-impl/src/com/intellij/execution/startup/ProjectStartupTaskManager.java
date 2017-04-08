@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class ProjectStartupTaskManager {
       final Iterator<RunnerAndConfigurationSettings> iterator = sharedConfigurations.iterator();
       while (iterator.hasNext()) {
         final RunnerAndConfigurationSettings configuration = iterator.next();
-        if (! myRunManager.isConfigurationShared(configuration)) {
+        if (!configuration.isShared()) {
           iterator.remove();
           canNotBeShared.add(configuration);
         }
@@ -117,7 +117,7 @@ public class ProjectStartupTaskManager {
   }
 
   public void checkOnChange(RunnerAndConfigurationSettings settings) {
-    if (! myRunManager.isConfigurationShared(settings)) {
+    if (!settings.isShared()) {
       final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
       if (sharedConfigurations.remove(settings)) {
         final List<RunnerAndConfigurationSettings> localConfigurations = new ArrayList<>(getLocalConfigurations());

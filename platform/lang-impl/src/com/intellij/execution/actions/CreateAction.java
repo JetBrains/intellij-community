@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(configuration.getFactory());
       final RunConfiguration templateConfiguration = template.getConfiguration();
       runManager.addConfiguration(configuration,
-                                  runManager.isConfigurationShared(template),
+                                  template.isShared(),
                                   runManager.getBeforeRunTasks(templateConfiguration),
                                   false);
       runManager.setSelectedConfiguration(configuration);
@@ -147,7 +147,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
         runManager.addConfiguration(configuration,
-                                    runManager.isConfigurationShared(configuration),
+                                    configuration.isShared(),
                                     runManager.getBeforeRunTasks(configuration.getConfiguration()), false);
         runManager.setSelectedConfiguration(configuration);
       }

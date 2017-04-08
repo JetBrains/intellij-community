@@ -83,10 +83,6 @@ class MockRunManager : RunManagerEx() {
                                 addTemplateTasksIfAbsent: Boolean) {
   }
 
-  override fun isConfigurationShared(settings: RunnerAndConfigurationSettings): Boolean {
-    return false
-  }
-
   override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
     return emptyList()
   }

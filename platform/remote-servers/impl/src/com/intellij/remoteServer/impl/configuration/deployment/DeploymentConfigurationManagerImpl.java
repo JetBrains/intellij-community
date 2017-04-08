@@ -62,7 +62,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     }
     if (RunDialog.editConfiguration(myProject, settings, "Create Deployment Configuration",
                                     DefaultRunExecutor.getRunExecutorInstance())) {
-      runManager.addConfiguration(settings, runManager.isConfigurationShared(settings));
+      runManager.addConfiguration(settings, settings.isShared());
       runManager.setSelectedConfiguration(settings);
       ProgramRunnerUtil.executeConfiguration(myProject, settings, DefaultRunExecutor.getRunExecutorInstance());
     }

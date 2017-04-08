@@ -48,7 +48,6 @@ import com.intellij.util.containers.*
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Function
 import javax.swing.Icon
@@ -101,7 +100,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private val templateIdToConfiguration = THashMap<String, RunnerAndConfigurationSettingsImpl>()
   // template configurations are not included here
   private val idToSettings = LinkedHashMap<String, RunnerAndConfigurationSettings>()
-  private val sharedConfigurations: MutableMap<String, Boolean> = ConcurrentHashMap()
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
@@ -126,7 +124,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         val settings = RunnerAndConfigurationSettingsImpl(this@RunManagerImpl)
         val element = dataHolder.read()
         try {
-          settings.readExternal(element)
+          settings.readExternal(element, false)
         }
         catch (e: InvalidDataException) {
           LOG.error(e)
@@ -187,11 +185,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory) = createConfiguration(runConfiguration, getConfigurationTemplate(factory))
 
-  private fun createConfiguration(runConfiguration: RunConfiguration, template: RunnerAndConfigurationSettingsImpl): RunnerAndConfigurationSettings {
-    val settings = RunnerAndConfigurationSettingsImpl(this, runConfiguration, false)
+  private fun createConfiguration(configuration: RunConfiguration, template: RunnerAndConfigurationSettingsImpl): RunnerAndConfigurationSettings {
+    val settings = RunnerAndConfigurationSettingsImpl(this, configuration, false)
     settings.importRunnerAndConfigurationSettings(template)
-    if (!sharedConfigurations.containsKey(settings.uniqueID)) {
-      shareConfiguration(settings, isConfigurationShared(template))
+    if (!settings.isShared) {
+      shareConfiguration(settings, template.isShared)
     }
     return settings
   }
@@ -277,7 +275,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
     if (existingId != null) {
       existingSettings = idToSettings.remove(existingId)
-      sharedConfigurations.remove(existingId)
     }
 
     if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
@@ -291,7 +288,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
     checkRecentsLimit()
 
-    sharedConfigurations.put(newId, shared)
     if (shared) {
       settings.isTemporary = false
     }
@@ -650,7 +646,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     val configurations: MutableList<RunnerAndConfigurationSettings>
     if (allConfigurations) {
       this.idToSettings.clear()
-      sharedConfigurations.clear()
       selectedConfigurationId = null
       configurations = ArrayList(this.idToSettings.values)
     }
@@ -659,10 +654,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       val iterator = this.idToSettings.values.iterator()
       while (iterator.hasNext()) {
         val configuration = iterator.next()
-        if (configuration.isTemporary || !isConfigurationShared(configuration)) {
+        if (configuration.isTemporary || !configuration.isShared) {
           iterator.remove()
 
-          sharedConfigurations.remove(configuration.uniqueID)
           configurations.add(configuration)
         }
       }
@@ -684,7 +678,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings? {
     val settings = RunnerAndConfigurationSettingsImpl(this)
     LOG.catchAndLog {
-      settings.readExternal(element)
+      settings.readExternal(element, isShared)
     }
 
     val factory = settings.factory ?: return null
@@ -763,7 +757,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   fun getStableConfigurations(shared: Boolean): Collection<RunnerAndConfigurationSettings> {
     var result: MutableList<RunnerAndConfigurationSettings>? = null
     for (configuration in idToSettings.values) {
-      if (!configuration.isTemporary && isConfigurationShared(configuration) == shared) {
+      if (!configuration.isTemporary && configuration.isShared == shared) {
         if (result == null) {
           result = SmartList<RunnerAndConfigurationSettings>()
         }
@@ -781,11 +775,15 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {
     settings.isTemporary = false
+    doMakeStable(settings)
+    fireRunConfigurationChanged(settings)
+  }
+
+  private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
     recentlyUsedTemporaries.remove(settings.configuration)
     if (!myOrder.isEmpty()) {
       setOrdered(false)
     }
-    fireRunConfigurationChanged(settings)
   }
 
   @Suppress("OverridingDeprecatedMember")
@@ -793,13 +791,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     getSettings(configuration)?.let {
       makeStable(it)
     }
-  }
-
-  override fun isConfigurationShared(settings: RunnerAndConfigurationSettings): Boolean {
-    if (settings.isTemporary) {
-      return false
-    }
-    return sharedConfigurations.get(settings.uniqueID) ?: sharedConfigurations.get(getConfigurationTemplate(settings.factory!!).uniqueID) ?: false
   }
 
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(taskProviderId: Key<T>): List<T> {
@@ -963,15 +954,16 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     return result.orEmpty()
   }
 
-  fun shareConfiguration(settings: RunnerAndConfigurationSettings?, shareConfiguration: Boolean) {
-    val shouldFire = settings != null && isConfigurationShared(settings) != shareConfiguration
-    if (shareConfiguration && settings!!.isTemporary) {
-      makeStable(settings)
+  fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
+    if (settings.isShared == value) {
+      return
     }
-    sharedConfigurations.put(settings!!.uniqueID, shareConfiguration)
-    if (shouldFire) {
-      fireRunConfigurationChanged(settings)
+
+    if (value && settings.isTemporary) {
+      doMakeStable(settings)
     }
+    (settings as RunnerAndConfigurationSettingsImpl).level = RunnerAndConfigurationSettingsImpl.Level.PROJECT
+    fireRunConfigurationChanged(settings)
   }
 
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
@@ -1024,7 +1016,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     while (it.hasNext()) {
       val entry = it.next()
       val settings = entry.value
-      if (!settings.isTemplate && isConfigurationShared(settings) && !existing.contains(settings.uniqueID)) {
+      if (!settings.isTemplate && settings.isShared && !existing.contains(settings.uniqueID)) {
         if (removed == null) {
           removed = SmartList<RunnerAndConfigurationSettings>()
         }
@@ -1087,7 +1079,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           }
 
           iterator.remove()
-          sharedConfigurations.remove(settings.uniqueID)
           recentlyUsedTemporaries.remove(settings.configuration)
           myDispatcher.multicaster.runConfigurationRemoved(otherSettings)
         }

@@ -47,7 +47,7 @@ public abstract class RunManagerEx extends RunManager {
   public abstract RunManagerConfig getConfig();
 
   public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings) {
-    addConfiguration(settings, isConfigurationShared(settings), null, false);
+    addConfiguration(settings, settings.isShared(), null, false);
   }
 
   public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
@@ -59,7 +59,11 @@ public abstract class RunManagerEx extends RunManager {
                                         List<BeforeRunTask> tasks,
                                         boolean addTemplateTasksIfAbsent);
 
-  public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final boolean isConfigurationShared(@NotNull RunnerAndConfigurationSettings settings) {
+    return settings.isShared();
+  }
 
   @NotNull
   public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration configuration);

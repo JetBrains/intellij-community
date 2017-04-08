@@ -182,7 +182,7 @@ class RunConfigurable extends BaseConfigurable {
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;
-              shared = runManager.isConfigurationShared(settings);
+              shared = settings.isShared();
               setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
               configuration = settings;
             }
@@ -752,7 +752,7 @@ class RunConfigurable extends BaseConfigurable {
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
           settings = (RunnerAndConfigurationSettings)userObject;
           configurationBean = new RunConfigurationBean(settings,
-                                                       manager.isConfigurationShared(settings),
+                                                       settings.isShared(),
                                                        manager.getBeforeRunTasks(settings.getConfiguration()));
 
         }

@@ -63,6 +63,11 @@ public interface RunnerAndConfigurationSettings {
   boolean isTemporary();
 
   /**
+   * Is stored in the versioned part of the project files
+   */
+  boolean isShared();
+
+  /**
    * Marks the configuration as temporary or permanent.
    *
    * @param temporary true if the configuration is temporary, false if it's permanent.

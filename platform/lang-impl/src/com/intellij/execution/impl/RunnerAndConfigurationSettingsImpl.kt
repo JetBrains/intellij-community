@@ -55,6 +55,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
                                                                    private var configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    private var singleton: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
+  enum class Level {
+    WORKSPACE, PROJECT, TEMPORARY
+  }
+
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -63,7 +67,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     override fun createSettings(runner: ProgramRunner<*>) = configuration!!.createRunnerSettings(InfoProvider(runner))
   }
 
-  private var isTemporary = false
+  internal var level = Level.WORKSPACE
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
   private var wasSingletonSpecifiedExplicitly = false
@@ -73,10 +77,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun isTemplate() = isTemplate
 
-  override fun isTemporary() = isTemporary
+  override fun isTemporary() = level == Level.TEMPORARY
 
-  override fun setTemporary(temporary: Boolean) {
-    isTemporary = temporary
+  override fun isShared() = level == Level.PROJECT
+
+  override fun setTemporary(value: Boolean) {
+    level = if (value) Level.TEMPORARY else Level.WORKSPACE
   }
 
   override fun getConfiguration() = configuration ?: UnknownConfigurationType.FACTORY.createTemplateConfiguration(manager.project)
@@ -128,9 +134,16 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getFolderName() = folderName
 
-  fun readExternal(element: Element) {
+  fun readExternal(element: Element, isShared: Boolean) {
     isTemplate = element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE).toBoolean()
-    isTemporary = element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name
+
+    if (isShared) {
+      level = Level.PROJECT
+    }
+    else {
+      level = if (element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name) Level.TEMPORARY else Level.WORKSPACE
+    }
+
     isEditBeforeRun = (element.getAttributeValue(EDIT_BEFORE_RUN)).toBoolean()
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()

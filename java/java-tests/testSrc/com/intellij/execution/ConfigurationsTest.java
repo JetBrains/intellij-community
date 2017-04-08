@@ -265,7 +265,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     new RunnerAndConfigurationSettingsImpl(runManager, oldRc, false).writeExternal(element);
 
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(runManager);
-    settings.readExternal(element);
+    settings.readExternal(element, false);
     JUnitConfiguration newRc = (JUnitConfiguration)settings.getConfiguration();
 
     checkTestObject(oldRc.getPersistentData().TEST_OBJECT, newRc);
