@@ -163,9 +163,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
     project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
-        val configuration = selectedConfiguration
-        if (configuration != null) {
-          iconCache.remove(configuration.uniqueID)
+        selectedConfiguration?.let {
+          iconCache.remove(it.uniqueID)
         }
       }
     })
