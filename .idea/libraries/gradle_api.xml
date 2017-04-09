@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="gradle-api">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../external/gradle/gradle-api-3.4.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../external/gradle/gradle-api-3.4.1.jar!/OSGI-OPT/src" />
+    </SOURCES>
+  </library>
+</component>
