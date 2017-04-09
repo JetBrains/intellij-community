@@ -66,8 +66,10 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   public Collection<String> getModifiedPaths() {
     Set<String> changedPaths = ContainerUtil.newHashSet();
     for (Change change : getChanges()) {
-      if (change.getAfterRevision() != null) changedPaths.add(change.getAfterRevision().getFile().getPath());
-      if (change.getBeforeRevision() != null) changedPaths.add(change.getBeforeRevision().getFile().getPath());
+      if (!change.getType().equals(Change.Type.MOVED)) {
+        if (change.getAfterRevision() != null) changedPaths.add(change.getAfterRevision().getFile().getPath());
+        if (change.getBeforeRevision() != null) changedPaths.add(change.getBeforeRevision().getFile().getPath());
+      }
     }
     return changedPaths;
   }

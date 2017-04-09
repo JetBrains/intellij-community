@@ -58,10 +58,8 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     if (data != null) {
       Set<String> changes = ContainerUtil.newHashSet();
       for (GitLogStatusInfo status : ((MyChangesComputable)myChangesGetter).getMergedChanges()) {
-        changes.add(absolutePath(status.getFirstPath()));
-        String secondPath = status.getSecondPath();
-        if (secondPath != null) {
-          changes.add(absolutePath(secondPath));
+        if (status.getSecondPath() == null) {
+          changes.add(absolutePath(status.getFirstPath()));
         }
       }
       return changes;
