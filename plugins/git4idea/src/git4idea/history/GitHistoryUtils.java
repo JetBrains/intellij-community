@@ -504,43 +504,6 @@ public class GitHistoryUtils {
                                                                     record.getAuthorTimeStamp()));
   }
 
-  private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
-                                                 @NotNull GitLogParser parser,
-                                                 @NotNull Consumer<GitLogRecord> recordConsumer) throws VcsException {
-    Ref<Throwable> parseError = new Ref<>();
-    processHandlerOutputByLine(handler, builder -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(builder);
-        if (record != null) {
-          recordConsumer.consume(record);
-        }
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Throwable t) {
-        if (parseError.isNull()) {
-          parseError.set(t);
-          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(builder.toString()) + "\"\n" +
-                    "Command " + handler.printableCommandLine(), t);
-        }
-      }
-    }, 0);
-
-    if (!parseError.isNull()) {
-      throw new VcsException(parseError.get());
-    }
-  }
-
-  private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
-                                                 @NotNull Consumer<StringBuilder> recordConsumer,
-                                                 int bufferSize)
-    throws VcsException {
-    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, recordConsumer, bufferSize);
-    handler.runInCurrentThread(null);
-    handlerListener.reportErrors();
-  }
-
   public static void readCommits(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull List<String> parameters,
@@ -552,22 +515,23 @@ public class GitHistoryUtils {
       return;
     }
 
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
                                                  AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("--decorate=full");
-    h.addParameters(parameters);
-    h.endOptions();
+    handler.setStdoutSuppressed(true);
+    handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    handler.addParameters("--decorate=full");
+    handler.addParameters(parameters);
+    handler.endOptions();
 
-    final int COMMIT_BUFFER = 1000;
-    processHandlerOutputByLine(h, buffer -> {
-      List<TimedVcsCommit> commits = parseCommit(parser, buffer, userConsumer, refConsumer, factory, root);
+    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
+      List<TimedVcsCommit> commits = parseCommit(parser, output, userConsumer, refConsumer, factory, root);
       for (TimedVcsCommit commit : commits) {
         commitConsumer.consume(commit);
       }
-    }, COMMIT_BUFFER);
+    }, 1000);
+    handler.runInCurrentThread(null);
+    handlerListener.reportErrors();
   }
 
   @NotNull
@@ -880,12 +844,36 @@ public class GitHistoryUtils {
 
     List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
                                     Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
-    GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    GitLogParser parser = createParserForDetails(handler, project, withRefs, withChanges, parameters);
 
-    StopWatch sw = StopWatch.start("loading details");
+    StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
-    processHandlerOutputByLine(h, parser, converter);
+    Ref<Throwable> parseError = new Ref<>();
+    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
+      try {
+        GitLogRecord record = parser.parseOneRecord(output);
+        if (record != null) {
+          converter.consume(record);
+        }
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Throwable t) {
+        if (parseError.isNull()) {
+          parseError.set(t);
+          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(output.toString()) + "\"\n" +
+                    "Command " + handler.printableCommandLine(), t);
+        }
+      }
+    }, 0);
+    handler.runInCurrentThread(null);
+    handlerListener.reportErrors();
+
+    if (!parseError.isNull()) {
+      throw new VcsException(parseError.get());
+    }
 
     sw.report();
   }
