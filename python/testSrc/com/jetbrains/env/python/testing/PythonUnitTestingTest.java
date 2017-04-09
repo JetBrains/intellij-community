@@ -467,7 +467,6 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testRelativeImports() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports",
                                                            PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "test_imps.py") {
