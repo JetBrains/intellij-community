@@ -118,7 +118,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
     String[] command = getCommand(envs);
 
