@@ -24,13 +24,11 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
 import com.jetbrains.python.testing.universalTests.TestTargetType;
@@ -467,7 +465,6 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testRelativeImports() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports",
                                                            PyUnitTestProcessRunner.TEST_PATTERN_PREFIX + "test_imps.py") {
