@@ -29,8 +29,6 @@ import javax.swing.Icon
 class MockRunManager : RunManagerEx() {
   override fun getConfigurationsList(type: ConfigurationType) = emptyList<RunConfiguration>()
 
-  fun isTemporary(configuration: RunConfiguration) = false
-
   override fun makeStable(configuration: RunConfiguration) {}
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
@@ -77,10 +75,7 @@ class MockRunManager : RunManagerEx() {
     throw UnsupportedOperationException()
   }
 
-  override fun addConfiguration(settings: RunnerAndConfigurationSettings,
-                                isShared: Boolean,
-                                tasks: List<BeforeRunTask<*>>,
-                                addTemplateTasksIfAbsent: Boolean) {
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
   }
 
   override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {

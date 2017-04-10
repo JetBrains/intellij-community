@@ -125,7 +125,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
     super.apply();
-    runManager.addConfiguration(settings, myStoreProjectConfiguration, runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+    runManager.addConfiguration(settings, myStoreProjectConfiguration);
   }
 
   @Override

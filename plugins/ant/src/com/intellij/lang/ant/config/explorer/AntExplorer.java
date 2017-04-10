@@ -637,9 +637,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       configuration.acceptSettings(target);
       if (RunDialog.editConfiguration(e.getProject(), settings, ExecutionBundle
         .message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
-        runManager.addConfiguration(settings,
-                                    settings.isShared(),
-                                    runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+        runManager.addConfiguration(settings);
         runManager.setSelectedConfiguration(settings);
       }
     }

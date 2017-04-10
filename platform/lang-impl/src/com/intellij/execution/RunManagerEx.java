@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +35,10 @@ public abstract class RunManagerEx extends RunManager {
   }
 
   /**
-   * @deprecated use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
+   * @deprecated Use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
    */
   @Deprecated
-  public void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
+  public final void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }
 
@@ -46,18 +47,26 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract RunManagerConfig getConfig();
 
-  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings) {
-    addConfiguration(settings, settings.isShared(), null, false);
-  }
-
   public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
-    addConfiguration(settings, isShared, null, false);
+    if (isShared) {
+      ((RunnerAndConfigurationSettingsImpl)settings).setLevel(RunnerAndConfigurationSettingsImpl.Level.PROJECT);
+    }
+    addConfiguration(settings);
   }
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettings settings,
-                                        boolean isShared,
-                                        List<BeforeRunTask> tasks,
-                                        boolean addTemplateTasksIfAbsent);
+  @Deprecated
+  public final void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
+    if (isShared) {
+      ((RunnerAndConfigurationSettingsImpl)settings).setLevel(RunnerAndConfigurationSettingsImpl.Level.PROJECT);
+    }
+    addConfiguration(settings, tasks, addTemplateTasksIfAbsent);
+  }
+
+  @Deprecated
+  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, @NotNull List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
+    setBeforeRunTasks(settings.getConfiguration(), tasks, addTemplateTasksIfAbsent);
+    addConfiguration(settings);
+  }
 
   @SuppressWarnings("MethodMayBeStatic")
   @Deprecated

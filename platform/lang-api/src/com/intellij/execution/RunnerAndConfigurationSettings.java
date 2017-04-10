@@ -41,10 +41,9 @@ public interface RunnerAndConfigurationSettings {
   /**
    * Returns the factory used to create the run configuration.
    *
-   * @return the factory, or null if the settings object was loaded from disk and no plugin corresponding to the stored type of the run
-   * configuration is loaded.
+   * @return the factory
    */
-  @Nullable
+  @NotNull
   ConfigurationFactory getFactory();
 
   /**
@@ -209,4 +208,6 @@ public interface RunnerAndConfigurationSettings {
    * @return the folder name, or null if the configuration is displayed on the top level.
    */
   @Nullable String getFolderName();
+
+
 }

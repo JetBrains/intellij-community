@@ -67,13 +67,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     override fun createSettings(runner: ProgramRunner<*>) = configuration!!.createRunnerSettings(InfoProvider(runner))
   }
 
-  internal var level = Level.WORKSPACE
+  var level = Level.WORKSPACE
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
-  override fun getFactory() = configuration?.factory
+  override fun getFactory(): ConfigurationFactory = configuration?.factory ?: UnknownConfigurationType.FACTORY
 
   override fun isTemplate() = isTemplate
 
@@ -197,8 +197,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   fun writeExternal(element: Element) {
-    val configuration = configuration
-    val factory = configuration!!.factory
+    val configuration = getConfiguration()
+    val factory = configuration.factory
     if (configuration !is UnknownRunConfiguration) {
       if (isTemplate) {
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
@@ -249,7 +249,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     writeExternal(element)
 
     configuration?.let {
-      manager.writeBeforeRunTasks(it, isTemplate, element)
+      manager.writeBeforeRunTasks(this, element)
     }
 
     return element
@@ -473,3 +473,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
   }
 }
+
+// always write method element for shared settings for now due to preserve backward compatibility
+val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
+  get() = !isShared

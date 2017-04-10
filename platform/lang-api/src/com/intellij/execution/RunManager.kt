@@ -156,12 +156,17 @@ abstract class RunManager {
   abstract fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
   /**
+   * Adds the specified run configuration to the list of run configurations.
+   */
+  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings)
+
+  /**
    * Adds the specified run configuration to the list of run configurations stored in the project.
    * @param settings the run configuration settings.
    * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
    * *                 (stored in the workspace file).
    */
-  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean)
+  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings, isShawred: Boolean)
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
