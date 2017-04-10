@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
@@ -64,6 +65,7 @@ public class PyDataViewerPanel extends JPanel {
   private EditorTextField myFormatTextField;
   private JPanel myMainPanel;
   private JBLabel myErrorLabel;
+  @SuppressWarnings("unused") private JBScrollPane myScrollPane;
   private boolean myColored;
   List<Listener> myListeners;
 
@@ -126,6 +128,7 @@ public class PyDataViewerPanel extends JPanel {
     addCompletion();
 
     myTable = new JBTableWithRowHeaders();
+    myScrollPane = myTable.getScrollPane();
   }
 
   private void addCompletion() {

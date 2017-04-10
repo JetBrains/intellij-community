@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="90774" class="com.intellij.ui.components.JBScrollPane">
+      <scrollpane id="90774" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPane" custom-create="true">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -17,15 +17,7 @@
           <verticalScrollBarPolicy value="20"/>
         </properties>
         <border type="none"/>
-        <children>
-          <component id="c7f7c" class="com.jetbrains.python.debugger.array.JBTableWithRowHeaders" binding="myTable" custom-create="true">
-            <constraints/>
-            <properties>
-              <autoResizeMode value="0"/>
-              <fillsViewportHeight value="true"/>
-            </properties>
-          </component>
-        </children>
+        <children/>
       </scrollpane>
       <component id="fd814" class="com.intellij.ui.EditorTextField" binding="mySliceTextField" custom-create="true">
         <constraints>
