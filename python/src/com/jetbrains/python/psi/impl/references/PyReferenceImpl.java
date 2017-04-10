@@ -278,7 +278,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                 .select(PyCallable.class)
                 .filter(callable -> PyiTypeProvider.isOverload(callable, typeEvalContext))
                 .map(callable -> new RatedResolveResult(getRate(callable, typeEvalContext), callable))
-                .append(latestDefs)
+                .prepend(latestDefs)
                 .toList();
             }
 

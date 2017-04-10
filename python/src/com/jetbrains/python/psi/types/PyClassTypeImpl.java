@@ -44,12 +44,15 @@ import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.pyi.PyiTypeProvider;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
@@ -118,7 +121,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public PyClassLikeType toClass() {
     return myIsDefinition ? this : new PyClassTypeImpl(myClass, true);
   }
-  
+
   /**
    * Wrap new instance to copy user data to it
    */
@@ -208,7 +211,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location);
+    final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location, context);
 
     if (PyNames.__CLASS__.equals(name)) {
       return resolveDunderClass(context, classMembers);
@@ -244,7 +247,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
             type = type.toInstance();
           }
           final List<? extends RatedResolveResult> superMembers =
-            resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location);
+            resolveInner(((PyClassType)type).getPyClass(), myIsDefinition, name, location, context);
           if (!superMembers.isEmpty()) {
             return superMembers;
           }
@@ -549,24 +552,53 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static List<? extends RatedResolveResult> resolveInner(@NotNull PyClass cls,
                                                                  boolean isDefinition,
                                                                  @NotNull String name,
-                                                                 @Nullable PyExpression location) {
+                                                                 @Nullable PyExpression location,
+                                                                 @NotNull TypeEvalContext context) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
-    final Collection<PsiElement> result;
+    final Stream<PsiElement> result;
 
     if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      result = processor.getElements();
+      result = processor.getElements().stream();
     }
     else {
       cls.processClassLevelDeclarations(processor);
-      result = processor.getElements();
+      final Collection<PsiElement> elements = processor.getElements();
+      result = containsOverloads(elements, context) ? moveOverloadsBack(elements, context) : elements.stream();
     }
 
-    return ContainerUtil.map(result, element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element));
+    return StreamEx
+      .of(result)
+      .map(element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element))
+      .toList();
+  }
+
+  private static boolean containsOverloads(@NotNull Collection<PsiElement> elements, @NotNull TypeEvalContext context) {
+    return ContainerUtil.exists(elements,
+                                element -> element instanceof PyCallable && PyiTypeProvider.isOverload((PyCallable)element, context));
+  }
+
+  @NotNull
+  private static Stream<PsiElement> moveOverloadsBack(@NotNull Collection<PsiElement> elements, @NotNull TypeEvalContext context) {
+    return elements
+      .stream()
+      .sorted(
+        (e1, e2) -> {
+          if (e1 instanceof PyCallable && e2 instanceof PyCallable) {
+            final boolean firstIsOverload = PyiTypeProvider.isOverload((PyCallable)e1, context);
+            final boolean secondIsOverload = PyiTypeProvider.isOverload((PyCallable)e2, context);
+
+            return Boolean.compare(firstIsOverload, secondIsOverload);
+          }
+
+          return 0;
+        }
+      );
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
+  @Override
   public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
@@ -794,6 +826,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return lookupString.startsWith("_") && !lookupString.startsWith("__");
   }
 
+  @Override
+  @Nullable
   public String getName() {
     return getPyClass().getName();
   }
@@ -842,6 +876,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
   }
 
+  @Override
   public boolean isValid() {
     return myClass.isValid();
   }
@@ -881,6 +916,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       this.instance = instance;
     }
 
+    @Override
     public boolean value(final PsiElement target) {
       return (instance != target);
     }

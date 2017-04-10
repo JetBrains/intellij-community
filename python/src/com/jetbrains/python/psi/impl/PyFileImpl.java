@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,8 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiTypeProvider;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +182,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             }
           }
         }
-        return resultList;
+
+        return containsOverloads(resultList, typeEvalContext) ? moveOverloadsBack(resultList, typeEvalContext) : resultList;
       }
 
       synchronized (myNameDefinerNegativeCache) {
@@ -191,6 +194,34 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     public long getModificationStamp() {
       return myModificationStamp;
+    }
+
+    private boolean containsOverloads(@NotNull List<RatedResolveResult> resolveResults, @NotNull TypeEvalContext context) {
+      return StreamEx
+        .of(resolveResults)
+        .map(RatedResolveResult::getElement)
+        .anyMatch(element -> element instanceof PyCallable && PyiTypeProvider.isOverload((PyCallable)element, context));
+    }
+
+    @NotNull
+    private List<RatedResolveResult> moveOverloadsBack(@NotNull List<RatedResolveResult> resolveResults, @NotNull TypeEvalContext context) {
+      return StreamEx
+        .of(resolveResults)
+        .sorted(
+          (r1, r2) -> {
+            final PsiElement e1 = r1.getElement();
+            final PsiElement e2 = r2.getElement();
+            if (e1 instanceof PyCallable && e2 instanceof PyCallable) {
+              final boolean firstIsOverload = PyiTypeProvider.isOverload((PyCallable)e1, context);
+              final boolean secondIsOverload = PyiTypeProvider.isOverload((PyCallable)e2, context);
+
+              return Boolean.compare(firstIsOverload, secondIsOverload);
+            }
+
+            return 0;
+          }
+        )
+        .toList();
     }
   }
 
@@ -210,6 +241,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return PythonFileType.INSTANCE;
   }
 
+  @Override
   public String toString() {
     return "PyFile:" + getName();
   }
@@ -444,6 +476,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return cache;
   }
 
+  @Override
   @Nullable
   public PsiElement getElementNamed(final String name) {
     final List<RatedResolveResult> results = multiResolveName(name);
@@ -458,6 +491,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
+  @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
     final List<PyElement> result = new ArrayList<>();
