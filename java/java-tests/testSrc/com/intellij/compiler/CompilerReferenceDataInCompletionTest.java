@@ -72,6 +72,10 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "AbstractList", "ArrayList");
   }
 
+  public void testHelperMethodIsNotAffected() {
+    doTestStaticMemberCompletionOrdering(new String[] {"Foo.java"}, "someMethod2(1)", "someMethod1(0)", "m(0)", "nonNull(1)");
+  }
+
   private void doTestConstructorCompletionOrdering(@NotNull String[] files,
                                                    @NotNull String phraseToComplete,
                                                    String... expectedOrder) {
@@ -80,6 +84,13 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
 
   private void doTestMemberCompletionOrdering(@NotNull String[] files, String... expectedOrder) {
     doTestCompletion(files, "foo.", expectedOrder, m -> "Foo".equals(m.getContainingClass().getName()));
+  }
+
+  private void doTestStaticMemberCompletionOrdering(@NotNull String[] files, String... expectedOrder) {
+    doTestCompletion(files, "", expectedOrder, (PsiMember m) -> {
+      PsiClass aClass = m.getContainingClass();
+      return aClass != null && "Foo".equals(aClass.getName());
+    });
   }
 
   private void doTestCompletion(@NotNull String[] files,
