@@ -75,7 +75,6 @@ target('default' : "Run all UI tests") {
 
 def args = [
         "-Xmx2048m",
-        "-XX:MaxPermSize=1024m",
         "-XX:ReservedCodeCacheSize=96m",
         "-XX:+UseCodeCacheFlushing"
 ]
