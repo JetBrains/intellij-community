@@ -44,15 +44,14 @@ import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.pyi.PyiTypeProvider;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
@@ -555,44 +554,20 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                  @Nullable PyExpression location,
                                                                  @NotNull TypeEvalContext context) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
-    final Stream<PsiElement> result;
+    final Collection<PsiElement> result;
 
     if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      result = processor.getElements().stream();
+      result = processor.getElements();
     }
     else {
       cls.processClassLevelDeclarations(processor);
       final Collection<PsiElement> elements = processor.getElements();
-      result = containsOverloads(elements, context) ? moveOverloadsBack(elements, context) : elements.stream();
+      result = PyiUtil.containsOverloads(elements, Function.identity(), context)
+               ? PyiUtil.moveOverloadsBack(elements, Function.identity(), context)
+               : elements;
     }
 
-    return StreamEx
-      .of(result)
-      .map(element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element))
-      .toList();
-  }
-
-  private static boolean containsOverloads(@NotNull Collection<PsiElement> elements, @NotNull TypeEvalContext context) {
-    return ContainerUtil.exists(elements,
-                                element -> element instanceof PyCallable && PyiTypeProvider.isOverload((PyCallable)element, context));
-  }
-
-  @NotNull
-  private static Stream<PsiElement> moveOverloadsBack(@NotNull Collection<PsiElement> elements, @NotNull TypeEvalContext context) {
-    return elements
-      .stream()
-      .sorted(
-        (e1, e2) -> {
-          if (e1 instanceof PyCallable && e2 instanceof PyCallable) {
-            final boolean firstIsOverload = PyiTypeProvider.isOverload((PyCallable)e1, context);
-            final boolean secondIsOverload = PyiTypeProvider.isOverload((PyCallable)e2, context);
-
-            return Boolean.compare(firstIsOverload, secondIsOverload);
-          }
-
-          return 0;
-        }
-      );
+    return ContainerUtil.map(result, element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element));
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");

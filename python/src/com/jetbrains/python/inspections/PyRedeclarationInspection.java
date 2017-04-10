@@ -34,7 +34,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.pyi.PyiTypeProvider;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +138,7 @@ public class PyRedeclarationInspection extends PyInspection {
                   readElementRef.set(originalElement);
                 }
                 if (rwInstruction.getAccess().isWriteAccess() && originalElement != element) {
-                  if (element instanceof PyCallable && isOverload(originalElement)) {
+                  if (PyiUtil.isOverload(originalElement, myTypeEvalContext)) {
                     return ControlFlowUtil.Operation.NEXT;
                   }
                   else {
@@ -165,10 +165,6 @@ public class PyRedeclarationInspection extends PyInspection {
                           quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
         }
       }
-    }
-
-    private boolean isOverload(@NotNull PsiElement element) {
-      return element instanceof PyCallable && PyiTypeProvider.isOverload((PyCallable)element, myTypeEvalContext);
     }
 
     private static boolean suggestRename(@NotNull PsiNameIdentifierOwner element, @NotNull PsiElement originalElement) {

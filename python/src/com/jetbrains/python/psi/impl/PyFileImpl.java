@@ -54,14 +54,14 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiTypeProvider;
-import one.util.streamex.StreamEx;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
@@ -183,7 +183,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           }
         }
 
-        return containsOverloads(resultList, typeEvalContext) ? moveOverloadsBack(resultList, typeEvalContext) : resultList;
+        final Function<RatedResolveResult, PsiElement> mapper = RatedResolveResult::getElement;
+        return PyiUtil.containsOverloads(resultList, mapper, typeEvalContext)
+               ? PyiUtil.moveOverloadsBack(resultList, mapper, typeEvalContext)
+               : resultList;
       }
 
       synchronized (myNameDefinerNegativeCache) {
@@ -194,34 +197,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     public long getModificationStamp() {
       return myModificationStamp;
-    }
-
-    private boolean containsOverloads(@NotNull List<RatedResolveResult> resolveResults, @NotNull TypeEvalContext context) {
-      return StreamEx
-        .of(resolveResults)
-        .map(RatedResolveResult::getElement)
-        .anyMatch(element -> element instanceof PyCallable && PyiTypeProvider.isOverload((PyCallable)element, context));
-    }
-
-    @NotNull
-    private List<RatedResolveResult> moveOverloadsBack(@NotNull List<RatedResolveResult> resolveResults, @NotNull TypeEvalContext context) {
-      return StreamEx
-        .of(resolveResults)
-        .sorted(
-          (r1, r2) -> {
-            final PsiElement e1 = r1.getElement();
-            final PsiElement e2 = r2.getElement();
-            if (e1 instanceof PyCallable && e2 instanceof PyCallable) {
-              final boolean firstIsOverload = PyiTypeProvider.isOverload((PyCallable)e1, context);
-              final boolean secondIsOverload = PyiTypeProvider.isOverload((PyCallable)e2, context);
-
-              return Boolean.compare(firstIsOverload, secondIsOverload);
-            }
-
-            return 0;
-          }
-        )
-        .toList();
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -26,10 +28,14 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author vlan
@@ -67,6 +73,57 @@ public class PyiUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static List<PyFunction> getOverloads(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
+    final String name = function.getName();
+    final List<PyFunction> overloads = new ArrayList<>();
+    final Processor<PyFunction> overloadsProcessor = f -> {
+      if (name != null && name.equals(f.getName()) && isOverload(f, context)) {
+        overloads.add(f);
+      }
+      return true;
+    };
+    if (owner instanceof PyClass) {
+      final PyClass cls = (PyClass)owner;
+      if (name != null) {
+        cls.visitMethods(overloadsProcessor, false, context);
+      }
+    }
+    else if (owner instanceof PyFile) {
+      final PyFile file = (PyFile)owner;
+      for (PyFunction f : file.getTopLevelFunctions()) {
+        if (!overloadsProcessor.process(f)) {
+          break;
+        }
+      }
+    }
+    return overloads;
+  }
+
+  public static boolean isOverload(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    final PyKnownDecoratorUtil.KnownDecorator overload = PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD;
+
+    return element instanceof PyFunction &&
+           PyKnownDecoratorUtil.getKnownDecorators((PyFunction)element, context).contains(overload);
+  }
+
+  public static <T> boolean containsOverloads(@NotNull Collection<T> elements,
+                                              @NotNull Function<? super T, PsiElement> mapper,
+                                              @NotNull TypeEvalContext context) {
+    return ContainerUtil.exists(elements, element -> isOverload(mapper.apply(element), context));
+  }
+
+  @NotNull
+  public static <T> List<T> moveOverloadsBack(@NotNull Collection<T> elements,
+                                              @NotNull Function<? super T, PsiElement> mapper,
+                                              @NotNull TypeEvalContext context) {
+    return StreamEx
+      .of(elements)
+      .sorted((e1, e2) -> Boolean.compare(isOverload(mapper.apply(e1), context), isOverload(mapper.apply(e2), context)))
+      .toList();
   }
 
   @Nullable
