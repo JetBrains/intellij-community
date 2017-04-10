@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.Commenter;
@@ -40,9 +41,9 @@ import static org.junit.Assert.fail;
  * @author Tagir Valeev
  */
 public class ActionHint {
-  final String myExpectedText;
-  final boolean myShouldPresent;
-  final ProblemHighlightType myHighlightType;
+  private final String myExpectedText;
+  private final boolean myShouldPresent;
+  private final ProblemHighlightType myHighlightType;
 
   private ActionHint(String expectedText, boolean shouldPresent, ProblemHighlightType severity) {
     myExpectedText = expectedText;
@@ -67,6 +68,7 @@ public class ActionHint {
    * @return true if this ActionHint checks that some action should be present
    * or false if it checks that some action should be absent
    */
+  @SuppressWarnings("WeakerAccess") // used in kotlin
   public boolean shouldPresent() {
     return myShouldPresent;
   }
@@ -88,7 +90,9 @@ public class ActionHint {
         fail("Action with text '" + myExpectedText + "' not found\nAvailable actions: " +
              actions.stream().map(IntentionAction::getText).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
-      } else if(myHighlightType != null) {
+      }
+      else if(myHighlightType != null) {
+        if (result instanceof IntentionActionDelegate) result = ((IntentionActionDelegate)result).getDelegate();
         if(!(result instanceof QuickFixWrapper)) {
           fail("Action with text '" + myExpectedText + "' is not a LocalQuickFix, but " + result.getClass().getName() +
                "\nExpected LocalQuickFix with ProblemHighlightType=" + myHighlightType + "\n" +
@@ -144,8 +148,7 @@ public class ActionHint {
     String state = matcher.group(2);
     if(state.equals("true") || state.equals("false")) {
       return new ActionHint(text, Boolean.parseBoolean(state), null);
-    } else {
-      return new ActionHint(text, true, ProblemHighlightType.valueOf(state));
     }
+    return new ActionHint(text, true, ProblemHighlightType.valueOf(state));
   }
 }

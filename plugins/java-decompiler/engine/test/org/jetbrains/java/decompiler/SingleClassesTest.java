@@ -93,6 +93,7 @@ public class SingleClassesTest {
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
   @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
+  @Test public void testIffSimplification() { doTest("pkg/TestIffSimplification"); }
   @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
   @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }

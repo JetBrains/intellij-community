@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,15 +233,15 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   @Override
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     if (isImport(node)) {
-      return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
+      return CodeFoldingSettings.getInstance().isCollapseImports();
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().COLLAPSE_METHODS) {
+      if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().isCollapseMethods()) {
         // method will be collapsed, no need to also collapse docstring
         return false;
       }
       if (getDocStringOwnerType(node) != null) {
-        return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
+        return CodeFoldingSettings.getInstance().isCollapseDocComments();
       }
       return PythonFoldingSettings.getInstance().isCollapseLongStrings();
     }
@@ -249,7 +249,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
     }
     if (node.getElementType() == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
-      return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
+      return CodeFoldingSettings.getInstance().isCollapseMethods();
     }
     if (FOLDABLE_COLLECTIONS_LITERALS.contains(node.getElementType())) {
       return PythonFoldingSettings.getInstance().isCollapseLongCollections();

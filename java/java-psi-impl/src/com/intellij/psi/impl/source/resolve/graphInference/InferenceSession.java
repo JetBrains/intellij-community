@@ -1146,9 +1146,7 @@ public class InferenceSession {
       }
     }
 
-    if (myContext != null) {
-      myContext.putUserData(ERASED, myErased);
-    }
+    setUncheckedInContext();
 
     final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
     for (PsiTypeParameter parameter : map.keySet()) {
@@ -1166,6 +1164,12 @@ public class InferenceSession {
         param = parameter;
       }
       mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
+    }
+  }
+
+  public void setUncheckedInContext() {
+    if (myContext != null) {
+      myContext.putUserData(ERASED, myErased);
     }
   }
 
@@ -1265,7 +1269,13 @@ public class InferenceSession {
       }
 
       if (type instanceof PsiIntersectionType) {
-        final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        if (conflictingConjunctsMessage == null) {
+          if (findParameterizationOfTheSameGenericClass(var.getBounds(InferenceBound.UPPER), pair -> pair.first == null || pair.second == null || pair.first.equals(pair.second)) != null) {
+            //warn if upper bounds has same generic class with different type arguments
+            conflictingConjunctsMessage = type.getPresentableText(false);
+          }
+        }
         if (conflictingConjunctsMessage != null) {
           registerIncompatibleErrorMessage("Type parameter " + var.getParameter().getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
           return PsiType.NULL;
@@ -1597,7 +1607,7 @@ public class InferenceSession {
       for (int i = 0; i < functionalMethodParameters.length; i++) {
         final PsiType pType = signature.getParameterTypes()[i];
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
-                                                      PsiUtil.captureToplevelWildcards(pType, reference)));
+                                                      PsiUtil.captureToplevelWildcards(pType, functionalMethodParameters[i])));
       }
     }
     else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
@@ -1644,7 +1654,7 @@ public class InferenceSession {
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
-                                                      PsiUtil.captureToplevelWildcards(interfaceParamType, reference)));
+                                                      PsiUtil.captureToplevelWildcards(interfaceParamType, functionalMethodParameters[i])));
       }
     }
 

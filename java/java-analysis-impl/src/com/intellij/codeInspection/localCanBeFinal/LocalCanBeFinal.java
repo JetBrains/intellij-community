@@ -281,7 +281,8 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   }
 
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
-    if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    PsiModifierList modifierList = psiVariable.getModifierList();
+    if (modifierList == null || modifierList.hasExplicitModifier(PsiModifier.FINAL)) return true;
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }

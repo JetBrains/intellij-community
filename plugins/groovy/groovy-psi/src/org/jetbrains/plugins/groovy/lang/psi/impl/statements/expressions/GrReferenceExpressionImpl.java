@@ -123,12 +123,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  @NotNull
-  public PsiReference getReference() {
-    return this;
-  }
-
-  @Override
   @Nullable
   public GrExpression getQualifier() {
     return getQualifierExpression();

@@ -48,4 +48,23 @@ public abstract class JavacDef {
       return myClasses;
     }
   }
+
+  public static class JavacMemberDef extends JavacDef {
+    private final JavacRef myRawReturnType;
+    private final boolean myStatic;
+
+    public JavacMemberDef(JavacRef element, JavacRef rawReturnType, boolean isStatic) {
+      super(element);
+      myRawReturnType = rawReturnType;
+      myStatic = isStatic;
+    }
+
+    public JavacRef getReturnType() {
+      return myRawReturnType;
+    }
+
+    public boolean isStatic() {
+      return myStatic;
+    }
+  }
 }

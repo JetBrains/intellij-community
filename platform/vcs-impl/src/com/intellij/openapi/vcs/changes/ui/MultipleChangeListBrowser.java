@@ -85,7 +85,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     setInitialSelection(changeLists, changes, initialListSelection);
 
     myChangeListChooser = new ChangeListChooser();
-    myChangeListChooser.updateLists(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 

@@ -42,7 +42,7 @@ public class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoActi
   @Override
   public void update(AnActionEvent e) {
     HgRepository repository = HgActionUtil.getSelectedRepositoryFromEvent(e);
-    e.getPresentation().setEnabledAndVisible(repository != null);
+    e.getPresentation().setEnabledAndVisible(repository != null && repository.getRepositoryConfig().isMqUsed());
   }
 
   public static void showUnAppliedPatches(@NotNull Project project, @NotNull HgRepository selectedRepo) {

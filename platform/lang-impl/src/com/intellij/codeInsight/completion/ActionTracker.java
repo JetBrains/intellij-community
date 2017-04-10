@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -68,7 +68,7 @@ class ActionTracker {
     if (commandProcessor.getCurrentCommand() == null) return;
 
     myIgnoreDocumentChanges = true;
-    commandProcessor.addCommandListener(new CommandAdapter() {
+    commandProcessor.addCommandListener(new CommandListener() {
       @Override
       public void commandFinished(CommandEvent event) {
         commandProcessor.removeCommandListener(this);

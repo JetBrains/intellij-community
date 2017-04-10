@@ -187,6 +187,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
           }
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
+          ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());
           return true;
         })
         .createPopup();
@@ -723,7 +724,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     copy.copyFrom(findInProjectModel);
 
     findInProjectModel.copyFrom(myHelper.getModel());
-    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());//todo check if we really need to do it now
     FindSettings findSettings = FindSettings.getInstance();
     myScopeUI.applyTo(findSettings, mySelectedScope);
     findSettings.setFileMask(myHelper.getModel().getFileFilter());

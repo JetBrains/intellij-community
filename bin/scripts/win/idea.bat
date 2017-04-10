@@ -17,7 +17,7 @@ SET IDE_HOME=%IDE_BIN_DIR%\..
 SET JDK=
 
 IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
-IF NOT "%JDK%" == "" GOTO check
+IF EXIST "%JDK%" GOTO check
 
 SET BITS=64
 SET USER_JDK64_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
@@ -30,17 +30,18 @@ IF EXIST "%USER_JDK64_FILE%" (
 )
 IF NOT "%JDK%" == "" (
   IF NOT EXIST "%JDK%" SET JDK="%IDE_HOME%\%JDK%"
-  GOTO check
+  IF EXIST "%JDK%" GOTO check
 )
 
 IF EXIST "%IDE_HOME%\jre64" SET JDK=%IDE_HOME%\jre64
-IF NOT "%JDK%" == "" GOTO check
-
+IF EXIST "%JDK%" GOTO check
 IF EXIST "%IDE_HOME%\jre32" SET JDK=%IDE_HOME%\jre32
-IF NOT "%JDK%" == "" GOTO check
+IF EXIST "%JDK%" GOTO check
+IF EXIST "%IDE_HOME%\jre" SET JDK=%IDE_HOME%\jre
+IF EXIST "%JDK%" GOTO check
 
 IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
-IF NOT "%JDK%" == "" GOTO check
+IF EXIST "%JDK%" GOTO check
 
 IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
 
@@ -49,7 +50,7 @@ SET JAVA_EXE=%JDK%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
   ECHO ERROR: cannot start IntelliJ IDEA.
-  ECHO No JDK found. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+  ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
   ECHO
   EXIT /B
 )

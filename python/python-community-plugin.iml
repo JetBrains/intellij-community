@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="python-community" exported="" />
     <orderEntry type="module" module-name="python-community-plugin-resources" exported="" />
     <orderEntry type="module" module-name="python-community-configure" exported="" />
+    <orderEntry type="module" module-name="python-community-plugin-minor" exported="" />
   </component>
 </module>

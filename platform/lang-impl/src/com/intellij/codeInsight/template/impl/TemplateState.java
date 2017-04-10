@@ -26,8 +26,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -91,7 +91,7 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged = false;
 
-  @Nullable private CommandAdapter myCommandListener;
+  @Nullable private CommandListener myCommandListener;
   @Nullable private CaretListener myCaretListener;
   @Nullable private LookupListener myLookupListener;
 
@@ -143,7 +143,7 @@ public class TemplateState implements Disposable {
         }
       }
     }, this);
-    myCommandListener = new CommandAdapter() {
+    myCommandListener = new CommandListener() {
       boolean started = false;
 
       @Override

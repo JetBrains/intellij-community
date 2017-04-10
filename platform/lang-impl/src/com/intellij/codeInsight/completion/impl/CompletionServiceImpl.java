@@ -143,6 +143,10 @@ public final class CompletionServiceImpl extends CompletionService {
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+      if (matcher.equals(getPrefixMatcher())) {
+        return this;
+      }
+      
       return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, matcher, myContributor, myParameters, mySorter, this);
     }
 
@@ -160,7 +164,7 @@ public final class CompletionServiceImpl extends CompletionService {
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
-      return withPrefixMatcher(new CamelHumpMatcher(prefix));
+      return withPrefixMatcher(getPrefixMatcher().cloneWithPrefix(prefix));
     }
 
     @NotNull

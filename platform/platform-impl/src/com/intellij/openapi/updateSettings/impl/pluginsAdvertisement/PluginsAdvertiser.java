@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -47,6 +48,7 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
@@ -71,15 +74,16 @@ public class PluginsAdvertiser implements StartupActivity {
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
 
+  @Nullable
   public static List<Plugin> retrieve(UnknownFeature unknownFeature) {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
     final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
-    final String pluginRepositoryUrl = FEATURE_IMPLEMENTATIONS_URL +
-                                       "featureType=" + featureType +
-                                       "&implementationName=" + implementationName.replaceAll("#", "%23") +
-                                       "&build=" + buildNumber;
-    return HttpRequests.request(pluginRepositoryUrl).connect(new HttpRequests.RequestProcessor<List<Plugin>>() {
+    return processUrl(FEATURE_IMPLEMENTATIONS_URL,
+                      ImmutableMap.of("featureType", featureType,
+                                      "implementationName", implementationName,
+                                      "build", buildNumber),
+                      new HttpRequests.RequestProcessor<List<Plugin>>() {
       @Override
       public List<Plugin> process(@NotNull HttpRequests.Request request) throws IOException {
         final JsonReader jsonReader = new JsonReader(request.getReader());
@@ -100,13 +104,15 @@ public class PluginsAdvertiser implements StartupActivity {
     }, null, LOG);
   }
 
+  @Nullable
   private static Map<String, Set<Plugin>> loadSupportedExtensions(@NotNull List<IdeaPluginDescriptor> allPlugins) {
     final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
-    final String pluginRepositoryUrl = FEATURE_IMPLEMENTATIONS_URL + "featureType=" + FileTypeFactory.FILE_TYPE_FACTORY_EP.getName();
-    return HttpRequests.request(pluginRepositoryUrl).connect(new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
+    return processUrl(FEATURE_IMPLEMENTATIONS_URL,
+                      ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
+                      new HttpRequests.RequestProcessor<Map<String, Set<Plugin>>>() {
       @Override
       public Map<String, Set<Plugin>> process(@NotNull HttpRequests.Request request) throws IOException {
         final JsonReader jsonReader = new JsonReader(request.getReader());
@@ -146,6 +152,25 @@ public class PluginsAdvertiser implements StartupActivity {
         return result;
       }
     }, null, LOG);
+  }
+
+  private static <K> K processUrl(String baseUrl,
+                                  Map<String, String> params,
+                                  HttpRequests.RequestProcessor<K> requestProcessor,
+                                  K errorValue,
+                                  Logger log) {
+    URIBuilder uriBuilder;
+
+    try {
+      uriBuilder = new URIBuilder(baseUrl);
+    }
+    catch (URISyntaxException e) {
+      log.error(baseUrl, e);
+      return errorValue;
+    }
+    params.forEach((key, value) -> uriBuilder.addParameter(key, value));
+
+    return HttpRequests.request(uriBuilder.toString()).connect(requestProcessor, errorValue, LOG);
   }
 
   public static void ensureDeleted() {

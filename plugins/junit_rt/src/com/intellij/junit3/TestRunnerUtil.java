@@ -54,6 +54,7 @@ public class TestRunnerUtil {
             suiteName = reader.readLine();
 
             reader.readLine(); //category
+            reader.readLine();//filters
 
             vector = new Vector();
             String line;

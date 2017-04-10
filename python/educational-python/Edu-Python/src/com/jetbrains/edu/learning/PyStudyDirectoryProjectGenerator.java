@@ -23,11 +23,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -59,7 +59,12 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
   private StudyNewProjectPanel mySettingsPanel;
 
+  @SuppressWarnings("unused") // used on startup
   public PyStudyDirectoryProjectGenerator() {
+    this(false);
+  }
+
+  public PyStudyDirectoryProjectGenerator(boolean isLocal) {
     myGenerator = new StudyProjectGenerator();
     myGenerator.addSettingsStateListener(new StudyProjectGenerator.SettingsListener() {
       @Override
@@ -68,7 +73,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       }
     });
 
-    mySettingsPanel = new StudyNewProjectPanel(myGenerator);
+    mySettingsPanel = new StudyNewProjectPanel(myGenerator, isLocal);
     mySettingsPanel.registerValidators(new FacetValidatorsManager() {
       public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
         throw new UnsupportedOperationException();
@@ -83,7 +88,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseClicked(MouseEvent e) {
         final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
+        if (selectedItem != null && ((Course)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           mySettingsPanel.showLoginDialog(false, "Signing In");
         }
       }
@@ -91,14 +96,14 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseEntered(MouseEvent e) {
         final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
+        if (selectedItem != null && ((Course)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        final CourseInfo selectedItem = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        final Course selectedItem = (Course)mySettingsPanel.getCoursesComboBox().getSelectedItem();
         if (selectedItem != null && selectedItem.isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getDefaultCursor());
         }
@@ -126,7 +131,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
                                @NotNull Module module,
                                @Nullable PyProjectSynchronizer synchronizer) {
     myGenerator.generateProject(project, baseDir);
-    final String testHelper = "test_helper.py";
+    final String testHelper = EduNames.TEST_HELPER;
     if (baseDir.findChild(testHelper) != null) return;
     final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
@@ -161,12 +166,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     return mySettingsPanel;
   }
 
-  @NotNull
-  public List<CourseInfo> getCourses() {
-    return myGenerator.getCoursesUnderProgress(false, "Getting Courses", ProjectManager.getInstance().getDefaultProject());
-  }
-
-  public void setSelectedCourse(CourseInfo course) {
+  public void setSelectedCourse(Course course) {
     myGenerator.setSelectedCourse(course);
   }
 
@@ -184,13 +184,13 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
     return generator -> {
       final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
-      final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
-      if (course == null) return true;
-      if (course.getId() > 0 && !enrolledCoursesIds.contains(course.getId())) {
+      final Course course = (Course)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+      if (course == null || !(course instanceof RemoteCourse)) return true;
+      if (((RemoteCourse)course).getId() > 0 && !enrolledCoursesIds.contains(((RemoteCourse)course).getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(),
-                                                                                   StepicUpdateSettings.getInstance().getUser()));
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(((RemoteCourse)course).getId(),
+                                                                                   StudySettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

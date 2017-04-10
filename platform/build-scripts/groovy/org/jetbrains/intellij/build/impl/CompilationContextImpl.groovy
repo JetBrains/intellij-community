@@ -18,11 +18,13 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
+import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -45,6 +47,16 @@ class CompilationContextImpl implements CompilationContext {
   final JpsGlobal global
   final JpsGantProjectBuilder projectBuilder
 
+  @SuppressWarnings("GrUnresolvedAccess")
+  @CompileDynamic
+  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot, Script gantScript) {
+    GantBinding binding = (GantBinding) gantScript.binding
+    binding.includeTool << JpsGantTool
+    //noinspection GroovyAssignabilityCheck
+    return create(binding.ant, binding.projectBuilder, binding.project, binding.global, communityHome, projectHome,
+                   { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
+   }
+
   static CompilationContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                        String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
@@ -56,6 +68,8 @@ class CompilationContextImpl implements CompilationContext {
 
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
+
+    setupDependencies(messages, communityHome)
     if (project.modules.isEmpty()) {
       loadProject(communityHome, projectHome, jdk8Home, project, global, messages)
     }
@@ -91,10 +105,10 @@ class CompilationContextImpl implements CompilationContext {
 
   private static void loadProject(String communityHome, String projectHome, String jdkHome, JpsProject project, JpsGlobal global,
                                   BuildMessages messages) {
-    def bundledKotlinPath = "$communityHome/build/kotlinc"
+    def bundledKotlinPath = "$communityHome/build/dependencies/build/Kotlin/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
       messages.error(
-        "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run download_kotlin.gant script to download Kotlin JARs")
+        "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
     }
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
 
@@ -104,6 +118,13 @@ class CompilationContextImpl implements CompilationContext {
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
     messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
+  }
+
+  private static void setupDependencies(BuildMessages messages, String communityHome) {
+    messages.info("Setting up compilation dependencies")    
+    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupJdks', 'setupKotlin')) {
+      messages.error("Cannot setup compilation dependencies")
+    }
   }
 
   void prepareForBuild() {
@@ -202,6 +223,21 @@ class CompilationContextImpl implements CompilationContext {
 
   JpsModule findModule(String name) {
     project.modules.find { it.name == name }
+  }
+
+  @Override
+  void notifyArtifactBuilt(String artifactPath) {
+    def file = new File(artifactPath)
+    def baseDir = new File(paths.projectHome)
+    if (!FileUtil.isAncestor(baseDir, file, true)) {
+      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
+      return
+    }
+    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+    if (file.isDirectory()) {
+      relativePath += "=>" + file.name
+    }
+    messages.artifactBuild(relativePath)
   }
 
   private static String toCanonicalPath(String communityHome) {

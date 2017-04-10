@@ -27,7 +27,6 @@ import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
@@ -45,7 +44,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -395,13 +393,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       cleanUpEmptyNodes(node);
     }
 
-    TreeState treeState = new TreeState();
-    try {
-      treeState.readExternal(treeStateElement);
-      treeState.applyTo(myTree);
-    }
-    catch (InvalidDataException ignore) {
-    }
+    TreeState.createFrom(treeStateElement).applyTo(myTree);
   }
 
   private void cleanUpEmptyNodes(@NotNull CachingSimpleNode node) {

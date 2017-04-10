@@ -99,16 +99,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     
     if (myExpression instanceof PsiCall) {
-      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT);
+      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT, true);
       if (callSession == null) {
         return false;
       }
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
         session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
-/*        if (callSession.isErased()) {
-          session.setErased();
-        }*/
+        callSession.setUncheckedInContext();
       }
       return true;
     }
@@ -129,7 +127,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
   public static InferenceSession reduceExpressionCompatibilityConstraint(InferenceSession session,
                                                                          PsiExpression expression,
-                                                                         PsiType targetType) {
+                                                                         PsiType targetType,
+                                                                         boolean registerErrorOnFailure) {
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
@@ -151,6 +150,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             typeParams = ArrayUtil.mergeArrays(typeParams, method.getTypeParameters());
           }
         }
+      }
+      else {
+        return session;
       }
 
       if (typeParams != null) {
@@ -184,8 +186,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.registerIncompatibleErrorMessage(message);
           }
         }
+        return null;
       }
-      return null;
+      else if (registerErrorOnFailure) {
+        session.registerIncompatibleErrorMessage("Failed to resolve argument");
+        return null;
+      }
     }
     return session;
   }

@@ -38,7 +38,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -50,7 +53,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.jetbrains.extenstions.toElement
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
@@ -77,57 +79,6 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUniversalUnitTe
 
 internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
 
-/**
- * Checks if configuration can run with provided qname against provided working dir.
- * Fixes name and configuration if can't
- */
-private fun configureRelative(name: QualifiedName,
-                              configuration: PyUniversalTestConfiguration): QualifiedName {
-  val module = configuration.module?: return name
-  val fileSystem = LocalFileSystem.getInstance()
-  val context = TypeEvalContext.userInitiated(module.project, null)
-
-  // Working dir points to project root for newly created configuration
-  var path = fileSystem.findFileByPath(configuration.workingDirectorySafe)?:return name
-
-  // If some element can't be resolved that means one of its parts is not package.
-  // foo.spam.bar does not work if "foo" is not package
-  // convert it to "spam.bar" and set "foo" as working dir  instead
-
-  var currentName = name
-  while (currentName.toElement(module, context, path) !is PyElement) {
-    val head = currentName.firstComponent ?: return name
-    currentName = currentName.removeHead(1)
-    path = path.findFileByRelativePath(head) ?: return name
-  }
-  configuration.workingDirectory = path.canonicalPath
-  return currentName
-}
-
-/**
- * Checks if configuration can run with provided path against provided working dir.
- * Fixes configuration workdir if it can't
- */
-private fun configureRelative(path: VirtualFile, configuration: PyUniversalTestConfiguration) {
-  val workDir = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe)?:return
-  if (! VfsUtil.isAncestor(workDir, path, false)) {
-    return
-  }
-
-  var currentPath = if(path.isDirectory) {
-    path
-  } else {
-    path.parent
-  }
-
-  //Ensure path is __init__.py based for all between path and configuration
-  // no init py -- not a package
-
-  while (currentPath.findFileByRelativePath(PyNames.INIT_DOT_PY) != null && currentPath != workDir) {
-    currentPath = currentPath.parent
-  }
-  configuration.workingDirectory = currentPath.path
-}
 
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
@@ -178,7 +129,7 @@ private object PyUniversalTestsLocator : SMTestLocator {
     val qualifiedName = QualifiedName.fromDottedString(path)
     // Assume qname id good and resolve it directly
     val element = qualifiedName.toElement(scope.module,
-                                          TypeEvalContext.codeAnalysis(project, null), folder)
+                                          TypeEvalContext.codeAnalysis(project, null), folderToStart = folder)
     if (element != null) {
       // Path is qualified name of python test according to runners protocol
       // Parentheses are part of generators / parametrized tests
@@ -434,7 +385,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   private fun generateRawArguments(): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString()
     if (rawArguments.isNotBlank()) {
-      return listOf("--") + rawArguments.trim().split(" ")
+      return listOf("--") + getParsedAdditionalArguments(project, rawArguments)
     }
     return emptyList()
   }
@@ -595,7 +546,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
   private fun getTargetForConfig(configuration: PyUniversalTestConfiguration,
                                  baseElement: PsiElement, fixConfiguration: Boolean = false): ConfigurationTarget? {
 
-    val setRelative = (fixConfiguration && configuration.packageOnlyIfInitPy(baseElement))
+    val fixPackages = (fixConfiguration && configuration.packageOnlyIfInitPy(baseElement))
 
     var element = baseElement
     // Go up until we reach top of the file
@@ -604,21 +555,28 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
     do {
       if (configuration.couldBeTestTarget(element)) {
         when (element) {
-          is PyQualifiedNameOwner -> { // Function, class, method
+          is  PyQualifiedNameOwner -> { // Function, class, method
             var qualifiedName = element.qualifiedName
             if (qualifiedName == null) {
               Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("$element has no qualified name")
               return null
             }
-            if (setRelative) {
-              qualifiedName = configureRelative(QualifiedName.fromDottedString(qualifiedName), configuration).toString()
+            if (fixPackages) {
+
+              val pathResult = findPathWithPackagesByName(element)
+              if (pathResult == null) {
+                Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("Can't resolve")
+                return null
+              }
+              configuration.workingDirectory = pathResult.first.path
+              qualifiedName = pathResult.second.toString()
             }
             return ConfigurationTarget(qualifiedName, TestTargetType.PYTHON)
           }
-          is PsiFileSystemItem ->  {
+          is PsiFileSystemItem -> {
             val path = element.virtualFile
-            if (setRelative) {
-              configureRelative(path, configuration).toString()
+            if (fixPackages) {
+              configuration.workingDirectory = findPathWithPackagesByFsItem(element)?.path ?: return null
             }
             return ConfigurationTarget(path.path, TestTargetType.PATH)
           }

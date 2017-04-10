@@ -88,10 +88,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       }
     };
     notificationManager.addNotificationListener(listener);
-    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
-                               ProgressExecutionMode.NO_PROGRESS_SYNC);
-    notificationManager.removeNotificationListener(listener);
-
+    try {
+      ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID, null,
+                                 ProgressExecutionMode.NO_PROGRESS_SYNC);
+    }
+    finally {
+      notificationManager.removeNotificationListener(listener);
+    }
 
     List<String> ideClasspath = ContainerUtil.newArrayList();
     ModuleRootManager.getInstance(module).orderEntries().withoutSdk().withoutModuleSourceEntries().compileOnly().productionOnly().forEach(

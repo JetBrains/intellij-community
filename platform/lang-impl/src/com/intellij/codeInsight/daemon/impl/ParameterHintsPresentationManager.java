@@ -87,8 +87,13 @@ public class ParameterHintsPresentationManager implements Disposable {
     return inlay;
   }
 
-  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint) {
-    updateRenderer(editor, hint, null);
+  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
+    if (useAnimation) {
+      updateRenderer(editor, hint, null);
+    }
+    else {
+      Disposer.dispose(hint);  
+    }
   }
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
@@ -97,7 +102,7 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText);
+    renderer.update(editor, newText, true);
     hint.updateSize();
     scheduleRendererUpdate(editor, hint);
   }
@@ -173,16 +178,15 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int step;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
-      updateState(editor, text);
-      if (!animated) step = steps + 1;
+      updateState(editor, text, animated);
     }
 
     private String getText() {
       return myText;
     }
 
-    public void update(Editor editor, String newText) {
-      updateState(editor, newText);
+    public void update(Editor editor, String newText, boolean animated) {
+      updateState(editor, newText, animated);
     }
 
     @Nullable
@@ -191,13 +195,13 @@ public class ParameterHintsPresentationManager implements Disposable {
       return "ParameterNameHints";
     }
 
-    private void updateState(Editor editor, String text) {
+    private void updateState(Editor editor, String text, boolean animated) {
       FontMetrics metrics = getFontMetrics(editor).metrics;
       startWidth = doCalcWidth(myText, metrics);
       myText = text;
       int endWidth = doCalcWidth(myText, metrics);
-      step = 1;
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
+      step = animated ? 1 : steps + 1;
     }
     
     public boolean nextStep() {

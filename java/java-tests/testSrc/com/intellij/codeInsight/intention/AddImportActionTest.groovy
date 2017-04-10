@@ -152,7 +152,7 @@ public class Foo {
     Ma<caret>p l = new HashMap<>();
 }
 '''
-    ImportClassFix intention = myFixture.findSingleIntention("Import class") as ImportClassFix
+    ImportClassFix intention = myFixture.findSingleIntention("Import class").delegate as ImportClassFix
     assert intention.classesToImport.collect { it.qualifiedName } == ['java.util.Map']
   }
 

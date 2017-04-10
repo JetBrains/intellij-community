@@ -1160,7 +1160,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
     else if (myRole2 == ChildRole.COMMA) {
-      createSpaceInCode(false);
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
       createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
@@ -1239,7 +1239,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
     else if (myRole2 == ChildRole.COMMA) {
-      createSpaceInCode(false);
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
     }
   }
 
@@ -1301,12 +1301,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.ARROW) {
       if (myRole2 == ChildRole.LBRACE) {
-        switch (mySettings.BRACE_STYLE) {
+        switch (mySettings.LAMBDA_BRACE_STYLE) {
           case NEXT_LINE:
           case NEXT_LINE_SHIFTED:
           case NEXT_LINE_SHIFTED2:
             int space = spaceAroundArrow ? 1 : 0;
-            myResult = Spacing.createSpacing(space, space, 1, false, 0);
+            myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
             break;
           default:
             createSpaceInCode(spaceAroundArrow);
@@ -1719,6 +1719,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.ANONYMOUS_CLASS) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_CLASS_LBRACE, null);
+    }
+    else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.NAME) {
+      createSpaceInCode(true);
     }
   }
 

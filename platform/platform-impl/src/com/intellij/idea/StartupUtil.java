@@ -151,8 +151,7 @@ public class StartupUtil {
    * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
-    String jreCheck = System.getProperty("idea.jre.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+    if ("true".equals(System.getProperty("idea.jre.check"))) {
       try {
         // try to find a class from tools.jar
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
@@ -169,18 +168,12 @@ public class StartupUtil {
         Main.showMessage("JDK Required", message, true);
         return false;
       }
-
-      if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
-        String message = "OpenJDK 6 is not supported. Please use Oracle Java or newer OpenJDK.";
-        Main.showMessage("Unsupported JVM", message, true);
-        return false;
-      }
     }
-    jreCheck = System.getProperty("idea.64bit.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+
+    if ("true".equals(System.getProperty("idea.64bit.check"))) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-          String message = "32-bit JVM is not supported. Please install 64-bit version.";
-          Main.showMessage("Unsupported JVM", message, true);
+        String message = "32-bit JVM is not supported. Please install 64-bit version.";
+        Main.showMessage("Unsupported JVM", message, true);
         return false;
       }
     }

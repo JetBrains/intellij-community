@@ -78,10 +78,6 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showDifferences(VcsFileRevision cvsVersionOn, VcsFileRevision cvsVersionOn1, File file) {
-  }
-
-  @Override
   public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
   }
 
@@ -102,12 +98,6 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
 
   @Override
   public void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title) {
-  }
-
-  @Override
-  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(@NotNull CommittedChangesProvider<T, U> provider,
-                                                                                                      RepositoryLocation location) {
-    return null;
   }
 
   @Override

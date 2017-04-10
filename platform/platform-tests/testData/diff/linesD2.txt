@@ -1,0 +1,3 @@
+    protected JComponent createCenterPanel() {
+      return getDiffPanel().getComponent();
+    }

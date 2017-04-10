@@ -1303,6 +1303,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return myPresentationFactory.getPresentation(action);
   }
 
+  public void clearPresentationCache() {
+    myPresentationFactory.reset();
+  }
+
   public interface PopupStateModifier {
     @ActionButtonComponent.ButtonState
     int getModifiedPopupState();

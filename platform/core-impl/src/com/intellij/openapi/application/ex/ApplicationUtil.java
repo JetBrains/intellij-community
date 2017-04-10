@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -73,6 +74,16 @@ public class ApplicationUtil {
         return result.get();
       }
       catch (TimeoutException ignored) { }
+    }
+  }
+
+  public static void showDialogAfterWriteAction(@NotNull Runnable runnable) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
+      application.invokeLater(runnable);
+    }
+    else {
+      runnable.run();
     }
   }
 

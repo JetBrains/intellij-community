@@ -1,4 +1,4 @@
-// "Replace with forEach" "false"
+// "Replace with forEach" "INFORMATION"
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

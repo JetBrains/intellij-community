@@ -634,7 +634,7 @@
 
       <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
               icon="AllIcons.Welcome.CreateDesktopEntry"/>
-      <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction" text="Check for Update"/>
+      <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction" text="Check for Updates"/>
     </group>
 
     <group id="WelcomeScreenRecentProjectActionGroup">
@@ -654,6 +654,7 @@
     <group id="EditorGutterPopupMenu">
       <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
       <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
+      <action id="EditorGutterToggleGlobalBreadcrumbs" class="com.intellij.openapi.editor.actions.ToggleShowBreadcrumbsGloballyAction"/>
       <separator/>
       <action id="EditorGutterToggleGlobalSoftWraps" class="com.intellij.openapi.editor.actions.ToggleSoftWrapsGloballyAction"/>
       <reference ref="EditorToggleUseSoftWraps"/>

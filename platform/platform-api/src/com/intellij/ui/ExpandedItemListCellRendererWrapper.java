@@ -35,7 +35,7 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     list.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
-    Component result = myWrappee.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    Component result = myWrappee.getListCellRendererComponent(list, UIUtil.htmlInjectionGuard(value), index, isSelected, cellHasFocus);
     if (!myHandler.getExpandedItems().contains(index)) return result;
     Rectangle bounds = result.getBounds();
     ExpandedItemRendererComponentWrapper wrapper = ExpandedItemRendererComponentWrapper.wrap(result);

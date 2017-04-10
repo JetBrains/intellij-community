@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -51,7 +52,12 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
   }
 
   protected void selectElement(Object element, String selectedText) {
-    ScrollingUtil.selectItem(myComponent, element);
+    if (element != null) {
+      ScrollingUtil.selectItem(myComponent, element);
+    }
+    else {
+      myComponent.clearSelection();
+    }
   }
 
   protected int getSelectedIndex() {
@@ -103,7 +109,10 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     public MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
       myList = list;
       mySearch = search;
-      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL);
+      if (action != null) {
+        copyShortcutFrom(action);
+      }
       setEnabledInModalContext(true);
     }
 

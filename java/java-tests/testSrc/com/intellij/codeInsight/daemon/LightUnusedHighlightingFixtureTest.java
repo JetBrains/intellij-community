@@ -34,7 +34,7 @@ public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureT
     PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(PsiElement element) {
-        return isImplicitWrite(element);
+        return false;
       }
 
       @Override

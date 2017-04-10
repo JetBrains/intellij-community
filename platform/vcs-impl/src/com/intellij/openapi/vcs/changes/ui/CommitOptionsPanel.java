@@ -34,10 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -52,7 +50,7 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
   @NotNull private final Collection<CheckinHandler> myHandlers;
   @NotNull private final Map<AbstractVcs, JPanel> myPerVcsOptionsPanels = newHashMap();
   @NotNull private final List<RefreshableOnComponent> myAdditionalComponents = newArrayList();
-  @NotNull private final Map<String, CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = newHashMap();
+  @NotNull private final Set<CheckinChangeListSpecificComponent> myCheckinChangeListSpecificComponents = newHashSet();
   @NotNull private final PseudoMap<Object, Object> myAdditionalData = new PseudoMap<>();
   private final boolean myEmpty;
 
@@ -99,11 +97,11 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }
 
-    myCheckinChangeListSpecificComponents.values().forEach(component -> component.onChangeListSelected(changeList));
+    myCheckinChangeListSpecificComponents.forEach(component -> component.onChangeListSelected(changeList));
   }
 
   public void saveChangeListComponentsState() {
-    myCheckinChangeListSpecificComponents.values().forEach(CheckinChangeListSpecificComponent::saveState);
+    myCheckinChangeListSpecificComponents.forEach(CheckinChangeListSpecificComponent::saveState);
   }
 
   @Override
@@ -126,7 +124,7 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
           myPerVcsOptionsPanels.put(vcs, vcsOptions);
           myAdditionalComponents.add(options);
           if (options instanceof CheckinChangeListSpecificComponent) {
-            myCheckinChangeListSpecificComponents.put(vcs.getName(), (CheckinChangeListSpecificComponent)options);
+            myCheckinChangeListSpecificComponents.add((CheckinChangeListSpecificComponent)options);
           }
           hasVcsOptions = true;
         }
@@ -140,16 +138,14 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
     for (CheckinHandler handler : myHandlers) {
       RefreshableOnComponent beforePanel = handler.getBeforeCheckinConfigurationPanel();
       if (beforePanel != null) {
-        beforeBox.add(beforePanel.getComponent());
         beforeVisible = true;
-        myAdditionalComponents.add(beforePanel);
+        addCheckinHandlerComponent(beforePanel, beforeBox);
       }
 
       RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(this);
       if (afterPanel != null) {
-        afterBox.add(afterPanel.getComponent());
         afterVisible = true;
-        myAdditionalComponents.add(afterPanel);
+        addCheckinHandlerComponent(afterPanel, afterBox);
       }
     }
 
@@ -186,5 +182,13 @@ public class CommitOptionsPanel extends BorderLayoutPanel implements Refreshable
     JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(additionalOptionsPanel, true);
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
     return false;
+  }
+
+  private void addCheckinHandlerComponent(@NotNull RefreshableOnComponent component, @NotNull Box container) {
+    container.add(component.getComponent());
+    myAdditionalComponents.add(component);
+    if (component instanceof CheckinChangeListSpecificComponent) {
+      myCheckinChangeListSpecificComponents.add((CheckinChangeListSpecificComponent)component);
+    }
   }
 }

@@ -80,10 +80,6 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showDifferences(cvsVersionOn: VcsFileRevision, cvsVersionOn1: VcsFileRevision, file: File) {
-    throw UnsupportedOperationException()
-  }
-
   override fun showChangesListBrowser(changelist: CommittedChangeList, title: String) {
     throw UnsupportedOperationException()
   }
@@ -97,10 +93,6 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   }
 
   override fun showWhatDiffersBrowser(parent: Component?, changes: Collection<Change>, title: String) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun <T : CommittedChangeList, U : ChangeBrowserSettings> chooseCommittedChangeList(provider: CommittedChangesProvider<T, U>, location: RepositoryLocation): T? {
     throw UnsupportedOperationException()
   }
 

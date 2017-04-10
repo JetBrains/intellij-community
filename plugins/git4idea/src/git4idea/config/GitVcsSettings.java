@@ -15,10 +15,9 @@
  */
 package git4idea.config;
 
-import com.intellij.dvcs.branch.BranchStorage;
 import com.intellij.dvcs.branch.DvcsBranchInfo;
+import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -30,10 +29,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchType;
 import git4idea.push.GitPushTagMode;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -91,10 +90,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     @Tag("push-targets")
     public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
 
-    @Tag("favorite-branches")
-    public BranchStorage FAVORITE_BRANCHES = new BranchStorage();
-    @Tag("excluded-from-favorite")
-    public BranchStorage EXCLUDED_FAVORITES = new BranchStorage();
+    @Property(surroundWithTag = false, flat = true)
+    public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -262,7 +259,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SIGN_OFF_COMMIT = state;
   }
 
-
   /**
    * Provides migration from project settings.
    * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
@@ -294,28 +290,9 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.PUSH_TARGETS.add(new PushTargetInfo(repositoryPath, sourceBranch, targetRemote, targetBranch));
   }
 
-  public void addToFavorites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.FAVORITE_BRANCHES.add(type.toString(), repository, branchName);
-  }
-
-  public void removeFromFavorites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.FAVORITE_BRANCHES.remove(type.toString(), repository, branchName);
-  }
-
-  public boolean isFavorite(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
-    return myState.FAVORITE_BRANCHES.contains(type.toString(), repository, branchName);
-  }
-
-  public void excludedFromFavorites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.EXCLUDED_FAVORITES.add(type.toString(), repository, branchName);
-  }
-
-  public void removeFromExcluded(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.EXCLUDED_FAVORITES.remove(type.toString(), repository, branchName);
-  }
-
-  public boolean isExcludedFromFavorites(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
-    return myState.EXCLUDED_FAVORITES.contains(type.toString(), repository, branchName);
+  @NotNull
+  public DvcsBranchSettings getFavoriteBranchSettings() {
+    return myState.FAVORITE_BRANCH_SETTINGS;
   }
 
   public boolean shouldSetUserNameGlobally() {

@@ -43,7 +43,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -208,8 +208,8 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     for (String version : versions) {
       newResultSet.addElement(LookupElementBuilder.create(prefix + version));
     }
-    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryUtils.ReleaseVersionId));
-    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryUtils.LatestVersionId));
+    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.ReleaseVersionId));
+    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId));
   }
 
   @NotNull

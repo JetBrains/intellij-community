@@ -188,9 +188,9 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  AbstractPopup() { }
+  protected AbstractPopup() { }
 
-  AbstractPopup init(Project project,
+  protected AbstractPopup init(Project project,
                      @NotNull JComponent component,
                      @Nullable JComponent preferredFocusedComponent,
                      boolean requestFocus,

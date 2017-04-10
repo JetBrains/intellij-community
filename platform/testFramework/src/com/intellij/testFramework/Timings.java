@@ -28,17 +28,18 @@ public class Timings {
   private static final int IO_PROBES = 42;
 
   public static final long CPU_TIMING;
+  private static final CpuTimings CPU_TIMING_DATA;
   public static final long IO_TIMING;
 
   /**
    * Measured on dual core p4 3HZ 1gig ram
    */
-  public static final long ETALON_CPU_TIMING = 200;
-  public static final long ETALON_IO_TIMING = 100;
+  public static final long REFERENCE_CPU_TIMING = 200;
+  public static final long REFERENCE_IO_TIMING = 100;
 
   static {
-    CpuTimings timings = CpuTimings.calcStableCpuTiming();
-    CPU_TIMING = timings.average;
+    CPU_TIMING_DATA = CpuTimings.calcStableCpuTiming();
+    CPU_TIMING = CPU_TIMING_DATA.average;
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
@@ -91,13 +92,12 @@ public class Timings {
    * @return value calibrated according to this machine speed. For slower machine, lesser value will be returned
    */
   public static int adjustAccordingToMySpeed(int value, boolean isParallelizable) {
-    return Math.max(1, (int)(1.0 * value * ETALON_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
+    return Math.max(1, (int)(1.0 * value * REFERENCE_CPU_TIMING / CPU_TIMING) / 8 * (isParallelizable ? JobSchedulerImpl.CORES_COUNT : 1));
   }
 
   public static String getStatistics() {
-    return
-      " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
-      ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
-      Runtime.getRuntime().availableProcessors() + " cores.";
+    return String.format("CPU=%d (%d%% reference CPU, sd=%.2f), I/O=%d (%d%% reference IO), %d cores",
+                         CPU_TIMING_DATA.average, CPU_TIMING * 100 / REFERENCE_CPU_TIMING, CPU_TIMING_DATA.stdDev,
+                         IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors());
   }
 }

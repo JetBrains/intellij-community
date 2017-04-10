@@ -50,6 +50,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testarithmetic$mul3() throws Throwable { doTest() }
 
+  void testarithmetic$mul4() throws Throwable { doTest() }
+
   void testarithmetic$post1() throws Throwable { doTest() }
 
   void testarithmetic$sh1() throws Throwable { doTest() }
@@ -169,6 +171,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testgstring$triple$triple2() throws Throwable { doTest() }
 
   void testgstring$triple$triple3() throws Throwable { doTest() }
+
+  void testgstring$triple$triple4() throws Throwable { doTest() }
 
   void testgstring$triple$quote_and_slash() throws Throwable { doTest() }
 
@@ -405,6 +409,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testregex$dollarSlashyTriple() throws Throwable { doTest() }
 
   void testregex$dollarSlashyUltimate() { doTest() }
+
+  void testregex$afterNewLine() { doTest() }
 
   void testrelational$eq1() throws Throwable { doTest() }
 

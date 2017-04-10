@@ -36,6 +36,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.TextDiffProviderBase;
 import com.intellij.diff.util.*;
@@ -406,7 +407,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           indicator.checkCanceled();
           return ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence());
         });
-        List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsets::create);
+        List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
 
         ComparisonManager manager = ComparisonManager.getInstance();
         List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -80,7 +81,9 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
   protected void setUpInWriteAction() throws Exception {
-    myRoot = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
+    VirtualFile tmpTestDir =
+      ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(FileUtil.getTempDirectory())));
+    myRoot = tmpTestDir.createChildDirectory(null, "idea_test_integration");
     PsiTestUtil.addContentRoot(myModule, myRoot);
   }
 

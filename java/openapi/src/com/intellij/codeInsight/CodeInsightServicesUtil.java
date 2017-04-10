@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,15 +78,18 @@ public class CodeInsightServicesUtil {
       }
     }
     else if (booleanExpression instanceof PsiLiteralExpression) {
-      return booleanExpression.getText().equals("true") ?
-             factory.createExpressionFromText("false", null) :
-             factory.createExpressionFromText("true", null);
+      Object value = ((PsiLiteralExpression)booleanExpression).getValue();
+      if (value instanceof Boolean) {
+        return factory.createExpressionFromText(String.valueOf(!((Boolean)value)), booleanExpression);
+      }
     }
 
     if (booleanExpression instanceof PsiParenthesizedExpression) {
       PsiExpression operand = ((PsiParenthesizedExpression)booleanExpression).getExpression();
-      operand.replace(invertCondition(operand));
-      return booleanExpression;
+      if (operand != null) {
+        operand.replace(invertCondition(operand));
+        return booleanExpression;
+      }
     }
 
     PsiPrefixExpression result = (PsiPrefixExpression)factory.createExpressionFromText("!(a)", null);

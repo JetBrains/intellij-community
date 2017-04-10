@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -605,6 +607,19 @@ public class GrStringUtil {
     if (text.endsWith(SLASH)) return SLASH;
     if (text.endsWith(SLASH_DOLLAR)) return SLASH_DOLLAR;
     return "";
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static TextRange getStringContentRange(@Nullable PsiElement element) {
+    if (element == null) return null;
+    IElementType elementType = element.getNode().getElementType();
+    if (elementType != GroovyTokenTypes.mSTRING_LITERAL && elementType != GroovyTokenTypes.mGSTRING_LITERAL) return null;
+
+    String text = element.getText();
+    String startQuote = getStartQuote(text);
+    String endQuote = getEndQuote(text.substring(startQuote.length()));
+    return new TextRange(startQuote.length(), element.getTextLength() - endQuote.length());
   }
 
 

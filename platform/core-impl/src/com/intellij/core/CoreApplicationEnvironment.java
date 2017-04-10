@@ -67,6 +67,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
@@ -83,6 +84,7 @@ public class CoreApplicationEnvironment {
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
   protected final VirtualFileSystem myJarFileSystem;
+  private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
   private final boolean myUnitTestMode;
 
@@ -102,6 +104,7 @@ public class CoreApplicationEnvironment {
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
+    myJrtFileSystem = createJrtFileSystem();
 
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
 
@@ -109,8 +112,10 @@ public class CoreApplicationEnvironment {
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
       charSequence -> new DocumentImpl(charSequence), null));
 
-    VirtualFileSystem[] fs = {myLocalFileSystem, myJarFileSystem};
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs,  myApplication.getMessageBus());
+    VirtualFileSystem[] fs = myJrtFileSystem != null
+                             ? new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem, myJrtFileSystem}
+                             : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
+    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, myApplication.getMessageBus());
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
@@ -225,6 +230,11 @@ public class CoreApplicationEnvironment {
     return new CoreLocalFileSystem();
   }
 
+  @Nullable
+  protected VirtualFileSystem createJrtFileSystem() {
+    return null;
+  }
+
   @NotNull
   public MockApplication getApplication() {
     return myApplication;
@@ -324,5 +334,10 @@ public class CoreApplicationEnvironment {
   @NotNull
   public VirtualFileSystem getJarFileSystem() {
     return myJarFileSystem;
+  }
+
+  @Nullable
+  public VirtualFileSystem getJrtFileSystem() {
+    return myJrtFileSystem;
   }
 }

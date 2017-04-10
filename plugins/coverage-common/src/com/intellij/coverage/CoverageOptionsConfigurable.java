@@ -16,7 +16,6 @@
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,7 @@ import java.util.List;
  * User: anna
  * Date: 12/16/10
  */
-public class CoverageOptionsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class CoverageOptionsConfigurable implements SearchableConfigurable {
   private CoverageOptionsPanel myPanel;
   private final CoverageOptionsProvider myManager;
   private final Project myProject;

@@ -17,6 +17,7 @@ package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -38,9 +39,11 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -62,6 +65,12 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   public PyConsoleTask() {
     super(null);
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getTagsToCover() {
+    return Sets.newHashSet("python3.6", "python2.7", "ipython", "ipython200", "jython", "IronPython");
   }
 
   public PythonConsoleView getConsoleView() {

@@ -1642,7 +1642,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   /**
    * Closes deleted files. Closes file which are in the deleted directories.
    */
-  private final class MyVirtualFileListener extends VirtualFileAdapter {
+  private final class MyVirtualFileListener implements VirtualFileListener {
     @Override
     public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
       assertDispatchThread();

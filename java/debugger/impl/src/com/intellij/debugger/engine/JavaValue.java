@@ -141,7 +141,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         if (node.isObsolete()) {
           return;
         }
@@ -151,7 +151,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {
-            Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
+            Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
             final String value = getValueString();
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();
@@ -219,7 +219,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         }
 
         @Override
-        public void contextAction() throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           if (callback.isObsolete()) return;
           evaluate(callback);
         }
@@ -346,7 +346,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         final XValueChildrenList children = new XValueChildrenList();
         final NodeRenderer renderer = myValueDescriptor.getRenderer(myEvaluationContext.getDebugProcess());
         final Ref<Integer> remainingNum = new Ref<>(0);
@@ -408,11 +408,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
     evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(command.getSuspendContext()) {
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         if (node.isObsolete()) {
           return;
         }
-        command.contextAction();
+        command.contextAction(suspendContext);
       }
 
       @Override
@@ -441,7 +441,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         ApplicationManager.getApplication().runReadAction(() -> {
           SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), false);
           if (position != null) {
@@ -520,7 +520,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         }
 
         @Override
-        public void contextAction() throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<XExpression>() {
             @Override
             public XExpression compute() {

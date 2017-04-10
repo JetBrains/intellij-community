@@ -1522,6 +1522,13 @@ class XInternalError {}
     checkResult()
   }
 
+  void testImplementViaCompletionWithGenerics() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'public void methodWithGenerics', 'public void methodWithTypeParam'
+    assert LookupElementPresentation.renderElement(lookup.items[0]).tailText == '(List k) {...}'
+    assert LookupElementPresentation.renderElement(lookup.items[1]).tailText == '(K k) {...}'
+  }
+
   void testImplementViaOverrideCompletion() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'Override', 'public void run'

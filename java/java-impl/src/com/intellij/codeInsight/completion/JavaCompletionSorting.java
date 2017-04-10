@@ -74,6 +74,10 @@ public class JavaCompletionSorting {
 
     List<LookupElementWeigher> afterStats = ContainerUtil.newArrayList();
     afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
+    final PreferMostUsedWeigher preferMostUsedWeigher = PreferMostUsedWeigher.create(position);
+    if (preferMostUsedWeigher != null) {
+      afterStats.add(preferMostUsedWeigher);
+    }
     if (!smart) {
       ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
       if (!afterNew) {

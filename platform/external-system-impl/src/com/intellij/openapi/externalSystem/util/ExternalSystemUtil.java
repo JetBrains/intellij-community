@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -455,6 +456,8 @@ public class ExternalSystemUtil {
       }
     };
 
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+
     final String title;
     switch (progressExecutionMode) {
       case NO_PROGRESS_SYNC:
@@ -667,6 +670,8 @@ public class ExternalSystemUtil {
     runConfiguration.getSettings().setTaskDescriptions(ContainerUtil.newArrayList(taskSettings.getTaskDescriptions()));
     runConfiguration.getSettings().setVmOptions(taskSettings.getVmOptions());
     runConfiguration.getSettings().setScriptParameters(taskSettings.getScriptParameters());
+    runConfiguration.getSettings().setPassParentEnvs(taskSettings.isPassParentEnvs());
+    runConfiguration.getSettings().setEnv(ContainerUtil.newHashMap(taskSettings.getEnv()));
     runConfiguration.getSettings().setExecutionName(taskSettings.getExecutionName());
 
     return settings;

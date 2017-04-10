@@ -65,10 +65,13 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
@@ -380,13 +383,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public boolean reportsIgnoredDirectories() {
-    return false;
-  }
-
-  @Override
   public List<CommitExecutor> getCommitExecutors() {
-    return Arrays.asList(myCommitAndPushExecutor, myMqNewExecutor);
+    ArrayList<CommitExecutor> commitExecutors = newArrayList(myCommitAndPushExecutor);
+    if (exists(HgUtil.getRepositoryManager(myProject).getRepositories(), r -> r.getRepositoryConfig().isMqUsed())) {
+      commitExecutors.add(myMqNewExecutor);
+    }
+    return commitExecutors;
   }
 
   @NotNull

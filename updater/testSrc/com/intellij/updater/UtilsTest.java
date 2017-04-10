@@ -49,6 +49,17 @@ public class UtilsTest {
   }
 
   @Test
+  public void testDeleteReadonlyFile() throws Exception {
+    File f = tempDir.newFile("temp_dir/temp_file");
+    assertTrue(f.setWritable(false, false));
+    File d = f.getParentFile();
+    assertTrue(d.exists());
+
+    Utils.delete(d);
+    assertFalse(d.exists());
+  }
+
+  @Test
   public void testDeleteLockedFileOnWindows() throws Exception {
     assumeTrue(IS_WINDOWS);
 
@@ -117,5 +128,18 @@ public class UtilsTest {
     Utils.delete(link);
     assertFalse(link.exists());
     assertThat(dir.listFiles()).containsExactly(file);
+  }
+
+  @Test
+  public void testDeleteDanglingSymlink() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File dir = tempDir.newFolder("temp_dir");
+    File link = new File(dir, "link");
+    Utils.createLink("dangling", link);
+    assertThat(dir.listFiles()).containsExactly(link);
+
+    Utils.delete(link);
+    assertThat(dir.listFiles()).isEmpty();
   }
 }

@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.reference.SoftReference;
@@ -51,7 +51,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
 
   @Override
   public void initComponent() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();

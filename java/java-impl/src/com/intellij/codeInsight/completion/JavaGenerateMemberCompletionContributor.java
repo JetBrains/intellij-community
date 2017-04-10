@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
@@ -29,6 +30,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -162,9 +164,9 @@ public class JavaGenerateMemberCompletionContributor {
     PsiType type = substitutor.substitute(prototype.getReturnType());
     String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + methodName;
 
-    String parameters = PsiFormatUtil.formatMethod(prototype, substitutor,
-                                                   PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                   PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_RAW_TYPE | PsiFormatUtilBase.SHOW_TYPE);
+    String parameters = "(" + StringUtil.join(prototype.getParameterList().getParameters(),
+                                              p -> getShortParameterName(substitutor, p) + " " + p.getName(),
+                                              ", ") + ")";
 
     String overrideSignature = " @Override " + signature; // leading space to make it a middle match, under all annotation suggestions
     LookupElementBuilder element = LookupElementBuilder.create(prototype, signature).withLookupString(methodName).
@@ -175,5 +177,10 @@ public class JavaGenerateMemberCompletionContributor {
     }
     element.putUserData(GENERATE_ELEMENT, true);
     return element;
+  }
+
+  @NotNull
+  private static String getShortParameterName(PsiSubstitutor substitutor, PsiParameter p) {
+    return PsiNameHelper.getShortClassName(substitutor.substitute(p.getType()).getPresentableText(false));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,30 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProjectIconsAccessor;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
+import org.jetbrains.uast.evaluation.UEvaluationContextKt;
+import org.jetbrains.uast.values.*;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Shows small (16x16 or less) icons as gutters.
@@ -50,71 +57,41 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (element instanceof PsiAssignmentExpression) {
-      final PsiExpression lExpression = ((PsiAssignmentExpression)element).getLExpression();
-      final PsiExpression expr = ((PsiAssignmentExpression)element).getRExpression();
-      if (lExpression instanceof PsiReferenceExpression) {
-        PsiElement var = ((PsiReferenceExpression)lExpression).resolve();
-        if (var instanceof PsiVariable) {
-          return createIconLineMarker(((PsiVariable)var).getType(), expr);
+    UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
+    if (expression == null) {
+      return null;
+    }
+
+    if (!ProjectIconsAccessor.isIconClassType(expression.getExpressionType())) {
+      return null;
+    }
+
+    UValue uValue = UEvaluationContextKt.uValueOf(expression);
+    if (uValue instanceof UCallResultValue) {
+      List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
+      if (arguments.size() > 0) {
+        Collection<UExpression> constants = UValueKt.toPossibleConstants(arguments.get(0))
+          .stream()
+          .filter(constant -> constant instanceof UStringConstant)
+          .map(UConstant::getSource)
+          .collect(Collectors.toList());
+        List<PsiElement> psiElements = UastUtils.toPsiElements(constants);
+        if (psiElements.size() > 0) {
+          return createIconLineMarker(psiElements.get(0), element);
         }
       }
     }
-    else if (element instanceof PsiReturnStatement) {
-      PsiReturnStatement psiReturnStatement = (PsiReturnStatement)element;
-      final PsiExpression value = psiReturnStatement.getReturnValue();
-      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      if (method != null) {
-        final PsiType returnType = method.getReturnType();
-        final LineMarkerInfo<PsiElement> result = createIconLineMarker(returnType, value);
 
-        if (result != null || !ProjectIconsAccessor.isIconClassType(returnType) || value == null) return result;
-
-        if (methodContainsReturnStatementOnly(method)) {
-          for (PsiReference ref : value.getReferences()) {
-            final PsiElement field = ref.resolve();
-            if (field instanceof PsiField) {
-              return createIconLineMarker(returnType, ((PsiField)field).getInitializer(), psiReturnStatement);
-            }
-          }
-        }
-      }
-    }
-    else if (element instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)element;
-
-      PsiUtilCore.ensureValid(var);
-      final PsiType type = var.getType();
-      if (!type.isValid()) {
-        PsiUtil.ensureValidType(type, "in variable: " + var + " of " + var.getClass());
-      }
-
-      return createIconLineMarker(type, var.getInitializer());
-    }
     return null;
   }
-
-  private static boolean methodContainsReturnStatementOnly(@NotNull PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body == null || body.getStatements().length != 1) return false;
-
-    return body.getStatements()[0] instanceof PsiReturnStatement;
-  }
-
   @Nullable
-  private static LineMarkerInfo<PsiElement> createIconLineMarker(PsiType type, @Nullable PsiExpression initializer) {
-    return createIconLineMarker(type, initializer, initializer);
-  }
-
-  @Nullable
-  private static LineMarkerInfo<PsiElement> createIconLineMarker(PsiType type,
-                                                                 @Nullable PsiExpression initializer,
+  private static LineMarkerInfo<PsiElement> createIconLineMarker(@Nullable PsiElement initializer,
                                                                  PsiElement bindingElement) {
     if (initializer == null) return null;
 
     final Project project = initializer.getProject();
 
-    final VirtualFile file = ProjectIconsAccessor.getInstance(project).resolveIconFile(type, initializer);
+    final VirtualFile file = ProjectIconsAccessor.getInstance(project).resolveIconFile(initializer);
     if (file == null) return null;
 
     final Icon icon = ProjectIconsAccessor.getInstance(project).getIcon(file);

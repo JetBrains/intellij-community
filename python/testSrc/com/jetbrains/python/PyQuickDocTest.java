@@ -288,4 +288,9 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     myFixture.copyDirectoryToProject("typing", "");
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
   }
+
+  // PY-22685
+  public void testBuiltinLen() {
+    checkHTMLOnly();
+  }
 }

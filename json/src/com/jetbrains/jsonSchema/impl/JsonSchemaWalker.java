@@ -70,9 +70,10 @@ public class JsonSchemaWalker {
     final List<Step> position = walker.findPosition(element, false, true);
     if (position == null || position.isEmpty()) return;
     // but this does not validate definitions section against general schema --> should be done separately
+    final Step firstStep = position.get(0);
     if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
-        position.get(0).getTransition() instanceof PropertyTransition &&
-        "definitions".equals(((PropertyTransition)position.get(0).getTransition()).getName())) return;
+        firstStep != null && firstStep.getTransition() instanceof PropertyTransition &&
+        "definitions".equals(((PropertyTransition)firstStep.getTransition()).getName())) return;
     extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position, true);
   }
 
@@ -110,10 +111,11 @@ public class JsonSchemaWalker {
   }
 
   public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
-    final String[] chain = JsonSchemaExportedDefinitions.normalizeId(nameInSchema).replace("\\", "/").split("/");
-    final List<Step> steps = Arrays.stream(chain).filter(s -> !s.isEmpty()).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
+    final List<String> chain = StringUtil.split(JsonSchemaExportedDefinitions.normalizeId(nameInSchema).replace("\\", "/"), "/");
+    final List<Step> steps = chain.stream().filter(s -> !s.isEmpty()).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
       .collect(Collectors.toList());
-    return Pair.create(steps, chain[chain.length - 1]);
+    if (steps.isEmpty()) return Pair.create(Collections.emptyList(), nameInSchema);
+    return Pair.create(steps, chain.get(chain.size() - 1));
   }
 
   protected static class DefinitionsResolver {
@@ -228,8 +230,10 @@ public class JsonSchemaWalker {
     if (variantSchemaFile == null) return;
     serviceEx.visitSchemaObject(variantSchemaFile,
                                 variantObject -> {
-                                  final List<Step> variantSteps = buildSteps(splitter.getRelativePath()).getFirst();
-                                  variantSteps.addAll(steps);
+                                  List<Step> variantSteps = buildSteps(splitter.getRelativePath()).getFirst();
+                                  // empty list might be not modifiable
+                                  if (variantSteps.isEmpty()) variantSteps = steps;
+                                  else variantSteps.addAll(steps);
                                   queue.add(Trinity.create(variantObject, variantSchemaFile, variantSteps));
                                   return true;
                                 });

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -85,7 +86,35 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
     baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
   }
 
-  private void baseInsertTest(final String folder, final String testFile) throws Exception {
+  public void testOneOfWithNotFilledPropertyValue() throws Exception {
+    baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "\"business\"", "\"home\"");
+  }
+
+  private void baseCompletionTest(@SuppressWarnings("SameParameterValue") final String folder,
+                                  @SuppressWarnings("SameParameterValue") final String testFile, @NotNull String... items) throws Exception {
+    baseTest(folder, testFile, () -> {
+      complete();
+      assertStringItems(items);
+    });
+  }
+
+  private void baseInsertTest(@SuppressWarnings("SameParameterValue") final String folder, final String testFile) throws Exception {
+    baseTest(folder, testFile, () -> {
+      final CodeCompletionHandlerBase handlerBase = new CodeCompletionHandlerBase(CompletionType.BASIC);
+      handlerBase.invokeCompletion(getProject(), getEditor());
+      if (myItems != null) {
+        selectItem(myItems[0]);
+      }
+      try {
+        checkResultByFile("/" + folder + "/" + testFile + "_after.json");
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  private void baseTest(@NotNull final String folder, @NotNull final String testFile, @NotNull final Runnable checker) throws Exception {
     skeleton(new Callback() {
       @Override
       public void registerSchemes() {
@@ -105,17 +134,7 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
 
       @Override
       public void doCheck() {
-        final CodeCompletionHandlerBase handlerBase = new CodeCompletionHandlerBase(CompletionType.BASIC);
-        handlerBase.invokeCompletion(getProject(), getEditor());
-        if (myItems != null) {
-          selectItem(myItems[0]);
-        }
-        try {
-          checkResultByFile("/" + folder + "/" + testFile + "_after.json");
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        checker.run();
       }
     });
   }

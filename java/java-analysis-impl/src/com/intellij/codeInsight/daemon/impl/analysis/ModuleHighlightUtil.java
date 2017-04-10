@@ -197,6 +197,7 @@ public class ModuleHighlightUtil {
         String message = JavaErrorMessages.message(key, refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
+        QuickFixAction.registerQuickFixAction(info, MergeModuleStatementsFix.createFix(statement));
         results.add(info);
       }
     }

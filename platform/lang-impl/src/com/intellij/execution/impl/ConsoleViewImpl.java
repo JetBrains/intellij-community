@@ -685,7 +685,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         int startIndex = startsWithCR ? 1 : 0;
         for (int i = startIndex; i < deferredTokens.size(); i++) {
           TokenBuffer.TokenInfo deferredToken = deferredTokens.get(i);
-          addedText.append(deferredToken.getText());
+          addedText.append(deferredToken.getText()); // can just append texts because \r inside these tokens were already taken care of
         }
         if (startsWithCR) {
           // remove last line if any

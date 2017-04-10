@@ -370,14 +370,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       if (hasFocus) {
         g2.setClip(clip);
         if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-          DarculaUIUtil.paintErrorBorder(g2, width, height, true);
+          DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, true);
         } else {
           DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
         }
       }
       else {
         if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-          DarculaUIUtil.paintErrorBorder(g2, width, height, false);
+          DarculaUIUtil.paintErrorBorder(g2, width, height, 0, false, true);
         } else {
           g2.setColor(borderColor);
           g2.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);

@@ -41,7 +41,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -524,16 +523,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private void restoreTreeState() {
-    if (myState.treeState != null) {
-      TreeState treeState = new TreeState();
-      try {
-        treeState.readExternal(myState.treeState);
-        treeState.applyTo(myTree);
-      }
-      catch (InvalidDataException e) {
-        LOG.info(e);
-      }
-    }
+    TreeState.createFrom(myState.treeState).applyTo(myTree);
   }
 
   private <T extends ExternalSystemNode> List<T> getSelectedNodes(Class<T> aClass) {

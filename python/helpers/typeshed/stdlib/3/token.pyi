@@ -58,6 +58,6 @@ N_TOKENS = 0
 NT_OFFSET = 0
 tok_name = ...  # type: Dict[int, str]
 
-def ISTERMINAL(x: int) -> bool: pass
-def ISNONTERMINAL(x: int) -> bool: pass
-def ISEOF(x: int) -> bool: pass
+def ISTERMINAL(x: int) -> bool: ...
+def ISNONTERMINAL(x: int) -> bool: ...
+def ISEOF(x: int) -> bool: ...

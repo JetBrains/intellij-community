@@ -375,7 +375,7 @@ public final class PythonSdkType extends SdkType {
    */
   @Nullable
   public static File findExecutableFile(File parent, String name) {
-    if (SystemInfo.isWindows || SystemInfo.isOS2) {
+    if (SystemInfo.isWindows) {
       for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
         File file = new File(parent, name + "." + suffix);
         if (file.exists()) return file;

@@ -24,15 +24,15 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
@@ -42,11 +42,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+  private WeakReference<JBPopup> myActivePopupRef = null;
+
   private static boolean isPlaceGlobal(AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
@@ -133,25 +136,42 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         return;
       }
 
-      final JBList list = new JBList(handlerItems.first);
+      final JBList<HandlerItem> list = new JBList<>(handlerItems.first);
       if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
+      HandlerItem stopAllItem =
+        new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), AllIcons.Actions.Suspend,
+                        true) {
+          @Override
+          void stop() {
+            for (HandlerItem item : handlerItems.first) {
+              item.stop();
+            }
+          }
+        };
+      ((DefaultListModel<HandlerItem>)list.getModel()).addElement(stopAllItem);
+      JBPopup activePopup = SoftReference.dereference(myActivePopupRef);
+      if (activePopup != null) {
+          stopAllItem.stop();
+          activePopup.cancel();
+          return;
+      }
 
-      list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
+      list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
         @Nullable
         @Override
-        public String getTextFor(Object value) {
-          return value instanceof HandlerItem ? ((HandlerItem)value).displayName : null;
+        public String getTextFor(HandlerItem item) {
+          return item.displayName;
         }
 
         @Nullable
         @Override
-        public Icon getIconFor(Object value) {
-          return value instanceof HandlerItem ? ((HandlerItem)value).icon : null;
+        public Icon getIconFor(HandlerItem item) {
+          return item.icon;
         }
 
         @Override
-        public boolean hasSeparatorAboveOf(Object value) {
-          return value instanceof HandlerItem && ((HandlerItem)value).hasSeparator;
+        public boolean hasSeparatorAboveOf(HandlerItem item) {
+          return item.hasSeparator;
         }
       }));
 
@@ -165,8 +185,15 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
             if (o instanceof HandlerItem) ((HandlerItem)o).stop();
           }
         })
+        .addListener(new JBPopupAdapter() {
+          @Override
+          public void onClosed(LightweightWindowEvent event) {
+            myActivePopupRef = null;
+          }
+        })
         .setRequestFocus(true)
         .createPopup();
+      myActivePopupRef = new WeakReference<>(popup);
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
       if (component != null && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {

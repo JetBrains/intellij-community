@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import java.util.HashSet;
 import java.util.Set;
 
-public class VisibleEditorsTracker extends CommandAdapter {
+public class VisibleEditorsTracker implements CommandListener {
   private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<>();
   private long myCurrentCommandStart;
   private long myLastCommandFinish;

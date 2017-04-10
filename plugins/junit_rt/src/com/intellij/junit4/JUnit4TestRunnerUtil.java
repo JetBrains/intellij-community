@@ -58,6 +58,8 @@ public class JUnit4TestRunnerUtil {
 
             final String categoryName = reader.readLine();
             final Class category = categoryName != null && categoryName.length() > 0 ? loadTestClass(categoryName) : null;
+            final String filters = reader.readLine();
+
             String line;
 
             while ((line = reader.readLine()) != null) {

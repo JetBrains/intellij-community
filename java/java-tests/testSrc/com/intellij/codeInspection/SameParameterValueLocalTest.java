@@ -17,10 +17,18 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
+import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class SameParameterValueLocalTest extends InspectionTestCase {
-  private LocalInspectionTool myTool = new SameParameterValueInspection().getSharedLocalInspectionTool();
+  private final SameParameterValueInspection myGlobalTool = new SameParameterValueInspection();
+  private LocalInspectionTool myTool = myGlobalTool.getSharedLocalInspectionTool();
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    //myGlobalTool.highestModifier = PsiModifier.PUBLIC;
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -42,6 +50,16 @@ public class SameParameterValueLocalTest extends InspectionTestCase {
   }
 
   public void testMethodWithSuper() {
+    String previous = myGlobalTool.highestModifier;
+    myGlobalTool.highestModifier = PsiModifier.PUBLIC;
+    try {
+      doTest(getGlobalTestDir(), myTool);
+    } finally {
+      myGlobalTool.highestModifier = previous;
+    }
+  }
+
+  public void testNotReportedDueToHighVisibility() {
     doTest(getGlobalTestDir(), myTool);
   }
 

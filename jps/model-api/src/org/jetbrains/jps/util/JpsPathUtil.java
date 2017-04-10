@@ -95,4 +95,8 @@ public class JpsPathUtil {
     String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
     return file.isDirectory() ? "file://" + path : "jar://" + path + "!/";
   }
+
+  public static boolean isJrtUrl(@NotNull String url) {
+    return url.startsWith("jrt://");
+  }
 }

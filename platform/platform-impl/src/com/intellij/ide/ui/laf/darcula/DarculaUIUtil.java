@@ -27,7 +27,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.Path2D;
 
 import static javax.swing.SwingConstants.EAST;
 import static javax.swing.SwingConstants.WEST;
@@ -114,28 +114,54 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
-  public static void paintErrorBorder(Graphics2D g, int width, int height, boolean hasFocus) {
-    int lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 4 : 3);
-    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
-
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
+  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
     g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
-    g.setStroke(new UIUtil.OuterStroke(lw));
-    g.draw(shape);
+    doPaint(g, width, height, arc, symmetric);
   }
 
-  public static void paintFocusBorder(Graphics2D g, int width, int height) {
-    int lw = JBUI.scale(4);
-    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
+  public static void paintFocusBorder(Graphics2D g, int width, int height, int arc, boolean symmetric) {
+    g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
+    doPaint(g, width, height, arc, symmetric);
+  }
+
+  @SuppressWarnings("SuspiciousNameCombination")
+  private static void doPaint(Graphics2D g, int width, int height, int arc, boolean symmetric) {
+    double bw = UIUtil.isRetina(g) ? 0.5 : 1.0;
+    double lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
-    g.setStroke(new UIUtil.OuterStroke(JBUI.scale(lw)));
-    g.draw(shape);
+    double outerArc = arc > 0 ? arc + lw - JBUI.scale(2) : lw;
+    double rightOuterArc = symmetric ? outerArc : JBUI.scale(6);
+    Path2D outerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    outerRect.moveTo(width - rightOuterArc, 0);
+    outerRect.quadTo(width, 0, width, rightOuterArc);
+    outerRect.lineTo(width, height - rightOuterArc);
+    outerRect.quadTo(width, height, width - rightOuterArc, height);
+    outerRect.lineTo(outerArc, height);
+    outerRect.quadTo(0, height, 0, height - outerArc);
+    outerRect.lineTo(0, outerArc);
+    outerRect.quadTo(0, 0, outerArc, 0);
+    outerRect.closePath();
+
+    lw += bw;
+    double rightInnerArc = symmetric ? outerArc : JBUI.scale(7);
+    Path2D innerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    innerRect.moveTo(width - rightInnerArc, lw);
+    innerRect.quadTo(width - lw, lw , width - lw, rightInnerArc);
+    innerRect.lineTo(width - lw, height - rightInnerArc);
+    innerRect.quadTo(width - lw, height - lw, width - rightInnerArc, height - lw);
+    innerRect.lineTo(outerArc, height - lw);
+    innerRect.quadTo(lw, height - lw, lw, height - outerArc);
+    innerRect.lineTo(lw, outerArc);
+    innerRect.quadTo(lw, lw, outerArc, lw);
+    innerRect.closePath();
+
+    Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    path.append(outerRect, false);
+    path.append(innerRect, false);
+    g.fill(path);
   }
 
   public static boolean isCurrentEventShiftDownEvent() {

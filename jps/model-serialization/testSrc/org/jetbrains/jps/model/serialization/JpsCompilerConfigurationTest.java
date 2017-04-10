@@ -23,6 +23,8 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.File;
+
 public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
   public void testLoadFromIpr() {
     doTest("jps/model-serialization/testData/compilerConfiguration/compilerConfiguration.ipr");
@@ -41,18 +43,24 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     ProcessorConfigProfile defaultProfile = configuration.getDefaultAnnotationProcessingProfile();
     assertTrue(defaultProfile.isEnabled());
     assertFalse(defaultProfile.isObtainProcessorsFromClasspath());
-    assertEquals(FileUtil.toSystemDependentName(JpsPathUtil.urlToPath(getUrl("src"))), defaultProfile.getProcessorPath());
+    String srcDir = JpsPathUtil.urlToPath(getUrl("src"));
+    assertEquals(FileUtil.toSystemDependentName(srcDir), defaultProfile.getProcessorPath());
     assertEquals("b", defaultProfile.getProcessorOptions().get("a"));
     assertEquals("d", defaultProfile.getProcessorOptions().get("c"));
     assertEquals("gen", defaultProfile.getGeneratedSourcesDirectoryName(false));
+
     JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
+    assertSameElements(excludes.getExcludedFiles(), new File(srcDir, "A.java"));
+    assertSameElements(excludes.getExcludedDirectories(), new File(srcDir, "nonrec"));
+    assertSameElements(excludes.getRecursivelyExcludedDirectories(), new File(srcDir, "rec"));
+
     assertFalse(isExcluded(excludes, "src/nonrec/x/Y.java"));
     assertTrue(isExcluded(excludes, "src/nonrec/Y.java"));
     assertTrue(isExcluded(excludes, "src/rec/x/Y.java"));
     assertTrue(isExcluded(excludes, "src/rec/Y.java"));
     assertTrue(isExcluded(excludes, "src/A.java"));
     assertFalse(isExcluded(excludes, "src/B.java"));
-    
+
     JpsJavaCompilerOptions options = configuration.getCurrentCompilerOptions();
     assertNotNull(options);
     assertEquals(512, options.MAXIMUM_HEAP_SIZE);

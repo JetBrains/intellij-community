@@ -27,10 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
@@ -80,6 +77,8 @@ public class JavaReflectionReferenceUtil {
   public static final String GET_DECLARED_FIELD = "getDeclaredField";
   public static final String GET_METHOD = "getMethod";
   public static final String GET_DECLARED_METHOD = "getDeclaredMethod";
+  public static final String GET_CONSTRUCTOR = "getConstructor";
+  public static final String GET_DECLARED_CONSTRUCTOR = "getDeclaredConstructor";
 
   public static final String JAVA_LANG_CLASS_LOADER = "java.lang.ClassLoader";
   public static final String FOR_NAME = "forName";
@@ -176,8 +175,10 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   public static PsiExpression findDefinition(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiReferenceExpression) {
-      return findVariableDefinition((PsiReferenceExpression)expression);
+    int preventEndlessLoop = 5;
+    while (expression instanceof PsiReferenceExpression) {
+      if (--preventEndlessLoop == 0) return null;
+      expression = findVariableDefinition((PsiReferenceExpression)expression);
     }
     return expression;
   }
@@ -367,6 +368,21 @@ public class JavaReflectionReferenceUtil {
         }
       }
       return false;
+    }
+
+    public boolean isAssignableFrom(@NotNull PsiType type) {
+      if (type.equals(PsiType.NULL)) {
+        return myPsiClass != null || myArrayDimensions != 0;
+      }
+      if (type.getArrayDimensions() != myArrayDimensions) {
+        return false;
+      }
+      final PsiType otherType = type.getDeepComponentType();
+      if (myPrimitiveType != null) {
+        return myPrimitiveType.isAssignableFrom(otherType) || otherType.equalsToText(myPrimitiveType.getBoxedTypeName());
+      }
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
+      return factory.createType(myPsiClass).isAssignableFrom(otherType);
     }
 
     @Nullable

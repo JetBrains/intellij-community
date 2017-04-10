@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -81,7 +81,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
   public void testMultipleClassesInOneFile() throws Exception {
     final boolean [] fileWasDeleted = new boolean[]{false};
-    final VirtualFileAdapter fileAdapter = new VirtualFileAdapter() {
+    final VirtualFileListener fileAdapter = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         fileWasDeleted[0] = !event.getFile().isDirectory();
@@ -179,8 +179,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     @Override
     public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-      final Comparator<PsiDirectory> directoryComparator =
-        (o1, o2) -> o1.getVirtualFile().getPresentableUrl().compareTo(o2.getVirtualFile().getPresentableUrl());
+      final Comparator<PsiDirectory> directoryComparator = Comparator.comparing(o -> o.getVirtualFile().getPresentableUrl());
 
       final PsiPackage sourcePackage = psiFacade.findPackage(myPackageName);
       assertNotNull(sourcePackage);

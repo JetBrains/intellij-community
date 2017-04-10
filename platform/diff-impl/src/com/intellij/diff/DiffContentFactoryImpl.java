@@ -42,6 +42,7 @@ import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,22 +173,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
-    if (file.isDirectory()) return new DirectoryContentImpl(project, file);
-    DocumentContent content = createDocument(project, file);
-    if (content != null) return content;
-    return new FileContentImpl(project, file);
+    return createContentFromFile(project, file);
   }
 
   @Nullable
   @Override
   public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
-    // TODO: add notification, that file is decompiled ?
-    if (file.isDirectory()) return null;
-    Document document = ReadAction.compute(() -> {
-      return FileDocumentManager.getInstance().getDocument(file);
-    });
-    if (document == null) return null;
-    return new FileDocumentContentImpl(project, document, file);
+    return ObjectUtils.tryCast(createContentFromFile(project, file), DocumentContent.class);
   }
 
   @Nullable
@@ -289,6 +281,31 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createBinaryImpl(project, content, type, fileName, null);
   }
 
+
+  @NotNull
+  private static DiffContent createContentFromFile(@Nullable Project project,
+                                                   @NotNull VirtualFile file) {
+    return createContentFromFile(project, file, file);
+  }
+
+  @NotNull
+  private static DiffContent createContentFromFile(@Nullable Project project,
+                                                   @NotNull VirtualFile file,
+                                                   @Nullable VirtualFile highlightFile) {
+    if (file.isDirectory()) return new DirectoryContentImpl(project, file, highlightFile);
+
+    Document document = ReadAction.compute(() -> {
+      return FileDocumentManager.getInstance().getDocument(file);
+    });
+    if (document != null) {
+      // TODO: add notification if file is decompiled ?
+      return new FileDocumentContentImpl(project, document, file, highlightFile);
+    }
+    else {
+      return new FileContentImpl(project, file, highlightFile);
+    }
+  }
+
   @NotNull
   private static DiffContent createBinaryImpl(@Nullable Project project,
                                               @NotNull byte[] content,
@@ -306,8 +323,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       file = new BinaryLightVirtualFile(fileName, type, content);
       file.setWritable(false);
     }
+    file.putUserData(DiffUtil.TEMP_FILE_KEY, Boolean.TRUE);
 
-    return new FileContentImpl(project, file, highlightFile);
+    return createContentFromFile(project, file, highlightFile);
   }
 
   @NotNull
@@ -382,6 +400,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     return documentContent;
   }
+
 
   @NotNull
   private static VirtualFile createTemporalFile(@Nullable Project project,

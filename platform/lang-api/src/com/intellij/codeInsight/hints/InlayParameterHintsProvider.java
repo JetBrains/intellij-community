@@ -30,7 +30,7 @@ import java.util.Set;
 public interface InlayParameterHintsProvider {
 
   /**
-   * Hints for params to be shown
+   * Hints for params to be shown, hints offsets should be located within elements text range
    */
   @NotNull
   List<InlayInfo> getParameterHints(PsiElement element);

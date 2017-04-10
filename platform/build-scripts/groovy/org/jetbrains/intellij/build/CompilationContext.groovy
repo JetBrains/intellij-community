@@ -35,4 +35,6 @@ interface CompilationContext {
   JpsModule findRequiredModule(String name)
 
   JpsModule findModule(String name)
+
+  void notifyArtifactBuilt(String artifactPath)
 }

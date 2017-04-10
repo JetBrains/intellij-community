@@ -122,7 +122,7 @@ from the Python 2 virtualenv to the Python 3 one:
 $ cp .venv2/bin/pytype .venv3/bin/pytype
 $ source .venv3/bin/activate
 (.venv3)$ ./runtests.sh
-running mypy --python-version 3.6 --strict-optional --fast-parser # with 479 files
+running mypy --python-version 3.6 --strict-optional # with 479 files
 running mypy --python-version 3.5 --strict-optional # with 469 files
 running mypy --python-version 3.4 --strict-optional # with 469 files
 running mypy --python-version 3.3 --strict-optional # with 454 files

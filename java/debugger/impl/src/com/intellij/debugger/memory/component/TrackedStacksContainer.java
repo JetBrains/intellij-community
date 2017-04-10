@@ -37,4 +37,6 @@ public interface TrackedStacksContainer {
   void unpinStacks(@NotNull ReferenceType referenceType);
 
   void release();
+
+  void clear();
 }

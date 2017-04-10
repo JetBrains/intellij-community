@@ -82,13 +82,9 @@ project(':Edu-Python') {
   }
 
   dependencies {
-    compile project(':educational-core:course-creator') {
+    compile project(':educational-core') {
       dependencies {
-        compile project(':educational-core:student') {
-          dependencies {
-            compile fileTree(dir: 'lib', include: ['*.jar'])
-          }
-        }
+        compile fileTree(dir: 'lib', include: ['*.jar'])
       }
     }
   }

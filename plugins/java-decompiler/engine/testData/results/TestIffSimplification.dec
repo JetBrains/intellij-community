@@ -1,0 +1,107 @@
+package pkg;
+
+public class TestIffSimplification {
+   public int simpleIff(boolean status, int[] values) {
+      return status ? values[0] : values[1];// 7
+   }
+
+   public int simpleIf(boolean status, int[] values) {
+      return status ? values[0] : values[1];// 11 12 15
+   }
+
+   public int nestedIf(boolean status, boolean condition, int[] values) {
+      if (status) {// 20
+         return condition ? values[2] : values[0];// 21 22 25
+      } else {
+         return values[1];// 29
+      }
+   }
+
+   public int compareTo(int mc1, int mc2, byte csg1, byte csg2, double score1, double score2, int doc1, int doc2) {
+      if (mc1 != mc2) {// 34
+         return mc1 < mc2 ? 1 : -1;// 35
+      } else if (csg1 != csg2) {// 38
+         return csg1 < csg2 ? 1 : -1;// 39
+      } else if (Math.abs(score1 - score2) < 1.0E-6D) {// 42
+         return doc1 < doc2 ? -1 : 1;// 43
+      } else {
+         return score1 < score2 ? 1 : -1;// 46
+      }
+   }
+}
+
+class 'pkg/TestIffSimplification' {
+   method 'simpleIff (Z[I)I' {
+      1      4
+      5      4
+      6      4
+      b      4
+      c      4
+      d      4
+   }
+
+   method 'simpleIf (Z[I)I' {
+      1      8
+      5      8
+      6      8
+      9      8
+      a      8
+   }
+
+   method 'nestedIf (ZZ[I)I' {
+      1      12
+      5      13
+      9      13
+      a      13
+      d      13
+      e      13
+      11      15
+      12      15
+      13      15
+   }
+
+   method 'compareTo (IIBBDDII)I' {
+      2      20
+      7      21
+      a      21
+      e      21
+      f      21
+      13      22
+      19      23
+      1c      23
+      20      23
+      21      23
+      26      24
+      27      24
+      2a      24
+      2d      24
+      2e      24
+      35      25
+      38      25
+      3c      25
+      3d      25
+      42      27
+      43      27
+      46      27
+      4a      27
+      4b      27
+   }
+}
+
+Lines mapping:
+7 <-> 5
+11 <-> 9
+12 <-> 9
+15 <-> 9
+20 <-> 13
+21 <-> 14
+22 <-> 14
+25 <-> 14
+29 <-> 16
+34 <-> 21
+35 <-> 22
+38 <-> 23
+39 <-> 24
+42 <-> 25
+43 <-> 26
+46 <-> 28

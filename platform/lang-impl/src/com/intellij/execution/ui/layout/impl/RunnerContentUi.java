@@ -668,7 +668,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         GridImpl grid = (GridImpl)findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
-          grid.processRemoveFromUi();
+          if (grid.isEmpty()) {
+            grid.processRemoveFromUi();
+          }
           removeGridIfNeeded(grid);
         }
         updateTabsUI(false);

@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
@@ -38,7 +37,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -49,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -162,11 +159,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
-      for (String taskName : mySettings.getTaskNames()) {
-        tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
-      }
-      if (tasks.isEmpty()) {
+      if (mySettings.getTaskNames().isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
       String jvmAgentSetup = null;
@@ -188,12 +181,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       ApplicationManager.getApplication().assertIsDispatchThread();
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(mySettings.getExternalSystemId(),
-                                                                                   myProject,
-                                                                                   tasks,
-                                                                                   mySettings.getVmOptions(),
-                                                                                   mySettings.getScriptParameters(),
-                                                                                   jvmAgentSetup);
+      final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmAgentSetup);
       copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);

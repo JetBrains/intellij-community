@@ -763,6 +763,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-22828
+  public void testNoProtectedBuiltinNames() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,45 +361,45 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
 
   private static class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
     @Override
-    protected Decision newExpressionsAreEquivalentDecision(@NotNull PsiNewExpression newExpression1,
-                                                           @NotNull PsiNewExpression newExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match newExpressionsMatch(@NotNull PsiNewExpression newExpression1,
+                                        @NotNull PsiNewExpression newExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision methodCallExpressionsAreEquivalentDecision(@NotNull PsiMethodCallExpression methodCallExpression1,
-                                                                  @NotNull PsiMethodCallExpression methodCallExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match methodCallExpressionsMatch(@NotNull PsiMethodCallExpression methodCallExpression1,
+                                               @NotNull PsiMethodCallExpression methodCallExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision assignmentExpressionsAreEquivalentDecision(@NotNull PsiAssignmentExpression assignmentExpression1,
-                                                                  @NotNull PsiAssignmentExpression assignmentExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1,
+                                               @NotNull PsiAssignmentExpression assignmentExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision arrayInitializerExpressionsAreEquivalentDecision(@NotNull PsiArrayInitializerExpression arrayInitializerExpression1,
-                                                                        @NotNull PsiArrayInitializerExpression arrayInitializerExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match arrayInitializerExpressionsMatch(@NotNull PsiArrayInitializerExpression arrayInitializerExpression1,
+                                                     @NotNull PsiArrayInitializerExpression arrayInitializerExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision prefixExpressionsAreEquivalentDecision(@NotNull PsiPrefixExpression prefixExpression1,
-                                                              @NotNull PsiPrefixExpression prefixExpression2) {
+    protected Match prefixExpressionsMatch(@NotNull PsiPrefixExpression prefixExpression1,
+                                           @NotNull PsiPrefixExpression prefixExpression2) {
       if (isSideEffectUnaryOperator(prefixExpression1.getOperationTokenType())) {
-        return EXACTLY_UN_MATCHES;
+        return EXACT_MISMATCH;
       }
-      return super.prefixExpressionsAreEquivalentDecision(prefixExpression1, prefixExpression2);
+      return super.prefixExpressionsMatch(prefixExpression1, prefixExpression2);
     }
 
     @Override
-    protected Decision postfixExpressionsAreEquivalentDecision(@NotNull PsiPostfixExpression postfixExpression1,
-                                                               @NotNull PsiPostfixExpression postfixExpression2) {
+    protected Match postfixExpressionsMatch(@NotNull PsiPostfixExpression postfixExpression1,
+                                            @NotNull PsiPostfixExpression postfixExpression2) {
       if (isSideEffectUnaryOperator(postfixExpression1.getOperationTokenType())) {
-        return EXACTLY_UN_MATCHES;
+        return EXACT_MISMATCH;
       }
-      return super.postfixExpressionsAreEquivalentDecision(postfixExpression1, postfixExpression2);
+      return super.postfixExpressionsMatch(postfixExpression1, postfixExpression2);
     }
 
     private static boolean isSideEffectUnaryOperator(IElementType tokenType) {

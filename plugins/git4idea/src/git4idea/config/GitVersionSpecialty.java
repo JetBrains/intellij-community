@@ -47,6 +47,10 @@ public enum GitVersionSpecialty {
     }
   },
 
+  /**
+   * @deprecated on Windows, quotes are now added automatically whenever necessary on the GeneralCommandLine level
+   */
+  @Deprecated
   NEEDS_QUOTES_IN_STASH_NAME {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -153,6 +157,16 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
+    }
+  },
+
+  /**
+   * Git pre-push hook is supported since version 1.8.2.
+   */
+  PRE_PUSH_HOOK {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
     }
   };
 

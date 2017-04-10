@@ -18,6 +18,7 @@ package com.intellij.internal.focus;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.JBColor;
@@ -34,6 +35,12 @@ import java.awt.event.FocusEvent;
 public class FocusDebuggerAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.focus.FocusDebuggerAction");
   private FocusDrawer myFocusDrawer;
+
+  public FocusDebuggerAction() {
+    if (Boolean.getBoolean("idea.ui.debug.mode")) {
+      ApplicationManager.getApplication().invokeLater(() -> actionPerformed(null));
+    }
+  }
 
   public void actionPerformed(final AnActionEvent e) {
     if (myFocusDrawer == null) {

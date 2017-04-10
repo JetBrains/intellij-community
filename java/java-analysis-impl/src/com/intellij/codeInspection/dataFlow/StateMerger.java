@@ -439,7 +439,7 @@ class StateMerger {
       myVar = var;
       myPositive = positive;
       myArg = arg;
-      myHash = Objects.hash(myType, myVar, myPositive, myArg);
+      myHash = ((type.ordinal() * 31 + var.hashCode()) * 31 + arg.hashCode()) * 31 + (positive ? 1 : 0);
     }
 
     @Override

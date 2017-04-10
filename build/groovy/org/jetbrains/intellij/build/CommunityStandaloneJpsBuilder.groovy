@@ -80,10 +80,6 @@ class CommunityStandaloneJpsBuilder {
 
         jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
         jar("aether-dependency-resolver.jar") { module("aether-dependency-resolver") }
-        ant.fileset(dir: "$home/plugins/maven/lib") {
-          include(name: "aether-*.jar")
-          include(name: "maven-aether-provider-*.jar")
-        }
         jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
         ant.fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") { include(name: "plexus-utils-*.jar") }
 
@@ -108,6 +104,13 @@ class CommunityStandaloneJpsBuilder {
           include(name: "ecj*.jar")
           include(name: "netty-all-*.jar")
           include(name: "snappy-in-java-*.jar")
+          include(name: "aether-*.jar")
+          include(name: "maven-aether-provider-*.jar")
+          include(name: "commons-codec-*.jar")
+          include(name: "commons-logging-*.jar")
+          include(name: "httpclient-*.jar")
+          include(name: "httpcore-*.jar")
+          include(name: "slf4j-api-*.jar")
         }
         ant.fileset(dir: "$home/jps/lib") {
           include(name: "optimizedFileManager.jar")

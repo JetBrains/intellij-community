@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
+import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
@@ -56,7 +57,9 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
 public class ExternalProjectsManager implements PersistentStateComponent<ExternalProjectsState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
 
-  private final AtomicBoolean isInitialized = new AtomicBoolean();
+  private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
+  private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
+  private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
   @NotNull
   private ExternalProjectsState myState = new ExternalProjectsState();
 
@@ -115,34 +118,51 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   }
 
   public void init() {
-    synchronized (isInitialized) {
-      if (isInitialized.getAndSet(true)) return;
+    if (isInitializationStarted.getAndSet(true)) return;
 
-      myWatcher = new ExternalSystemProjectsWatcher(myProject);
-      myWatcher.start();
+    myWatcher = new ExternalSystemProjectsWatcher(myProject);
+    myWatcher.start();
 
-      // load external projects data
-      ExternalProjectsDataStorage.getInstance(myProject).load();
-      myRunManagerListener.attach();
+    // load external projects data
+    ExternalProjectsDataStorage.getInstance(myProject).load();
+    myRunManagerListener.attach();
 
-      // init shortcuts manager
-      myShortcutsManager.init();
-      for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
-        final Collection<ExternalProjectInfo> externalProjects =
-          ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
-        for (ExternalProjectInfo externalProject : externalProjects) {
-          if (externalProject.getExternalProjectStructure() == null) continue;
-          Collection<DataNode<TaskData>> taskData =
-            ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
-          myShortcutsManager.scheduleKeymapUpdate(taskData);
-        }
-
-        if (!externalProjects.isEmpty()) {
-          myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
-        }
+    // init shortcuts manager
+    myShortcutsManager.init();
+    for (ExternalSystemManager<?, ?, ?, ?, ?> systemManager : ExternalSystemApiUtil.getAllManagers()) {
+      final Collection<ExternalProjectInfo> externalProjects =
+        ExternalProjectsDataStorage.getInstance(myProject).list(systemManager.getSystemId());
+      for (ExternalProjectInfo externalProject : externalProjects) {
+        if (externalProject.getExternalProjectStructure() == null) continue;
+        Collection<DataNode<TaskData>> taskData =
+          ExternalSystemApiUtil.findAllRecursively(externalProject.getExternalProjectStructure(), TASK);
+        myShortcutsManager.scheduleKeymapUpdate(taskData);
       }
-      // init task activation info
-      myTaskActivator.init();
+
+      if (!externalProjects.isEmpty()) {
+        myShortcutsManager.scheduleRunConfigurationKeymapUpdate(systemManager.getSystemId());
+      }
+    }
+    // init task activation info
+    myTaskActivator.init();
+
+    synchronized (isInitializationFinished) {
+      isInitializationFinished.set(true);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        myPostInitializationActivities.run();
+        myPostInitializationActivities.clear();
+      });
+    }
+  }
+
+  public void runWhenInitialized(Runnable runnable) {
+    synchronized(isInitializationFinished) {
+      if (isInitializationFinished.get()) {
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      }
+      else {
+        myPostInitializationActivities.add(runnable);
+      }
     }
   }
 

@@ -40,6 +40,7 @@ import java.beans.PropertyChangeListener;
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   private static final Border ourDefaultEditorBorder = JBUI.Borders.empty(1, 0);
 
+  static final int VALUE_OFFSET = JBUI.scale(5);
   private Icon DEFAULT_ICON;
 
   private PropertyChangeListener myEditorChangeListener;
@@ -146,7 +147,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Insets i = comboBox.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + 7, iconWidth), Math.max(d.height, iconHeight));
+    return new Dimension(Math.max(d.width + 7, iconWidth), iconHeight);
   }
 
   @Override
@@ -243,8 +244,8 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
-    rect.x += JBUI.scale(5);
-    rect.width -= JBUI.scale(5);
+    rect.x += VALUE_OFFSET;
+    rect.width -= VALUE_OFFSET;
     return rect;
   }
 
@@ -278,7 +279,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
         Dimension size = cb.getMinimumSize();
         Rectangle bounds = cb.getBounds();
-        bounds.width = bounds.width < size.width ? size.width : bounds.width;
         bounds.height = bounds.height < size.height ? size.height : bounds.height;
 
         size = cb.getPreferredSize();
@@ -353,6 +353,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
         }
       }
 
+      @SuppressWarnings("unchecked")
       private void wrapRenderer() {
         ListCellRenderer<Object> renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
@@ -367,6 +368,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Rectangle bounds = rectangleForCurrentValue();
 
     if ( !comboBox.isEditable() ) {
+      listBox.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
       paintCurrentValue(g, bounds, comboBox.isPopupVisible());
     }
   }

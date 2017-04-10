@@ -15,8 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInspection.longLine.LongLineInspection;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 

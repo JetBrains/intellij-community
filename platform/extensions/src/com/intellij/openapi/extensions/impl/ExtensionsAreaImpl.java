@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,13 +277,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                       @NotNull PluginDescriptor descriptor,
                                       @NotNull ExtensionPoint.Kind kind) {
     if (hasExtensionPoint(extensionPointName)) {
+      if (extensionPointName.equals("org.jetbrains.uast.uastLanguagePlugin")) return;
+      final String message =
+        "Duplicate registration for EP: " + extensionPointName + ": original plugin " + getExtensionPoint(extensionPointName).getDescriptor().getPluginId() +
+        ", new plugin " + descriptor.getPluginId();
       if (DEBUG_REGISTRATION) {
-        final ExtensionPointImpl oldEP = getExtensionPoint(extensionPointName);
-        myLogger.error("Duplicate registration for EP: " + extensionPointName + ": original plugin " + oldEP.getDescriptor().getPluginId() +
-                       ", new plugin " + descriptor.getPluginId(),
-                       myEPTraces.get(extensionPointName));
+        myLogger.error(message, myEPTraces.get(extensionPointName));
       }
-      throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
+      throw new PicoPluginExtensionInitializationException(message, null, descriptor.getPluginId());
     }
 
     registerExtensionPoint(new ExtensionPointImpl(extensionPointName, extensionPointBeanClass, kind, this, myAreaInstance, descriptor));

@@ -55,8 +55,13 @@ import java.util.List;
  */
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
-  
+
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
+
+  public static final MessageDescriptor ALL_ELEMENTS_IN_RANGE_ARE_NULL =
+    new MessageDescriptor(DebuggerBundle.message("message.node.all.elements.null"));
+  public static final MessageDescriptor HIDDEN_NULL_ELEMENTS =
+    new MessageDescriptor(DebuggerBundle.message("message.node.elements.null.hidden"));
 
   public int START_INDEX = 0;
   public int END_INDEX   = 100;
@@ -113,10 +118,12 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
 
       int added = 0;
+      boolean hiddenNulls = false;
       if (array.length() - 1 >= START_INDEX) {
         int end = array.length() - 1 < END_INDEX ? array.length() - 1 : END_INDEX;
         for (int idx = START_INDEX; idx <= end; idx++) {
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && elementIsNull(array, idx)) {
+            hiddenNulls = true;
             continue;
           }
 
@@ -128,19 +135,27 @@ public class ArrayRenderer extends NodeRendererImpl{
 
           children.add(arrayItemNode);
           added++;
+          if (added > ENTRIES_LIMIT) {
+            break;
+          }
         }
       }
 
       if (added == 0) {
         if (START_INDEX == 0 && array.length() - 1 <= END_INDEX) {
-          children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_RANGE_ARE_NULL));
+          children.add(nodeManager.createMessageNode(ALL_ELEMENTS_IN_RANGE_ARE_NULL));
         }
         else {
           children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX)));
         }
       }
-      else if (!myForced && END_INDEX < array.length() - 1) {
-        builder.setRemaining(array.length() - 1 - END_INDEX);
+      else {
+        if (hiddenNulls) {
+          children.add(0, nodeManager.createMessageNode(HIDDEN_NULL_ELEMENTS));
+        }
+        if (!myForced && END_INDEX < array.length() - 1) {
+          builder.setRemaining(array.length() - 1 - END_INDEX);
+        }
       }
     }
     builder.setChildren(children);

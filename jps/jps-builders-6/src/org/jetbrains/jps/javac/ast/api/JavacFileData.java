@@ -18,6 +18,8 @@ package org.jetbrains.jps.javac.ast.api;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.ThrowableConsumer;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -31,13 +33,13 @@ public class JavacFileData {
   private static final byte FUN_EXPR_MARKER = 3;
 
   private final String myFilePath;
-  private final Collection<JavacRef> myRefs;
-  private final Collection<JavacRef> myImportRefs;
+  private final TObjectIntHashMap<JavacRef> myRefs;
+  private final TObjectIntHashMap<JavacRef> myImportRefs;
   private final List<JavacDef> myDefs;
 
   public JavacFileData(@NotNull String path,
-                       @NotNull Collection<JavacRef> refs,
-                       @NotNull Collection<JavacRef> importRefs,
+                       @NotNull TObjectIntHashMap<JavacRef> refs,
+                       @NotNull TObjectIntHashMap<JavacRef> importRefs,
                        @NotNull List<JavacDef> defs) {
     myFilePath = path;
     myRefs = refs;
@@ -51,12 +53,12 @@ public class JavacFileData {
   }
 
   @NotNull
-  public Collection<JavacRef> getRefs() {
+  public TObjectIntHashMap<JavacRef> getRefs() {
     return myRefs;
   }
 
   @NotNull
-  public Collection<JavacRef> getImportRefs() {
+  public TObjectIntHashMap<JavacRef> getImportRefs() {
     return myImportRefs;
   }
 
@@ -95,22 +97,35 @@ public class JavacFileData {
     }
   }
 
-  private static void saveRefs(final DataOutput out, Collection<JavacRef> refs) throws IOException {
-    DataInputOutputUtilRt.writeSeq(out, refs, new ThrowableConsumer<JavacRef, IOException>() {
+  private static void saveRefs(final DataOutput out, TObjectIntHashMap<JavacRef> refs) throws IOException {
+    final IOException[] exception = new IOException[]{null};
+    DataInputOutputUtilRt.writeINT(out, refs.size());
+    if (!refs.forEachEntry(new TObjectIntProcedure<JavacRef>() {
       @Override
-      public void consume(JavacRef ref) throws IOException {
-        writeJavacRef(out, ref);
+      public boolean execute(JavacRef ref, int count) {
+        try {
+          writeJavacRef(out, ref);
+          DataInputOutputUtilRt.writeINT(out, count);
+        }
+        catch (IOException e) {
+          exception[0] = e;
+          return false;
+        }
+        return true;
       }
-    });
+    })) {
+      assert exception[0] != null;
+      throw exception[0];
+    }
   }
 
-  private static Collection<JavacRef> readRefs(final DataInput in) throws IOException {
-    return DataInputOutputUtilRt.readSeq(in, new ThrowableComputable<JavacRef, IOException>() {
-      @Override
-      public JavacRef compute() throws IOException {
-        return readJavacRef(in);
-      }
-    });
+  private static TObjectIntHashMap<JavacRef> readRefs(final DataInput in) throws IOException {
+    final int size = DataInputOutputUtilRt.readINT(in);
+    TObjectIntHashMap<JavacRef> deserialized = new TObjectIntHashMap<JavacRef>(size);
+    for (int i = 0; i < size; i++) {
+      deserialized.put(readJavacRef(in), DataInputOutputUtilRt.readINT(in));
+    }
+    return deserialized;
   }
 
   private static void saveDefs(final DataOutput out, List<JavacDef> defs) throws IOException {
@@ -143,6 +158,10 @@ public class JavacFileData {
         return new JavacDef.JavacClassDef(readJavacRef(in), superClasses);
       case FUN_EXPR_MARKER:
         return new JavacDef.JavacFunExprDef(readJavacRef(in));
+      case METHOD_MARKER:
+        JavacRef retType = readJavacRef(in);
+        boolean isStatic = in.readBoolean();
+        return new JavacDef.JavacMemberDef(readJavacRef(in), retType, isStatic);
       default:
         throw new IllegalStateException("unknown marker " + marker);
     }
@@ -159,6 +178,11 @@ public class JavacFileData {
     }
     else if (def instanceof JavacDef.JavacFunExprDef) {
       out.writeByte(FUN_EXPR_MARKER);
+    }
+    else if (def instanceof JavacDef.JavacMemberDef) {
+      out.writeByte(METHOD_MARKER);
+      writeJavacRef(out, ((JavacDef.JavacMemberDef)def).getReturnType());
+      out.writeBoolean(((JavacDef.JavacMemberDef)def).isStatic());
     }
     else {
       throw new IllegalStateException("unknown type: " + def.getClass());
