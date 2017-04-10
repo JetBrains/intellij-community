@@ -38,7 +38,7 @@ public class PyEnvTaskRunner {
 
     final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
 
-    final Set<String> tagsToCover = testTask.getTagsToCover();
+    final Set<String> tagsToCover = null;
 
     for (String root : myRoots) {
 
