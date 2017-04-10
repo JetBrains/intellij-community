@@ -4,6 +4,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.checker.StudyCheckListener;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,10 @@ public class EduNextRecommendationCheckListener implements StudyCheckListener {
 
   @Override
   public void afterCheck(@NotNull Project project, @NotNull Task task) {
+    Course course = task.getLesson().getCourse();
+    if (!(course instanceof RemoteCourse && course.isAdaptive())) {
+      return;
+    }
     if (myStatusBeforeCheck == StudyStatus.Solved) {
       return;
     }
