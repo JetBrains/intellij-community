@@ -123,6 +123,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     myTemplatesMap = new ConcurrentMultiMap<>();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
+    LOG.debug("groups=" + groups);
 
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
@@ -644,6 +645,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     }
 
     ModuleBuilder builder = getSelectedBuilder();
+    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedGroup() + "; groupIndex=" + myProjectTypeList.getMinSelectionIndex());
+
     myContext.setProjectBuilder(builder);
     if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());
