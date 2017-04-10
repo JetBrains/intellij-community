@@ -11,6 +11,9 @@ If you want to build a product from sources locally, run the corresponding *.gan
   system property to skip some long build steps (e.g. scrambling). See {@link org.jetbrains.intellij.build.BuildOptions BuildOptions} class for more options.
 </p>
 <p>
+  In order to run a gant script without IntelliJ IDEA you can use build/gant.xml Ant file and pass path to the gant script via gant.script property.
+</p>
+<p>
   If you want to add a new module to an existing product, add its name to {@link org.jetbrains.intellij.build.ProductModulesLayout#platformApiModules
   platformApiModules/platformImplementationModules}. If the module is part of IntelliJ Platform and needs to be included into all products
   add its name to {@link org.jetbrains.intellij.build.CommunityRepositoryModules#PLATFORM_API_MODULES PLATFORM_API_MODULES/PLATFORM_IMPLEMENTATION_MODULES} list.
