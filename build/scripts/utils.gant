@@ -152,7 +152,7 @@ private void setupKotlin() {
 private boolean ensureKotlinCompilerAddedToClassPath() {
   try {
     Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
-    return
+    return true
   }
   catch (ClassNotFoundException ignored) {
   }
