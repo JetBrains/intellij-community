@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -154,7 +155,8 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
 
     checkConfigurationException("NotATest isn't test class", configuration);
 
-    RunManagerEx.getInstanceEx(myProject).setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(null, configuration, false));
+    RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    runManager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(runManager, configuration, false));
     rename(psiClass, "NotATest2");
     JUnitConfiguration.Data data = configuration.getPersistentData();
     assertEquals("NotATest2", data.getMainClassName());
@@ -230,15 +232,20 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    mySource.tearDown();
-    mySource = null;
-    super.tearDown();
+    try {
+      mySource.tearDown();
+      mySource = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
   protected <T extends RunConfiguration> T createConfiguration(@NotNull PsiElement psiClass, @NotNull MapDataContext dataContext) {
     T configuration = super.createConfiguration(psiClass, dataContext);
-    RunManagerEx.getInstanceEx(myProject).setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(null, configuration, false));
+    RunManagerImpl manager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    manager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(manager, configuration, false));
     return configuration;
   }
 
@@ -247,7 +254,8 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
                                                         @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     final JUnitConfiguration configuration = super.createJUnitConfiguration(psiElement, producerClass, dataContext);
-    RunManagerEx.getInstanceEx(myProject).setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(null, configuration, false));
+    RunManagerImpl manager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    manager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(manager, configuration));
     return configuration;
   }
 }
