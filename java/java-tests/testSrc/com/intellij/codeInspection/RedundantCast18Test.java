@@ -41,4 +41,5 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testConditional() { doTest(); }
   public void testInferApplicabilityError() { doTest(); }
   public void testCastToRawType() { doTest(); }
+  public void testCastInMultidimensionalArrayIndex() { doTest(); }
 }
