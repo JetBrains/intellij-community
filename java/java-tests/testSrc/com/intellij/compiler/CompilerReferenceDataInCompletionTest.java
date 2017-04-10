@@ -76,6 +76,13 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestStaticMemberCompletionOrdering(new String[] {"Foo.java"}, "someMethod2(1)", "someMethod1(0)", "m(0)", "nonNull(1)");
   }
 
+  public void testExpectedByTypeAreFirst() {
+    doTestCompletion(new String[] {"Foo.java"}, "String s = ", new String[] {"someMethod2(1)", "someMethod1(0)", "someMethod3(0)", "m(0)", "mm(1)"}, m -> {
+      PsiClass aClass = m.getContainingClass();
+      return aClass != null && "Foo".equals(aClass.getName());
+    });
+  }
+
   private void doTestConstructorCompletionOrdering(@NotNull String[] files,
                                                    @NotNull String phraseToComplete,
                                                    String... expectedOrder) {

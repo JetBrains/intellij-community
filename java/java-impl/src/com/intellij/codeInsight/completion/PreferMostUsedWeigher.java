@@ -60,7 +60,7 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
       if (OBJECT_METHOD_PATTERN.accepts(psi)) {
         return null;
       }
-      if (looksLikeHelperMethod(psi)) {
+      if (looksLikeHelperMethodOrConst(psi)) {
         return null;
       }
       final Integer occurrenceCount = myCompilerReferenceService.getCompileTimeOccurrenceCount(psi, myConstructorSuggestion);
@@ -69,7 +69,7 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
   }
 
   //Objects.requireNonNull is an example
-  private static boolean looksLikeHelperMethod(@NotNull PsiElement element) {
+  private static boolean looksLikeHelperMethodOrConst(@NotNull PsiElement element) {
     if (!(element instanceof PsiMethod)) return false;
     PsiMethod method = (PsiMethod)element;
     if (method.isConstructor()) return false;
@@ -78,11 +78,11 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       PsiType paramType = parameter.getType();
-      if (!isRawDeepTypeEqualToObject(paramType)) {
-        return false;
+      if (isRawDeepTypeEqualToObject(paramType)) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   private static boolean isRawDeepTypeEqualToObject(@Nullable PsiType type) {
