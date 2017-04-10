@@ -29,13 +29,6 @@ target('default': 'The default target') {
   new IdeaCommunityBuilder(home, binding, options).buildDistributions()
 }
 
-//todo[nik] do we really need this target? update.xml calls layout.gant directly
-target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
-  def options = new BuildOptions()
-  options.useCompiledClassesFromProjectOutput = true
-  new IdeaCommunityBuilder(home, binding, options).buildDistJars()
-}
-
 target('build-intellij-core' : 'Build intellij-core.zip') {
   def options = new BuildOptions()
   new IdeaCommunityBuilder(home, binding, options).buildIntelliJCore()
