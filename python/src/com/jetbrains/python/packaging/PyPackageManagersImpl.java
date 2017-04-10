@@ -17,8 +17,6 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -47,15 +45,9 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       else {
         manager = new PyPackageManagerImpl(sdk);
       }
-      if (sdkIsSetUp(sdk))
-        myInstances.put(key, manager);
+      myInstances.put(key, manager);
     }
     return manager;
-  }
-
-  private static boolean sdkIsSetUp(@NotNull final Sdk sdk) {
-    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    return roots.length != 0;
   }
 
   public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
