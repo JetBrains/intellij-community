@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.pyi.PyiFile
-import com.jetbrains.python.pyi.PyiTypeProvider
+import com.jetbrains.python.pyi.PyiUtil
 import java.util.*
 
 class PyOverloadsInspection : PyInspection() {
@@ -64,9 +64,9 @@ class PyOverloadsInspection : PyInspection() {
     }
 
     private fun processSameNameFunctions(owner: ScopeOwner, functions: List<PyFunction>) {
-      if (functions.find { PyiTypeProvider.isOverload(it, myTypeEvalContext) } == null) return
+      if (functions.find { PyiUtil.isOverload(it, myTypeEvalContext) } == null) return
 
-      val implementation = functions.lastOrNull { !PyiTypeProvider.isOverload(it, myTypeEvalContext) }
+      val implementation = functions.lastOrNull { !PyiUtil.isOverload(it, myTypeEvalContext) }
 
       if (implementation == null) {
         functions
@@ -101,7 +101,7 @@ class PyOverloadsInspection : PyInspection() {
 
     private fun isIncompatibleOverload(implementation: PyFunction, overload: PyFunction): Boolean {
       return implementation != overload &&
-             PyiTypeProvider.isOverload(overload, myTypeEvalContext) &&
+             PyiUtil.isOverload(overload, myTypeEvalContext) &&
              !PyUtil.isSignatureCompatibleTo(implementation, overload, myTypeEvalContext)
     }
   }

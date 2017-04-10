@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiTypeProvider;
+import com.jetbrains.python.pyi.PyiUtil;
 
 /**
  * @author yole
@@ -377,7 +377,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiTypeProvider
+        PyiUtil
           .getOverloads(foo, context)
           .forEach(
             overload -> {
@@ -396,7 +396,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
       }
     );
   }
@@ -409,14 +409,14 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
 
         final PyClass pyClass = foo.getContainingClass();
         assertNotNull(pyClass);
 
         pyClass.visitMethods(
           function -> {
-            assertTrue(PyiTypeProvider.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
+            assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
             return true;
           },
           false,
@@ -435,7 +435,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiTypeProvider
+        PyiUtil
           .getOverloads(foo, context)
           .forEach(
             overload -> {
@@ -454,7 +454,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
       }
     );
   }
@@ -467,7 +467,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertTrue(PyiTypeProvider.isOverload(foo, context));
+        assertTrue(PyiUtil.isOverload(foo, context));
 
         ((PyFile)foo.getContainingFile())
           .getTopLevelFunctions()
@@ -488,7 +488,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiTypeProvider
+        PyiUtil
           .getOverloads(foo, context)
           .forEach(
             overload -> {
@@ -508,7 +508,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
       }
     );
   }
@@ -522,14 +522,14 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
 
         final PyClass pyClass = foo.getContainingClass();
         assertNotNull(pyClass);
 
         pyClass.visitMethods(
           function -> {
-            assertTrue(PyiTypeProvider.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
+            assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
             return true;
           },
           false,
@@ -549,7 +549,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiTypeProvider
+        PyiUtil
           .getOverloads(foo, context)
           .forEach(
             overload -> {
@@ -569,7 +569,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
       }
     );
   }
@@ -583,12 +583,12 @@ public class Py3ResolveTest extends PyResolveTestCase {
       () -> {
         final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiTypeProvider.isOverload(foo, context));
+        assertFalse(PyiUtil.isOverload(foo, context));
 
         ((PyFile)foo.getContainingFile())
           .getTopLevelFunctions()
           .forEach(
-            function -> assertTrue(PyiTypeProvider.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(function, foo))
+            function -> assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(function, foo))
           );
       }
     );

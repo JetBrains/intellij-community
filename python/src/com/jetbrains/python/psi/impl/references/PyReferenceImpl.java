@@ -45,7 +45,6 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiTypeProvider;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -275,9 +274,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             if (ContainerUtil.exists(latestDefs, result -> result.getElement() instanceof PyCallable)) {
               return StreamEx
                 .of(processor.getResults().keySet())
-                .select(PyCallable.class)
-                .filter(callable -> PyiTypeProvider.isOverload(callable, typeEvalContext))
-                .map(callable -> new RatedResolveResult(getRate(callable, typeEvalContext), callable))
+                .nonNull()
+                .filter(element -> PyiUtil.isOverload(element, typeEvalContext))
+                .map(element -> new RatedResolveResult(getRate(element, typeEvalContext), element))
                 .prepend(latestDefs)
                 .toList();
             }

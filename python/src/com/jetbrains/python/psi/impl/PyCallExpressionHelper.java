@@ -32,7 +32,7 @@ import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.pyi.PyiTypeProvider;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -859,7 +859,7 @@ public class PyCallExpressionHelper {
     boolean containsImplementations = false;
 
     for (PyCallExpression.PyRatedMarkedCallee callee : callees) {
-      final boolean overload = PyiTypeProvider.isOverload(callee.getElement(), context);
+      final boolean overload = PyiUtil.isOverload(callee.getElement(), context);
       containsOverloads |= overload;
       containsImplementations |= !overload;
 
@@ -876,7 +876,7 @@ public class PyCallExpressionHelper {
       return callees.stream();
     }
 
-    return callees.stream().filter(callee -> PyiTypeProvider.isOverload(callee.getElement(), context));
+    return callees.stream().filter(callee -> PyiUtil.isOverload(callee.getElement(), context));
   }
 
   public static class ArgumentMappingResults {

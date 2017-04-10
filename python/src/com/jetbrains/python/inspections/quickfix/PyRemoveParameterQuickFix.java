@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiTypeProvider;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
       if (parameterName != null) {
         StreamEx
-          .of(PyiTypeProvider.getOverloads(function, myContext))
+          .of(PyiUtil.getOverloads(function, myContext))
           .map(overload -> overload.getParameterList().getParameters())
           .map(parameters -> ContainerUtil.find(parameters, overloadParameter -> parameterName.equals(overloadParameter.getName())))
           .nonNull()
