@@ -97,7 +97,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       else {
         onTaskFailed(testsOutput.getMessage());
       }
-      runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
         StepicUser user = StudySettings.getInstance().getUser();
