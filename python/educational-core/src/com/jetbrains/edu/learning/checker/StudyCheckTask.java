@@ -84,6 +84,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       else {
         checkForEduCourse(indicator);
       }
+      runAfterTaskCheckedActions();
     }
   }
 
@@ -141,26 +142,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
     if (myTask instanceof ChoiceTask) {
       final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, (ChoiceTask)myTask, user);
-      processStepicCheckOutput(indicator, result);
+      processStepicCheckOutput(result);
     }
     else if (myTask instanceof TheoryTask) {
-      final int lessonId = myTask.getLesson().getId();
-      final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
-                                                                                           String.valueOf(user.getId()),
-                                                                                           EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
-
-      if (reactionPosted) {
-        if (myStatusBeforeCheck != StudyStatus.Solved) {
-          myTask.setStatus(StudyStatus.Solved);
-          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myTask.getLesson(), indicator,
-                                                            EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
-        }
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(() ->
-                                                          StudyUtils
-                                                            .showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
-      }
+     myTask.setStatus(StudyStatus.Solved);
     }
     else {
       final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
@@ -172,26 +157,21 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         }
         else {
           final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkCodeTask(myProject, myTask, user);
-          processStepicCheckOutput(indicator, pair);
+          processStepicCheckOutput(pair);
         }
       }
     }
   }
 
-  private void processStepicCheckOutput(@NotNull ProgressIndicator indicator, @Nullable Pair<Boolean, String> pair) {
+  private void processStepicCheckOutput(@Nullable Pair<Boolean, String> pair) {
     if (pair != null && pair.getFirst() != null) {
       if (pair.getFirst()) {
         onTaskSolved("Congratulations! Remote tests passed.");
-        if (myStatusBeforeCheck != StudyStatus.Solved) {
-          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myTask.getLesson(), indicator,
-                                                            EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
-        }
       }
       else {
         final String checkMessage = pair.getSecond();
         onTaskFailed(checkMessage);
       }
-      runAfterTaskCheckedActions();
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> {

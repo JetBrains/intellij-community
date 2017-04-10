@@ -141,9 +141,9 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
           final com.jetbrains.edu.learning.courseFormat.tasks.Task task = StudyUtils.getCurrentTask(myProject);
           if (task != null && task.getStatus() != StudyStatus.Solved) {
             final ProgressIndicatorBase progress = new ProgressIndicatorBase();
-            progress.setText("Loading Next Recommendation");
+            progress.setText(EduAdaptiveStepicConnector.LOADING_NEXT_RECOMMENDATION);
             ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
-                                                                      "Loading Next Recommendation") {
+                                                                      EduAdaptiveStepicConnector.LOADING_NEXT_RECOMMENDATION) {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);

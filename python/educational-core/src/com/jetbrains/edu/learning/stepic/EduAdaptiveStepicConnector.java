@@ -62,6 +62,7 @@ public class EduAdaptiveStepicConnector {
   public static final int NEXT_RECOMMENDATION_REACTION = 2;
   public static final int TOO_HARD_RECOMMENDATION_REACTION = 0;
   public static final int TOO_BORING_RECOMMENDATION_REACTION = -1;
+  public static final String LOADING_NEXT_RECOMMENDATION = "Loading Next Recommendation";
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
   private static final String CODE_TASK_TYPE = "code";
