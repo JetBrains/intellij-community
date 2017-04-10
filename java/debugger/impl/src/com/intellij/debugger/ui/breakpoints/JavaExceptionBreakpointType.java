@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,8 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -128,13 +127,8 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
     final String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
 
     if (qName != null && qName.length() > 0) {
-      return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<JavaExceptionBreakpointProperties>>() {
-       @Override
-       public XBreakpoint<JavaExceptionBreakpointProperties> compute() {
-         return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
-           JavaExceptionBreakpointType.this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName()));
-       }
-     });
+      return WriteAction.compute(() -> XDebuggerManager.getInstance(project).getBreakpointManager()
+        .addBreakpoint(this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName())));
     }
     return null;
   }
