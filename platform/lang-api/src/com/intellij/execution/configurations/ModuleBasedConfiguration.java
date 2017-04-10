@@ -72,9 +72,9 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   protected void writeModule(@NotNull Element element) {
-    if (myModule.getModule() != null) {
+    //if (myModule.getModule() != null) {
       myModule.writeExternal(element);
-    }
+    //}
   }
 
   public Collection<Module> getAllModules() {

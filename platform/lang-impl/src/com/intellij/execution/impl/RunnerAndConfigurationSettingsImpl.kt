@@ -204,6 +204,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
       }
       else {
+        if (!isNewSerializationAllowed) {
+          element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "false")
+        }
         element.setAttribute(NAME_ATTR, configuration.name)
       }
 

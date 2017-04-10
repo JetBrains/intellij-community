@@ -254,9 +254,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     writeModule(element);
 
     Map<String, String> envs = getEnvs();
-    if (!envs.isEmpty()) {
+    //if (!envs.isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, envs);
-    }
+    //}
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
