@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
@@ -61,6 +60,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
@@ -190,18 +191,13 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
               final CommitContext commitContext = new CommitContext();
               final TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
               final FilePath pathBeforeRename = patchContext.getPathBeforeRename(file);
-              final String relativePath = patch.getAfterName() == null ? patch.getBeforeName() : patch.getAfterName();
 
-              final Getter<CharSequence> baseContentGetter = () -> {
-                BaseRevisionTextPatchEP baseRevisionTextPatchEP =
-                  Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
-                return baseRevisionTextPatchEP.provideContent(relativePath, commitContext);
-              };
-
-              Getter<ApplyPatchForBaseRevisionTexts> getter =
-                () -> ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch, baseContentGetter);
-
-              return PatchDiffRequestFactory.createConflictDiffRequest(project, file, patch, "Shelved Version", getter, getName(), context, indicator);
+              CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class)
+                .provideContent(chooseNotNull(patch.getAfterName(), patch.getBeforeName()), commitContext);
+              ApplyPatchForBaseRevisionTexts texts =
+                ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch, baseContents);
+              return PatchDiffRequestFactory
+                .createConflictDiffRequest(project, file, patch, "Shelved Version", texts, getName());
             }
             catch (VcsException e) {
               throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
