@@ -13,13 +13,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.actions.StudyCheckAction;
+import com.jetbrains.edu.learning.checker.StudyCheckResult;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
@@ -475,8 +476,8 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  public static Pair<Boolean, String> checkChoiceTask(@NotNull Project project, @NotNull ChoiceTask task, @NotNull StepicUser user) {
-    if (task.getSelectedVariants().isEmpty()) return Pair.create(null, "No variants selected");
+  public static StudyCheckResult checkChoiceTask(@NotNull Project project, @NotNull ChoiceTask task, @NotNull StepicUser user) {
+    if (task.getSelectedVariants().isEmpty()) return new StudyCheckResult(StudyStatus.Failed, "No variants selected");
     final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(task.getStepId(), user.getId());
 
     if (attempt != null) {
@@ -484,12 +485,11 @@ public class EduAdaptiveStepicConnector {
 
       final boolean isActiveAttempt = task.getSelectedVariants().stream()
         .allMatch(index -> attempt.dataset.options.get(index).equals(task.getChoiceVariants().get(index)));
-      if (!isActiveAttempt) return Pair.create(false, "Your solution is out of date. Please try again");
+      if (!isActiveAttempt) return new StudyCheckResult(StudyStatus.Failed, "Your solution is out of date. Please try again");
       final StepicWrappers.SubmissionToPostWrapper wrapper = new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId),
                                                                                                         createChoiceTaskAnswerArray(task));
-      final Pair<Boolean, String> pair = doAdaptiveCheck(wrapper, attemptId, user.getId());
-      Boolean result = pair.getFirst();
-      if (result != null && !result) {
+      final StudyCheckResult result = doAdaptiveCheck(wrapper, attemptId, user.getId());
+      if (result.getStatus() == StudyStatus.Failed) {
         try {
           createNewAttempt(task.getStepId());
           final Task updatedTask = getTask(project, task.getName(), task.getStepId(), user.getId());
@@ -503,10 +503,10 @@ public class EduAdaptiveStepicConnector {
           LOG.warn(e.getMessage());
         }
       }
-      return pair;
+      return result;
     }
 
-    return new Pair<>(null, "Failed to launch checking");
+    return new StudyCheckResult(StudyStatus.Unchecked, StudyCheckAction.FAILED_CHECK_LAUNCH);
   }
 
   private static boolean[] createChoiceTaskAnswerArray(@NotNull ChoiceTask task) {
@@ -518,7 +518,7 @@ public class EduAdaptiveStepicConnector {
     return answer;
   }
 
-  public static Pair<Boolean, String> checkCodeTask(@NotNull Project project, @NotNull Task task, @NotNull StepicUser user) {
+  public static StudyCheckResult checkCodeTask(@NotNull Project project, @NotNull Task task, @NotNull StepicUser user) {
     int attemptId = -1;
     try {
       attemptId = getAttemptId(task);
@@ -539,10 +539,10 @@ public class EduAdaptiveStepicConnector {
     else {
       LOG.warn("Got an incorrect attempt id: " + attemptId);
     }
-    return Pair.create(null, "Failed to launch checking");
+    return new StudyCheckResult(StudyStatus.Unchecked, StudyCheckAction.FAILED_CHECK_LAUNCH);
   }
 
-  private static Pair<Boolean, String> doAdaptiveCheck(@NotNull StepicWrappers.SubmissionToPostWrapper submission,
+  private static StudyCheckResult doAdaptiveCheck(@NotNull StepicWrappers.SubmissionToPostWrapper submission,
                                                        int attemptId, int userId) {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
     if (client != null) {
@@ -553,7 +553,7 @@ public class EduAdaptiveStepicConnector {
           final String status = wrapper.submissions[0].status;
           final String hint = wrapper.submissions[0].hint;
           final boolean isSolved = !status.equals("wrong");
-          return Pair.create(isSolved, hint.isEmpty() ? StringUtil.capitalize(status) + " solution" : hint);
+          return new StudyCheckResult(isSolved ? StudyStatus.Solved : StudyStatus.Failed, hint.isEmpty() ? StringUtil.capitalize(status) + " solution" : hint);
         }
         else {
           LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
@@ -561,11 +561,10 @@ public class EduAdaptiveStepicConnector {
       }
       else {
         LOG.warn("Can't do adaptive check: " + "wrapper is null");
-        return Pair.create(null, "Can't get check results for Stepik");
+        return new StudyCheckResult(StudyStatus.Unchecked, "Can't get check results for Stepik");
       }
     }
-
-    return Pair.create(null, "Failed to launch checking");
+    return new StudyCheckResult(StudyStatus.Unchecked, StudyCheckAction.FAILED_CHECK_LAUNCH);
   }
 
   @Nullable

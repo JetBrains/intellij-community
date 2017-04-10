@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.stepic;
 
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -32,9 +33,11 @@ public class EduNextRecommendationCheckListener implements StudyCheckListener {
     if (statusAfterCheck != StudyStatus.Solved) {
       return;
     }
-    ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(project, EduAdaptiveStepicConnector.LOADING_NEXT_RECOMMENDATION) {
+    ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(project, EduAdaptiveStepicConnector.LOADING_NEXT_RECOMMENDATION, false,
+                                                                                            PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         EduAdaptiveStepicConnector.addNextRecommendedTask(project, task.getLesson(), indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
       }
     });
