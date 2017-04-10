@@ -1,0 +1,24 @@
+UFile (package = ) [public class For {...]
+    UClass (name = For) [public class For {...}]
+        UMethod (name = foo) [public static fun foo() : int {...}]
+            UBlockExpression [{...}] = Nothing
+                UDeclarationsExpression [var result: int = 0] = Undetermined
+                    ULocalVariable (name = result) [var result: int = 0]
+                        ULiteralExpression (value = 0) [0] = 0
+                UForExpression [for (var i: int = 0; i < 10; i++) {...}] = Undetermined
+                    UDeclarationsExpression [var i: int = 0] = Undetermined
+                        ULocalVariable (name = i) [var i: int = 0]
+                            ULiteralExpression (value = 0) [0] = 0
+                    UBinaryExpression (operator = <) [i < 10] = Undetermined
+                        USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                        ULiteralExpression (value = 10) [10] = 10
+                    UPostfixExpression (operator = ++) [i++] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                        USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                    UBlockExpression [{...}] = Undetermined
+                        UBinaryExpression (operator = =) [result = result + i] = Undetermined
+                            USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0 (depending on: (var i = 0))), (var result = 0))
+                            UBinaryExpression (operator = +) [result + i] = Undetermined
+                                USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0 (depending on: (var i = 0))), (var result = 0))
+                                USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                UReturnExpression [return result] = Nothing
+                    USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0 (depending on: (var i = 0))), (var result = 0))
