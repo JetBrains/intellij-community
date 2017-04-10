@@ -99,8 +99,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
 
   @Override
   public boolean isValid() {
-    PsiLanguageInjectionHost host = getHost();
-    return getHostRangeMarker() != null && host != null && host.isValid();
+    return getHostRangeMarker() != null && getHost() != null;
   }
 
   @Override
