@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.IdeaCommunityBuilder
+import org.jetbrains.jps.idea.IdeaProjectLoader
 
-import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
-
-includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+String home = IdeaProjectLoader.guessHome(this)
 
 target(compile: "Compile project") {
   new IdeaCommunityBuilder(home, binding).compileModules()
