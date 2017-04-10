@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@SuppressWarnings("Duplicates")
 public class TemplateFormatUtil {
 
   private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();

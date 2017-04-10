@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("Duplicates")
 public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock {
   private AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private Indent myIndent;
