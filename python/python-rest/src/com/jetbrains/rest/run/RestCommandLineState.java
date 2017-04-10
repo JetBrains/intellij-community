@@ -23,6 +23,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,8 +32,6 @@ import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * User : catherine
@@ -79,7 +79,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     if (afterTask != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
                                             public void processTerminated(ProcessEvent event) {
-                                              SwingUtilities.invokeLater(afterTask);
+                                              TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), afterTask);
                                             }});
     }
     return processHandler;
