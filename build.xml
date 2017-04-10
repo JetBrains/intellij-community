@@ -3,7 +3,6 @@
     -Dout=/path/to/out/dir, defaults to ${basedir}/out
     -Dbuild=123, defaults to SNAPSHOT
     -Dtestpatterns=com.foo.*, defaults to empty string
-    -Dproduct=foo, defaults to idea
  -->
 <project name="IntelliJ IDEA Community Edition" default="all">
   <property name="project.home" value="${basedir}"/>
@@ -18,14 +17,6 @@
 
   <condition property="test.patterns" value="${testpatterns}" else="">
     <isset property="testpatterns" />
-  </condition>
-
-  <condition property="product.name" value="${product}" else="idea">
-    <isset property="product" />
-  </condition>
-
-  <condition property="productPropertiesPath" value="${productPropertiesPath}" else="">
-    <isset property="productPropertiesPath" />
   </condition>
 
   <property name="tmp.dir" value="${out.dir}/tmp"/>
@@ -55,8 +46,6 @@
         <sysproperty key="out" value="${out.dir}" />
         <sysproperty key="buildNumber" value="${build.number}" />
         <sysproperty key="idea.test.patterns" value="${test.patterns}" />
-        <sysproperty key="product" value="${product.name}" />
-        <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>
         <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>
