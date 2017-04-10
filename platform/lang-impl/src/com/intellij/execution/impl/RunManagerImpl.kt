@@ -515,7 +515,31 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   internal fun writeBeforeRunTasks(settings: RunnerAndConfigurationSettings, configurationElement: Element) {
     val configuration = settings.configuration
-    val tasks = if (settings.isTemplate) configuration.beforeRunTasks else getEffectiveBeforeRunTasks(configuration, ownIsOnlyEnabled = false, isDisableTemplateTasks = true)
+    var tasks = if (settings.isTemplate) configuration.beforeRunTasks else getEffectiveBeforeRunTasks(configuration, ownIsOnlyEnabled = false, isDisableTemplateTasks = false)
+
+    if (!tasks.isEmpty() && !settings.isTemplate) {
+      val templateTasks = getTemplateBeforeRunTasks(getConfigurationTemplate(configuration.factory).configuration)
+      if (!templateTasks.isEmpty()) {
+        var index = 0
+        for (templateTask in templateTasks) {
+          if (!templateTask.isEnabled) {
+            continue
+          }
+
+          if (templateTask == tasks.get(index)) {
+            index++
+          }
+          else {
+            break
+          }
+        }
+
+        if (index > 0) {
+          tasks = tasks.subList(index, tasks.size)
+        }
+      }
+    }
+
     if (tasks.isEmpty() && settings.isNewSerializationAllowed) {
       return
     }
@@ -673,8 +697,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   private fun doLoadConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl) {
-    val tasks = element.getChild(METHOD)?.let { readStepsBeforeRun(it, settings) } ?: emptyList()
-    settings.configuration.beforeRunTasks = tasks
+    settings.configuration.beforeRunTasks = element.getChild(METHOD)?.let { readStepsBeforeRun(it, settings) } ?: emptyList()
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
@@ -878,8 +901,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
     val ownTasks: List<BeforeRunTask<*>> = newOwnTasks ?: configuration.beforeRunTasks
 
-    val template = getConfigurationTemplate(configuration.factory)
-    val templateConfiguration = template.configuration
+    val templateConfiguration = getConfigurationTemplate(configuration.factory).configuration
     if (templateConfiguration is UnknownRunConfiguration) {
       return emptyList()
     }
@@ -981,7 +1003,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           for (otherSettings in idToSettings.values) {
             val otherConfiguration = otherSettings.configuration
             if (otherConfiguration !is WrappingRunConfiguration<*> && otherConfiguration.factory === templateConfiguration.factory) {
-              otherConfiguration.beforeRunTasks = getEffectiveBeforeRunTasks(otherConfiguration, isDisableTemplateTasks = true, newTemplateTasks = tasks)
+              otherConfiguration.beforeRunTasks = getEffectiveBeforeRunTasks(otherConfiguration, ownIsOnlyEnabled = false, isDisableTemplateTasks = true, newTemplateTasks = tasks)
             }
           }
         }
