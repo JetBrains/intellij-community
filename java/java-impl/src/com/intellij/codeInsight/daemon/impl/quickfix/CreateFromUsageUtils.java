@@ -30,6 +30,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -388,8 +388,7 @@ public class CreateFromUsageUtils {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiElementFactory factory = facade.getElementFactory();
 
-    return ApplicationManager.getApplication().runWriteAction(
-      (Computable<PsiClass>)() -> {
+    return WriteAction.compute(() -> {
         try {
           PsiClass targetClass;
           if (directory != null) {
@@ -585,8 +584,8 @@ public class CreateFromUsageUtils {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
           if (expressionList != null) {
             int argCount = expressionList.getExpressions().length;
-            Comparator<ExpectedTypeInfo> mostSuitableMethodComparator = Comparator
-              .comparingInt((ExpectedTypeInfo eti) -> eti.getCalledMethod().getParameterList().getParametersCount() == argCount ? 0 : 1);
+            Comparator<ExpectedTypeInfo> mostSuitableMethodComparator =
+              Comparator.comparingInt(typeInfo -> typeInfo.getCalledMethod().getParameterList().getParametersCount() == argCount ? 0 : 1);
             comparator = mostSuitableMethodComparator.thenComparing(comparator);
           }
           Arrays.sort(someExpectedTypes, comparator);
@@ -885,8 +884,7 @@ public class CreateFromUsageUtils {
     final Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
     if (moduleForFile == null) return;
 
-    final GlobalSearchScope searchScope =
-      ApplicationManager.getApplication().runReadAction((Computable<GlobalSearchScope>)file::getResolveScope);
+    final GlobalSearchScope searchScope = ReadAction.compute(file::getResolveScope);
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
@@ -895,10 +893,8 @@ public class CreateFromUsageUtils {
       return;
     }
 
-    final PsiMember[] members = ApplicationManager.getApplication().runReadAction(
-      (Computable<PsiMember[]>)() -> method
-                                     ? cache.getMethodsByName(memberName, searchScope)
-                                     : cache.getFieldsByName(memberName, searchScope));
+    final PsiMember[] members = ReadAction.compute(
+      () -> method ? cache.getMethodsByName(memberName, searchScope) : cache.getFieldsByName(memberName, searchScope));
 
     for (int i = 0; i < members.length; ++i) {
       final PsiMember member = members[i];
@@ -924,7 +920,7 @@ public class CreateFromUsageUtils {
   private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.run(() -> {
       final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
       if (objectClass != null) {
         if (method && objectClass.findMethodsByName(memberName, false).length > 0) {
@@ -945,10 +941,9 @@ public class CreateFromUsageUtils {
         return true;
       }
 
-      final String[] strings = ApplicationManager.getApplication().runReadAction((Computable<String[]>)cache::getAllClassNames);
+      final String[] strings = ReadAction.compute(cache::getAllClassNames);
       for (final String className : strings) {
-        final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(
-          (Computable<PsiClass[]>)() -> cache.getClassesByName(className, searchScope));
+        final PsiClass[] classes = ReadAction.compute(() -> cache.getClassesByName(className, searchScope));
         for (final PsiClass aClass : classes) {
           final String qname = getQualifiedName(aClass);
           ContainerUtil.addIfNotNull(possibleClassNames, qname);
@@ -961,7 +956,7 @@ public class CreateFromUsageUtils {
 
   @Nullable
   private static String getQualifiedName(final PsiClass aClass) {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)aClass::getQualifiedName);
+    return ReadAction.compute(aClass::getQualifiedName);
   }
 
   private static boolean hasCorrectModifiers(@Nullable final PsiMember member, final boolean staticAccess) {
@@ -969,8 +964,7 @@ public class CreateFromUsageUtils {
       return false;
     }
 
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> !member.hasModifierProperty(PsiModifier.PRIVATE) &&
+    return ReadAction.compute(() -> !member.hasModifierProperty(PsiModifier.PRIVATE) &&
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
