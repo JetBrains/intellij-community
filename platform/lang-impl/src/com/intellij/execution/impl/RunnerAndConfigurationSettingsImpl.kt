@@ -198,6 +198,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     configurationPerRunnerSettings.loadState(element)
   }
 
+  // do not call directly
   fun writeExternal(element: Element) {
     val configuration = configuration
     val factory = configuration.factory

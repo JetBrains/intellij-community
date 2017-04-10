@@ -261,8 +261,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     oldRc.setWorkingDirectory(module.getModuleFilePath());
 
     RunManagerImpl runManager = new RunManagerImpl(myProject);
-    Element element = new Element("configuration");
-    new RunnerAndConfigurationSettingsImpl(runManager, oldRc, false).writeExternal(element);
+    Element element = new RunnerAndConfigurationSettingsImpl(runManager, oldRc, false).writeScheme();
 
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(runManager);
     settings.readExternal(element, false);
