@@ -513,8 +513,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     settings.forEach { parentNode.addContent((it as RunnerAndConfigurationSettingsImpl).writeScheme()) }
   }
 
-  internal fun writeBeforeRunTasks(settings: RunnerAndConfigurationSettings, configurationElement: Element) {
-    val configuration = settings.configuration
+  internal fun writeBeforeRunTasks(settings: RunnerAndConfigurationSettings, configuration: RunConfiguration): Element? {
     var tasks = if (settings.isTemplate) configuration.beforeRunTasks else getEffectiveBeforeRunTasks(configuration, ownIsOnlyEnabled = false, isDisableTemplateTasks = false)
 
     if (!tasks.isEmpty() && !settings.isTemplate) {
@@ -541,18 +540,17 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
 
     if (tasks.isEmpty() && settings.isNewSerializationAllowed) {
-      return
+      return null
     }
 
-    val methodsElement = Element(METHOD)
+    val methodElement = Element(METHOD)
     for (task in tasks) {
       val child = Element(OPTION)
       child.setAttribute(NAME_ATTR, task.providerId.toString())
       task.writeExternal(child)
-      methodsElement.addContent(child)
+      methodElement.addContent(child)
     }
-
-    configurationElement.addContent(methodsElement)
+    return methodElement
   }
 
   override fun loadState(parentNode: Element) {

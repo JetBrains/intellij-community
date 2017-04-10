@@ -254,10 +254,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     val element = Element("configuration")
     writeExternal(element)
 
-    _configuration?.let {
-      manager.writeBeforeRunTasks(this, element)
+    val configuration = _configuration
+    if (configuration != null && configuration !is UnknownRunConfiguration) {
+      manager.writeBeforeRunTasks(this, configuration)?.let {
+        element.addContent(it)
+      }
     }
-
     return element
   }
 
