@@ -22,7 +22,7 @@ interface ConfigurationInfoProvider {
 
   val configuration: RunConfiguration
 
-  val runnerSettings: RunnerSettings
+  val runnerSettings: RunnerSettings?
 
-  val configurationSettings: ConfigurationPerRunnerSettings
+  val configurationSettings: ConfigurationPerRunnerSettings?
 }

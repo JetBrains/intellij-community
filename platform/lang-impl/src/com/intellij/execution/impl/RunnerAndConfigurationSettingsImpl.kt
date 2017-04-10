@@ -21,6 +21,7 @@ import com.intellij.configurationStore.serializeInto
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.logger
@@ -53,7 +54,7 @@ internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
 val SINGLETON = "singleton"
 
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
-                                                                   private var configuration: RunConfiguration? = null,
+                                                                   private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    private var singleton: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
   enum class Level {
@@ -65,7 +66,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   private val configurationPerRunnerSettings = object : RunnerItem<ConfigurationPerRunnerSettings>("ConfigurationWrapper") {
-    override fun createSettings(runner: ProgramRunner<*>) = configuration!!.createRunnerSettings(InfoProvider(runner))
+    override fun createSettings(runner: ProgramRunner<*>) = configuration.createRunnerSettings(InfoProvider(runner))
   }
 
   var level = Level.WORKSPACE
@@ -74,7 +75,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
-  override fun getFactory(): ConfigurationFactory = configuration?.factory ?: UnknownConfigurationType.FACTORY
+  override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.FACTORY
 
   override fun isTemplate() = isTemplate
 
@@ -86,19 +87,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     level = if (value) Level.TEMPORARY else Level.WORKSPACE
   }
 
-  override fun getConfiguration() = configuration ?: UnknownConfigurationType.FACTORY.createTemplateConfiguration(manager.project)
+  override fun getConfiguration() = _configuration ?: UnknownConfigurationType.FACTORY.createTemplateConfiguration(manager.project)
 
   override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
-    val configuration = configuration!!
+    val configuration = configuration
     RunnerAndConfigurationSettingsImpl(manager, configuration.factory.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration), false)
   }
 
   override fun setName(name: String) {
-    configuration!!.name = name
+    configuration.name = name
   }
 
   override fun getName(): String {
-    val configuration = configuration!!
+    val configuration = configuration
     if (isTemplate) {
       return "<template> of ${configuration.factory.name}"
     }
@@ -106,7 +107,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   override fun getUniqueID(): String {
-    val configuration = configuration!!
+    val configuration = configuration
     @Suppress("DEPRECATION")
     return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
@@ -167,7 +168,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
 
     val configuration = if (isTemplate) {
-      manager.getConfigurationTemplate(factory).configuration!!
+      manager.getConfigurationTemplate(factory).configuration
     }
     else {
       // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
@@ -177,7 +178,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       configuration
     }
 
-    this.configuration = configuration
+    _configuration = configuration
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
     if (configuration is ModuleBasedConfiguration<*>) {
@@ -198,7 +199,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   fun writeExternal(element: Element) {
-    val configuration = getConfiguration()
+    val configuration = configuration
     val factory = configuration.factory
     if (configuration !is UnknownRunConfiguration) {
       if (isTemplate) {
@@ -252,7 +253,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     val element = Element("configuration")
     writeExternal(element)
 
-    configuration?.let {
+    _configuration?.let {
       manager.writeBeforeRunTasks(this, element)
     }
 
@@ -260,7 +261,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   override fun checkSettings(executor: Executor?) {
-    val configuration = configuration!!
+    val configuration = configuration
     configuration.checkConfiguration()
     if (configuration !is RunConfigurationBase) {
       return
@@ -289,10 +290,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType() = configuration?.type
+  override fun getType() = _configuration?.type
 
   public override fun clone(): RunnerAndConfigurationSettings {
-    val copy = RunnerAndConfigurationSettingsImpl(manager, configuration!!.clone(), false)
+    val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone(), false)
     copy.importRunnerAndConfigurationSettings(this)
     return copy
   }
@@ -340,12 +341,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
     override val configuration: RunConfiguration
-      get() = RunnerAndConfigurationSettingsImpl@this.configuration
+      get() = this@RunnerAndConfigurationSettingsImpl.configuration
 
-    override val runnerSettings: RunnerSettings
+    override val runnerSettings: RunnerSettings?
       get() = this@RunnerAndConfigurationSettingsImpl.getRunnerSettings(runner)
 
-    override val configurationSettings: ConfigurationPerRunnerSettings
+    override val configurationSettings: ConfigurationPerRunnerSettings?
       get() = this@RunnerAndConfigurationSettingsImpl.getConfigurationSettings(runner)
   }
 
@@ -355,7 +356,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       return if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
     }
     
-    if (isTemplate && configuration != null) {
+    if (isTemplate && _configuration != null) {
       val templateConfiguration = configuration.factory.createTemplateConfiguration(manager.project, manager)
 
       val templateState = Element("state")
@@ -405,7 +406,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       else {
         LOG.error("More than one runner found for ID: $runnerId")
         for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
-          runnersById.firstOrNull { it.canRun(executor.id, configuration!!)  }?.let {
+          runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
             return it
           }
         }
@@ -462,22 +463,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       loadedIds.add(runner.runnerId)
     }
 
-    fun getOrCreateSettings(runner: ProgramRunner<*>): T {
-      var result: T? = settings.get(runner)
-      if (result == null) {
-        try {
-          result = createSettings(runner)
-          settings.put(runner, result)
-        }
-        catch (ignored: AbstractMethodError) {
-          LOG.error("Update failed for: ${configuration!!.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
-        }
+    fun getOrCreateSettings(runner: ProgramRunner<*>): T? {
+      try {
+        return settings.getOrPut(runner) { createSettings(runner) }
       }
-      return result!!
+      catch (ignored: AbstractMethodError) {
+        LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+        return null
+      }
     }
   }
 }
 
 // always write method element for shared settings for now due to preserve backward compatibility
 val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
-  get() = !isShared
+  get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
