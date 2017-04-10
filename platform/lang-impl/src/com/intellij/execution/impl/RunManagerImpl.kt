@@ -401,7 +401,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
     if (myOrder.isEmpty()) {
       // IDEA-63663 Sort run configurations alphabetically if clean checkout
-      order.sort { o1, o2 ->
+      order.sortWith(Comparator { o1, o2 ->
         val temporary1 = o1.getSecond().isTemporary
         val temporary2 = o2.getSecond().isTemporary
         when {
@@ -409,14 +409,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           temporary1 -> 1
           else -> -1
         }
-      }
+      })
     }
     else {
-      order.sort { o1, o2 ->
+      order.sortWith(Comparator { o1, o2 ->
         val i1 = folderNames.indexOf(o1.getSecond().folderName)
         val i2 = folderNames.indexOf(o2.getSecond().folderName)
         if (i1 != i2) {
-          return@sort i1 -i2
+          return@Comparator i1 - i2
         }
 
         val temporary1 = o1.getSecond().isTemporary
@@ -435,7 +435,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           temporary1 -> 1
           else -> -1
         }
-      }
+      })
     }
 
     for (each in order) {

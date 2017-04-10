@@ -32,6 +32,7 @@ import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
+import java.util.*
 
 private val LOG = logger<RunnerAndConfigurationSettings>()
 
@@ -432,10 +433,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         }
       }
       unloadedSettings?.mapTo(runnerSettings) { it.clone() }
-      runnerSettings.sort { o1, o2 ->
-        val attributeValue1 = o1.getAttributeValue(RUNNER_ID)
-        if (attributeValue1 == null) 1 else StringUtil.compare(attributeValue1, o2.getAttributeValue(RUNNER_ID), false)
-      }
+      runnerSettings.sortWith<Element>(Comparator { o1, o2 ->
+        val attributeValue1 = o1.getAttributeValue(RUNNER_ID) ?: return@Comparator 1
+        StringUtil.compare(attributeValue1, o2.getAttributeValue(RUNNER_ID), false)
+      })
       for (runnerSetting in runnerSettings) {
         element.addContent(runnerSetting)
       }
