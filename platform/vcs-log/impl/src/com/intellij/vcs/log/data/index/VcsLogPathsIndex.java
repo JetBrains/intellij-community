@@ -32,7 +32,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashMap;
@@ -229,9 +229,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
       Collection<Couple<String>> moves;
       Collection<String> changedPaths;
-      if (inputData instanceof VcsChangesLazilyParsedDetails) {
-        changedPaths = ((VcsChangesLazilyParsedDetails)inputData).getModifiedPaths();
-        moves = ((VcsChangesLazilyParsedDetails)inputData).getRenamedPaths();
+      if (inputData instanceof VcsIndexableDetails) {
+        changedPaths = ((VcsIndexableDetails)inputData).getModifiedPaths(0);
+        moves = ((VcsIndexableDetails)inputData).getRenamedPaths(0);
       }
       else {
         moves = ContainerUtil.newHashSet();

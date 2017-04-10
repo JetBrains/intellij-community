@@ -61,29 +61,4 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       return Collections.emptyList();
     }
   }
-
-  @NotNull
-  public Collection<String> getModifiedPaths() {
-    Set<String> changedPaths = ContainerUtil.newHashSet();
-    for (Change change : getChanges()) {
-      if (!change.getType().equals(Change.Type.MOVED)) {
-        if (change.getAfterRevision() != null) changedPaths.add(change.getAfterRevision().getFile().getPath());
-        if (change.getBeforeRevision() != null) changedPaths.add(change.getBeforeRevision().getFile().getPath());
-      }
-    }
-    return changedPaths;
-  }
-
-  @NotNull
-  public Collection<Couple<String>> getRenamedPaths() {
-    Set<Couple<String>> renames = ContainerUtil.newHashSet();
-    for (Change change : getChanges()) {
-      if (change.getType().equals(Change.Type.MOVED)) {
-        if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
-          renames.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
-        }
-      }
-    }
-    return renames;
-  }
 }

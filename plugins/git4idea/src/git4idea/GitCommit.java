@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import git4idea.history.GitChangeType;
 import git4idea.history.GitChangesParser;
 import git4idea.history.GitLogStatusInfo;
@@ -41,7 +42,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  *
  * @author Kirill Likhodedov
  */
-public final class GitCommit extends VcsChangesLazilyParsedDetails {
+public final class GitCommit extends VcsChangesLazilyParsedDetails implements VcsIndexableDetails {
   private static final Logger LOG = Logger.getInstance(GitCommit.class);
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
@@ -53,34 +54,70 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
 
   @NotNull
   @Override
-  public Collection<String> getModifiedPaths() {
-    Data data = ((MyChangesComputable)myChangesGetter).getData();
+  public Collection<String> getModifiedPaths(int parent) {
+    Set<String> changes = ContainerUtil.newHashSet();
+
+    Data data = getChangesGetter().getData();
     if (data != null) {
-      Set<String> changes = ContainerUtil.newHashSet();
-      for (GitLogStatusInfo status : ((MyChangesComputable)myChangesGetter).getMergedChanges()) {
+      for (GitLogStatusInfo status : getChangesGetter().getData().changesOutput.get(parent)) {
         if (status.getSecondPath() == null) {
           changes.add(absolutePath(status.getFirstPath()));
         }
       }
-      return changes;
     }
-    return super.getModifiedPaths();
+    else {
+      for (Change change : getChanges(parent)) {
+        if (!change.getType().equals(Change.Type.MOVED)) {
+          if (change.getAfterRevision() != null) changes.add(change.getAfterRevision().getFile().getPath());
+          if (change.getBeforeRevision() != null) changes.add(change.getBeforeRevision().getFile().getPath());
+        }
+      }
+    }
+
+    return changes;
   }
 
   @NotNull
   @Override
-  public Collection<Couple<String>> getRenamedPaths() {
-    Data data = ((MyChangesComputable)myChangesGetter).getData();
+  public Collection<Couple<String>> getRenamedPaths(int parent) {
+    Set<Couple<String>> renames = ContainerUtil.newHashSet();
+
+    Data data = getChangesGetter().getData();
     if (data != null) {
-      Set<Couple<String>> changes = ContainerUtil.newHashSet();
-      for (GitLogStatusInfo status : ((MyChangesComputable)myChangesGetter).getMergedChanges()) {
+      for (GitLogStatusInfo status : getChangesGetter().getData().changesOutput.get(parent)) {
         if (status.getSecondPath() != null) {
-          changes.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
+          renames.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
         }
       }
-      return changes;
     }
-    return super.getRenamedPaths();
+    else {
+      for (Change change : getChanges(parent)) {
+        if (change.getType().equals(Change.Type.MOVED)) {
+          if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
+            renames.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
+          }
+        }
+      }
+    }
+
+    return renames;
+  }
+
+  @NotNull
+  @Override
+  public Collection<Change> getChanges(int parent) {
+    try {
+      return getChangesGetter().getChanges(parent);
+    }
+    catch (VcsException e) {
+      LOG.error("Error happened when parsing changes", e);
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  private MyChangesComputable getChangesGetter() {
+    return (MyChangesComputable)myChangesGetter;
   }
 
   @NotNull
@@ -95,7 +132,8 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
 
   private static class MyChangesComputable implements ThrowableComputable<Collection<Change>, VcsException> {
     private Data myData;
-    private Collection<Change> myChanges;
+    private Collection<Change> myMergedChanges;
+    private List<Collection<Change>> myChanges;
 
     public MyChangesComputable(Data data) {
       myData = data;
@@ -103,13 +141,35 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
 
     @Override
     public Collection<Change> compute() throws VcsException {
-      if (myChanges == null) {
-        assert myData != null;
-        myChanges = GitChangesParser.parse(myData.project, myData.root, getMergedChanges(), myData.hash.asString(),
-                                           new Date(myData.time), ContainerUtil.map(myData.parents, Hash::asString));
-        myData = null; // don't hold the not-yet-parsed string
+      if (myMergedChanges == null) {
+        computeChanges();
       }
-      return myChanges;
+      return myMergedChanges;
+    }
+
+    public Collection<Change> getChanges(int parent) throws VcsException {
+      if (myChanges == null) {
+        computeChanges();
+      }
+      return myChanges.get(parent);
+    }
+
+    private void computeChanges() throws VcsException {
+      assert myData != null;
+      myMergedChanges = GitChangesParser.parse(myData.project, myData.root, getMergedChanges(), myData.hash.asString(),
+                                               new Date(myData.time), ContainerUtil.map(myData.parents, Hash::asString));
+      if (myData.changesOutput.size() == 1) {
+        myChanges = Collections.singletonList(myMergedChanges);
+      }
+      else {
+        myChanges = ContainerUtil.newArrayListWithCapacity(myData.changesOutput.size());
+        for (int i = 0; i < myData.changesOutput.size(); i++) {
+          List<GitLogStatusInfo> statusInfos = myData.changesOutput.get(i);
+          myChanges.add(GitChangesParser.parse(myData.project, myData.root, statusInfos, myData.hash.asString(),
+                                               new Date(myData.time), Collections.singletonList(myData.parents.get(i).asString())));
+        }
+      }
+      myData = null; // don't hold the not-yet-parsed string
     }
 
     /*
