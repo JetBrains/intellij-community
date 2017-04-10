@@ -24,16 +24,19 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.intellij.vcsUtil.VcsRunnable;
-import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Date;
@@ -67,6 +70,7 @@ public class DefaultPatchBaseVersionProvider {
     myRevisionPattern = null;
   }
 
+  @CalledInAny
   public void getBaseVersionContent(final FilePath filePath,
                                     final Processor<CharSequence> processor,
                                     final List<String> warnings) throws VcsException {
@@ -82,32 +86,34 @@ public class DefaultPatchBaseVersionProvider {
       if (matcher.find()) {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
         final VcsRevisionNumber finalRevision = revision;
-        final Boolean[] loadedExactRevision = new Boolean[1];
-
-        if (historyProvider instanceof VcsBaseRevisionAdviser) {
-          final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
-            public void run() throws VcsException {
-              loadedExactRevision[0] = ((VcsBaseRevisionAdviser)historyProvider).getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
-            }
-          }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
-          // was cancelled
-          if (! success) return;
-        } else {
-          // use diff provider
-          final DiffProvider diffProvider = myVcs.getDiffProvider();
-          if (diffProvider != null && filePath.getVirtualFile() != null) {
-            final ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
-
-            final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
-              public void run() throws VcsException {
-                loadedExactRevision[0] = ! processor.process(fileContent.getContent());
+        final boolean loadedExactRevision;
+        try {
+          loadedExactRevision = finalRevision != null && ProgressManager.getInstance()
+            .run(new Task.WithResult<Boolean, VcsException>(myProject,
+                                                            VcsBundle.message("progress.text2.loading.revision", finalRevision.asString()),
+                                                            true) {
+              @Override
+              protected Boolean compute(@NotNull ProgressIndicator indicator) throws VcsException {
+                if (historyProvider instanceof VcsBaseRevisionAdviser) {
+                  return ((VcsBaseRevisionAdviser)historyProvider)
+                    .getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
+                }
+                else {
+                  // use diff provider
+                  final DiffProvider diffProvider = myVcs.getDiffProvider();
+                  if (diffProvider != null && filePath.getVirtualFile() != null) {
+                    final ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
+                    return fileContent != null && !processor.process(fileContent.getContent());
+                  }
+                  return false;
+                }
               }
-            }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
-            // was cancelled
-            if (! success) return;
-          }
+            });
         }
-        if (Boolean.TRUE.equals(loadedExactRevision[0])) return;
+        catch (ProcessCanceledException pce) {
+          return;
+        }
+        if (loadedExactRevision) return;
       }
     }
 
@@ -127,39 +133,46 @@ public class DefaultPatchBaseVersionProvider {
         return;
       }
     }
-    try {
-      final Ref<VcsHistorySession> ref = new Ref<>();
-      boolean result = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
-        public void run() throws VcsException {
-          ref.set(historyProvider.createSessionFor(filePath));
-        }
-      }, VcsBundle.message("loading.file.history.progress"), true, myProject);
-      //if not found or cancelled
-      if (ref.isNull() || !result) return;
-      final VcsHistorySession session = ref.get();
-      final List<VcsFileRevision> list = session.getRevisionList();
-      if (list == null) return;
-      for (VcsFileRevision fileRevision : list) {
-        boolean found;
-        if (revision != null) {
-          found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
-        }
-        else {
-          final Date date = fileRevision instanceof VcsFileRevisionEx ?
-                            ((VcsFileRevisionEx) fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
-          found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
-        }
 
-        if (found) {
+    final VcsHistorySession historySession;
+    try {
+      historySession = ProgressManager.getInstance()
+        .run(new Task.WithResult<VcsHistorySession, VcsException>(myProject, VcsBundle.message("loading.file.history.progress"), true) {
+          @Override
+          protected VcsHistorySession compute(@NotNull ProgressIndicator indicator) throws VcsException {
+            return historyProvider.createSessionFor(filePath);
+          }
+        });
+    }
+    catch (ProcessCanceledException e) {
+      return;
+    }
+    //if not found or cancelled
+    if (historySession == null) return;
+    final List<VcsFileRevision> list = historySession.getRevisionList();
+    if (list == null) return;
+    for (VcsFileRevision fileRevision : list) {
+      boolean found;
+      if (revision != null) {
+        found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
+      }
+      else {
+        final Date date = fileRevision instanceof VcsFileRevisionEx ?
+                          ((VcsFileRevisionEx)fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
+        found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
+      }
+
+      if (found) {
+        try {
           fileRevision.loadContent();
           processor.process(LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false, false));
           // TODO: try to download more than one version
           break;
         }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
-    }
-    catch (IOException e) {
-      LOG.error(e);
     }
   }
 
