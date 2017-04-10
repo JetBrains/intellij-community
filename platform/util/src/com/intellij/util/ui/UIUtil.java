@@ -2528,7 +2528,7 @@ public class UIUtil {
 
     public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
       style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
-      style.addRule("code { font-size: 90%; }"); // small by Swing's default, make it b/w small and medium
+      style.addRule("code { font-size: 100%; }"); // small by Swing's default
       style.addRule("small { font-size: small; }"); // x-small by Swing's default
       if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
     }
