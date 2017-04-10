@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -75,7 +74,6 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
     final PatchChange change = getChange();
     final FilePatch patch = getPatch();
     final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-    final Getter<CharSequence> baseContentGetter = () -> patchReader.getBaseRevision(project, path);
     return new DiffRequestProducer() {
       @NotNull
       @Override
@@ -88,12 +86,13 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
         if (isConflictingChange()) {
           final VirtualFile file = getCurrentBase();
 
-          Getter<ApplyPatchForBaseRevisionTexts> getter =
-            () -> ApplyPatchForBaseRevisionTexts.create(project, file, VcsUtil.getFilePath(file), getPatch(), baseContentGetter);
+          ApplyPatchForBaseRevisionTexts texts =
+            ApplyPatchForBaseRevisionTexts
+              .create(project, file, VcsUtil.getFilePath(file), getPatch(), patchReader.getBaseRevision(project, path));
 
           String afterTitle = getPatch().getAfterVersionId();
           if (afterTitle == null) afterTitle = "Patched Version";
-          return PatchDiffRequestFactory.createConflictDiffRequest(project, file, getPatch(), afterTitle, getter, getName(), context, indicator);
+          return PatchDiffRequestFactory.createConflictDiffRequest(project, file, getPatch(), afterTitle, texts, getName());
         }
         else {
           return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);

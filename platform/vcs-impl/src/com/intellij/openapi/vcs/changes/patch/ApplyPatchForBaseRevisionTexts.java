@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -22,11 +23,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,9 @@ public class ApplyPatchForBaseRevisionTexts {
   private final List<String> myWarnings;
 
   @NotNull
+  @CalledInAny
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
-                                                       final TextFilePatch patch, @Nullable final Getter<CharSequence> baseContents) {
+                                                       final TextFilePatch patch, @Nullable final CharSequence baseContents) {
     assert ! patch.isNewFile();
     final String beforeVersionId = patch.getBeforeVersionId();
     DefaultPatchBaseVersionProvider provider = null;
@@ -55,26 +57,20 @@ public class ApplyPatchForBaseRevisionTexts {
     }
   }
 
+  @CalledInAny
   private ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider,
                                          final FilePath pathBeforeRename,
                                          final TextFilePatch patch,
                                          final VirtualFile file,
-                                         @Nullable Getter<CharSequence> baseContents) {
+                                         @Nullable CharSequence baseContents) {
     myWarnings = new ArrayList<>();
-    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    Document document = fileDocumentManager.getDocument(file);
-    if (document != null) {
-      fileDocumentManager.saveDocument(document);
-    }
-    myLocal = LoadTextUtil.loadText(file);
+    myLocal = getLocalFileContent(file);
 
     final List<PatchHunk> hunks = patch.getHunks();
 
-    CharSequence contents = baseContents != null ? baseContents.get() : null;
-    if (contents != null) {
-      contents = StringUtil.convertLineSeparators(contents.toString());
-      myBase = contents;
-      final GenericPatchApplier applier = new GenericPatchApplier(contents, hunks);
+    if (baseContents != null) {
+      myBase = StringUtil.convertLineSeparators(baseContents.toString());
+      final GenericPatchApplier applier = new GenericPatchApplier(myBase, hunks);
       if (!applier.execute()) {
         applier.trySolveSomehow();
       }
@@ -105,6 +101,17 @@ public class ApplyPatchForBaseRevisionTexts {
       applier.trySolveSomehow();
     }
     setPatched(applier.getAfter());
+  }
+
+  @NotNull
+  private static CharSequence getLocalFileContent(@NotNull VirtualFile file) {
+    return ReadAction.compute(() -> {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        return document.getText();
+      }
+      return LoadTextUtil.loadText(file);
+    });
   }
 
   public CharSequence getLocal() {

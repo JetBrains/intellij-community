@@ -60,7 +60,8 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
     return new Result(ApplyPatchStatus.FAILURE) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {
-        return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch, baseContents);
+        return ApplyPatchForBaseRevisionTexts
+          .create(project, fileToPatch, pathBeforeRename, myPatch, baseContents != null ? baseContents.get() : null);
       }
     };
   }
