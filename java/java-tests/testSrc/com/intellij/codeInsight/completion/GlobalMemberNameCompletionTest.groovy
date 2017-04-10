@@ -138,7 +138,7 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
       }
     """)
 
-    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo.Excl")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "*Excl")
 
     doTest "class Bar {{ abcm<caret> }}", true, """import static foo.Foo.abcmethod;
 
