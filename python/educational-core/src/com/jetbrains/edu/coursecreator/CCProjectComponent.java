@@ -119,6 +119,8 @@ public class CCProjectComponent extends AbstractProjectComponent {
   }
 
   public void projectClosed() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
+    if (myTaskFileLifeListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
+    }
   }
 }
