@@ -31,14 +31,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.edu.learning.builtInServer.BuiltInServerUtils.*;
+import static com.jetbrains.edu.learning.core.EduNames.SERVICE_NAME;
+import static com.jetbrains.edu.learning.core.EduNames.STEP_ID;
 
 /**
  * @author meanmail
  */
 public class StepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(StepikRestService.class.getName());
-  private static final String SERVICE_NAME = "edu/stepik";
-  public static final String STEP_ID = "step_id";
   private static final Pattern OPEN_COURSE = Pattern.compile("/" + SERVICE_NAME + "/course/(\\d+)");
 
   @NotNull
@@ -70,9 +70,12 @@ public class StepikRestService extends RestService {
       List<String> stepIds = urlDecoder.parameters().get(STEP_ID);
       int stepId = 0;
       if (stepIds != null && !stepIds.isEmpty()) {
+        String firstStepId = "";
         try {
-          stepId = Integer.parseInt(stepIds.get(0));
-        } catch (NumberFormatException ignored) {
+          firstStepId = stepIds.get(0);
+          stepId = Integer.parseInt(firstStepId);
+        } catch (NumberFormatException e) {
+          LOG.warn("Wrong a request parameter: step_id=" + firstStepId, e);
         }
       }
       LOG.info(String.format("Try to open a course: courseId=%s, stepId=%s", courseId, stepId));
