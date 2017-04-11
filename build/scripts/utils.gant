@@ -151,7 +151,7 @@ private void setupKotlin() {
 
 private boolean ensureKotlinCompilerAddedToClassPath() {
   if (getClass().getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
-    return
+    return true
   }
 
   def kotlinPluginLibPath = "$home/build/dependencies/build/Kotlin/lib"
