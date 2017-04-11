@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,15 +367,23 @@ public class FileReferenceSet {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
       final ArrayList<PsiFileSystemItem> list = new ArrayList<>();
       final Project project = file.getProject();
+      boolean hasRealContexts = false;
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
           if (!list.isEmpty() && helper.isFallback()) {
             continue;
           }
-          list.addAll(helper.getContexts(project, virtualFile));
+          Collection<PsiFileSystemItem> contexts = helper.getContexts(project, virtualFile);
+          for (PsiFileSystemItem context : contexts) {
+            list.add(context);
+            hasRealContexts |= !(context instanceof FileReferenceResolver);
+          }
         }
       }
       if (!list.isEmpty()) {
+        if (!hasRealContexts) {
+          list.addAll(getParentDirectoryContext());
+        }
         return list;
       }
       return getParentDirectoryContext();
