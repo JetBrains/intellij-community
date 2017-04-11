@@ -160,17 +160,17 @@ public abstract class PluginManagerMain implements Disposable {
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myPanelDescription);
     myPanelDescription.setBorder(JBUI.Borders.emptyLeft(7));
 
-    final JPanel header = new JPanel(new BorderLayout()) {
+    JPanel header = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        final Color bg = UIUtil.getTableBackground(false);
+        Color bg = UIUtil.getTableBackground(false);
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, ColorUtil.shift(bg, 1.4), 0, getHeight(), ColorUtil.shift(bg, 0.9)));
         g.fillRect(0,0, getWidth(), getHeight());
       }
     };
     header.setBorder(new CustomLineBorder(1, 1, 0, 0));
-    final JLabel mySortLabel = new JLabel();
+    JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
     mySortLabel.setIcon(AllIcons.General.SplitDown);
@@ -179,7 +179,7 @@ public abstract class PluginManagerMain implements Disposable {
     myTablePanel.add(header, BorderLayout.NORTH);
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManager", getActionGroup(true), true);
-    final JComponent component = myActionToolbar.getComponent();
+    JComponent component = myActionToolbar.getComponent();
     myToolbarPanel.add(component, BorderLayout.CENTER);
     myToolbarPanel.add(myFilter, BorderLayout.WEST);
     new ClickListener() {
@@ -190,7 +190,7 @@ public abstract class PluginManagerMain implements Disposable {
         return true;
       }
     }.installOn(mySortLabel);
-    final TableModelListener modelListener = new TableModelListener() {
+    TableModelListener modelListener = new TableModelListener() {
       @Override
       public void tableChanged(TableModelEvent e) {
         String text = "Sort by:";
@@ -245,9 +245,9 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   private static String getTextPrefix() {
-    final int fontSize = JBUI.scale(12);
-    final int m1 = JBUI.scale(2);
-    final int m2 = JBUI.scale(5);
+    int fontSize = JBUI.scale(12);
+    int m1 = JBUI.scale(2);
+    int m2 = JBUI.scale(5);
     return String.format(
            "<html><head>" +
            "    <style type=\"text/css\">" +
@@ -281,7 +281,7 @@ public abstract class PluginManagerMain implements Disposable {
     IdeaPluginDescriptor plugin = descriptors != null && descriptors.length == 1 ? descriptors[0] : null;
     pluginInfoUpdate(plugin, myFilter.getFilter(), myDescriptionTextArea, myPluginHeaderPanel);
     myActionToolbar.updateActionsImmediately();
-    final JComponent parent = (JComponent)myHeader.getParent();
+    JComponent parent = (JComponent)myHeader.getParent();
     parent.revalidate();
     parent.repaint();
   }
@@ -324,8 +324,8 @@ public abstract class PluginManagerMain implements Disposable {
     setDownloadStatus(true);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
-      final Map<String, String> errors = ContainerUtil.newLinkedHashMap();
+      List<IdeaPluginDescriptor> list = ContainerUtil.newArrayList();
+      Map<String, String> errors = ContainerUtil.newLinkedHashMap();
       ProgressIndicator indicator = new EmptyProgressIndicator();
 
       List<String> hosts = RepositoryHelper.getPluginHosts();
@@ -407,10 +407,10 @@ public abstract class PluginManagerMain implements Disposable {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
-  public static boolean downloadPlugins(final List<PluginNode> plugins,
-                                        final List<PluginId> allPlugins,
-                                        final Runnable onSuccess,
-                                        @Nullable final Runnable cleanup) throws IOException {
+  public static boolean downloadPlugins(List<PluginNode> plugins,
+                                        List<PluginId> allPlugins,
+                                        Runnable onSuccess,
+                                        @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
                            allPlugins.stream().map(p -> new PluginNode(p, p.getIdString(), "-1")).collect(Collectors.toList()),
                            onSuccess,
@@ -418,12 +418,12 @@ public abstract class PluginManagerMain implements Disposable {
                            cleanup);
   }
 
-  public static boolean downloadPlugins(final List<PluginNode> plugins,
-                                        final List<IdeaPluginDescriptor> allPlugins,
-                                        final Runnable onSuccess,
+  public static boolean downloadPlugins(List<PluginNode> plugins,
+                                        List<IdeaPluginDescriptor> allPlugins,
+                                        Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
-                                        @Nullable final Runnable cleanup) throws IOException {
-    final boolean[] result = new boolean[1];
+                                        @Nullable Runnable cleanup) throws IOException {
+    boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
         @Override
@@ -540,7 +540,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public String apply() {
-    final String applyMessage = canApply();
+    String applyMessage = canApply();
     if (applyMessage != null) return applyMessage;
     setRequireShutdown(true);
     return null;
@@ -642,19 +642,19 @@ public abstract class PluginManagerMain implements Disposable {
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
                                                                  List<PluginNode> list) {
-    final Set<IdeaPluginDescriptor> disabled = new HashSet<>();
-    final Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
+    Set<IdeaPluginDescriptor> disabled = new HashSet<>();
+    Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
-      final PluginId pluginId = node.getPluginId();
+      PluginId pluginId = node.getPluginId();
       if (pluginEnabler.isDisabled(pluginId)) {
         disabled.add(node);
       }
-      final List<PluginId> depends = node.getDepends();
+      List<PluginId> depends = node.getDepends();
       if (depends != null) {
-        final Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
         for (PluginId dependantId : depends) {
           if (optionalDeps.contains(dependantId)) continue;
-          final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
+          IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
           if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {
             disabledDependants.add(pluginDescriptor);
           }
@@ -774,7 +774,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static void notifyPluginsUpdated(@Nullable Project project) {
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("update.notifications.title");
     String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     String message = IdeBundle.message("ide.restart.required.notification", action, ApplicationNamesInfo.getInstance().getFullProductName());
@@ -819,7 +819,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected DefaultActionGroup createSortersGroup() {
-    final DefaultActionGroup group = new DefaultActionGroup("Sort by", true);
+    DefaultActionGroup group = new DefaultActionGroup("Sort by", true);
     group.addAction(new SortByStatusAction(pluginTable, pluginsModel));
     return group;
   }
