@@ -309,16 +309,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       targetFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, sourceFile.getAbsolutePath());
     }
 
-    final File _source = sourceFile;
-    final VirtualFile _target = targetFile;
+    copyContent(sourceFile, targetFile);
+
+    return targetFile;
+  }
+
+  private static void copyContent(File sourceFile, VirtualFile targetFile) {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws IOException {
-        _target.setBinaryContent(FileUtil.loadFileBytes(_source));
+        targetFile.setBinaryContent(FileUtil.loadFileBytes(sourceFile));
+        // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
+        FileDocumentManager.getInstance().reloadFiles(targetFile);
       }
     }.execute();
-
-    return targetFile;
   }
 
   @NotNull
