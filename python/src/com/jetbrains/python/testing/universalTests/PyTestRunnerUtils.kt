@@ -116,6 +116,7 @@ private fun findVFSItemRoot(virtualFile: VirtualFile, project: Project): Virtual
 }
 
 
+//TODO: Migrate to [ParametersListUtil#parse] but support single quotes
 /**
  * Emulates command line processor (cmd, bash) by parsing command line to arguments that can be provided as argv.
  * Escape chars are not supported but quotes work.
