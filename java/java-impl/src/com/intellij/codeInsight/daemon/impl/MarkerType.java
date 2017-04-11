@@ -462,7 +462,7 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
-      if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (ReadAction.compute(() -> myMethod.hasModifierProperty(PsiModifier.ABSTRACT))) {
         PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
         FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
           @Override
