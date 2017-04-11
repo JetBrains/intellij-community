@@ -226,7 +226,7 @@ public class ShelvedChange {
 
     private String loadContent(final TextFilePatch patch) throws ApplyPatchException {
       if (patch.isNewFile()) {
-        return patch.getNewFileText();
+        return patch.getSingleHunkPatchText();
       }
       if (patch.isDeletedFile()) {
         return null;

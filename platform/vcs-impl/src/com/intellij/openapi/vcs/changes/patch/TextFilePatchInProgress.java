@@ -53,7 +53,7 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       myConflicts = null;
       if (FilePatchStatus.ADDED.equals(myStatus)) {
         final FilePath newFilePath = VcsUtil.getFilePath(myIoCurrentBase, false);
-        final String content = myPatch.getNewFileText();
+        final String content = myPatch.getSingleHunkPatchText();
         myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
       }
       else {

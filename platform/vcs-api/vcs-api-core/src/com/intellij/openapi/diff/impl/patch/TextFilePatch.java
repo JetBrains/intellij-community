@@ -67,7 +67,7 @@ public class TextFilePatch extends FilePatch {
     return myHunks.size() == 1 && myHunks.get(0).isNewContent();
   }
 
-  public String getNewFileText() {
+  public String getSingleHunkPatchText() {
     return myHunks.get(0).getText();
   }
 
