@@ -129,6 +129,21 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return null;
   }
 
+  @Nullable
+  public FilePath getPath(@NotNull VcsFullCommitDetails details) {
+    if (myPath.isDirectory()) return myPath;
+
+    List<Change> changes = collectRelevantChanges(details);
+    for (Change change : changes) {
+      ContentRevision revision = change.getAfterRevision();
+      if (revision != null) {
+        return revision.getFile();
+      }
+    }
+
+    return null;// file was deleted
+  }
+
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     Set<FilePath> fileNames = getFileNames(details);
