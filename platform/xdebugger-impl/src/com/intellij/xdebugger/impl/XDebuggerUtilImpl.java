@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,7 +234,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   @Override
                   public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
                     selectionListener.clearHighlighter();
-                    ApplicationManager.getApplication().runWriteAction(() -> {
+                    WriteAction.run(() -> {
                       P properties = (P)selectedValue.createProperties();
                       res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
                     });
