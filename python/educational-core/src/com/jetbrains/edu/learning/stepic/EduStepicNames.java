@@ -23,4 +23,7 @@ public class EduStepicNames {
   public static final String STEPIC_REGISTRATION_LINK = "https://stepic.org/registration?next=%2Fexplore%2Fcourses";
 
   public static final String PYCHARM_PREFIX = "pycharm";
+
+  public static final String EDU_STEPIK_SERVICE_NAME = "edu/stepik";
+  public static final String STEP_ID = "step_id";
 }

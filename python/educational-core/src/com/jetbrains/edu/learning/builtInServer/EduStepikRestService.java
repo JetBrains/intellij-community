@@ -31,20 +31,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.edu.learning.builtInServer.EduBuiltInServerUtils.*;
-import static com.jetbrains.edu.learning.core.EduNames.SERVICE_NAME;
-import static com.jetbrains.edu.learning.core.EduNames.STEP_ID;
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.EDU_STEPIK_SERVICE_NAME;
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.STEP_ID;
 
 /**
  * @author meanmail
  */
 public class EduStepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(EduStepikRestService.class.getName());
-  private static final Pattern OPEN_COURSE = Pattern.compile("/" + SERVICE_NAME + "/course/(\\d+)");
+  private static final Pattern OPEN_COURSE = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "/course/(\\d+)");
 
   @NotNull
   @Override
   protected String getServiceName() {
-    return SERVICE_NAME;
+    return EDU_STEPIK_SERVICE_NAME;
   }
 
   @Override

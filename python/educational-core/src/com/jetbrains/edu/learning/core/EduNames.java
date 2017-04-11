@@ -51,8 +51,6 @@ public class EduNames {
   public static final String SUBTASK = "subtask";
 
   public static final String STUDY_PROJECT_XML_PATH = "/.idea/study_project.xml";
-  public static final String SERVICE_NAME = "edu/stepik";
-  public static final String STEP_ID = "step_id";
 
   private EduNames() {
   }

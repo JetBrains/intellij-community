@@ -25,7 +25,8 @@ import com.jetbrains.python.newProject.steps.PyCharmNewProjectStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author meanmail
@@ -54,8 +55,7 @@ public class EduBuiltInServerNewProjectStep extends PyCharmNewProjectStep {
     @Override
     protected DirectoryProjectGenerator createEmptyProjectGenerator() {
       StudyProjectGenerator generator = myGenerator.getGenerator();
-      ArrayList<Course> courses = new ArrayList<>();
-      courses.add(myCourse);
+      List<Course> courses = Collections.singletonList(myCourse);
       generator.setCourses(courses);
       generator.setSelectedCourse(myCourse);
       return myGenerator;
