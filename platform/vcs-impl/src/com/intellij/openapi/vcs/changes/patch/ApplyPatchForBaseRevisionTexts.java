@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -34,15 +35,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public class ApplyPatchForBaseRevisionTexts {
+
+  private static final Logger LOG = Logger.getInstance(ApplyPatchForBaseRevisionTexts.class);
+
   private final CharSequence myLocal;
   private CharSequence myBase;
   private String myPatched;
+  private boolean myIsAppliedSomehow;
   private final List<String> myWarnings;
+  private boolean myBaseRevisionLoaded;
 
   @NotNull
   @CalledInAny
-  public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
+  public static ApplyPatchForBaseRevisionTexts create(final Project project, @NotNull final VirtualFile file, final FilePath pathBeforeRename,
                                                        final TextFilePatch patch, @Nullable final CharSequence baseContents) {
     assert ! patch.isNewFile();
     final String beforeVersionId = patch.getBeforeVersionId();
@@ -61,7 +69,7 @@ public class ApplyPatchForBaseRevisionTexts {
   private ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider,
                                          final FilePath pathBeforeRename,
                                          final TextFilePatch patch,
-                                         final VirtualFile file,
+                                         @NotNull final VirtualFile file,
                                          @Nullable CharSequence baseContents) {
     myWarnings = new ArrayList<>();
     myLocal = getLocalFileContent(file);
@@ -70,8 +78,13 @@ public class ApplyPatchForBaseRevisionTexts {
 
     if (baseContents != null) {
       myBase = StringUtil.convertLineSeparators(baseContents.toString());
+      myBaseRevisionLoaded = true;
       final GenericPatchApplier applier = new GenericPatchApplier(myBase, hunks);
       if (!applier.execute()) {
+        myIsAppliedSomehow = true;
+        LOG.warn(
+          String.format("Patch for %s has wrong base and can't be applied properly",
+                        chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
         applier.trySolveSomehow();
       }
       setPatched(applier.getAfter());
@@ -86,6 +99,7 @@ public class ApplyPatchForBaseRevisionTexts {
             return true;
           }
           myBase = text;
+          myBaseRevisionLoaded = true;
           setPatched(applier.getAfter());
           return false;
         }, myWarnings);
@@ -97,7 +111,8 @@ public class ApplyPatchForBaseRevisionTexts {
     }
 
     final GenericPatchApplier applier = new GenericPatchApplier(myLocal, hunks);
-    if (! applier.execute()) {
+    if (!applier.execute()) {
+      myIsAppliedSomehow = true;
       applier.trySolveSomehow();
     }
     setPatched(applier.getAfter());
@@ -121,6 +136,10 @@ public class ApplyPatchForBaseRevisionTexts {
   public CharSequence getBase() {
     return myBase;
   }
+
+  public void clearBase() {
+    myBase = null;
+  }
   
   private void setPatched(final String text) {
     myPatched = StringUtil.convertLineSeparators(text);
@@ -128,5 +147,13 @@ public class ApplyPatchForBaseRevisionTexts {
 
   public String getPatched() {
     return myPatched;
+  }
+
+  public boolean isAppliedSomehow() {
+    return myIsAppliedSomehow;
+  }
+
+  public boolean isBaseRevisionLoaded() {
+    return myBaseRevisionLoaded;
   }
 }

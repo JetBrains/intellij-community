@@ -15,14 +15,19 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -47,10 +52,8 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
-import com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,9 +64,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createConflictDiffRequest;
+import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createDiffRequest;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class DiffShelvedChangesAction extends AnAction implements DumbAware {
+
+  private static final String DIFF_WITH_BASE_ERROR = "Base content not found or not applicable.";
+  public static final String SHELVED_VERSION = "Shelved Version";
+  public static final String BASE_VERSION = "Base Version";
+  public static final String CURRENT_VERSION = "Current Version";
+
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
   }
@@ -80,19 +92,23 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   }
 
   public static void showShelvedChangesDiff(final DataContext dc) {
+    showShelvedChangesDiff(dc, false);
+  }
+
+  public static void showShelvedChangesDiff(final DataContext dc, boolean withLocal) {
     final Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dc);
-    ShelvedChangeList changeList = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(changeLists));
+    ShelvedChangeList changeList = assertNotNull(ContainerUtil.getFirstItem(changeLists));
 
     final List<ShelvedChange> textChanges = changeList.getChanges(project);
     final List<ShelvedBinaryFile> binaryChanges = changeList.getBinaryFiles();
 
     final List<MyDiffRequestProducer> diffRequestProducers = new ArrayList<>();
 
-    processTextChanges(project, textChanges, diffRequestProducers);
+    processTextChanges(project, textChanges, diffRequestProducers, withLocal);
     processBinaryFiles(project, binaryChanges, diffRequestProducers);
 
     Collections.sort(diffRequestProducers, ChangeDiffRequestComparator.getInstance());
@@ -141,7 +157,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
           Change change = shelvedChange.createChange(project);
-          return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
+          return createDiffRequest(project, change, getName(), context, indicator);
         }
       });
     }
@@ -149,7 +165,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
   private static void processTextChanges(@NotNull final Project project,
                                          @NotNull List<ShelvedChange> changesFromFirstList,
-                                         @NotNull List<MyDiffRequestProducer> diffRequestProducers) {
+                                         @NotNull List<MyDiffRequestProducer> diffRequestProducers,
+                                         boolean withLocal) {
     final String base = project.getBasePath();
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader(project);
@@ -185,27 +202,70 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           if (!isNewFile && file.getFileType() == UnknownFileType.INSTANCE) {
             return new UnknownFileTypeDiffRequest(file, getName());
           }
+          if (isNewFile) return createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
+          
+          final CommitContext commitContext;
+          final TextFilePatch patch;
+          try {
+            commitContext = new CommitContext();
+            patch = preloader.getPatch(shelvedChange, commitContext);
+          }
+          catch (VcsException e) {
+            throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
+          }
 
-          if (shelvedChange.isConflictingChange(project)) {
-            try {
-              final CommitContext commitContext = new CommitContext();
-              final TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
-              final FilePath pathBeforeRename = patchContext.getPathBeforeRename(file);
+          if (patch.isDeletedFile()) {
+            return createDiffRequestForDeleted(patch);
+          }
+          return createDiffRequestForModified(patch, commitContext, context, indicator);
+        }
 
-              CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class)
-                .provideContent(chooseNotNull(patch.getAfterName(), patch.getBeforeName()), commitContext);
-              ApplyPatchForBaseRevisionTexts texts =
-                ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch, baseContents);
-              return PatchDiffRequestFactory
-                .createConflictDiffRequest(project, file, patch, "Shelved Version", texts, getName());
-            }
-            catch (VcsException e) {
-              throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
-            }
+        @NotNull
+        private DiffRequest createDiffRequestForDeleted(@NotNull TextFilePatch patch) {
+          assert file != null;
+          DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+          DiffContent leftContent = withLocal
+                                    ? contentFactory.create(project, file)
+                                    : contentFactory.create(project, patch.getSingleHunkPatchText());
+          return new SimpleDiffRequest(getName(), leftContent,
+                                       contentFactory.createEmpty(),
+                                       withLocal ? CURRENT_VERSION : SHELVED_VERSION, null);
+        }
+
+        @NotNull
+        private DiffRequest createDiffRequestForModified(@NotNull TextFilePatch patch,
+                                                         @NotNull CommitContext commitContext,
+                                                         @NotNull UserDataHolder context,
+                                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
+          assert file != null;
+          CharSequence baseContents = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class)
+            .provideContent(chooseNotNull(patch.getAfterName(), patch.getBeforeName()), commitContext);
+          ApplyPatchForBaseRevisionTexts texts =
+            ApplyPatchForBaseRevisionTexts.create(project, file, patchContext.getPathBeforeRename(file), patch, baseContents);
+          //found base
+          if (texts.isBaseRevisionLoaded() && !texts.isAppliedSomehow()) {
+            //normal diff
+            DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+            DiffContent leftContent = withLocal
+                                      ? contentFactory.create(project, file)
+                                      : contentFactory.create(project, texts.getBase().toString());
+            return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(project, texts.getPatched()),
+                                         withLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
           }
           else {
-            final Change change = shelvedChange.getChange(project);
-            return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
+            //try applying on local
+            if (texts.isAppliedSomehow()) {
+              texts.clearBase();  // wrong base should not be used even it exists
+            }
+            DiffRequest diffRequest = shelvedChange.isConflictingChange(project)
+                                      ? createConflictDiffRequest(project, file, patch, SHELVED_VERSION, texts, getName())
+                                      : createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
+            if (!withLocal) {
+              DiffUtil
+                .addNotification(DiffNotifications.createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"),
+                                 diffRequest);
+            }
+            return diffRequest;
           }
         }
       });

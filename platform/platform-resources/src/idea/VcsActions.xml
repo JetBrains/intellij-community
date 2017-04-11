@@ -147,6 +147,9 @@
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <action id="ShelvedChanges.Diff" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction"
           icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
+      <action id="ShelvedChanges.DiffWithLocal" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesWithLocalAction"
+              text="Compare with Local" description="Compare shelved version with current" use-shortcut-of="Vcs.ShowDiffWithLocal"
+              icon="AllIcons.Actions.DiffWithCurrent"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
               icon="AllIcons.Vcs.Patch"/>
       <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
