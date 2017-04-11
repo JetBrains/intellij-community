@@ -45,7 +45,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
   /**
    * Update the host element using the provided text of the injected file. It may be required to escape characters from {@code text}
-   * in accordance with the host language syntax. The implementation may delegate to {@link com.intellij.psi.ElementManipulators#handleContentChange(PsiElement, String)}
+   * in accordance with the host language syntax. The implementation may delegate to {@link ElementManipulators#handleContentChange(PsiElement, String)}
    * if {@link com.intellij.psi.ElementManipulator} implementation is registered for this element class
    * @param text text of the injected file
    * @return the updated instance
@@ -59,6 +59,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
   LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
 
 
+  @FunctionalInterface
   interface InjectedPsiVisitor {
     void visit(@NotNull PsiFile injectedPsi, @NotNull List<Shred> places);
   }

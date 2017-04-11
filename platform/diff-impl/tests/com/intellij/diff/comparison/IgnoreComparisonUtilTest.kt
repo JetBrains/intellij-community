@@ -401,27 +401,16 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       .run()
   }
 
-  private inner class Test(input1: String, input2: String,
+  private inner class Test(val input1: String, val input2: String,
                            ignored1: String, ignored2: String,
                            result1: String, result2: String) {
-    private val input1: String
-    private val input2: String
-    private val ignored1: String
-    private val ignored2: String
-    private val result1: String
-    private val result2: String
+    val ignored1: String = ignored1.filterNot { it == '.' }
+    val ignored2: String = ignored2.filterNot { it == '.' }
+    val result1: String = result1.filterNot { it == '.' }
+    val result2: String = result2.filterNot { it == '.' }
 
     private var inner = true
     private var changedLines: IntPair? = null
-
-    init {
-      this.input1 = input1
-      this.input2 = input2
-      this.ignored1 = ignored1.filterNot { it == '.' }
-      this.ignored2 = ignored2.filterNot { it == '.' }
-      this.result1 = result1.filterNot { it == '.' }
-      this.result2 = result2.filterNot { it == '.' }
-    }
 
     fun noInnerChanges(): Test {
       inner = false

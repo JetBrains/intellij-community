@@ -1,0 +1,8 @@
+public class TryWithResources {
+    public fun foo() : void {
+        try (final var br: BufferedReader = BufferedReader(FileReader(path))){
+            return br.readLine()
+        }
+
+    }
+}

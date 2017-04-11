@@ -17,7 +17,9 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ChangeToPairCreateQuickFix;
@@ -41,7 +43,7 @@ public class DontUseNewPairInspection extends DevKitInspectionBase {
             && ((PsiClassType)type).rawType().equalsToText(PAIR_FQN)
             && params != null
             && expression.getArgumentList() != null
-            //&& !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) //diamonds
+            && !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) //diamonds
         ) {
           final PsiType[] types = ((PsiClassType)type).getParameters();
           if (Arrays.equals(types, params.getExpressionTypes())) {

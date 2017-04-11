@@ -16,7 +16,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
@@ -27,11 +32,33 @@ public class UnusedReturnValueQuickFixTest extends LightCodeInsightFixtureTestCa
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+      @Override
+      public boolean isImplicitUsage(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitRead(PsiElement element) {
+        return element instanceof PsiMethod && ((PsiMethod)element).getName().equals("implicitRead");
+      }
+
+      @Override
+      public boolean isImplicitWrite(PsiElement element) {
+        return false;
+      }
+    }, getTestRootDisposable());
+
     myFixture.enableInspections(new UnusedReturnValue());
   }
 
   public void testSideEffects() { doTest(); }
   public void testRedundantReturn() { doTest(); }
+  public void testNoChangeForImplicitRead() {
+    final String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    assertEmpty(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix")));
+  }
 
   private void doTest() {
     final String name = getTestName(false);

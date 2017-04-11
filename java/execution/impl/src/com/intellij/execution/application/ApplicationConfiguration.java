@@ -246,12 +246,17 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void writeExternal(final Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
+
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
-    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
+
+    Map<String, String> envs = getEnvs();
+    //if (!envs.isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, envs);
+    //}
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {

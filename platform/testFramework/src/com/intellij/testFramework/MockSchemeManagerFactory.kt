@@ -29,7 +29,8 @@ class MockSchemeManagerFactory : SchemeManagerFactory() {
                                                                  roamingType: RoamingType,
                                                                  isUseOldFileNameSanitize: Boolean,
                                                                  streamProvider: StreamProvider?,
-                                                                 directoryPath: Path?): SchemeManager<SCHEME> {
+                                                                 directoryPath: Path?,
+                                                                 autoSave: Boolean): SchemeManager<SCHEME> {
     @Suppress("UNCHECKED_CAST")
     return EMPTY as SchemeManager<SCHEME>
   }

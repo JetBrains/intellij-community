@@ -144,7 +144,7 @@ public class StudyProjectGenerator {
   }
 
   @NotNull
-  public List<Course> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
+  public List<Course> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @Nullable final Project project) {
     try {
       return ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(() -> {

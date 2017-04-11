@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
                                          RunnerAndConfigurationSettings original,
                                          RunnerAndConfigurationSettings snapshot) {
-    return runManager.isConfigurationShared(original) != myStoreProjectConfiguration;
+    return original.isShared() != myStoreProjectConfiguration;
   }
 
   @Override
@@ -125,7 +125,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
     super.apply();
-    runManager.addConfiguration(settings, myStoreProjectConfiguration, runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+    runManager.addConfiguration(settings, myStoreProjectConfiguration);
   }
 
   @Override
@@ -369,7 +369,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private void doReset(RunnerAndConfigurationSettings settings) {
       final RunConfiguration runConfiguration = settings.getConfiguration();
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-      myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
+      myStoreProjectConfiguration = settings.isShared();
       myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());

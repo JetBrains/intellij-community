@@ -56,10 +56,7 @@ public class InjectedLanguageUtil {
   // meaning: injected file text is probably incorrect
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
-    enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-      }
+    enumerate(host, (injectedPsi, places) -> {
     });
   }
 
@@ -408,18 +405,15 @@ public class InjectedLanguageUtil {
                                        final int hostOffset,
                                        @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<>();
-    enumerate(element, hostFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        for (PsiLanguageInjectionHost.Shred place : places) {
-          TextRange hostRange = place.getHost().getTextRange();
-          if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(hostOffset)) {
-            DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
-            if (document == null) return;
-            int injectedOffset = document.hostToInjected(hostOffset);
-            PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
-            out.set(injElement == null ? injectedPsi : injElement);
-          }
+    enumerate(element, hostFile, true, (injectedPsi, places) -> {
+      for (PsiLanguageInjectionHost.Shred place : places) {
+        TextRange hostRange = place.getHost().getTextRange();
+        if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(hostOffset)) {
+          DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
+          if (document == null) return;
+          int injectedOffset = document.hostToInjected(hostOffset);
+          PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
+          out.set(injElement == null ? injectedPsi : injElement);
         }
       }
     });
@@ -439,7 +433,7 @@ public class InjectedLanguageUtil {
     return injected;
   }
 
-  public static void clearCachedInjectedFragmentsForFile(@NotNull PsiFile file) {
+  static void clearCachedInjectedFragmentsForFile(@NotNull PsiFile file) {
     file.putUserData(INJECTED_DOCS_KEY, null);
   }
 
@@ -527,12 +521,7 @@ public class InjectedLanguageUtil {
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
-    enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        result.set(true);
-      }
-    });
+    enumerate(host, (injectedPsi, places) -> result.set(true));
     return result.get().booleanValue();
   }
 
@@ -602,12 +591,7 @@ public class InjectedLanguageUtil {
   @Nullable
   public static PsiElement findElementInInjected(@NotNull PsiLanguageInjectionHost injectionHost, final int offset) {
     final Ref<PsiElement> ref = Ref.create();
-    enumerate(injectionHost, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        ref.set(injectedPsi.findElementAt(offset - getInjectedStart(places)));
-      }
-    });
+    enumerate(injectionHost, (injectedPsi, places) -> ref.set(injectedPsi.findElementAt(offset - getInjectedStart(places))));
     return ref.get();
   }
 

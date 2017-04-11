@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.project.isDirectoryBased
+import com.intellij.util.SmartList
 import com.intellij.util.isEmpty
+import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
 import java.io.OutputStream
@@ -51,7 +53,8 @@ interface SchemeExtensionProvider {
 
 abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
   open fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
-    return attributeProvider.apply(nameAttribute) ?: throw IllegalStateException("name is missed in the scheme data")
+    return attributeProvider.apply(nameAttribute)
+           ?: throw IllegalStateException("name is missed in the scheme data")
   }
 
   abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>,
@@ -144,4 +147,10 @@ fun wrapState(element: Element, project: Project): Element {
 class BundledSchemeEP : AbstractExtensionPointBean() {
   @Attribute("path")
   var path: String? = null
+}
+
+fun SchemeManager<*>.save() {
+  val errors = SmartList<Throwable>()
+  save(errors)
+  CompoundRuntimeException.throwIfNotEmpty(errors)
 }

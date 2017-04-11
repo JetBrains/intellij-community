@@ -284,7 +284,7 @@ public class InspectionEngine {
     }
     else if (language instanceof MetaLanguage) {
       Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
-      result = new HashSet<>();
+      result = new THashSet<>();
       for (Language matchingLanguage : matchingLanguages) {
         result.addAll(getLanguageWithDialects(wrapper, matchingLanguage));
       }
@@ -297,9 +297,9 @@ public class InspectionEngine {
 
   @NotNull
   private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, Language language) {
-    Set<String> result;List<Language> dialects = language.getDialects();
+    List<Language> dialects = language.getDialects();
     boolean applyToDialects = wrapper.applyToDialects();
-    result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
+    Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
     result.add(language.getID());
     if (applyToDialects) {
       for (Language dialect : dialects) {

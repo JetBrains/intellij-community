@@ -2,13 +2,14 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -136,13 +137,16 @@ public class StepicWrappers {
   }
 
   private static List<VirtualFile> getTestFiles(@NotNull Task task, @NotNull Project project) {
+    final Course course = task.getLesson().getCourse();
+    final Language language = course.getLanguageById();
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     List<VirtualFile> testFiles = new ArrayList<>();
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return testFiles;
     }
     if (!(task instanceof TaskWithSubtasks)) {
-      VirtualFile testFile = taskDir.findChild(EduNames.TESTS_FILE);
+      VirtualFile testFile = taskDir.findChild(configurator.getTestFileName());
       testFiles.add(testFile);
       return testFiles;
     }
@@ -190,6 +194,7 @@ public class StepicWrappers {
     public CourseWrapper(Course course) {
       this.course = new RemoteCourse();
       this.course.setName(course.getName());
+      this.course.setLanguage(course.getLanguageID());
       this.course.setDescription(course.getDescription());
       this.course.setAuthors(course.getAuthors());
     }

@@ -53,19 +53,13 @@
   </macrodef>
 
   <target name="layout">
-    <run script="${project.home}/build/scripts/dist.gant"
+    <run script="${project.home}/build/scripts/idea_community.gant"
          target="update-from-sources"
          deploy="${project.home}/out/deploy"/>
   </target>
 
-  <target name="build-jars">
-    <run script="${project.home}/build/scripts/dist.gant"
-         target="build-dist-jars"
-         deploy="${project.home}/out/deploy"/>
-  </target>
-
   <target name="build-intellij-core">
-    <run script="${project.home}/build/scripts/dist.gant"
+    <run script="${project.home}/build/scripts/idea_community.gant"
          target="build-intellij-core"
          deploy="${project.home}/out/deploy"/>
   </target>

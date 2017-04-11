@@ -108,6 +108,7 @@ public class CCStepicConnector {
       postedCourse.setLessons(course.getLessons(true));
       postedCourse.setAuthors(course.getAuthors());
       postedCourse.setCourseMode(CCUtils.COURSE_MODE);
+      postedCourse.setLanguage(course.getLanguageID());
       final int sectionId = postModule(postedCourse.getId(), 1, String.valueOf(postedCourse.getName()));
       int position = 1;
       for (Lesson lesson : course.getLessons()) {

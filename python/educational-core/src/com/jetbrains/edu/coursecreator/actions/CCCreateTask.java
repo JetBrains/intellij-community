@@ -11,13 +11,13 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 
 public class CCCreateTask extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.TASK_TITLED;
@@ -25,9 +25,6 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   public CCCreateTask() {
     super(EduNames.TASK_TITLED, TITLE, EducationalCoreIcons.Task);
   }
-
-
-
 
   @Nullable
   @Override
@@ -59,8 +56,8 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   @Override
   @Nullable
   protected PsiDirectory createItemDir(@NotNull final Project project, @NotNull final StudyItem item,
-                                     @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
-                                     @NotNull final Course course) {
+                                       @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
+                                       @NotNull final Course course) {
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator != null) {
       return configurator.createTaskContent(project, (Task)item, view, parentDirectory, course);
@@ -100,11 +97,10 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   }
 
   @Override
-  protected List<? extends StudyItem> getSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
+  protected void sortSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
     if (parentItem instanceof Lesson) {
-      return ((Lesson)parentItem).getTaskList();
+      Collections.sort(((Lesson)parentItem).getTaskList(), EduUtils.INDEX_COMPARATOR);
     }
-    return Collections.emptyList();
   }
 
   @Override
@@ -114,7 +110,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
 
   @Override
   protected StudyItem createAndInitItem(@NotNull Course course, @Nullable StudyItem parentItem, String name, int index) {
-    final Task task = new Task(name);
+    final Task task = new PyCharmTask(name);
     task.setIndex(index);
     if (parentItem == null) {
       return null;

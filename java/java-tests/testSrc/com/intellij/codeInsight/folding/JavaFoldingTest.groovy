@@ -487,15 +487,15 @@ class Test {
   };
 }
 """
-    boolean oldValue = CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS;
+    boolean oldValue = CodeFoldingSettings.instance.isCollapseCustomFoldingRegions();
     try {
-      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = true;
+      CodeFoldingSettings.instance.setCollapseCustomFoldingRegions(true);
       configure text
       def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
       assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("//<editor-fold"))
     }
     finally {
-      CodeFoldingSettings.instance.COLLAPSE_CUSTOM_FOLDING_REGIONS = oldValue;
+      CodeFoldingSettings.instance.setCollapseCustomFoldingRegions(oldValue);
     }
   }
 

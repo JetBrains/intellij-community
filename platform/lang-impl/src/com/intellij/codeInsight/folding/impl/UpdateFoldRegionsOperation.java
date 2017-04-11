@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,6 +50,8 @@ class UpdateFoldRegionsOperation implements Runnable {
   
   private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed"); 
+  private static final Key<ModificationTracker[]> DEPENDENCIES = Key.create("dependencies"); 
+  private static final Key<Map<ModificationTracker, Long>> MODIFICATION_STAMPS = Key.create("modificationStamps"); 
   
   private final Project myProject;
   private final Editor myEditor;
@@ -79,15 +84,17 @@ class UpdateFoldRegionsOperation implements Runnable {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
     Map<TextRange,Boolean> rangeToExpandStatusMap = new THashMap<>();
+    Set<TextRange> rangesToResetToDefault = new THashSet<>();
 
     // FoldingUpdate caches instances of our object, so they must be immutable.
     FoldingUpdate.FoldingMap elementsToFold = new FoldingUpdate.FoldingMap(myElementsToFoldMap); 
 
-    removeInvalidRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap);
+    removeInvalidRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, rangesToResetToDefault);
 
     Map<FoldRegion, Boolean> shouldExpand = new THashMap<>();
     Map<FoldingGroup, Boolean> groupExpand = new THashMap<>();
-    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, shouldExpand, groupExpand);
+    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, shouldExpand, groupExpand, 
+                                                rangesToResetToDefault);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
     
@@ -109,9 +116,11 @@ class UpdateFoldRegionsOperation implements Runnable {
 
   private List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
                                          @NotNull FoldingModelEx foldingModel,
-                                         FoldingUpdate.FoldingMap elementsToFold, @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                         FoldingUpdate.FoldingMap elementsToFold,
+                                         @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                          @NotNull Map<FoldRegion, Boolean> shouldExpand,
-                                         @NotNull Map<FoldingGroup, Boolean> groupExpand) {
+                                         @NotNull Map<FoldingGroup, Boolean> groupExpand,
+                                         @NotNull Set<TextRange> rangesToResetToDefault) {
     List<FoldRegion> newRegions = new ArrayList<>();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiElement element : elementsToFold.keySet()) {
@@ -145,11 +154,13 @@ class UpdateFoldRegionsOperation implements Runnable {
         }
         
         if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
+        storeAssociatedDependencies(region, descriptor.getDependencies());
 
         info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
         newRegions.add(region);
 
-        boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(element, range, rangeToExpandStatusMap);
+        boolean expandStatus = !descriptor.isNonExpandable() && 
+                               shouldExpandNewRegion(element, range, rangeToExpandStatusMap, rangesToResetToDefault.contains(range));
         if (group == null) {
           shouldExpand.put(region, expandStatus);
         }
@@ -163,10 +174,39 @@ class UpdateFoldRegionsOperation implements Runnable {
     return newRegions;
   }
 
-  private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
-    if (myApplyDefaultState != ApplyDefaultStateMode.NO) {
+  private static void storeAssociatedDependencies(@NotNull FoldRegion region, @NotNull Set<Object> dependencies) {
+    if (dependencies.isEmpty()) return;
+    ModificationTracker[] modificationTrackers = ContainerUtil.findAllAsArray(dependencies, ModificationTracker.class);
+    if (modificationTrackers.length == 0) return;
+    region.putUserData(DEPENDENCIES, modificationTrackers);
+    Map<ModificationTracker, Long> stamps = region.getEditor().getUserData(MODIFICATION_STAMPS);
+    if (stamps == null) {
+      region.getEditor().putUserData(MODIFICATION_STAMPS, stamps = new WeakHashMap<>());
+    }
+    for (ModificationTracker tracker : modificationTrackers) {
+      stamps.put(tracker, tracker.getModificationCount());
+    }
+  }
+
+  private static boolean hasExpiredDependencies(@NotNull FoldRegion region) {
+    ModificationTracker[] dependencies = region.getUserData(DEPENDENCIES);
+    if (dependencies == null) return false;
+    Map<ModificationTracker, Long> stamps = region.getEditor().getUserData(MODIFICATION_STAMPS);
+    if (stamps == null) return false;
+    for (ModificationTracker tracker : dependencies) {
+      Long initialValue = stamps.get(tracker);
+      if (initialValue != null && initialValue != tracker.getModificationCount()) return true;
+    }
+    return false;
+  }
+
+  private boolean shouldExpandNewRegion(PsiElement element,
+                                        TextRange range,
+                                        Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                        boolean forceReset) {
+    if (myApplyDefaultState != ApplyDefaultStateMode.NO || forceReset) {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
-      if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION) {
+      if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION || forceReset) {
         TextRange lineRange = OpenFileDescriptor.getRangeToUnfoldOnNavigation(myEditor);
         if (lineRange.intersects(range)) {
           return true;
@@ -181,10 +221,18 @@ class UpdateFoldRegionsOperation implements Runnable {
 
   private void removeInvalidRegions(@NotNull EditorFoldingInfo info,
                                     @NotNull FoldingModelEx foldingModel,
-                                    FoldingUpdate.FoldingMap elementsToFold, @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
+                                    FoldingUpdate.FoldingMap elementsToFold,
+                                    @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                    @NotNull Set<TextRange> rangesToResetToDefault) {
     List<FoldRegion> toRemove = new ArrayList<>();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+      if (hasExpiredDependencies(region)) {
+        toRemove.add(region);
+        rangesToResetToDefault.add(new TextRange(region.getStartOffset(), region.getEndOffset()));
+        continue;
+      }
+
       if (myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region)) continue;
       
       PsiElement element = info.getPsiElement(region);

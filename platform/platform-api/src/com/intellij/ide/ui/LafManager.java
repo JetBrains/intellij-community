@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,19 +20,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import javax.swing.*;
 
 /**
- * User: anna
- * Date: 17-May-2006
+ * @author anna
+ * @since 17-May-2006
  */
 public abstract class LafManager {
-  public static LafManager getInstance(){
+  public static LafManager getInstance() {
     return ApplicationManager.getApplication().getComponent(LafManager.class);
   }
 
   public abstract UIManager.LookAndFeelInfo[] getInstalledLookAndFeels();
 
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
-
-  public abstract boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo);
 
   public abstract void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo);
 

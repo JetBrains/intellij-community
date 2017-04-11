@@ -1,0 +1,2 @@
+public class Simple {
+}

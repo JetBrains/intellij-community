@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.BooleanTrackableProperty;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "XmlFoldingSettings", storages = @Storage("editor.codeinsight.xml"))
@@ -35,28 +37,68 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
     // todo: remove after 2017.1 release
     CssFoldingSettings cssFoldingSettings = CssFoldingSettings.getInstance();
     if (cssFoldingSettings != null) {
-      myState.COLLAPSE_DATA_URI = cssFoldingSettings.isCollapseDataUri();
+      myState.myCollapseDataUri.setValue(cssFoldingSettings.isCollapseDataUri());
     }
   }
 
   @Override
   public boolean isCollapseXmlTags() {
-    return myState.COLLAPSE_XML_TAGS;
+    return myState.isCollapseXmlTags();
+  }
+
+  @Override
+  public void setCollapseXmlTags(boolean value) {
+    myState.myCollapseXmlTags.setValue(value);
+  }
+
+  @Override
+  public BooleanTrackableProperty getCollapseXmlTagsProperty() {
+    return myState.myCollapseXmlTags;
   }
 
   @Override
   public boolean isCollapseHtmlStyleAttribute() {
-    return myState.COLLAPSE_HTML_STYLE_ATTRIBUTE;
+    return myState.isCollapseHtmlStyleAttribute();
+  }
+
+  @Override
+  public void setCollapseHtmlStyleAttribute(boolean value) {
+    myState.myCollapseHtmlStyleAttributes.setValue(value);
+  }
+
+  @Override
+  public BooleanTrackableProperty getCollapseHtmlStyleAttributeProperty() {
+    return myState.myCollapseHtmlStyleAttributes;
   }
 
   @Override
   public boolean isCollapseEntities() {
-    return myState.COLLAPSE_ENTITIES;
+    return myState.isCollapseEntities();
+  }
+
+  @Override
+  public void setCollapseEntities(boolean value) {
+    myState.myCollapseEntities.setValue(value);
+  }
+
+  @Override
+  public BooleanTrackableProperty getCollapseEntitiesProperty() {
+    return myState.myCollapseEntities;
   }
 
   @Override
   public boolean isCollapseDataUri() {
-    return myState.COLLAPSE_DATA_URI;
+    return myState.isCollapseDataUri();
+  }
+
+  @Override
+  public void setCollapseDataUri(boolean value) {
+    myState.myCollapseDataUri.setValue(value);
+  }
+
+  @Override
+  public BooleanTrackableProperty getCollapseDataUriProperty() {
+    return myState.myCollapseDataUri;
   }
 
   @Override
@@ -71,9 +113,29 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
   }
 
   public static final class State {
-    public boolean COLLAPSE_XML_TAGS;
-    public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
-    public boolean COLLAPSE_ENTITIES = true;
-    public boolean COLLAPSE_DATA_URI = true;
+    private BooleanTrackableProperty myCollapseXmlTags = new BooleanTrackableProperty();
+    private BooleanTrackableProperty myCollapseHtmlStyleAttributes = new BooleanTrackableProperty(true);
+    private BooleanTrackableProperty myCollapseEntities = new BooleanTrackableProperty(true);
+    private BooleanTrackableProperty myCollapseDataUri = new BooleanTrackableProperty(true);
+
+    @OptionTag("COLLAPSE_XML_TAGS")
+    public boolean isCollapseXmlTags() {
+      return myCollapseXmlTags.getValue();
+    }
+
+    @OptionTag("COLLAPSE_HTML_STYLE_ATTRIBUTE")
+    public boolean isCollapseHtmlStyleAttribute() {
+      return myCollapseHtmlStyleAttributes.getValue();
+    }
+
+    @OptionTag("COLLAPSE_ENTITIES")
+    public boolean isCollapseEntities() {
+      return myCollapseEntities.getValue();
+    }
+
+    @OptionTag("COLLAPSE_DATA_URI")
+    public boolean isCollapseDataUri() {
+      return myCollapseDataUri.getValue();
+    }
   }
 }

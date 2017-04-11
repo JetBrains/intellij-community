@@ -17,6 +17,51 @@ public class LongRangeLoop {
       if(<warning descr="Condition 'i == 20' is always 'false'">i == 20</warning>) {
         System.out.println("Oops");
       }
+      if(<warning descr="Condition 'i < -10' is always 'false'">i < -10</warning>) {
+        System.out.println("Oops");
+      }
+    }
+  }
+
+  public static void loopOrigin(long i) {
+    if(i > 0) {
+      for (long j = i; j <= 1000; ++j) {
+        if (<warning descr="Condition 'j < 0' is always 'false'">j < 0</warning>) {
+          System.out.println("Impossible");
+        }
+      }
+    }
+  }
+
+  public static void loopUnknownBoundIncluding(int bound) {
+    for (int i = 0; i <= bound; i++) {
+      if (i == -1) {
+        System.out.println("Overflow detected: bound was Integer.MAX_VALUE");
+      }
+    }
+  }
+
+  public static void loopUnknownBoundExcluding(int bound) {
+    for (int i = 0; i < bound; i++) {
+      if (<warning descr="Condition 'i == -1' is always 'false'">i == -1</warning>) {
+        System.out.println("Impossible even if bound is Integer.MAX_VALUE");
+      }
+    }
+  }
+
+  public static void loopUnknownBoundIncludingLong(int bound) {
+    for (long i = 0; i <= bound; i++) {
+      if (<warning descr="Condition 'i == -1' is always 'false'">i == -1</warning>) {
+        System.out.println("Impossible even if bound is Integer.MAX_VALUE");
+      }
+    }
+  }
+
+  public void IDEA168715() {
+    for (int i = 1; i < 100; i++) {
+      if (<warning descr="Condition 'i == 0' is always 'false'">i == 0</warning>) {
+        System.out.print("Dead code");
+      }
     }
   }
 

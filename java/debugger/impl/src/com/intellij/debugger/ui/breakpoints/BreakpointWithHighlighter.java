@@ -25,11 +25,11 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -184,12 +184,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected static boolean isPositionValid(@Nullable final XSourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return sourcePosition != null && sourcePosition.getFile().isValid();
-      }
-    }).booleanValue();
+    return ReadAction.compute(() -> sourcePosition != null && sourcePosition.getFile().isValid()).booleanValue();
   }
 
   @Nullable
@@ -344,13 +339,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected static PsiClass getPsiClassAt(@Nullable final SourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Nullable
-      @Override
-      public PsiClass compute() {
-        return JVMNameUtil.getClassAt(sourcePosition);
-      }
-    });
+    return ReadAction.compute(() -> JVMNameUtil.getClassAt(sourcePosition));
   }
 
   @Override
@@ -403,13 +392,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   public String toString() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
-               + getDescription()
-               + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END;
-      }
-    });
+    return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
+                                    + getDescription()
+                                    + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END);
   }
 }

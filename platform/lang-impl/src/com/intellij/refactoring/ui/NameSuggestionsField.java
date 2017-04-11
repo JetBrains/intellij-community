@@ -182,6 +182,10 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
+  public boolean hasSuggestions() {
+    return myComponent instanceof JComboBox;
+  }
+
   private JComponent createTextFieldForName(String[] nameSuggestions, FileType fileType) {
     final String text;
     if (nameSuggestions != null && nameSuggestions.length > 0 && nameSuggestions[0] != null) {

@@ -77,11 +77,8 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   private void ensureKotlinCompilerAddedToClassPath() {
-    try {
-      Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
+    if (getClass().getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
       return
-    }
-    catch (ClassNotFoundException ignored) {
     }
 
     def kotlinPluginLibPath = "$context.paths.communityHome/build/dependencies/build/Kotlin/lib"

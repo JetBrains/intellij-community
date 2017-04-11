@@ -1,15 +1,11 @@
 package com.jetbrains.edu.learning;
 
-import com.intellij.execution.RunContentExecutor;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -31,7 +27,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -61,8 +56,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.edu.learning.checker.StudyExecutor;
-import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderDeleteHandler;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -235,42 +228,6 @@ public class StudyUtils {
     catch (IOException e) {
       LOG.error(e);
     }
-  }
-
-  @Nullable
-  public static Sdk findSdk(@NotNull final Task task, @NotNull final Project project) {
-    final Language language = task.getLesson().getCourse().getLanguageById();
-    return StudyExecutor.INSTANCE.forLanguage(language).findSdk(project);
-  }
-
-  @NotNull
-  public static StudyTestRunner getTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    final Language language = task.getLesson().getCourse().getLanguageById();
-    return StudyExecutor.INSTANCE.forLanguage(language).getTestRunner(task, taskDir);
-  }
-
-  public static RunContentExecutor getExecutor(@NotNull final Project project, @NotNull final Task currentTask,
-                                               @NotNull final ProcessHandler handler) {
-    final Language language = currentTask.getLesson().getCourse().getLanguageById();
-    return StudyExecutor.INSTANCE.forLanguage(language).getExecutor(project, handler);
-  }
-
-  public static void setCommandLineParameters(@NotNull final GeneralCommandLine cmd,
-                                              @NotNull final Project project,
-                                              @NotNull final String filePath,
-                                              @NotNull final String sdkPath,
-                                              @NotNull final Task currentTask) {
-    final Language language = currentTask.getLesson().getCourse().getLanguageById();
-    StudyExecutor.INSTANCE.forLanguage(language).setCommandLineParameters(cmd, project, filePath, sdkPath, currentTask);
-  }
-
-  public static void showNoSdkNotification(@NotNull final Task currentTask, @NotNull final Project project) {
-    final Lesson lesson = currentTask.getLesson();
-    if (lesson == null) return;
-    final Course course = lesson.getCourse();
-    if (course == null) return;
-    final Language language = course.getLanguageById();
-    StudyExecutor.INSTANCE.forLanguage(language).showNoSdkNotification(project);
   }
 
 
@@ -735,7 +692,7 @@ public class StudyUtils {
   }
 
   public static void registerStudyToolWindow(@Nullable final Course course, Project project) {
-    if (course != null && "PyCharm".equals(course.getCourseType())) {
+    if (course != null && EduNames.PYCHARM.equals(course.getCourseType())) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
       registerToolWindows(toolWindowManager, project);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);

@@ -368,6 +368,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Rectangle bounds = rectangleForCurrentValue();
 
     if ( !comboBox.isEditable() ) {
+      listBox.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
       paintCurrentValue(g, bounds, comboBox.isPopupVisible());
     }
   }

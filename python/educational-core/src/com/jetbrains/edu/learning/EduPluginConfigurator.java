@@ -105,7 +105,6 @@ public interface EduPluginConfigurator {
       }
       group.add(action);
     }
-    group.add(new StudyRunAction());
     group.add(new StudyEditInputAction());
     return group;
   }

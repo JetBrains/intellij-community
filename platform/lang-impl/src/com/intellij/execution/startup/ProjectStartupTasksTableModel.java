@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,14 +128,14 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
   @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
     if (NAME_COLUMN == columnIndex) return false;
-    return myRunManager.isConfigurationShared(myAllConfigurations.get(rowIndex));
+    return myAllConfigurations.get(rowIndex).isShared();
   }
 
   public void addConfiguration(final @NotNull RunnerAndConfigurationSettings configuration) {
     if (myAllConfigurations.contains(configuration)) return;
     if (! myAllConfigurations.add(configuration)) return;
     Collections.sort(myAllConfigurations, RunnerAndConfigurationSettingsComparator.getInstance());
-    if (myRunManager.isConfigurationShared(configuration)) {
+    if (configuration.isShared()) {
       mySharedConfigurations.add(configuration);
     }
     fireTableDataChanged();

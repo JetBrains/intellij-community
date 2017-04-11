@@ -2,12 +2,15 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -27,7 +30,7 @@ import java.util.Map;
  * - go to Lesson and update elementTypes in taskList AbstractCollection. Needed for proper xml serialization
  * - Update TaskSerializer and TaskDeserializer in StudySerializationUtil to handle json serialization
  */
-public class Task implements StudyItem {
+public abstract class Task implements StudyItem {
   @Expose private String name;
 
   // index is visible to user number of task from 1 to task number
@@ -167,9 +170,12 @@ public class Task implements StudyItem {
 
   @NotNull
   public String getTestsText(@NotNull final Project project) {
+    final Course course = getLesson().getCourse();
+    final Language language = course.getLanguageById();
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
+      final VirtualFile file = taskDir.findChild(configurator.getTestFileName());
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -263,7 +269,9 @@ public class Task implements StudyItem {
   }
 
   // used in json serialization/deserialization
-  public String getTaskType() {
-    return "pycharm";
+  public abstract String getTaskType();
+
+  public StudyTaskChecker getChecker(@NotNull Project project) {
+    return new StudyTaskChecker<>(this, project);
   }
 }

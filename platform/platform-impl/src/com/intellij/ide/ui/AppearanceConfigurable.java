@@ -244,13 +244,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
-      final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
-      if (lafManager.checkLookAndFeel(lafInfo)) {
-        update = true;
-        shouldUpdateUI = false;
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
-      }
+      UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
+      update = true;
+      shouldUpdateUI = false;
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
     }
 
     if (shouldUpdateUI) {

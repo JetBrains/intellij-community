@@ -374,12 +374,15 @@ public class JavaReflectionReferenceUtil {
       if (type.equals(PsiType.NULL)) {
         return myPsiClass != null || myArrayDimensions != 0;
       }
-      if (type.getArrayDimensions() != myArrayDimensions) {
-        return false;
+      PsiType otherType = type;
+      for (int i = 0; i < myArrayDimensions; i++) {
+        if (!(otherType instanceof PsiArrayType)) {
+          return false;
+        }
+        otherType = ((PsiArrayType)otherType).getComponentType();
       }
-      final PsiType otherType = type.getDeepComponentType();
       if (myPrimitiveType != null) {
-        return myPrimitiveType.isAssignableFrom(otherType) || otherType.equalsToText(myPrimitiveType.getBoxedTypeName());
+        return myPrimitiveType.isAssignableFrom(otherType);
       }
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
       return factory.createType(myPsiClass).isAssignableFrom(otherType);

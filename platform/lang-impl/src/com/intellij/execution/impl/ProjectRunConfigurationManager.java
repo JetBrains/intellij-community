@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,7 @@ public class ProjectRunConfigurationManager implements PersistentStateComponent<
   @Override
   public Element getState() {
     Element state = new Element("state");
-    for (RunnerAndConfigurationSettings configuration : myManager.getStableConfigurations(true)) {
-      myManager.addConfigurationElement(state, configuration);
-    }
+    myManager.writeConfigurations(state, myManager.getSharedConfigurations());
     if (!ContainerUtil.isEmpty(myUnloadedElements)) {
       for (Element unloadedElement : myUnloadedElements) {
         state.addContent(unloadedElement.clone());
@@ -92,7 +90,6 @@ public class ProjectRunConfigurationManager implements PersistentStateComponent<
 
     // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
     myManager.setOrdered(false);
-    myManager.getSortedConfigurations();
   }
 
   static class RunConfigurationStateSplitter extends StateSplitterEx {

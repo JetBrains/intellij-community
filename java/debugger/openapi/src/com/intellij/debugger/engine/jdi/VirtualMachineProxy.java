@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.debugger.engine.jdi;
 
 import com.intellij.debugger.engine.DebugProcess;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -40,5 +41,5 @@ public interface VirtualMachineProxy {
 
   List<ReferenceType> nestedTypes(ReferenceType refType);
 
-  List<ReferenceType> classesByName(String s);
+  List<ReferenceType> classesByName(@NotNull String s);
 }

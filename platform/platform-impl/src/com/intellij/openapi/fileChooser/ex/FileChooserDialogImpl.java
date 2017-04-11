@@ -95,7 +95,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private MergingUpdateQueue myUiUpdater;
   private boolean myTreeIsUpdating;
 
-  public static DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
+  public static final DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
 
   public FileChooserDialogImpl(@NotNull final FileChooserDescriptor descriptor, @Nullable Project project) {
     super(project, true);
@@ -347,7 +347,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.add(dndLabel, BorderLayout.SOUTH);
 
     ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
-      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
@@ -622,9 +622,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     else {
       setErrorText(null);
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true));
 
     myNorthPanel.revalidate();
     myNorthPanel.repaint();

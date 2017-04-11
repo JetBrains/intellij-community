@@ -15,8 +15,6 @@ import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class CCCreateLesson extends CCCreateStudyItemActionBase {
   public static final String TITLE = "Create New " + EduNames.LESSON_TITLED;
 
@@ -82,8 +80,8 @@ public class CCCreateLesson extends CCCreateStudyItemActionBase {
   }
 
   @Override
-  protected List<? extends StudyItem> getSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
-    return course.getLessons(true);
+  protected void sortSiblings(@NotNull Course course, @Nullable StudyItem parentItem) {
+    course.sortLessons();
   }
 
   @Override

@@ -36,14 +36,18 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -135,15 +139,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
 
-    AtomicReference<ProgressWindowWithNotification> indicatorRef = new AtomicReference<>();
+    AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(
       () -> {
-        ProgressWindowWithNotification progress =
-          new ProgressWindowWithNotification(true, false, debugProcess.getProject(), "Cancel emulation");
+        ProgressWindow progress =
+          new ProgressWindow(true, false, debugProcess.getProject(), "Cancel emulation");
         progress.setDelayInMillis(2000);
         indicatorRef.set(progress);
       });
-    ProgressWindowWithNotification indicator = indicatorRef.get();
+    ProgressWindow indicator = indicatorRef.get();
 
     AtomicBoolean changed = new AtomicBoolean();
     XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
@@ -441,37 +445,34 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     //final int endOffset = document.getLineEndOffset(sourcePosition);
     //final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
     // conflicts with readAction on initial breakpoints creation
-    final MethodDescriptor descriptor = ApplicationManager.getApplication().runReadAction(new Computable<MethodDescriptor>() {
-      @Nullable
-      public MethodDescriptor compute() {
-        //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
-        PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
-        if (method == null) {
-          return null;
-        }
-        final int methodOffset = method.getTextOffset();
-        if (methodOffset < 0) {
-          return null;
-        }
-        if (document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
-          return null;
-        }
-
-        final PsiIdentifier identifier = method.getNameIdentifier();
-        int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
-        final MethodDescriptor descriptor =
-          new MethodDescriptor();
-        descriptor.methodName = JVMNameUtil.getJVMMethodName(method);
-        try {
-          descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
-          descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-        }
-        catch (IndexNotReadyException ignored) {
-          return null;
-        }
-        descriptor.methodLine = document.getLineNumber(methodNameOffset);
-        return descriptor;
+    final MethodDescriptor descriptor = ReadAction.compute(() -> {
+      //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
+      PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
+      if (method == null) {
+        return null;
       }
+      final int methodOffset = method.getTextOffset();
+      if (methodOffset < 0) {
+        return null;
+      }
+      if (document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
+        return null;
+      }
+
+      final PsiIdentifier identifier = method.getNameIdentifier();
+      int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
+      final MethodDescriptor res =
+        new MethodDescriptor();
+      res.methodName = JVMNameUtil.getJVMMethodName(method);
+      try {
+        res.methodSignature = JVMNameUtil.getJVMSignature(method);
+        res.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+      }
+      catch (IndexNotReadyException ignored) {
+        return null;
+      }
+      res.methodLine = document.getLineNumber(methodNameOffset);
+      return res;
     });
     if (descriptor == null || descriptor.methodName == null || descriptor.methodSignature == null) {
       return null;

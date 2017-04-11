@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +29,11 @@ import java.util.Set;
  * @author peter
  */
 public class UniqueNameGenerator implements Condition<String> {
-  private final Set<String> myExistingNames = new HashSet<String>();
+  private final Set<String> myExistingNames = new THashSet<String>();
 
   public <T> UniqueNameGenerator(@NotNull Collection<T> elements, @Nullable Function<T, String> namer) {
     for (final T t : elements) {
-      addExistingName(namer != null ? namer.fun(t) : t.toString());
+      addExistingName(namer != null ? StringUtil.notNullize(namer.fun(t)) : t.toString());
     }
   }
 
@@ -44,7 +45,7 @@ public class UniqueNameGenerator implements Condition<String> {
     return isUnique(candidate);
   }
 
-  public final boolean isUnique(String candidate) {
+  public final boolean isUnique(@NotNull String candidate) {
     return !myExistingNames.contains(candidate);
   }
 
@@ -105,7 +106,7 @@ public class UniqueNameGenerator implements Condition<String> {
     return result;
   }
 
-  public void addExistingName(String result) {
+  public void addExistingName(@NotNull String result) {
     myExistingNames.add(result);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class PlaybackRunner {
     myUseDirectActionCall = useDirectActionCall;
     myUseTypingTargets = useTypingTargets;
     myStopOnAppDeactivation = stopOnAppDeactivation;
-    myAppListener = new ApplicationActivationListener.Adapter() {
+    myAppListener = new ApplicationActivationListener() {
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
@@ -298,10 +298,6 @@ public class PlaybackRunner {
     cmd.setScriptDir(scriptDir);
 
     return cmd;
-  }
-
-  private void setDone() {
-    myActionCallback.setDone();
   }
 
   public void stop() {

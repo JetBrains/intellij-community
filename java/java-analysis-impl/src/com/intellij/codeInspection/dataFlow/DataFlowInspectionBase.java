@@ -405,7 +405,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     for (PsiCall call : visitor.getAlwaysFailingCalls()) {
       PsiMethod method = call.resolveMethod();
       if (method != null && reportedAnchors.add(call)) {
-        holder.registerProblem(getElementToHighlight(call), "The call to #ref always fails, according to its method contracts");
+        holder.registerProblem(getElementToHighlight(call), "The call to '#ref' always fails, according to its method contracts");
       }
     }
   }
@@ -1028,7 +1028,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
 
     private static boolean isNonTrivialFailingContract(MethodContract contract) {
-      return contract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial();
+      return contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial();
     }
 
     @Override

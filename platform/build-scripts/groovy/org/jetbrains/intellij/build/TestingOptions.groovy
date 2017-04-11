@@ -28,7 +28,7 @@ class TestingOptions {
    * <p> Test groups are defined in testGroups.properties files and there is an implicit 'ALL_EXCLUDE_DEFINED' group for tests which aren't
    * included into any group and 'ALL' group for all tests. By default 'ALL_EXCLUDE_DEFINED' group is used. </p>
    */
-  String testGroup = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
+  String testGroups = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported.

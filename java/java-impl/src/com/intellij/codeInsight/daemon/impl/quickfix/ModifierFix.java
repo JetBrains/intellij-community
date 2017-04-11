@@ -200,11 +200,21 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       changeModifierList(modifierList);
-      if (myShouldHave && owner instanceof PsiMethod && PsiModifier.ABSTRACT.equals(myModifier)) {
-        final PsiMethod method = (PsiMethod)owner;
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          changeModifierList(aClass.getModifierList());
+      if (myShouldHave && owner instanceof PsiMethod) {
+        if (PsiModifier.ABSTRACT.equals(myModifier)) {
+          final PsiMethod method = (PsiMethod)owner;
+          final PsiClass aClass = method.getContainingClass();
+          if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            changeModifierList(aClass.getModifierList());
+          }
+        }
+        else if (PsiModifier.PUBLIC.equals(myModifier) &&
+                 ((PsiMethod)owner).getBody() != null &&
+                 !((PsiMethod)owner).hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass = ((PsiMethod)owner).getContainingClass();
+          if (containingClass != null && containingClass.isInterface()) {
+            modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+          }
         }
       }
       UndoUtil.markPsiFileForUndo(containingFile);

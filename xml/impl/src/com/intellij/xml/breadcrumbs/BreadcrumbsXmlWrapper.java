@@ -49,8 +49,6 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
-import com.intellij.ui.RelativeFont;
-import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -77,77 +75,7 @@ import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
  * @author spleaner
  */
 public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
-  private static final class PsiCrumb extends Crumb.Impl {
-    private final PsiElement element;
-    private CrumbPresentation presentation;
-
-    private PsiCrumb(PsiElement element, BreadcrumbsInfoProvider provider) {
-      super(null, provider.getElementInfo(element), provider.getElementTooltip(element));
-      this.element = element;
-    }
-
-    private static PsiElement getElement(Crumb crumb) {
-      return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).element : null;
-    }
-
-    private static CrumbPresentation getPresentation(Crumb crumb) {
-      return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).presentation : null;
-    }
-  }
-
-  final boolean above = Registry.is("editor.breadcrumbs.above");
-
-  private final Breadcrumbs breadcrumbs = new Breadcrumbs() {
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height, int thickness) {
-      super.paint(g, x, y, width, above ? height : thickness, thickness);
-    }
-
-    @Override
-    public void setFont(Font font) {
-      super.setFont(RelativeFont.SMALL.derive(font));
-    }
-
-    @Override
-    public Color getForeground() {
-      if (!isForegroundSet()) {
-        Color foreground = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
-        if (foreground != null) return foreground;
-      }
-      return super.getForeground();
-    }
-
-    @Override
-    public Color getBackground() {
-      if (!isBackgroundSet()) {
-        Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-        if (background != null) return background;
-      }
-      return super.getBackground();
-    }
-
-    @Override
-    protected Color getForeground(Crumb crumb) {
-      CrumbPresentation presentation = PsiCrumb.getPresentation(crumb);
-      if (presentation == null) return super.getForeground(crumb);
-
-      Color background = super.getBackground(crumb);
-      if (background != null) return super.getForeground(crumb);
-
-      return presentation.getBackgroundColor(isSelected(crumb), isHovered(crumb), isAfterSelected(crumb));
-    }
-
-    @Override
-    protected Color getBackground(Crumb crumb) {
-      CrumbPresentation presentation = PsiCrumb.getPresentation(crumb);
-      if (presentation == null) return super.getBackground(crumb);
-
-      Color background = super.getBackground(crumb);
-      if (background == null) return null;
-
-      return presentation.getBackgroundColor(isSelected(crumb), isHovered(crumb), isAfterSelected(crumb));
-    }
-  };
+  final PsiBreadcrumbs breadcrumbs = new PsiBreadcrumbs();
 
   private final static Logger LOG = Logger.getInstance(BreadcrumbsXmlWrapper.class);
 
@@ -256,7 +184,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       ComponentAdapter resizeListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent event) {
-          updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+          breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
         }
       };
 
@@ -266,19 +194,15 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
         removeComponentListener(resizeListener);
         gutterComponent.removeComponentListener(resizeListener);
       });
-      updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+      breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
     }
     else {
-      updateBorder(0);
+      breadcrumbs.updateBorder(0);
     }
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
     queueUpdate();
-  }
-
-  private void updateBorder(int offset) {
-    breadcrumbs.setBorder(BorderFactory.createEmptyBorder(above ? 2 : 0, offset, above ? 0 : 2, 0));
   }
 
   private void updateCrumbs() {
@@ -520,6 +444,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     }
     myEditor = null;
+    breadcrumbs.setCrumbs(null);
   }
 
   @Nullable

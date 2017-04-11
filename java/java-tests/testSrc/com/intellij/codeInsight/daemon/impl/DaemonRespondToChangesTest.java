@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -2158,7 +2160,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private volatile boolean runHeavyProcessing;
   public void testDaemonDisablesItselfDuringHeavyProcessing() throws Exception {
-    executeWithReparseDelay(() -> {
+    executeWithoutReparseDelay(() -> {
       runHeavyProcessing = false;
       try {
         final Set<Editor> applied = Collections.synchronizedSet(new THashSet<>());
@@ -2380,7 +2382,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
-    executeWithReparseDelay(() -> {
+    executeWithoutReparseDelay(() -> {
       for (int i = 0; i < 1000; i++) {
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
@@ -2397,7 +2399,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static void executeWithReparseDelay(@NotNull Runnable task) {
+  private static void executeWithoutReparseDelay(@NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int oldDelay = settings.AUTOREPARSE_DELAY;
     settings.AUTOREPARSE_DELAY = 0;
@@ -2441,8 +2443,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   
   public void testCodeFoldingPassRestartsOnRegionUnfolding() throws Exception {
-    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    executeWithReparseDelay(() -> {
+    executeWithoutReparseDelay(() -> {
       configureByText(StdFileTypes.JAVA, "class Foo {\n" +
                                          "    void m() {\n" +
                                          "\n" +
@@ -2469,6 +2470,30 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testChangingSettingsHasImmediateEffectOnOpenedEditor() throws Exception {
+    executeWithoutReparseDelay(() -> {
+      configureByText(StdFileTypes.JAVA, "class C { \n" +
+                                         "  void m() {\n" +
+                                         "  } \n" +
+                                         "}");
+      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
+      waitForDaemon();
+      checkFoldingState("[FoldRegion -(22:27), placeholder='{}']");
+
+      JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+      boolean savedValue = settings.isCollapseMethods();
+      try {
+        settings.setCollapseMethods(true);
+        CodeFoldingConfigurable.applyCodeFoldingSettingsChanges();
+        waitForDaemon();
+        checkFoldingState("[FoldRegion +(22:27), placeholder='{}']");
+      }
+      finally {
+        settings.setCollapseMethods(savedValue);
+      }
+    });
+  }
+  
   private void checkFoldingState(String expected) {
     assertEquals(expected, Arrays.toString(myEditor.getFoldingModel().getAllFoldRegions()));
   }

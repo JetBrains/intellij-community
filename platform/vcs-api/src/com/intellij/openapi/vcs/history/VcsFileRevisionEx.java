@@ -19,6 +19,8 @@ import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Date;
+
 /**
  * User: spLeaner
  */
@@ -38,4 +40,7 @@ public abstract class VcsFileRevisionEx implements VcsFileRevision {
    */
   @NotNull
   public abstract FilePath getPath();
+
+  @Nullable
+  public abstract Date getAuthorDate();
 }

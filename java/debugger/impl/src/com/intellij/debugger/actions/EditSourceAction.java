@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 
 public class EditSourceAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
@@ -84,11 +83,7 @@ public class EditSourceAction extends DebuggerAction{
     }
 
     final NodeDescriptorImpl nodeDescriptor1 = nodeDescriptor;
-    return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-      public SourcePosition compute() {
-        return SourcePositionProvider.getSourcePosition(nodeDescriptor1, project, context);
-      }
-    });
+    return ReadAction.compute(() -> SourcePositionProvider.getSourcePosition(nodeDescriptor1, project, context));
   }
 
   public void update(AnActionEvent e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (isI18nProperty(expression)) {
       final IProperty property = getI18nProperty(expression);
       final HashSet<Object> set = new HashSet<>();
+      set.add(JavaCodeFoldingSettings.getInstance().getCollapseI18nMessagesProperty());
       set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       final String msg = formatI18nProperty(expression, property);
 

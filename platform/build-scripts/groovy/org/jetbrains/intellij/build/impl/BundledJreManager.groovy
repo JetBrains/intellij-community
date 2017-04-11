@@ -118,22 +118,16 @@ class BundledJreManager {
   }
 
   private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    def jreDir = new File(buildContext.paths.communityHome, "build/dependencies/build/jbre")
-    String suffix = "_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
-    String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
-    Collection<File> jreFiles = jreDir.listFiles()?.findAll { it.file && it.name.startsWith(prefix) && it.name.endsWith(suffix) } ?: [] as List<File>
-    String errorMessage;
-    if (jreFiles.size() > 1) {
-      errorMessage = "Cannot extract $osName JRE: several matching files are found ($jreFiles)"
-    }
-    else if (jreFiles.isEmpty()) {
-      errorMessage = "Cannot extract $osName JRE: no '${prefix}...${suffix}' files found in $jreDir"
-    }
-    else {
-      errorMessage = null
-    }
+    def dependenciesDir = new File(buildContext.paths.communityHome, 'build/dependencies')
+    def jreDir = new File(dependenciesDir, 'build/jbre')
+    def jreVersion = getExpectedJreVersion(dependenciesDir)
 
-    if (errorMessage != null) {
+    String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
+    String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
+    def jreArchive = new File(jreDir, "$prefix$suffix")
+
+    if (!jreArchive.file || !jreArchive.exists()) {
+      def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found (${jreDir.listFiles()})"
       if (buildContext.options.isInDevelopmentMode) {
         buildContext.messages.warning(errorMessage)
       }
@@ -142,7 +136,19 @@ class BundledJreManager {
       }
       return null
     }
-    return jreFiles.first()
+    return jreArchive
+  }
+
+  private static String getExpectedJreVersion(File dependenciesDir) {
+    def properties = new Properties()
+    def stream = new File(dependenciesDir, 'gradle.properties').newInputStream()
+    try {
+      properties.load(stream)
+      return properties.get("jdkBuild", "")
+    }
+    finally {
+      stream.close()
+    }
   }
 
   private enum JreVendor {

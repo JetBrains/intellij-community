@@ -26,9 +26,8 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -156,14 +155,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           if (!filter.isEnabled()) {
             continue;
           }
-          final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
-            public JVMName compute() {
-              PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
-              if (psiClass == null) {
-                return null;
-              }
-              return JVMNameUtil.getJVMQualifiedName(psiClass);
+          final JVMName jvmClassName = ReadAction.compute(() -> {
+            PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
+            if (psiClass == null) {
+              return null;
             }
+            return JVMNameUtil.getJVMQualifiedName(psiClass);
           });
           String pattern = filter.getPattern();
           try {

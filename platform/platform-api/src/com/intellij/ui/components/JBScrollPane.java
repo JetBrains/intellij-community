@@ -561,7 +561,7 @@ public class JBScrollPane extends JScrollPane {
         if (hsbOpaque) {
           Component corner = hsbOnTop ? (vsbOnLeft ? upperRight : upperLeft) : (vsbOnLeft ? lowerRight : lowerLeft);
           fillLowerCorner = corner == null && UIManager.getBoolean("ScrollPane.fillLowerCorner");
-          if (!fillLowerCorner && ScrollSettings.isHeaderOverCorner()) {
+          if (!fillLowerCorner && ScrollSettings.isHeaderOverCorner(rowHead)) {
             if (hsbOnTop) rowHeadBounds.y -= hsbBounds.height;
             rowHeadBounds.height += hsbBounds.height;
           }
@@ -577,7 +577,7 @@ public class JBScrollPane extends JScrollPane {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);
           fillUpperCorner = corner == null && UIManager.getBoolean("ScrollPane.fillUpperCorner");
-          if (!fillUpperCorner && ScrollSettings.isHeaderOverCorner()) {
+          if (!fillUpperCorner && ScrollSettings.isHeaderOverCorner(colHead)) {
             if (vsbOnLeft) colHeadBounds.x -= vsbBounds.width;
             colHeadBounds.width += vsbBounds.width;
           }

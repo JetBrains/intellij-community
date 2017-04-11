@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule.readExternal(element);
   }
 
-  protected void writeModule(final Element element) {
-    myModule.writeExternal(element);
+  protected void writeModule(@NotNull Element element) {
+    //if (myModule.getModule() != null) {
+      myModule.writeExternal(element);
+    //}
   }
 
   public Collection<Module> getAllModules() {

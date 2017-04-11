@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   @NotNull
   private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
+    return ContainerUtil.filter(myManager.getAllSettings(), myModuleConfigCondition);
   }
 
   private boolean usesMyModule(RunConfiguration config) {
@@ -109,9 +109,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + ")");
-    for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-      myManager.addConfigurationElement(element, settings);
-    }
+    myManager.writeConfigurations(element, getModuleRunConfigurationSettings());
     if (myUnloadedElements != null) {
       for (final Element unloadedElement : myUnloadedElements) {
         element.addContent(unloadedElement.clone());
@@ -154,6 +152,5 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
     // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
     myManager.setOrdered(false);
-    myManager.getSortedConfigurations();
   }
 }

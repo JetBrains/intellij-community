@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ public class DumpConfigurationTypesAction extends AnAction implements DumbAware 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
-    final ConfigurationType[] factories =
-      RunManager.getInstance(project).getConfigurationFactories();
-    for (ConfigurationType factory : factories) {
+    for (ConfigurationType factory : RunManager.getInstance(project).getConfigurationFactories()) {
       System.out.println(factory.getDisplayName() + " : " + factory.getId());
     }
   }

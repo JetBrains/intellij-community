@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,9 @@ public interface RunnerAndConfigurationSettings {
   /**
    * Returns the factory used to create the run configuration.
    *
-   * @return the factory, or null if the settings object was loaded from disk and no plugin corresponding to the stored type of the run
-   * configuration is loaded.
+   * @return the factory
    */
-  @Nullable
+  @NotNull
   ConfigurationFactory getFactory();
 
   /**
@@ -63,19 +62,23 @@ public interface RunnerAndConfigurationSettings {
   boolean isTemporary();
 
   /**
+   * Is stored in the versioned part of the project files
+   */
+  default boolean isShared() {
+    return false;
+  }
+
+  /**
    * Marks the configuration as temporary or permanent.
    *
    * @param temporary true if the configuration is temporary, false if it's permanent.
-   * @see RunManager#makeStable(com.intellij.execution.configurations.RunConfiguration)
    */
   void setTemporary(boolean temporary);
 
   /**
    * Returns the {@link RunConfiguration} instance that will be used to execute this run configuration.
-   *
-   * @return the run configuration, or null if the settings object was loaded from disk and no plugin corresponding to the stored type
-   * of the run configuration is loaded.
    */
+  @NotNull
   RunConfiguration getConfiguration();
 
   /**
@@ -90,6 +93,7 @@ public interface RunnerAndConfigurationSettings {
    *
    * @return the name of the configuration.
    */
+  @NotNull
   String getName();
 
   String getUniqueID();
@@ -121,7 +125,9 @@ public interface RunnerAndConfigurationSettings {
    * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
    * configuration.
    */
-  void checkSettings() throws RuntimeConfigurationException;
+  default void checkSettings() throws RuntimeConfigurationException {
+    checkSettings(null);
+  }
 
   /**
    * Checks whether the run configuration settings are valid for execution with the specified executor.
@@ -164,9 +170,9 @@ public interface RunnerAndConfigurationSettings {
   /**
    * Sets the "Before launch: Activate tool window" flag (for activation tool window Run/Debug etc.)
    *
-   * @param b if true, the tool window will be activated before launching this configuration.
+   * @param value if true, the tool window will be activated before launching this configuration.
    */
-  void setActivateToolWindowBeforeRun(boolean activate);
+  void setActivateToolWindowBeforeRun(boolean value);
 
   /**
    * Returns the "Before launch: Activate tool window" flag (for activation tool window Run/Debug etc.)
@@ -202,4 +208,6 @@ public interface RunnerAndConfigurationSettings {
    * @return the folder name, or null if the configuration is displayed on the top level.
    */
   @Nullable String getFolderName();
+
+
 }

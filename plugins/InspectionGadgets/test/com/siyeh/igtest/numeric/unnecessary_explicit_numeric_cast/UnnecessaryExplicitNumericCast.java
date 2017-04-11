@@ -88,3 +88,17 @@ enum Numeric {
 
   Numeric(byte b) {}
 }
+class S {
+
+  static void doSomething() {
+    //   V --- this cast is reported as unnecessary
+    if ( (int) whatever() < 0 ) {
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T whatever() {
+    return (T) (Object) 0;
+  }
+
+}

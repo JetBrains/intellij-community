@@ -651,6 +651,9 @@ public class EquivalenceChecker {
       else if (statement instanceof PsiBlockStatement) {
         element = ((PsiBlockStatement)statement).getCodeBlock();
       }
+      else {
+        break;
+      }
     }
     return element;
   }

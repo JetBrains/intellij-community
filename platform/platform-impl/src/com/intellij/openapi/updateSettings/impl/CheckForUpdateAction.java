@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,6 +33,10 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     }
     else {
       e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(place));
+    }
+
+    if (!UpdateSettings.getInstance().isPlatformUpdateEnabled()) {
+      e.getPresentation().setDescription(ActionsBundle.message("action.CheckForUpdate.description.plugins"));
     }
   }
 

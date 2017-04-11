@@ -2,9 +2,15 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task.Backgroundable;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicNames;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,17 +18,24 @@ import java.util.List;
 
 public class RemoteCourse extends Course {
   //course type in format "pycharm<version> <language>"
-  @SerializedName("course_format") private String myType = "pycharm" + EduStepicConnector.CURRENT_VERSION + " Python";
+  @SerializedName("course_format") private String myType =
+                        String.format("%s%d %s", EduStepicNames.PYCHARM_PREFIX, EduStepicConnector.CURRENT_VERSION, getLanguageID());
   @SerializedName("is_idea_compatible") private boolean isCompatible = true;
   List<Integer> sections;
   List<Integer> instructors = new ArrayList<>();
   @Expose private int id;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
+  private Boolean isUpToDate = true;
   @Expose private boolean isAdaptive = false;
   @SerializedName("is_public") boolean isPublic;
 
   public String getType() {
     return myType;
+  }
+
+  public void setLanguage(@NotNull final String language) {
+    super.setLanguage(language);
+    updateType(language);
   }
 
   public List<Integer> getSections() {
@@ -45,14 +58,24 @@ public class RemoteCourse extends Course {
   public boolean isUpToDate() {
     if (id == 0) return true;
     if (!EduNames.STUDY.equals(courseMode)) return true;
-    final Date date = EduStepicConnector.getCourseUpdateDate(id);
-    if (date == null) return true;
-    if (myUpdateDate == null) return true;
-    if (date.after(myUpdateDate)) return false;
-    for (Lesson lesson : lessons) {
-      if (!lesson.isUpToDate()) return false;
-    }
-    return true;
+
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Backgroundable(null, "Updating Course") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final Date date = EduStepicConnector.getCourseUpdateDate(id);
+        if (date == null) return;
+        if (date.after(myUpdateDate)) {
+          isUpToDate = false;
+        }
+        for (Lesson lesson : lessons) {
+          if (!lesson.isUpToDate()) {
+            isUpToDate = false;
+          }
+        }
+      }
+    }, new EmptyProgressIndicator());
+
+    return isUpToDate;
   }
 
   public void setUpdated() {
@@ -91,8 +114,10 @@ public class RemoteCourse extends Course {
 
   public void copyCourseParameters(RemoteCourse course) {
     setName(course.getName());
-
     setUpdateDate(course.getUpdateDate());
+  }
 
+  private void updateType(String language) {
+    myType = String.format("%s%d %s", EduStepicNames.PYCHARM_PREFIX, EduStepicConnector.CURRENT_VERSION, language);
   }
 }

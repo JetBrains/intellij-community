@@ -47,6 +47,8 @@ import java.util.function.Function;
 import javax.swing.JComponent;
 import javax.swing.border.AbstractBorder;
 
+import static javax.swing.SwingUtilities.isLeftMouseButton;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -337,6 +339,10 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     return insets;
   }
 
+  private static int getGap(Component component) {
+    return 10 * getScale(component);
+  }
+
   private static int getScale(Component component) {
     return component == null ? 1 : getScale(component.getFont());
   }
@@ -364,7 +370,9 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
 
     @Override
     public Dimension preferredLayoutSize(Container container) {
-      Dimension size = getPreferredSize(getComponents(container, Breadcrumbs::toVisible));
+      ArrayList<Component> components = getComponents(container, Breadcrumbs::toVisible);
+      Dimension size = getPreferredSize(components);
+      size.width += components.size() * getGap(container);
       if (size.height == 0) size.height = getPreferredHeight(container);
       JBInsets.addTo(size, container.getInsets());
       return size;
@@ -385,7 +393,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
         else /*if (bounds.width < size.width) {
             }
             else*/ {
-          int gap = Math.max(0, Math.min(10 * getScale(container), (bounds.width - size.width) / (count - 1)));
+          int gap = getGap(container);
           for (Component component : components) {
             Dimension preferred = component.getPreferredSize();
             component.setBounds(bounds.x, bounds.y, preferred.width, bounds.height);
@@ -416,6 +424,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
             if (!isHovered(crumb)) consumer = hover;
             break;
           case MouseEvent.MOUSE_CLICKED:
+            if (!isLeftMouseButton(event)) break;
             crumb = function.apply(event);
             if (crumb != null) consumer = select;
             break;
