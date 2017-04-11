@@ -235,12 +235,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       });
 
+      boolean hasModules = false;
       if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) &&
           JpsJavaSdkType.parseVersion(getLanguageLevel(ContainerUtil.getFirstItem(chunk.getModules()))) >= 9) {
         // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
         JavaModuleIndex index = getJavaModuleIndex(context);
-        for (JpsModule module : chunk.getModules()) {
-          ContainerUtil.addIfNotNull(filesToCompile, index.getModuleInfoFile(module));
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          File moduleInfoFile = index.getModuleInfoFile(target.getModule(), target.isTests());
+          if (moduleInfoFile != null) {
+            filesToCompile.add(moduleInfoFile);
+            hasModules = true;
+          }
         }
       }
 
@@ -251,7 +256,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool, hasModules);
     }
     catch (BuildDataCorruptedException | PersistentEnumeratorBase.CorruptedException | ProjectBuildException e) {
       throw e;
@@ -270,7 +275,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                            Collection<File> files,
                            OutputConsumer outputConsumer,
-                           JavaCompilingTool compilingTool) throws Exception {
+                           JavaCompilingTool compilingTool,
+                           boolean hasModules) throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
     final boolean hasSourcesToCompile = !files.isEmpty();
@@ -323,7 +329,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           try {
-            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool);
+            compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
             // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
@@ -370,7 +376,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               Collection<File> sourcePath,
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
-                              JavaCompilingTool compilingTool) throws Exception {
+                              JavaCompilingTool compilingTool,
+                              boolean hasModules) throws Exception {
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
 
@@ -395,7 +402,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final int targetLanguageLevel = JpsJavaSdkType.parseVersion(getLanguageLevel(chunk.getModules().iterator().next()));
       final boolean shouldForkJavac = shouldForkCompilerProcess(context, chunk, targetLanguageLevel);
-      final boolean hasModules = targetLanguageLevel >= 9 && getJavaModuleIndex(context).hasJavaModules(modules);
 
       // when forking external javac, compilers from SDK 1.6 and higher are supported
       Pair<String, Integer> forkSdk = null;
