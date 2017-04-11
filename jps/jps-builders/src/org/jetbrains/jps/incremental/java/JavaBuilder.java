@@ -78,6 +78,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -222,7 +223,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return true;
       });
 
-      boolean hasModules = false;
+
+      int javaModulesCount = 0;
       if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) &&
           JpsJavaSdkType.parseVersion(getLanguageLevel(ContainerUtil.getFirstItem(chunk.getModules()))) >= 9) {
         // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
@@ -231,7 +233,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           File moduleInfoFile = index.getModuleInfoFile(target.getModule(), target.isTests());
           if (moduleInfoFile != null) {
             filesToCompile.add(moduleInfoFile);
-            hasModules = true;
+            javaModulesCount++;
           }
         }
       }
@@ -243,7 +245,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool, hasModules);
+      if (javaModulesCount > 1) {
+        String prefix = "Cannot compile a module cycle with multiple module-info.java files: ";
+        String message = chunk.getModules().stream().map(JpsModule::getName).collect(Collectors.joining(", ", prefix, ""));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        return ExitCode.ABORT;
+      }
+
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer, compilingTool, javaModulesCount > 0);
     }
     catch (BuildDataCorruptedException | PersistentEnumeratorBase.CorruptedException | ProjectBuildException e) {
       throw e;
