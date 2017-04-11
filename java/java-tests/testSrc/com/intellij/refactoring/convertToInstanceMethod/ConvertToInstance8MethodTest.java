@@ -23,6 +23,10 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
     return "/refactoring/convertToInstance8Method/";
   }
 
+  public void testThisInsteadOfNoQualifier() throws Exception {
+    doTest(0);
+  }
+
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;

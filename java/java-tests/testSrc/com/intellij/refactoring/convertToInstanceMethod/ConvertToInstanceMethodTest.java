@@ -51,7 +51,7 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
     }
   }
 
-  private void doTest(final int targetParameter) throws Exception {
+  protected void doTest(final int targetParameter) throws Exception {
     doTest(targetParameter, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 

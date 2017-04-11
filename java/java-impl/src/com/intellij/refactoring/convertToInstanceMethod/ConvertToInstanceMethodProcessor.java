@@ -354,6 +354,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private static boolean sameUnqualified(PsiElement parent) {
+    if (parent instanceof PsiMethodReferenceExpression) return false;
     PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
     if (resolve instanceof PsiField) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(resolve.getProject());
