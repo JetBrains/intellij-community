@@ -3,7 +3,8 @@ LineBreakpoint created at ExceptionWhenEvaluating.java:6
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 ExceptionWhenEvaluating.java:5
 java.lang.RuntimeException: error!
-	at ExceptionWhenEvaluating$GeneratedEvaluationClass.lambda$invoke$3(ExceptionWhenEvaluating.java:!LINE_NUMBER!)
+	at ExceptionWhenEvaluating$GeneratedEvaluationClass$4.accept(ExceptionWhenEvaluating.java:!LINE_NUMBER!)
+	at ExceptionWhenEvaluating$GeneratedEvaluationClass$4.accept(ExceptionWhenEvaluating.java:!LINE_NUMBER!)
 	at java.util.stream.ReferencePipeline$11$1.accept(ReferencePipeline.java:!LINE_NUMBER!)
 	at java.util.stream.ReferencePipeline$11$1.accept(ReferencePipeline.java:!LINE_NUMBER!)
 	at java.util.stream.ReferencePipeline$11$1.accept(ReferencePipeline.java:!LINE_NUMBER!)
