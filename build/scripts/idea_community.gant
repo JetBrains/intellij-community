@@ -43,3 +43,13 @@ target('update-from-sources': 'Update locally installed distribution from compil
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
   new IdeaCommunityBuilder(home, binding, options, projectHome).buildUnpackedDistribution(deploy)
 }
+
+private boolean isDefined(String key) {
+  try {
+    this[key]
+    return true
+  }
+  catch (MissingPropertyException ignored) {
+    return false
+  }
+}
