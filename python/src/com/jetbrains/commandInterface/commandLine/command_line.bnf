@@ -22,6 +22,10 @@
    elementTypeClass = 'com.jetbrains.commandInterface.commandLine.CommandLineElementType'
 
 
+ //TODO: I would suggest making this pattern negative rather than positive in order to support all the characters like ? and others
+ //TODO: This lexer doesn't support multi-line arguments and options. LabelsReplyCreate issue
+ //TODO: This lexer doesn't support escaping.
+ //TODO: This parser doesn't support - --no-option - -nonoption.
   tokens=[
     space='regexp:\s+' // WARNING: Comment out or remove this (space) before generating Flex file! It is here only for live preview.
     EQ = '='
