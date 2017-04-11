@@ -36,7 +36,6 @@
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <pluginConfigurator implementationClass="com.jetbrains.edu.learning.PyEduPluginConfigurator" language="Python"/>
-    <eduProjectCreator implementation="com.jetbrains.edu.learning.builtInServer.EduPythonProjectCreator"/>
   </extensions>
   <actions>
     <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"

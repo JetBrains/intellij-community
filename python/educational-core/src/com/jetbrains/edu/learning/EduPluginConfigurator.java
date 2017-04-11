@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.Consumer;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -130,5 +131,9 @@ public interface EduPluginConfigurator {
 
   default List<String> getBundledCoursePaths() {
     return Collections.emptyList();
+  }
+
+  default boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
+    return false;
   }
 }

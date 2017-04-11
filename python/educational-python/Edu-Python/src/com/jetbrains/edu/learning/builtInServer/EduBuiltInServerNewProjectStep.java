@@ -30,9 +30,9 @@ import java.util.ArrayList;
 /**
  * @author meanmail
  */
-public class BuiltInServerNewProjectStep extends PyCharmNewProjectStep {
-  public BuiltInServerNewProjectStep(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
-    super(new BuiltInServerNewProjectStep.MyCustomization(course, onCreated));
+public class EduBuiltInServerNewProjectStep extends PyCharmNewProjectStep {
+  public EduBuiltInServerNewProjectStep(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
+    super(new EduBuiltInServerNewProjectStep.MyCustomization(course, onCreated));
   }
 
   protected static class MyCustomization extends PyCharmNewProjectStep.Customization {

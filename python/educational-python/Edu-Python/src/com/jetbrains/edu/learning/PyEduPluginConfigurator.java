@@ -5,6 +5,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -14,9 +16,11 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
+import com.jetbrains.edu.learning.builtInServer.EduBuiltInServerNewProjectStep;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
@@ -143,5 +147,19 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
     }
 
     return Collections.singletonList(new File(new File(jarPath, "courses"), COURSE_NAME).getPath());
+  }
+
+  @Override
+  public boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      AbstractNewProjectDialog dlg = new AbstractNewProjectDialog() {
+        @Override
+        protected DefaultActionGroup createRootStep() {
+          return new EduBuiltInServerNewProjectStep(course, onCreated);
+        }
+      };
+      dlg.show();
+    });
+    return true;
   }
 }

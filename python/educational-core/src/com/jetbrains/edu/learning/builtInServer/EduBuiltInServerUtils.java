@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.xmlb.XmlSerializationException;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -51,8 +52,8 @@ import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTas
 /**
  * @author meanmail
  */
-public class BuiltInServerUtils {
-  private static final Logger LOG = Logger.getInstance(BuiltInServerUtils.class);
+public class EduBuiltInServerUtils {
+  private static final Logger LOG = Logger.getInstance(EduBuiltInServerUtils.class);
 
   public static boolean focusOpenProject(int courseId, int stepId) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -189,7 +190,11 @@ public class BuiltInServerUtils {
               navigateToStep(project, targetCourse, stepId);
             }
           });
-        return EduProjectCreator.createProject(course[0], onCreated);
+        EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course[0].getLanguageById());
+        if (configurator == null) {
+          return false;
+        }
+        return configurator.createCourseProject(course[0], onCreated);
       }
     return false;
   }
