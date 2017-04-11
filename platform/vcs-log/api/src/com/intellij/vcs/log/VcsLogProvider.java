@@ -147,6 +147,9 @@ public interface VcsLogProvider {
   @Nullable
   String getCurrentBranch(@NotNull VirtualFile root);
 
+  @Nullable
+  VcsLogDiffHandler getDiffHandler();
+
   interface Requirements {
 
     /**
