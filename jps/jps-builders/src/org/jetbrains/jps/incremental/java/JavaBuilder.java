@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,7 +68,9 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -256,17 +259,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       LOG.info(e);
       String message = e.getMessage();
-      if (message == null) {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(out);
-        try {
-          e.printStackTrace(stream);
-        }
-        finally {
-          stream.close();
-        }
-        message = "Internal error: \n" + out;
-      }
+      if (message == null) message = "Internal error: \n" + ExceptionUtil.getThrowableText(e);
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
       throw new StopBuildException();
     }
