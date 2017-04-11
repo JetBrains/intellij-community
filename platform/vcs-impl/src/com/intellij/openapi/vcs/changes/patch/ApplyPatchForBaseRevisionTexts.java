@@ -38,11 +38,13 @@ public class ApplyPatchForBaseRevisionTexts {
   private final CharSequence myLocal;
   private CharSequence myBase;
   private String myPatched;
+  private boolean isAppliedSomehow;
   private final List<String> myWarnings;
+  private boolean myBaseRevisionLoaded;
 
   @NotNull
   @CalledInAny
-  public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
+  public static ApplyPatchForBaseRevisionTexts create(final Project project, @NotNull final VirtualFile file, final FilePath pathBeforeRename,
                                                        final TextFilePatch patch, @Nullable final CharSequence baseContents) {
     assert ! patch.isNewFile();
     final String beforeVersionId = patch.getBeforeVersionId();
@@ -61,7 +63,7 @@ public class ApplyPatchForBaseRevisionTexts {
   private ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider,
                                          final FilePath pathBeforeRename,
                                          final TextFilePatch patch,
-                                         final VirtualFile file,
+                                         @NotNull final VirtualFile file,
                                          @Nullable CharSequence baseContents) {
     myWarnings = new ArrayList<>();
     myLocal = getLocalFileContent(file);
@@ -70,8 +72,10 @@ public class ApplyPatchForBaseRevisionTexts {
 
     if (baseContents != null) {
       myBase = StringUtil.convertLineSeparators(baseContents.toString());
+      myBaseRevisionLoaded = true;
       final GenericPatchApplier applier = new GenericPatchApplier(myBase, hunks);
       if (!applier.execute()) {
+        isAppliedSomehow = true;
         applier.trySolveSomehow();
       }
       setPatched(applier.getAfter());
@@ -86,6 +90,7 @@ public class ApplyPatchForBaseRevisionTexts {
             return true;
           }
           myBase = text;
+          myBaseRevisionLoaded = true;
           setPatched(applier.getAfter());
           return false;
         }, myWarnings);
@@ -97,7 +102,8 @@ public class ApplyPatchForBaseRevisionTexts {
     }
 
     final GenericPatchApplier applier = new GenericPatchApplier(myLocal, hunks);
-    if (! applier.execute()) {
+    if (!applier.execute()) {
+      isAppliedSomehow = true;
       applier.trySolveSomehow();
     }
     setPatched(applier.getAfter());
@@ -128,5 +134,13 @@ public class ApplyPatchForBaseRevisionTexts {
 
   public String getPatched() {
     return myPatched;
+  }
+
+  public boolean isAppliedSomehow() {
+    return isAppliedSomehow;
+  }
+
+  public boolean isBaseRevisionLoaded() {
+    return myBaseRevisionLoaded;
   }
 }
