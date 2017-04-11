@@ -14,10 +14,8 @@ object MethodReferenceToLambdaTransformer : PsiElementTransformer.Base() {
     get() = object : JavaRecursiveElementVisitor() {
       override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression?) {
         super.visitMethodReferenceExpression(expression)
-        expression?.let {
-          val lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(it, false, true)
-          lambda?.let { expression.replace(lambda) }
-        }
+        if (expression == null) return
+        LambdaRefactoringUtil.convertMethodReferenceToLambda(expression, false, true)
       }
     }
 }
