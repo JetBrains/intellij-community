@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.igtest.numeric.cast_that_loses_precision;
 
 public class CastThatLosesPrecision
@@ -6,14 +21,14 @@ public class CastThatLosesPrecision
     {
     }
 
-    public void fooBar()
+    public void fooBar(long l, double d, float f)
     {
         byte b;
         int i;
         char ch;
-        long l = 0L;
-        double d = 0.0;
-        float f = 0.0f;
+
+
+
 
         i = (int) f;
         System.out.println("i = " + i);
@@ -38,11 +53,11 @@ public class CastThatLosesPrecision
         System.out.println("f = " + f);
     }
 
-    public void barFoo() {
+    public void barFoo(long l) {
         byte b;
         int i;
         char ch;
-        long l = 0L;
+
 
         i = (int) 0.0f;
         System.out.println("i = " + i);
@@ -77,5 +92,24 @@ public class CastThatLosesPrecision
     long temp = d != +0.0d ? (int) d : 0L;
     result = 31 * result + (int) (temp ^ temp >>> 32);
     return result;
+  }
+
+  void testNegativeOnly(long longNumberOfAgents) {
+    if (longNumberOfAgents > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Too many agents: " + longNumberOfAgents);
+    }
+    int intNumberOfAgents = (int)longNumberOfAgents;
+    System.out.println(intNumberOfAgents);
+  }
+
+  void testBoundsCheck(long longNumberOfAgents) {
+    if (longNumberOfAgents < 0) {
+      throw new IllegalArgumentException("Negative is not allowed");
+    }
+    if (longNumberOfAgents > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Too many agents: " + longNumberOfAgents);
+    }
+    int intNumberOfAgents = (int)longNumberOfAgents;
+    System.out.println(intNumberOfAgents);
   }
 }
