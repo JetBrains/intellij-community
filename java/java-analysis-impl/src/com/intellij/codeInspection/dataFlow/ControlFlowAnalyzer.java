@@ -27,9 +27,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
+import com.siyeh.ig.psiutils.CountingLoop;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -463,6 +467,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       });
     }
 
+    addCountingLoopBound(statement);
+
     PsiExpression condition = statement.getCondition();
     if (condition != null) {
       condition.accept(this);
@@ -494,6 +500,41 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiVariable psiVariable = (PsiVariable)declaredVariable;
       myCurrentFlow.removeVariable(psiVariable);
     }
+  }
+
+  /**
+   * Add known-to-be-true condition inside counting loop, effectively converting
+   * {@code for(int i=origin; i<bound; i++)} to {@code for(int i=origin; i>=origin && i<bound; i++)}.
+   * This adds a range knowledge to data flow analysis.
+   * <p>
+   * Does nothing if the statement is not a counting loop.
+   *
+   * @param statement counting loop candidate.
+   */
+  private void addCountingLoopBound(PsiForStatement statement) {
+    CountingLoop loop = CountingLoop.from(statement);
+    if (loop == null) return;
+    // Add known-to-be-true condition inside counting loop, effectively converting
+    PsiLocalVariable counter = loop.getCounter();
+    PsiExpression initializer = loop.getInitializer();
+    if (!PsiType.INT.equals(initializer.getType()) && !PsiType.LONG.equals(initializer.getType())) return;
+    DfaValue origin = null;
+    Object initialValue = ExpressionUtils.computeConstantExpression(initializer);
+    if (initialValue instanceof Number) {
+      origin = myFactory.getConstFactory().createFromValue(initialValue, initializer.getType(), null);
+    }
+    else if (initializer instanceof PsiReferenceExpression) {
+      PsiVariable initialVariable = ObjectUtils.tryCast(((PsiReferenceExpression)initializer).resolve(), PsiVariable.class);
+      if ((initialVariable instanceof PsiLocalVariable || initialVariable instanceof PsiParameter)
+        && !VariableAccessUtils.variableIsAssigned(initialVariable, statement.getBody())) {
+        origin = myFactory.getVarFactory().createVariableValue(initialVariable, false);
+      }
+    }
+    if (origin == null || VariableAccessUtils.variableIsAssigned(counter, statement.getBody())) return;
+    addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(counter, false), null));
+    addInstruction(new PushInstruction(origin, null));
+    addInstruction(new BinopInstruction(JavaTokenType.LT, null, myProject));
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
   }
 
   @Override public void visitIfStatement(PsiIfStatement statement) {

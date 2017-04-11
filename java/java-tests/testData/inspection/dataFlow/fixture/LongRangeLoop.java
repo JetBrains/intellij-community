@@ -17,6 +17,27 @@ public class LongRangeLoop {
       if(<warning descr="Condition 'i == 20' is always 'false'">i == 20</warning>) {
         System.out.println("Oops");
       }
+      if(<warning descr="Condition 'i < -10' is always 'false'">i < -10</warning>) {
+        System.out.println("Oops");
+      }
+    }
+  }
+
+  public static void loopOrigin(long i) {
+    if(i > 0) {
+      for(long j = i; j < 1000; ++j) {
+        if (<warning descr="Condition 'j < 0' is always 'false'">j < 0</warning>) {
+          System.out.println("Impossible");
+        }
+      }
+    }
+  }
+
+  public void IDEA168715() {
+    for (int i = 1; i < 100; i++) {
+      if (<warning descr="Condition 'i == 0' is always 'false'">i == 0</warning>) {
+        System.out.print("Dead code");
+      }
     }
   }
 
