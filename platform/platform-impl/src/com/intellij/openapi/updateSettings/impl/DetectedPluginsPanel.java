@@ -20,14 +20,14 @@ import com.intellij.ide.plugins.PluginHeaderPanel;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.OrderPanel;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -100,11 +100,18 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     removeAll();
 
-    Splitter splitter = new Splitter(false);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(entryTable));
-    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myDescriptionPanel));
+    Splitter splitter = new OnePixelSplitter(false);
+    splitter.setFirstComponent(wrapWithPane(entryTable, 1, 0));
+    splitter.setSecondComponent(wrapWithPane(myDescriptionPanel, 0, 1));
     add(splitter, BorderLayout.CENTER);
   }
+
+  @NotNull
+  private static JScrollPane wrapWithPane(@NotNull JComponent c, int left, int right) {
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(c);
+    pane.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, left, 1, right));
+    return pane;
+  } 
 
   public String getCheckboxColumnName() {
     return "";
