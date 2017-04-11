@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.edu.learning.builtInServer.Utils.*;
+import static com.jetbrains.edu.learning.builtInServer.BuiltInServerUtils.*;
 
 /**
  * @author meanmail

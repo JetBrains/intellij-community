@@ -15,20 +15,24 @@
  */
 package com.jetbrains.edu.learning.builtInServer;
 
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.xmlb.XmlSerializationException;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -38,17 +42,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
+import static com.jetbrains.edu.learning.core.EduNames.STUDY_PROJECT_XML_PATH;
 import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTask;
 
 /**
  * @author meanmail
  */
-public class Utils {
-  public static final String STUDY_PROJECT_XML_PATH = "/.idea/study_project.xml";
+public class BuiltInServerUtils {
+  private static final Logger LOG = Logger.getInstance(BuiltInServerUtils.class);
 
   public static boolean focusOpenProject(int courseId, int stepId) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -87,8 +91,7 @@ public class Utils {
   }
 
   public static boolean openRecentProject(int targetCourseId, int stepId) {
-    RecentProjectsManagerBase recentProjectsManager;
-    recentProjectsManager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
+    RecentProjectsManagerBase recentProjectsManager = RecentProjectsManagerBase.getInstanceEx();
 
     if (recentProjectsManager == null) {
       return false;
@@ -153,22 +156,31 @@ public class Utils {
         return ((RemoteCourse)course).getId();
       }
     }
-    catch (IllegalStateException ignored) {
+    catch (IllegalStateException | XmlSerializationException ignored) {
     }
     return 0;
   }
 
   public static boolean createProject(int courseId, int stepId) {
-    EduProjectGenerator generator = new EduProjectGenerator();
+    final Course[] course = new Course[1];
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    String title = "Getting Available Courses";
-    List<Course> availableCourses = new ArrayList<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      List<Course> courses = generator.getCoursesUnderProgress(true, title, defaultProject);
-      availableCourses.addAll(courses);
-    });
-    for (Course course : availableCourses) {
-      if (course instanceof RemoteCourse && ((RemoteCourse)course).getId() == courseId) {
+    StepicUser user = StudySettings.getInstance().getUser();
+    ApplicationManager.getApplication().invokeAndWait(() ->
+      course[0] = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(() -> {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+          return execCancelable(() -> {
+            try {
+              return EduStepicConnector.getCourseFromStepik(user, courseId);
+            }
+            catch (IOException e) {
+              LOG.warn("Tried to create a project for course with id=" + courseId, e);
+              return null;
+            }
+          });
+        }, "Getting Available Courses", true, defaultProject));
+
+      if (course[0] != null) {
         Consumer<Project> onCreated = project ->
           ApplicationManager.getApplication().invokeLater(() -> {
             StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
@@ -177,9 +189,8 @@ public class Utils {
               navigateToStep(project, targetCourse, stepId);
             }
           });
-        return EduProjectCreator.createProject(course, onCreated);
+        return EduProjectCreator.createProject(course[0], onCreated);
       }
-    }
     return false;
   }
 
@@ -195,13 +206,10 @@ public class Utils {
 
   @Nullable
   private static Task getTask(@NotNull Course course, int stepId) {
-    List<Lesson> lessons = course.getLessons();
-    for (Lesson lesson : lessons) {
-      Optional<Task> optionalTask = lesson.getTaskList().stream()
-        .filter(task -> task.getStepId() == stepId)
-        .findFirst();
-      if (optionalTask.isPresent()) {
-        return optionalTask.get();
+    for (Lesson lesson : course.getLessons()) {
+      Task task = lesson.getTask(stepId);
+      if (task != null) {
+        return task;
       }
     }
     return null;
