@@ -80,7 +80,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
         //
       }
     }
-    document.setText(myPatch.getNewFileText());
+    document.setText(myPatch.getSingleHunkPatchText());
     FileDocumentManager.getInstance().saveDocument(document);
   }
 }
