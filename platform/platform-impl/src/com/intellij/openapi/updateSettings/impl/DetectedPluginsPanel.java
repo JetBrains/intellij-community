@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,10 +73,10 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
           final String loadedVersion = downloader.getPluginVersion();
           if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
             final String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
-                                            ? "v. " + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " -> " : "")
+                                            ? ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " " + UIUtil.rightArrow() + " " : "")
                                             : "";
             final String availableVersion = loadedVersion != null ? loadedVersion : "";
-            append(" (" + installedVersion + availableVersion + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+            append(" " + installedVersion + availableVersion, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
           }
         }
       }
