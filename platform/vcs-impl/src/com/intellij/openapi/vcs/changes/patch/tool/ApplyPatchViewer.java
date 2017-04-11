@@ -285,6 +285,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   //
 
   protected void initPatchViewer() {
+  myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myPatchRequest));
     final Document outputDocument = myResultEditor.getDocument();
     boolean success = DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
       outputDocument.setText(myPatchRequest.getLocalContent());
