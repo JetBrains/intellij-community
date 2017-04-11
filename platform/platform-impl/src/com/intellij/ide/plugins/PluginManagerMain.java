@@ -85,7 +85,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 public abstract class PluginManagerMain implements Disposable {
   public static final String JETBRAINS_VENDOR = "JetBrains";
 
-  public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
+  public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
 
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
