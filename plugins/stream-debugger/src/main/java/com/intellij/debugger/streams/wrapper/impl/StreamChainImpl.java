@@ -36,7 +36,8 @@ public class StreamChainImpl implements StreamChain {
 
   public StreamChainImpl(@NotNull ProducerStreamCall producer,
                          @NotNull List<IntermediateStreamCall> intermediateCalls,
-                         @NotNull TerminatorStreamCall terminator, PsiElement context) {
+                         @NotNull TerminatorStreamCall terminator,
+                         @NotNull PsiElement context) {
     myProducer = producer;
     myIntermediateCalls = intermediateCalls;
     myTerminator = terminator;
