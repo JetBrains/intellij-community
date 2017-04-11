@@ -514,8 +514,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void addCountingLoopBound(PsiForStatement statement) {
     CountingLoop loop = CountingLoop.from(statement);
     if (loop == null) return;
-    // Add known-to-be-true condition inside counting loop, effectively converting
     PsiLocalVariable counter = loop.getCounter();
+    if (loop.isIncluding() && !(PsiType.LONG.equals(counter.getType()) && PsiType.INT.equals(loop.getBound().getType()))) {
+      Object bound = ExpressionUtils.computeConstantExpression(loop.getBound());
+      // could be for(int i=0; i<=Integer.MAX_VALUE; i++) which will overflow: conservatively skip this
+      if (!(bound instanceof Number)) return;
+      if (bound.equals(Long.MAX_VALUE) || bound.equals(Integer.MAX_VALUE)) return;
+    }
     PsiExpression initializer = loop.getInitializer();
     if (!PsiType.INT.equals(initializer.getType()) && !PsiType.LONG.equals(initializer.getType())) return;
     DfaValue origin = null;
