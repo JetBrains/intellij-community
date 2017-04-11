@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
@@ -138,7 +138,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected void init() {
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(main, true);
     HTMLEditorKit kit = new HTMLEditorKit();
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
@@ -147,6 +147,7 @@ public abstract class PluginManagerMain implements Disposable {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
     JScrollPane installedScrollPane = createTable();
+    installedScrollPane.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 1, 1, 0));
     myPluginHeaderPanel = new PluginHeaderPanel(this);
     myHeader.setBackground(UIUtil.getTextFieldBackground());
     myPluginHeaderPanel.getPanel().setBackground(UIUtil.getTextFieldBackground());
@@ -168,7 +169,7 @@ public abstract class PluginManagerMain implements Disposable {
         g.fillRect(0,0, getWidth(), getHeight());
       }
     };
-    header.setBorder(new CustomLineBorder(1, 1, 0, 1));
+    header.setBorder(new CustomLineBorder(1, 1, 0, 0));
     final JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
@@ -213,7 +214,7 @@ public abstract class PluginManagerMain implements Disposable {
     modelListener.tableChanged(null);
 
     myDescriptionScrollPane.setBackground(UIUtil.getTextFieldBackground());
-    Border border = new BorderUIResource.LineBorderUIResource(new JBColor(Gray._220, Gray._55), 1);
+    Border border = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 1, 1);
     myInfoPanel.setBorder(border);
   }
 
