@@ -20,7 +20,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,33 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 /**
  * @author Maxim.Medvedev
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
-  private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = callExpression -> {
-    GroovyResolveResult[] resolveResults;
-
-    GrExpression invokedExpression = callExpression.getInvokedExpression();
-    if (invokedExpression instanceof GrReferenceExpression) {
-      resolveResults = ((GrReferenceExpression)invokedExpression).multiResolve(false);
-    }
-    else {
-      resolveResults = GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
-        PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
-      if (res != null) {
-        return res;
-      }
-    }
-
-    return null;
-  };
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
@@ -83,7 +62,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
 
   @Override
   public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, METHOD_CALL_TYPES_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, GrTypeCalculator::getTypeFromCalculators);
   }
 
   @Override
