@@ -15,4 +15,13 @@
   <item name="com.intellij.util.containers.ContainerUtil java.util.Map&lt;K, V&gt; newHashMap(com.intellij.openapi.util.Pair&lt;K, ? extends V&gt;, com.intellij.openapi.util.Pair&lt;K, ? extends V&gt;...)">
     <annotation name="java.lang.SafeVarargs" />
   </item>
+  <item name="com.intellij.util.containers.Convertor">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.containers.InternalIterator">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.containers.Predicate">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
 </root>
