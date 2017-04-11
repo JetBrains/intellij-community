@@ -90,12 +90,8 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     File index = new File(storageRoot, INDEX_PATH);
     FileUtil.createParentDirs(index);
 
-    Writer writer = new OutputStreamWriter(new FileOutputStream(index), CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (Writer writer = new OutputStreamWriter(new FileOutputStream(index), CharsetToolkit.UTF8_CHARSET)) {
       p.store(writer, null);
-    }
-    finally {
-      writer.close();
     }
   }
 
@@ -106,14 +102,8 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     }
 
     Properties p = new Properties();
-    try {
-      Reader reader = new InputStreamReader(new FileInputStream(index), CharsetToolkit.UTF8_CHARSET);
-      try {
-        p.load(reader);
-      }
-      finally {
-        reader.close();
-      }
+    try (Reader reader = new InputStreamReader(new FileInputStream(index), CharsetToolkit.UTF8_CHARSET)) {
+      p.load(reader);
     }
     catch (IOException e) {
       throw new RuntimeException("Failed to read module index file: " + index, e);

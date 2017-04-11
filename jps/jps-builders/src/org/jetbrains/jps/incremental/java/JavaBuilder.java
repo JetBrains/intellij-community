@@ -26,6 +26,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
@@ -78,65 +79,54 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
-import static com.intellij.util.containers.ContainerUtil.concat;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-
 /**
  * @author Eugene Zhuravlev
  * @since 21.09.2011
  */
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
-  public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = "java";
-  private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = GlobalContextKey.create("_java_compiler_version_");
+
+  public static final String BUILDER_NAME = "java";
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
-  private static final Key<Boolean> PREFER_TARGT_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
+  public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
+
+  private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = GlobalContextKey.create("_java_compiler_version_");
+  private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
+  private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<>(Collections.singletonList(
-    "-target"
-  ));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<>(Arrays.asList(
-    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
-  ));
+  private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
+    "-target");
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
+    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError");
 
-  public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
-  private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
-
-  private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
-  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes;
-  @Nullable
-  private static final File ourDefaultRtJar;
+  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
+  private static final @Nullable File ourDefaultRtJar;
   static {
-    ourCompilableModuleTypes = new HashSet<>();
     for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
       ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
     }
+
     File rtJar = null;
     StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
     while (tokenizer.hasMoreTokens()) {
-      final String path = tokenizer.nextToken();
-      if (isRtJarPath(path)) {
-        rtJar = new File(path);
+      File file = new File(tokenizer.nextToken());
+      if ("rt.jar".equals(file.getName())) {
+        rtJar = file;
         break;
       }
     }
     ourDefaultRtJar = rtJar;
   }
 
-  private static boolean isRtJarPath(String path) {
-    if (StringUtil.endsWithIgnoreCase(path, RT_JAR_PATH_SUFFIX)) {
-      return true;
-    }
-    return RT_JAR_PATH_SUFFIX.charAt(0) != '/' && StringUtil.endsWithIgnoreCase(path, "/rt.jar");
-  }
-
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
   }
+
+  private final Executor myTaskRunner;
 
   public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
@@ -202,7 +192,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   @Override
   public List<String> getCompilableFileExtensions() {
-    return Collections.singletonList(JAVA_EXTENSION);
+    return COMPILABLE_EXTENSIONS;
   }
 
   @Override
@@ -225,14 +215,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final Set<File> filesToCompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
-        @Override
-        public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
-          if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
-            filesToCompile.add(file);
-          }
-          return true;
+      dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
+        if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+          filesToCompile.add(file);
         }
+        return true;
       });
 
       boolean hasModules = false;
@@ -443,7 +430,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!platformCp.isEmpty()) {
         final int chunkSdkVersion;
         if (hasModules) {
-          modulePath = newArrayList(concat(platformCp, modulePath));
+          modulePath = JBIterable.from(platformCp).append(modulePath).toList();
           platformCp = Collections.emptyList();
         }
         else if ((chunkSdkVersion = getChunkSdkVersion(chunk)) >= 9) {
@@ -451,7 +438,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           // because platform classes are stored in jimage binary files with unknown format.
           // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
           // and prepending additional jars from the JDK configuration to compilation classpath
-          classPath = newArrayList(concat(platformCp, classPath));
+          classPath = JBIterable.from(platformCp).append(classPath).toList();
           platformCp = Collections.emptyList();
         }
         else if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
@@ -484,7 +471,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
           forkSdk.getFirst(),
-          getExternalJavacHeapSize(context),
+          getExternalJavacHeapSize(),
           vmOptions, options, platformCp, classPath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
@@ -511,7 +498,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static int getExternalJavacHeapSize(CompileContext context) {
+  private static int getExternalJavacHeapSize() {
     //final JpsProject project = context.getProjectDescriptor().getProject();
     //final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     //final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
@@ -598,13 +585,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean preferTargetJdkCompiler(CompileContext context) {
-    Boolean val = PREFER_TARGT_JDK_COMPILER.get(context);
+    Boolean val = PREFER_TARGET_JDK_COMPILER.get(context);
     if (val == null) {
       final JpsProject project = context.getProjectDescriptor().getProject();
       final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
       // default
       val = config != null? config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER : Boolean.TRUE;
-      PREFER_TARGT_JDK_COMPILER.set(context, val);
+      PREFER_TARGET_JDK_COMPILER.set(context, val);
     }
     return val;
   }
@@ -789,7 +776,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
       if (srcOutput != null) {
-        srcOutput.mkdirs();
+        FileUtil.createDirectory(srcOutput);
         options.add("-s");
         options.add(srcOutput.getPath());
       }

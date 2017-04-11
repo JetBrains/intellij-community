@@ -43,7 +43,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M7("${TEST_MODULE_NAME}_m7", "src_m7");
 
     fun root(): VirtualFile =
-        if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
+      if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
   }
 
   override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -93,8 +93,8 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
   fun cleanupSourceRoots() = runWriteAction {
     ModuleDescriptor.values().asSequence()
-        .filter { it != ModuleDescriptor.MAIN }
-        .flatMap { it.root().children.asSequence() }
-        .forEach { it.delete(this) }
+      .filter { it != ModuleDescriptor.MAIN }
+      .flatMap { it.root().children.asSequence() }
+      .forEach { it.delete(this) }
   }
 }
