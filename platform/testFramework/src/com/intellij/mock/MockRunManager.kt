@@ -36,6 +36,9 @@ class MockRunManager : RunManagerEx() {
   override val configurationFactories: Array<ConfigurationType>
     get() = emptyArray()
 
+  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
+    get() = emptyList()
+
   override val allConfigurationsList: List<RunConfiguration>
     get() = emptyList()
 

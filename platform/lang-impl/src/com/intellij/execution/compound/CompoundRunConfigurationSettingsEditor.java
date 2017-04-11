@@ -19,7 +19,6 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunConfigurationSelector;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -119,13 +118,10 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     return decorator.disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-
         final List<RunConfiguration> all = new ArrayList<>();
-        for (ConfigurationType type : myRunManager.getConfigurationFactories()) {
-          if (!(type instanceof UnknownConfigurationType)) {
-            for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
-              all.add(settings.getConfiguration());
-            }
+        for (ConfigurationType type : myRunManager.getConfigurationFactoriesWithoutUnknown()) {
+          for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
+            all.add(settings.getConfiguration());
           }
         }
 

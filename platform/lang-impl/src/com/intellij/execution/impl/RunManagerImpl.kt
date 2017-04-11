@@ -204,7 +204,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   override val configurationFactories by lazy { idToType.values.toTypedArray() }
 
-  val configurationFactoriesWithoutUnknown: List<ConfigurationType>
+  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
     get() = idToType.values.filterSmart { it !is UnknownConfigurationType }
 
   /**
@@ -232,7 +232,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   fun getSettings(configuration: RunConfiguration) = sortedConfigurations.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = sortedConfigurations.filterSmart { it.type?.id == type.id }
+  override fun getConfigurationSettingsList(type: ConfigurationType) = lock.read { sortedConfigurations.filterSmart { it.type?.id == type.id } }
 
   fun getConfigurationSettings() = idToSettings.values.toTypedArray()
 

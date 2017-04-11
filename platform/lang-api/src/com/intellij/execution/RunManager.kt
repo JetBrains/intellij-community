@@ -58,6 +58,8 @@ abstract class RunManager {
    */
   abstract val configurationFactories: Array<ConfigurationType>
 
+  abstract val configurationFactoriesWithoutUnknown: List<ConfigurationType>
+
   /**
    * Returns the list of all configurations of a specified type.
    * @param type a run configuration type.

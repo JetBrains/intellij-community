@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -156,8 +154,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         allActionsGroup.addSeparator();
       }
 
-      final ConfigurationType[] types = runManager.getConfigurationFactories();
-      for (ConfigurationType type : types) {
+      for (ConfigurationType type : runManager.getConfigurationFactories()) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
         Map<String,List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
         for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
@@ -273,7 +270,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       myConfiguration = configuration;
       myProject = project;
       String name = configuration.getName();
-      if (name == null || name.length() == 0) {
+      if (name.isEmpty()) {
         name = " ";
       }
       final Presentation presentation = getTemplatePresentation();

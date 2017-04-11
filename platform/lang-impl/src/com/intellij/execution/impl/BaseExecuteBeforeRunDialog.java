@@ -146,9 +146,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   private DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
     RunManager runManager = RunManager.getInstance(myProject);
-    final ConfigurationType[] configTypes = runManager.getConfigurationFactories();
-
-    for (final ConfigurationType type : configTypes) {
+    for (final ConfigurationType type : runManager.getConfigurationFactories()) {
       final Icon icon = type.getIcon();
       DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
       root.add(typeNode);

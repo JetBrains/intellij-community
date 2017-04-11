@@ -204,8 +204,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     final RunManagerEx manager = getRunManager();
-    final ConfigurationType[] factories = manager.getConfigurationFactories();
-    for (ConfigurationType type : factories) {
+    for (ConfigurationType type : manager.getConfigurationFactories()) {
       final List<RunnerAndConfigurationSettings> configurations = manager.getConfigurationSettingsList(type);
       if (!configurations.isEmpty()) {
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
@@ -232,16 +231,13 @@ class RunConfigurable extends BaseConfigurable {
 
     // add defaults
     final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode(DEFAULTS);
-    final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
-    for (final ConfigurationType type : configurationTypes) {
-      if (!(type instanceof UnknownConfigurationType)) {
-        ConfigurationFactory[] configurationFactories = type.getConfigurationFactories();
-        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
-        defaults.add(typeNode);
-        if (configurationFactories.length != 1) {
-          for (ConfigurationFactory factory : configurationFactories) {
-            typeNode.add(new DefaultMutableTreeNode(factory));
-          }
+    for (final ConfigurationType type : RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactoriesWithoutUnknown()) {
+      ConfigurationFactory[] configurationFactories = type.getConfigurationFactories();
+      DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
+      defaults.add(typeNode);
+      if (configurationFactories.length != 1) {
+        for (ConfigurationFactory factory : configurationFactories) {
+          typeNode.add(new DefaultMutableTreeNode(factory));
         }
       }
     }
@@ -668,7 +664,6 @@ class RunConfigurable extends BaseConfigurable {
       updateActiveConfigurationFromSelected();
 
       final RunManagerImpl manager = getRunManager();
-      final ConfigurationType[] types = manager.getConfigurationFactories();
       List<ConfigurationType> configurationTypes = new ArrayList<>();
       for (int i = 0; i < myRoot.getChildCount(); i++) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
@@ -677,7 +672,7 @@ class RunConfigurable extends BaseConfigurable {
           configurationTypes.add((ConfigurationType)userObject);
         }
       }
-      for (ConfigurationType type : types) {
+      for (ConfigurationType type : manager.getConfigurationFactories()) {
         if (!configurationTypes.contains(type))
           configurationTypes.add(type);
       }
