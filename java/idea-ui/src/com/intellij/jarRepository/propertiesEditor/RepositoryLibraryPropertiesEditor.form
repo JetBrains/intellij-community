@@ -134,7 +134,7 @@
                 </constraints>
                 <properties>
                   <label value="Download Sources"/>
-                  <text resource-bundle="ProjectBundle" key="maven.property.download.sources"/>
+                  <text value="Download &amp;Sources"/>
                 </properties>
               </component>
               <hspacer id="7d6e5">
@@ -148,7 +148,7 @@
                 </constraints>
                 <properties>
                   <label value="Download JavaDocs"/>
-                  <text resource-bundle="ProjectBundle" key="maven.property.download.javadocs"/>
+                  <text value="Download &amp;JavaDocs"/>
                 </properties>
               </component>
             </children>
