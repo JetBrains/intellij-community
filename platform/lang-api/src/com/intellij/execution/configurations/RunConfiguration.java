@@ -44,11 +44,11 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the type of the run configuration.
-   *
-   * @return the configuration type.
    */
   @NotNull
-  ConfigurationType getType();
+  default ConfigurationType getType() {
+    return getFactory().getType();
+  }
 
   /**
    * Returns the factory that has created the run configuration.

@@ -31,7 +31,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -129,8 +128,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
   private val schemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-                                                                               object : LazySchemeProcessor<RunConfigurationScheme, RunConfigurationScheme>() {
-      override fun createScheme(dataHolder: SchemeDataHolder<RunConfigurationScheme>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunConfigurationScheme {
+                                                                               object : LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>() {
+      override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
         val settings = RunnerAndConfigurationSettingsImpl(this@RunManagerImpl)
         val element = dataHolder.read()
         try {
@@ -295,7 +294,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
 
       if (!settings.isShared && existingSettings !== settings) {
-        schemeManager.addScheme(settings as RunConfigurationScheme)
+        schemeManager.addScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
     }
 
@@ -715,7 +714,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     fireRunConfigurationsRemoved(configurations)
   }
 
-  fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings? {
+  fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings {
     val settings = RunnerAndConfigurationSettingsImpl(this)
     LOG.catchAndLog {
       settings.readExternal(element, isShared)
@@ -1145,13 +1144,3 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     changedSettings.forEach { myDispatcher.multicaster.runConfigurationChanged(it, null) }
   }
 }
-
-internal interface RunConfigurationScheme : Scheme
-
-//private class UnknownRunConfigurationScheme(private val name: String) : RunConfigurationScheme, SerializableScheme {
-//  override fun getSchemeState() = SchemeState.UNCHANGED
-//
-//  override fun writeScheme() = throw AssertionError("Must be not called")
-//
-//  override fun getName() = name
-//}

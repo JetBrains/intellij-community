@@ -41,8 +41,7 @@ public class EditConfigurationAction extends RunConfigurationTreeAction {
 
   @Override
   protected boolean isEnabled4(DashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).getAllConfigurationsList().contains(
-      node.getConfigurationSettings().getConfiguration());
+    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override
