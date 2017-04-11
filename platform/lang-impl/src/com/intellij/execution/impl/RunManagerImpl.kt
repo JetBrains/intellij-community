@@ -117,8 +117,10 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
    var isOrdered = true
     set(value) {
       lock.write {
-        field = value
-        immutableSortedSettingsList = null
+        if (field != value) {
+          field = value
+          immutableSortedSettingsList = null
+        }
       }
     }
 
@@ -346,25 +348,17 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     removed?.let { fireRunConfigurationsRemoved(it) }
   }
 
-  fun saveOrder() {
-    setOrder(null)
-  }
-
-  private fun doSaveOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
-    val sorted = idToSettings.values.filter { it.type !is UnknownConfigurationType }
-    if (comparator != null) {
-      sorted.sortedWith(comparator)
-    }
-
-    myOrder.clear()
-    sorted.mapTo(myOrder) { it.uniqueID}
-    immutableSortedSettingsList = null
-  }
-
   fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
-    doSaveOrder(comparator)
-    // force recache of configurations list
-    isOrdered = false
+    lock.write {
+      val sorted = idToSettings.values.filter { it.type !is UnknownConfigurationType }
+      if (comparator != null) {
+        sorted.sortedWith(comparator)
+      }
+      myOrder.clear()
+      sorted.mapTo(myOrder) { it.uniqueID }
+      // force recache of configurations list
+      isOrdered = false
+    }
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
@@ -400,6 +394,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       lock.write {
         immutableSortedSettingsList?.let {
           return it
+        }
+
+        if (idToSettings.isEmpty()) {
+          immutableSortedSettingsList = emptyList()
+          return immutableSortedSettingsList!!
         }
 
         if (isOrdered) {

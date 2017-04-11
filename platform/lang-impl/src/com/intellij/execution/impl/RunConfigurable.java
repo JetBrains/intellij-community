@@ -704,7 +704,7 @@ class RunConfigurable extends BaseConfigurable {
         each.first.apply();
       }
 
-      manager.saveOrder();
+      manager.setOrder(null);
     }
     finally {
       getRunManager().fireEndUpdate();
