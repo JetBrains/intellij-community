@@ -11,8 +11,10 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElementFactory;
@@ -60,14 +62,19 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final String evaluationCodeBlock = String.format("{" + LINE_SEPARATOR + "%s" + LINE_SEPARATOR + " }",
                                                      declarations + tracingCall + fillingInfoArray);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-    final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText(evaluationCodeBlock, chain.getContext());
+    final String expression = ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      final PsiCodeBlock block = elementFactory.createCodeBlockFromText(evaluationCodeBlock, chain.getContext());
 
-    MethodReferenceToLambdaTransformer.INSTANCE.transform(codeBlock);
-    LambdaToAnonymousTransformer.INSTANCE.transform(codeBlock);
-    ToObjectInheritorTransformer.INSTANCE.transform(codeBlock);
+      LOG.info("before transformation: " + LINE_SEPARATOR + block.getText());
+
+      MethodReferenceToLambdaTransformer.INSTANCE.transform(block);
+      LambdaToAnonymousTransformer.INSTANCE.transform(block);
+      ToObjectInheritorTransformer.INSTANCE.transform(block);
+      return block.getText();
+    });
 
     final String result = RESULT_VARIABLE_DECLARATION + LINE_SEPARATOR +
-                          codeBlock.getText() + LINE_SEPARATOR +
+                          expression + LINE_SEPARATOR +
                           RESULT_VARIABLE_NAME + ";";
     LOG.info("stream expression to trace:" + LINE_SEPARATOR + result);
     return result;
