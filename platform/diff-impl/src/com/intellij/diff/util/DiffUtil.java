@@ -34,7 +34,6 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -1345,7 +1344,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static List<JComponent> getCustomNotifications(@NotNull DiffContext context, @NotNull DiffRequest request) {
+  public static List<JComponent> getCustomNotifications(@NotNull UserDataHolder context, @NotNull UserDataHolder request) {
     List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));
