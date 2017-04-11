@@ -471,7 +471,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             if (vsb != null && vsb.isVisible()) {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
-                  ? (!opaque || ScrollSettings.isHeaderOverCorner())
+                  ? (!opaque || ScrollSettings.isHeaderOverCorner(viewport))
                   : (!opaque && viewport == pane.getViewport())) {
                 Alignment va = UIUtil.getClientProperty(vsb, Alignment.class);
                 if (va == Alignment.LEFT) {
@@ -487,7 +487,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             if (hsb != null && hsb.isVisible()) {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
-                  ? (!opaque || ScrollSettings.isHeaderOverCorner())
+                  ? (!opaque || ScrollSettings.isHeaderOverCorner(viewport))
                   : (!opaque && viewport == pane.getViewport())) {
                 Alignment ha = UIUtil.getClientProperty(hsb, Alignment.class);
                 if (ha == Alignment.TOP) {
