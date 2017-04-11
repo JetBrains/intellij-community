@@ -121,16 +121,13 @@ public interface JavacRef {
 
   abstract class JavacElementRefBase implements JavacRef {
     protected final @NotNull Element myOriginalElement;
+    @Nullable private final Element myQualifier;
     protected final JavacNameTable myNameTableCache;
 
-    protected JavacElementRefBase(@NotNull Element element, JavacNameTable nameTableCache) {
+    protected JavacElementRefBase(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
       myOriginalElement = element;
+      myQualifier = qualifier;
       myNameTableCache = nameTableCache;
-    }
-
-    @NotNull
-    public Element getOriginalElement() {
-      return myOriginalElement;
     }
 
     @NotNull
@@ -147,19 +144,19 @@ public interface JavacRef {
     @NotNull
     @Override
     public String getOwnerName() {
-      return myNameTableCache.parseBinaryName(myOriginalElement.getEnclosingElement());
+      return myNameTableCache.parseBinaryName(myQualifier != null ? myQualifier : myOriginalElement.getEnclosingElement());
     }
 
     @Nullable
-    public static JavacElementRefBase fromElement(Element element, JavacNameTable nameTableCache) {
+    public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache) {
       if (element instanceof TypeElement) {
-        return new JavacElementClassImpl(element, nameTableCache);
+        return new JavacElementClassImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof VariableElement) {
-        return new JavacElementFieldImpl(element, nameTableCache);
+        return new JavacElementFieldImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof ExecutableElement) {
-        return new JavacElementMethodImpl(element, nameTableCache);
+        return new JavacElementMethodImpl(element, qualifier, nameTableCache);
       }
       else if (element == null || element.getKind() == ElementKind.OTHER || element.getKind() == ElementKind.TYPE_PARAMETER) {
         // javac reserved symbol kind (e.g: com.sun.tools.javac.comp.Resolve.ResolveError)
@@ -175,18 +172,22 @@ public interface JavacRef {
 
       JavacElementRefBase base = (JavacElementRefBase)o;
 
-      return myOriginalElement == base.myOriginalElement;
+      return myOriginalElement == base.myOriginalElement && myQualifier == base.myQualifier;
     }
 
     @Override
     public int hashCode() {
-      return myOriginalElement.hashCode();
+      int hashCode = myOriginalElement.hashCode();
+      if (myQualifier != null) {
+        hashCode += myQualifier.hashCode();
+      }
+      return hashCode;
     }
   }
 
   class JavacElementClassImpl extends JavacElementRefBase implements JavacClass {
-   public JavacElementClassImpl(@NotNull Element element, JavacNameTable nameTableCache) {
-      super(element, nameTableCache);
+   public JavacElementClassImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
+      super(element, qualifier, nameTableCache);
     }
 
     @NotNull
@@ -202,8 +203,8 @@ public interface JavacRef {
   }
 
   class JavacElementMethodImpl extends JavacElementRefBase implements JavacMethod {
-    public JavacElementMethodImpl(@NotNull Element element, JavacNameTable nameTableCache) {
-      super(element, nameTableCache);
+    public JavacElementMethodImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
+      super(element, qualifier, nameTableCache);
     }
 
     @Override
@@ -213,8 +214,8 @@ public interface JavacRef {
   }
 
   class JavacElementFieldImpl extends JavacElementRefBase implements JavacField {
-    public JavacElementFieldImpl(@NotNull Element element, JavacNameTable nameTableCache) {
-      super(element, nameTableCache);
+    public JavacElementFieldImpl(@NotNull Element element, @Nullable Element qualifier, JavacNameTable nameTableCache) {
+      super(element, qualifier, nameTableCache);
     }
   }
 }

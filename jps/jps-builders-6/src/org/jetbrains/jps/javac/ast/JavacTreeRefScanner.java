@@ -15,14 +15,18 @@
  */
 package org.jetbrains.jps.javac.ast;
 
+import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.*;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -87,7 +91,13 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   public Tree visitMemberSelect(MemberSelectTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null && element.getKind() != ElementKind.PACKAGE) {
-      refCollector.sinkReference(refCollector.asJavacRef(element));
+      ExpressionTree qualifierExpression = node.getExpression();
+      Element qualifierType = null;
+      TypeMirror type = refCollector.getType(qualifierExpression);
+      if (type instanceof DeclaredType) {
+        qualifierType = ((DeclaredType)type).asElement();
+      }
+      refCollector.sinkReference(refCollector.asJavacRef(element, qualifierType));
     }
     return super.visitMemberSelect(node, refCollector);
   }
@@ -107,11 +117,48 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     }
     return super.visitMethod(node, refCollector);
   }
-  
+
+  @Override
+  public Tree visitMethodInvocation(MethodInvocationTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    if (node.getMethodSelect() instanceof IdentifierTree) {
+      Element element = collector.getReferencedElement(node.getMethodSelect());
+      if (element.getKind() != ElementKind.CONSTRUCTOR && !element.getModifiers().contains(Modifier.STATIC)) {
+        TypeElement currentClass = myCurrentEnclosingElement.peek();
+        Elements elements = collector.getElementUtility();
+        Types types = collector.getTypeUtility();
+        TypeElement actualQualifier = null;
+        while (currentClass != null) {
+          List<? extends Element> members = elements.getAllMembers(currentClass);
+          for (Element member : members) {
+            if (member == element /*cheaper then the next condition*/ || types.isSameType(member.asType(), element.asType())) {
+              actualQualifier = currentClass;
+              break;
+            }
+          }
+          if (actualQualifier != null) {
+            break;
+          }
+          currentClass = getEnclosingClass(currentClass);
+        }
+
+        if (actualQualifier == null) {
+          throw new NullPointerException();
+        }
+        collector.sinkReference(collector.asJavacRef(element, actualQualifier));
+        scan(node.getTypeArguments(), collector);
+        scan(node.getArguments(), collector);
+        return null;
+      }
+    }
+    return super.visitMethodInvocation(node, collector);
+  }
+
+  final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>();
   @Override
   public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     TypeElement element = (TypeElement)refCollector.getReferencedElement(node);
     if (element == null) return null;
+    myCurrentEnclosingElement.add(element);
 
     final TypeMirror superclass = element.getSuperclass();
     final List<? extends TypeMirror> interfaces = element.getInterfaces();
@@ -136,7 +183,9 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (aClass == null) return null;
     refCollector.sinkReference(aClass);
     refCollector.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));
-    return super.visitClass(node, refCollector);
+    super.visitClass(node, refCollector);
+    myCurrentEnclosingElement.pop();
+    return null;
   }
 
   static JavacTreeRefScanner createASTScanner() {
@@ -151,5 +200,14 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
   private static boolean isStatic(Element element) {
     return element.getModifiers().contains(Modifier.STATIC);
+  }
+
+  private static TypeElement getEnclosingClass(TypeElement element) {
+    Element current = element;
+    while (true) {
+      current = current.getEnclosingElement();
+      if (current == null) return null;
+      if (current instanceof TypeElement) return (TypeElement)current;
+    }
   }
 }
