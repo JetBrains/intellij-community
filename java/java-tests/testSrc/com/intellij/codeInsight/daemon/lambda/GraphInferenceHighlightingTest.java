@@ -178,6 +178,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testTopLevelParentNoParameters() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
