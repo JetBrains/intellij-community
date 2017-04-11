@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.PsiElementRole;
@@ -27,7 +42,6 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -51,7 +65,6 @@ import java.util.regex.Pattern;
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
   private static final String DELIMETER_CHARS = ",;.[]{}():";
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
-  private PsiElementVisitor myLexicalNodesFilter;
 
   @Override
   public void compile(PsiElement[] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
@@ -127,19 +140,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   @NotNull
   @Override
-  public PsiElementVisitor getLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
-    if (myLexicalNodesFilter == null) {
-      myLexicalNodesFilter = new PsiElementVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          super.visitElement(element);
-          if (DuplocatorUtil.isIgnoredNode(element)) {
-            filter.setResult(true);
-          }
-        }
-      };
-    }
-    return myLexicalNodesFilter;
+  public NodeFilter getLexicalNodesFilter() {
+    return element -> DuplocatorUtil.isIgnoredNode(element);
   }
 
   public static boolean containsOnlyDelimeters(String s) {
