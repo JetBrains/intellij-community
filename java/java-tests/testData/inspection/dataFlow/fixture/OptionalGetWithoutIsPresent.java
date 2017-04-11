@@ -316,6 +316,14 @@ class OptionalWithoutIsPresent {
     return optional.isPresent()  ? opt2.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>() : "";
   }
 
+  com.google.common.base.Optional<String> field;
+
+  void guavaFieldTest() {
+    if(field.isPresent()) {
+      System.out.println(field.get());
+    }
+  }
+
   void guavaTest(com.google.common.base.Optional<String> opt, String s) {
     System.out.println(opt.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
     if(opt.isPresent()) {
