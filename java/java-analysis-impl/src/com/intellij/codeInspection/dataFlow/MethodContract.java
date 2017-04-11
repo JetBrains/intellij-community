@@ -16,71 +16,45 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Objects;
 
 /**
- * @author peter
+ * A method contract which states that method will have a concrete return value
+ * if arguments fulfill some constraint.
+ *
+ * @author Tagir Valeev
  */
-public class MethodContract {
-  public final ValueConstraint[] arguments;
-  public final ValueConstraint returnValue;
+public abstract class MethodContract {
+  // package private to avoid uncontrolled implementations
+  MethodContract() {
 
-  public MethodContract(@NotNull ValueConstraint[] arguments, @NotNull ValueConstraint returnValue) {
-    this.arguments = arguments;
-    this.returnValue = returnValue;
   }
 
-  @NotNull
-  static ValueConstraint[] createConstraintArray(int paramCount) {
-    ValueConstraint[] args = new ValueConstraint[paramCount];
-    for (int i = 0; i < args.length; i++) {
-      args[i] = ValueConstraint.ANY_VALUE;
-    }
-    return args;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || o.getClass() != getClass()) return false;
-
-    MethodContract contract = (MethodContract)o;
-
-    if (!Arrays.equals(arguments, contract.arguments)) return false;
-    if (returnValue != contract.returnValue) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 0;
-    for (ValueConstraint argument : arguments) {
-      result = 31 * result + argument.ordinal();
-    }
-    result = 31 * result + returnValue.ordinal();
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    return StringUtil.join(arguments, constraint -> constraint.toString(), ", ") + " -> " + returnValue;
-  }
+  /**
+   * @return a value the method will return if the contract conditions fulfill
+   */
+  public abstract ValueConstraint getReturnValue();
 
   /**
    * @return true if this contract result does not depend on arguments
    */
   boolean isTrivial() {
-    return Arrays.stream(this.arguments).allMatch(Predicate.isEqual(ValueConstraint.ANY_VALUE));
+    return false;
+  }
+
+  abstract String getArgumentsPresentation();
+
+  abstract List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments);
+
+  @Override
+  public String toString() {
+    return getArgumentsPresentation() + " -> " + getReturnValue();
   }
 
   public enum ValueConstraint {
@@ -102,62 +76,25 @@ public class MethodContract {
       return this == NOT_NULL_VALUE || this == FALSE_VALUE;
     }
 
+    /**
+     * Returns a condition value which should be applied to memory state to satisfy this constraint
+     *
+     * @param factory factory to create new values
+     * @param argValue argument value to test
+     * @return a condition
+     */
+    public DfaValue getCondition(DfaValueFactory factory, DfaValue argValue) {
+      if (this == THROW_EXCEPTION || this == ANY_VALUE) {
+        return factory.getBoolean(true);
+      }
+      DfaConstValue expectedValue = Objects.requireNonNull(getComparisonValue(factory));
+
+      return factory.createCondition(argValue, RelationType.equivalence(!shouldUseNonEqComparison()), expectedValue);
+    }
+
     @Override
     public String toString() {
       return myPresentableName;
     }
-  }
-
-  public static List<MethodContract> parseContract(String text) throws ParseException {
-    List<MethodContract> result = ContainerUtil.newArrayList();
-    for (String clause : StringUtil.replace(text, " ", "").split(";")) {
-      String arrow = "->";
-      int arrowIndex = clause.indexOf(arrow);
-      if (arrowIndex < 0) {
-        throw new ParseException("A contract clause must be in form arg1, ..., argN -> return-value");
-      }
-
-      String beforeArrow = clause.substring(0, arrowIndex);
-      ValueConstraint[] args;
-      if (StringUtil.isNotEmpty(beforeArrow)) {
-        String[] argStrings = beforeArrow.split(",");
-        args = new ValueConstraint[argStrings.length];
-        for (int i = 0; i < args.length; i++) {
-          args[i] = parseConstraint(argStrings[i]);
-        }
-      } else {
-        args = new ValueConstraint[0];
-      }
-      result.add(new MethodContract(args, parseConstraint(clause.substring(arrowIndex + arrow.length()))));
-    }
-    return result;
-  }
-
-  private static ValueConstraint parseConstraint(String name) throws ParseException {
-    if (StringUtil.isEmpty(name)) throw new ParseException("Constraint should not be empty");
-    for (ValueConstraint constraint : ValueConstraint.values()) {
-      if (constraint.toString().equals(name)) return constraint;
-    }
-    throw new ParseException("Constraint should be one of: null, !null, true, false, fail, _. Found: " + name);
-  }
-
-  public static class ParseException extends Exception {
-    private ParseException(String message) {
-      super(message);
-    }
-  }
-
-  abstract static class QualifierBasedContract extends MethodContract {
-    public QualifierBasedContract(@NotNull ValueConstraint[] arguments,
-                                  @NotNull ValueConstraint returnValue) {
-      super(arguments, returnValue);
-    }
-
-    @Override
-    boolean isTrivial() {
-      return false;
-    }
-
-    abstract boolean applyContract(boolean matches, DfaValue qualifier, DfaMemoryState memoryState);
   }
 }

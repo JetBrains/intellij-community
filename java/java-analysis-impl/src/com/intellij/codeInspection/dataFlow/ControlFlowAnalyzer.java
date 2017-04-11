@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -787,8 +788,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
       DfaValue value = state.pop();
       DfaValueFactory factory = runner.getFactory();
-      if (state.applyCondition(
-        factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true))) {
+      if (state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()))) {
         return nextInstruction(runner, state);
       }
       if (visitor instanceof StandardInstructionVisitor) {
@@ -1338,9 +1338,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addConditionalRuntimeThrow();
-    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.emptyList();
+    List<? extends MethodContract> contracts =
+      method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.emptyList();
     addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
-    if (contracts.stream().anyMatch(c -> c.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION)) {
+    if (contracts.stream().anyMatch(c -> c.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION)) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getContractFail(), null));
@@ -1375,12 +1376,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private static List<MethodContract> getMethodCallContracts(@NotNull final PsiMethod method, @NotNull PsiMethodCallExpression call) {
+  private static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
+                                                                       @NotNull PsiMethodCallExpression call) {
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, call);
     return !contracts.isEmpty() ? contracts : getMethodContracts(method);
   }
 
-  public static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
+  public static List<StandardMethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiAnnotation contractAnno = findContractAnnotation(method);
       if (contractAnno != null) {
@@ -1388,15 +1390,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         if (text != null) {
           try {
             final int paramCount = method.getParameterList().getParametersCount();
-            List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text),
-                                                                   contract -> contract.arguments.length == paramCount);
+            List<StandardMethodContract> applicable = ContainerUtil.filter(StandardMethodContract.parseContract(text),
+                                                                           contract -> contract.arguments.length == paramCount);
             return CachedValueProvider.Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
           catch (Exception ignored) {
           }
         }
       }
-      return CachedValueProvider.Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result
+        .create(Collections.<StandardMethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 

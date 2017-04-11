@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
-import com.intellij.psi.JavaTokenType;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRangeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,31 +122,31 @@ public abstract class LongRangeSet {
    * @param relation relation to be applied to current set (JavaTokenType.EQEQ/NE/GT/GE/LT/LE)
    * @return new set or null if relation is unsupported
    */
-  public LongRangeSet fromRelation(IElementType relation) {
-    if (isEmpty()) return null;
-    if (JavaTokenType.EQEQ.equals(relation)) {
-      return this;
+  public LongRangeSet fromRelation(@Nullable DfaRelationValue.RelationType relation) {
+    if (isEmpty() || relation == null) return null;
+    switch (relation) {
+      case EQ:
+        return this;
+      case NE: {
+        long min = min();
+        if (min == max()) return all().without(min);
+        return all();
+      }
+      case GT: {
+        long min = min();
+        return min == Long.MAX_VALUE ? empty() : range(min + 1, Long.MAX_VALUE);
+      }
+      case GE:
+        return range(min(), Long.MAX_VALUE);
+      case LE:
+        return range(Long.MIN_VALUE, max());
+      case LT: {
+        long max = max();
+        return max == Long.MIN_VALUE ? empty() : range(Long.MIN_VALUE, max - 1);
+      }
+      default:
+        return null;
     }
-    if (JavaTokenType.NE.equals(relation)) {
-      long min = min();
-      if (min == max()) return all().without(min);
-      return all();
-    }
-    if (JavaTokenType.GT.equals(relation)) {
-      long min = min();
-      return min == Long.MAX_VALUE ? empty() : range(min + 1, Long.MAX_VALUE);
-    }
-    if (JavaTokenType.GE.equals(relation)) {
-      return range(min(), Long.MAX_VALUE);
-    }
-    if (JavaTokenType.LE.equals(relation)) {
-      return range(Long.MIN_VALUE, max());
-    }
-    if (JavaTokenType.LT.equals(relation)) {
-      long max = max();
-      return max == Long.MIN_VALUE ? empty() : range(Long.MIN_VALUE, max - 1);
-    }
-    return null;
   }
 
   /**
@@ -322,6 +324,17 @@ public abstract class LongRangeSet {
     }
     else if (val instanceof Character) {
       return point(((Character)val).charValue());
+    }
+    return null;
+  }
+
+  @Nullable
+  public static LongRangeSet fromDfaValue(DfaValue value) {
+    if (value instanceof DfaRangeValue) {
+      return ((DfaRangeValue)value).getValue();
+    }
+    if (value instanceof DfaConstValue) {
+      return fromConstant(((DfaConstValue)value).getValue());
     }
     return null;
   }

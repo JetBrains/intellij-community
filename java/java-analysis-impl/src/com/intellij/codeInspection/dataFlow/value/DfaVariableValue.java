@@ -273,10 +273,10 @@ public class DfaVariableValue extends DfaValue {
 
   public boolean isFlushableByCalls() {
     if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
-    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL)) {
+    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL) ||
+        myVariable instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)myVariable)) {
       return myQualifier != null && myQualifier.isFlushableByCalls();
     }
-    if (myVariable instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)myVariable)) return false;
     return true;
   }
 
