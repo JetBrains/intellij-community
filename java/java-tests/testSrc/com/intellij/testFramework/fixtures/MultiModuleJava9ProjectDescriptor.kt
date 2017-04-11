@@ -28,6 +28,8 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import jdk.nashorn.internal.objects.NativeArray.forEach
+import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
  * Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7'
@@ -44,6 +46,9 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
     fun root(): VirtualFile =
       if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
+
+    fun testRoot(): VirtualFile? =
+      if (this == MAIN) TempFileSystem.getInstance().findFileByPath("/test_src")!! else null
   }
 
   override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
@@ -89,12 +94,18 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
   override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
     model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
+    if (module.name == TEST_MODULE_NAME) {
+      val testRoot = createSourceRoot(module, "test_src")
+      registerSourceRoot(module.project, testRoot)
+      model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
+    }
   }
 
   fun cleanupSourceRoots() = runWriteAction {
     ModuleDescriptor.values().asSequence()
       .filter { it != ModuleDescriptor.MAIN }
       .flatMap { it.root().children.asSequence() }
+      .plus(ModuleDescriptor.MAIN.testRoot()!!.children.asSequence())
       .forEach { it.delete(this) }
   }
 }
