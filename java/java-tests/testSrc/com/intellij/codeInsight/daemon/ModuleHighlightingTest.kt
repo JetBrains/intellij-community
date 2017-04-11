@@ -55,6 +55,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
   }
 
+  fun testFileDuplicateInTestRoot() {
+    addTestFile("module-info.java", """module M.test { }""")
+    highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
+  }
+
   fun testWrongFileLocation() {
     highlight("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
   }

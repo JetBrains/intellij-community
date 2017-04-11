@@ -135,7 +135,7 @@ public class ModuleHighlightUtil {
     Module module = findModule(file);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
