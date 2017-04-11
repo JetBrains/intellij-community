@@ -1,0 +1,61 @@
+LineBreakpoint created at AccessToPrivateMethodsInStaticContext.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! AccessToPrivateMethodsInStaticContext
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+AccessToPrivateMethodsInStaticContext.java:5
+Stream.generate(() -> 1)
+.limit(10)
+.peek(x -> method(x))
+.filter(x -> x % 2 == 0)
+.count()
+Stream.generate
+    before: nothing
+    after: 1,4,7,10,13,16,19,22,25,28
+limit
+    before: 1,4,7,10,13,16,19,22,25,28
+    after: 2,5,8,11,14,17,20,23,26,29
+peek
+    before: 2,5,8,11,14,17,20,23,26,29
+    after: 3,6,9,12,15,18,21,24,27,30
+filter
+    before: 3,6,9,12,15,18,21,24,27,30
+    after: nothing
+count
+    before: nothing
+    after: nothing
+mappings for limit
+    nothing -> 1 -> 2
+    nothing -> 4 -> 5
+    nothing -> 7 -> 8
+    nothing -> 10 -> 11
+    nothing -> 13 -> 14
+    nothing -> 16 -> 17
+    nothing -> 19 -> 20
+    nothing -> 22 -> 23
+    nothing -> 25 -> 26
+    nothing -> 28 -> 29
+mappings for peek
+    1 -> 2 -> 3
+    4 -> 5 -> 6
+    7 -> 8 -> 9
+    10 -> 11 -> 12
+    13 -> 14 -> 15
+    16 -> 17 -> 18
+    19 -> 20 -> 21
+    22 -> 23 -> 24
+    25 -> 26 -> 27
+    28 -> 29 -> 30
+mappings for filter
+    2 -> 3 -> nothing
+    5 -> 6 -> nothing
+    8 -> 9 -> nothing
+    11 -> 12 -> nothing
+    14 -> 15 -> nothing
+    17 -> 18 -> nothing
+    20 -> 21 -> nothing
+    23 -> 24 -> nothing
+    26 -> 27 -> nothing
+    29 -> 30 -> nothing
+mappings for count
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

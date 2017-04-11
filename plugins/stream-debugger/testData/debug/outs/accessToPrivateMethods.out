@@ -1,0 +1,71 @@
+LineBreakpoint created at AccessToPrivateMethods.java:10
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! AccessToPrivateMethods
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+AccessToPrivateMethods.java:9
+Stream.generate(() -> 1)
+.limit(10)
+.filter(x -> method(x))
+.mapToInt(x -> x * 2)
+.count()
+Stream.generate
+    before: nothing
+    after: 1,5,9,13,17,21,25,29,33,37
+limit
+    before: 1,5,9,13,17,21,25,29,33,37
+    after: 2,6,10,14,18,22,26,30,34,38
+filter
+    before: 2,6,10,14,18,22,26,30,34,38
+    after: 3,7,11,15,19,23,27,31,35,39
+mapToInt
+    before: 3,7,11,15,19,23,27,31,35,39
+    after: 4,8,12,16,20,24,28,32,36,40
+count
+    before: 4,8,12,16,20,24,28,32,36,40
+    after: nothing
+mappings for limit
+    nothing -> 1 -> 2
+    nothing -> 5 -> 6
+    nothing -> 9 -> 10
+    nothing -> 13 -> 14
+    nothing -> 17 -> 18
+    nothing -> 21 -> 22
+    nothing -> 25 -> 26
+    nothing -> 29 -> 30
+    nothing -> 33 -> 34
+    nothing -> 37 -> 38
+mappings for filter
+    1 -> 2 -> 3
+    5 -> 6 -> 7
+    9 -> 10 -> 11
+    13 -> 14 -> 15
+    17 -> 18 -> 19
+    21 -> 22 -> 23
+    25 -> 26 -> 27
+    29 -> 30 -> 31
+    33 -> 34 -> 35
+    37 -> 38 -> 39
+mappings for mapToInt
+    2 -> 3 -> 4
+    6 -> 7 -> 8
+    10 -> 11 -> 12
+    14 -> 15 -> 16
+    18 -> 19 -> 20
+    22 -> 23 -> 24
+    26 -> 27 -> 28
+    30 -> 31 -> 32
+    34 -> 35 -> 36
+    38 -> 39 -> 40
+mappings for count
+    3 -> 4 -> nothing
+    7 -> 8 -> nothing
+    11 -> 12 -> nothing
+    15 -> 16 -> nothing
+    19 -> 20 -> nothing
+    23 -> 24 -> nothing
+    27 -> 28 -> nothing
+    31 -> 32 -> nothing
+    35 -> 36 -> nothing
+    39 -> 40 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
