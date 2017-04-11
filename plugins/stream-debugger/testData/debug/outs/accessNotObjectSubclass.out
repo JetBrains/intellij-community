@@ -1,0 +1,16 @@
+LineBreakpoint created at AccessNotObjectSubclass.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! AccessNotObjectSubclass
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+AccessNotObjectSubclass.java:6
+java.lang.IllegalAccessError: class AccessNotObjectSubclass$GeneratedEvaluationClass$4 cannot access its superclass AccessNotObjectSubclass$Super
+	at java.lang.ClassLoader.defineClass1(Native Method)
+	at java.lang.ClassLoader.defineClass(ClassLoader.java:!LINE_NUMBER!)
+	at java.lang.ClassLoader.defineClass(ClassLoader.java:!LINE_NUMBER!)
+	at AccessNotObjectSubclass.main(AccessNotObjectSubclass.java:!LINE_NUMBER!)
+Evaluation result type is unexpected
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+AccessNotObjectSubclass$MyClass@71e7a66b
+AccessNotObjectSubclass$MyClass@2ac1fdc4
+AccessNotObjectSubclass$MyClass@5f150435
