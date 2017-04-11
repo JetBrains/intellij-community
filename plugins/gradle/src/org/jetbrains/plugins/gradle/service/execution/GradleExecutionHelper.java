@@ -343,7 +343,7 @@ public class GradleExecutionHelper {
             File propertiesFile = new File(settings.getWrapperPropertyFile());
             if (propertiesFile.exists()) {
               Distribution distribution =
-                new DistributionFactoryExt(new DefaultExecutorServiceFactory()).getWrappedDistribution(propertiesFile);
+                new DistributionFactoryExt().getWrappedDistribution(propertiesFile);
               try {
                 setField(connector, "distribution", distribution);
               }
