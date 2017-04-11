@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +85,10 @@ public class HardcodedContracts {
              className.startsWith("com.google.common.truth.") ||
              className.startsWith("org.assertj.core.api.")) {
       return handleTestFrameworks(paramCount, className, methodName, call);
+    }
+    else if (TypeUtils.isOptional(owner) && methodName.startsWith("get") || methodName.equals("isPresent")) {
+      // To force purity for Guava optional
+      return Collections.singletonList(new MethodContract(new MethodContract.ValueConstraint[0], NOT_NULL_VALUE));
     }
 
     return Collections.emptyList();
