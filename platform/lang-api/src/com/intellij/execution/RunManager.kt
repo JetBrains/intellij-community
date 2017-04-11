@@ -21,7 +21,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.nullize
 import java.util.regex.Pattern
 
 /**
@@ -80,7 +80,7 @@ abstract class RunManager {
    * @param type a run configuration type.
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
-  @Deprecated("")
+  @Deprecated("", ReplaceWith("getConfigurationSettingsList(type)"))
   fun getConfigurationSettings(type: ConfigurationType) = getConfigurationSettingsList(type).toTypedArray()
 
   /**
@@ -168,7 +168,7 @@ abstract class RunManager {
    * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
    * *                 (stored in the workspace file).
    */
-  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings, isShawred: Boolean)
+  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean)
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
@@ -177,9 +177,8 @@ abstract class RunManager {
   abstract fun refreshUsagesList(profile: RunProfile)
 
   fun suggestUniqueName(name: String?, type: ConfigurationType?): String {
-    val settingsList = if (type != null) getConfigurationSettingsList(type) else allSettings
-    val names = ContainerUtil.map(settingsList) { settings -> settings.name }
-    return suggestUniqueName(StringUtil.notNullize(name, UNNAMED), names)
+    val settingsList = if (type == null) allSettings else getConfigurationSettingsList(type)
+    return suggestUniqueName(name.nullize() ?: UNNAMED, settingsList.map { it.name })
   }
 
   /**

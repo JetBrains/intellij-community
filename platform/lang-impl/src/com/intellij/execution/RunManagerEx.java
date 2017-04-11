@@ -47,7 +47,7 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract RunManagerConfig getConfig();
 
-  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
+  public final void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
     if (isShared) {
       ((RunnerAndConfigurationSettingsImpl)settings).setLevel(RunnerAndConfigurationSettingsImpl.Level.PROJECT);
     }
