@@ -48,34 +48,34 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
 
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);
-    final JTable entryTable = getEntryTable();
+    JTable entryTable = getEntryTable();
     myHeader = new PluginHeaderPanel(null);
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
-      protected void customizeCellRenderer(final JTable table,
-                                           final Object value,
-                                           final boolean selected,
-                                           final boolean hasFocus,
-                                           final int row,
-                                           final int column) {
+      protected void customizeCellRenderer(JTable table,
+                                           Object value,
+                                           boolean selected,
+                                           boolean hasFocus,
+                                           int row,
+                                           int column) {
         setBorder(null);
-        final PluginDownloader downloader = (PluginDownloader)value;
+        PluginDownloader downloader = (PluginDownloader)value;
         if (downloader != null) {
-          final String pluginName = downloader.getPluginName();
+          String pluginName = downloader.getPluginName();
           append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
+          IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
           if (ideaPluginDescriptor != null) {
-            final String oldPluginName = ideaPluginDescriptor.getName();
+            String oldPluginName = ideaPluginDescriptor.getName();
             if (!Comparing.strEqual(pluginName, oldPluginName)) {
               append(" - " + oldPluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
             }
           }
-          final String loadedVersion = downloader.getPluginVersion();
+          String loadedVersion = downloader.getPluginVersion();
           if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
-            final String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
+            String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
                                             ? ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " " + UIUtil.rightArrow() + " " : "")
                                             : "";
-            final String availableVersion = loadedVersion != null ? loadedVersion : "";
+            String availableVersion = loadedVersion != null ? loadedVersion : "";
             append(" " + installedVersion + availableVersion, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
           }
         }
@@ -83,10 +83,10 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     });
     entryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        final int selectedRow = entryTable.getSelectedRow();
+        int selectedRow = entryTable.getSelectedRow();
         if (selectedRow != -1) {
-          final PluginDownloader selection = getValueAt(selectedRow);
-          final IdeaPluginDescriptor descriptor = selection.getDescriptor();
+          PluginDownloader selection = getValueAt(selectedRow);
+          IdeaPluginDescriptor descriptor = selection.getDescriptor();
           if (descriptor != null) {
             PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader);
           }
@@ -100,7 +100,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     removeAll();
 
-    final Splitter splitter = new Splitter(false);
+    Splitter splitter = new Splitter(false);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(entryTable));
     splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myDescriptionPanel));
     add(splitter, BorderLayout.CENTER);
@@ -110,15 +110,15 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     return "";
   }
 
-  public boolean isCheckable(final PluginDownloader downloader) {
+  public boolean isCheckable(PluginDownloader downloader) {
     return true;
   }
 
-  public boolean isChecked(final PluginDownloader downloader) {
+  public boolean isChecked(PluginDownloader downloader) {
     return !getSkippedPlugins().contains(downloader.getPluginId());
   }
 
-  public void setChecked(final PluginDownloader downloader, final boolean checked) {
+  public void setChecked(PluginDownloader downloader, boolean checked) {
     if (checked) {
       getSkippedPlugins().remove(downloader.getPluginId());
     }
