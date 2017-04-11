@@ -519,7 +519,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
                    relativePath
                      .replace(file.getName(), "<b>" + file.getName() + "</b>") + "</body></html>";
           }
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, -14, 0)).setShowLine(false));
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, 0, 0)).setShowLine(false));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
