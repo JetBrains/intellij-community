@@ -99,7 +99,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   @NotNull
   private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
+    return ContainerUtil.filter(myManager.getAllSettings(), myModuleConfigCondition);
   }
 
   private boolean usesMyModule(RunConfiguration config) {
@@ -152,6 +152,5 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
     // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
     myManager.setOrdered(false);
-    myManager.getSortedConfigurations();
   }
 }

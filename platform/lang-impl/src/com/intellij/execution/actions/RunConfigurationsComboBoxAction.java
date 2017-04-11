@@ -34,6 +34,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -225,8 +225,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
         return selectedConfiguration;
       }
-      Iterator<RunnerAndConfigurationSettings> iterator = RunManager.getInstance(project).getTempConfigurationsList().iterator();
-      return iterator.hasNext() ? iterator.next() : null;
+      return ContainerUtil.getFirstItem(RunManager.getInstance(project).getTempConfigurationsList());
     }
   }
 

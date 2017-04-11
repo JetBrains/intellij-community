@@ -41,7 +41,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IconUtil
@@ -114,7 +113,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   @Suppress("DEPRECATION")
   private val myOrder = JDOMExternalizableStringList()
   private val recentlyUsedTemporaries = ArrayList<RunConfiguration>()
-  private var myOrdered = true
+
+   var isOrdered = true
+    set(value) {
+      lock.write {
+        field = value
+        immutableSortedSettingsList = null
+      }
+    }
 
   private val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
 
@@ -212,7 +218,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
    */
   override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> {
     var result: MutableList<RunConfiguration>? = null
-    for (settings in sortedConfigurations) {
+    for (settings in allSettings) {
       val configuration = settings.configuration
       if (type.id == configuration.type.id) {
         if (result == null) {
@@ -225,16 +231,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   override val allConfigurationsList: List<RunConfiguration>
-    get() = sortedConfigurations.mapSmart { it.configuration }
+    get() = allSettings.mapSmart { it.configuration }
 
-  override val allSettings: List<RunnerAndConfigurationSettings>
-    get() = sortedConfigurations.toList()
+  fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  fun getSettings(configuration: RunConfiguration) = sortedConfigurations.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
-
-  override fun getConfigurationSettingsList(type: ConfigurationType) = lock.read { sortedConfigurations.filterSmart { it.type?.id == type.id } }
-
-  fun getConfigurationSettings() = idToSettings.values.toTypedArray()
+  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type?.id == type.id }
 
   override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
     val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
@@ -275,6 +276,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     var existingSettings: RunnerAndConfigurationSettings? = null
     var existingId: String? = null
     lock.write {
+      immutableSortedSettingsList = null
+
       existingId = findExistingConfigurationId(settings)
       existingId?.let {
         existingSettings = idToSettings.remove(it)
@@ -322,25 +325,25 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   fun checkRecentsLimit() {
     trimUsagesListToLimit()
-    val removed = SmartList<RunnerAndConfigurationSettings>()
+    var removed: MutableList<RunnerAndConfigurationSettings>? = null
     lock.write {
-      while (tempConfigurationsList.size > config.recentsLimit) {
+      while (idToSettings.values.count { it.isTemporary } > config.recentsLimit) {
         val it = idToSettings.values.iterator()
         while (it.hasNext()) {
           val settings = it.next()
           if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings.configuration)) {
-            removed.add(settings)
+            if (removed == null) {
+              immutableSortedSettingsList = null
+              removed = SmartList<RunnerAndConfigurationSettings>()
+            }
+            removed!!.add(settings)
             it.remove()
             break
           }
         }
       }
     }
-    fireRunConfigurationsRemoved(removed)
-  }
-
-  fun setOrdered(ordered: Boolean) {
-    myOrdered = ordered
+    removed?.let { fireRunConfigurationsRemoved(it) }
   }
 
   fun saveOrder() {
@@ -355,12 +358,13 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
     myOrder.clear()
     sorted.mapTo(myOrder) { it.uniqueID}
+    immutableSortedSettingsList = null
   }
 
   fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
     doSaveOrder(comparator)
     // force recache of configurations list
-    setOrdered(false)
+    isOrdered = false
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
@@ -377,75 +381,95 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   private fun setSelectedConfigurationId(id: String?) {
     selectedConfigurationId = id
-    if (selectedConfigurationId != null) {
+    if (id != null) {
       loadedSelectedConfigurationUniqueName = null
     }
   }
 
-  override fun getSortedConfigurations(): MutableCollection<RunnerAndConfigurationSettings> {
-    if (myOrdered) {
-      return idToSettings.values
-    }
+  private data class OrderItem(val id: String, val settings: RunnerAndConfigurationSettings)
 
-    val order = ArrayList<Pair<String, RunnerAndConfigurationSettings>>(idToSettings.size)
-    val folderNames = SmartList<String>()
-    for (each in idToSettings.values) {
-      order.add(Pair.create(each.uniqueID, each))
-      val folderName = each.folderName
-      if (folderName != null && !folderNames.contains(folderName)) {
-        folderNames.add(folderName)
+  @Volatile
+  private var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = null
+
+  override val allSettings: List<RunnerAndConfigurationSettings>
+    get() {
+      immutableSortedSettingsList?.let {
+        return it
+      }
+
+      lock.write {
+        immutableSortedSettingsList?.let {
+          return it
+        }
+
+        if (isOrdered) {
+          val result = Collections.unmodifiableList(idToSettings.values.toList())
+          immutableSortedSettingsList = result
+          return result
+        }
+
+        val order = ArrayList<OrderItem>(idToSettings.size)
+        val folderNames = SmartList<String>()
+        for (each in idToSettings.values) {
+          order.add(OrderItem(each.uniqueID, each))
+          val folderName = each.folderName
+          if (folderName != null && !folderNames.contains(folderName)) {
+            folderNames.add(folderName)
+          }
+        }
+        folderNames.add(null)
+        idToSettings.clear()
+
+        if (myOrder.isEmpty()) {
+          // IDEA-63663 Sort run configurations alphabetically if clean checkout
+          order.sortWith(Comparator { o1, o2 ->
+            val temporary1 = o1.settings.isTemporary
+            val temporary2 = o2.settings.isTemporary
+            when {
+              temporary1 == temporary2 -> o1.id.compareTo(o2.id)
+              temporary1 -> 1
+              else -> -1
+            }
+          })
+        }
+        else {
+          order.sortWith(Comparator { o1, o2 ->
+            val i1 = folderNames.indexOf(o1.settings.folderName)
+            val i2 = folderNames.indexOf(o2.settings.folderName)
+            if (i1 != i2) {
+              return@Comparator i1 - i2
+            }
+
+            val temporary1 = o1.settings.isTemporary
+            val temporary2 = o2.settings.isTemporary
+            when {
+              temporary1 == temporary2 -> {
+                val index1 = myOrder.indexOf(o1.id)
+                val index2 = myOrder.indexOf(o2.id)
+                if (index1 == -1 && index2 == -1) {
+                  o1.settings.name.compareTo(o2.settings.name)
+                }
+                else {
+                  index1 - index2
+                }
+              }
+              temporary1 -> 1
+              else -> -1
+            }
+          })
+        }
+
+        for (each in order) {
+          val setting = each.settings
+          idToSettings.put(setting.uniqueID, setting)
+        }
+
+        val result = Collections.unmodifiableList(idToSettings.values.toList())
+        isOrdered = true
+        immutableSortedSettingsList = result
+        return result
       }
     }
-    folderNames.add(null)
-    idToSettings.clear()
-
-    if (myOrder.isEmpty()) {
-      // IDEA-63663 Sort run configurations alphabetically if clean checkout
-      order.sortWith(Comparator { o1, o2 ->
-        val temporary1 = o1.getSecond().isTemporary
-        val temporary2 = o2.getSecond().isTemporary
-        when {
-          temporary1 == temporary2 -> o1.first.compareTo(o2.first)
-          temporary1 -> 1
-          else -> -1
-        }
-      })
-    }
-    else {
-      order.sortWith(Comparator { o1, o2 ->
-        val i1 = folderNames.indexOf(o1.getSecond().folderName)
-        val i2 = folderNames.indexOf(o2.getSecond().folderName)
-        if (i1 != i2) {
-          return@Comparator i1 - i2
-        }
-
-        val temporary1 = o1.getSecond().isTemporary
-        val temporary2 = o2.getSecond().isTemporary
-        when {
-          temporary1 == temporary2 -> {
-            val index1 = myOrder.indexOf(o1.first)
-            val index2 = myOrder.indexOf(o2.first)
-            if (index1 == -1 && index2 == -1) {
-              o1.second.name.compareTo(o2.second.name)
-            }
-            else {
-              index1 - index2
-            }
-          }
-          temporary1 -> 1
-          else -> -1
-        }
-      })
-    }
-
-    for (each in order) {
-      val setting = each.second
-      idToSettings.put(setting.uniqueID, setting)
-    }
-
-    myOrdered = true
-    return idToSettings.values
-  }
 
   @Suppress("DEPRECATION")
   override fun getState(): Element {
@@ -502,7 +526,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   fun writeContext(element: Element) {
-    writeConfigurations(element, lock.read { idToSettings.values.filterSmart { it.isTemporary  } })
+    for (setting in allSettings) {
+      if (setting.isTemporary) {
+        element.addContent((setting as RunnerAndConfigurationSettingsImpl).writeScheme())
+      }
+    }
 
     selectedConfiguration?.let {
       element.setAttribute(SELECTED_ATTR, it.uniqueID)
@@ -589,7 +617,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         }
       }
     }
-    myOrdered = false
+    isOrdered = false
 
     loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
     setSelectedConfigurationId(loadedSelectedConfigurationUniqueName)
@@ -648,32 +676,40 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   private fun clear(allConfigurations: Boolean) {
-    val configurations: MutableList<RunnerAndConfigurationSettings>
-    if (allConfigurations) {
-      this.idToSettings.clear()
-      selectedConfigurationId = null
-      configurations = ArrayList(this.idToSettings.values)
-    }
-    else {
-      configurations = SmartList<RunnerAndConfigurationSettings>()
-      val iterator = this.idToSettings.values.iterator()
-      while (iterator.hasNext()) {
-        val configuration = iterator.next()
-        if (configuration.isTemporary || !configuration.isShared) {
-          iterator.remove()
+    val configurations = lock.write {
+      immutableSortedSettingsList = null
 
-          configurations.add(configuration)
-        }
-      }
+      val configurations = if (allConfigurations) {
+        val configurations = idToSettings.values.toList()
 
-      if (selectedConfigurationId != null && this.idToSettings.containsKey(selectedConfigurationId!!)) {
+        idToSettings.clear()
         selectedConfigurationId = null
+
+        configurations
       }
+      else {
+        val configurations = SmartList<RunnerAndConfigurationSettings>()
+        val iterator = idToSettings.values.iterator()
+        while (iterator.hasNext()) {
+          val configuration = iterator.next()
+          if (configuration.isTemporary || !configuration.isShared) {
+            iterator.remove()
+
+            configurations.add(configuration)
+          }
+        }
+
+        if (selectedConfigurationId != null && this.idToSettings.containsKey(selectedConfigurationId!!)) {
+          selectedConfigurationId = null
+        }
+
+        configurations
+      }
+
+      templateIdToConfiguration.clear()
+      configurations
     }
 
-    lock.write {
-      templateIdToConfiguration.clear()
-    }
     loadedSelectedConfigurationUniqueName = null
     iconCache.clear()
     recentlyUsedTemporaries.clear()
@@ -763,25 +799,20 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   fun getSharedConfigurations(): List<RunnerAndConfigurationSettings> {
-    lock.read {
-      var result: MutableList<RunnerAndConfigurationSettings>? = null
-      for (configuration in idToSettings.values) {
-        if (configuration.isShared) {
-          if (result == null) {
-            result = ArrayList<RunnerAndConfigurationSettings>()
-          }
-          result.add(configuration)
+    var result: MutableList<RunnerAndConfigurationSettings>? = null
+    for (configuration in allSettings) {
+      if (configuration.isShared) {
+        if (result == null) {
+          result = ArrayList<RunnerAndConfigurationSettings>()
         }
+        result.add(configuration)
       }
-      return result ?: emptyList()
     }
+    return result ?: emptyList()
   }
 
-  internal val configurationSettings: Collection<RunnerAndConfigurationSettings>
-    get() = idToSettings.values
-
   override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
-    get() = idToSettings.values.filter { it.isTemporary }
+    get() = allSettings.filterSmart { it.isTemporary }
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {
     settings.isTemporary = false
@@ -792,7 +823,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
     recentlyUsedTemporaries.remove(settings.configuration)
     if (!myOrder.isEmpty()) {
-      setOrdered(false)
+      isOrdered = false
     }
   }
 
@@ -807,7 +838,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     val tasks = SmartList<T>()
     val checkedTemplates = SmartList<RunnerAndConfigurationSettings>()
     lock.read {
-      for (settings in idToSettings.values.toTypedArray()) {
+      for (settings in allSettings) {
         val configuration = settings.configuration
         for (task in getBeforeRunTasks(configuration)) {
           if (task.isEnabled && task.providerId === taskProviderId) {
@@ -858,11 +889,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     if (name == null) {
       return null
     }
-    return idToSettings.values.firstOrNull { it.name == name }
+    return allSettings.firstOrNull { it.name == name }
   }
 
   fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? {
-    return sortedConfigurations.firstOrNull {
+    return allSettings.firstOrNull {
       val t = it.type
       t != null && typeId == t.id && name == it.name
     }
@@ -998,7 +1029,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         // we must update all existing configuration tasks to ensure that effective tasks (own + template) are the same as before template configuration change
         // see testTemplates test
         lock.read {
-          for (otherSettings in idToSettings.values) {
+          for (otherSettings in allSettings) {
             val otherConfiguration = otherSettings.configuration
             if (otherConfiguration !is WrappingRunConfiguration<*> && otherConfiguration.factory === templateConfiguration.factory) {
               otherConfiguration.beforeRunTasks = getEffectiveBeforeRunTasks(otherConfiguration, ownIsOnlyEnabled = false, isDisableTemplateTasks = true, newTemplateTasks = tasks)
@@ -1028,6 +1059,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         val settings = entry.value
         if (!settings.isTemplate && settings.isShared && !existing.contains(settings.uniqueID)) {
           if (removed == null) {
+            immutableSortedSettingsList = null
             removed = SmartList<RunnerAndConfigurationSettings>()
           }
           removed!!.add(settings)
@@ -1080,6 +1112,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
     lock.write {
+      immutableSortedSettingsList = null
+
       val iterator = idToSettings.values.iterator()
       for (otherSettings in iterator) {
         if (otherSettings === settings) {
