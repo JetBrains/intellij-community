@@ -81,7 +81,7 @@ public class PatchDiffRequestFactory {
       applier.execute();
 
       final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
-      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, null, null);
+      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, "Current Version", null);
     }
     else {
       String localContent = texts.getLocal().toString();
