@@ -31,6 +31,7 @@ public abstract class EmptyStubElementType<T extends PsiElement> extends IStubEl
     super(debugName, language);
   }
 
+  @NotNull
   @Override
   public final EmptyStub createStub(@NotNull T psi, StubElement parentStub) {
     return createStub(parentStub);
