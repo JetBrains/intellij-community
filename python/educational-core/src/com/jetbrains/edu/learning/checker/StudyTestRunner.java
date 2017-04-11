@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning.checker;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
@@ -15,5 +16,7 @@ public abstract class StudyTestRunner {protected final Task myTask;
   }
 
   public abstract Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException;
+
+  public abstract GeneralCommandLine getCommandLine();
 
 }

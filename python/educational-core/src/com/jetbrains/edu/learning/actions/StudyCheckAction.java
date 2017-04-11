@@ -37,7 +37,7 @@ import javax.swing.*;
 
 public class StudyCheckAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
-  private static final String ACTION_ID = "Edu.Check";
+  public static final String ACTION_ID = "Edu.Check";
   private static final String TEXT = "Check Task";
   public static final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
 
@@ -109,16 +109,19 @@ public class StudyCheckAction extends StudyActionWithShortcut {
             listener.afterCheck(project, task);
           }
           checker.clearState();
+          myCheckInProgress.set(false);
         }
 
         @Override
         public void onCancel() {
           checker.clearState();
+          myCheckInProgress.set(false);
         }
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
+          myCheckInProgress.set(true);
           myResult = isRemote ? checkOnRemote() : checker.check();
         }
 

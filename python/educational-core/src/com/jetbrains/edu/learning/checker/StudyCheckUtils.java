@@ -1,6 +1,8 @@
 package com.jetbrains.edu.learning.checker;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -222,5 +225,19 @@ public class StudyCheckUtils {
         }
       }
     });
+  }
+
+  public static StudyTestsOutputParser.TestsOutput getTestOutput(@NotNull Process testProcess,
+                                                                 @NotNull String commandLine,
+                                                                 boolean isAdaptive) {
+    final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess, null, commandLine);
+    final ProcessOutput output = handler.runProcessWithProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
+    final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, isAdaptive);
+    String stderr = output.getStderr();
+    if (!stderr.isEmpty() && output.getStdout().isEmpty()) {
+      LOG.info("#educational " + stderr);
+      return new StudyTestsOutputParser.TestsOutput(false, stderr);
+    }
+    return testsOutput;
   }
 }

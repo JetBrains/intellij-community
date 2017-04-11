@@ -34,7 +34,7 @@ public class TheoryTask extends Task {
 
       @Override
       public StudyCheckResult checkOnRemote(@NotNull StepicUser user) {
-        return new StudyCheckResult(StudyStatus.Solved, "");
+        return check();
       }
     };
   }

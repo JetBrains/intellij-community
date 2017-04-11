@@ -45,7 +45,6 @@
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
-    <action class="com.jetbrains.edu.learning.PyStudyCheckAction" id="PyCheckAction"/>
     <!--course creator-->
     <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu">
       <add-to-group group-id="CCFileGroup" anchor="last"/>
