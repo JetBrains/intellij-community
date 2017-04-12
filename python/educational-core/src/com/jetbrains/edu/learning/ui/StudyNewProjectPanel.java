@@ -333,10 +333,6 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
   }
 
-  public JComboBox<Course> getCoursesComboBox() {
-    return myCoursesComboBox;
-  }
-
   public JPanel getInfoPanel() {
     return myInfoPanel;
   }

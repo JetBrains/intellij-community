@@ -19,21 +19,17 @@ import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.xmlb.XmlSerializationException;
-import com.jetbrains.edu.learning.EduPluginConfigurator;
-import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.newproject.ui.EduCreateNewProjectDialog;
+import com.jetbrains.edu.learning.newproject.ui.EduCreateNewProjectListener;
+import com.jetbrains.edu.learning.newproject.ui.EduCreateNewStepikProjectDialog;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -45,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 import static com.jetbrains.edu.learning.core.EduNames.STUDY_PROJECT_XML_PATH;
 import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTask;
 
@@ -53,8 +48,6 @@ import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTas
  * @author meanmail
  */
 public class EduBuiltInServerUtils {
-  private static final Logger LOG = Logger.getInstance(EduBuiltInServerUtils.class);
-
   public static boolean focusOpenProject(int courseId, int stepId) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
@@ -163,26 +156,11 @@ public class EduBuiltInServerUtils {
   }
 
   public static boolean createProject(int courseId, int stepId) {
-    final Course[] course = new Course[1];
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    StepicUser user = StudySettings.getInstance().getUser();
-    ApplicationManager.getApplication().invokeAndWait(() ->
-      course[0] = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(() -> {
-          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return execCancelable(() -> {
-            try {
-              return EduStepicConnector.getCourseFromStepik(user, courseId);
-            }
-            catch (IOException e) {
-              LOG.warn("Tried to create a project for course with id=" + courseId, e);
-              return null;
-            }
-          });
-        }, "Getting Available Courses", true, defaultProject));
-
-      if (course[0] != null) {
-        Consumer<Project> onCreated = project ->
+    ApplicationManager.getApplication().invokeLater(() -> {
+      EduCreateNewProjectDialog createNewProjectDlg = new EduCreateNewStepikProjectDialog(courseId);
+      EduCreateNewProjectListener listener = new EduCreateNewProjectListener() {
+        @Override
+        public void created(@NotNull Project project) {
           ApplicationManager.getApplication().invokeLater(() -> {
             StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
             Course targetCourse = taskManager.getCourse();
@@ -190,13 +168,13 @@ public class EduBuiltInServerUtils {
               navigateToStep(project, targetCourse, stepId);
             }
           });
-        EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course[0].getLanguageById());
-        if (configurator == null) {
-          return false;
         }
-        return configurator.createCourseProject(course[0], onCreated);
-      }
-    return false;
+      };
+      createNewProjectDlg.addListener(listener);
+      createNewProjectDlg.show();
+    });
+
+    return true;
   }
 
   private static void navigateToStep(@NotNull Project project, @NotNull Course course, int stepId) {

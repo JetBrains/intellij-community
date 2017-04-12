@@ -12,7 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.Consumer;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -133,7 +133,5 @@ public interface EduPluginConfigurator {
     return Collections.emptyList();
   }
 
-  default boolean createCourseProject(@NotNull Course course, @Nullable Consumer<Project> onCreated) {
-    return false;
-  }
+  EduCourseProjectGenerator getEduCourseProjectGenerator();
 }
