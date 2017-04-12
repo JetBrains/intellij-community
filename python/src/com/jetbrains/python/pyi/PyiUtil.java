@@ -54,7 +54,7 @@ public class PyiUtil {
   @Nullable
   public static PsiElement getPythonStub(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyFile && !(file instanceof PyiFile)) {
+    if (pyButNotPyiFile(file)) {
       final PyiFile pythonStubFile = getPythonStubFile((PyFile)file);
       if (pythonStubFile != null) {
         return findSimilarElement(element, pythonStubFile);
@@ -72,6 +72,22 @@ public class PyiUtil {
         return findSimilarElement(element, originalFile);
       }
     }
+    return null;
+  }
+
+  @Nullable
+  public static PyFunction getImplementation(@NotNull PyFunction overload) {
+    final PsiFile file = overload.getContainingFile();
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(overload.getProject());
+
+    if (pyButNotPyiFile(file) && isOverload(overload, context)) {
+      final PsiElement similar = findSimilarElement(overload, (PyFile)file);
+
+      if (similar instanceof PyFunction && !isOverload(similar, context)) {
+        return (PyFunction)similar;
+      }
+    }
+
     return null;
   }
 
@@ -126,6 +142,10 @@ public class PyiUtil {
       .toList();
   }
 
+  private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
+    return file instanceof PyFile && !(file instanceof PyiFile);
+  }
+
   @Nullable
   private static PyiFile getPythonStubFile(@NotNull PyFile file) {
     final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
@@ -170,14 +190,20 @@ public class PyiUtil {
           final PyClassLikeType instanceType = classType.toInstance();
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
                                                                                                PyResolveContext.noImplicits(), false);
-          if (resolveResults != null && !resolveResults.isEmpty()) {
-            return resolveResults.get(0).getElement();
-          }
+          return takeFirstElement(resolveResults);
         }
       }
       else if (originalOwner instanceof PyFile) {
-        return ((PyFile)originalOwner).getElementNamed(name);
+        return takeFirstElement(((PyFile)originalOwner).multiResolveName(name));
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement takeFirstElement(@Nullable List<? extends RatedResolveResult> resolveResults) {
+    if (!ContainerUtil.isEmpty(resolveResults)) {
+      return resolveResults.get(0).getElement();
     }
     return null;
   }
