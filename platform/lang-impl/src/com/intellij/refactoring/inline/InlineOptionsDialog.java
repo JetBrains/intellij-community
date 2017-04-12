@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -32,6 +33,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Predicate;
 
 public abstract class InlineOptionsDialog extends RefactoringDialog implements InlineOptions {
   protected JRadioButton myRbInlineAll;
@@ -163,14 +165,28 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return myRbInlineThisOnly.isSelected() ? myRbInlineThisOnly : myRbInlineAll;
   }
 
+
+  protected boolean ignoreOccurrence(PsiReference reference) {
+    return false;
+  }
+
   protected static int initOccurrencesNumber(PsiNameIdentifierOwner nameIdentifierOwner) {
+    return getNumberOfOccurrences(nameIdentifierOwner, reference -> true);
+  }
+
+  protected int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner) {
+    return getNumberOfOccurrences(nameIdentifierOwner, this::ignoreOccurrence);
+  }
+
+  private static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
+                                            Predicate<PsiReference> ignoreOccurrence) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(nameIdentifierOwner.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(nameIdentifierOwner.getProject());
     final String name = nameIdentifierOwner.getName();
     final boolean isCheapToSearch =
      name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-    return isCheapToSearch ? ReferencesSearch.search(nameIdentifierOwner, scope).findAll().size() : - 1;
+    return isCheapToSearch ? (int)ReferencesSearch.search(nameIdentifierOwner, scope).findAll().stream().filter(ignoreOccurrence).count() : - 1;
   }
 
 }
