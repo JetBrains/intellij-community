@@ -20,7 +20,6 @@ public interface ConsoleCommunication {
 
   boolean needsMore();
 
-
   void execInterpreter(ConsoleCodeFragment code, Function<InterpreterResponse, Object> callback);
 
   void interrupt();
@@ -29,6 +28,8 @@ public interface ConsoleCommunication {
 
   void notifyCommandExecuted(boolean more);
   void notifyInputRequested();
+
+  void notifyInputReceived();
 
   class ConsoleCodeFragment {
     private final String myText;

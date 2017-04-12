@@ -59,7 +59,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private PythonConsoleView myConsoleView;
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
-  private PydevConsoleExecuteActionHandler myExecuteHandler;
+  private PythonConsoleExecuteActionHandler myExecuteHandler;
 
   private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
