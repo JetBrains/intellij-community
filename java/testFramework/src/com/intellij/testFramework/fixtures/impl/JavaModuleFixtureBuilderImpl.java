@@ -52,7 +52,7 @@ import java.util.Map;
 /**
  * @author mike
  */
-abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
+public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
   private final List<Lib> myLibraries = new ArrayList<>();
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
