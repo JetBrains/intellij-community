@@ -15,11 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaOptionalValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,17 +73,19 @@ public class HardcodedContracts {
     }
     else if (CommonClassNames.JAVA_LANG_STRING.equals(className)) {
       if (("charAt".equals(methodName) || "codePointAt".equals(methodName)) && paramCount == 1) {
-        return Arrays.asList(new NonnegativeArgumentContract(1, 0),
-                             new SpecialFieldRangeContract(1, 0, RelationType.LT, SpecialField.STRING_LENGTH));
+        return Arrays.asList(nonnegativeArgumentContract(0),
+                             specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH));
       }
       else if (("substring".equals(methodName) || "subSequence".equals(methodName)) && paramCount <= 2) {
         List<MethodContract> contracts = new ArrayList<>(5);
-        contracts.add(new NonnegativeArgumentContract(paramCount, 0));
-        contracts.add(new SpecialFieldRangeContract(paramCount, 0, RelationType.LE, SpecialField.STRING_LENGTH));
+        contracts.add(nonnegativeArgumentContract(0));
+        contracts.add(specialFieldRangeContract(0, RelationType.LE, SpecialField.STRING_LENGTH));
         if (paramCount == 2) {
-          contracts.add(new NonnegativeArgumentContract(paramCount, 1));
-          contracts.add(new SpecialFieldRangeContract(paramCount, 1, RelationType.LE, SpecialField.STRING_LENGTH));
-          contracts.add(new ArgumentRelationContract(paramCount, 0, RelationType.LE, 1));
+          contracts.add(nonnegativeArgumentContract(1));
+          contracts.add(specialFieldRangeContract(1, RelationType.LE, SpecialField.STRING_LENGTH));
+          contracts.add(MethodContract
+                          .singleConditionContract(ContractValue.argument(0), RelationType.LE.getNegated(), ContractValue.argument(1),
+                                                   THROW_EXCEPTION));
         }
         return contracts;
       }
@@ -100,8 +97,8 @@ public class HardcodedContracts {
       return SpecialField.COLLECTION_SIZE.getEmptyContracts();
     }
     else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_COLLECTION, null, "get", PsiType.INT)) {
-      return Arrays.asList(new NonnegativeArgumentContract(paramCount, 0),
-                           new SpecialFieldRangeContract(paramCount, 0, RelationType.LT, SpecialField.COLLECTION_SIZE));
+      return Arrays.asList(nonnegativeArgumentContract(0),
+                           specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE));
     }
     else if ("org.apache.commons.lang.Validate".equals(className) ||
              "org.apache.commons.lang3.Validate".equals(className) ||
@@ -124,135 +121,29 @@ public class HardcodedContracts {
     }
     else if (TypeUtils.isOptional(owner)) {
       if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
-        return Arrays.asList(new OptionalPresenceContract(false, THROW_EXCEPTION),
-                             new OptionalPresenceContract(true, NOT_NULL_VALUE));
+        return Arrays.asList(optionalAbsentContract(THROW_EXCEPTION), MethodContract.trivialContract(NOT_NULL_VALUE));
       }
       else if ("isPresent".equals(methodName)) {
-        return Arrays.asList(new OptionalPresenceContract(false, FALSE_VALUE),
-                             new OptionalPresenceContract(true, TRUE_VALUE));
+        return Arrays.asList(optionalAbsentContract(FALSE_VALUE), MethodContract.trivialContract(TRUE_VALUE));
       }
     }
 
     return Collections.emptyList();
   }
 
-  static class OptionalPresenceContract extends MethodContract {
-    private final boolean myPresent;
-    private final ValueConstraint myReturnValue;
-
-    public OptionalPresenceContract(boolean mustPresent, ValueConstraint returnValue) {
-      myReturnValue = returnValue;
-      myPresent = mustPresent;
-    }
-
-    @Override
-    protected List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      DfaOptionalValue optional = factory.getOptionalFactory().getOptional(myPresent);
-      return Collections.singletonList(factory.createCondition(qualifier, RelationType.IS, optional));
-    }
-
-    @Override
-    protected String getArgumentsPresentation() {
-      return "[" + (myPresent ? "present" : "absent") + "]";
-    }
-
-    @Override
-    public ValueConstraint getReturnValue() {
-      return myReturnValue;
-    }
+  static MethodContract optionalAbsentContract(MethodContract.ValueConstraint returnValue) {
+    return MethodContract
+      .singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
   }
 
-  static abstract class ArgumentRangeContract extends MethodContract {
-    final int myParamCount;
-    final int myIndex;
-    final RelationType myRelationType;
-
-    ArgumentRangeContract(int paramCount, int index, RelationType type) {
-      myParamCount = paramCount;
-      myIndex = index;
-      myRelationType = type;
-    }
-
-    @Override
-    protected List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      DfaValue left = arguments[myIndex];
-      DfaValue right = getBound(factory, qualifier, arguments);
-      return Collections.singletonList(factory.createCondition(left, myRelationType.getNegated(), right));
-    }
-
-    @NotNull
-    abstract DfaValue getBound(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments);
-
-    abstract String getBoundRepresentation();
-
-    @Override
-    protected String getArgumentsPresentation() {
-      return IntStreamEx.range(myParamCount)
-        .mapToObj(idx -> idx == myIndex ? myRelationType.getNegated() + getBoundRepresentation() : "_")
-        .joining(", ");
-    }
-
-    @Override
-    public ValueConstraint getReturnValue() {
-      return THROW_EXCEPTION;
-    }
+  static MethodContract nonnegativeArgumentContract(int argNumber) {
+    return MethodContract
+      .singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.constant(0, PsiType.INT), THROW_EXCEPTION);
   }
 
-  static class NonnegativeArgumentContract extends ArgumentRangeContract {
-    public NonnegativeArgumentContract(int paramCount, int nonNegativeArgumentIndex) {
-      super(paramCount, nonNegativeArgumentIndex, RelationType.GE);
-    }
-
-    @NotNull
-    @Override
-    DfaValue getBound(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return factory.getConstFactory().createFromValue(0, PsiType.INT, null);
-    }
-
-    @Override
-    String getBoundRepresentation() {
-      return "0";
-    }
-  }
-
-  static class ArgumentRelationContract extends ArgumentRangeContract {
-    private final int myIndex;
-
-    public ArgumentRelationContract(int paramCount, int leftIndex, RelationType relationType, int rightIndex) {
-      super(paramCount, leftIndex, relationType);
-      myIndex = rightIndex;
-    }
-
-    @NotNull
-    @Override
-    DfaValue getBound(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return arguments[myIndex];
-    }
-
-    @Override
-    String getBoundRepresentation() {
-      return "arg#" + myIndex;
-    }
-  }
-
-  static class SpecialFieldRangeContract extends ArgumentRangeContract {
-    private final SpecialField mySpecialField;
-
-    SpecialFieldRangeContract(int paramCount, int index, RelationType type, SpecialField specialField) {
-      super(paramCount, index, type);
-      mySpecialField = specialField;
-    }
-
-    @NotNull
-    @Override
-    DfaValue getBound(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return mySpecialField.createValue(factory, qualifier);
-    }
-
-    @Override
-    String getBoundRepresentation() {
-      return "this."+mySpecialField.getMethodName()+"()";
-    }
+  static MethodContract specialFieldRangeContract(int index, RelationType type, SpecialField specialField) {
+    return MethodContract.singleConditionContract(ContractValue.argument(index), type.getNegated(),
+                                                  ContractValue.specialField(ContractValue.qualifier(), specialField), THROW_EXCEPTION);
   }
 
   private static boolean isJunit(String className) {

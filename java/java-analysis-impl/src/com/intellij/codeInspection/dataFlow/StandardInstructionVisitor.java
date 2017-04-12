@@ -467,7 +467,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                   DfaValueFactory factory,
                                                                   Set<DfaMemoryState> finalStates,
                                                                   DfaValue returnValue) {
-    List<DfaValue> conditions = contract.getConditions(factory, callParameters.myQualifier, callParameters.myArguments);
+    List<DfaValue> conditions = ContainerUtil.map(contract.getConditions(), cv -> cv.makeDfaValue(factory, callParameters.myQualifier, callParameters.myArguments));
     if (StreamEx.of(conditions).allMatch(factory.getConstFactory().getTrue()::equals)) {
       for (DfaMemoryState state : states) {
         state.push(returnValue);

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.dataFlow.value;
+package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -120,39 +119,15 @@ public enum SpecialField {
     return null;
   }
 
+  /**
+   * @return a list of method contracts which equivalent to checking this special field for zero
+   */
   public List<MethodContract> getEmptyContracts() {
-    return Arrays.asList(new MethodContract() {
-      @Override
-      public ValueConstraint getReturnValue() {
-        return ValueConstraint.TRUE_VALUE;
-      }
-
-      @Override
-      protected String getArgumentsPresentation() {
-        return "[empty]";
-      }
-
-      @Override
-      protected List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-        return Collections.singletonList(factory.createCondition(createValue(factory, qualifier), DfaRelationValue.RelationType.EQ,
-                                                   factory.getConstFactory().createFromValue(0, PsiType.INT, null)));
-      }
-    }, new MethodContract() {
-      @Override
-      public ValueConstraint getReturnValue() {
-        return ValueConstraint.FALSE_VALUE;
-      }
-
-      @Override
-      protected String getArgumentsPresentation() {
-        return "[non-empty]";
-      }
-
-      @Override
-      protected List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-        return Collections.emptyList();
-      }
-    });
+    ContractValue thisValue = ContractValue.specialField(ContractValue.qualifier(), this);
+    ContractValue zeroValue = ContractValue.constant(0, PsiType.INT);
+    return Arrays.asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, zeroValue,
+                                                                MethodContract.ValueConstraint.TRUE_VALUE),
+                         MethodContract.trivialContract(MethodContract.ValueConstraint.FALSE_VALUE));
   }
 
   @Override
