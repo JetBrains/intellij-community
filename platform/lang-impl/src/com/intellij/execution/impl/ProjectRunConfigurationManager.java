@@ -53,9 +53,6 @@ public class ProjectRunConfigurationManager implements PersistentStateComponent<
 
     myManager.removeNotExistingSharedConfigurations(existing);
 
-    // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
-    myManager.setOrdered(false);
-
     if (myManager.getSelectedConfiguration() == null) {
       for (RunnerAndConfigurationSettings settings : myManager.getAllSettings()) {
         if (!(settings.getType() instanceof UnknownRunConfiguration)) {

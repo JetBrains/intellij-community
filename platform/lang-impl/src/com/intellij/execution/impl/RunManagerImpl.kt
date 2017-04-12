@@ -111,16 +111,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private val customOrder = ArrayList<String>()
   private val recentlyUsedTemporaries = ArrayList<RunConfiguration>()
 
-   var isOrdered = true
-    set(value) {
-      lock.write {
-        if (field != value) {
-          field = value
-          immutableSortedSettingsList = null
-        }
-      }
-    }
-
   private val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
 
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
@@ -356,15 +346,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
     lock.write {
-      val sorted = idToSettings.values.filter { it.type !is UnknownConfigurationType }
+      val sorted = idToSettings.values.filterTo(ArrayList(idToSettings.size)) { it.type !is UnknownConfigurationType }
       if (comparator != null) {
-        sorted.sortedWith(comparator)
+        sorted.sortWith(comparator)
       }
       customOrder.clear()
       customOrder.ensureCapacity(sorted.size)
       sorted.mapTo(customOrder) { it.uniqueID }
-      // force recache of configurations list
-      isOrdered = false
+      immutableSortedSettingsList = null
     }
   }
 
@@ -406,12 +395,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         if (idToSettings.isEmpty()) {
           immutableSortedSettingsList = emptyList()
           return immutableSortedSettingsList!!
-        }
-
-        if (isOrdered) {
-          val result = Collections.unmodifiableList(idToSettings.values.toList())
-          immutableSortedSettingsList = result
-          return result
         }
 
         val order = ArrayList<OrderItem>(idToSettings.size)
@@ -471,7 +454,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         }
 
         val result = Collections.unmodifiableList(idToSettings.values.toList())
-        isOrdered = true
         immutableSortedSettingsList = result
         return result
       }
@@ -625,7 +607,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         }
       }
     }
-    isOrdered = false
+    immutableSortedSettingsList = null
 
     loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
     setSelectedConfigurationId(loadedSelectedConfigurationUniqueName)
@@ -828,7 +810,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
     recentlyUsedTemporaries.remove(settings.configuration)
     if (!customOrder.isEmpty()) {
-      isOrdered = false
+      immutableSortedSettingsList = null
     }
   }
 
@@ -888,7 +870,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     return icon
   }
 
-  fun getConfigurationById(id: String) = idToSettings.get(id)
+  fun getConfigurationById(id: String) = lock.read { idToSettings.get(id) }
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
     if (name == null) {

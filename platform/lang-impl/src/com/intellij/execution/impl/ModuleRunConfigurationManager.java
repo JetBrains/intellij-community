@@ -121,9 +121,6 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       existing.add(myManager.loadConfiguration(child, true).getUniqueID());
     }
 
-    // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
-    myManager.setOrdered(false);
-
     for (RunnerAndConfigurationSettings settings : myManager.getAllSettings()) {
       if (!usesMyModule(settings.getConfiguration())) {
         existing.add(settings.getUniqueID());
