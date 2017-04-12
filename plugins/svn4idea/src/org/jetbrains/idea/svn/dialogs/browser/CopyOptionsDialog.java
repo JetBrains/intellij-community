@@ -161,7 +161,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     final JPanel commitMessageWrapper = new JPanel(new BorderLayout());
     commitMessageWrapper.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
 
-    myCommitMessage = CommitMessage.createCommitTextEditor(myProject, false);
+    myCommitMessage = CommitMessage.createCommitTextEditor(myProject);
 
     commitMessageWrapper.add(myCommitMessage, BorderLayout.CENTER);
     return commitMessageWrapper;

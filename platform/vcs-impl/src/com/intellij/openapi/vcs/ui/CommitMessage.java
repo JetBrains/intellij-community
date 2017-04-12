@@ -60,7 +60,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   public CommitMessage(@NotNull Project project, final boolean withSeparator) {
     super(new BorderLayout());
 
-    myEditorField = createCommitTextEditor(project, false);
+    myEditorField = createCommitTextEditor(project);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
 
     add(myEditorField, BorderLayout.CENTER);
@@ -112,18 +112,22 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   /**
    * Creates a text editor appropriate for creating commit messages.
-   *
-   * @param project project this commit message editor is intended for
-   * @param forceSpellCheckOn if false, {@link com.intellij.openapi.vcs.VcsConfiguration#CHECK_COMMIT_MESSAGE_SPELLING} will control
-   *                          whether or not the editor has spell check enabled
+   * Spelling is checked depending on {@link VcsConfiguration#CHECK_COMMIT_MESSAGE_SPELLING} value.
    * @return a commit message editor
+   * @deprecated Use {@link CommitMessage#createCommitTextEditor(Project)}.
    */
-  public static EditorTextField createCommitTextEditor(@NotNull Project project, boolean forceSpellCheckOn) {
+  @Deprecated
+  public static EditorTextField createCommitTextEditor(@NotNull Project project, @SuppressWarnings("unused") boolean forceSpellCheckOn) {
+    return createCommitTextEditor(project);
+  }
+
+  @NotNull
+  public static EditorTextField createCommitTextEditor(@NotNull Project project) {
     Set<EditorCustomization> features = new HashSet<>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {
-      boolean enableSpellChecking = forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
+      boolean enableSpellChecking = configuration.CHECK_COMMIT_MESSAGE_SPELLING;
       ContainerUtil.addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enableSpellChecking));
       features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
       features.add(WrapWhenTypingReachesRightMarginCustomization.getInstance(configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN));
