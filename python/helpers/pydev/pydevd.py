@@ -76,7 +76,7 @@ connected = False
 bufferStdOutToServer = False
 bufferStdErrToServer = False
 remote = False
-inside_fork = False
+forked = False
 
 file_system_encoding = getfilesystemencoding()
 
@@ -1220,8 +1220,8 @@ def _locked_settrace(
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
 
-        global inside_fork
-        if frame_eval_func is not None and not inside_fork:
+        global forked
+        if frame_eval_func is not None and not forked:
             # Disable frame evaluation for Remote Debug Server
             debugger.frame_eval_func = None
 
@@ -1364,8 +1364,8 @@ def settrace_forked():
     if port is not None:
         global connected
         connected = False
-        global inside_fork
-        inside_fork = True
+        global forked
+        forked = True
 
         custom_frames_container_init()
 
