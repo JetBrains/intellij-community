@@ -71,8 +71,7 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
     }
     else {
       if (commits.size() == 2) {
-        VcsLogDiffHandler handler = ui.getLogData().getLogProvider(commits.get(0).getRoot()).getDiffHandler();
-        e.getPresentation().setEnabled(handler != null);
+        e.getPresentation().setEnabled(e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null);
       }
       else {
         e.getPresentation().setEnabled(commits.size() == 1);
@@ -105,8 +104,8 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
     if (commits.size() != 1 && commits.size() != 2) return;
 
-    VirtualFile root = commits.get(0).getRoot();
-    VcsLogDiffHandler handler = ui.getLogData().getLogProvider(root).getDiffHandler();
+    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    // this check is needed here since we may come on key event without performing proper checks
     if (commits.size() == 2 && handler == null) return;
 
     List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
@@ -117,7 +116,8 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
         // so that it could return a single file path for each revision
         VcsFullCommitDetails newestDetail = details.get(0);
         VcsFullCommitDetails olderDetail = details.get(1);
-        notNull(handler).showDiff(root, ui.getPath(olderDetail), olderDetail.getId(), ui.getPath(newestDetail), newestDetail.getId());
+        notNull(handler).showDiff(olderDetail.getRoot(), ui.getPath(olderDetail), olderDetail.getId(),
+                                  ui.getPath(newestDetail), newestDetail.getId());
       }
       else if (details.size() == 1) {
         VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
