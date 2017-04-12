@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PythonFlavorProvider;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.util.Comparator;
