@@ -18,11 +18,14 @@ package org.jetbrains.jps.javac.ast;
 import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -128,21 +131,16 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
         Types types = collector.getTypeUtility();
         TypeElement actualQualifier = null;
         while (currentClass != null) {
-          List<? extends Element> members = elements.getAllMembers(currentClass);
-          for (Element member : members) {
-            if (member == element /*cheaper then the next condition*/ || types.isSameType(member.asType(), element.asType())) {
-              actualQualifier = currentClass;
-              break;
-            }
-          }
-          if (actualQualifier != null) {
+          if (containsMember(currentClass, element, types, elements, new THashSet<Element>(TObjectHashingStrategy.IDENTITY))) {
+            actualQualifier = currentClass;
             break;
           }
           currentClass = getEnclosingClass(currentClass);
         }
 
+        //means java.lang.Object's method called from an interface
         if (actualQualifier == null) {
-          throw new NullPointerException();
+          actualQualifier = myCurrentEnclosingElement.peek();
         }
         collector.sinkReference(collector.asJavacRef(element, actualQualifier));
         scan(node.getTypeArguments(), collector);
@@ -209,5 +207,36 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (current == null) return null;
       if (current instanceof TypeElement) return (TypeElement)current;
     }
+  }
+
+  private static boolean containsMember(TypeElement classElement, Element memberToFind, Types types, Elements elements, Set<Element> visitedClasses) {
+    NoType noType = types.getNoType(TypeKind.NONE);
+
+    for (Element member : classElement.getEnclosedElements()) {
+      if (member.getKind() == ElementKind.METHOD && (member == memberToFind ||
+                                                      member.getSimpleName() == memberToFind.getSimpleName() ||
+                                                      types.isSameType(member.asType(), memberToFind.asType()))) {
+        return true;
+      }
+    }
+
+    TypeMirror superClassType = classElement.getSuperclass();
+    if (superClassType != null &&
+        superClassType != noType &&
+        visitedClasses.add(((DeclaredType)superClassType).asElement()) &&
+        containsMember((TypeElement)((DeclaredType)superClassType).asElement(), memberToFind, types, elements, visitedClasses)) {
+      return true;
+    }
+
+    for (TypeMirror implementedInterface : classElement.getInterfaces()) {
+      if (implementedInterface != null &&
+          implementedInterface != noType &&
+          visitedClasses.add(((DeclaredType) implementedInterface).asElement()) &&
+          containsMember((TypeElement)((DeclaredType) implementedInterface).asElement(), memberToFind, types, elements, visitedClasses)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
