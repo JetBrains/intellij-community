@@ -44,6 +44,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,6 +173,9 @@ public class IdeaApplication {
         X11UiUtil.patchDetectedWm(wmName);
       }
     }
+
+    //IDEA-170295
+    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
 
     IconLoader.activate();
 
