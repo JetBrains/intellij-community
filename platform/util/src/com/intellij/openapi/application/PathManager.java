@@ -123,7 +123,7 @@ public class PathManager {
   }
 
   private static boolean isIdeaHome(final File root) {
-    for (final File file : getPossibleBinaryFileLocations(root, PROPERTIES_FILE_NAME)) {
+    for (final File file : getBinFileLocations(root, PROPERTIES_FILE_NAME)) {
       if (file.exists()) {
         return true;
       }
@@ -137,7 +137,7 @@ public class PathManager {
    * {@link #getBinPath()}
    */
   @NotNull
-  private static File[] getPossibleBinaryFileLocations(@NotNull final File root, @NotNull final String fileName) {
+  private static File[] getBinFileLocations(@NotNull final File root, @NotNull final String fileName) {
     final File[] binFolders = {
       new File(root, FileUtil.toSystemDependentName(BIN_FOLDER)),
       new File(root, FileUtil.toSystemDependentName("community/bin/")),
@@ -155,20 +155,20 @@ public class PathManager {
 
   /**
    * Get all possible locations of some binary file relative to home <strong>including</strong> {@link #getBinPath()}
-   * @see #getPossibleBinaryFileLocationsString(String)
+   * @see #getBinFileLocationsString(String)
    */
   @NotNull
-  private static File[] getPossibleBinaryFileLocationsFile(@NotNull final String fileName) {
-    return ArrayUtil.mergeArrays(getPossibleBinaryFileLocations(new File(getHomePath()), fileName), new File[]{new File(getBinPath(), fileName)});
+  private static File[] getBinFileLocations(@NotNull final String fileName) {
+    return ArrayUtil.mergeArrays(getBinFileLocations(new File(getHomePath()), fileName), new File[]{new File(getBinPath(), fileName)});
   }
 
   /**
-   * Same as {@link #getPossibleBinaryFileLocationsFile(String)}
+   * Same as {@link #getBinFileLocations(String)}
    */
   @NotNull
-  private static String[] getPossibleBinaryFileLocationsString(@NotNull final String fileName) {
+  private static String[] getBinFileLocationsString(@NotNull final String fileName) {
     final Collection<String> pathsList = new ArrayList<String>();
-    for (final File possibleFileLocation : getPossibleBinaryFileLocationsFile(fileName)) {
+    for (final File possibleFileLocation : getBinFileLocations(fileName)) {
       pathsList.add(possibleFileLocation.getAbsolutePath());
     }
 
@@ -197,8 +197,8 @@ public class PathManager {
     if (pair.first != null) {
       return pair.first;
     }
-    final String joinedPaths = StringUtil.join(pair.second, ",");
-    throw new FileNotFoundException(String.format("None of these exist: %s", joinedPaths));
+    final String joinedPaths = StringUtil.join(pair.second, "\n");
+    throw new FileNotFoundException(String.format("'%s' not found in directories:\n%s", fileName, joinedPaths));
   }
 
   /**
@@ -207,7 +207,7 @@ public class PathManager {
    */
   @NotNull
   private static Pair<File, String[]>  findBinFileInternal(@NotNull final String fileName) {
-    final String[] paths = getPossibleBinaryFileLocationsString(fileName);
+    final String[] paths = getBinFileLocationsString(fileName);
     final File result = FileUtil.findFirstThatExist(paths);
     return Pair.create(result, paths);
   }
@@ -431,7 +431,7 @@ public class PathManager {
       new String[]{System.getProperty(PROPERTIES_FILE),
         getCustomPropertiesFile(),
         getUserHome() + "/" + PROPERTIES_FILE_NAME},
-      getPossibleBinaryFileLocationsString(PROPERTIES_FILE_NAME));
+      getBinFileLocationsString(PROPERTIES_FILE_NAME));
 
 
     for (String path : propFiles) {
