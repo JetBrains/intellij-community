@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -255,5 +256,10 @@ public abstract class PythonSdkFlavor {
 
   public VirtualFile getSdkPath(VirtualFile path) {
     return path;
+  }
+
+  @Nullable
+  public CommandLinePatcher commandLinePatcher() {
+    return null;
   }
 }
