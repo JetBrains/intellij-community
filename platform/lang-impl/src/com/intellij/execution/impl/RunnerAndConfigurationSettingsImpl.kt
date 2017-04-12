@@ -304,7 +304,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getType(): ConfigurationType = _configuration?.type ?: UnknownConfigurationType.INSTANCE
 
-  public override fun clone(): RunnerAndConfigurationSettings {
+  public override fun clone(): RunnerAndConfigurationSettingsImpl {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone(), false)
     copy.importRunnerAndConfigurationSettings(this)
     return copy
