@@ -17,6 +17,7 @@ package com.jetbrains.edu.learning.newproject.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -45,9 +46,10 @@ public class EduCreateNewProjectPanel extends JPanel {
     add(panel, BorderLayout.CENTER);
     errorIcon.setIcon(AllIcons.Actions.Lightning);
     resetError();
-    nameField.setText("untitled");
     String location = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
     locationField.setText(location);
+    String name = ProjectWizardUtil.findNonExistingFileName(location, "course", "");
+    nameField.setText(name);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     locationField.addBrowseFolderListener("Choose Location Folder", null, project, descriptor);
     locationField.addFocusListener(new FocusAdapter() {
