@@ -160,7 +160,7 @@ public class VcsContextWrapper implements VcsContext {
       stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
       getSelectedFilesStream().map(VcsUtil::getFilePath),
       stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
-    );
+    ).distinct();
   }
 
   @Nullable
