@@ -40,7 +40,8 @@ public enum SpecialField {
       return obj instanceof String ? factory.getConstFactory().createFromValue(((String)obj).length(), PsiType.INT, null) : null;
     }
   },
-  COLLECTION_SIZE(CommonClassNames.JAVA_UTIL_COLLECTION, "size", false, LongRangeSet.indexRange());
+  COLLECTION_SIZE(CommonClassNames.JAVA_UTIL_COLLECTION, "size", false, LongRangeSet.indexRange()),
+  MAP_SIZE(CommonClassNames.JAVA_UTIL_MAP, "size", false, LongRangeSet.indexRange());
 
   private final String myClassName;
   private final String myMethodName;
@@ -123,9 +124,8 @@ public enum SpecialField {
    * @return a list of method contracts which equivalent to checking this special field for zero
    */
   public List<MethodContract> getEmptyContracts() {
-    ContractValue thisValue = ContractValue.specialField(ContractValue.qualifier(), this);
-    ContractValue zeroValue = ContractValue.constant(0, PsiType.INT);
-    return Arrays.asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, zeroValue,
+    ContractValue thisValue = ContractValue.qualifier().specialField(this);
+    return Arrays.asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(),
                                                                 MethodContract.ValueConstraint.TRUE_VALUE),
                          MethodContract.trivialContract(MethodContract.ValueConstraint.FALSE_VALUE));
   }

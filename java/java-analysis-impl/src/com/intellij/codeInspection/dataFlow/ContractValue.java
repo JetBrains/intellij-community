@@ -41,6 +41,10 @@ public abstract class ContractValue {
     return new Argument(index);
   }
 
+  public ContractValue specialField(SpecialField field) {
+    return new Spec(this, field);
+  }
+
   public static ContractValue constant(Object value, PsiType type) {
     return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
   }
@@ -57,8 +61,8 @@ public abstract class ContractValue {
     return IndependentValue.NULL;
   }
 
-  public static ContractValue specialField(ContractValue qualifier, SpecialField field) {
-    return new Spec(qualifier, field);
+  public static ContractValue zero() {
+    return IndependentValue.ZERO;
   }
 
   public static ContractValue condition(ContractValue left, DfaRelationValue.RelationType relation, ContractValue right) {
@@ -103,6 +107,8 @@ public abstract class ContractValue {
     static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false");
     static final IndependentValue PRESENT = new IndependentValue(factory -> factory.getOptionalFactory().getOptional(true), "present");
     static final IndependentValue ABSENT = new IndependentValue(factory -> factory.getOptionalFactory().getOptional(false), "empty");
+    static final IndependentValue ZERO =
+      new IndependentValue(factory -> factory.getConstFactory().createFromValue(0, PsiType.INT, null), "0");
 
     private final Function<DfaValueFactory, DfaValue> mySupplier;
     private final String myPresentation;

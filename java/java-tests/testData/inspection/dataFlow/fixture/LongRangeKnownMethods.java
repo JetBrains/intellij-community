@@ -223,4 +223,40 @@ public class LongRangeKnownMethods {
     }
     else return "";
   }
+
+  void testSetFirst(TreeSet<Integer> set) {
+    if (set.first() == 0 && <warning descr="Condition 'set.size() > 0' is always 'true' when reached">set.size() > 0</warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testMap(HashMap<String, Integer> map) {
+    if(<warning descr="Condition 'map.isEmpty() && map.containsKey(\"xyz\")' is always 'false'">map.isEmpty() && <warning descr="Condition 'map.containsKey(\"xyz\")' is always 'false' when reached">map.containsKey("xyz")</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testMapContainsValue(TreeMap<String, Integer> map) {
+    if(<warning descr="Condition 'map.containsValue(1) && map.size() < 1' is always 'false'">map.containsValue(1) && <warning descr="Condition 'map.size() < 1' is always 'false' when reached">map.size() < 1</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testMapEquals(Map<String, String> map, Map<String, String> otherMap) {
+    if(<warning descr="Condition 'map.isEmpty() && otherMap.equals(map) && otherMap.containsValue(\"xyz\")' is always 'false'">map.isEmpty() && otherMap.equals(map) && <warning descr="Condition 'otherMap.containsValue(\"xyz\")' is always 'false'">otherMap.containsValue("xyz")</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testListIndexOf(List<String> list) {
+    if(<warning descr="Condition 'list.size() == 10 && list.indexOf(\"xyz\") == 15' is always 'false'">list.size() == 10 && <warning descr="Condition 'list.indexOf(\"xyz\") == 15' is always 'false' when reached">list.indexOf("xyz") == 15</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testGetUnknown(List<String> list, int index) {
+    if(<warning descr="Condition 'list.get(index).isEmpty() && list.isEmpty()' is always 'false'">list.get(index).isEmpty() && <warning descr="Condition 'list.isEmpty()' is always 'false' when reached">list.isEmpty()</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
 }

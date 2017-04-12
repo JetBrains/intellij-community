@@ -41,7 +41,9 @@ public class CustomMethodHandlers {
 
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
-              (args, memState, factory) -> stringIndexOf(args.myQualifier, memState, factory))
+              (args, memState, factory) -> indexOf(args.myQualifier, memState, factory, SpecialField.STRING_LENGTH))
+    .register(instanceCall(JAVA_UTIL_LIST, "indexOf", "lastIndexOf"),
+              (args, memState, factory) -> indexOf(args.myQualifier, memState, factory, SpecialField.COLLECTION_SIZE))
     .register(instanceCall(JAVA_LANG_STRING, "equals").parameterCount(1),
               (args, memState, factory) -> stringEquals(args, memState, factory, false))
     .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
@@ -105,10 +107,11 @@ public class CustomMethodHandlers {
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
   }
 
-  private static List<DfaMemoryState> stringIndexOf(DfaValue qualifier,
-                                                    DfaMemoryState memState,
-                                                    DfaValueFactory factory) {
-    DfaValue length = SpecialField.STRING_LENGTH.createValue(factory, qualifier);
+  private static List<DfaMemoryState> indexOf(DfaValue qualifier,
+                                              DfaMemoryState memState,
+                                              DfaValueFactory factory,
+                                              SpecialField specialField) {
+    DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = memState.getRange(length);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
     return singleResult(memState, factory.getRangeFactory().create(LongRangeSet.range(-1, maxLen - 1)));

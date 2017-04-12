@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
@@ -38,6 +39,9 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.create
  * @author peter
  */
 public class HardcodedContracts {
+  private static final Pattern FIRST_OR_LAST = Pattern.compile("first|last");
+  private static final Pattern CONTAINS_KEY_VALUE = Pattern.compile("containsKey|containsValue");
+
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
     if (owner == null ||
@@ -96,9 +100,36 @@ public class HardcodedContracts {
     else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_COLLECTION, PsiType.BOOLEAN, "isEmpty")) {
       return SpecialField.COLLECTION_SIZE.getEmptyContracts();
     }
-    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_COLLECTION, null, "get", PsiType.INT)) {
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_COLLECTION, PsiType.BOOLEAN, "contains", (PsiType)null)) {
+      return Collections.singletonList(MethodContract.singleConditionContract(
+        ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), FALSE_VALUE));
+    }
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_SET, PsiType.BOOLEAN, "equals", (PsiType)null) ||
+             MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, PsiType.BOOLEAN, "equals", (PsiType)null)) {
+      return Collections.singletonList(MethodContract.singleConditionContract(
+        ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.NE,
+        ContractValue.argument(0).specialField(SpecialField.COLLECTION_SIZE), FALSE_VALUE));
+    }
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT)) {
       return Arrays.asList(nonnegativeArgumentContract(0),
                            specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE));
+    }
+    else if (MethodUtils.methodMatches(method, "java.util.SortedSet", null, FIRST_OR_LAST)) {
+      return Collections.singletonList(MethodContract.singleConditionContract(
+        ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
+        ContractValue.zero(), THROW_EXCEPTION));
+    }
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_MAP, PsiType.BOOLEAN, "isEmpty")) {
+      return SpecialField.MAP_SIZE.getEmptyContracts();
+    }
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_MAP, PsiType.BOOLEAN, CONTAINS_KEY_VALUE, (PsiType)null)) {
+      return Collections.singletonList(MethodContract.singleConditionContract(
+        ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.EQ, ContractValue.zero(), FALSE_VALUE));
+    }
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_MAP, PsiType.BOOLEAN, "equals", (PsiType)null)) {
+      return Collections.singletonList(MethodContract.singleConditionContract(
+        ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.NE,
+        ContractValue.argument(0).specialField(SpecialField.MAP_SIZE), FALSE_VALUE));
     }
     else if ("org.apache.commons.lang.Validate".equals(className) ||
              "org.apache.commons.lang3.Validate".equals(className) ||
@@ -138,12 +169,12 @@ public class HardcodedContracts {
 
   static MethodContract nonnegativeArgumentContract(int argNumber) {
     return MethodContract
-      .singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.constant(0, PsiType.INT), THROW_EXCEPTION);
+      .singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.zero(), THROW_EXCEPTION);
   }
 
   static MethodContract specialFieldRangeContract(int index, RelationType type, SpecialField specialField) {
     return MethodContract.singleConditionContract(ContractValue.argument(index), type.getNegated(),
-                                                  ContractValue.specialField(ContractValue.qualifier(), specialField), THROW_EXCEPTION);
+                                                  ContractValue.qualifier().specialField(specialField), THROW_EXCEPTION);
   }
 
   private static boolean isJunit(String className) {
