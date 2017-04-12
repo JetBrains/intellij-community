@@ -2705,6 +2705,13 @@ public class StringUtil extends StringUtilRt {
     return res;
   }
 
+  public static final Comparator<String> NATURAL_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return naturalCompare(o1, o2);
+    }
+  };
+
   /**
    * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html"/>
    * "Sorting for Humans: Natural Sort Order"</a>

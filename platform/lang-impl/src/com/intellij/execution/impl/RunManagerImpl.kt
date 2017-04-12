@@ -40,6 +40,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -376,10 +377,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
   }
 
-  private data class OrderItem(val id: String, val settings: RunnerAndConfigurationSettings)
-
   @Volatile
-  private var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = null
+  private var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = emptyList()
 
   override val allSettings: List<RunnerAndConfigurationSettings>
     get() {
@@ -397,46 +396,48 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           return immutableSortedSettingsList!!
         }
 
-        val order = ArrayList<OrderItem>(idToSettings.size)
-        val folderNames = SmartList<String>()
-        for (each in idToSettings.values) {
-          order.add(OrderItem(each.uniqueID, each))
-          val folderName = each.folderName
-          if (folderName != null && !folderNames.contains(folderName)) {
-            folderNames.add(folderName)
-          }
-        }
-        folderNames.add(null)
-        idToSettings.clear()
-
+        // IDEA-63663 Sort run configurations alphabetically if clean checkout
         if (customOrder.isEmpty()) {
-          // IDEA-63663 Sort run configurations alphabetically if clean checkout
-          order.sortWith(Comparator { o1, o2 ->
-            val temporary1 = o1.settings.isTemporary
-            val temporary2 = o2.settings.isTemporary
+          idToSettings.values.sortedWith(Comparator { o1, o2 ->
+            val temporary1 = o1.isTemporary
+            val temporary2 = o2.isTemporary
             when {
-              temporary1 == temporary2 -> o1.id.compareTo(o2.id)
+              temporary1 == temporary2 -> o1.uniqueID.compareTo(o2.uniqueID)
               temporary1 -> 1
               else -> -1
             }
           })
         }
         else {
-          order.sortWith(Comparator { o1, o2 ->
-            val i1 = folderNames.indexOf(o1.settings.folderName)
-            val i2 = folderNames.indexOf(o2.settings.folderName)
-            if (i1 != i2) {
-              return@Comparator i1 - i2
+          val list = idToSettings.values.toTypedArray()
+          val folderNames = SmartList<String>()
+          for (settings in list) {
+            val folderName = settings.folderName
+            if (folderName != null && !folderNames.contains(folderName)) {
+              folderNames.add(folderName)
+            }
+          }
+
+          folderNames.sortWith(StringUtil.NATURAL_COMPARATOR)
+          folderNames.add(null)
+
+          list.sortWith(Comparator { o1, o2 ->
+            if (o1.folderName != o2.folderName) {
+              val i1 = folderNames.indexOf(o1.folderName)
+              val i2 = folderNames.indexOf(o2.folderName)
+              if (i1 != i2) {
+                return@Comparator i1 - i2
+              }
             }
 
-            val temporary1 = o1.settings.isTemporary
-            val temporary2 = o2.settings.isTemporary
+            val temporary1 = o1.isTemporary
+            val temporary2 = o2.isTemporary
             when {
               temporary1 == temporary2 -> {
-                val index1 = customOrder.indexOf(o1.id)
-                val index2 = customOrder.indexOf(o2.id)
+                val index1 = customOrder.indexOf(o1.uniqueID)
+                val index2 = customOrder.indexOf(o2.uniqueID)
                 if (index1 == -1 && index2 == -1) {
-                  o1.settings.name.compareTo(o2.settings.name)
+                  o1.name.compareTo(o2.name)
                 }
                 else {
                   index1 - index2
@@ -446,11 +447,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
               else -> -1
             }
           })
-        }
 
-        for (each in order) {
-          val setting = each.settings
-          idToSettings.put(setting.uniqueID, setting)
+          idToSettings.clear()
+          for (settings in list) {
+            idToSettings.put(settings.uniqueID, settings)
+          }
         }
 
         val result = Collections.unmodifiableList(idToSettings.values.toList())

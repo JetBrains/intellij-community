@@ -76,6 +76,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
+  private var uniqueId: String? = null
+
   override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.FACTORY
 
   override fun isTemplate() = isTemplate
@@ -108,9 +110,14 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   override fun getUniqueID(): String {
-    val configuration = configuration
-    @Suppress("DEPRECATION")
-    return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+    var result = uniqueId
+    if (result == null) {
+      val configuration = configuration
+      @Suppress("DEPRECATION")
+      result = "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+      uniqueId = result
+    }
+    return result
   }
 
   override fun setEditBeforeRun(b: Boolean) {
@@ -180,6 +187,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
 
     _configuration = configuration
+    uniqueId = null
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
     if (configuration is ModuleBasedConfiguration<*>) {
