@@ -45,6 +45,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
   private final DiffContentFactoryEx myContentFactory = DiffContentFactoryEx.getInstanceEx();
 
@@ -127,7 +129,13 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   }
 
   @NotNull
-  public static String getTitle(@NotNull FilePath path1, @NotNull FilePath path2, @NotNull String separator) {
+  public static String getTitle(@Nullable FilePath path1, @Nullable FilePath path2, @NotNull String separator) {
+    assert path1 != null || path2 != null;
+
+    if (path1 == null || path2 == null) {
+      return getContentTitle(chooseNotNull(path1, path2));
+    }
+
     if ((path1.isDirectory() || path2.isDirectory()) && path1.getPath().equals(path2.getPath())) {
       return path1.getPresentableUrl();
     }
