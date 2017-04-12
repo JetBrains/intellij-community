@@ -32,11 +32,10 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
 
   @Override
   public int compare(Sdk o1, Sdk o2) {
-    for (PySdkWeightProvider provider : Extensions.getExtensions(PySdkWeightProvider.EP_NAME)) {
-      int weight1 = provider.getWeight(o1);
-      int weight2 = provider.getWeight(o2);
-      if(weight1 != weight2) {
-        return weight2 - weight1;
+    for (PySdkComparator comparator : Extensions.getExtensions(PySdkComparator.EP_NAME)) {
+      int result = comparator.compare(o1, o2);
+      if(result != 0) {
+        return result;
       }
     }
 

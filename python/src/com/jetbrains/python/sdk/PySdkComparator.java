@@ -21,8 +21,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 /**
  * Created by kirylch on 3/29/2017.
  */
-public interface PySdkWeightProvider {
-  ExtensionPointName<PySdkWeightProvider> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkWeightProvider");
+public interface PySdkComparator {
+  ExtensionPointName<PySdkComparator> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkComparator");
 
-  int getWeight(Sdk sdk);
+  int compare(Sdk sdk1, Sdk sdk2);
 }
