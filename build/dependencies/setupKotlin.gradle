@@ -45,3 +45,4 @@ task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin) {
     }
   }
 }
+setupKotlinPlugin.dependsOn cleanSetupKotlinPlugin

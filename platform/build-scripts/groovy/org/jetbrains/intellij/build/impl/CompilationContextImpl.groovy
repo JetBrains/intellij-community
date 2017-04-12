@@ -122,7 +122,7 @@ class CompilationContextImpl implements CompilationContext {
 
   private static void setupDependencies(BuildMessages messages, String communityHome) {
     messages.info("Setting up compilation dependencies")    
-    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupJdks', 'cleanSetupKotlinPlugin', 'setupKotlinPlugin')) {
+    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupJdks', 'setupKotlinPlugin')) {
       messages.error("Cannot setup compilation dependencies")
     }
   }
