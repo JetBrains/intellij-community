@@ -17,7 +17,6 @@ package git4idea.log;
 
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.DiffRequest;
@@ -51,10 +50,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Objects;
 
+import static com.intellij.diff.DiffRequestFactoryImpl.getTitle;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class GitLogDiffHandler implements VcsLogDiffHandler {
   private static final Logger LOG = Logger.getInstance(GitLogDiffHandler.class);
@@ -84,7 +82,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                           DiffContent leftDiffContent = createDiffContent(root, leftPath, leftHash);
                           DiffContent rightDiffContent = createDiffContent(root, rightPath, rightHash);
 
-                          return new SimpleDiffRequest(getTitle(leftPath, rightPath),
+                          return new SimpleDiffRequest(getTitle(leftPath, rightPath, " -> "),
                                                        leftDiffContent, rightDiffContent,
                                                        leftHash.asString(), rightHash.asString());
                         }
@@ -110,7 +108,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                           LOG.assertTrue(file != null);
                           DiffContent rightDiffContent = myDiffContentFactory.create(myProject, file);
 
-                          return new SimpleDiffRequest(getTitle(revisionPath, localPath),
+                          return new SimpleDiffRequest(getTitle(revisionPath, localPath, " -> "),
                                                        leftDiffContent, rightDiffContent,
                                                        revisionHash.asString(), "(Local)");
                         }
@@ -131,7 +129,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                                            " and " +
                                            (rightRevision == null ? "current revision" : rightRevision.asString()) +
                                            " in " +
-                                           getTitle(directoryPath, directoryPath);
+                                           getTitle(directoryPath, directoryPath, " -> ");
                       VcsDiffUtil.showChangesDialog(myProject, dialogTitle, ContainerUtil.newArrayList(diff));
                     }, "Calculating Diff for " + directoryPath.getName());
   }
@@ -201,18 +199,5 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, new Pair<>(path, new GitRevisionNumber(hash.asString())));
 
     return diffContent;
-  }
-
-  @NotNull
-  private static String getTitle(@Nullable FilePath leftPath, @Nullable FilePath rightPath) {
-    LOG.assertTrue(leftPath != null || rightPath != null);
-
-    if (Objects.equals(rightPath, leftPath)) {
-      return DiffRequestFactoryImpl.getContentTitle(notNull(leftPath));
-    }
-    if (leftPath == null || rightPath == null) {
-      return DiffRequestFactoryImpl.getContentTitle(chooseNotNull(leftPath, rightPath));
-    }
-    return DiffRequestFactoryImpl.getTitle(leftPath, rightPath, " -> ");
   }
 }
