@@ -83,6 +83,7 @@ public class ConsoleViewUtil {
       editorSettings.setRightMarginShown(false);
       editorSettings.setCaretRowShown(false);
       editor.getGutterComponentEx().setPaintBackground(false);
+      editor.getGutterComponentEx().resetInitialIconAreaWidth();
 
       editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 

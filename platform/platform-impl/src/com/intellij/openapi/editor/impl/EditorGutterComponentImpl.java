@@ -127,6 +127,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  private int myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   private int myIconsAreaWidth;
   private int myLineNumberAreaWidth;
   private int myAdditionalLineNumberAreaWidth;
@@ -809,7 +810,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    int minWidth = areIconsShown() ? scaleWidth(START_ICON_AREA_WIDTH) : 0;
+    int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     processGutterRenderers((line, renderers) -> {
@@ -1802,6 +1803,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void setForceShowRightFreePaintersArea(boolean value) {
     myForceRightFreePaintersAreaShown = value;
+  }
+
+  @Override
+  public void setInitialIconAreaWidth(int width) {
+    myStartIconAreaWidth = width;
+  }
+
+  @Override
+  public void resetInitialIconAreaWidth() {
+    myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   }
 
   private void invokePopup(MouseEvent e) {
