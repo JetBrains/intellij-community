@@ -976,27 +976,29 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     void process(int x, int y, @NotNull GutterMark renderer);
   }
 
-  private Icon scaleIcon(Icon icon) {
-    if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
+  private float getEditorScaleFactor() {
+    if (Registry.is("editor.scale.gutter.icons")) {
       float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
-        if (icon instanceof JBUIScaleTrackable) {
-          ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
-        }
-        return ((ScalableIcon)icon).scale(scale);
+        return scale;
       }
+    }
+    return 1f;
+  }
+
+  private Icon scaleIcon(Icon icon) {
+    float scale = getEditorScaleFactor();
+    if (icon instanceof ScalableIcon && scale != 1f) {
+      if (icon instanceof JBUIScaleTrackable) {
+        ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
+      }
+      return ((ScalableIcon)icon).scale(scale);
     }
     return icon;
   }
 
   private int scaleWidth(int width) {
-    if (Registry.is("editor.scale.gutter.icons")) {
-      float scale = myEditor.getScale();
-      if (Math.abs(1f - scale) > 0.10f) {
-        return (int) (scale * width);
-      }
-    }
-    return width;
+    return (int) (getEditorScaleFactor() * width);
   }
 
   private void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
