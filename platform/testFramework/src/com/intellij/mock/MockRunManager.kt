@@ -27,6 +27,8 @@ import javax.swing.Icon
  * @author gregsh
  */
 class MockRunManager : RunManagerEx() {
+  override fun hasSettings(settings: RunnerAndConfigurationSettings) = false
+
   override fun getConfigurationsList(type: ConfigurationType) = emptyList<RunConfiguration>()
 
   override fun makeStable(configuration: RunConfiguration) {}
