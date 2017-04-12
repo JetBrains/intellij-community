@@ -297,15 +297,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
       if (JavaSdkUtil.isJdkAtLeast(params.getJdk(), JavaSdkVersion.JDK_1_9)) {
-        PsiClass mainClass = module.findClass(params.getMainClass());
-        if (mainClass != null) {
-          PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
-          if (mainModule != null) {
-            params.setModuleName(mainModule.getName());
-            PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
-            modulePath.addAll(classPath.getPathList());
-            classPath.clear();
-          }
+        PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass()));
+        if (mainModule != null) {
+          params.setModuleName(mainModule.getName());
+          PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
+          modulePath.addAll(classPath.getPathList());
+          classPath.clear();
         }
       }
     }
