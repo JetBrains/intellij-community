@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,13 +55,13 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/22/12                       
+ *         Date: 1/22/12
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class ExternalJavacManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.javac.ExternalJavacServer");
   public static final GlobalContextKey<ExternalJavacManager> KEY = GlobalContextKey.create("_external_javac_server_");
-  
+
   public static final int DEFAULT_SERVER_PORT = 7878;
   public static final String STDOUT_LINE_PREFIX = "JAVAC_PROCESS[STDOUT]";
   public static final String STDERR_LINE_PREFIX = "JAVAC_PROCESS[STDERR]";
@@ -107,7 +107,7 @@ public class ExternalJavacManager {
       throw new RuntimeException(e);
     }
   }
-  
+
 
   public boolean forkJavac(final String javaHome, final int heapSize, List<String> vmOptions, List<String> options,
                            Collection<File> platformCp,
@@ -195,7 +195,7 @@ public class ExternalJavacManager {
     }
     return null;
   }
-  
+
   public void stop() {
     myChannelRegistrar.close().awaitUninterruptibly();
   }
@@ -278,6 +278,10 @@ public class ExternalJavacManager {
 
     appendParam(cmdLine, FileUtil.toSystemIndependentName(workingDir.getPath()));
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("starting external compiler: " + cmdLine);
+    }
+
     final ProcessBuilder builder = new ProcessBuilder(cmdLine);
     builder.directory(workingDir);
 
@@ -338,12 +342,12 @@ public class ExternalJavacManager {
     @Override
     public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
       JavacProcessDescriptor descriptor = context.channel().attr(SESSION_DESCRIPTOR).get();
-  
+
       UUID sessionId;
       if (descriptor == null) {
         // this is the first message for this session, so fill session data with missing info
         sessionId = JavacProtoUtil.fromProtoUUID(message.getSessionId());
-  
+
         descriptor = myMessageHandlers.get(sessionId);
         if (descriptor != null) {
           descriptor.channel = context.channel();
@@ -353,7 +357,7 @@ public class ExternalJavacManager {
       else {
         sessionId = descriptor.sessionId;
       }
-  
+
       final ExternalJavacMessageHandler handler = descriptor != null? descriptor.handler : null;
 
       final JavacRemoteProto.Message.Type messageType = message.getMessageType();
@@ -388,7 +392,7 @@ public class ExternalJavacManager {
       }
       finally {
         if (reply != null) {
-          context.channel().writeAndFlush(reply);  
+          context.channel().writeAndFlush(reply);
         }
       }
     }
@@ -456,16 +460,13 @@ public class ExternalJavacManager {
         channel.writeAndFlush(JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createCancelRequest()));
       }
     }
-    
+
     public void setDone() {
       myDone.up();
     }
-    
-    
+
     public boolean waitFor(long timeout) {
       return myDone.waitFor(timeout);
     }
-    
   }
-  
 }
