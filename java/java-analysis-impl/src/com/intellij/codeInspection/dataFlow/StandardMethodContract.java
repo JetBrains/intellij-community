@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * A method contract which is described by {@link MethodContract.ValueConstraint} constraints on arguments.
@@ -76,12 +75,8 @@ public final class StandardMethodContract extends MethodContract {
     return result;
   }
 
-  boolean isTrivial() {
-    return Arrays.stream(this.arguments).allMatch(Predicate.isEqual(ValueConstraint.ANY_VALUE));
-  }
-
   @Override
-  protected String getArgumentsPresentation() {
+  String getArgumentsPresentation() {
     return StringUtil.join(arguments, constraint -> constraint.toString(), ", ");
   }
 

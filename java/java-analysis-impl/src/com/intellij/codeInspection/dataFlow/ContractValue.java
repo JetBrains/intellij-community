@@ -26,6 +26,7 @@ import com.intellij.util.Function;
  * @author Tagir Valeev
  */
 public abstract class ContractValue {
+  // package private to avoid uncontrolled implementations
   ContractValue() {
 
   }
