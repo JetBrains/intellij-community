@@ -52,6 +52,7 @@ public class ProjectRunConfigurationManager implements PersistentStateComponent<
     }
 
     myManager.removeNotExistingSharedConfigurations(existing);
+    myManager.requestSort();
 
     if (myManager.getSelectedConfiguration() == null) {
       for (RunnerAndConfigurationSettings settings : myManager.getAllSettings()) {

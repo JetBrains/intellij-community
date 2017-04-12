@@ -128,5 +128,6 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     }
 
     myManager.removeNotExistingSharedConfigurations(existing);
+    myManager.requestSort();
   }
 }

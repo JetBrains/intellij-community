@@ -116,7 +116,17 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private val iconCache = TimedIconCache()
   private val _config by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
 
-  private val customOrder = ArrayList<String>()
+  private var isCustomOrderApplied = true
+    set(value) {
+      if (field != value) {
+        field = value
+        if (!value) {
+          immutableSortedSettingsList = null
+        }
+      }
+    }
+
+  private val customOrder = ObjectIntHashMap<String>()
   private val recentlyUsedTemporaries = ArrayList<RunConfiguration>()
 
   private val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
@@ -277,7 +287,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       existingId = findExistingConfigurationId(settings)
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
-      if (existingId != newId && existingId != null) {
+      if (existingId != null) {
+        // idToSettings is a LinkedHashMap - we must remove even if existingId equals to newId and in any case we will replace it on put
         idToSettings.remove(existingId!!)
       }
 
@@ -285,6 +296,10 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         selectedConfigurationId = newId
       }
       idToSettings.put(newId, settings)
+
+      if (!customOrder.isEmpty && !customOrder.contains(settings.uniqueID)) {
+        customOrder.put(settings.uniqueID, customOrder.size())
+      }
 
       if (existingId == null) {
         refreshUsagesList(settings)
@@ -357,6 +372,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     removed?.let { fireRunConfigurationsRemoved(it) }
   }
 
+  // comparator is null if want just to save current order (e.g. if want to keep order even after reload)
+  // yes, on hot reload, because our ProjectRunConfigurationManager doesn't use SchemeManager and change of some RC file leads to reload of all configurations
   fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
     lock.write {
       val sorted = idToSettings.values.filterTo(ArrayList(idToSettings.size)) { it.type !is UnknownConfigurationType }
@@ -365,8 +382,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
       customOrder.clear()
       customOrder.ensureCapacity(sorted.size)
-      sorted.mapTo(customOrder) { it.uniqueID }
+      sorted.mapIndexed { index, settings -> customOrder.put(settings.uniqueID, index) }
       immutableSortedSettingsList = null
+      isCustomOrderApplied = false
     }
   }
 
@@ -385,6 +403,19 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   @Volatile
   private var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = emptyList()
 
+  fun requestSort() {
+    lock.write {
+      if (customOrder.isEmpty) {
+        sortAlphabetically()
+      }
+      else {
+        isCustomOrderApplied = false
+      }
+      immutableSortedSettingsList = null
+      allSettings
+    }
+  }
+
   override val allSettings: List<RunnerAndConfigurationSettings>
     get() {
       immutableSortedSettingsList?.let {
@@ -402,18 +433,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         }
 
         // IDEA-63663 Sort run configurations alphabetically if clean checkout
-        if (customOrder.isEmpty()) {
-          idToSettings.values.sortedWith(Comparator { o1, o2 ->
-            val temporary1 = o1.isTemporary
-            val temporary2 = o2.isTemporary
-            when {
-              temporary1 == temporary2 -> o1.uniqueID.compareTo(o2.uniqueID)
-              temporary1 -> 1
-              else -> -1
-            }
-          })
-        }
-        else {
+        if (!isCustomOrderApplied && !customOrder.isEmpty) {
           val list = idToSettings.values.toTypedArray()
           val folderNames = SmartList<String>()
           for (settings in list) {
@@ -439,8 +459,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
             val temporary2 = o2.isTemporary
             when {
               temporary1 == temporary2 -> {
-                val index1 = customOrder.indexOf(o1.uniqueID)
-                val index2 = customOrder.indexOf(o2.uniqueID)
+                val index1 = customOrder.get(o1.uniqueID)
+                val index2 = customOrder.get(o2.uniqueID)
                 if (index1 == -1 && index2 == -1) {
                   o1.name.compareTo(o2.name)
                 }
@@ -453,6 +473,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
             }
           })
 
+          isCustomOrderApplied = true
           idToSettings.clear()
           for (settings in list) {
             idToSettings.put(settings.uniqueID, settings)
@@ -464,6 +485,26 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         return result
       }
     }
+
+  private fun sortAlphabetically() {
+    if (idToSettings.isEmpty()) {
+      return
+    }
+
+    val list = idToSettings.values.sortedWith(Comparator { o1, o2 ->
+      val temporary1 = o1.isTemporary
+      val temporary2 = o2.isTemporary
+      when {
+        temporary1 == temporary2 -> o1.uniqueID.compareTo(o2.uniqueID)
+        temporary1 -> 1
+        else -> -1
+      }
+    })
+    idToSettings.clear()
+    for (settings in list) {
+      idToSettings.put(settings.uniqueID, settings)
+    }
+  }
 
   override fun getState(): Element {
     val element = Element("state")
@@ -597,25 +638,35 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
     schemeManager.reload()
 
+    val order = ArrayList<String>()
     @Suppress("DEPRECATION")
-    com.intellij.openapi.util.JDOMExternalizableStringList.readList(customOrder, parentNode)
+    com.intellij.openapi.util.JDOMExternalizableStringList.readList(order, parentNode)
 
-    recentlyUsedTemporaries.clear()
-    val recentNode = parentNode.getChild(RECENT)
-    if (recentNode != null) {
-      val list = SmartList<String>()
-      @Suppress("DEPRECATION")
-      com.intellij.openapi.util.JDOMExternalizableStringList.readList(list, recentNode)
-      for (id in list) {
-        idToSettings.get(id)?.configuration?.let {
-          recentlyUsedTemporaries.add(it)
+    lock.write {
+      customOrder.clear()
+      customOrder.ensureCapacity(order.size)
+      order.mapIndexed { index, id -> customOrder.put(id, index) }
+
+      // ProjectRunConfigurationManager will not call requestSort if no shared configurations
+      requestSort()
+
+      recentlyUsedTemporaries.clear()
+      val recentNode = parentNode.getChild(RECENT)
+      if (recentNode != null) {
+        val list = SmartList<String>()
+        @Suppress("DEPRECATION")
+        com.intellij.openapi.util.JDOMExternalizableStringList.readList(list, recentNode)
+        for (id in list) {
+          idToSettings.get(id)?.configuration?.let {
+            recentlyUsedTemporaries.add(it)
+          }
         }
       }
-    }
-    immutableSortedSettingsList = null
+      immutableSortedSettingsList = null
 
-    loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
-    selectedConfigurationId = loadedSelectedConfigurationUniqueName
+      loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
+      selectedConfigurationId = loadedSelectedConfigurationUniqueName
+    }
 
     fireBeforeRunTasksUpdated()
     fireRunConfigurationSelected()
@@ -800,9 +851,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
-    recentlyUsedTemporaries.remove(settings.configuration)
-    if (!customOrder.isEmpty()) {
-      immutableSortedSettingsList = null
+    lock.write {
+      recentlyUsedTemporaries.remove(settings.configuration)
+      if (!customOrder.isEmpty) {
+        isCustomOrderApplied = false
+      }
     }
   }
 
