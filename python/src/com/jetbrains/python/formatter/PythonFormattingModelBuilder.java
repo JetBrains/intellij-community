@@ -38,7 +38,7 @@ import static com.jetbrains.python.PyTokenTypes.*;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
-  public static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
+  static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
 
   @NotNull
   @Override
@@ -66,6 +66,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     return null;
   }
 
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     return createModel(element, settings, FormattingMode.REFORMAT);
@@ -163,14 +164,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
-    return TokenSet.create(IElementType.enumerate(new IElementType.Predicate() {
-      @Override
-      public boolean matches(@NotNull IElementType type) {
-        return type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage);
-      }
-    }));
+    return TokenSet.create(IElementType.enumerate(type -> type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage)));
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;
   }
@@ -180,12 +177,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       for (int i = 0; i < indent; i++) {
         System.out.print(" ");
       }
-      System.out.println(node.toString() + " " + node.getTextRange().toString());
+      System.out.println(node + " " + node.getTextRange());
       printAST(node.getFirstChildNode(), indent + 2);
       node = node.getTreeNext();
     }
   }
 
+  @Override
   public boolean isEngagedToFormat(PsiElement context) {
     PsiFile file = context.getContainingFile();
     return file != null && file.getLanguage() == PythonLanguage.getInstance();
