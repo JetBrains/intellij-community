@@ -105,7 +105,7 @@ class CompilationContextImpl implements CompilationContext {
 
   private static void loadProject(String communityHome, String projectHome, String jdkHome, JpsProject project, JpsGlobal global,
                                   BuildMessages messages) {
-    def bundledKotlinPath = "$communityHome/build/dependencies/build/Kotlin/kotlinc"
+    def bundledKotlinPath = "$communityHome/build/dependencies/build/kotlin/Kotlin/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
       messages.error(
         "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
