@@ -18,13 +18,12 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.containers.HashMap;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,9 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Feb 8, 2010
  */
-public class UnBoxingEvaluator implements Evaluator{
+public class UnBoxingEvaluator implements Evaluator {
+  private static final Logger LOG = Logger.getInstance(UnBoxingEvaluator.class);
+
   private final Evaluator myOperand;
   private static final Map<String, Couple<String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<>();
   static {
@@ -79,6 +80,17 @@ public class UnBoxingEvaluator implements Evaluator{
                                           String conversionMethodSignature) throws EvaluateException {
     final DebugProcessImpl process = context.getDebugProcess();
     final ClassType wrapperClass = (ClassType)value.referenceType();
+
+    // for speedup first try value field
+    Field valueField = wrapperClass.fieldByName("value");
+    if (valueField != null) {
+      Value primitiveValue = value.getValue(valueField);
+      if (primitiveValue != null) {
+        LOG.assertTrue(DebuggerUtilsEx.signatureToName(conversionMethodSignature).startsWith(primitiveValue.type().name()));
+        return primitiveValue;
+      }
+    }
+
     Method method = wrapperClass.concreteMethodByName(conversionMethodName, conversionMethodSignature);
     if (method == null) {
       throw new EvaluateException("Cannot convert to primitive value of type " + value.type() + ": Unable to find method " +
