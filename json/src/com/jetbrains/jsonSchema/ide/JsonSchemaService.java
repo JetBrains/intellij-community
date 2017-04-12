@@ -8,7 +8,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +30,6 @@ public interface JsonSchemaService {
 
   @Nullable
   CompletionContributor getCompletionContributor(@Nullable VirtualFile file);
-
-  boolean isSchemaFile(@NotNull VirtualFile file, @NotNull Consumer<String> errorConsumer);
 
   @Nullable
   DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file);

@@ -7,9 +7,8 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -20,7 +19,6 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -103,7 +101,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     }
   }
 
-  private JsonSchemaObject getSchemaObject(File file) throws IOException {
+  private JsonSchemaObject getSchemaObject(File file) throws Exception {
     Assert.assertTrue(file.exists());
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     Assert.assertNotNull(virtualFile);
@@ -143,22 +141,22 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
   }
 
-  private void doTestSchemaReadNotHung(final File file) throws IOException {
+  private void doTestSchemaReadNotHung(final File file) throws Exception {
     // because of threading
     if (Runtime.getRuntime().availableProcessors() < 2) return;
 
     Assert.assertTrue(file.exists());
 
     final AtomicBoolean done = new AtomicBoolean();
-    final AtomicReference<IOException> error = new AtomicReference<>();
+    final AtomicReference<Exception> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Thread thread = new Thread(() -> {
       try {
-        ApplicationManager.getApplication().runReadAction((ThrowableComputable<JsonSchemaObject, IOException>)() -> getSchemaObject(file));
+        ReadAction.run(() -> getSchemaObject(file));
         done.set(true);
       }
-      catch (IOException e) {
+      catch (Exception e) {
         error.set(e);
       }
       finally {

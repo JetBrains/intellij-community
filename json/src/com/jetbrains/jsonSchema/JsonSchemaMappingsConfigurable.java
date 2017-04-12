@@ -32,11 +32,10 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
@@ -110,18 +109,16 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     final VirtualFile file =
       FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(
         JsonBundle.message("json.schema.add.schema.chooser.title")), myProject, null);
-    if (file != null) {
-      final String relativePath = VfsUtil.getRelativePath(file, myProject.getBaseDir());
+    if (file != null && myProject != null) {
+      final String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());
       if (relativePath == null) {
         Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
         return;
       }
-      final JsonSchemaChecker importer = new JsonSchemaChecker(myProject, file);
-      if (!importer.checkSchemaFile()) {
-        if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
-          JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
-          Messages.showErrorDialog(myProject, importer.getError(), READ_JSON_SCHEMA);
-        }
+      final String error = JsonSchemaReader.checkIfValidJsonSchema(myProject, file);
+      if (error != null) {
+        JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.ERROR).notify(myProject);
+        Messages.showErrorDialog(myProject, error, READ_JSON_SCHEMA);
         return;
       }
 
@@ -343,7 +340,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   }
 
   public static class JsonSchemaChecker {
-    private static final int MAX_SCHEMA_LENGTH = FileUtil.MEGABYTE;
+    private static final int MAX_SCHEMA_LENGTH = FileUtilRt.MEGABYTE;
     private final Project myProject;
     private final VirtualFile myFile;
 
@@ -365,13 +362,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
         return false;
       }
-      final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-      final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-      if (service != null && !service.isSchemaFile(myFile, collectConsumer)) {
-        myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
-        if (!collectConsumer.getResult().isEmpty()) {
-          myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");
-        }
+      final String error = JsonSchemaReader.checkIfValidJsonSchema(myProject, myFile);
+      if (error != null) {
+        myError = String.format("JSON Schema not found or contain error in '%s': %s", myFile.getName(), error);
         return false;
       }
       return true;

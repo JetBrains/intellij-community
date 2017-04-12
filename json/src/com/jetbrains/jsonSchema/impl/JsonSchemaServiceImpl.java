@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.*;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,25 +103,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     }
   }
 
-  @Override
-  public boolean isSchemaFile(@NotNull VirtualFile file, @NotNull final Consumer<String> errorConsumer) {
-    try {
-      VfsUtilCore.loadText(file);
-    }
-    catch (IOException e) {
-      errorConsumer.consume(e.getMessage());
-      return false;
-    }
-    try {
-      return JsonSchemaReader.isJsonSchema(myProject, file, errorConsumer);
-    }
-    catch (Exception e) {
-      reset();
-      errorConsumer.consume(e.getMessage());
-      return false;
-    }
-  }
-
   @Nullable
   @Override
   public DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file) {
@@ -160,9 +139,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     if (file == null) return null;
     return ReadAction.compute(() -> {
       try {
-        final JsonSchemaReader reader = JsonSchemaReader.create(myProject, file);
-        if (reader == null) return null;
-        final JsonSchemaObject schemaObject = reader.read();
+        final JsonSchemaObject schemaObject = JsonSchemaReader.create(myProject, file).read();
         if (schemaObject.getId() != null) myDefinitions.register(file, schemaObject.getId());
         return schemaObject;
       }

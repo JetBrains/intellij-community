@@ -21,11 +21,11 @@ import com.intellij.json.psi.JsonValue;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +36,7 @@ import java.util.*;
  * @author Irina.Chernushina on 8/27/2015.
  */
 public class JsonSchemaReader {
+  private static final int MAX_SCHEMA_LENGTH = FileUtilRt.MEGABYTE;
   public static final Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.impl.JsonSchemaReader");
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
 
@@ -45,12 +46,13 @@ public class JsonSchemaReader {
     myRoot = root;
   }
 
-  @Nullable
-  public static JsonSchemaReader create(@NotNull Project project, @NotNull VirtualFile key) {
+  @NotNull
+  public static JsonSchemaReader create(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
-    if (!(psiFile instanceof JsonFile)) return null;
+    if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load PSI for JSON Schema file '%s'", key.getName()));
     final List<JsonValue> values = ((JsonFile)psiFile).getAllTopLevelValues();
-    if (values.size() != 1 || !(values.get(0) instanceof JsonObject)) return null;
+    if (values.size() != 1 || !(values.get(0) instanceof JsonObject))
+      throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", key.getName()));
     return new JsonSchemaReader((JsonObject)values.get(0));
   }
 
@@ -63,18 +65,24 @@ public class JsonSchemaReader {
     return object;
   }
 
-  public static boolean isJsonSchema(@NotNull Project project, @NotNull VirtualFile key,
-                                     Consumer<String> errorConsumer) throws IOException {
-    final JsonSchemaReader reader = create(project, key);
-    if (reader == null) return false;
-    try {
-      reader.read();
-    } catch (Exception e) {
-      LOG.info(e);
-      errorConsumer.consume(e.getMessage());
-      return false;
+  @Nullable
+  public static String checkIfValidJsonSchema(@NotNull final Project project, @NotNull final VirtualFile file) {
+    final long length = file.getLength();
+    final String fileName = file.getName();
+    if (length > MAX_SCHEMA_LENGTH) {
+      return String.format("JSON schema was not loaded from '%s' because it's too large (file size is %d bytes).", fileName, length);
     }
-    return true;
+    if (length == 0) {
+      return String.format("JSON schema was not loaded from '%s'. File is empty.", fileName);
+    }
+    try {
+      create(project, file).read();
+    } catch (Exception e) {
+      final String message = String.format("JSON Schema not found or contain error in '%s': %s", fileName, e.getMessage());
+      LOG.info(message);
+      return message;
+    }
+    return null;
   }
 
   private static void removeDefinitions(JsonSchemaObject root, ArrayList<JsonSchemaObject> objects) {
