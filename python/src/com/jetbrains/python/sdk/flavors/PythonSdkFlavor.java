@@ -256,4 +256,7 @@ public abstract class PythonSdkFlavor {
   public VirtualFile getSdkPath(VirtualFile path) {
     return path;
   }
+
+  public void patchHelperCommandLine(GeneralCommandLine line) {
+  }
 }
