@@ -106,7 +106,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       textField.setEnabled(true);
     }
 
-    final PsiVariable variable = myVariables[selectedIndex];
+    final PsiElement variable = myVariables[selectedIndex];
     if (variable instanceof PsiField) {
       final PsiField field = (PsiField)variable;
       final PsiClass hisClass = field.getContainingClass();

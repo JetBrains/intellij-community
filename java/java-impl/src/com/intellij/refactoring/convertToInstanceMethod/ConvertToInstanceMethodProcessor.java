@@ -29,6 +29,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -54,7 +55,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG =
     Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor");
   private PsiMethod myMethod;
-  private PsiParameter myTargetParameter;
+  private @Nullable PsiParameter myTargetParameter;
   private PsiClass myTargetClass;
   private Map<PsiTypeParameter, PsiTypeParameter> myTypeParameterReplacements;
   private static final Key<PsiTypeParameter> BIND_TO_TYPE_PARAMETER = Key.create("REPLACEMENT");
@@ -64,17 +65,22 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   public ConvertToInstanceMethodProcessor(final Project project,
                                           final PsiMethod method,
-                                          final PsiParameter targetParameter,
+                                          final PsiElement targetParameter,
                                           final String newVisibility) {
     super(project);
     myMethod = method;
-    myTargetParameter = targetParameter;
+    myTargetParameter = targetParameter instanceof PsiParameter ? (PsiParameter)targetParameter : null;
     LOG.assertTrue(method.hasModifierProperty(PsiModifier.STATIC));
-    LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
-    LOG.assertTrue(myTargetParameter.getType() instanceof PsiClassType);
-    final PsiType type = myTargetParameter.getType();
-    LOG.assertTrue(type instanceof PsiClassType);
-    myTargetClass = ((PsiClassType)type).resolve();
+    if (myTargetParameter != null) {
+      LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
+      LOG.assertTrue(myTargetParameter.getType() instanceof PsiClassType);
+      final PsiType type = myTargetParameter.getType();
+      LOG.assertTrue(type instanceof PsiClassType);
+      myTargetClass = ((PsiClassType)type).resolve();
+    }
+    else {
+      myTargetClass = method.getContainingClass();
+    }
     myOldVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     myNewVisibility = newVisibility;
   }
@@ -89,15 +95,15 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected void refreshElements(@NotNull PsiElement[] elements) {
-    LOG.assertTrue(elements.length == 3);
+    LOG.assertTrue(elements.length > 1);
     myMethod = (PsiMethod)elements[0];
-    myTargetParameter = (PsiParameter)elements[1];
-    myTargetClass = (PsiClass)elements[2];
+    myTargetParameter = elements.length == 3 ? (PsiParameter)elements[1] : null;
+    myTargetClass = (PsiClass)elements[elements.length - 1];
   }
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
+    LOG.assertTrue(myTargetParameter == null || myTargetParameter.getDeclarationScope() == myMethod);
     final Project project = myMethod.getProject();
 
     final PsiReference[] methodReferences =
@@ -111,7 +117,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           result.add(new MethodCallUsageInfo((PsiMethodCallExpression)parent));
         }
         else if (element instanceof PsiMethodReferenceExpression) {
-          result.add(new MethodReferenceUsageInfo((PsiMethodReferenceExpression)element, myMethod.getParameterList().getParameterIndex(myTargetParameter) == 0));
+          result.add(new MethodReferenceUsageInfo((PsiMethodReferenceExpression)element, myTargetParameter == null || myMethod.getParameterList().getParameterIndex(myTargetParameter) == 0));
         }
       }
       else if (element instanceof PsiDocTagValue) {
@@ -119,10 +125,12 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false)) {
-      final PsiElement element = ref.getElement();
-      if (element instanceof PsiReferenceExpression || element instanceof PsiDocParamRef) {
-        result.add(new ParameterUsageInfo(ref));
+    if (myTargetParameter != null) {
+      for (final PsiReference ref : ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false)) {
+        final PsiElement element = ref.getElement();
+        if (element instanceof PsiReferenceExpression || element instanceof PsiDocParamRef) {
+          result.add(new ParameterUsageInfo(ref));
+        }
       }
     }
 
@@ -177,23 +185,33 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
 
     for (final UsageInfo usageInfo : usagesIn) {
+      PsiElement place = null;
       if (usageInfo instanceof MethodCallUsageInfo) {
-        final PsiMethodCallExpression methodCall = ((MethodCallUsageInfo)usageInfo).getMethodCall();
-        final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
-        final int index = myMethod.getParameterList().getParameterIndex(myTargetParameter);
-        if (index < expressions.length) {
-          PsiExpression instanceValue = expressions[index];
-          instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
-          if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
-            String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
-                                                       RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
-                                                       CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
-            conflicts.putValue(methodCall, message);
+        place = ((MethodCallUsageInfo)usageInfo).getMethodCall();
+        if (myTargetParameter != null) {
+          final PsiExpression[] expressions = ((PsiMethodCallExpression)place).getArgumentList().getExpressions();
+          final int index = myMethod.getParameterList().getParameterIndex(myTargetParameter);
+          if (index < expressions.length) {
+            PsiExpression instanceValue = expressions[index];
+            instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
+            if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
+              String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+                                                         RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(place), true),
+                                                         CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
+              conflicts.putValue(place, message);
+            }
           }
         }
       }
-      else if (usageInfo instanceof MethodReferenceUsageInfo && !((MethodReferenceUsageInfo)usageInfo).isApplicableBySecondSearch()) {
-        conflicts.putValue(((MethodReferenceUsageInfo)usageInfo).getExpression(), RefactoringBundle.message("expand.method.reference.warning"));
+      else if (usageInfo instanceof MethodReferenceUsageInfo) {
+        place = ((MethodReferenceUsageInfo)usageInfo).getExpression();
+        if (!((MethodReferenceUsageInfo)usageInfo).isApplicableBySecondSearch()) {
+          conflicts.putValue(place, RefactoringBundle.message("expand.method.reference.warning"));
+        }
+      }
+
+      if (myTargetParameter == null && place != null && myTargetClass.hasTypeParameters() && !thisAccessExpressionApplicable(place)) {
+        conflicts.putValue(place, "Impossible to infer class type arguments. When proceed, raw " + myTargetClass.getName() + " would be created");
       }
     }
 
@@ -237,7 +255,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
 
     prepareTypeParameterReplacement();
-    myTargetParameter.delete();
+    if (myTargetParameter != null) myTargetParameter.delete();
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     if (!myTargetClass.isInterface()) {
       PsiMethod method = addMethodToClass(myTargetClass);
@@ -271,7 +289,18 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     if (usage.isApplicableBySecondSearch()) {
       PsiExpression qualifierExpression = expression.getQualifierExpression();
       LOG.assertTrue(qualifierExpression != null);
-      qualifierExpression.replace(JavaPsiFacade.getElementFactory(myProject).createReferenceExpression(myTargetClass));
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
+      PsiElement qualifier;
+      if (myTargetParameter != null) {
+        qualifier = factory.createReferenceExpression(myTargetClass);
+      }
+      else {
+        boolean thisAccess = thisAccessExpressionApplicable(expression);
+        qualifier = thisAccess
+                    ? factory.createExpressionFromText("this", qualifierExpression)
+                    : createSyntheticAccessExpression(factory, expression);
+      }
+      qualifierExpression.replace(qualifier);
     }
     else {
       PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda(expression, false, true);
@@ -403,12 +432,28 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void processMethodCall(final PsiMethodCallExpression methodCall) throws IncorrectOperationException {
-    PsiParameterList parameterList = myMethod.getParameterList();
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
-    int parameterIndex = parameterList.getParameterIndex(myTargetParameter);
-    PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-    if (arguments.length <= parameterIndex) return;
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+    PsiExpression argument;
+    if (myTargetParameter != null) {
+      PsiParameterList parameterList = myMethod.getParameterList();
+      int parameterIndex = parameterList.getParameterIndex(myTargetParameter);
+      PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+      if (arguments.length <= parameterIndex) return;
+      argument = arguments[parameterIndex];
+    }
+    else {
+      if (thisAccessExpressionApplicable(methodCall)) {
+        PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+        if (qualifierExpression != null) {
+          qualifierExpression.delete();
+        }
+        return;
+      }
+
+      argument = createSyntheticAccessExpression(factory, methodCall);
+    }
+
     final PsiExpression qualifier;
     if (methodExpression.getQualifierExpression() != null) {
       qualifier = methodExpression.getQualifierExpression();
@@ -417,16 +462,29 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       final PsiReferenceExpression newRefExpr = (PsiReferenceExpression)factory.createExpressionFromText("x." + myMethod.getName(), null);
       qualifier = ((PsiReferenceExpression)methodExpression.replace(newRefExpr)).getQualifierExpression();
     }
-    qualifier.replace(arguments[parameterIndex]);
-    arguments[parameterIndex].delete();
+    qualifier.replace(argument);
+    argument.delete();
   }
 
+  private PsiExpression createSyntheticAccessExpression(PsiElementFactory factory, PsiElement context) {
+    return factory.createExpressionFromText("new " + myTargetClass.getName() + "()", context);
+  }
+
+
+  private boolean thisAccessExpressionApplicable(PsiElement expression) {
+    return PsiTreeUtil.isAncestor(myTargetClass, expression, false) && PsiUtil.getEnclosingStaticElement(expression, myTargetClass) == null;
+  }
+
+  @NotNull
   protected String getCommandName() {
     return ConvertToInstanceMethodHandler.REFACTORING_NAME;
   }
 
   @Nullable
   public Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {
+    if (myTargetParameter == null) {
+      return Collections.emptyMap();
+    }
     final PsiClassType type = (PsiClassType)myTargetParameter.getType();
     final PsiSubstitutor substitutor = type.resolveGenerics().getSubstitutor();
     return calculateReplacementMap(substitutor, myTargetClass, myMethod);
@@ -454,6 +512,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return myMethod;
   }
 
+  @Nullable
   public PsiParameter getTargetParameter() {
     return myTargetParameter;
   }

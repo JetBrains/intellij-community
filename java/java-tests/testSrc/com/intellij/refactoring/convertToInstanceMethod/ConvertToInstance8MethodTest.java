@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 
@@ -30,6 +31,19 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
 
   public void testMethodReferenceAcceptableBySecondSearch() throws Exception {
     doTest(0);
+  }
+
+  public void testConvertToInstanceMethodOfTheSameClass() throws Exception {
+    doTest(-1);
+  }
+
+  public void testConvertToInstanceMethodOfTheSameClassWithTypeParams() throws Exception {
+    try {
+      doTest(-1);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals(StringUtil.trimEnd(StringUtil.repeat("Impossible to infer class type arguments. When proceed, raw Bar would be created\n", 3), "\n"), e.getMessage());
+    }
   }
 
   public void testMethodReferenceToLambda() throws Exception {
