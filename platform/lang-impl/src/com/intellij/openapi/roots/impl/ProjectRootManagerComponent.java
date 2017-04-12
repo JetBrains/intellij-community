@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -62,7 +63,7 @@ import java.util.Set;
 /**
  * ProjectRootManager extended with ability to watch events.
  */
-public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent {
+public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
 
   private boolean myPointerChangesDetected = false;
@@ -305,6 +306,11 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         ((NewVirtualFile)root).markDirtyRecursively();
       }
     }
+  }
+
+  @Override
+  public void dispose() {
+    assertListenersAreDisposed();
   }
 
   private class AppListener extends ApplicationAdapter {
