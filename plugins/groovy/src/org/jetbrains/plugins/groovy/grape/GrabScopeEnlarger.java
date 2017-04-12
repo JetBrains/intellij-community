@@ -20,26 +20,25 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ResolveScopeEnlarger;
 import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.resolve.GrabService;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author a.afanasiev
- */
 public class GrabScopeEnlarger extends ResolveScopeEnlarger {
   @Override
   @Nullable
   public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     if (file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) {
+      if (file instanceof LightVirtualFile) {file = ((LightVirtualFile)file).getOriginalFile();}
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Module module = ModuleUtilCore.findModuleForFile(file, project);
       List<VirtualFile> roots;
@@ -50,7 +49,7 @@ public class GrabScopeEnlarger extends ResolveScopeEnlarger {
         boolean isInTest = fileIndex.isInTestSourceContent(file);
         roots = GrabService.getInstance(project).getDependencies(module.getModuleScope(isInTest));
       }
-      GrabService.LOG.trace("Grab scope enlarger " + file + " roots " + String.join(",", roots.stream().map(String::valueOf).collect(
+      GrabServiceImpl.LOG.trace("Grab scope enlarger " + file + " roots " + String.join(",", roots.stream().map(String::valueOf).collect(
         Collectors.toList())));
       return NonClasspathDirectoriesScope.compose(roots);
     }

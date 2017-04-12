@@ -58,9 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author a.afanasiev
- */
 public class GrapeHelper {
   public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.grape.GrapeRunner");

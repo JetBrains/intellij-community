@@ -24,9 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-/**
- * @author a.afanasiev
- */
 public class GrabDependencies implements IntentionAction {
   @Override
   @NotNull

@@ -327,7 +327,9 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings"
                     serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.grape.GrabService"/>
+    <projectService
+        serviceInterface="org.jetbrains.plugins.groovy.lang.resolve.GrabService"
+        serviceImplementation="org.jetbrains.plugins.groovy.grape.GrabServiceImpl"/>
 
 
     <spellchecker.support language="Groovy"
@@ -587,6 +589,8 @@
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex"/>
 
+    <!--indexedRootsProvider implementation="org.jetbrains.plugins.groovy.grape.GrabRootsProvider"/-->
+    <additionalLibraryRootsProvider implementation="org.jetbrains.plugins.groovy.grape.GrabRootsProvider"/>
     <hierarchy.indexer implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy.GrStubIndexer"/>
 
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.ConstructorReferencesSearcher"/>
@@ -1641,6 +1645,7 @@
   </extensions>
 
   <actions>
+    <action id="loasdfadsfrgsdfsdrg" class="org.jetbrains.plugins.groovy.grape.MyDebugAction"/>
     <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
             text="Execute Groovy Code"
             description="Execute Groovy code in console">

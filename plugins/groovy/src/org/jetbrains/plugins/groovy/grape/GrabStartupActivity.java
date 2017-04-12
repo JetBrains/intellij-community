@@ -17,19 +17,43 @@ package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.resolve.GrabService;
 
-/**
- * @author a.afanasiev
- */
 public class GrabStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     GrabService grabService = GrabService.getInstance(project);
-    grabService.updateGrabsInScope(GlobalSearchScope.allScope(project));
+    grabService.scheduleUpdate(GlobalSearchScope.allScope(project)); // not schedule
+
+    //AdditionalIndexableFileSet fileSet = new AdditionalIndexableFileSet(project, new GrabRootsProvider()) {
+    //  @Override
+    //  public boolean isInSet(@NotNull VirtualFile file) {
+    //    System.out.println(file.getPath());
+    //    return super.isInSet(file);
+    //  }
+    //};
+    //FileBasedIndex index = FileBasedIndex.getInstance();
+    //index.registerIndexableSet(fileSet, project);
+    //ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerAdapter() {
+    //  private boolean removed;
+    //  @Override
+    //  public void projectClosing(Project project1) {
+    //    if (!removed) {
+    //      removed = true;
+    //      index.removeIndexableSet(fileSet);
+    //    }
+    //  }
+    //});
   }
 }

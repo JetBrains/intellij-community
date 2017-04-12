@@ -15,21 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.grape;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
@@ -46,11 +49,14 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.indexing.AdditionalIndexableFileSet;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.UnindexedFilesUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.resolve.GrabService;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
@@ -61,11 +67,8 @@ import java.util.stream.Collectors;
 import static org.jetbrains.plugins.groovy.grape.GrapeHelper.NOTIFICATION_GROUP;
 import static org.jetbrains.plugins.groovy.grape.GrapeHelper.findGrabAnnotations;
 
-/**
- * @author a.afanasiev
- */
 @State(name = "GrabService", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class GrabService implements PersistentStateComponent<GrabService.PersistentState> {
+public class GrabServiceImpl implements GrabService {
   @NotNull
   public static final Logger LOG = Logger.getInstance(GrabService.class);
 
@@ -83,7 +86,7 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
   private final AtomicBoolean notified = new AtomicBoolean(false);
 
 
-  public GrabService(@NotNull Project project, @NotNull DumbService dumbService) {
+  public GrabServiceImpl(@NotNull Project project, @NotNull DumbService dumbService) {
     grabClassFinder = Extensions.findExtension(PsiElementFinder.EP_NAME, project, GrabClassFinder.class);
     myProject = project;
     myDumbService = dumbService;
@@ -91,6 +94,7 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
+        if (myProject.isDisposed()) return;
         for (VFileEvent event: events) {
           VirtualFile file = event.getFile();
           scheduleUpdate(file);
@@ -105,43 +109,32 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
 
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
+        if (myProject.isDisposed()) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
         scheduleUpdate(file);
       }
     });
   }
 
-  @NotNull
-  public static GrabService getInstance(@NotNull Project project) {
-    return ObjectUtils.notNull(ServiceManager.getService(project, GrabService.class));
-  }
-
   private void scheduleUpdate(@Nullable VirtualFile file) {
     if (file != null && file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) { //should be optimized
-      runUpdate(GlobalSearchScope.fileScope(myProject, file));
+      scheduleUpdate(GlobalSearchScope.fileScope(myProject, file));
     }
   }
 
-  private void runUpdate(@NotNull GlobalSearchScope scope) {
+  @Override
+  public void scheduleUpdate(@NotNull GlobalSearchScope scope) {
     if (myProject.isDisposed()) return;
-
-    if (myDumbService.isDumb()) {
-      myDumbService.runWhenSmart(() -> runUpdate(scope));
-      return;
-    }
     LOG.trace("@Grab annotations update scheduled");
 
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        runUpdate(scope);
-      }
-
-      @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> {
         LOG.trace("@Grab annotations update started. Scope " + scope);
-        updateGrabsInScope(scope);
+        myDumbService.runReadActionInSmartMode(() -> updateGrabsInScope(scope));
         LOG.trace("@Grab annotations update finished");
+      }, new ProgressIndicatorBase());
+      if (!success) {
+        scheduleUpdate(scope);
       }
     });
   }
@@ -151,7 +144,7 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     final boolean[] updateResolve = {false};
     Map<VirtualFile, List<String>> updateGrabQueries = collectGrabQueries(scope);
     updateGrabQueries.forEach((file, grabQueries) -> {
-      for (String query: grabQueries) {
+      for (String query : grabQueries) {
         if (grapeState.get(query) == null) notify[0] = true;
       }
       List<String> oldGrabQueries = grabs.get(file);
@@ -227,6 +220,7 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
       @Override
       public void finish() {
         updateResolve();
+        updateRoots();
       }
     });
   }
@@ -263,13 +257,18 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     PsiManager.getInstance(myProject).dropResolveCaches();
     ResolveCache.getInstance(myProject).clearCache(true);
 
-    ApplicationManager.getApplication().invokeLater(
-      () -> DaemonCodeAnalyzer.getInstance(myProject).restart(),
-      ModalityState.NON_MODAL,
-      myProject.getDisposed()
-    );
+
   }
 
+  void updateRoots() {
+    myDumbService.queueTask(new UnindexedFilesUpdater(myProject));
+  //  ApplicationManager.getApplication().invokeLater(()->
+  //  ApplicationManager.getApplication().runWriteAction(()->
+  //                                                     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.getInstance(), false, true)
+  //  ));
+  }
+
+  @Override
   @NotNull
   public List<VirtualFile> getDependencies(@NotNull SearchScope scope) {
     List<VirtualFile> result = new ArrayList<>();
@@ -281,8 +280,19 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     return result;
   }
 
+  @Override
+  public Set<VirtualFile> getJars() {
+    Set<VirtualFile> jars = new HashSet<>();
+    grapeState.forEach((s, files) -> {
+      jars.addAll(files);
+    });
+    return jars;
+  }
+
+  @Override
   @NotNull
   public List<VirtualFile> getDependencies(@NotNull VirtualFile file) {
+
     List<String> strings = grabs.get(file);
     return strings != null ? getDependencies(strings) : Collections.emptyList();
   }
@@ -291,16 +301,5 @@ public class GrabService implements PersistentStateComponent<GrabService.Persist
     return queries.stream().map(grapeState::get).filter(Objects::nonNull).flatMap(List::stream).collect(Collectors.toList());
   }
 
-  public static class PersistentState {
-    public Map<String, List<String>> fileMap;
 
-    public PersistentState(Map<String, List<VirtualFile>> map) {
-      fileMap = new HashMap<>();
-      map.forEach((s, files) -> fileMap.put(s, files.stream().map(VirtualFile::getCanonicalPath).collect(Collectors.toList())));
-    }
-
-    @SuppressWarnings("unused")
-    public PersistentState() {
-    }
-  }
 }

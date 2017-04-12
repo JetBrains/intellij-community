@@ -16,19 +16,15 @@
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.resolve.GrabService;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-/**
- * @author a.afanasiev
- */
 public class GrabClassFinder extends NonClasspathClassFinder {
 
   public GrabClassFinder(@NotNull Project project) {
@@ -38,7 +34,7 @@ public class GrabClassFinder extends NonClasspathClassFinder {
   @Override
   protected List<VirtualFile> calcClassRoots() {
     List<VirtualFile> dependencies = GrabService.getInstance(myProject).getDependencies(GlobalSearchScope.allScope(myProject));
-    GrabService.LOG.trace("Grab scope finder  roots " + String.join(",", dependencies.stream().map(String::valueOf).collect(
+    GrabServiceImpl.LOG.trace("Grab scope finder  roots " + String.join(",", dependencies.stream().map(String::valueOf).collect(
       Collectors.toList())));
     return dependencies;
   }
