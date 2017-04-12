@@ -37,6 +37,19 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "pytest")
 public final class PythonPyTestingTest extends PyEnvTestCase {
 
+
+  // Ensures setup/teardown does not break anything
+  @Test
+  public void testSetupTearDown() throws Exception {
+    runPythonTest(new SetupTearDownTestTask<PyTestTestProcessRunner>(){
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
   // Ensure slow test is not run when -m "not slow" is provided
   @Test
   public void testMarkerWithSpaces() throws Exception {
