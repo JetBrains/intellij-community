@@ -414,7 +414,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       final List<String> options = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
+        String mode = shouldForkJavac ? "fork" : "in-process";
+        LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
       }
 
       Collection<File> platformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool);
