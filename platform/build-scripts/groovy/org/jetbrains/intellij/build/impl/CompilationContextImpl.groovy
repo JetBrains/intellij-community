@@ -69,7 +69,6 @@ class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
 
-    setupDependencies(messages, communityHome)
     if (project.modules.isEmpty()) {
       loadProject(communityHome, projectHome, jdk8Home, project, global, messages)
     }
@@ -118,13 +117,6 @@ class CompilationContextImpl implements CompilationContext {
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
     messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
-  }
-
-  private static void setupDependencies(BuildMessages messages, String communityHome) {
-    messages.info("Setting up compilation dependencies")    
-    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupJdks', 'setupKotlinPlugin')) {
-      messages.error("Cannot setup compilation dependencies")
-    }
   }
 
   void prepareForBuild() {

@@ -84,7 +84,7 @@ class BuildUtils {
     }
   }
 
-  static boolean gradle(File projectDir, String... tasks) {
+  static boolean runGradle(File projectDir, String... tasks) {
     def gradleScript = SystemInfo.isWindows ? "gradlew.bat" : "gradlew"
     List<String> command = new ArrayList()
     command.add("${projectDir.absolutePath}/$gradleScript".toString())

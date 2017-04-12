@@ -40,6 +40,7 @@ class CompilationTasksImpl extends CompilationTasks {
       return
     }
 
+    setupCompilationDependencies()
     ensureKotlinCompilerAddedToClassPath()
 
     context.messages.progress("Compiling project")
@@ -74,6 +75,13 @@ class CompilationTasksImpl extends CompilationTasks {
   @Override
   void compileAllModulesAndTests() {
     compileModules(null, null)
+  }
+
+  private void setupCompilationDependencies() {
+    context.messages.info("Setting up compilation dependencies")    
+    if (!BuildUtils.runGradle(new File(context.paths.communityHome, 'build/dependencies/'), 'setupJdks', 'setupKotlinPlugin')) {
+      context.messages.error("Cannot setup compilation dependencies")
+    }
   }
 
   private void ensureKotlinCompilerAddedToClassPath() {
