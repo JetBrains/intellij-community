@@ -16,7 +16,6 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +23,9 @@ import org.jetbrains.annotations.Nullable;
 public interface VcsLogDiffHandler {
   void showDiff(@NotNull VirtualFile root,
                 @Nullable FilePath leftPath, @NotNull Hash leftHash,
-                @Nullable FilePath rightPath, @NotNull Hash rightHash) throws VcsException;
+                @Nullable FilePath rightPath, @NotNull Hash rightHash);
 
   void showDiffWithLocal(@NotNull VirtualFile root,
                          @Nullable FilePath revisionPath,
-                         @NotNull Hash hash, @NotNull FilePath localPath)
-    throws VcsException;
+                         @NotNull Hash hash, @NotNull FilePath localPath);
 }

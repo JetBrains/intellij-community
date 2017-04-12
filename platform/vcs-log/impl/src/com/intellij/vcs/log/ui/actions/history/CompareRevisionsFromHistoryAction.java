@@ -117,24 +117,7 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
         // so that it could return a single file path for each revision
         VcsFullCommitDetails newestDetail = details.get(0);
         VcsFullCommitDetails olderDetail = details.get(1);
-        ProgressIndicator indicator = ui.getLogData().getProgress().createProgressIndicator(true);
-        ProgressManager.getInstance()
-          .runProcessWithProgressAsynchronously(new Task.Backgroundable(project, "Comparing Revisions...", false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              try {
-                notNull(handler).showDiff(root, ui.getPath(olderDetail), olderDetail.getId(), ui.getPath(newestDetail), newestDetail.getId());
-              }
-              catch (VcsException e1) {
-                VcsBalloonProblemNotifier.showOverVersionControlView(project, "Could not compare revisions " +
-                                                                              olderDetail.getId().asString() +
-                                                                              " and " +
-                                                                              newestDetail.getId().asString() +
-                                                                              "\n" +
-                                                                              e1.getMessage(), MessageType.ERROR);
-              }
-            }
-          }, indicator);
+        notNull(handler).showDiff(root, ui.getPath(olderDetail), olderDetail.getId(), ui.getPath(newestDetail), newestDetail.getId());
       }
       else if (details.size() == 1) {
         VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
