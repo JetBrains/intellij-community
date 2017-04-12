@@ -73,6 +73,7 @@ public interface VirtualFileListener extends EventListener {
    * @param event the event object containing information about the change.
    */
   default void fileCopied(@NotNull VirtualFileCopyEvent event) {
+    fileCreated(event);
   }
 
   /**
