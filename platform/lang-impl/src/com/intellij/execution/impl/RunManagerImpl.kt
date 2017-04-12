@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.InvalidDataException
-import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
@@ -109,8 +108,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private val iconCache = TimedIconCache()
   private val _config by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
 
-  @Suppress("DEPRECATION")
-  private val myOrder = JDOMExternalizableStringList()
+  private val customOrder = ArrayList<String>()
   private val recentlyUsedTemporaries = ArrayList<RunConfiguration>()
 
    var isOrdered = true
@@ -236,7 +234,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type?.id == type.id }
+  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type.id == type.id }
 
   override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
     val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
@@ -290,7 +288,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       idToSettings.put(newId, settings)
 
       if (existingId == null) {
-        refreshUsagesList(settings.configuration)
+        refreshUsagesList(settings)
       }
 
       if (!settings.isShared && existingSettings !== settings) {
@@ -309,11 +307,20 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   override fun refreshUsagesList(profile: RunProfile) {
-    if (profile !is RunConfiguration) return
-    val settings = getSettings(profile)
-    if (settings != null && settings.isTemporary) {
-      recentlyUsedTemporaries.remove(profile)
-      recentlyUsedTemporaries.add(0, profile)
+    if (profile !is RunConfiguration) {
+      return
+    }
+
+    getSettings(profile)?.let {
+      refreshUsagesList(it)
+    }
+  }
+
+  fun refreshUsagesList(settings: RunnerAndConfigurationSettings) {
+    if (settings.isTemporary) {
+      val configuration = settings.configuration
+      recentlyUsedTemporaries.remove(configuration)
+      recentlyUsedTemporaries.add(0, configuration)
       trimUsagesListToLimit()
     }
   }
@@ -353,8 +360,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       if (comparator != null) {
         sorted.sortedWith(comparator)
       }
-      myOrder.clear()
-      sorted.mapTo(myOrder) { it.uniqueID }
+      customOrder.clear()
+      customOrder.ensureCapacity(sorted.size)
+      sorted.mapTo(customOrder) { it.uniqueID }
       // force recache of configurations list
       isOrdered = false
     }
@@ -418,7 +426,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         folderNames.add(null)
         idToSettings.clear()
 
-        if (myOrder.isEmpty()) {
+        if (customOrder.isEmpty()) {
           // IDEA-63663 Sort run configurations alphabetically if clean checkout
           order.sortWith(Comparator { o1, o2 ->
             val temporary1 = o1.settings.isTemporary
@@ -442,8 +450,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
             val temporary2 = o2.settings.isTemporary
             when {
               temporary1 == temporary2 -> {
-                val index1 = myOrder.indexOf(o1.id)
-                val index2 = myOrder.indexOf(o2.id)
+                val index1 = customOrder.indexOf(o1.id)
+                val index2 = customOrder.indexOf(o2.id)
                 if (index1 == -1 && index2 == -1) {
                   o1.settings.name.compareTo(o2.settings.name)
                 }
@@ -469,7 +477,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
     }
 
-  @Suppress("DEPRECATION")
   override fun getState(): Element {
     val element = Element("state")
 
@@ -491,23 +498,24 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
 
     if (idToSettings.size > 1) {
-      var order: JDOMExternalizableStringList? = null
+      var order: MutableList<String>? = null
       for (each in idToSettings.values) {
         if (each.type is UnknownConfigurationType) {
           continue
         }
 
         if (order == null) {
-          order = JDOMExternalizableStringList()
+          order = ArrayList()
         }
         order.add(each.uniqueID)
       }
       if (order != null) {
-        order.writeExternal(element)
+        @Suppress("DEPRECATION")
+        com.intellij.openapi.util.JDOMExternalizableStringList.writeList(order, element)
       }
     }
 
-    val recentList = JDOMExternalizableStringList()
+    val recentList = SmartList<String>()
     for (each in recentlyUsedTemporaries) {
       if (each.type is UnknownConfigurationType) {
         continue
@@ -518,7 +526,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     if (!recentList.isEmpty()) {
       val recent = Element(RECENT)
       element.addContent(recent)
-      recentList.writeExternal(recent)
+      @Suppress("DEPRECATION")
+      com.intellij.openapi.util.JDOMExternalizableStringList.writeList(recentList, recent)
     }
     return element
   }
@@ -597,16 +606,17 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
     schemeManager.reload()
 
-    myOrder.readExternal(parentNode)
+    @Suppress("DEPRECATION")
+    com.intellij.openapi.util.JDOMExternalizableStringList.readList(customOrder, parentNode)
 
     // migration (old ids to UUIDs)
-    readList(myOrder)
+    readList(customOrder)
 
     recentlyUsedTemporaries.clear()
     val recentNode = parentNode.getChild(RECENT)
     if (recentNode != null) {
       @Suppress("DEPRECATION")
-      val list = JDOMExternalizableStringList()
+      val list = com.intellij.openapi.util.JDOMExternalizableStringList()
       list.readExternal(recentNode)
       readList(list)
       for (name in list) {
@@ -624,7 +634,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     fireRunConfigurationSelected()
   }
 
-  private fun readList(@Suppress("DEPRECATION") list: JDOMExternalizableStringList) {
+  private fun readList(list: MutableList<String>) {
     for (i in list.indices) {
       for (settings in idToSettings.values) {
         val configuration = settings.configuration
@@ -640,12 +650,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   fun readContext(parentNode: Element) {
     loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
 
-    for (aChildren in parentNode.children) {
-      val element = aChildren
+    for (element in parentNode.children) {
       val config = loadConfiguration(element, false)
-      if (loadedSelectedConfigurationUniqueName == null
-          && config != null
-          && java.lang.Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
+      if (loadedSelectedConfigurationUniqueName == null && element.getAttributeValue(SELECTED_ATTR).toBoolean()) {
         loadedSelectedConfigurationUniqueName = config.uniqueID
       }
     }
@@ -820,7 +827,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
     recentlyUsedTemporaries.remove(settings.configuration)
-    if (!myOrder.isEmpty()) {
+    if (!customOrder.isEmpty()) {
       isOrdered = false
     }
   }
@@ -890,12 +897,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     return allSettings.firstOrNull { it.name == name }
   }
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? {
-    return allSettings.firstOrNull {
-      val t = it.type
-      t != null && typeId == t.id && name == it.name
-    }
-  }
+  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderId: Key<T>): List<T> {
     if (settings is WrappingRunConfiguration<*>) {

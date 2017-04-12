@@ -338,7 +338,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun compareTo(other: Any) = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
 
-  override fun toString() = "${type.displayName}: ${if (isTemplate) "<template>" else name}"
+  override fun toString() = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
 
   private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
     override val configuration: RunConfiguration
