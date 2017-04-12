@@ -89,7 +89,7 @@ class CompilationTasksImpl extends CompilationTasks {
       return
     }
 
-    def kotlinPluginLibPath = "$context.paths.communityHome/build/dependencies/build/kotlin/Kotlin/lib"
+    def kotlinPluginLibPath = "$context.paths.kotlinHome/lib"
     if (new File(kotlinPluginLibPath).exists()) {
       ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", context.ant)
