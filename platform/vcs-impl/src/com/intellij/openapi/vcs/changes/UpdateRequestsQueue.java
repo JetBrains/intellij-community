@@ -204,22 +204,21 @@ public class UpdateRequestsQueue {
       }
     }
 
+    boolean stopped = myStopped;
     synchronized (myLock) {
-      if (! myStopped) {
+      if (!stopped) {
         myWaitingUpdateCompletionQueue.add(data.getCallback());
         schedule();
       }
     }
     // do not run under lock; stopped cannot be switched into not stopped - can check without lock
-    if (myStopped) {
+    if (stopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!myProject.isDisposed()) {
-            afterUpdate.run();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          afterUpdate.run();
         }
-      });
+      }, state != null ? state : ModalityState.any());
       return;
     }
     // invoke progress if needed
