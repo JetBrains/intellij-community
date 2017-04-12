@@ -26,6 +26,18 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+  // Ensures setup/teardown does not break anything
+  @Test
+  public void testSetupTearDown() throws Exception {
+    runPythonTest(new SetupTearDownTestTask<PyNoseTestProcessRunner>(){
+      @NotNull
+      @Override
+      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+        return new PyNoseTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
 
   // Ensure slow test is not run when --attr="!slow"  is provided
   @Test

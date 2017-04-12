@@ -205,12 +205,21 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return test_name
 
     # Blocks are used for 2 cases now:
-    # 1) Unittest subtests
+    # 1) Unittest subtests (only closed, opened by subTestBlockOpened)
     # 2) setup/teardown (does not work, see https://github.com/JetBrains/teamcity-messages/issues/114)
     # def blockOpened(self, name, flowId=None):
     #      self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
 
     def blockClosed(self, name, flowId=None):
+
+        # If _latest_subtest_result is not set or does not exist we closing setup method, not a subtest
+        try:
+            if not self._latest_subtest_result:
+                return
+        except AttributeError:
+            return
+
+        # If we here that means we are closing subtest
         test_name = ".".join(TREE_MANAGER.current_branch)
         if self._latest_subtest_result == "Failure":
             self.testFailed(test_name)
@@ -219,8 +228,6 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         self.testFinished(test_name)
         self._latest_subtest_result = None
-
-
 
     def subTestBlockOpened(self, name, subTestResult, flowId=None):
         self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
