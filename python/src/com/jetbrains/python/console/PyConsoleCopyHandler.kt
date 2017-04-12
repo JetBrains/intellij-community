@@ -66,7 +66,9 @@ class PyConsoleCopyHandler(val originalHandler: EditorActionHandler) : EditorAct
       val rangeEnd = Math.min(document.getLineEndOffset(i), end)
       if (rangeStart < rangeEnd) {
         sb.append(document.getText(TextRange(rangeStart, rangeEnd)))
-        sb.append("\n")
+        if (rangeEnd < end) {
+          sb.append("\n")
+        }
       }
     }
     if (!sb.isEmpty()) {
