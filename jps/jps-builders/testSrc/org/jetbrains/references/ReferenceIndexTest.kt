@@ -130,6 +130,7 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   }
 
   fun testOccurrences() {
+
     assertIndexOnRebuild("Foo.java", "Bar.java")
   }
 
@@ -138,6 +139,26 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   }
 
   fun testAnnotation() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution2() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution3() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution4() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution5() {
     assertIndexOnRebuild("Foo.java")
   }
 }
