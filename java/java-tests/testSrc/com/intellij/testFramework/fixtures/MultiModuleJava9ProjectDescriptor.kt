@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import jdk.nashorn.internal.objects.NativeArray.forEach
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
