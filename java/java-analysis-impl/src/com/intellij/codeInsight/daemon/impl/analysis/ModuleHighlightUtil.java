@@ -83,17 +83,14 @@ public class ModuleHighlightUtil {
       return null;
     }
     else {
-      return getModuleDescriptor(index.getModuleForFile(file));
+      Module module = index.getModuleForFile(file);
+      return Optional.ofNullable(module)
+        .map(m -> FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, m.getModuleScope(false)))
+        .map(c -> c.size() == 1 ? c.iterator().next() : null)
+        .map(f -> PsiManager.getInstance(project).findFile(f))
+        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
+        .orElse(null);
     }
-  }
-
-  static PsiJavaModule getModuleDescriptor(Module module) {
-    return Optional.ofNullable(module)
-      .map(m -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, m.getModuleScope(false)))
-      .map(c -> c.size() == 1 ? c.iterator().next() : null)
-      .map(f -> PsiManager.getInstance(module.getProject()).findFile(f))
-      .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-      .orElse(null);
   }
 
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {

@@ -46,14 +46,15 @@ public class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
 
   @Nullable
-  public static PsiJavaModule findDescriptorByElement(@NotNull PsiElement element) {
-    PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
-    return fsItem != null ? ModuleHighlightUtil.getModuleDescriptor(fsItem) : null;
-  }
+  public static PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
+    if (element != null) {
+      PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+      if (fsItem != null) {
+        return ModuleHighlightUtil.getModuleDescriptor(fsItem);
+      }
+    }
 
-  @Nullable
-  public static PsiJavaModule findDescriptorByModule(@Nullable Module module) {
-    return ModuleHighlightUtil.getModuleDescriptor(module);
+    return null;
   }
 
   @Nullable
