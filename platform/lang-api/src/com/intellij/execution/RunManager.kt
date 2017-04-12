@@ -176,6 +176,8 @@ abstract class RunManager {
    */
   abstract fun refreshUsagesList(profile: RunProfile)
 
+  fun hasSettings(settings: RunnerAndConfigurationSettings) = allSettings.contains(settings)
+
   fun suggestUniqueName(name: String?, type: ConfigurationType?): String {
     val settingsList = if (type == null) allSettings else getConfigurationSettingsList(type)
     return suggestUniqueName(name.nullize() ?: UNNAMED, settingsList.map { it.name })

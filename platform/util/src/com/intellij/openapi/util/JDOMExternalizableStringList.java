@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 @Deprecated
@@ -49,7 +50,11 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
 
   @Override
   public void readExternal(Element element) {
-    clear();
+    readList(this, element);
+  }
+
+  public static void readList(@NotNull List<String> strings, Element element) {
+    strings.clear();
 
     Class callerClass = null;
     for (Element listElement : element.getChildren(ATTR_LIST)) {
@@ -75,19 +80,23 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
 
         LOG.assertTrue(String.class.equals(itemClass));
 
-        add(listItem);
+        strings.add(listItem);
       }
     }
   }
 
   @Override
   public void writeExternal(Element element) {
-    int listSize = size();
+    writeList(this, element);
+  }
+
+  public static void writeList(@NotNull List<String> strings, @NotNull Element element) {
+    int listSize = strings.size();
     Element listElement = new Element(ATTR_LIST);
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));
     element.addContent(listElement);
     for (int i = 0; i < listSize; i++) {
-      String listItem = get(i);
+      String listItem = strings.get(i);
       if (listItem != null) {
         Element itemElement = new Element(ATTR_ITEM);
         itemElement.setAttribute(ATTR_INDEX, Integer.toString(i));

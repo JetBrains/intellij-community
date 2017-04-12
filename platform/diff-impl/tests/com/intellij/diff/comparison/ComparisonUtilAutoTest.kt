@@ -198,8 +198,8 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
     for (fragment in fragments) {
       if (fragment.innerFragments != null) {
-        val sequence1 = text1.subsequence(fragment.startOffset1, fragment.endOffset1)
-        val sequence2 = text2.subsequence(fragment.startOffset2, fragment.endOffset2)
+        val sequence1 = text1.subSequence(fragment.startOffset1, fragment.endOffset1)
+        val sequence2 = text2.subSequence(fragment.startOffset2, fragment.endOffset2)
 
         checkResultWord(sequence1, sequence2, fragment.innerFragments!!, policy)
       }
@@ -538,7 +538,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     return Couple.of(firstLine, lastLine)
   }
 
-  private fun Document.subsequence(start: Int, end: Int): CharSequence {
+  private fun Document.subSequence(start: Int, end: Int): CharSequence {
     return this.charsSequence.subSequence(start, end)
   }
 

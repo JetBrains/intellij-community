@@ -132,13 +132,6 @@ public interface PopupComponent {
       myDialog.setBackground(UIUtil.getPanelBackground());
       myDialog.pack();
       myDialog.setLocation(x, y);
-      myDialog.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosed(WindowEvent e) {
-          super.windowClosed(e);
-          //A11YFix.invokeFocusGained(myDialog);
-        }
-      });
     }
 
     public Window getWindow() {
@@ -155,13 +148,20 @@ public interface PopupComponent {
 
     public void show() {
 
-    UIUtil.suppressFocusStealing(getWindow());
+      UIUtil.suppressFocusStealing(getWindow());
 
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
       }
 
       AwtPopupWrapper.fixFlickering(myDialog, false);
+      myDialog.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+          //A11YFix.invokeFocusGained(myDialog);
+          myDialog.removeWindowListener(this);
+        }
+      });
       myDialog.setVisible(true);
       AwtPopupWrapper.fixFlickering(myDialog, true);
 

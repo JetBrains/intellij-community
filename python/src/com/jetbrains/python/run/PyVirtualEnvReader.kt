@@ -67,6 +67,11 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
   }
 
+  override fun dumpProcessEnvToFile(command: MutableList<String>, envFile: File, lineSeparator: String?): MutableMap<String, String> {
+    // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
+    return runProcessAndReadEnvs(command, null, EnvironmentUtil.getEnvironmentMap(), envFile, lineSeparator)
+  }
+
   private fun readVirtualEnvOnWindows(activate: Pair<String, String?>): MutableMap<String, String> {
     val activateFile = FileUtil.createTempFile("pycharm-virualenv-activate.", ".bat", false)
     val envFile = FileUtil.createTempFile("pycharm-virualenv-envs.", ".tmp", false)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,13 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Object node = TreeUtil.getUserObject(value);
+
+    if (node instanceof NodeDescriptor) {
+      NodeDescriptor descriptor = (NodeDescriptor)node;
+      // TODO: use this color somewhere
+      Color color = descriptor.getColor();
+      setIcon(descriptor.getIcon());
+    }
 
     PresentationData presentation =
       node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor)node).getPresentation() :

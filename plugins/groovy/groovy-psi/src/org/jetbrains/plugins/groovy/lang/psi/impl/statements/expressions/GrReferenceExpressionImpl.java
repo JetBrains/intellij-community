@@ -527,7 +527,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     GroovyResolveResult[] results = multiResolve(false);
 
     for (GroovyResolveResult result : results) {
-      if (!result.isValidResult()) continue;
       PsiElement baseTarget = result.getElement();
       if (baseTarget == null) continue;
       if (getManager().areElementsEquivalent(element, baseTarget)) {

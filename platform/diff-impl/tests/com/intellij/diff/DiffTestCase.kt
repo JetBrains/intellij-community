@@ -115,6 +115,18 @@ abstract class DiffTestCase : TestCase() {
     }
   }
 
+  fun assertSetsEquals(expected: BitSet, actual: BitSet, message: String = "") {
+    val sb = StringBuilder(message)
+    sb.append(": \"")
+    for (i in 0..actual.length()) {
+      sb.append(if (actual[i]) '-' else ' ')
+    }
+    sb.append('"')
+    val fullMessage = sb.toString()
+
+    assertEquals(expected, actual, fullMessage)
+  }
+
   //
   // Parsing
   //
@@ -210,7 +222,7 @@ abstract class DiffTestCase : TestCase() {
     }
   }
 
-  class DebugData() {
+  class DebugData {
     private val data: MutableList<Pair<String, Any>> = ArrayList()
 
     fun put(key: String, value: Any) {

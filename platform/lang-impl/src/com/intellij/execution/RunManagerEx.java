@@ -97,8 +97,14 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator);
 
+  /**
+   * @deprecated Use {@link #getAllSettings()}
+   */
   @NotNull
-  public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();
+  @Deprecated
+  public final Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
+    return getAllSettings();
+  }
 
   public abstract void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings);
 

@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -52,7 +53,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -545,7 +545,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      editor.setBorder(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
+      editor.setBorder(UIUtil.isUnderDefaultMacTheme() ? new DarculaUIUtil.EditorTextFieldBorder(this) : new DarculaEditorTextFieldBorder());
       editor.addFocusListener(new FocusChangeListener() {
         @Override
         public void focusGained(Editor editor) {

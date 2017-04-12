@@ -115,7 +115,8 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
                 final PsiExpression[] expressions = argumentList.getExpressions();
                 final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
                 holder.registerProblem(element, InspectionsBundle.message(
-                  "inspection.reflection.invocation.item.number.not.assignable", i, requiredType.getQualifiedName()));
+                  "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
+                break;
               }
             }
           }

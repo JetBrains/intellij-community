@@ -567,6 +567,7 @@ public class BraceHighlightingHandler {
       hint.hide();
       myEditor.putUserData(HINT_IN_EDITOR_KEY, null);
     }
+    removeLineMarkers();
   }
 
   private void lineMarkFragment(int startLine, int endLine, @NotNull Color color) {

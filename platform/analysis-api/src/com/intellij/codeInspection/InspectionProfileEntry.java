@@ -49,10 +49,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author anna
@@ -177,26 +174,32 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @NotNull
   public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
-    final InspectionSuppressor elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
+    final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
-      ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
+      ContainerUtil.addAllNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.allForLanguage(viewProvider.getBaseLanguage()));
       for (Language language : viewProvider.getLanguages()) {
-        ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(language));
+        ContainerUtil.addAllNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
       }
-      ContainerUtil.addIfNotNull(suppressors, elementLanguageSuppressor);
+      ContainerUtil.addAllNotNull(suppressors, elementLanguageSuppressor);
       return suppressors;
     }
     if (!element.getLanguage().isKindOf(viewProvider.getBaseLanguage())) {
       // handling embedding elements {@link EmbeddingElementType
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
-      ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
-      ContainerUtil.addIfNotNull(suppressors, elementLanguageSuppressor);
+      ContainerUtil.addAllNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.allForLanguage(viewProvider.getBaseLanguage()));
+      ContainerUtil.addAllNotNull(suppressors, elementLanguageSuppressor);
       return suppressors;
     }
-    return elementLanguageSuppressor != null
-           ? Collections.singleton(elementLanguageSuppressor)
-           : Collections.emptySet();
+    int size = elementLanguageSuppressor.size();
+    switch (size) {
+      case 0:
+        return Collections.emptySet();
+      case 1:
+        return Collections.singleton(elementLanguageSuppressor.get(0));
+      default:
+        return new java.util.HashSet<>(elementLanguageSuppressor);
+    }
   }
 
   public void cleanup(@NotNull Project project) {

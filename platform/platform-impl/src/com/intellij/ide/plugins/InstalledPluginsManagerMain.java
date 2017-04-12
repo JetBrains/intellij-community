@@ -157,7 +157,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         PluginInstaller.install(file, file.getName(), false, pluginDescriptor);
         ourState.onPluginInstall(pluginDescriptor);
         checkInstalledPluginDependencies(model, pluginDescriptor, parent);
-        callback.consume(pair(file, (IdeaPluginDescriptor)pluginDescriptor));
+        callback.consume(pair(file, pluginDescriptor));
       }
       catch (IOException ex) {
         MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());

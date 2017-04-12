@@ -134,6 +134,11 @@ public class PsiVFSListener implements VirtualFileListener {
   }
 
   @Override
+  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+    fileCreated(event);
+  }
+
+  @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 

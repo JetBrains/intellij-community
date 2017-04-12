@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -229,9 +230,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
         return false;
       }
 
-      public void remove () {
-        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-        ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
+      public void remove() {
+        XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+        WriteAction.run(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
       }
 
       @Override

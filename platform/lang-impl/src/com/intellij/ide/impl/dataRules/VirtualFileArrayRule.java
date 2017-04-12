@@ -66,23 +66,25 @@ public class VirtualFileArrayRule implements GetDataRule {
     if (fileSystemTree != null) {
       result = addFiles(result, fileSystemTree.getSelectedFiles());
     }
+    else {
+      Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataProvider);
+      if (project != null && !project.isDisposed()) {
+        result = addFiles(result, ProjectRootManager.getInstance(project).getContentRoots());
+      }
 
-    Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataProvider);
-    if (project != null && !project.isDisposed()) {
-      result = addFiles(result, ProjectRootManager.getInstance(project).getContentRoots());
-    }
+      Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
+      if (selectedModules != null && selectedModules.length > 0) {
+        for (Module selectedModule : selectedModules) {
+          result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
+        }
+      }
 
-    Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
-    if (selectedModules != null && selectedModules.length > 0) {
-      for (Module selectedModule : selectedModules) {
+      Module selectedModule = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
+      if (selectedModule != null && !selectedModule.isDisposed()) {
         result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
       }
     }
 
-    Module selectedModule = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
-    if (selectedModule != null && !selectedModule.isDisposed()) {
-      result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
-    }
 
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
     if (psiElements != null) {

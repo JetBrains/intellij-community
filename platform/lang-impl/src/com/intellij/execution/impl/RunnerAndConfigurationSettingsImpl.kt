@@ -26,6 +26,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
@@ -56,7 +57,7 @@ val SINGLETON = "singleton"
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var singleton: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
+                                                                   private var singleton: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, Scheme, SerializableScheme {
   enum class Level {
     WORKSPACE, PROJECT, TEMPORARY
   }
@@ -293,7 +294,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType() = _configuration?.type
+  override fun getType(): ConfigurationType = _configuration?.type ?: UnknownConfigurationType.INSTANCE
 
   public override fun clone(): RunnerAndConfigurationSettings {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone(), false)
@@ -337,10 +338,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun compareTo(other: Any) = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
 
-  override fun toString(): String {
-    val type = type
-    return "${if (type == null) "" else "${type.displayName}: "}${if (isTemplate) "<template>" else name}"
-  }
+  override fun toString() = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
 
   private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
     override val configuration: RunConfiguration

@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class UniqueNameGenerator implements Condition<String> {
 
   public <T> UniqueNameGenerator(@NotNull Collection<T> elements, @Nullable Function<T, String> namer) {
     for (final T t : elements) {
-      addExistingName(namer != null ? namer.fun(t) : t.toString());
+      addExistingName(namer != null ? StringUtil.notNullize(namer.fun(t)) : t.toString());
     }
   }
 

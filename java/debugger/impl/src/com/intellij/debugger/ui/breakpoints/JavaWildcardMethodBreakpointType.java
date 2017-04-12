@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -104,7 +103,7 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
     if (!dialog.showAndGet()) {
       return null;
     }
-    return ApplicationManager.getApplication().runWriteAction((Computable<XBreakpoint<JavaMethodBreakpointProperties>>)() -> {
+    return WriteAction.compute(() -> {
       JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties(dialog.getClassPattern(), dialog.getMethodName());
       if (Registry.is("debugger.emulate.method.breakpoints")) {
         properties.EMULATED = true; // create all new emulated

@@ -107,10 +107,6 @@ class MockRunManager : RunManagerEx() {
     return null
   }
 
-  override fun getSortedConfigurations(): Collection<RunnerAndConfigurationSettings> {
-    return emptyList()
-  }
-
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {}
 
   override fun addRunManagerListener(listener: RunManagerListener) {}
