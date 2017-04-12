@@ -31,7 +31,7 @@ import java.util.Objects;
  */
 public abstract class MethodContract {
   // package private to avoid uncontrolled implementations
-  MethodContract() {
+  public MethodContract() {
 
   }
 
@@ -69,9 +69,9 @@ public abstract class MethodContract {
     return false;
   }
 
-  abstract String getArgumentsPresentation();
+  protected abstract String getArgumentsPresentation();
 
-  abstract List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments);
+  protected abstract List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments);
 
   @Override
   public String toString() {

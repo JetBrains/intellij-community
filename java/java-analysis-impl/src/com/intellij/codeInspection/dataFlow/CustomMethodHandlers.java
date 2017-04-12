@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -41,8 +40,6 @@ public class CustomMethodHandlers {
   }
 
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
-    .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
-              (args, memState, factory) -> stringIsEmpty(args.myQualifier, memState, factory))
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
               (args, memState, factory) -> stringIndexOf(args.myQualifier, memState, factory))
     .register(instanceCall(JAVA_LANG_STRING, "equals").parameterCount(1),
@@ -83,8 +80,8 @@ public class CustomMethodHandlers {
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ends ? leftConst.endsWith(rightConst) : leftConst.startsWith(rightConst)));
     }
-    DfaValue leftLength = factory.createStringLength(args.myQualifier);
-    DfaValue rightLength = factory.createStringLength(arg);
+    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, args.myQualifier);
+    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, arg);
     DfaValue trueRelation = factory.createCondition(leftLength, RelationType.GE, rightLength);
     DfaValue falseRelation = factory.createCondition(leftLength, RelationType.LT, rightLength);
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
@@ -101,8 +98,8 @@ public class CustomMethodHandlers {
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ignoreCase ? leftConst.equalsIgnoreCase(rightConst) : leftConst.equals(rightConst)));
     }
-    DfaValue leftLength = factory.createStringLength(args.myQualifier);
-    DfaValue rightLength = factory.createStringLength(arg);
+    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, args.myQualifier);
+    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, arg);
     DfaValue trueRelation = factory.createCondition(leftLength, RelationType.EQ, rightLength);
     DfaValue falseRelation = factory.createCondition(leftLength, RelationType.NE, rightLength);
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
@@ -111,21 +108,10 @@ public class CustomMethodHandlers {
   private static List<DfaMemoryState> stringIndexOf(DfaValue qualifier,
                                                     DfaMemoryState memState,
                                                     DfaValueFactory factory) {
-    DfaValue length = factory.createStringLength(qualifier);
+    DfaValue length = SpecialField.STRING_LENGTH.createValue(factory, qualifier);
     LongRangeSet range = memState.getRange(length);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
     return singleResult(memState, factory.getRangeFactory().create(LongRangeSet.range(-1, maxLen - 1)));
-  }
-
-  private static List<DfaMemoryState> stringIsEmpty(DfaValue qualifier, DfaMemoryState memState, DfaValueFactory factory) {
-    DfaValue length = factory.createStringLength(qualifier);
-    if (length == DfaUnknownValue.getInstance()) {
-      return singleResult(memState, DfaUnknownValue.getInstance());
-    }
-    DfaConstValue zero = factory.getConstFactory().createFromValue(0, PsiType.INT, null);
-    DfaValue trueRelation = factory.createCondition(length, RelationType.EQ, zero);
-    DfaValue falseRelation = factory.createCondition(length, RelationType.NE, zero);
-    return applyCondition(memState, trueRelation, factory.getBoolean(true), falseRelation, factory.getBoolean(false));
   }
 
   private static List<DfaMemoryState> mathMinMax(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean max) {

@@ -30,7 +30,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -103,30 +102,6 @@ public class DfaValueFactory {
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
     return getConstFactory().create(literal);
-  }
-
-  @NotNull
-  public DfaValue createStringLength(DfaValue value) {
-    if (value instanceof DfaVariableValue) {
-      DfaVariableValue variableValue = (DfaVariableValue)value;
-      PsiType type = variableValue.getVariableType();
-      if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (psiClass != null) {
-          PsiMethod[] lengthMethods = psiClass.findMethodsByName("length", false);
-          if (lengthMethods.length == 1) {
-            return getVarFactory().createVariableValue(lengthMethods[0], PsiType.INT, false, variableValue);
-          }
-        }
-      }
-    }
-    if(value instanceof DfaConstValue) {
-      Object str = ((DfaConstValue)value).getValue();
-      if(str instanceof String) {
-        return getConstFactory().createFromValue(((String)str).length(), PsiType.INT, null);
-      }
-    }
-    return DfaUnknownValue.getInstance();
   }
 
   /**

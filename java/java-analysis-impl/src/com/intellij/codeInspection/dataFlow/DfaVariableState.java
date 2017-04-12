@@ -25,15 +25,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,11 +61,17 @@ class DfaVariableState {
     DfaVariableValue qualifier = var.getQualifier();
     if(qualifier != null) {
       PsiModifierListOwner owner = var.getPsiVariable();
-      boolean stringLength = owner instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)owner);
       boolean arrayLength =
         owner instanceof PsiField && "length".equals(((PsiField)owner).getName()) && qualifier.getVariableType() instanceof PsiArrayType;
-      if(stringLength || arrayLength) {
+      if(arrayLength) {
         return LongRangeSet.indexRange();
+      }
+      if (owner instanceof PsiMethod) {
+        for (SpecialField sf : SpecialField.values()) {
+          if(sf.isMyMethod((PsiMethod)owner)) {
+            return sf.getRange();
+          }
+        }
       }
     }
     return LongRangeSet.fromType(var.getVariableType());

@@ -83,12 +83,12 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   @Override
-  String getArgumentsPresentation() {
+  protected String getArgumentsPresentation() {
     return StringUtil.join(arguments, constraint -> constraint.toString(), ", ");
   }
 
   @Override
-  List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] argValues) {
+  protected List<DfaValue> getConditions(DfaValueFactory factory, DfaValue qualifier, DfaValue[] argValues) {
     return StreamEx.zip(arguments, argValues, (constraint, value) -> constraint.getCondition(factory, value))
       .without(factory.getConstFactory().getTrue()).toList();
   }

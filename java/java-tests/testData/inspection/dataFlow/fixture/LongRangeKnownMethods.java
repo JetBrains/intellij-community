@@ -1,6 +1,5 @@
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class LongRangeKnownMethods {
   void testIndexOf(String s) {
@@ -187,5 +186,41 @@ public class LongRangeKnownMethods {
     void readNext() {
       value = new Scanner(System.in).next();
     }
+  }
+
+  void testEmptyList(List<String> list) {
+    if (<warning descr="Condition 'list.get(0).isEmpty() && list.isEmpty()' is always 'false'">list.get(0).isEmpty() && <warning descr="Condition 'list.isEmpty()' is always 'false' when reached">list.isEmpty()</warning></warning>) {
+      System.out.println("impossible");
+    }
+  }
+
+  void testEmptyListGet(List<String> list) {
+    if (list.isEmpty()) {
+      System.out.println(list.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>(0));
+    }
+  }
+
+  void testBoundError(List<String> list) {
+    if (list.size() < 10) {
+      System.out.println(list.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>(10));
+    }
+  }
+
+  void testCollectionArray(Set<Object> currentElements, Object[] elements) {
+    if(!currentElements.isEmpty() && elements.length == currentElements.size()) {
+      if (<warning descr="Condition 'elements.length > 0' is always 'true'">elements.length > 0</warning>) {
+        System.out.println("Yes");
+      }
+    }
+  }
+
+  public String getOrThrow(int index, List<String> localVariables) {
+    if (index < localVariables.size()) {
+      return localVariables.get(index);
+    }
+    else if (<warning descr="Condition 'index < 0' is always 'false'">index < 0</warning>) {
+      throw new IndexOutOfBoundsException();
+    }
+    else return "";
   }
 }

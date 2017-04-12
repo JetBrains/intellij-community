@@ -30,7 +30,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,8 +175,10 @@ public class DfaExpressionFactory {
           return method;
         }
       }
-      if (MethodUtils.isStringLength(method)) {
-        return method;
+      for (SpecialField sf : SpecialField.values()) {
+        if (sf.isMyMethod(method)) {
+          return sf.getCanonicalMethod(((PsiMethod)target).getContainingClass());
+        }
       }
       if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
         return method;
