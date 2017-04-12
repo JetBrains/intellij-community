@@ -92,7 +92,7 @@ public class JavaModuleGraphUtil {
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
       if (files.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
       Optional.ofNullable(ContainerUtil.getFirstItem(files))
         .map(PsiManager.getInstance(project)::findFile)
@@ -146,7 +146,7 @@ public class JavaModuleGraphUtil {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
       Optional.ofNullable(ContainerUtil.getFirstItem(files))
         .map(PsiManager.getInstance(project)::findFile)
         .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
