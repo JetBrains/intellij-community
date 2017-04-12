@@ -317,6 +317,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     isSingleton = template.isSingleton
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
+    level = template.level
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
