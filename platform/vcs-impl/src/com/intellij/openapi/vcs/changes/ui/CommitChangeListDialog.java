@@ -488,7 +488,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      executeDefaultCommitSession();
+      executeDefaultCommitSession(null);
     }
 
     @NotNull
@@ -533,7 +533,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return toObjectArray(result, Action.class);
   }
 
-  private void executeDefaultCommitSession() {
+  private void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
     if (!myIsAlien && !addUnversionedFiles()) return;
     if (!saveDialogState()) return;
     saveComments(true);
@@ -541,7 +541,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     ensureDataIsActual(() -> {
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
-        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(null);
+        CheckinHandler.ReturnResult result = runBeforeCommitHandlers(executor);
         if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
           doCommit(myResultHandler);
@@ -558,7 +558,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void execute(@NotNull CommitExecutor commitExecutor) {
     CommitSession session = commitExecutor.createCommitSession();
     if (session == CommitSession.VCS_COMMIT) {
-      executeDefaultCommitSession();
+      executeDefaultCommitSession(commitExecutor);
       return;
     }
 
