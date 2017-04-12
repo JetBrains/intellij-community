@@ -221,7 +221,6 @@ final class JavacReferenceCollectorListener implements TaskListener {
     private final JavacFileData myFileData;
     private final JavacTreeHelper myTreeHelper;
     private int myRemainDeclarations;
-    public CompilationUnitTree myUnitTree;
 
     private ReferenceCollector(int remainDeclarations,
                                String filePath,
@@ -232,7 +231,6 @@ final class JavacReferenceCollectorListener implements TaskListener {
                                      myDivideImportRefs ? createReferenceHolder() : EMPTY_T_OBJ_INT_MAP,
                                      createDefinitionHolder());
       myTreeHelper = new JavacTreeHelper(unitTree, myTreeUtility);
-      myUnitTree = unitTree;
     }
 
     void sinkReference(@Nullable JavacRef.JavacElementRefBase ref) {
@@ -273,14 +271,6 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     private int decrementRemainDeclarationsAndGet(Tree declarationToProcess) {
       return declarationToProcess == null ? myRemainDeclarations : --myRemainDeclarations;
-    }
-
-    public Elements getElementUtility() {
-      return myElementUtility;
-    }
-
-    public Trees getTrees() {
-      return myTreeUtility;
     }
   }
 

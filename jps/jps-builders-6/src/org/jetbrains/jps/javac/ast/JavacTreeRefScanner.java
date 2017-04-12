@@ -127,11 +127,10 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       Element element = collector.getReferencedElement(node.getMethodSelect());
       if (element.getKind() != ElementKind.CONSTRUCTOR && !element.getModifiers().contains(Modifier.STATIC)) {
         TypeElement currentClass = myCurrentEnclosingElement.peek();
-        Elements elements = collector.getElementUtility();
         Types types = collector.getTypeUtility();
         TypeElement actualQualifier = null;
         while (currentClass != null) {
-          if (containsMember(currentClass, element, types, elements, new THashSet<Element>(TObjectHashingStrategy.IDENTITY))) {
+          if (containsMember(currentClass, element, types, new THashSet<Element>(1, TObjectHashingStrategy.IDENTITY))) {
             actualQualifier = currentClass;
             break;
           }
@@ -209,7 +208,10 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     }
   }
 
-  private static boolean containsMember(TypeElement classElement, Element memberToFind, Types types, Elements elements, Set<Element> visitedClasses) {
+  private static boolean containsMember(TypeElement classElement,
+                                        Element memberToFind,
+                                        Types types,
+                                        Set<Element> visitedClasses) {
     NoType noType = types.getNoType(TypeKind.NONE);
 
     for (Element member : classElement.getEnclosedElements()) {
@@ -224,7 +226,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (superClassType != null &&
         superClassType != noType &&
         visitedClasses.add(((DeclaredType)superClassType).asElement()) &&
-        containsMember((TypeElement)((DeclaredType)superClassType).asElement(), memberToFind, types, elements, visitedClasses)) {
+        containsMember((TypeElement)((DeclaredType)superClassType).asElement(), memberToFind, types, visitedClasses)) {
       return true;
     }
 
@@ -232,7 +234,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (implementedInterface != null &&
           implementedInterface != noType &&
           visitedClasses.add(((DeclaredType) implementedInterface).asElement()) &&
-          containsMember((TypeElement)((DeclaredType) implementedInterface).asElement(), memberToFind, types, elements, visitedClasses)) {
+          containsMember((TypeElement)((DeclaredType) implementedInterface).asElement(), memberToFind, types, visitedClasses)) {
         return true;
       }
     }
