@@ -18,7 +18,10 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -39,7 +42,7 @@ import java.awt.*;
  */
 public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;
-  protected final PsiElement[] myVariables;
+  protected final Object[] myVariables;
 
   public JComponent getPreferredFocusedComponent() {
     return myList;
@@ -49,7 +52,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected JavaVisibilityPanel myVisibilityPanel;
   protected final String myRefactoringName;
 
-  public MoveInstanceMethodDialogBase(PsiMethod method, PsiElement[] variables, String refactoringName) {
+  public MoveInstanceMethodDialogBase(PsiMethod method, Object[] variables, String refactoringName) {
     super(method.getProject(), true);
     myMethod = method;
     myVariables = variables;
@@ -147,8 +150,8 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
         setIcon(psiVariable.getIcon(0));
         setText(text);
       }
-      else if (value instanceof PsiExpression) {
-        setText(((PsiExpression)value).getText());
+      else if (value instanceof String) {
+        setText((String)value);
       }
       return this;
     }

@@ -65,11 +65,11 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   public ConvertToInstanceMethodProcessor(final Project project,
                                           final PsiMethod method,
-                                          final PsiElement targetParameter,
+                                          @Nullable final PsiParameter targetParameter,
                                           final String newVisibility) {
     super(project);
     myMethod = method;
-    myTargetParameter = targetParameter instanceof PsiParameter ? (PsiParameter)targetParameter : null;
+    myTargetParameter = targetParameter;
     LOG.assertTrue(method.hasModifierProperty(PsiModifier.STATIC));
     if (myTargetParameter != null) {
       LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);

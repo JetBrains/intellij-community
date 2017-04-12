@@ -26,6 +26,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    List<PsiElement> targetQualifiers = new ArrayList<>();
+    List<Object> targetQualifiers = new ArrayList<>();
     for (final PsiParameter parameter : parameters) {
       final PsiType type = parameter.getType();
       if (type instanceof PsiClassType) {
@@ -89,11 +90,9 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     boolean noArgConstructor =
       constructors.length == 0 || Arrays.stream(constructors).anyMatch(constructor -> constructor.getParameterList().getParametersCount() == 0);
     if (noArgConstructor) {
-      targetQualifiers.add(JavaPsiFacade.getElementFactory(project).createExpressionFromText("new " + className + "()", method));
+      targetQualifiers.add("this / new " + className + "()");
     }
 
-    new ConvertToInstanceMethodDialog(
-      method,
-      targetQualifiers.toArray(new PsiElement[targetQualifiers.size()])).show();
+    new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
   }
 }
