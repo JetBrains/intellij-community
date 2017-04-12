@@ -234,20 +234,28 @@ public final class PythonImportUtils {
 
   private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
     List<PsiElement> result = new ArrayList<>();
-    PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
-    for (PsiFile file : files) {
-      if (isImportableModule(targetFile, file)) {
-        result.add(file);
+    //add packages
+    FilenameIndex.processFilesByName(reftext, true, file -> {
+      ProgressManager.checkCanceled();
+      if (!file.isDirectory() ){
+        return true;
       }
-    }
-    // perhaps the module is a directory, not a file
-    PsiFile[] initFiles = FilenameIndex.getFilesByName(project, PyNames.INIT_DOT_PY, scope);
-    for (PsiFile initFile : initFiles) {
-      PsiDirectory parent = initFile.getParent();
-      if (parent != null && parent.getName().equals(reftext)) {
-        result.add(parent);
+      PsiDirectory candidatePackageDir = (PsiDirectory) file;
+      if (candidatePackageDir.findFile(PyNames.INIT_DOT_PY) == null){
+        return true;
       }
-    }
+      result.add(candidatePackageDir);
+      return true;
+    }, scope, project, null);
+    //Add modules
+    FilenameIndex.processFilesByName(reftext + ".py", false, true, item -> {
+      ProgressManager.checkCanceled();
+      if (isImportableModule(targetFile, item)){
+        result.add(item);
+      }
+      return true;
+    }, scope, project, null);
+
     return result;
   }
 
