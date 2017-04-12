@@ -106,8 +106,12 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     for (final PsiReference ref : methodReferences) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
-        if (element.getParent() instanceof PsiMethodCallExpression) {
-          result.add(new MethodCallUsageInfo((PsiMethodCallExpression)element.getParent()));
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          result.add(new MethodCallUsageInfo((PsiMethodCallExpression)parent));
+        }
+        else if (element instanceof PsiMethodReferenceExpression) {
+          result.add(new MethodReferenceUsageInfo((PsiMethodReferenceExpression)element, myMethod.getParameterList().getParameterIndex(myTargetParameter) == 0));
         }
       }
       else if (element instanceof PsiDocTagValue) {
@@ -188,6 +192,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+      else if (usageInfo instanceof MethodReferenceUsageInfo && !((MethodReferenceUsageInfo)usageInfo).isApplicableBySecondSearch()) {
+        conflicts.putValue(((MethodReferenceUsageInfo)usageInfo).getExpression(), RefactoringBundle.message("expand.method.reference.warning"));
+      }
     }
 
     return showConflicts(conflicts, usagesIn);
@@ -216,13 +223,16 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     // Process usages
     for (final UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo) {
-        processMethodCall((MethodCallUsageInfo)usage);
+        processMethodCall(((MethodCallUsageInfo)usage).getMethodCall());
       }
       else if (usage instanceof ParameterUsageInfo) {
         processParameterUsage((ParameterUsageInfo)usage);
       }
       else if (usage instanceof ImplementingClassUsageInfo) {
         inheritors.add(((ImplementingClassUsageInfo)usage).getPsiClass());
+      }
+      else if (usage instanceof MethodReferenceUsageInfo) {
+        processMethodReference((MethodReferenceUsageInfo)usage);
       }
     }
 
@@ -256,15 +266,43 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     myMethod.delete();
   }
 
+  private void processMethodReference(MethodReferenceUsageInfo usage) {
+    PsiMethodReferenceExpression expression = usage.getExpression();
+    if (usage.isApplicableBySecondSearch()) {
+      PsiExpression qualifierExpression = expression.getQualifierExpression();
+      LOG.assertTrue(qualifierExpression != null);
+      qualifierExpression.replace(JavaPsiFacade.getElementFactory(myProject).createReferenceExpression(myTargetClass));
+    }
+    else {
+      PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda(expression, false, true);
+      List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
+      if (!returnExpressions.isEmpty()) {
+        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)returnExpressions.get(0);
+        processMethodCall(methodCall);
+        usage.setReplacement(methodCall);
+      }
+    }
+  }
+
   private void fixVisibility(final PsiMethod method, final UsageInfo[] usages) throws IncorrectOperationException {
     final PsiModifierList modifierList = method.getModifierList();
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
       for (UsageInfo usage : usages) {
+        PsiElement place = null;
         if (usage instanceof MethodCallUsageInfo) {
-          final PsiElement place = usage.getElement();
-          if (place != null) {
-            VisibilityUtil.escalateVisibility(method, place);
+          place = usage.getElement();
+        }
+        else if (usage instanceof MethodReferenceUsageInfo) {
+          PsiMethodReferenceExpression expression = ((MethodReferenceUsageInfo)usage).getExpression();
+          if (expression != null && expression.isValid()) {
+            place = expression;
           }
+          else {
+            place = ((MethodReferenceUsageInfo)usage).getReplacement();
+          }
+        }
+        if (place != null) {
+          VisibilityUtil.escalateVisibility(method, place);
         }
       }
     }
@@ -364,8 +402,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void processMethodCall(MethodCallUsageInfo usageInfo) throws IncorrectOperationException {
-    PsiMethodCallExpression methodCall = usageInfo.getMethodCall();
+  private void processMethodCall(final PsiMethodCallExpression methodCall) throws IncorrectOperationException {
     PsiParameterList parameterList = myMethod.getParameterList();
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
     int parameterIndex = parameterList.getParameterIndex(myTargetParameter);

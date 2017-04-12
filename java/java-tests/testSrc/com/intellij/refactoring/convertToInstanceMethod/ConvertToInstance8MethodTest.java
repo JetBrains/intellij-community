@@ -16,6 +16,7 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 
 public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   @Override
@@ -25,6 +26,14 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
 
   public void testThisInsteadOfNoQualifier() throws Exception {
     doTest(0);
+  }
+
+  public void testMethodReferenceAcceptableBySecondSearch() throws Exception {
+    doTest(0);
+  }
+
+  public void testMethodReferenceToLambda() throws Exception {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(1));
   }
 
   @Override
