@@ -78,6 +78,7 @@ public class XValueHint extends AbstractValueHint {
 
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
+  private final boolean myFromKeyboard;
   private final String myExpression;
   private final String myValueName;
   private final @Nullable XSourcePosition myExpressionPosition;
@@ -88,11 +89,12 @@ public class XValueHint extends AbstractValueHint {
 
   public XValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
                     @NotNull ExpressionInfo expressionInfo, @NotNull XDebuggerEvaluator evaluator,
-                    @NotNull XDebugSession session) {
+                    @NotNull XDebugSession session, boolean fromKeyboard) {
     super(project, editor, point, type, expressionInfo.getTextRange());
 
     myEvaluator = evaluator;
     myDebugSession = session;
+    myFromKeyboard = fromKeyboard;
     myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument());
     myValueName = XDebuggerEvaluateActionHandler.getDisplayText(expressionInfo, editor.getDocument());
     myExpressionInfo = expressionInfo;
@@ -126,7 +128,8 @@ public class XValueHint extends AbstractValueHint {
         public void actionPerformed(@NotNull AnActionEvent e) {
           hideHint();
           final Point point = new Point(myPoint.x, myPoint.y + getEditor().getLineHeight());
-          new XValueHint(getProject(), getEditor(), point, ValueHintType.MOUSE_CLICK_HINT, myExpressionInfo, myEvaluator, myDebugSession).invokeHint();
+          new XValueHint(getProject(), getEditor(), point, ValueHintType.MOUSE_CLICK_HINT, myExpressionInfo, myEvaluator, myDebugSession,
+                         true).invokeHint();
         }
       }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
     }
@@ -208,7 +211,7 @@ public class XValueHint extends AbstractValueHint {
               }
             }
             else {
-              if (getType() == ValueHintType.MOUSE_OVER_HINT) {
+              if (getType() == ValueHintType.MOUSE_OVER_HINT && myFromKeyboard) {
                 text.insert(0, "(" + KeymapUtil.getFirstKeyboardShortcutText("ShowErrorDescription") + ") ",
                             SimpleTextAttributes.GRAYED_ATTRIBUTES);
               }
