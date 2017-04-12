@@ -158,6 +158,8 @@ internal object JavaConverter {
         is PsiExpressionStatement -> unwrapElements(element.parent)
         is PsiParameterList -> unwrapElements(element.parent)
         is PsiAnnotationParameterList -> unwrapElements(element.parent)
+        is PsiModifierList -> unwrapElements(element.parent)
+        is PsiExpressionList -> unwrapElements(element.parent)
         else -> element
     }
 
@@ -227,14 +229,23 @@ internal object JavaConverter {
                     expr<UCallExpression>(build(::JavaConstructorUCallExpression))
             }
             is PsiMethodCallExpression -> {
-                if (el.methodExpression.qualifierExpression != null)
-                    expr<UQualifiedReferenceExpression> {
+                if (el.methodExpression.qualifierExpression != null) {
+                    if (requiredType == null ||
+                        requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java) ||
+                        requiredType.isAssignableFrom(UCallExpression::class.java)) {
                         val parent = if (parentCallback == null) null else (parentCallback() ?: return null)
-                        JavaUCompositeQualifiedExpression(el, parent).apply {
+                        val expr = JavaUCompositeQualifiedExpression(el, parent).apply {
                             receiver = convertOrEmpty(el.methodExpression.qualifierExpression!!, this)
                             selector = JavaUCallExpression(el, this)
                         }
+                        if (requiredType?.isAssignableFrom(UCallExpression::class.java) != null)
+                            expr.selector
+                        else
+                            expr
                     }
+                    else
+                        null
+                }
                 else
                     expr<UCallExpression>(build(::JavaUCallExpression))
             }
