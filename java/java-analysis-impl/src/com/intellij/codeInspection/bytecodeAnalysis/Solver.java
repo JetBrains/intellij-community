@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -101,7 +100,6 @@ class ResultUtil {
 
 class HResultUtil {
   private static final HKey[] EMPTY_PRODUCT = new HKey[0];
-  private static final ArrayFactory<HComponent> HCOMPONENT_ARRAY_FACTORY = count -> new HComponent[count];
   private final ELattice<Value> lattice;
   final Value top;
 
@@ -138,7 +136,7 @@ class HResultUtil {
     }
     HPending pending1 = (HPending) r1;
     HPending pending2 = (HPending) r2;
-    return new HPending(ArrayUtil.mergeArrays(pending1.delta, pending2.delta, HCOMPONENT_ARRAY_FACTORY));
+    return new HPending(ArrayUtil.mergeArrays(pending1.delta, pending2.delta, HComponent.ARRAY_FACTORY));
   }
 }
 

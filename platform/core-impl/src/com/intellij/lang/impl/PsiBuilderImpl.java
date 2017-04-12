@@ -126,8 +126,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneMarker.clean();
     }
   });
-  private static final ArrayFactory<IElementType> myElementTypeArrayFactory =
-    count -> count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
 
   public static void registerWhitespaceToken(@NotNull IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -918,7 +916,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private void resizeLexemes(final int newSize) {
     myLexStarts = ArrayUtil.realloc(myLexStarts, newSize+1);
-    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, myElementTypeArrayFactory);
+    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, IElementType.ARRAY_FACTORY);
     clearCachedTokenType();
   }
 

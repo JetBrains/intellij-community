@@ -27,7 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author ilyas
  */
 public interface GrReferenceList extends GroovyPsiElement, PsiReferenceList {
-  ArrayFactory<GrReferenceList> ARRAY_FACTORY = count -> new GrReferenceList[0];
+  GrReferenceList[] EMPTY_ARRAY = new GrReferenceList[0];
+  ArrayFactory<GrReferenceList> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrReferenceList[count];
 
   @Nullable
   PsiElement getKeyword();
