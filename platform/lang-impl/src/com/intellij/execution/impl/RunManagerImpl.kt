@@ -297,10 +297,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
       idToSettings.put(newId, settings)
 
-      if (!customOrder.isEmpty && !customOrder.contains(settings.uniqueID)) {
-        customOrder.put(settings.uniqueID, customOrder.size())
-      }
-
       if (existingId == null) {
         refreshUsagesList(settings)
       }
@@ -853,6 +849,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
     lock.write {
       recentlyUsedTemporaries.remove(settings.configuration)
+      immutableSortedSettingsList = null
       if (!customOrder.isEmpty) {
         isCustomOrderApplied = false
       }
