@@ -177,6 +177,11 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
           }, "Refreshing List of Packages, Please Wait", false, null);
         }
       });
+
+      if (myRemotePathField != null) {
+        myRemotePathField.addTextChangeListener(this::checkValid);
+      }
+      
       UiNotifyConnector.doWhenFirstShown(mySdkCombo, this::checkValid);
     }
   }
@@ -348,7 +353,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
     mySdkCombo.addChangedListener(e -> configureMappingField(remoteInterpreterManager));
     panelToAddField.add(myRemotePathField.getMainPanel());
-    myRemotePathField.addTextChangeListener(() -> checkValid());
     configureMappingField(remoteInterpreterManager);
   }
 
