@@ -562,7 +562,6 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
               return null
             }
             if (fixPackages) {
-
               val pathResult = findPathWithPackagesByName(element)
               if (pathResult == null) {
                 Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("Can't resolve")
@@ -570,6 +569,11 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
               }
               configuration.workingDirectory = pathResult.first.path
               qualifiedName = pathResult.second.toString()
+            } else {
+              val virtualFile = element.containingFile.virtualFile
+              if (virtualFile != null) {
+                configuration.workingDirectory = findVFSItemRoot(virtualFile, element.project)?.path
+              }
             }
             return ConfigurationTarget(qualifiedName, TestTargetType.PYTHON)
           }
