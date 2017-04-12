@@ -22,6 +22,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -256,7 +257,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      "<code>" + name + "</code>",
-                                                                     "<code>" + value + "</code>"),
+                                                                     "<code>" + StringUtil.unquoteString(value) + "</code>"),
                                            createFix(name, value),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
