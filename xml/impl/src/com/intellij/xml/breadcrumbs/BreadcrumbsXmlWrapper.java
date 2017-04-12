@@ -449,15 +449,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static BreadcrumbsInfoProvider getInfoProvider(@NotNull final Language language) {
-    for (final BreadcrumbsInfoProvider provider : Extensions.getExtensions(BreadcrumbsInfoProvider.EP_NAME)) {
-      for (final Language language1 : provider.getLanguages()) {
-        if (language.isKindOf(language1)) {
-          return provider;
-        }
-      }
-    }
-
-    return null;
+    return BreadcrumbsInfoProvider.find(supported -> supported.isKindOf(language));
   }
 
   private static class MyUpdate extends Update {

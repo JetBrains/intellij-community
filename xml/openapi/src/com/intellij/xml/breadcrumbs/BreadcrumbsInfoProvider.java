@@ -28,8 +28,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
+import java.util.function.Predicate;
+
 public abstract class BreadcrumbsInfoProvider {
-  public static final ExtensionPointName<BreadcrumbsInfoProvider> EP_NAME = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");
+  public static final ExtensionPointName<BreadcrumbsInfoProvider> EP_NAME
+    = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");
 
   public abstract Language[] getLanguages();
 
@@ -45,4 +49,24 @@ public abstract class BreadcrumbsInfoProvider {
 
   @Nullable
   public abstract String getElementTooltip(@NotNull final PsiElement e);
+
+  @NotNull
+  public static Iterable<Language> getSupportedLanguages() {
+    LinkedHashMap<String, Language> map = new LinkedHashMap<>();
+    for (BreadcrumbsInfoProvider provider : EP_NAME.getExtensions()) {
+      for (Language language : provider.getLanguages()) {
+        map.put(language.getID(), language);
+      }
+    }
+    return map.values();
+  }
+
+  public static BreadcrumbsInfoProvider find(Predicate<Language> predicate) {
+    for (BreadcrumbsInfoProvider provider : EP_NAME.getExtensions()) {
+      for (Language language : provider.getLanguages()) {
+        if (predicate.test(language)) return provider;
+      }
+    }
+    return null;
+  }
 }
