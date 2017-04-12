@@ -79,18 +79,24 @@ public class ModuleHighlightUtil {
           return LightJavaModule.getModule(PsiManager.getInstance(project), classRoot);
         }
       }
-
-      return null;
     }
     else {
       Module module = index.getModuleForFile(file);
-      return Optional.ofNullable(module)
-        .map(m -> FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, m.getModuleScope(false)))
-        .map(c -> c.size() == 1 ? c.iterator().next() : null)
-        .map(f -> PsiManager.getInstance(project).findFile(f))
-        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .orElse(null);
+      if (module != null) {
+        boolean isTest = index.isInTestSourceContent(file);
+        List<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope()).stream()
+          .filter(f -> index.isInTestSourceContent(f) == isTest)
+          .collect(Collectors.toList());
+        if (files.size() == 1) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+      }
     }
+
+    return null;
   }
 
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
