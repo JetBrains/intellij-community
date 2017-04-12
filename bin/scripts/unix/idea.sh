@@ -158,9 +158,9 @@ VM_OPTIONS_FILE=""
 if [ -n "$@@product_uc@@_VM_OPTIONS" -a -r "$@@product_uc@@_VM_OPTIONS" ]; then
   # explicit
   VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
-elif [ -r "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" ]; then
+elif [ -r "$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions" ]; then
   # user-overridden
-  VM_OPTIONS_FILE="$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions"
+  VM_OPTIONS_FILE="$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions"
 elif [ -r "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" ]; then
   # default, standard installation
   VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"

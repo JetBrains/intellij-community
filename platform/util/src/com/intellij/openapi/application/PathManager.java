@@ -231,7 +231,7 @@ public class PathManager {
   @Nullable
   public static String getCustomOptionsDirectory() {
     // do not use getConfigPath() here - as it may be not yet defined
-    return PATHS_SELECTOR != null ? platformPath(PATHS_SELECTOR, "Library/Preferences", "") : null;
+    return PATHS_SELECTOR != null ? getDefaultConfigPathFor(PATHS_SELECTOR) : null;
   }
 
   // runtime paths
