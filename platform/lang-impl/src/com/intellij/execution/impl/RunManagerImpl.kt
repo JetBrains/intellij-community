@@ -104,7 +104,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
   private var loadedSelectedConfigurationUniqueName: String? = null
+
   private var selectedConfigurationId: String? = null
+    set(value) {
+      field = value
+      if (value != null) {
+        loadedSelectedConfigurationUniqueName = null
+      }
+    }
 
   private val iconCache = TimedIconCache()
   private val _config by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
@@ -263,18 +270,19 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
     val newId = settings.uniqueID
-    var existingSettings: RunnerAndConfigurationSettings? = null
     var existingId: String? = null
     lock.write {
       immutableSortedSettingsList = null
 
       existingId = findExistingConfigurationId(settings)
-      existingId?.let {
-        existingSettings = idToSettings.remove(it)
+      // https://youtrack.jetbrains.com/issue/IDEA-112821
+      // we should check by instance, not by id (todo is it still relevant?)
+      if (existingId != newId && existingId != null) {
+        idToSettings.remove(existingId!!)
       }
 
       if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
-        setSelectedConfigurationId(newId)
+        selectedConfigurationId = newId
       }
       idToSettings.put(newId, settings)
 
@@ -282,18 +290,18 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         refreshUsagesList(settings)
       }
 
-      if (!settings.isShared && existingSettings !== settings) {
+      if (!settings.isShared && existingId == null) {
         schemeManager.addScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
+
+      checkRecentsLimit()
     }
 
-    checkRecentsLimit()
-
-    if (existingSettings === settings) {
-      myDispatcher.multicaster.runConfigurationChanged(settings, existingId)
+    if (existingId == null) {
+      myDispatcher.multicaster.runConfigurationAdded(settings)
     }
     else {
-      myDispatcher.multicaster.runConfigurationAdded(settings)
+      myDispatcher.multicaster.runConfigurationChanged(settings, existingId)
     }
   }
 
@@ -307,15 +315,18 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
   }
 
-  fun refreshUsagesList(settings: RunnerAndConfigurationSettings) {
+  private fun refreshUsagesList(settings: RunnerAndConfigurationSettings) {
     if (settings.isTemporary) {
-      val configuration = settings.configuration
-      recentlyUsedTemporaries.remove(configuration)
-      recentlyUsedTemporaries.add(0, configuration)
-      trimUsagesListToLimit()
+      lock.write {
+        val configuration = settings.configuration
+        recentlyUsedTemporaries.remove(configuration)
+        recentlyUsedTemporaries.add(0, configuration)
+        trimUsagesListToLimit()
+      }
     }
   }
 
+  // call only under write lock
   private fun trimUsagesListToLimit() {
     while (recentlyUsedTemporaries.size > config.recentsLimit) {
       recentlyUsedTemporaries.removeAt(recentlyUsedTemporaries.size - 1)
@@ -323,9 +334,10 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   fun checkRecentsLimit() {
-    trimUsagesListToLimit()
     var removed: MutableList<RunnerAndConfigurationSettings>? = null
     lock.write {
+      trimUsagesListToLimit()
+
       while (idToSettings.values.count { it.isTemporary } > config.recentsLimit) {
         val it = idToSettings.values.iterator()
         while (it.hasNext()) {
@@ -361,21 +373,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   override var selectedConfiguration: RunnerAndConfigurationSettings?
     get() {
       if (selectedConfigurationId == null && loadedSelectedConfigurationUniqueName != null) {
-        setSelectedConfigurationId(loadedSelectedConfigurationUniqueName)
+        selectedConfigurationId = loadedSelectedConfigurationUniqueName
       }
-      return selectedConfigurationId?.let { idToSettings.get(it) }
+      return selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
     }
     set(value) {
-      setSelectedConfigurationId(value?.uniqueID)
+      selectedConfigurationId = value?.uniqueID
       fireRunConfigurationSelected()
     }
-
-  private fun setSelectedConfigurationId(id: String?) {
-    selectedConfigurationId = id
-    if (id != null) {
-      loadedSelectedConfigurationUniqueName = null
-    }
-  }
 
   @Volatile
   private var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = emptyList()
@@ -464,53 +469,56 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     val element = Element("state")
 
     schemeManager.save()
-    // backward compatibility - write templates in the end
-    schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
-      val w1 = if (n1.startsWith("<template> of ")) 1 else 0
-      val w2 = if (n2.startsWith("<template> of ")) 1 else 0
-      if (w1 != w2) {
-        w1 - w2
-      }
-      else {
-        n1.compareTo(n2)
-      }
-    })
 
-    selectedConfiguration?.let {
-      element.setAttribute(SELECTED_ATTR, it.uniqueID)
-    }
+    lock.read {
+      // backward compatibility - write templates in the end
+      schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
+        val w1 = if (n1.startsWith("<template> of ")) 1 else 0
+        val w2 = if (n2.startsWith("<template> of ")) 1 else 0
+        if (w1 != w2) {
+          w1 - w2
+        }
+        else {
+          n1.compareTo(n2)
+        }
+      })
 
-    if (idToSettings.size > 1) {
-      var order: MutableList<String>? = null
-      for (each in idToSettings.values) {
-        if (each.type is UnknownConfigurationType) {
+      selectedConfiguration?.let {
+        element.setAttribute(SELECTED_ATTR, it.uniqueID)
+      }
+
+      if (idToSettings.size > 1) {
+        var order: MutableList<String>? = null
+        for (settings in idToSettings.values) {
+          if (settings.type is UnknownConfigurationType) {
+            continue
+          }
+
+          if (order == null) {
+            order = ArrayList()
+          }
+          order.add(settings.uniqueID)
+        }
+        if (order != null) {
+          @Suppress("DEPRECATION")
+          com.intellij.openapi.util.JDOMExternalizableStringList.writeList(order, element)
+        }
+      }
+
+      val recentList = SmartList<String>()
+      for (configuration in recentlyUsedTemporaries) {
+        if (configuration.type is UnknownConfigurationType) {
           continue
         }
-
-        if (order == null) {
-          order = ArrayList()
-        }
-        order.add(each.uniqueID)
+        val settings = getSettings(configuration) ?: continue
+        recentList.add(settings.uniqueID)
       }
-      if (order != null) {
+      if (!recentList.isEmpty()) {
+        val recent = Element(RECENT)
+        element.addContent(recent)
         @Suppress("DEPRECATION")
-        com.intellij.openapi.util.JDOMExternalizableStringList.writeList(order, element)
+        com.intellij.openapi.util.JDOMExternalizableStringList.writeList(recentList, recent)
       }
-    }
-
-    val recentList = SmartList<String>()
-    for (each in recentlyUsedTemporaries) {
-      if (each.type is UnknownConfigurationType) {
-        continue
-      }
-      val settings = getSettings(each) ?: continue
-      recentList.add(settings.uniqueID)
-    }
-    if (!recentList.isEmpty()) {
-      val recent = Element(RECENT)
-      element.addContent(recent)
-      @Suppress("DEPRECATION")
-      com.intellij.openapi.util.JDOMExternalizableStringList.writeList(recentList, recent)
     }
     return element
   }
@@ -592,18 +600,14 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     @Suppress("DEPRECATION")
     com.intellij.openapi.util.JDOMExternalizableStringList.readList(customOrder, parentNode)
 
-    // migration (old ids to UUIDs)
-    readList(customOrder)
-
     recentlyUsedTemporaries.clear()
     val recentNode = parentNode.getChild(RECENT)
     if (recentNode != null) {
+      val list = SmartList<String>()
       @Suppress("DEPRECATION")
-      val list = com.intellij.openapi.util.JDOMExternalizableStringList()
-      list.readExternal(recentNode)
-      readList(list)
-      for (name in list) {
-        idToSettings.get(name)?.configuration?.let {
+      com.intellij.openapi.util.JDOMExternalizableStringList.readList(list, recentNode)
+      for (id in list) {
+        idToSettings.get(id)?.configuration?.let {
           recentlyUsedTemporaries.add(it)
         }
       }
@@ -611,23 +615,10 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     immutableSortedSettingsList = null
 
     loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
-    setSelectedConfigurationId(loadedSelectedConfigurationUniqueName)
+    selectedConfigurationId = loadedSelectedConfigurationUniqueName
 
     fireBeforeRunTasksUpdated()
     fireRunConfigurationSelected()
-  }
-
-  private fun readList(list: MutableList<String>) {
-    for (i in list.indices) {
-      for (settings in idToSettings.values) {
-        val configuration = settings.configuration
-        @Suppress("DEPRECATION")
-        if (list.get(i) == "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}") {
-          list.set(i, settings.uniqueID)
-          break
-        }
-      }
-    }
   }
 
   fun readContext(parentNode: Element) {
@@ -640,17 +631,17 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
     }
 
-    setSelectedConfigurationId(loadedSelectedConfigurationUniqueName)
+    selectedConfigurationId = loadedSelectedConfigurationUniqueName
 
     fireRunConfigurationSelected()
   }
 
-  fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings): String? {
-    lock.read {
-      for ((key, value) in idToSettings) {
-        if (value === settings) {
-          return key
-        }
+  override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
+
+  private fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings): String? {
+    for ((key, value) in idToSettings) {
+      if (value === settings) {
+        return key
       }
     }
     return null
@@ -687,7 +678,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           }
         }
 
-        if (selectedConfigurationId != null && this.idToSettings.containsKey(selectedConfigurationId!!)) {
+        if (selectedConfigurationId != null && idToSettings.containsKey(selectedConfigurationId!!)) {
           selectedConfigurationId = null
         }
 
@@ -695,12 +686,12 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
 
       templateIdToConfiguration.clear()
+      loadedSelectedConfigurationUniqueName = null
+      recentlyUsedTemporaries.clear()
       configurations
     }
 
-    loadedSelectedConfigurationUniqueName = null
     iconCache.clear()
-    recentlyUsedTemporaries.clear()
     fireRunConfigurationsRemoved(configurations)
   }
 
@@ -1094,6 +1085,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
 
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
+    var isRemoved = false
     lock.write {
       immutableSortedSettingsList = null
 
@@ -1106,7 +1098,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
           iterator.remove()
           recentlyUsedTemporaries.remove(settings.configuration)
-          myDispatcher.multicaster.runConfigurationRemoved(otherSettings)
+          isRemoved = true
         }
 
         var changed = false
@@ -1126,6 +1118,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
     }
 
+    if (isRemoved) {
+      myDispatcher.multicaster.runConfigurationRemoved(settings)
+    }
     changedSettings.forEach { myDispatcher.multicaster.runConfigurationChanged(it, null) }
   }
 }
