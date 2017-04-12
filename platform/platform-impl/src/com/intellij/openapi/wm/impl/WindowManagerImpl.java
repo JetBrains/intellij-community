@@ -759,7 +759,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private int updateFrameBounds(IdeFrameImpl frame) {
     int extendedState = frame.getExtendedState();
     if (SystemInfo.isMacOSLion) {
-      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = frame.getPeer();
       if (peer instanceof FramePeer) {
         // frame.state is not updated by jdk so get it directly from peer
         extendedState = ((FramePeer)peer).getState();
