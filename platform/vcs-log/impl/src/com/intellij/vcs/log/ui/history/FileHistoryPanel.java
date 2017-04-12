@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +36,7 @@ import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +53,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final JBSplitter myDetailsSplitter;
   @NotNull private final FilePath myFilePath;
   @NotNull private final FileHistoryUi myUi;
+  @NotNull private final VirtualFile myRoot;
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
                           @NotNull VcsLogData logData,
@@ -58,6 +61,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                           @NotNull FilePath filePath) {
     myUi = ui;
     myFilePath = filePath;
+    myRoot = notNull(VcsUtil.getVcsRootFor(logData.getProject(), myFilePath));
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack) {
       @Override
       protected boolean isSpeedSearchEnabled() {
@@ -149,6 +153,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }
     else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
       return false;
+    }
+    else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
+      return myUi.getLogData().getLogProvider(myRoot).getDiffHandler();
     }
     return null;
   }
