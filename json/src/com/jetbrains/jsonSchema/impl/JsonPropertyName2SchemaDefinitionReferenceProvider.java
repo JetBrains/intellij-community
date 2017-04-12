@@ -18,7 +18,6 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
@@ -62,16 +61,13 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
       final JsonSchemaServiceEx schemaServiceEx = JsonSchemaService.Impl.getEx(myElement.getProject());
       final VirtualFile file = myElement.getContainingFile().getVirtualFile();
       if (file == null) return null;
-      final Collection<Pair<VirtualFile, String>> pairs = schemaServiceEx.getSchemaFilesByFile(file);
-      if (pairs != null && ! pairs.isEmpty()) {
-        for (Pair<VirtualFile, String> pair : pairs) {
-          final VirtualFile schemaFile = pair.getFirst();
-          final List<JsonSchemaWalker.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(getElement(), true, true);
-          if (steps == null) continue;
-          final PsiElement element =
-            new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, reference, steps).resolveInSchemaRecursively();
-          if (element != null) return element;
-        }
+      final Collection<VirtualFile> schemaFiles = schemaServiceEx.getSchemaFilesForFile(file);
+      for (VirtualFile schemaFile : schemaFiles) {
+        final List<JsonSchemaWalker.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(getElement(), true, true);
+        if (steps == null) continue;
+        final PsiElement element =
+          new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, reference, steps).resolveInSchemaRecursively();
+        if (element != null) return element;
       }
 
       return null;

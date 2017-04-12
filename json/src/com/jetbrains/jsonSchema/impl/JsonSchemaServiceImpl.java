@@ -195,15 +195,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @NotNull
   private List<CodeInsightProviders> getWrappers(@Nullable VirtualFile file) {
     if (file == null) return Collections.emptyList();
-    final FileType type = file.getFileType();
-    final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
-
     final List<CodeInsightProviders> wrappers = new SmartList<>();
-    getWrapperSkeletonMethod(provider -> (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) &&
-                                         provider.isAvailable(myProject, file),
-                             wrapper -> wrappers.add(wrapper), true);
+    getWrapperSkeletonMethod(provider -> isProviderAvailable(file, provider), wrapper -> wrappers.add(wrapper), true);
 
     return wrappers;
+  }
+
+  private boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
+    final FileType type = file.getFileType();
+    final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
+    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(myProject, file);
   }
 
   @Nullable
@@ -370,15 +371,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   }
 
   @Override
-  @Nullable
-  public Collection<Pair<VirtualFile, String>> getSchemaFilesByFile(@NotNull final VirtualFile file) {
-    final CodeInsightProviders wrapper = getWrapper(file);
-    if (wrapper != null) {
-      final List<Pair<VirtualFile, String>> result = new SmartList<>();
-      wrapper.iterateSchemaFiles((schemaFile, schemaId) -> result.add(Pair.create(schemaFile, schemaId)));
-      return result;
-    }
-    return null;
+  @NotNull
+  public Collection<VirtualFile> getSchemaFilesForFile(@NotNull final VirtualFile file) {
+    return getProviders().stream().filter(provider -> isProviderAvailable(file, provider))
+      .map(processor -> processor.getSchemaFile()).collect(Collectors.toList());
   }
 
   @Override

@@ -16,13 +16,12 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
@@ -37,9 +36,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
@@ -91,27 +88,15 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
         final PsiManager psiManager = PsiManager.getInstance(project);
         final Editor[] editors = EditorFactory.getInstance().getAllEditors();
-        for (Editor editor : editors) {
-          if (editor instanceof EditorEx) {
-            final VirtualFile file = ((EditorEx)editor).getVirtualFile();
-            if (file != null && file.isValid() && JsonFileType.INSTANCE.equals(file.getFileType())) {
-              final Collection<Pair<VirtualFile, String>> collection = myService.getSchemaFilesByFile(file);
-              if (collection != null && !collection.isEmpty()) {
-                for (Pair<VirtualFile, String> pair : collection) {
-                  if (scope.contains(pair.getFirst())) {
-                    ApplicationManager.getApplication().runReadAction(() -> {
-                      final PsiFile psiFile = psiManager.findFile(file);
-                      if (psiFile != null) {
-                        analyzer.restart(psiFile);
-                      }
-                    });
-                    break;
-                  }
-                }
-              }
+        Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
+          .map(editor -> ((EditorEx)editor).getVirtualFile())
+          .filter(file -> file != null && file.isValid())
+          .forEach(file -> {
+            final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
+            if (schemaFiles.stream().anyMatch(scope::contains)) {
+              ReadAction.run(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart));
             }
-          }
-        }
+          });
       };
     }
 
