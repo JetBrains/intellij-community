@@ -84,7 +84,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JCheckBox myShowChangedRecursively;
   private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
-  private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
 
   private static class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
@@ -384,7 +383,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myLimitHistory.reset();
     myScopeFilterConfig.reset();
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
-    myCommitMessageMarginConfigurable.reset();
   }
 
   @NotNull
@@ -522,7 +520,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
-    panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
     return panel;
   }
 
@@ -623,11 +620,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return component;
   }
 
-  private JComponent createUseCommitMessageRightMargin() {
-    myCommitMessageMarginConfigurable = new VcsCommitMessageMarginConfigurable(myProject, myVcsConfiguration);
-    return myCommitMessageMarginConfigurable.createComponent();
-  }
-
   private JComponent createShowRecursivelyDirtyOption() {
     myShowChangedRecursively = new JCheckBox("Show directories with changed descendants", myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     return myShowChangedRecursively;
@@ -646,7 +638,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myLimitHistory.apply();
     myScopeFilterConfig.apply();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
-    myCommitMessageMarginConfigurable.apply();
     initializeModel();
   }
 
@@ -666,9 +657,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     if (myLimitHistory.isModified()) return true;
     if (myScopeFilterConfig.isModified()) return true;
     if (myVcsConfiguration.SHOW_DIRTY_RECURSIVELY != myShowChangedRecursively.isSelected()) {
-      return true;
-    }
-    if (myCommitMessageMarginConfigurable.isModified()) {
       return true;
     }
     return !getModelMappings().equals(myVcsManager.getDirectoryMappings());

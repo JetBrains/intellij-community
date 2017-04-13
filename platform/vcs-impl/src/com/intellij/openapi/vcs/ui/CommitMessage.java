@@ -42,6 +42,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
+
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   private final EditorTextField myEditorField;
@@ -127,7 +129,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {
-      features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
+      features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, getBodyRightMargin(project)));
       features.add(WrapWhenTypingReachesRightMarginCustomization.getInstance(configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN));
     } else {
       features.add(new RightMarginEditorCustomization(false, -1));

@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.intellij.codeInspection.InspectionProfileEntry.getShortName;
+import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.toList;
 
 public class CommitMessageInspectionProfile extends InspectionProfileImpl {
@@ -42,9 +44,19 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl {
     return ServiceManager.getService(project, CommitMessageInspectionProfile.class);
   }
 
+  public static int getBodyRightMargin(@NotNull Project project) {
+    return getInstance(project).getBodyRightMargin();
+  }
+
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  public int getBodyRightMargin() {
+    InspectionToolWrapper toolWrapper = getInspectionTool(getShortName(BodyLimitInspection.class.getSimpleName()), myProject);
+
+    return ((BodyLimitInspection)notNull(toolWrapper).getTool()).RIGHT_MARGIN;
   }
 
   private static class CommitMessageInspectionToolRegistrar extends InspectionToolRegistrar {
