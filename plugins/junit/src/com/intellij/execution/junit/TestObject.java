@@ -176,6 +176,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
               fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
 
+              fileName.startsWith("junit-platform-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
+
               fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
                                                                hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
             classPath.add(file.getAbsolutePath());
