@@ -24,6 +24,8 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
 
 /**
  * @author egor
@@ -40,6 +42,11 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
     LOG.assertTrue(UnBoxingEvaluator.isTypeUnboxable(className));
     setClassName(className);
     setEnabled(true);
+  }
+
+  @Override
+  public boolean isApplicable(Type type) {
+    return type instanceof ReferenceType && StringUtil.equals(type.name(), getClassName());
   }
 
   public static class BooleanRenderer extends UnboxableTypeRenderer {
