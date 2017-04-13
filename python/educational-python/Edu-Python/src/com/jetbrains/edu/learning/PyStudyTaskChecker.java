@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
   private static final Logger LOG = Logger.getInstance(PyStudyTaskChecker.class);
@@ -37,12 +38,18 @@ public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
       LOG.info("taskDir is null for task " + myTask.getName());
       return new StudyCheckResult(StudyStatus.Unchecked, "Task is broken");
     }
+    CountDownLatch latch = new CountDownLatch(1);
     ApplicationManager.getApplication()
-      .invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.flushWindows(myTask, taskDir)));
+      .invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+        StudyCheckUtils.flushWindows(myTask, taskDir);
+        latch.countDown();
+      }));
     final StudyTestRunner testRunner = new PyStudyTestRunner(myTask, taskDir);
     try {
       final VirtualFile fileToCheck = getTaskVirtualFile(myTask, taskDir);
       if (fileToCheck != null) {
+        //otherwise answer placeholders might have been not flushed yet
+        latch.await();
         Process testProcess = testRunner.createCheckProcess(myProject, fileToCheck.getPath());
         StudyTestsOutputParser.TestsOutput output =
           StudyCheckUtils
@@ -50,7 +57,7 @@ public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
         return new StudyCheckResult(output.isSuccess() ? StudyStatus.Solved : StudyStatus.Failed, output.getMessage());
       }
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException | InterruptedException e) {
       LOG.error(e);
     }
     return new StudyCheckResult(StudyStatus.Unchecked, StudyCheckAction.FAILED_CHECK_LAUNCH);
