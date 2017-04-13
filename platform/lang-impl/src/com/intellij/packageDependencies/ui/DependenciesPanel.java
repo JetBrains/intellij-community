@@ -25,6 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -302,7 +303,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new ShowFilesAction());
     if (ModuleManager.getInstance(myProject).getModules().length > 1) {
       group.add(new ShowModulesAction());
-      group.add(new ShowModuleGroupsAction());
+      group.add(createFlattenModulesAction());
+      if (ModuleManager.getInstance(myProject).hasModuleGroups()) {
+        group.add(new ShowModuleGroupsAction());
+      }
     }
     group.add(new GroupByScopeTypeAction());
     //group.add(new GroupByFilesAction());
@@ -315,6 +319,15 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
+  }
+
+  @NotNull
+  private FlattenModulesToggleAction createFlattenModulesAction() {
+    return new FlattenModulesToggleAction(myProject, () -> mySettings.UI_SHOW_MODULES, () -> !mySettings.UI_SHOW_MODULE_GROUPS, (value) -> {
+      DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = !value;
+      mySettings.UI_SHOW_MODULE_GROUPS = !value;
+      rebuild();
+    });
   }
 
   private void rebuild() {
@@ -601,8 +614,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
+      e.getPresentation().setVisible(ModuleManager.getInstance(myProject).hasModuleGroups());
       e.getPresentation().setEnabled(mySettings.UI_SHOW_MODULES);
     }
   }
