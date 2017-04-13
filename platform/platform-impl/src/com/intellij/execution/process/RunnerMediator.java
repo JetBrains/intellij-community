@@ -93,7 +93,7 @@ public class RunnerMediator {
       }
       LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
     }
-    File runnerw = new File(PathManager.getBinPath(), STANDARD_RUNNERW);
+    File runnerw = new File(PathManager.getOsSpecificBinPath(), STANDARD_RUNNERW);
     if (runnerw.exists()) {
       return runnerw.getPath();
     }
