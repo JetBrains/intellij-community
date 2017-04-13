@@ -138,6 +138,11 @@ public class GeneralCommandLineTest {
     return new GeneralCommandLine(command);
   }
 
+  @NotNull
+  protected GeneralCommandLine postProcessCommandLine(@NotNull GeneralCommandLine commandLine) {
+    return commandLine;
+  }
+
   protected void assumeCanTestWindowsShell() {
     assumeTrue("Windows-only test", SystemInfo.isWindows);
   }
@@ -423,16 +428,15 @@ public class GeneralCommandLineTest {
     checkEnvPassing(command, env, expected, false);
   }
 
-
-  private static String execAndGetOutput(GeneralCommandLine commandLine) throws ExecutionException {
-    ProcessOutput output = ExecUtil.execAndGetOutput(commandLine);
+  @NotNull
+  private String execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    ProcessOutput output = ExecUtil.execAndGetOutput(postProcessCommandLine(commandLine));
     int ec = output.getExitCode();
-    if (ec != 0) {
+    if (ec != 0 || !output.getStderr().isEmpty()) {
       fail("Command:\n" + commandLine.getPreparedCommandLine() +
            "\nStdOut:\n" + output.getStdout() +
            "\nStdErr:\n" + output.getStderr());
     }
-    assertTrue(output.getStderr(), output.getStderr().isEmpty());
     return output.getStdout();
   }
 
@@ -476,7 +480,7 @@ public class GeneralCommandLineTest {
     return pair(commandLine, out);
   }
 
-  private static String execHelper(Pair<GeneralCommandLine, File> pair) throws IOException, ExecutionException {
+  private String execHelper(Pair<GeneralCommandLine, File> pair) throws IOException, ExecutionException {
     try {
       execAndGetOutput(pair.first);
       return FileUtil.loadFile(pair.second, CommandTestHelper.ENC);
@@ -490,16 +494,16 @@ public class GeneralCommandLineTest {
     assertEquals(StringUtil.join(expected, "\n") + "\n", StringUtil.convertLineSeparators(output));
   }
 
-  private static void checkEnvPassing(Pair<GeneralCommandLine, File> command,
-                                      Map<String, String> testEnv,
-                                      boolean passParentEnv) throws ExecutionException, IOException {
+  private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
+                               Map<String, String> testEnv,
+                               boolean passParentEnv) throws ExecutionException, IOException {
     checkEnvPassing(command, testEnv, testEnv, passParentEnv);
   }
 
-  private static void checkEnvPassing(Pair<GeneralCommandLine, File> command,
-                                      Map<String, String> testEnv,
-                                      Map<String, String> expectedOutputEnv,
-                                      boolean passParentEnv) throws ExecutionException, IOException {
+  private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
+                               Map<String, String> testEnv,
+                               Map<String, String> expectedOutputEnv,
+                               boolean passParentEnv) throws ExecutionException, IOException {
     command.first.withEnvironment(testEnv);
     command.first.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     String output = execHelper(command);
