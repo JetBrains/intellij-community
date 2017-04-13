@@ -120,19 +120,6 @@ public class XValueHint extends AbstractValueHint {
   @Override
   protected boolean showHint(final JComponent component) {
     boolean result = super.showHint(component);
-    if (result && getType() == ValueHintType.MOUSE_OVER_HINT) {
-      myDisposable = Disposer.newDisposable();
-      ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          hideHint();
-          final Point point = new Point(myPoint.x, myPoint.y + getEditor().getLineHeight());
-          new XValueHint(getProject(), getEditor(), point, ValueHintType.MOUSE_CLICK_HINT, myExpressionInfo, myEvaluator, myDebugSession,
-                         true).invokeHint();
-        }
-      }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
-    }
     if (result) {
       XValueHint prev = getEditor().getUserData(HINT_KEY);
       if (prev != null) {
@@ -211,13 +198,23 @@ public class XValueHint extends AbstractValueHint {
               }
             }
             else {
-              if (getType() == ValueHintType.MOUSE_OVER_HINT && myFromKeyboard) {
-                text.insert(0, "(" + KeymapUtil.getFirstKeyboardShortcutText("ShowErrorDescription") + ") ",
-                            SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              if (getType() == ValueHintType.MOUSE_OVER_HINT) {
+                if (myFromKeyboard) {
+                  text.insert(0, "(" + KeymapUtil.getFirstKeyboardShortcutText("ShowErrorDescription") + ") ",
+                              SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                }
+
+                myDisposable = Disposer.newDisposable();
+                ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
+                new DumbAwareAction() {
+                  @Override
+                  public void actionPerformed(@NotNull AnActionEvent e) {
+                    showTree(result);
+                  }
+                }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
-              JComponent component = createExpandableHintComponent(text, () -> showTree(result));
-              showHint(component);
+              showHint(createExpandableHintComponent(text, () -> showTree(result)));
             }
             myShown = true;
           }
