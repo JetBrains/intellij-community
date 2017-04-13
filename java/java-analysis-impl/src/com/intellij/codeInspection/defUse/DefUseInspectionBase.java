@@ -155,21 +155,21 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       myReportInitializer = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option2"));
       myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
-      myReportInitializer.getModel().addChangeListener(e -> REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected());
+      myReportInitializer.getModel().addItemListener(e -> REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected());
       gc.insets = JBUI.insetsBottom(15);
       gc.gridy = 0;
       add(myReportInitializer, gc);
 
       myReportPrefix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option"));
       myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
-      myReportPrefix.getModel().addChangeListener(e -> REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected());
+      myReportPrefix.getModel().addItemListener(e -> REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected());
       gc.insets = JBUI.emptyInsets();
       gc.gridy++;
       add(myReportPrefix, gc);
 
       myReportPostfix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option1"));
       myReportPostfix.setSelected(REPORT_POSTFIX_EXPRESSIONS);
-      myReportPostfix.getModel().addChangeListener(e -> REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected());
+      myReportPostfix.getModel().addItemListener(e -> REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected());
       gc.weighty = 1;
       gc.gridy++;
       add(myReportPostfix, gc);
