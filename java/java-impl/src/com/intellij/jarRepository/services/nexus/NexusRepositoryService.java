@@ -98,7 +98,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
       final SearchResults results = new Endpoint.DataIndex(url).getArtifactlistAsSearchResults(
         name, template.getGroupId(), template.getArtifactId(), template.getVersion(), null, template.getClassNames()
       );
-      boolean tooManyResults = results.isTooManyResults();
+      //boolean tooManyResults = results.isTooManyResults();
       final SearchResults.Data data = results.getData();
       final ArrayList<RepositoryArtifactDescription> result = new ArrayList<>();
       if (data != null) {
@@ -108,9 +108,9 @@ public class NexusRepositoryService extends MavenRepositoryService {
           }
         }
       }
-      if (tooManyResults) {
-        result.add(null);
-      }
+      //if (tooManyResults) {
+      //  result.add(null);
+      //}
       return result;
     }
     catch (UnmarshalException e) {

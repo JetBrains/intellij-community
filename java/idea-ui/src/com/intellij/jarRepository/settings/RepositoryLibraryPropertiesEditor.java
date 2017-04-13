@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jarRepository.propertiesEditor;
+package com.intellij.jarRepository.settings;
 
 import com.google.common.base.Strings;
 import com.intellij.jarRepository.JarRepositoryManager;

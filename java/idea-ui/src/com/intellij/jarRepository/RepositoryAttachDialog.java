@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,8 +55,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
@@ -79,8 +80,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private final JComboBox myCombobox;
 
-  private final Map<String, Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> myCoordinates = ContainerUtil.newTroveMap();
-  private final Map<String, RemoteRepositoryDescription> myRepositories = new TreeMap<>();
+  private final Map<String, RepositoryArtifactDescription> myCoordinates = ContainerUtil.newTroveMap();
   private final List<String> myShownItems = ContainerUtil.newArrayList();
   private final String myDefaultDownloadFolder;
 
@@ -203,7 +203,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
       main:
       for (String coordinate : myCoordinates.keySet()) {
         for (String part : parts) {
-          if (!StringUtil.containsIgnoreCase(coordinate, part)) continue main;
+          if (!StringUtil.containsIgnoreCase(coordinate, part)) {
+            continue main;
+          }
         }
         myShownItems.add(coordinate);
       }
@@ -267,41 +269,22 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private boolean performSearch() {
     final String text = getCoordinateText();
-    if (StringUtil.isEmptyOrSpaces(text)) return false;
-    if (myCoordinates.containsKey(text)) return false;
-    if (myProgressIcon.isRunning()) return false;
+    if (myProgressIcon.isRunning() || StringUtil.isEmptyOrSpaces(text) || myCoordinates.containsKey(text)) {
+      return false;
+    }
     myProgressIcon.resume();
-    JarRepositoryManager.searchArtifacts(myProject, text, (artifacts, tooMany) -> {
+    JarRepositoryManager.searchArtifacts(myProject, text, (pairs) -> {
       if (myProgressIcon.isDisposed()) {
-        return false;
+        return;
       }
-      if (tooMany != null) {
-        myProgressIcon.suspend(); // finished
-      }
+      myProgressIcon.suspend(); // finished
       final int prevSize = myCoordinates.size();
-      for (Pair<RepositoryArtifactDescription, RemoteRepositoryDescription> each : artifacts) {
-        myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
-        String url = each.second != null? each.second.getUrl() : null;
-        if (StringUtil.isNotEmpty(url) && !myRepositories.containsKey(url)) {
-          myRepositories.put(url, each.second);
-        }
-      }
-      String title = getTitle();
-      String tooManyMessage = ": too many results found";
-      if (tooMany != null) {
-        boolean alreadyThere = title.endsWith(tooManyMessage);
-        if (tooMany.booleanValue() && !alreadyThere) {
-          setTitle(title + tooManyMessage);
-        }
-        else if (!tooMany.booleanValue() && alreadyThere) {
-          setTitle(title.substring(0, title.length() - tooManyMessage.length()));
-        }
+      for (Pair<RepositoryArtifactDescription, RemoteRepositoryDescription> pair : pairs) {
+        final RepositoryArtifactDescription artifact = pair.first;
+        myCoordinates.put(artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion(), artifact);
       }
       updateComboboxSelection(prevSize != myCoordinates.size());
-      // tooMany != null on last call, so enable OK action to let
-      // local maven repo a chance even if all remote services failed
-      setOKActionEnabled(!myRepositories.isEmpty() || tooMany != null);
-      return true;
+      setOKActionEnabled(true);
     });
     return true;
   }
@@ -350,13 +333,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return RepositoryAttachDialog.class.getName();
-  }
-
-  @NotNull
-  public List<RemoteRepositoryDescription> getRepositories() {
-    final Pair<RepositoryArtifactDescription, RemoteRepositoryDescription> artifactAndRepo = myCoordinates.get(getCoordinateText());
-    final RemoteRepositoryDescription repository = artifactAndRepo == null ? null : artifactAndRepo.second;
-    return repository != null ? Collections.singletonList(repository) : ContainerUtil.findAll(myRepositories.values(), Condition.NOT_NULL);
   }
 
   private boolean isValidCoordinateSelected() {

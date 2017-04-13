@@ -16,7 +16,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
-import com.intellij.jarRepository.propertiesEditor.RepositoryLibraryPropertiesEditor;
+import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
