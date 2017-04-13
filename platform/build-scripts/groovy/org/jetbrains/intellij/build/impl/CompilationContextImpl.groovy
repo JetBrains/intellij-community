@@ -105,12 +105,7 @@ class CompilationContextImpl implements CompilationContext {
 
   private static void loadProject(String projectHome, String jdkHome, String kotlinHome, JpsProject project, JpsGlobal global, 
                                   BuildMessages messages) {
-    def bundledKotlinPath = "$kotlinHome/kotlinc"
-    if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
-      messages.error(
-        "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
-    }
-    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
+    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
 
     JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(global, "1.8", jdkHome)
