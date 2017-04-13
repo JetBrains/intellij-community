@@ -1142,19 +1142,25 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {
-    if (settings == null) {
+    if (settings != null) {
+      removeConfigurations(listOf(settings))
+    }
+  }
+
+  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) {
+    if (toRemove.isEmpty()) {
       return
     }
 
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
-    var isRemoved = false
+    val removed = SmartList<RunnerAndConfigurationSettings>()
     lock.write {
       immutableSortedSettingsList = null
 
       val iterator = idToSettings.values.iterator()
-      for (otherSettings in iterator) {
-        if (otherSettings === settings) {
-          if (selectedConfigurationId === settings.uniqueID) {
+      for (settings in iterator) {
+        if (toRemove.contains(settings)) {
+          if (selectedConfigurationId == settings.uniqueID) {
             selectedConfiguration = null
           }
 
@@ -1163,29 +1169,28 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
             schemeManager.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
           }
           recentlyUsedTemporaries.remove(settings.configuration)
-          isRemoved = true
+          removed.add(settings)
         }
-
-        var changed = false
-        val otherConfiguration = otherSettings.configuration
-        val newList = otherConfiguration.beforeRunTasks.nullize()?.toMutableSmartList() ?: continue
-        val beforeRunTaskIterator = newList.iterator()
-        for (task in beforeRunTaskIterator) {
-          if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && task.settings === settings) {
-            beforeRunTaskIterator.remove()
-            changed = true
-            changedSettings.add(otherSettings)
+        else {
+          var isChanged = false
+          val otherConfiguration = settings.configuration
+          val newList = otherConfiguration.beforeRunTasks.nullize()?.toMutableSmartList() ?: continue
+          val beforeRunTaskIterator = newList.iterator()
+          for (task in beforeRunTaskIterator) {
+            if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && toRemove.contains(task.settings)) {
+              beforeRunTaskIterator.remove()
+              isChanged = true
+              changedSettings.add(settings)
+            }
           }
-        }
-        if (changed) {
-          otherConfiguration.beforeRunTasks = newList
+          if (isChanged) {
+            otherConfiguration.beforeRunTasks = newList
+          }
         }
       }
     }
 
-    if (isRemoved) {
-      myDispatcher.multicaster.runConfigurationRemoved(settings)
-    }
+    removed.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
     changedSettings.forEach { myDispatcher.multicaster.runConfigurationChanged(it, null) }
   }
 }
