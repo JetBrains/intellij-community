@@ -15,13 +15,14 @@
  */
 package com.intellij.vcs.commit;
 
+import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class SubjectLimitInspection extends BaseCommitMessageInspection {
+
+  public int RIGHT_MARGIN = 72;
 
   @Nls
   @NotNull
@@ -30,9 +31,9 @@ public class SubjectLimitInspection extends BaseCommitMessageInspection {
     return "Limit subject line";
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    return new SubjectLimitInspectionOptions().getMainPanel();
+  public ConfigurableUi<Project> createOptionsConfigurable() {
+    return new SubjectLimitInspectionOptions(this);
   }
 }

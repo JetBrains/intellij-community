@@ -17,6 +17,8 @@ package com.intellij.vcs.commit;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,5 +52,10 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     return !isCommitMessage(element);
+  }
+
+  @Nullable
+  public ConfigurableUi<Project> createOptionsConfigurable() {
+    return null;
   }
 }

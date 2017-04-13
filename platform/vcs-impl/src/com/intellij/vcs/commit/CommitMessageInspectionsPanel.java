@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -44,9 +45,9 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.areToolDescriptorsChanged;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
   @NotNull private final Project myProject;
@@ -124,7 +125,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   private void setDetails(@Nullable MyInspectionTreeNode node) {
     myCurrentDetails = node != null ? myToolDetails.computeIfAbsent(node.getKey(), key -> createDetails(node)) : null;
 
-    myDetailsPanel.setContent(myCurrentDetails != null ? myCurrentDetails.getMainPanel() : null);
+    myDetailsPanel.setContent(myCurrentDetails != null ? myCurrentDetails.createComponent() : null);
     myDetailsPanel.repaint();
   }
 
@@ -154,19 +155,30 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
 
   @Override
   public void reset() {
+    myToolDetails.clear();
+    myModifiableModel.getAllTools().forEach(ScopeToolState::resetConfigPanel);
     resetProfileModel();
     initToolDescriptors();
+
+    TreeState state = TreeState.createOn(myInspectionsTable.getTree(), myRoot);
     buildInspectionsModel();
     ((DefaultTreeModel)myInspectionsTable.getTree().getModel()).reload();
+    state.applyTo(myInspectionsTable.getTree(), myRoot);
   }
 
   @Override
   public boolean isModified() {
-    return false;
+    return exists(myInitialToolDescriptors, toolDescriptors -> areToolDescriptorsChanged(myProject, myModifiableModel, toolDescriptors)) ||
+           exists(myToolDetails.values(), CommitMessageInspectionDetails::isModified);
   }
 
   @Override
   public void apply() throws ConfigurationException {
+    for (CommitMessageInspectionDetails details : myToolDetails.values()) {
+      details.apply();
+    }
+    myModifiableModel.commit();
+    reset();
   }
 
   private class MyInspectionsTableSettings extends InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings {

@@ -18,10 +18,14 @@ package com.intellij.vcs.commit;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
@@ -37,7 +41,7 @@ import java.util.EventListener;
 import static com.intellij.ui.GuiUtils.enableChildren;
 import static java.util.Collections.singletonList;
 
-public class CommitMessageInspectionDetails {
+public class CommitMessageInspectionDetails implements UnnamedConfigurable {
   @NotNull private final Project myProject;
   @NotNull private final InspectionProfileImpl myProfile;
   @NotNull private final ToolDescriptors myToolDescriptors;
@@ -45,6 +49,7 @@ public class CommitMessageInspectionDetails {
   private JPanel mySeverityChooserPanel;
   private LevelChooserAction mySeverityChooser;
   private JComponent myMainPanel;
+  private ConfigurableUi<Project> myOptionsConfigurable;
 
   @NotNull private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
@@ -57,11 +62,7 @@ public class CommitMessageInspectionDetails {
     myToolState = myToolDescriptors.getDefaultDescriptor().getState();
 
     init();
-  }
-
-  @NotNull
-  public JComponent getMainPanel() {
-    return myMainPanel;
+    reset();
   }
 
   @NotNull
@@ -78,11 +79,41 @@ public class CommitMessageInspectionDetails {
     myEventDispatcher.addListener(listener);
   }
 
+  @NotNull
+  @Override
+  public JComponent createComponent() {
+    return myMainPanel;
+  }
+
+  @Override
+  public boolean isModified() {
+    return myOptionsConfigurable != null && myOptionsConfigurable.isModified(myProject);
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    if (myOptionsConfigurable != null) {
+      myOptionsConfigurable.apply(myProject);
+    }
+  }
+
+  @Override
+  public void reset() {
+    if (myOptionsConfigurable != null) {
+      myOptionsConfigurable.reset(myProject);
+    }
+  }
+  
   private void init() {
     mySeverityChooser = new MySeverityChooser(myProfile.getProfileManager().getOwnSeverityRegistrar());
     mySeverityChooserPanel.add(mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation()), BorderLayout.CENTER);
 
-    JComponent options = myToolState.getAdditionalConfigPanel();
+    InspectionProfileEntry tool = myToolState.getTool().getTool();
+    if (tool instanceof BaseCommitMessageInspection) {
+      myOptionsConfigurable = ((BaseCommitMessageInspection)tool).createOptionsConfigurable();
+    }
+
+    JComponent options = myOptionsConfigurable != null ? myOptionsConfigurable.getComponent() : myToolState.getAdditionalConfigPanel();
     if (options != null) {
       myMainPanel.add(options, createOptionsPanelConstraints());
     }
