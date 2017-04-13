@@ -36,6 +36,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -43,7 +44,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
@@ -102,7 +102,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
 
     DocumentContent resultContent = request.getResultContent();
-    DocumentContent patchContent = DiffContentFactory.getInstance().create(new DocumentImpl("", true), resultContent);
+    DocumentContent patchContent = DiffContentFactory.getInstance().create(EditorFactory.getInstance().createDocument(""), resultContent);
 
     myResultHolder = TextEditorHolder.create(myProject, resultContent);
     myPatchHolder = TextEditorHolder.create(myProject, patchContent);
@@ -302,7 +302,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
 
     Document patchDocument = myPatchEditor.getDocument();
-    patchDocument.setText(builder.getPatchContent());
+    WriteAction.run(() -> patchDocument.setText(builder.getPatchContent()));
 
     LineNumberConvertor convertor1 = builder.getLineConvertor1();
     LineNumberConvertor convertor2 = builder.getLineConvertor2();
