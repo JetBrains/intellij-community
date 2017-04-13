@@ -55,6 +55,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +106,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(mySettings));
+    element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
+      @Override
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
+        // only these fields due to backward compatibility
+        switch (accessor.getName()) {
+          case "passParentEnvs":
+            return !mySettings.isPassParentEnvs();
+          case "env":
+            return !mySettings.getEnv().isEmpty();
+          default:
+            return true;
+        }
+      }
+    }));
   }
 
   @NotNull
