@@ -16,18 +16,17 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.AnalysisScope
-import com.intellij.idea.Bombed
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtil.loadFileText
 import com.intellij.testFramework.InspectionTestCase
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.NonNls
 
 /**
  * @author Pavel.Dolgov
@@ -38,8 +37,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
   override fun setUp() {
     super.setUp()
 
-    addFile("module-info.java", "module MAIN { requires M2; }", MAIN)
-    addFile("module-info.java", "module M2 { exports my.api; provides my.api.MyService with my.impl.MyServiceImpl; }", M2)
+    moduleInfo("module MAIN { requires API; }", MAIN)
 
     addFile("my/api/MyService.java", "package my.api; public interface MyService { void foo(); }", M2)
   }
@@ -50,17 +48,27 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
 
   fun testProvider() = doTest()
 
-  @Bombed(user ="Pavel Dolgov", year = 2017, month = 8, day = 1, description = "Disabled, until the test infrastructure supports it")
   fun testUnusedImplementation() = doTest(false)
 
-  @Bombed(user ="Pavel Dolgov", year = 2017, month = 8, day = 1, description = "Disabled, until the test infrastructure supports it")
   fun testUnusedConstructor() = doTest(false)
 
-  @Bombed(user ="Pavel Dolgov", year = 2017, month = 8, day = 1, description = "Disabled, until the test infrastructure supports it")
   fun testUnusedProvider() = doTest(false)
 
-  private fun doTest(withUsage: Boolean = true) {
-    @Language("JAVA") @NonNls
+  fun testExternalImplementation() = doTest(sameModule = false)
+
+  fun testExternalConstructor() = doTest(sameModule = false)
+
+  fun testExternalProvider() = doTest(sameModule = false)
+
+  fun testUnusedExternalImplementation() = doTest(false, sameModule = false)
+
+  fun testUnusedExternalConstructor() = doTest(false, sameModule = false)
+
+  fun testUnusedExternalProvider() = doTest(false, sameModule = false)
+
+
+  private fun doTest(withUsage: Boolean = true, sameModule: Boolean = true) {
+    @Language("JAVA")
     val usageText = """
     import my.api.MyService;
     public class MyApp {
@@ -72,16 +80,35 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
     }"""
     if (withUsage) addFile("my/app/MyApp.java", usageText, MAIN)
 
+    if (sameModule) {
+      moduleInfo("module API { exports my.api; provides my.api.MyService with my.impl.MyServiceImpl; }", M2)
+    }
+    else {
+      val moduleManager = ModuleManager.getInstance(project)
+      val m2 = moduleManager.findModuleByName(M2.moduleName)!!
+      val m4 = moduleManager.findModuleByName(M4.moduleName)!!
+      ModuleRootModificationUtil.addDependency(m4, m2)
+      moduleInfo("module API { exports my.api; }", M2)
+      moduleInfo("module EXT { requires API; provides my.api.MyService with my.ext.MyServiceExt; }", M4)
+    }
+
     val testPath = testDataPath + "/" + getTestName(true)
-    val sourceFile = FileUtil.findFirstThatExist(testPath + "/MyServiceImpl.java")
+    val sourceFile = FileUtil.findFirstThatExist("$testPath/MyService${if (sameModule) "Impl" else "Ext"}.java")
     assertNotNull("Test data: $testPath", sourceFile)
-    val implText = String(loadFileText(sourceFile!!))
-    addFile("my/impl/MyServiceImpl.java", implText, M2)
+    val implText = String(FileUtil.loadFileText(sourceFile!!))
+    if (sameModule)
+      addFile("my/impl/MyServiceImpl.java", implText, M2)
+    else
+      addFile("my/ext/MyServiceExt.java", implText, M4)
 
     val toolWrapper = InspectionTestCase.getUnusedDeclarationWrapper()
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testPath)
+  }
+
+  private fun moduleInfo(@Language("JAVA") moduleInfoText: String, descriptor: ModuleDescriptor) {
+    addFile("module-info.java", moduleInfoText, descriptor)
   }
 }

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
   <problem>
-    <file>MyServiceImpl.java</file>
+    <file>MyServiceExt.java</file>
     <line>5</line>
-    <package>my.impl</package>
-    <entry_point TYPE="method" FQNAME="my.impl.MyServiceImpl my.api.MyService provider()" />
+    <package>my.ext</package>
+    <entry_point TYPE="method" FQNAME="my.ext.MyServiceExt my.api.MyService provider()" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
     <description>Method has one usage but it is not reachable from entry points.</description>
   </problem>
