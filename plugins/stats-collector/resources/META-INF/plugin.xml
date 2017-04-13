@@ -1,8 +1,8 @@
 <idea-plugin>
-  <id>com.intellij.stats.completion</id>
-  <name>Completion Stats Collector</name>
-  <version>0.0.49</version>
-  <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+  <id>com.intellij.stats</id>
+  <name>Stats Collector</name>
+  <version>1</version>
+  <vendor>JetBrains</vendor>
 
   <description><![CDATA[
       This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
