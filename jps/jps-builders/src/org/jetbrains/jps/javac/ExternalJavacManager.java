@@ -228,6 +228,8 @@ public class ExternalJavacManager {
     copyProperty(cmdLine, "user.country");
     copyProperty(cmdLine, "user.region");
 
+    copyProperty(cmdLine, "io.netty.noUnsafe");
+
     appendParam(cmdLine, "-D" + ExternalJavacProcess.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
 
     // this will disable standard extensions to ensure javac is loaded from the right tools.jar
