@@ -67,14 +67,6 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
 
-  public static String getTypeName(FileType fileType) {
-    return fileType.getName().toLowerCase();
-  }
-
-  public final boolean canProcess(@NotNull FileType fileType) {
-    return fileType instanceof LanguageFileType && isMyLanguage(((LanguageFileType)fileType).getLanguage());
-  }
-
   public abstract boolean isMyLanguage(@NotNull Language language);
 
   @NotNull
@@ -167,7 +159,7 @@ public abstract class StructuralSearchProfile {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    String fileType = getTypeName(options.getMatchOptions().getFileType());
+    String fileType = options.getMatchOptions().getFileType().getName().toLowerCase();
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
