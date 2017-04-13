@@ -99,8 +99,9 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings);
 
-  public abstract void addRunManagerListener(RunManagerListener listener);
-  public abstract void removeRunManagerListener(RunManagerListener listener);
+  public abstract void addRunManagerListener(@NotNull RunManagerListener listener);
+
+  public abstract void removeRunManagerListener(@NotNull RunManagerListener listener);
 
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);

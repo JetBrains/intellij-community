@@ -127,7 +127,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
 
   private val customOrder = ObjectIntHashMap<String>()
-  private val recentlyUsedTemporaries = ArrayList<RunConfiguration>()
+  private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
   private val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
 
@@ -341,9 +341,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   private fun refreshUsagesList(settings: RunnerAndConfigurationSettings) {
     if (settings.isTemporary) {
       lock.write {
-        val configuration = settings.configuration
-        recentlyUsedTemporaries.remove(configuration)
-        recentlyUsedTemporaries.add(0, configuration)
+        recentlyUsedTemporaries.remove(settings)
+        recentlyUsedTemporaries.add(0, settings)
         trimUsagesListToLimit()
       }
     }
@@ -365,7 +364,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         val it = idToSettings.values.iterator()
         while (it.hasNext()) {
           val settings = it.next()
-          if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings.configuration)) {
+          if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings)) {
             if (removed == null) {
               immutableSortedSettingsList = null
               removed = SmartList<RunnerAndConfigurationSettings>()
@@ -377,7 +376,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         }
       }
     }
-    removed?.let { fireRunConfigurationsRemoved(it) }
+    removed?.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
   }
 
   // comparator is null if want just to save current order (e.g. if want to keep order even after reload)
@@ -544,7 +543,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           }
 
           if (order == null) {
-            order = ArrayList()
+            order = ArrayList(idToSettings.size)
           }
           order.add(settings.uniqueID)
         }
@@ -555,11 +554,10 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
 
       val recentList = SmartList<String>()
-      for (configuration in recentlyUsedTemporaries) {
-        if (configuration.type is UnknownConfigurationType) {
+      for (settings in recentlyUsedTemporaries) {
+        if (settings.type is UnknownConfigurationType) {
           continue
         }
-        val settings = getSettings(configuration) ?: continue
         recentList.add(settings.uniqueID)
       }
       if (!recentList.isEmpty()) {
@@ -665,7 +663,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         @Suppress("DEPRECATION")
         com.intellij.openapi.util.JDOMExternalizableStringList.readList(list, recentNode)
         for (id in list) {
-          idToSettings.get(id)?.configuration?.let {
+          idToSettings.get(id)?.let {
             recentlyUsedTemporaries.add(it)
           }
         }
@@ -714,7 +712,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   }
 
   private fun clear(allConfigurations: Boolean) {
-    val configurations = lock.write {
+    val removedConfigurations = lock.write {
       immutableSortedSettingsList = null
 
       val configurations = if (allConfigurations) {
@@ -751,7 +749,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
 
     iconCache.clear()
-    fireRunConfigurationsRemoved(configurations)
+    removedConfigurations.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
   }
 
   fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings {
@@ -860,18 +858,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   private fun doMakeStable(settings: RunnerAndConfigurationSettings) {
     lock.write {
-      recentlyUsedTemporaries.remove(settings.configuration)
+      recentlyUsedTemporaries.remove(settings)
       immutableSortedSettingsList = null
       if (!customOrder.isEmpty) {
         isCustomOrderApplied = false
       }
-    }
-  }
-
-  @Suppress("OverridingDeprecatedMember")
-  override fun makeStable(configuration: RunConfiguration) {
-    getSettings(configuration)?.let {
-      makeStable(it)
     }
   }
 
@@ -1089,21 +1080,19 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   fun removeNotExistingSharedConfigurations(existing: Set<String>) {
     var removed: MutableList<RunnerAndConfigurationSettings>? = null
     lock.write {
-      val it = idToSettings.entries.iterator()
-      while (it.hasNext()) {
-        val entry = it.next()
-        val settings = entry.value
+      val iterator = idToSettings.values.iterator()
+      for (settings in iterator) {
         if (!settings.isTemplate && settings.isShared && !existing.contains(settings.uniqueID)) {
           if (removed == null) {
             immutableSortedSettingsList = null
             removed = SmartList<RunnerAndConfigurationSettings>()
           }
           removed!!.add(settings)
-          it.remove()
+          iterator.remove()
         }
       }
     }
-    fireRunConfigurationsRemoved(removed)
+    removed?.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
   }
 
   fun fireBeginUpdate() {
@@ -1116,13 +1105,6 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   fun fireRunConfigurationChanged(settings: RunnerAndConfigurationSettings) {
     myDispatcher.multicaster.runConfigurationChanged(settings, null)
-  }
-
-  private fun fireRunConfigurationsRemoved(removed: List<RunnerAndConfigurationSettings>?) {
-    if (removed != null && !removed.isEmpty()) {
-      recentlyUsedTemporaries.removeAll(removed.map { it.configuration })
-      removed.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
-    }
   }
 
   private fun fireRunConfigurationSelected() {
@@ -1168,7 +1150,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           if (!settings.isShared) {
             schemeManager.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
           }
-          recentlyUsedTemporaries.remove(settings.configuration)
+          recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
         }
         else {
