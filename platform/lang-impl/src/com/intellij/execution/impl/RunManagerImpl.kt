@@ -1038,7 +1038,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     if (value && settings.isTemporary) {
       doMakeStable(settings)
     }
-    (settings as RunnerAndConfigurationSettingsImpl).level = RunConfigurationLevel.PROJECT
+    (settings as RunnerAndConfigurationSettingsImpl).isShared = value
     fireRunConfigurationChanged(settings)
   }
 
