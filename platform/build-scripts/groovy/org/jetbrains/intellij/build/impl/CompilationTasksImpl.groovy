@@ -31,6 +31,7 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
+    setupCompilationDependencies()
     if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
       return
@@ -40,7 +41,6 @@ class CompilationTasksImpl extends CompilationTasks {
       return
     }
 
-    setupCompilationDependencies()
     ensureKotlinCompilerAddedToClassPath()
 
     context.messages.progress("Compiling project")
