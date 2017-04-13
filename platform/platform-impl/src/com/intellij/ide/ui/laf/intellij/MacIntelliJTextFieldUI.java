@@ -85,7 +85,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   private static Icon getSearchIcon(Component c) {
-    return MacIntelliJIconCache.getIcon(isSearchFieldWithHistoryPopup(c) ? "searchFieldWithHistory" : "searchFieldLabel");
+    return MacIntelliJIconCache.getIcon(isSearchFieldWithHistoryPopup(c) ? "searchFieldWithHistory" : "search");
   }
 
   protected Point getSearchIconCoord() {
