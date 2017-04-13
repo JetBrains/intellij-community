@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,9 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   protected abstract int getEndLine(@NotNull T change);
 
-  protected abstract void scrollToChange(@NotNull T change);
+  protected void scrollToChange(@NotNull T change) {
+    DiffUtil.scrollEditor(getEditor(), getStartLine(change), true);
+  }
 
   @Override
   public boolean canGoNext() {
