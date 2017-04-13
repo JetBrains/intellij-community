@@ -34,26 +34,26 @@ import java.util.regex.Pattern;
 /**
  * <p>Parses the 'git log' output basing on the given number of options.
  * Doesn't execute of prepare the command itself, performs only parsing.</p>
- *
+ * <p>
  * <p>
  * Usage:
  * 1. Pass options you want to have in the output to the constructor using the {@link GitLogOption} enum constants.
  * 2. Get the custom format pattern for 'git log' by calling {@link #getPretty()}
  * 3. Call the command and retrieve the output.
  * 4. Parse the output via {@link #parse(CharSequence)} or {@link #parseOneRecord(CharSequence)} (if you want the output to be parsed line by line).</p>
- *
+ * <p>
  * <p>The class is package visible, since it's used only in GitHistoryUtils - the class which retrieve various pieced of history information
  * in different formats from 'git log'</p>
- *
+ * <p>
  * <p>Note that you may pass one set of options to the GitLogParser constructor and then execute git log with other set of options.
  * In that case {@link #parse(CharSequence)} will parse only those options which you've specified in the constructor.
  * Others will be ignored since the parser knows nothing about them: it just gets the 'git log' output to parse.
  * Moreover you really <b>must</b> use {@link #getPretty()} to pass "--pretty=format" pattern to 'git log' - otherwise the parser won't be able
  * to parse output of 'git log' (because special separator characters are used for that).</p>
- *
+ * <p>
  * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #parseStatusBeforeName(boolean)} with
  * true or false respectively, because it also affects the output.</p>
- *  
+ *
  * @see git4idea.history.GitLogRecord
  */
 public class GitLogParser {
@@ -75,13 +75,13 @@ public class GitLogParser {
 
   /**
    * Record format:
-   *
+   * <p>
    * One git log record.
    * RECORD_START - optional: it is split out when calling parse() but it is not when calling parseOneRecord() directly.
    * commit information separated by ITEMS_SEPARATOR.
    * RECORD_END
    * Optionally: changed paths or paths with statuses (if --name-only or --name-status options are given).
-   *
+   * <p>
    * Example:
    * 2c815939f45fbcfda9583f84b14fe9d393ada790<ITEM_SEPARATOR>sample commit<RECORD_END>
    * D       a.txt
@@ -92,18 +92,25 @@ public class GitLogParser {
   private static final String PATHS =
     SINGLE_PATH +                    // First path - required.
     "(?:\t" + SINGLE_PATH + ")?" +   // Second path - optional. Paths are separated by tab.
-    "(?:" + EOL + ")?";                             // Path(s) information ends with a line terminator (possibly except the last path in the output).
+    "(?:" + EOL + ")?";
+  // Path(s) information ends with a line terminator (possibly except the last path in the output).
 
   private static Pattern NAME_ONLY = Pattern.compile(PATHS);
   private static Pattern NAME_STATUS = Pattern.compile("([\\S]+)\t" + PATHS);
 
   // --name-only, --name-status or no flag
   enum NameStatus {
-    /** No flag. */
+    /**
+     * No flag.
+     */
     NONE,
-    /** --name-only */
+    /**
+     * --name-only
+     */
     NAME,
-    /** --name-status */
+    /**
+     * --name-status
+     */
     STATUS
   }
 
@@ -117,8 +124,14 @@ public class GitLogParser {
     RAW_BODY("B");
 
     private String myPlaceholder;
-    GitLogOption(String placeholder) { myPlaceholder = placeholder; }
-    private String getPlaceholder() { return myPlaceholder; }
+
+    GitLogOption(String placeholder) {
+      myPlaceholder = placeholder;
+    }
+
+    private String getPlaceholder() {
+      return myPlaceholder;
+    }
   }
 
   /**
@@ -141,8 +154,9 @@ public class GitLogParser {
   }
 
   private static String makeFormatFromOptions(GitLogOption[] options) {
-    Function<GitLogOption,String> function = new Function<GitLogOption, String>() {
-      @Override public String fun(GitLogOption option) {
+    Function<GitLogOption, String> function = new Function<GitLogOption, String>() {
+      @Override
+      public String fun(GitLogOption option) {
         return "%" + option.getPlaceholder();
       }
     };
@@ -155,9 +169,10 @@ public class GitLogParser {
 
   /**
    * Parses the output returned from 'git log' which was executed with '--pretty=format:' pattern retrieved from {@link #getPretty()}.
+   *
    * @param output 'git log' output to be parsed.
    * @return The list of {@link GitLogRecord GitLogRecords} with information for each revision.
-   *         The list is sorted as usual for git log - the first is the newest, the last is the oldest.
+   * The list is sorted as usual for git log - the first is the newest, the last is the oldest.
    */
   @NotNull
   List<GitLogRecord> parse(@NotNull CharSequence output) {
@@ -168,12 +183,14 @@ public class GitLogParser {
     // ^b71477e9738168aa67a8d41c414f284255f81e8a#moved out$
     //
     // R100    dir/anew.txt    anew.txt
-    final List<CharSequence> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
+    final List<CharSequence> records = StringUtil.split(output,
+                                                        RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
     String notMatchedPart = null;
     final List<GitLogRecord> res = new ArrayList<>(records.size());
     for (CharSequence record : records) {
       String recordString = record.toString();
-      if (!recordString.isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
+      if (!recordString
+        .isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
         if (notMatchedPart != null) {
           recordString = notMatchedPart + recordString;
         }
@@ -192,6 +209,7 @@ public class GitLogParser {
   /**
    * Parses a single record returned by 'git log'. The record contains information from pattern and file status and path (if respective
    * flags --name-only or name-status were provided).
+   *
    * @param line record to be parsed.
    * @return GitLogRecord with information about the revision or {@code null} if the given line is empty.
    * @throws GitFormatException if the line is given in unexpected format.
@@ -276,7 +294,12 @@ public class GitLogParser {
     }
   }
 
-  private static void throwGFE(String message, @NotNull CharSequence line) {
+  private static void throwGFE(@NotNull String message, @NotNull CharSequence line) {
+    throw new GitFormatException(message + " [" + getTruncatedEscapedOutput(line) + "]");
+  }
+
+  @NotNull
+  public static String getTruncatedEscapedOutput(@NotNull CharSequence line) {
     String lineString;
 
     String formatString = "%s...(%d more characters)...%s";
@@ -288,6 +311,7 @@ public class GitLogParser {
     else {
       lineString = line.toString();
     }
-    throw new GitFormatException(message + " [" + StringUtil.escapeStringCharacters(lineString) + "]");
+
+    return StringUtil.escapeStringCharacters(lineString);
   }
 }

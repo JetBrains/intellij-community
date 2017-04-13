@@ -863,7 +863,7 @@ public class GitHistoryUtils {
       catch (Throwable t) {
         if (parseError.isNull()) {
           parseError.set(t);
-          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(output.toString()) + "\"\n" +
+          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(output) + "\"\n" +
                     "Command " + handler.printableCommandLine(), t);
         }
       }
