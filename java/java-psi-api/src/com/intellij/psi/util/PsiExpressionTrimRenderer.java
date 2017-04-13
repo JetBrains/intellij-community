@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,11 +260,15 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   public static String render(PsiExpression expression) {
+    return render(expression, 100);
+  }
+
+  public static String render(PsiExpression expression, int maxLength) {
     StringBuilder buf = new StringBuilder();
     expression.accept(new PsiExpressionTrimRenderer(buf));
     final String text = buf.toString();
     int firstNewLinePos = text.indexOf('\n');
-    String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+    String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(maxLength, text.length()));
     if (trimmedText.length() != text.length()) trimmedText += " ...";
     return trimmedText;
   }

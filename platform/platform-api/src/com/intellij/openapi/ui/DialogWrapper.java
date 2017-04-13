@@ -601,6 +601,15 @@ public abstract class DialogWrapper {
         return super.getBackground();
       }
     };
+
+    if (doNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
+      myCheckBoxDoNotShowDialog.setVisible(doNotAsk.canBeHidden());
+      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+    }
+    JComponent doNotAskCheckbox = createDoNotAskCheckbox();
+
     final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
     //noinspection UseDPIAwareInsets
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
@@ -624,7 +633,7 @@ public abstract class DialogWrapper {
         }
         lrButtonsPanel.add(buttonsPanel, bag.next());
       }
-      if (SwingConstants.CENTER == myButtonAlignment) {
+      if (SwingConstants.CENTER == myButtonAlignment && doNotAskCheckbox == null) {
         lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
       }
     }
@@ -635,15 +644,6 @@ public abstract class DialogWrapper {
         helpButton = createHelpButton(insets);
       }
     }
-
-    if (doNotAsk != null) {
-      myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
-      myCheckBoxDoNotShowDialog.setVisible(doNotAsk.canBeHidden());
-      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
-      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-    }
-    JComponent doNotAskCheckbox = createDoNotAskCheckbox();
-
 
     if (helpButton != null || doNotAskCheckbox != null) {
       JPanel leftPanel = new JPanel(new BorderLayout());

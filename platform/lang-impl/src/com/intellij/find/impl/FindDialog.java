@@ -496,6 +496,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
           Ref<VirtualFile> lastUsageFileRef = new Ref<>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
+            if(isCancelled()) {
+              return false;
+            }
             final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
             usage.getPresentation().getIcon(); // cache icon
 
@@ -507,6 +510,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             }
 
             ApplicationManager.getApplication().invokeLater(() -> {
+              if (isCancelled()) return;
               model.addRow(new Object[]{usage});
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
@@ -515,7 +519,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
             return new Continuation(() -> {
-              if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
+              if (!isCancelled()) {
                 int occurrences = resultsCount.get();
                 int filesWithOccurrences = resultsFilesCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -532,6 +536,10 @@ public class FindDialog extends DialogWrapper implements FindUI {
             }, state);
           }
           return null;
+        }
+
+        boolean isCancelled() {
+          return progressIndicatorWhenSearchStarted != myResultsPreviewSearchProgress || myResultsPreviewSearchProgress.isCanceled();
         }
 
         @Override

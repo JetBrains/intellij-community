@@ -50,6 +50,9 @@ public class StreamApiUtil {
     }
     PsiType streamType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false);
     if (variableType) {
+      if (streamType instanceof PsiIntersectionType) {
+        return null;
+      }
       streamType = GenericsUtil.getVariableTypeByExpressionType(streamType);
     }
     return streamType;

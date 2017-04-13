@@ -124,8 +124,6 @@ def main():
             runs += 1
             flags = ['--python-version', '%d.%d' % (major, minor)]
             flags.append('--strict-optional')
-            if (major, minor) >= (3, 6):
-                flags.append('--fast-parser')
             # flags.append('--warn-unused-ignores')  # Fast parser and regular parser disagree.
             sys.argv = ['mypy'] + flags + files
             if args.verbose:

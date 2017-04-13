@@ -39,6 +39,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -216,6 +217,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         return TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       }
       catch (NoSuchAlgorithmException e) {
+        LOG.error("Cannot create trust manager factory", e);
         return null;
       }
     }
@@ -244,7 +246,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         }
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Cannot create key store", e);
         return null;
       }
       return keyStore;
@@ -271,7 +273,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         return true;
       }
       catch (Exception e) {
-        LOG.error("Can't add certificate", e);
+        LOG.error("Cannot add certificate", e);
         return false;
       }
       finally {
@@ -330,7 +332,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
         return true;
       }
       catch (Exception e) {
-        LOG.error("Can't remove certificate for alias: " + alias, e);
+        LOG.error("Cannot remove certificate for alias: " + alias, e);
         return false;
       }
       finally {
@@ -462,11 +464,16 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       try {
         if (myFactory != null && myKeyStore != null) {
           myFactory.init(myKeyStore);
-          return findX509TrustManager(myFactory.getTrustManagers());
+          final TrustManager[] trustManagers = myFactory.getTrustManagers();
+          final X509TrustManager result = findX509TrustManager(trustManagers);
+          if (result == null) {
+            LOG.error("Cannot find X509 trust manager among " + Arrays.toString(trustManagers));
+          }
+          return result;
         }
       }
       catch (KeyStoreException e) {
-        LOG.error(e);
+        LOG.error("Cannot initialize trust store", e);
       }
       return null;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,23 +24,19 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.ListItemsDialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
@@ -122,30 +118,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
-    uiField.getTextField().setEditable(false);
-    uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
-    uiField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final TagListDialog tagListDialog = new TagListDialog(title);
-        tagListDialog.setData(createCollectionOn(uiField.getText()));
-        if (tagListDialog.showAndGet()) {
-          uiField.setText(createStringOn(tagListDialog.getData()));
-        }
-      }
-
-      private String createStringOn(final ArrayList<String> data) {
-        return StringUtil.join(ArrayUtil.toStringArray(data), ",");
-      }
-
-      private ArrayList<String> createCollectionOn(final String data) {
-        if (data == null || data.trim().isEmpty()) {
-          return new ArrayList<>();
-        }
-        return new ArrayList<>(Arrays.asList(data.split(",")));
-      }
-
-    });
+    ListItemsDialogWrapper.installListItemsDialogForTextField(uiField, () -> new TagListDialog(title));
   }
 
   @Override
@@ -177,11 +150,6 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
     settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
     myRightMarginForm.apply(settings);
-  }
-
-  @NotNull
-  protected String getQuotes() {
-    return ApplicationBundle.message("single.quotes").equals(myQuotesCombo.getSelectedItem()) ? "'" : "\"";
   }
 
   private static int getIntValue(JTextField keepBlankLines) {

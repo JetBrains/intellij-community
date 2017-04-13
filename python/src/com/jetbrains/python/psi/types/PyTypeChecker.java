@@ -80,6 +80,7 @@ public class PyTypeChecker {
       }
     }
     if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
+        && !(expected instanceof PyGenericType && typeVarAcceptsBothClassAndInstanceTypes((PyGenericType)expected)) 
         && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
       return false;
     }
@@ -178,7 +179,7 @@ public class PyTypeChecker {
         else if (superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
           final PyType expectedElementType = superTupleType.getIteratedItemType();
           for (int i = 0; i < subTupleType.getElementCount(); i++) {
-            if (!match(expectedElementType, subTupleType.getElementType(i), context)) {
+            if (!match(expectedElementType, subTupleType.getElementType(i), context, substitutions, recursive)) {
               return false;
             }
           }
@@ -188,7 +189,7 @@ public class PyTypeChecker {
           return false;
         }
         else {
-          return match(superTupleType.getIteratedItemType(), subTupleType.getIteratedItemType(), context);
+          return match(superTupleType.getIteratedItemType(), subTupleType.getIteratedItemType(), context, substitutions, recursive);
         }
       }
       else if (expected instanceof PyCollectionType && actual instanceof PyTupleType) {
@@ -286,6 +287,10 @@ public class PyTypeChecker {
       }
     }
     return matchNumericTypes(expected, actual);
+  }
+
+  private static boolean typeVarAcceptsBothClassAndInstanceTypes(@NotNull PyGenericType typeVar) {
+    return !typeVar.isDefinition() && typeVar.getBound() == null;
   }
 
   private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {

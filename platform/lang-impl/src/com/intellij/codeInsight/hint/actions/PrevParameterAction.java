@@ -17,7 +17,11 @@
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.hint.PrevNextParameterHandler;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -27,4 +31,14 @@ public class PrevParameterAction extends EditorAction {
     super(new PrevNextParameterHandler(false));
     setInjectedContext(true);
   }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+    super.beforeActionPerformedUpdate(e);
+  }
+
 }

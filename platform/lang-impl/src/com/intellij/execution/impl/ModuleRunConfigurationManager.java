@@ -42,12 +42,13 @@ import java.util.Set;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
+  private static final Object LOCK = new Object();
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
+  @NotNull
+  private final Module myModule;
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
     settings -> settings != null && usesMyModule(settings.getConfiguration());
-  @NotNull
-  private final Module myModule;
   @NotNull
   private final RunManagerImpl myManager;
   @Nullable
@@ -62,8 +63,10 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
-          for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-            myManager.removeConfiguration(settings);
+          synchronized (LOCK) {
+            for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
+              myManager.removeConfiguration(settings);
+            }
           }
         }
       }
@@ -117,6 +120,12 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   }
 
   public void readExternal(@NotNull final Element element) {
+    synchronized (LOCK) {
+      doReadExternal(element);
+    }
+  }
+
+  private void doReadExternal(@NotNull Element element) {
     LOG.debug("readExternal(" + myModule + ")");
     myUnloadedElements = null;
     final Set<String> existing = new HashSet<>();

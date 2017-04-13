@@ -49,8 +49,8 @@ public class ModuleParser {
     PsiBuilder.Marker firstAnnotation = myParser.getDeclarationParser().parseAnnotations(builder);
 
     IElementType type = builder.getTokenType();
-    String text = builder.getTokenText();
-    if (type != JavaTokenType.IDENTIFIER || !(PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text))) {
+    String text = type == JavaTokenType.IDENTIFIER ? builder.getTokenText() : null;
+    if (!(PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text))) {
       module.rollbackTo();
       return null;
     }

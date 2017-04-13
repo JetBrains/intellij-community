@@ -68,7 +68,7 @@ class SmartPointerTracker {
     return true;
   }
 
-  private boolean isActual(VirtualFile file, Key<SmartPointerTracker> key) {
+  boolean isActual(VirtualFile file, Key<SmartPointerTracker> key) {
     return file.getUserData(key) == this;
   }
 
@@ -94,17 +94,24 @@ class SmartPointerTracker {
     nextAvailableIndex = index;
   }
 
-  synchronized void removeReference(@NotNull PointerReference reference) {
+  synchronized void removeReference(@NotNull PointerReference reference, @NotNull Key<SmartPointerTracker> expectedKey) {
     int index = reference.index;
     if (index < 0) return;
 
-    assert isActual(reference.file, reference.key);
+    assertActual(expectedKey, reference.file, reference.key);
     assert references[index] == reference : "At " + index + " expected " + reference + ", found " + references[index];
     references[index].index = -1;
     references[index] = null;
     if (--size == 0) {
       reference.file.replace(reference.key, this, null);
     }
+  }
+
+  private void assertActual(Key<SmartPointerTracker> expectedKey, VirtualFile file, Key<SmartPointerTracker> refKey) {
+    assert isActual(file, refKey) : "Smart pointer list mismatch mismatch:" +
+                                    " ref.key=" + expectedKey +
+                                    ", manager.key=" + refKey +
+                                    (file.getUserData(refKey) != null ? "; has another pointer list" : "");
   }
 
   private void processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl> processor) {
@@ -115,7 +122,7 @@ class SmartPointerTracker {
       assert isActual(ref.file, ref.key);
       SmartPsiElementPointerImpl pointer = ref.get();
       if (pointer == null) {
-        removeReference(ref);
+        removeReference(ref, ref.key);
         continue;
       }
 
@@ -235,7 +242,7 @@ class SmartPointerTracker {
 
       SmartPointerTracker pointers = reference.file.getUserData(reference.key);
       if (pointers != null) {
-        pointers.removeReference(reference);
+        pointers.removeReference(reference, reference.key);
       }
     }
   }

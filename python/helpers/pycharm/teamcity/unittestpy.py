@@ -13,6 +13,7 @@ _real_stdout = sys.stdout
 class TeamcityTestResult(TestResult):
     separator2 = "\n"
 
+    # noinspection PyUnusedLocal
     def __init__(self, stream=_real_stdout, descriptions=None, verbosity=None):
         super(TeamcityTestResult, self).__init__()
 
@@ -111,15 +112,15 @@ class TeamcityTestResult(TestResult):
             self.add_subtest_failure(test_id, block_id)
 
             if issubclass(err[0], test.failureException):
-                self.messages.blockOpened(block_id, flowId=test_id)
+                self.messages.subTestBlockOpened(block_id, subTestResult="Failure", flowId=test_id)
                 self.messages.testStdErr(test_id, out="SubTest failure: %s\n" % convert_error_to_string(err), flowId=test_id)
                 self.messages.blockClosed(block_id, flowId=test_id)
             else:
-                self.messages.blockOpened(block_id, flowId=test_id)
+                self.messages.subTestBlockOpened(block_id, subTestResult="Error", flowId=test_id)
                 self.messages.testStdErr(test_id, out="SubTest error: %s\n" % convert_error_to_string(err), flowId=test_id)
                 self.messages.blockClosed(block_id, flowId=test_id)
         else:
-            self.messages.blockOpened(block_id, flowId=test_id)
+            self.messages.subTestBlockOpened(block_id, subTestResult="Success", flowId=test_id)
             self.messages.blockClosed(block_id, flowId=test_id)
 
     def add_subtest_failure(self, test_id, subtest_block_id):
@@ -194,6 +195,16 @@ class TeamcityTestRunner(TextTestRunner):
     if sys.version_info < (2, 7):
         def _makeResult(self):
             return TeamcityTestResult(self.stream, self.descriptions, self.verbosity)
+
+    def run(self, test):
+        # noinspection PyBroadException
+        try:
+            total_tests = test.countTestCases()
+            TeamcityServiceMessages(_real_stdout).testCount(total_tests)
+        except:
+            pass
+
+        return super(TeamcityTestRunner, self).run(test)
 
 
 if __name__ == '__main__':

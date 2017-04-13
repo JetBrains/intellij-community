@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.Comparator;
@@ -749,5 +750,10 @@ public class PersistentHashMapValueStorage {
       ourAppendersCache.remove(myPath + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION);
       ourRandomAccessFileCache.remove(myPath + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION);
     }
+  }
+
+  @TestOnly
+  public boolean isReadOnly() {
+    return myReadOnly;
   }
 }

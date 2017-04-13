@@ -20,11 +20,13 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 public class CommonUiProperties {
   public static final VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>("Window.ShowDetails");
   public static final Map<Integer, VcsLogUiProperty<Integer>> COLUMN_WIDTH = ContainerUtil.newHashMap();
+  public static final VcsLogUiProperty<List<Integer>> COLUMN_ORDER = new VcsLogUiProperty<>("Table.ColumnOrder");
 
   static {
     COLUMN_WIDTH.put(GraphTableModel.AUTHOR_COLUMN, new TableColumnProperty("Author", GraphTableModel.AUTHOR_COLUMN));

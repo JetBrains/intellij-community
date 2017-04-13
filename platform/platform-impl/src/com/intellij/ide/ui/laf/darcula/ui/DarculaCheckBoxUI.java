@@ -225,6 +225,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return JBUI.scale(EmptyIcon.create(20)).asUIResource();
+    return EmptyIcon.create(JBUI.scale(20)).asUIResource();
   }
 }

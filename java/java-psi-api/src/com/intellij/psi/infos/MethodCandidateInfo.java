@@ -492,11 +492,12 @@ public class MethodCandidateInfo extends CandidateInfo{
   private static String clearErrorMessageInSubexpressions(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiConditionalExpression) {
-      String message = clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getThenExpression());
-      if (message != null) {
-        return message;
+      String thenErrorMessage = clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getThenExpression());
+      String elseErrorMessage = clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getElseExpression());
+      if (thenErrorMessage != null) {
+        return thenErrorMessage;
       }
-      return clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getElseExpression());
+      return elseErrorMessage;
     }
     else if (expression instanceof PsiCallExpression) {
       final JavaResolveResult result;

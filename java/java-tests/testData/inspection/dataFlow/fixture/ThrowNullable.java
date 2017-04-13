@@ -15,4 +15,8 @@ class DataFlowBug {
     }
   }
 
+  void foo(RuntimeException tt) {
+    throw tt;
+  }
+
 }

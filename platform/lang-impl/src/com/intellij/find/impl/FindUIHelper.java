@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class FindUIHelper implements Disposable {
+public class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private  FindModel myModel;
    FindModel myPreviousModel;
@@ -120,7 +120,7 @@ class FindUIHelper implements Disposable {
   }
 
   @NotNull
-   FindModel getModel() {
+  public FindModel getModel() {
     return myModel;
   }
 

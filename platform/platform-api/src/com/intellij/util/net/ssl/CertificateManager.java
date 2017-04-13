@@ -134,7 +134,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       if (Registry.is("ide.certificate.manager")) {
         SSLContext.setDefault(getSslContext());
-        LOG.debug("Default SSL context initialized");
+        LOG.info("Default SSL context initialized");
       }
     }
     catch (Exception e) {

@@ -16,6 +16,7 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -65,6 +66,11 @@ public abstract class BaseUpdateAction extends PatchAction {
     out.writeBoolean(myIsMove);
   }
 
+  @Override
+  public boolean calculate(File olderDir, File newerDir) throws IOException {
+    return doCalculate(getSource(olderDir), getFile(newerDir));
+  }
+
   protected File getSource(File toDir) {
     return new File(toDir, mySource);
   }
@@ -91,10 +97,10 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   public ValidationResult validate(File toDir) throws IOException {
     File fromFile = getSource(toDir);
-    ValidationResult result = doValidateAccess(fromFile, ValidationResult.Action.UPDATE);
+    ValidationResult result = doValidateAccess(fromFile, ValidationResult.Action.UPDATE, true);
     if (result != null) return result;
     if (!mySource.isEmpty()) {
-      result = doValidateAccess(getFile(toDir), ValidationResult.Action.UPDATE);
+      result = doValidateAccess(getFile(toDir), ValidationResult.Action.UPDATE, true);
       if (result != null) return result;
     }
     return doValidateNotChanged(fromFile, ValidationResult.Kind.ERROR, ValidationResult.Action.UPDATE);
@@ -155,5 +161,26 @@ public abstract class BaseUpdateAction extends PatchAction {
       text = text.substring(0, text.length() - 1) + ", " + (myIsMove ? '=' : '~') + mySource + ')';
     }
     return text;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!super.equals(o)) return false;
+
+    BaseUpdateAction that = (BaseUpdateAction)o;
+
+    if (myIsMove != that.myIsMove) return false;
+    if (!Objects.equals(mySource, that.mySource)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myIsMove ? 1 : 0);
+    result = 31 * result + Objects.hashCode(mySource);
+    return result;
   }
 }

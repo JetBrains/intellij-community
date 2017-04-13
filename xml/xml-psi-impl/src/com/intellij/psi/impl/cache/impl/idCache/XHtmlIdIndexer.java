@@ -29,4 +29,9 @@ public class XHtmlIdIndexer extends LexerBasedIdIndexer {
   static XHtmlFilterLexer createIndexingLexer(OccurrenceConsumer consumer) {
     return new XHtmlFilterLexer(new XHtmlHighlightingLexer(), consumer);
   }
+
+  @Override
+  public int getVersion() {
+    return 2;
+  }
 }

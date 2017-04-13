@@ -31,8 +31,7 @@ public class SymlinkPatchTest extends PatchTestCase {
     super.setUp();
 
     FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "hello");
-    Utils.delete(myNewerDir);
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    resetNewerDir();
   }
 
   @Test

@@ -26,9 +26,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
+ *
+ * @see LocalQuickFixAndIntentionActionOnPsiElement
  */
-public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction{
-  public static IntentionAndQuickFixAction[] EMPTY_ARRAY = new IntentionAndQuickFixAction[0];
+public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction {
 
   @Override
   @NotNull
@@ -38,29 +39,29 @@ public abstract class IntentionAndQuickFixAction implements LocalQuickFix, Inten
   @NotNull
   public abstract String getFamilyName();
 
-  public abstract void applyFix(@NotNull Project project, final PsiFile file, @Nullable final Editor editor);
+  public abstract void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor);
 
   @Override
   @NotNull
-  public final String getText() {
+  public String getText() {
     return getName();
   }
 
   @Override
-  public final void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     applyFix(project, descriptor.getPsiElement().getContainingFile(), null);
   }
 
   @Override
-  public final void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     applyFix(project, file, editor);
   }
 
   /**
-   *  In general case will be called if invoked as IntentionAction.
+   * In general case will be called if invoked as IntentionAction.
    */
   @Override
-  public boolean isAvailable(@NotNull final Project project, @Nullable final Editor editor, final PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
     return true;
   }
 

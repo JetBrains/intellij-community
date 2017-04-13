@@ -116,7 +116,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private int getColumnWidth() {
-    return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
+    return myGraphTable.getColumnByModelIndex(GraphTableModel.COMMIT_COLUMN).getWidth();
   }
 
   public void setCompactReferencesView(boolean compact) {

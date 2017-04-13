@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -498,7 +499,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         Disposer.dispose(prevTask);
       }
 
-      if (PowerSaveMode.isEnabled()) {
+      if (PowerSaveMode.isEnabled() && Registry.is("pause.indexing.in.power.save.mode")) {
         indicator.setText("Indexing paused during Power Save mode...");
         runWhenPowerSaveModeChanges(() -> result.complete(pollTaskQueue()));
         completeWhenProjectClosed(result);

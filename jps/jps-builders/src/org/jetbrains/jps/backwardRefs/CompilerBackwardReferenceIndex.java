@@ -140,6 +140,10 @@ public class CompilerBackwardReferenceIndex {
     return myRebuildRequestCause;
   }
 
+  File getIndicesDir() {
+    return myIndicesDir;
+  }
+
   public static void removeIndexFiles(File buildDir) {
     final File indexDir = getIndexDir(buildDir);
     if (indexDir.exists()) {
@@ -167,8 +171,7 @@ public class CompilerBackwardReferenceIndex {
         is.close();
       }
     }
-    catch (IOException ex) {
-      LOG.info(ex);
+    catch (IOException ignored) {
     }
     return true;
   }
@@ -193,7 +196,6 @@ public class CompilerBackwardReferenceIndex {
   }
 
   void setRebuildRequestCause(Exception e) {
-    LOG.error(e);
     myRebuildRequestCause = e;
   }
 

@@ -54,7 +54,9 @@ public class CompositeBuildDataService extends AbstractProjectDataService<Compos
       if (projectData != null) {
         GradleProjectSettings projectSettings =
           GradleSettings.getInstance(project).getLinkedProjectSettings(projectData.getLinkedExternalProjectPath());
-        if (projectSettings != null) {
+        if (projectSettings != null &&
+            projectSettings.getCompositeBuild() != null &&
+            projectSettings.getCompositeBuild().getCompositeDefinitionSource() == CompositeDefinitionSource.SCRIPT) {
           projectSettings.setCompositeBuild(null);
         }
       }

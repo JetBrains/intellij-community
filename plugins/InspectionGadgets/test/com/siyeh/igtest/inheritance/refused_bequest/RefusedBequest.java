@@ -34,3 +34,10 @@ class D extends C {
 
   }
 }
+class E extends C {
+  @Override
+  public void setUp() {
+    Runnable r = super::setUp;
+    r.run();
+  }
+}

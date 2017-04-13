@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -28,18 +29,25 @@ private class DefaultRunProgramRunner : AsyncGenericProgramRunner<RunnerSettings
   override fun getRunnerId() = "defaultRunRunner"
 
   override fun prepare(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
-    FileDocumentManager.getInstance().saveAllDocuments()
+    return resolvedPromise(object : RunProfileStarter() {
+      override fun execute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        return showRunContent(state.execute(environment.executor, this@DefaultRunProgramRunner), environment)
+      }
 
-    if (state is DebuggableRunProfileState) {
-      return state.execute(-1)
-        .then {
-          it?.let {
-            runProfileStarter { state, environment -> RunContentBuilder(it, environment).showRunContent(environment.contentToReuse) }
-          }
+      override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment): Promise<RunContentDescriptor?> {
+        if (state is DebuggableRunProfileState) {
+          FileDocumentManager.getInstance().saveAllDocuments()
+          return state.execute(-1)
+            .then {
+              it?.let {
+                RunContentBuilder(it, environment).showRunContent(environment.contentToReuse)
+              }
+            }
         }
-    }
-
-    return resolvedPromise(runProfileStarter { state, environment -> showRunContent(state.execute(environment.executor, this), environment) })
+        return super.executeAsync(state, environment)
+      }
+    })
   }
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {

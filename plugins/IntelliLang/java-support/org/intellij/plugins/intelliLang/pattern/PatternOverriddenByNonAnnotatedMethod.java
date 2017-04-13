@@ -63,7 +63,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
             final String annotationClassname = annotationFromHierarchy[annotationFromHierarchy.length - 1].getQualifiedName();
             final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
             holder.registerProblem(psiIdentifier, "Non-annotated Method overrides @Pattern Method",
-                                   new AnnotateFix(method, annotationClassname, argList));
+                                   new AnnotateFix(annotationClassname, argList));
           }
         }
       }

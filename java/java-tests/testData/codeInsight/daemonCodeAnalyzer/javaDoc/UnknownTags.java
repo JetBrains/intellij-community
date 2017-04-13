@@ -1,14 +1,14 @@
 /**
- * <warning>@foo</warning>
+ * <warning descr="Wrong tag 'foo'">@foo</warning>
  */
 class Foo {
   /**
-   * <warning>@foo</warning>
+   * <warning descr="Wrong tag 'foo'">@foo</warning>
    */
   void foo() {}
 
   /**
-  * <warning>@foo</warning>
-  */
+   * <warning descr="Wrong tag 'foo'">@foo</warning>
+   */
   int field;
 }

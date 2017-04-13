@@ -96,7 +96,7 @@ class PyDBFrame:
 
     def trace_return(self, frame, event, arg):
         if event == 'return':
-            main_debugger, filename, info, thread = self._args
+            main_debugger, filename = self._args[0], self._args[1]
             send_signature_return_trace(main_debugger, frame, filename, arg)
         return self.trace_return
 

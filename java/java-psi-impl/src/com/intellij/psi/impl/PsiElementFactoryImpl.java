@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -674,6 +674,16 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
     GeneratedMarkerVisitor.markGenerated(psiAnnotation);
+    return psiAnnotation;
+  }
+
+  public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText,
+                                                @Nullable final PsiElement context,
+                                                boolean markGenerated) throws IncorrectOperationException {
+    final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
+    if (markGenerated) {
+      GeneratedMarkerVisitor.markGenerated(psiAnnotation);
+    }
     return psiAnnotation;
   }
 

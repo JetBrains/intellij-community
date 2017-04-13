@@ -35,6 +35,7 @@ import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
+import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -253,7 +254,7 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = f
     // be aware - on windows hosts file doesn't contain localhost
     // hosts can contain remote addresses, so, we check it
     if (hostsOnly && !InetAddresses.isInetAddress(host)) {
-      return io.netty.resolver.HostsFileEntriesResolver.DEFAULT.address(host).let { it != null && it.isLocal() }
+      return io.netty.resolver.HostsFileEntriesResolver.DEFAULT.address(host, ResolvedAddressTypes.IPV4_PREFERRED).let { it != null && it.isLocal() }
     }
     else {
       return true

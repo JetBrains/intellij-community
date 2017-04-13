@@ -76,8 +76,4 @@ public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesE
   public void reset() {
     myPreloaderTf.setText(myProperties.getPreloaderClass());
   }
-
-  @Override
-  public void disposeUIResources() {
-  }
 }

@@ -16,6 +16,7 @@
 package hg4idea.test.history;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -63,7 +64,7 @@ public class HgHistoryTest extends HgPlatformTest {
     int namesSize = names.length;
     VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
     assert subDir != null;
-    VirtualFile vFile = subDir.findFileByRelativePath(names[namesSize - 1]);
+    VirtualFile vFile = VfsUtil.findFileByIoFile(new File(subDir.getPath(),names[namesSize - 1]), true);
     assert vFile != null;
     HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(vFile));
     HgLogCommand logCommand = new HgLogCommand(myProject);
@@ -86,7 +87,7 @@ public class HgHistoryTest extends HgPlatformTest {
     //find file with parent revision name
     VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
     assert subDir != null;
-    VirtualFile vFile = subDir.findFileByRelativePath(names[namesSize - 1]);
+    VirtualFile vFile = VfsUtil.findFileByIoFile(new File(subDir.getPath(),names[namesSize - 1]), true);
     assert vFile != null;
     HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(vFile));
     HgLogCommand logCommand = new HgLogCommand(myProject);
@@ -105,9 +106,9 @@ public class HgHistoryTest extends HgPlatformTest {
     int namesSize = names.length;
     VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
     assert subDir != null;
-    VirtualFile currentVirtualFile = subDir.findFileByRelativePath(names[namesSize - 1]);
-    assert currentVirtualFile != null;
-    HgFile localFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(currentVirtualFile));
+    VirtualFile vFile = VfsUtil.findFileByIoFile(new File(subDir.getPath(), names[namesSize - 1]), true);
+    assert vFile != null;
+    HgFile localFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(vFile));
     HgLogCommand logCommand = new HgLogCommand(myProject);
     logCommand.setFollowCopies(true);
     List<HgFileRevision> revisions = logCommand.execute(localFile, -1, true);
@@ -126,7 +127,7 @@ public class HgHistoryTest extends HgPlatformTest {
     cd(subDir);
     int namesSize = names.length;
     String beforeName = names[namesSize - 1];
-    VirtualFile before = subDir.findFileByRelativePath(beforeName);
+    VirtualFile before = VfsUtil.findFileByIoFile(new File(subDir.getPath(), beforeName), true);
     assert before != null;
     FilePath filePath = VcsUtil.getFilePath(VfsUtilCore.virtualToIoFile(before));
     final String renamed = "renamed";

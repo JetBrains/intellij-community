@@ -19,6 +19,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
+import com.intellij.util.xmlb.annotations.Transient
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -26,7 +27,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   // if property value differs from default
   private val properties: MutableList<StoredProperty> = SmartList()
 
-  @Volatile internal var modificationCount: Long = 0
+  @Volatile
+  internal var modificationCount: Long = 0
 
   // reset on load state
   fun resetModificationCount() {
@@ -52,6 +54,15 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
+  /**
+   * Empty string is always normalized to null.
+   */
+  fun string(defaultValue: String? = null): ReadWriteProperty<BaseState, String?> {
+    val result = StringStoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
   fun storedProperty(defaultValue: Int = 0): ReadWriteProperty<BaseState, Int> {
     val result = IntStoredProperty(defaultValue)
     properties.add(result)
@@ -70,6 +81,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
+  @Transient
   override fun getModificationCount(): Long {
     var result = modificationCount
     for (property in properties) {
@@ -97,27 +109,49 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     builder.setLength(builder.length - 1)
     return builder.toString()
   }
+
+  fun copyFrom(state: BaseState) {
+    assert(state.properties.size == properties.size)
+    for ((index, property) in properties.withIndex()) {
+      val otherProperty = state.properties.get(index)
+      if (property.name != null) {
+        if (otherProperty.name == null) {
+          otherProperty.name = property.name
+        }
+        else {
+          assert(otherProperty.name == property.name)
+        }
+      }
+      property.setValue(otherProperty)
+    }
+  }
 }
 
 internal interface StoredProperty {
   val defaultValue: Any?
   val value: Any?
 
-  val name: String?
+  var name: String?
+
+  fun setValue(other: StoredProperty)
 }
 
 private class ObjectStoredProperty<T>(override val defaultValue: T) : ReadWriteProperty<BaseState, T>, StoredProperty {
   override var value = defaultValue
   override var name: String? = null
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T {
+    name = property.name
+    return value
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
+    name = property.name
+
     if (value != newValue) {
       thisRef.modificationCount++
 
-      name = property.name
       value = newValue
     }
   }
@@ -127,20 +161,64 @@ private class ObjectStoredProperty<T>(override val defaultValue: T) : ReadWriteP
   override fun hashCode() = value?.hashCode() ?: 0
 
   override fun toString() = if (value === defaultValue) "" else value?.toString() ?: super.toString()
+
+  override fun setValue(other: StoredProperty) {
+    @Suppress("UNCHECKED_CAST")
+    value = (other as ObjectStoredProperty<T>).value
+  }
+}
+
+private class StringStoredProperty(override val defaultValue: String?) : ReadWriteProperty<BaseState, String?>, StoredProperty {
+  override var value = defaultValue
+  override var name: String? = null
+
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): String? {
+    name = property.name
+    return value
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") _newValue: String?) {
+    name = property.name
+
+    var newValue = _newValue
+    if (newValue != null && newValue.isEmpty()) {
+      newValue = null
+    }
+
+    if (value != newValue) {
+      thisRef.modificationCount++
+      value = newValue
+    }
+  }
+
+  override fun equals(other: Any?) = this === other || (other is ObjectStoredProperty<*> && value == other.value)
+
+  override fun hashCode() = value?.hashCode() ?: 0
+
+  override fun toString() = if (value == defaultValue) "" else value ?: super.toString()
+
+  override fun setValue(other: StoredProperty) {
+    value = (other as StringStoredProperty).value
+  }
 }
 
 private class IntStoredProperty(override val defaultValue: Int) : ReadWriteProperty<BaseState, Int>, StoredProperty {
   override var value = defaultValue
   override var name: String? = null
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): Int {
+    name = property.name
+    return value
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: Int) {
+    name = property.name
+
     if (value != newValue) {
       thisRef.modificationCount++
 
-      name = property.name
       value = newValue
     }
   }
@@ -150,20 +228,28 @@ private class IntStoredProperty(override val defaultValue: Int) : ReadWritePrope
   override fun hashCode() = value.hashCode()
 
   override fun toString() = if (value == defaultValue) "" else value.toString()
+
+  override fun setValue(other: StoredProperty) {
+    value = (other as IntStoredProperty).value
+  }
 }
 
 private class FloatStoredProperty(override val defaultValue: Float) : ReadWriteProperty<BaseState, Float>, StoredProperty {
   override var value = defaultValue
   override var name: String? = null
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>): Float {
+    name = property.name
+    return value
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: Float) {
+    name = property.name
+
     if (value != newValue) {
       thisRef.modificationCount++
 
-      name = property.name
       value = newValue
     }
   }
@@ -173,4 +259,8 @@ private class FloatStoredProperty(override val defaultValue: Float) : ReadWriteP
   override fun hashCode() = value.hashCode()
 
   override fun toString() = if (value == defaultValue) "" else value.toString()
+
+  override fun setValue(other: StoredProperty) {
+    value = (other as FloatStoredProperty).value
+  }
 }

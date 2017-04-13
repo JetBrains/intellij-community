@@ -54,4 +54,9 @@ public class CommandLineOptionImpl extends CommandLineElement implements Command
     return CommandLinePsiImplUtils.findRealOption(this);
   }
 
+  @Nullable
+  public CommandLineArgument findArgument() {
+    return CommandLinePsiImplUtils.findArgument(this);
+  }
+
 }

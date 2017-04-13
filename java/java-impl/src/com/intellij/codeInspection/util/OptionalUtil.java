@@ -136,7 +136,7 @@ public class OptionalUtil {
       }
       trueExpression =
         targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
-      String typeArg = getMapTypeArgument(trueExpression, targetType);
+      String typeArg = getMapTypeArgument(trueExpression, targetType, falseExpression);
       qualifier += "." + typeArg + "map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     if (useOrElseGet && !ExpressionUtils.isSimpleExpression(falseExpression)) {
@@ -154,6 +154,11 @@ public class OptionalUtil {
 
   @NotNull
   public static String getMapTypeArgument(PsiExpression expression, PsiType type) {
+    return getMapTypeArgument(expression, type, null);
+  }
+
+  @NotNull
+  private static String getMapTypeArgument(PsiExpression expression, PsiType type, PsiExpression falseExpression) {
     if (!(type instanceof PsiClassType)) return "";
     PsiExpression copy =
       JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), expression);
@@ -162,7 +167,9 @@ public class OptionalUtil {
         !exprType.equals(PsiType.NULL) &&
         !LambdaUtil.notInferredType(exprType) &&
         TypeConversionUtil.isAssignable(type, exprType)) {
-      return "";
+      if (falseExpression == null) return "";
+      PsiType falseType = falseExpression.getType();
+      if (falseType != null && falseType.isAssignableFrom(exprType)) return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }

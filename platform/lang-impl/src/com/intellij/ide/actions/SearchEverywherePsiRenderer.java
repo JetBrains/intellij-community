@@ -21,14 +21,17 @@ import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -68,18 +71,28 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
 
   @Override
   public String getElementText(PsiElement element) {
-    final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
+    VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
+                       element instanceof VirtualFile ? (VirtualFile)element : null;
+    if (file != null) {
+      return EditorTabbedContainer.calcTabTitle(element.getProject(), file);
+    }
+    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
     return StringUtil.notNullize(name, "<unnamed>");
   }
 
   @Override
   protected String getContainerText(PsiElement element, String name) {
     if (element instanceof PsiFileSystemItem) {
-      PsiFileSystemItem parent = ((PsiFileSystemItem)element).getParent();
-      final PsiDirectory psiDirectory = parent instanceof PsiDirectory ? (PsiDirectory)parent : null;
-      VirtualFile virtualFile = psiDirectory == null ? null : psiDirectory.getVirtualFile();
-      if (virtualFile == null) return null;
-      String relativePath = GotoFileCellRenderer.getRelativePath(virtualFile, element.getProject());
+      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+      VirtualFile parent = file == null ? null : file.getParent();
+      if (parent == null) {
+        if (file != null) { // use fallback from Switcher
+          String presentableUrl = file.getPresentableUrl();
+          return FileUtil.getLocationRelativeToUserHome(presentableUrl);
+        }
+        return null;
+      }
+      String relativePath = GotoFileCellRenderer.getRelativePath(parent, element.getProject());
       if (relativePath == null) return "( " + File.separator + " )";
       int width = myList.getWidth();
       if (width == 0) width += 800;

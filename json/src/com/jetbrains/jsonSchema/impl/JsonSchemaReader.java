@@ -21,6 +21,7 @@ import com.intellij.json.psi.JsonValue;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -90,13 +91,16 @@ public class JsonSchemaReader {
   }
 
   private void processReferences(JsonSchemaObject root, Set<JsonSchemaObject> objects) {
+    final Set<String> queuedDefinitions = new HashSet<>();
     final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
     queue.add(root);
     queue.addAll(objects);
     int control = 10000;
 
     while (!queue.isEmpty()) {
-      if (--control == 0) throw new RuntimeException("cyclic definitions search");
+      if (--control == 0) {
+        throw new RuntimeException("cyclic definitions search");
+      }
 
       final JsonSchemaObject current = queue.removeFirst();
       if ("#".equals(current.getRef())) continue;
@@ -108,7 +112,8 @@ public class JsonSchemaReader {
           current.setRef(null);
           continue;
         }
-        if (definition.getRef() != null && !"#".equals(definition.getRef())) {
+        if (definition.getRef() != null && !"#".equals(definition.getRef()) && !queuedDefinitions.contains(definition.getRef())) {
+          queuedDefinitions.add(definition.getRef());
           queue.addFirst(current);
           queue.addFirst(definition);
           continue;
@@ -186,21 +191,21 @@ public class JsonSchemaReader {
     }
     if (isAbsoluteReference(ref)) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
     ref = ref.substring(2);
-    final String[] parts = ref.split("/");
+    final List<String> parts = StringUtil.split(ref, "/");
     JsonSchemaObject current = root;
-    for (int i = 0; i < parts.length; i++) {
+    for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
-      final String part = parts[i];
+      final String part = parts.get(i);
       if ("definitions".equals(part)) {
-        if (i == (parts.length - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
+        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
         //noinspection AssignmentToForLoopParameter
-        current = current.getDefinitions().get(parts[++i]);
+        current = current.getDefinitions().get(parts.get(++i));
         continue;
       }
       if ("properties".equals(part)) {
-        if (i == (parts.length - 1)) throw new RuntimeException("Incorrect properties reference: " + ref);
+        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect properties reference: " + ref);
         //noinspection AssignmentToForLoopParameter
-        current = current.getProperties().get(parts[++i]);
+        current = current.getProperties().get(parts.get(++i));
         continue;
       }
 

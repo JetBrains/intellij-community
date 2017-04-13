@@ -21,3 +21,9 @@ class Suppressed extends TestCase {
   protected void setUp() throws Exception {
   }
 }
+class Lambda extends TestCase {
+  protected void tearDown() throws Exception {
+    Runnable r = () -> { try { super.tearDown(); } catch (Exception e) {} };
+    r.run();
+  }
+}

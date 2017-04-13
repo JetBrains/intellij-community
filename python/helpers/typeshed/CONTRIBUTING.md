@@ -76,6 +76,7 @@ At present the core developers are (alphabetically):
 * Matthias Kramm (@matthiaskramm)
 * Greg Price (@gnprice)
 * Guido van Rossum (@gvanrossum)
+* Jelle Zijlstra (@JelleZijlstra)
 
 NOTE: the process for preparing and submitting changes also applies to
 core developers.  This ensures high quality contributions and keeps
@@ -127,6 +128,7 @@ Style conventions for stub files are different from PEP 8. The general
 rule is that they should be as concise as possible.  Specifically:
 * there is no line length limit;
 * prefer long lines over elaborate indentation;
+* all function bodies should be empty;
 * prefer ``...`` over ``pass``;
 * prefer ``...`` on the same line as the class/function signature;
 * avoid vertical whitespace between consecutive module-level functions,
@@ -232,3 +234,11 @@ and labels mean.
   there should be no user-facing effect.
 * **duplicate**, **wontfix**: These identify issues that we've closed
   for the respective reasons.
+
+### Core developer guidelines
+
+Core developers should follow these rules when processing pull requests:
+
+* Always wait for tests to pass before merging PRs.
+* Use "[Squash and merge](https://github.com/blog/2141-squash-your-commits)" to merge PRs.
+* Delete branches for merged PRs (by core devs pushing to the main repo).

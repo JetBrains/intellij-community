@@ -17,10 +17,14 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * During indexing, only extensions that implement {@link com.intellij.openapi.project.DumbAware} are called.
+ * See also {@link DumbService}.
+ *
  * @author Nikolay.Tropin
  */
 public abstract class SourcePositionHighlighter {
@@ -30,7 +34,8 @@ public abstract class SourcePositionHighlighter {
 
   @Nullable
   public static TextRange getHighlightRangeFor(SourcePosition sourcePosition) {
-    for (SourcePositionHighlighter provider: EP_NAME.getExtensions()) {
+    DumbService dumbService = DumbService.getInstance(sourcePosition.getFile().getProject());
+    for (SourcePositionHighlighter provider : dumbService.filterByDumbAwareness(EP_NAME.getExtensions())) {
       TextRange range = provider.getHighlightRange(sourcePosition);
       if (range != null) {
         return range;

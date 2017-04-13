@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,12 @@ public enum RegExpCapability {
 
   /**
    * Normal mode is ']' and '}' allowed as regular character.
-   * In this mode '{' is also allowed as character when not part of quantifier.
+   * In this  mode '{' is also allowed as character when not part of quantifier.
    */
   DANGLING_METACHARACTERS,
 
   /**
+   * Normal mode is ']' and '}' allowed as regular character.
    * In this mode ']' and '}' are NOT allowed as regular character.
    * This mode overrides DANGLING_METACHARACTERS.
    */
@@ -44,6 +45,11 @@ public enum RegExpCapability {
    * '{,1}' is legal
    */
   OMIT_NUMBERS_IN_QUANTIFIERS,
+
+  /**
+   * {,} allowed as quantifier (Python).
+   */
+  OMIT_BOTH_NUMBERS_IN_QUANTIFIERS,
   COMMENT_MODE,
 
   /**

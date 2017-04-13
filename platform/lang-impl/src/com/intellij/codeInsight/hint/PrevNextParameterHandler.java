@@ -45,8 +45,6 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (exprList == null) return false;
 

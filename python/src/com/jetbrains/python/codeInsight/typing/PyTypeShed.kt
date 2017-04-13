@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -40,7 +41,7 @@ object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..6
   // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types")
+  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime")
   private val BLACK_LIST = setOf<String>()
 
   /**
@@ -58,6 +59,9 @@ object PyTypeShed {
       return true
     }
     if (isInThirdPartyLibraries(root)) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return true
+      }
       val pyPIPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: topLevelPackage
       val packages = PyPackageManagers.getInstance().forSdk(sdk).packages ?: return true
       return PyPackageUtil.findPackage(packages, pyPIPackage) != null
@@ -82,13 +86,13 @@ object PyTypeShed {
    * Returns the list of roots in typeshed for the specified Python language [level].
    */
   fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val minor = when (level.major) {
-      2 -> ONLY_SUPPORTED_PY2_MINOR
-      3 -> Math.min(Math.max(level.minor, SUPPORTED_PY3_MINORS.start), SUPPORTED_PY3_MINORS.endInclusive)
+    val minors = when (level.major) {
+      2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
+      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= level.minor }
       else -> return emptyList()
     }
-    return listOf("stdlib/${level.major}.${minor}",
-                  "stdlib/${level.major}",
+    return minors.map { "stdlib/${level.major}.$it" } +
+           listOf("stdlib/${level.major}",
                   "stdlib/2and3",
                   "third_party/${level.major}",
                   "third_party/2and3")
@@ -125,7 +129,7 @@ object PyTypeShed {
    */
   fun isInThirdPartyLibraries(file: VirtualFile) = "third_party" in file.path
 
-  private fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
+  fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
 
   private val LanguageLevel.major: Int
     get() = this.version / 10

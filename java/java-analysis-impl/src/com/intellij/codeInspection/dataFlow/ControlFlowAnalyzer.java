@@ -52,7 +52,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private FList<Trap> myTrapStack = FList.emptyList();
   private final ExceptionTransfer myRuntimeException;
   private final ExceptionTransfer myError;
-  private final PsiType myNpe;
   private final PsiType myAssertionError;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions) {
@@ -63,7 +62,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     GlobalSearchScope scope = codeFragment.getResolveScope();
     myRuntimeException = new ExceptionTransfer(myFactory.createTypeValue(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL));
     myError = new ExceptionTransfer(myFactory.createTypeValue(createClassType(scope, JAVA_LANG_ERROR), Nullness.NOT_NULL));
-    myNpe = createClassType(scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
     myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
   }
 
@@ -708,16 +706,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       exception.accept(this);
 
       addConditionalRuntimeThrow();
-      addInstruction(new DupInstruction());
-      addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, myProject));
-      ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
-      addInstruction(gotoInstruction);
-
       addInstruction(new FieldReferenceInstruction(exception, "thrown exception"));
-      throwException(myNpe, statement);
-
-      gotoInstruction.setOffset(myCurrentFlow.getInstructionCount());
       throwException(exception.getType(), statement);
     }
 

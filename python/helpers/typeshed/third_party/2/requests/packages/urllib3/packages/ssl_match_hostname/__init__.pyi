@@ -1,1 +1,0 @@
-class CertificateError(ValueError): pass

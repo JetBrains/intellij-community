@@ -22,7 +22,7 @@ def _parse_parametrized(part):
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses
     """
-    match = re.match("^(.+)(\(.+\))$", part)
+    match = re.match("^(.+)(\\(.+\\))$", part)
     if not match:
         return [part]
     else:
@@ -163,7 +163,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return
 
         try:
-            properties["locationHint"] = "python://{0}".format(properties["name"])
+            # Report directory so Java site knows which folder to resolve names against
+            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), properties["name"])
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -204,14 +205,36 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return test_name
 
     # Blocks are used for 2 cases now:
-    # 1) Unittest subtests (broken, because failure can't be reported)
+    # 1) Unittest subtests
     # 2) setup/teardown (does not work, see https://github.com/JetBrains/teamcity-messages/issues/114)
-    # So, temporary disabled
     # def blockOpened(self, name, flowId=None):
-    #     self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
-    #
-    # def blockClosed(self, name, flowId=None):
-    #     self.testFinished(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+    #      self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
+
+    def blockClosed(self, name, flowId=None):
+        test_name = ".".join(TREE_MANAGER.current_branch)
+        if self._latest_subtest_result == "Failure":
+            self.testFailed(test_name)
+
+        self.testFinished(test_name)
+        self._latest_subtest_result = None
+
+
+    def testIgnored(self, testName, message='', flowId=None):
+        import re
+        # Skipped subtest of unittest in format "test_name.test_name (subtestInfo)" should be processed as special case:
+        # start, ignore like test_name.test_name.(subtestInfo), stop
+        match_result = re.match(r"^([^(]+\s)*([(][^)]+[)])$", str(testName))
+        if match_result:
+            test_to_skip = ".".join(TREE_MANAGER.current_branch + [match_result.group(2)])
+            self.testStarted(test_to_skip)
+            super(NewTeamcityServiceMessages, self).testIgnored(test_to_skip, message, flowId)
+            self.testFinished(test_to_skip)
+        else:
+            super(NewTeamcityServiceMessages, self).testIgnored(testName, message, flowId) # For all other cases leave same behaviour
+
+    def subTestBlockOpened(self, name, subTestResult, flowId=None):
+        self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
+        self._latest_subtest_result = subTestResult
 
     def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
         test_name_as_list = self._test_to_list(testName)
@@ -309,19 +332,27 @@ class _SymbolNameSplitter(object):
 
 class _SymbolName2KSplitter(_SymbolNameSplitter):
     """
-    Based on imp which works in 2, but not 3
+    Based on imp which works in 2, but not 3.
+    It also emulates packages for folders with out of __init__.py.
+    Say, you have Python path "spam.eggs" where "spam" is plain folder.
+    It works for Py3, but not Py2.
+    find_module for "spam" raises exception which is processed then (see "_symbol_processed") 
     """
     def __init__(self):
         super(_SymbolNameSplitter, self).__init__()
         self._path = None
+        # Set to True when at least one find_module success, so we have at least one symbol
+        self._symbol_processed = False
 
     def check_is_importable(self, parts, current_step, separator):
         import imp
         module_to_import = parts[current_step]
         (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
+        self._symbol_processed = True
         if desc[2] == imp.PKG_DIRECTORY:
             # Package
             self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+
 
 
 class _SymbolName3KSplitter(_SymbolNameSplitter):
@@ -391,6 +422,9 @@ def jb_start_tests():
         _jb_utils.OptionDescription('--target', 'Python target to run', "append"))
     del sys.argv[1:]  # Remove all args
     NewTeamcityServiceMessages().message('enteredTheMatrix')
+
+    # Working dir should be on path, that is how runners work when launched from command line
+    sys.path.insert(1, os.getcwd())
     return namespace.path, namespace.target, additional_args
 
 
@@ -406,4 +440,4 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1}".format(framework_name, " ".join(args)))
+    print("Launching {0} with arguments {1} in {2}".format(framework_name, " ".join(args), os.getcwd()))

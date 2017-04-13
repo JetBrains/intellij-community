@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +24,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -124,14 +124,5 @@ public class AfterTestEvent extends AbstractTestEvent {
       return Couple.of(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
     }
     return null;
-  }
-
-  private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
-    @Override
-    public void run() {
-      for (Runnable runnable : this) {
-        runnable.run();
-      }
-    }
   }
 }

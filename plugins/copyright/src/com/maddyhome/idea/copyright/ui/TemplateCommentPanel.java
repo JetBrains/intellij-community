@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
-import com.maddyhome.idea.copyright.CopyrightProfile;
+import com.maddyhome.idea.copyright.CopyrightProfileKt;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
@@ -340,7 +340,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
 
   private void showPreview(LanguageOptions options) {
     final String defaultCopyrightText = myNoCopyright.isSelected() ? "" : FileTypeUtil
-      .buildComment(fileType, VelocityHelper.evaluate(null, null, null, EntityUtil.decode(CopyrightProfile.DEFAULT_COPYRIGHT_NOTICE)), options);
+      .buildComment(fileType, VelocityHelper.evaluate(null, null, null, EntityUtil.decode(CopyrightProfileKt.DEFAULT_COPYRIGHT_NOTICE)), options);
     SwingUtilities.invokeLater(() -> preview.setText(defaultCopyrightText));
   }
 

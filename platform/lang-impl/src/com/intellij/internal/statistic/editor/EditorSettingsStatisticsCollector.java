@@ -16,7 +16,9 @@
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
+import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
@@ -24,6 +26,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +35,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 class EditorSettingsStatisticsCollector extends UsagesCollector {
+  private static final GroupDescriptor GROUP_DESCRIPTOR = GroupDescriptor.create("Editor");
+
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
-    return GroupDescriptor.create("Editor");
+    return GROUP_DESCRIPTOR;
   }
 
   @NotNull
@@ -106,7 +111,6 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, cis.HIGHLIGHT_BRACES, true, "bracesHighlight");
     addIfDiffers(set, cis.HIGHLIGHT_SCOPE, false, "scopeHighlight");
     addIfDiffers(set, cis.HIGHLIGHT_IDENTIFIER_UNDER_CARET, true, "identifierUnderCaretHighlight");
-    addIfDiffers(set, cis.OPTIMIZE_IMPORTS_ON_THE_FLY, false, "autoOptimizeImports");
     addIfDiffers(set, cis.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY, false, "autoAddImports");
     
     return set;
@@ -123,4 +127,21 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
       set.add(new UsageDescriptor(featureIdPrefix + "." + value, 1));
     }
   }
+
+  public static class ProjectUsages extends AbstractApplicationUsagesCollector {
+    @NotNull
+    @Override
+    public GroupDescriptor getGroupId() {
+      return GROUP_DESCRIPTOR;
+    }
+
+    @NotNull
+    @Override
+    public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
+      Set<UsageDescriptor> set = new HashSet<>();
+      addIfDiffers(set, CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly, false, "autoOptimizeImports");
+      return set;
+    }
+  }
+
 }

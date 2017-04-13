@@ -22,9 +22,11 @@ public class IDEATestNGInvokedMethodListener implements IInvokedMethodListener {
     myListener = listener;
   }
 
-  public synchronized void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-    if (!testResult.getMethod().isTest()) {
-      myListener.onConfigurationStart(myListener.createDelegated(testResult));
+  public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+    synchronized (myListener) {
+      if (!testResult.getMethod().isTest()) {
+        myListener.onConfigurationStart(myListener.createDelegated(testResult));
+      }
     }
   }
 

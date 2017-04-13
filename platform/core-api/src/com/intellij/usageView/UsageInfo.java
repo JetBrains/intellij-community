@@ -222,10 +222,14 @@ public class UsageInfo {
   }
 
   public boolean isValid() {
-    if (myPsiFileRange == null && getElement() instanceof PsiFile) {
+    if (isFileUsage()) {
       return true; // in case of binary file
     }
     return getSegment() != null;
+  }
+
+  protected boolean isFileUsage() {
+    return myPsiFileRange == null && getElement() instanceof PsiFile;
   }
 
   @Nullable

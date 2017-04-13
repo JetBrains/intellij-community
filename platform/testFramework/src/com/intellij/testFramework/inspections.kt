@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ private fun clearAllToolsIn(profile: InspectionProfileImpl) {
     return
   }
 
-  for (state in profile.getAllTools(null)) {
+  for (state in profile.allTools) {
     val wrapper = state.tool
     if (wrapper.extension != null) {
       // make it not initialized

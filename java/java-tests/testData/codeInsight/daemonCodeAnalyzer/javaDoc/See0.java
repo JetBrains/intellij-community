@@ -1,8 +1,10 @@
 class Test {
-    /**
-     *  @see A#<error>someField</error>
-     */
-     public void i() {}
+  /**
+   * @see A#<error descr="Cannot resolve symbol 'someField'">someField</error>
+   */
+  public void i() {}
 
-     class A{ public void foo() {}}
+  class A {
+    public void foo() {}
+  }
 }

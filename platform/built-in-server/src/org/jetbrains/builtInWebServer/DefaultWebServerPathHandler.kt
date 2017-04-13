@@ -55,7 +55,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
-      pathInfo = pathToFileManager.doFindByRelativePath(path)
+      pathInfo = pathToFileManager.doFindByRelativePath(path, defaultPathQuery)
       if (pathInfo == null) {
         HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true

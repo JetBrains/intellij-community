@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 __all__ = ...  # type: List[str]
 
 
-class weekday(object):
+class weekday:
     def __init__(self, weekday: int, n: Optional[int]=...) -> None: ...
 
     def __call__(self, n: int) -> 'weekday': ...
@@ -25,7 +25,7 @@ SA = ...  # type: weekday
 SU = ...  # type: weekday
 
 
-class relativedelta(object):
+class relativedelta:
     def __init__(self,
                  dt1: Optional[date]=...,
                  dt2: Optional[date]=...,

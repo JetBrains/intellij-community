@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,9 @@ import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.MethodEntryEvent;
@@ -69,6 +71,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -132,17 +135,43 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
 
-    AtomicReference<ProgressIndicator> indicatorRef = new AtomicReference<>();
-    ApplicationManager.getApplication()
-      .invokeAndWait(
-        () -> indicatorRef.set(new ProgressWindowWithNotification(true, false, debugProcess.getProject(), "Cancel emulation")));
-    ProgressIndicator indicator = indicatorRef.get();
+    AtomicReference<ProgressWindowWithNotification> indicatorRef = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> {
+        ProgressWindowWithNotification progress =
+          new ProgressWindowWithNotification(true, false, debugProcess.getProject(), "Cancel emulation");
+        progress.setDelayInMillis(2000);
+        indicatorRef.set(progress);
+      });
+    ProgressWindowWithNotification indicator = indicatorRef.get();
+
+    AtomicBoolean changed = new AtomicBoolean();
+    XBreakpointAdapter<XBreakpoint<?>> listener = new XBreakpointAdapter<XBreakpoint<?>>() {
+      void changed(@NotNull XBreakpoint b) {
+        if (b == breakpoint.getXBreakpoint()) {
+          changed.set(true);
+          indicator.cancel();
+        }
+      }
+
+      @Override
+      public void breakpointRemoved(@NotNull XBreakpoint b) {
+        changed(b);
+      }
+
+      @Override
+      public void breakpointChanged(@NotNull XBreakpoint b) {
+        changed(b);
+      }
+    };
+
+    XDebuggerManager.getInstance(debugProcess.getProject()).getBreakpointManager().addBreakpointListener(listener, indicator);
     ProgressManager.getInstance().executeProcessUnderProgress(
       () -> processPreparedSubTypes(baseType,
                                     subType -> createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, false),
                                     indicator),
       indicator);
-    if (indicator.isCanceled()) {
+    if (indicator.isCanceled() && !changed.get()) {
       breakpoint.disableEmulation();
     }
   }

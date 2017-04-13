@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
 import org.jetbrains.plugins.gradle.service.settings.GradleSystemSettingsControl;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
@@ -48,7 +47,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     super(builder);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String[] getSupportedExtensions() {
     return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME};
@@ -62,6 +61,11 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
         if (fileName.endsWith(extension)) {
           return true;
         }
+      }
+    }
+    else {
+      for (String supported : getSupportedExtensions()) {
+        if (file.findChild(supported) != null) return true;
       }
     }
     return super.canOpenProject(file);
@@ -158,5 +162,10 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @Override
   public boolean lookForProjectsInDirectory() {
     return false;
+  }
+
+  @Override
+  public boolean isStrongProjectInfoHolder() {
+    return ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 }

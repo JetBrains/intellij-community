@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -48,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -83,10 +84,11 @@ public class EditorHyperlinkSupport {
       }
     });
 
-    editor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+    editor.addEditorMouseMotionListener(new EditorMouseMotionAdapter() {
       @Override
-      public void mouseMoved(final MouseEvent e) {
-        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getPoint());
+      public void mouseMoved(EditorMouseEvent e) {
+        if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
+        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getMouseEvent().getPoint());
         if (info != null) {
           myEditor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }

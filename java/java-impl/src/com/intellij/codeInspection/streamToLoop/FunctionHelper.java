@@ -420,11 +420,14 @@ abstract class FunctionHelper {
             PsiTypeCastExpression castExpr = (PsiTypeCastExpression)lambdaExpression.getBody();
             LOG.assertTrue(castExpr != null);
             methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
+            LOG.assertTrue(methodRef != null);
           }
         }
       }
       PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);
-      LOG.assertTrue(lambda != null);
+      if(lambda == null) {
+        throw new IllegalStateException("Unable to convert method reference to lambda: "+methodRef.getText());
+      }
       PsiElement body = lambda.getBody();
       LOG.assertTrue(body instanceof PsiExpression);
       myExpression = (PsiExpression)body;

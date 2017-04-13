@@ -2,6 +2,7 @@
 
 import sys
 from abc import abstractmethod, ABCMeta
+from types import CodeType, FrameType
 
 # Definitions of special type checking related constructs.  Their definition
 # are not used, so their value does not matter.
@@ -32,6 +33,7 @@ List = TypeAlias(object)
 Dict = TypeAlias(object)
 DefaultDict = TypeAlias(object)
 Set = TypeAlias(object)
+FrozenSet = TypeAlias(object)
 Counter = TypeAlias(object)
 Deque = TypeAlias(object)
 if sys.version_info >= (3, 3):
@@ -63,11 +65,11 @@ class SupportsFloat(metaclass=ABCMeta):
 
 class SupportsComplex(metaclass=ABCMeta):
     @abstractmethod
-    def __complex__(self) -> complex: pass
+    def __complex__(self) -> complex: ...
 
 class SupportsBytes(metaclass=ABCMeta):
     @abstractmethod
-    def __bytes__(self) -> bytes: pass
+    def __bytes__(self) -> bytes: ...
 
 class SupportsAbs(Generic[_T]):
     @abstractmethod
@@ -118,6 +120,11 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
 
     @abstractmethod
     def __iter__(self) -> 'Generator[_T_co, _T_contra, _V_co]': ...
+
+    gi_code = ...  # type: CodeType
+    gi_frame = ...  # type: FrameType
+    gi_running = ...  # type: bool
+    gi_yieldfrom = ...  # type: Optional[Generator]
 
 # TODO: Several types should only be defined if sys.python_version >= (3, 5):
 # Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection, ContextManager.
@@ -174,11 +181,23 @@ if sys.version_info >= (3, 6):
         @abstractmethod
         def __aiter__(self) -> 'AsyncGenerator[_T_co, _T_contra]': ...
 
+        ag_await = ...  # type: Any
+        ag_code = ...  # type: CodeType
+        ag_frame = ...  # type: FrameType
+        ag_running = ...  # type: bool
+
 class Container(Generic[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
 
-class Sequence(Iterable[_T_co], Container[_T_co], Sized, Reversible[_T_co], Generic[_T_co]):
+
+if sys.version_info >= (3, 6):
+    class Collection(Sized, Iterable[_T_co], Container[_T_co], Generic[_T_co]): ...
+    _Collection = Collection
+else:
+    class _Collection(Sized, Iterable[_T_co], Container[_T_co], Generic[_T_co]): ...
+
+class Sequence(_Collection[_T_co], Reversible[_T_co], Generic[_T_co]):
     @overload
     @abstractmethod
     def __getitem__(self, i: int) -> _T_co: ...
@@ -218,7 +237,7 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     def remove(self, object: _T) -> None: ...
     def __iadd__(self, x: Iterable[_T]) -> MutableSequence[_T]: ...
 
-class AbstractSet(Iterable[_T_co], Container[_T_co], Sized, Generic[_T_co]):
+class AbstractSet(_Collection[_T_co], Generic[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
     # Mixin methods
@@ -232,8 +251,6 @@ class AbstractSet(Iterable[_T_co], Container[_T_co], Sized, Generic[_T_co]):
     def __xor__(self, s: AbstractSet[_T]) -> AbstractSet[Union[_T_co, _T]]: ...
     # TODO: Argument can be a more general ABC?
     def isdisjoint(self, s: AbstractSet[Any]) -> bool: ...
-
-class FrozenSet(AbstractSet[_T_co], Generic[_T_co]): ...
 
 class MutableSet(AbstractSet[_T], Generic[_T]):
     @abstractmethod
@@ -266,7 +283,7 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
 
 # TODO: ContextManager (only if contextlib.AbstractContextManager exists)
 
-class Mapping(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT_co]):
+class Mapping(_Collection[_KT], Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
     # see discussion in https: //github.com/python/typing/pull/273.
     @abstractmethod
@@ -289,7 +306,10 @@ class MutableMapping(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __delitem__(self, v: _KT) -> None: ...
 
     def clear(self) -> None: ...
-    def pop(self, k: _KT, default: _VT = ...) -> _VT: ...
+    @overload
+    def pop(self, k: _KT) -> _VT: ...
+    @overload
+    def pop(self, k: _KT, default: Union[_VT, _T] = ...) -> Union[_VT, _T]: ...
     def popitem(self) -> Tuple[_KT, _VT]: ...
     def setdefault(self, k: _KT, default: _VT = ...) -> _VT: ...
     # 'update' used to take a Union, but using overloading is better.
@@ -303,9 +323,9 @@ class MutableMapping(Mapping[_KT, _VT], Generic[_KT, _VT]):
     # known to be a Mapping with unknown type parameters, which is closer
     # to the behavior we want. See mypy issue  #1430.
     @overload
-    def update(self, m: Mapping[_KT, _VT]) -> None: ...
+    def update(self, m: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
     @overload
-    def update(self, m: Iterable[Tuple[_KT, _VT]]) -> None: ...
+    def update(self, m: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
 
 Text = str
 
@@ -343,9 +363,8 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     def seekable(self) -> bool: ...
     @abstractmethod
     def tell(self) -> int: ...
-    # TODO None should not be compatible with int
     @abstractmethod
-    def truncate(self, size: int = ...) -> int: ...
+    def truncate(self, size: Optional[int] = ...) -> int: ...
     @abstractmethod
     def writable(self) -> bool: ...
     # TODO buffer objects
@@ -430,7 +449,7 @@ class Match(Generic[AnyStr]):
 
 class Pattern(Generic[AnyStr]):
     flags = 0
-    groupindex = 0
+    groupindex = ...  # type: Mapping[str, int]
     groups = 0
     pattern = ...  # type: AnyStr
 

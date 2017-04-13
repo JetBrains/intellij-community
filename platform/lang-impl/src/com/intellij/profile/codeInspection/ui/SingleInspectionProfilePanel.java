@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,8 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
+import com.intellij.util.containers.Queue;
+
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
@@ -124,6 +126,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     super(new BorderLayout());
     myProjectProfileManager = projectProfileManager;
     myProfile = profile;
+    // to ensure that profile initialized with proper project
+    myProfile.initInspectionTools(projectProfileManager.getProject());
   }
 
   public Map<HighlightDisplayKey, ToolDescriptors> getInitialToolDescriptors() {
@@ -440,7 +444,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private void postProcessModification() {
     wereToolSettingsModified();
     //resetup configs
-    for (ScopeToolState state : myProfile.getAllTools(myProjectProfileManager.getProject())) {
+    for (ScopeToolState state : myProfile.getAllTools()) {
       state.resetConfigPanel();
     }
     fillTreeData(myProfileFilter.getFilter(), true);
@@ -1022,7 +1026,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     if (myProfile != null) {
-      for (ScopeToolState state : myProfile.getAllTools(myProjectProfileManager.getProject())) {
+      for (ScopeToolState state : myProfile.getAllTools()) {
         state.resetConfigPanel();
       }
     }

@@ -968,4 +968,16 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertFalse(((PsiFileImpl)psiFile).isContentsLoaded());
   }
 
+  public void testDoubleRemoveIsAnError() throws Exception {
+    SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", "class A {}"));
+    getPointerManager().removePointer(pointer);
+    try {
+      getPointerManager().removePointer(pointer);
+      fail("Should have failed");
+    }
+    catch (AssertionError e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
+    }
+  }
+
 }

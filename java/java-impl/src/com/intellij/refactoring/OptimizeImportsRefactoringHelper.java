@@ -31,9 +31,7 @@ import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.HashSet;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
   private static final String REMOVING_REDUNDANT_IMPORTS_TITLE = "Removing redundant imports";
@@ -60,7 +58,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
       }
     });
 
-    final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<>();
+    final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -106,7 +104,7 @@ class OptimizeImportsTask implements SequentialTask {
   private final int myTotal;
   private int myCount;
 
-  public OptimizeImportsTask(SequentialModalProgressTask progressTask, Set<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
+  public OptimizeImportsTask(SequentialModalProgressTask progressTask, Collection<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
     myTask = progressTask;
     myTotal = pointers.size();
     myPointers = pointers.iterator();

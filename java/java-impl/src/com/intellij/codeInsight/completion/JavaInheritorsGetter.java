@@ -159,7 +159,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         }
         try {
           final PsiStatement statement = elementFactory
-            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
+            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getPosition());
           final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
           final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
           final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||

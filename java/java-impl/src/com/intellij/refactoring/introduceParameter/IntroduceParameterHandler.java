@@ -32,6 +32,8 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -477,9 +479,23 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           Util.analyzeExpression(myExpr, new ArrayList<>(), classMemberRefs, new ArrayList<>());
         }
 
+        showDialog(method, methodToSearchFor, occurences, replaceAllOccurrences, delegate, initializerType, mustBeFinal,
+                   classMemberRefs, createNameSuggestionGenerator(myExpr, propName, myProject, enteredName));
+      }
+    }
+
+    private void showDialog(PsiMethod method,
+                            PsiMethod methodToSearchFor,
+                            PsiExpression[] occurences,
+                            boolean replaceAllOccurrences,
+                            boolean delegate,
+                            PsiType initializerType,
+                            boolean mustBeFinal,
+                            List<UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         final IntroduceParameterDialog dialog =
           new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr,
-                                       createNameSuggestionGenerator(myExpr, propName, myProject, enteredName),
+                                       nameSuggestionGenerator,
                                        createTypeSelectorManager(occurences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurences), mustBeFinal);
         dialog.setReplaceAllOccurrences(replaceAllOccurrences);
         dialog.setGenerateDelegate(delegate);
@@ -489,9 +505,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
               myEditor.getSelectionModel().removeSelection();
             }
           };
-          SwingUtilities.invokeLater(cleanSelectionRunnable);
+          ApplicationManager.getApplication().invokeLater(cleanSelectionRunnable, ModalityState.any());
         }
-      }
+      });
     }
 
     private TypeSelectorManagerImpl createTypeSelectorManager(PsiExpression[] occurences, PsiType initializerType) {

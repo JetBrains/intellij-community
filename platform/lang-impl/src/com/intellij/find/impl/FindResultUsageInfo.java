@@ -82,12 +82,16 @@ class FindResultUsageInfo extends UsageInfo {
     myTimestamp = document.getModificationStamp();
 
     Segment segment = getSegment();
-    if (segment == null) {
+    if (segment == null && !isFileUsage()) {
       myCachedResult = false;
       return false;
     }
 
     VirtualFile file = getPsiFile().getVirtualFile();
+    if (isFileUsage()) {
+      myCachedResult = file.isValid();
+      return myCachedResult;
+    }
 
     Segment searchOffset;
     if (myAnchor != null) {

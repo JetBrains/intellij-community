@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
     List<String> urls = getRootUrls(rootType);
     List<File> files = new ArrayList<>(urls.size());
     for (String url : urls) {
-      if (!url.startsWith("jrt://")) {
+      if (!JpsPathUtil.isJrtUrl(url)) {
         files.add(JpsPathUtil.urlToFile(url));
       }
     }

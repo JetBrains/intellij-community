@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -55,20 +57,38 @@ public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightInspe
            "}");
   }
 
+  public void testParameterInOverridingMethod() {
+    doTest("import java.util.Optional;" +
+           "import java.util.function.Function;" +
+           "class X {" +
+           "  Function<Optional<Long>, Long> homebrewOrElseNull = new Function<Optional<Long>, Long>() {" +
+           "    @Override\n" +
+           "    public Long apply(Optional<Long> input) {" +
+           "      return input.isPresent() ? input.get() : null;" +
+           "    }" +
+           "  };" +
+           "}");
+  }
+
+  public void testForeach() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  void x(Optional<String>[] array) {" +
+           "    for(Optional<String> optional : array) {" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
     return new OptionalUsedAsFieldOrParameterTypeInspection();
   }
 
+  @NotNull
   @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.util;" +
-      "public final class Optional<T> {}",
-
-      "package java.util;" +
-      "public final class OptionalDouble {}"
-    };
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

@@ -40,7 +40,7 @@ class YAMLObjectMetaclass(type):
     def __init__(cls, name, bases, kwds) -> None: ...
 
 class YAMLObject:
-    __metaclass__ = ...  # type: Any
+    __metaclass__ = YAMLObjectMetaclass
     yaml_loader = ...  # type: Any
     yaml_dumper = ...  # type: Any
     yaml_tag = ...  # type: Any

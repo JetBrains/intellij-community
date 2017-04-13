@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private final Set<PotemkinProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
@@ -184,9 +184,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     boolean hasEdtProgresses = !myEdtProgresses.isEmpty();
     if (shouldSleep && hasEdtProgresses) {
       //noinspection NonShortCircuitBooleanExpression
-      return () -> pingProgresses() | sleepIfNeeded();
+      return () -> pingProgresses() | sleepIfNeededToGivePriorityToAnotherThread();
     }
-    if (shouldSleep) return ProgressManagerImpl::sleepIfNeeded;
+    if (shouldSleep) return ProgressManagerImpl::sleepIfNeededToGivePriorityToAnotherThread;
     if (hasEdtProgresses) return this::pingProgresses;
     return null;
   }
@@ -202,9 +202,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     return hasProgresses;
   }
 
-  private static boolean sleepIfNeeded() {
+  private static boolean sleepIfNeededToGivePriorityToAnotherThread() {
     if (HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
-      TimeoutUtil.sleep(1);
+      LockSupport.parkNanos(1_000_000);
       return true;
     }
     return false;

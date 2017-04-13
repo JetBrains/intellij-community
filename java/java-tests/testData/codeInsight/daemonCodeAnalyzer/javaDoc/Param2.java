@@ -1,7 +1,6 @@
 class Test {
-    /**
-     *  @param <error>param</error> some param
-     */
-    public void foo() {
-    }
+  /**
+   * @param <error descr="Cannot resolve symbol 'param'">param</error> some param
+   */
+  public void foo() { }
 }

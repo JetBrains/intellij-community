@@ -36,15 +36,15 @@ public class DigesterTest extends UpdaterTestCase {
 
     assertEquals(CHECKSUMS.README_TXT, digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
     assertEquals(CHECKSUMS.FOCUS_KILLER_DLL, digester.digestRegularFile(new File(binDir, "focuskiller.dll"), false));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BINARY, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
-    assertEquals(CHECKSUMS.ANNOTATIONS_JAR_NORM, digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
-    assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR_NORM, digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
-    assertEquals(CHECKSUMS.BOOT_JAR_NORM, digester.digestRegularFile(new File(libDir, "boot.jar"), true));
-    assertEquals(CHECKSUMS.BOOT2_JAR_NORM, digester.digestRegularFile(new File(libDir, "boot2.jar"), true));
-    assertEquals(CHECKSUMS.BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM, digester.digestRegularFile(new File(libDir, "boot2_changed_with_unchanged_content.jar"), true));
-    assertEquals(CHECKSUMS.BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM, digester.digestRegularFile(new File(libDir, "boot_with_directory_becomes_file.jar"), true));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_NORM, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), true));
-    assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR_NORM, digester.digestRegularFile(new File(libDir, "bootstrap_deleted.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BIN, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
+    assertEquals(CHECKSUMS.ANNOTATIONS_JAR, digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
+    assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR, digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
+    assertEquals(CHECKSUMS.BOOT_JAR, digester.digestRegularFile(new File(libDir, "boot.jar"), true));
+    assertEquals(CHECKSUMS.BOOT2_JAR, digester.digestRegularFile(new File(libDir, "boot2.jar"), true));
+    assertEquals(CHECKSUMS.BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR, digester.digestRegularFile(new File(libDir, "boot2_changed_with_unchanged_content.jar"), true));
+    assertEquals(CHECKSUMS.BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR, digester.digestRegularFile(new File(libDir, "boot_with_directory_becomes_file.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, digester.digestRegularFile(new File(libDir, "bootstrap.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR, digester.digestRegularFile(new File(libDir, "bootstrap_deleted.jar"), true));
 
     assertEquals(CHECKSUMS.BOOTSTRAP_JAR, digester.digestZipFile(new File(libDir, "bootstrap.jar")));
  }

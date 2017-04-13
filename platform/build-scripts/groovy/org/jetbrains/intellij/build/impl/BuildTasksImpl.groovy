@@ -364,7 +364,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.pluginModulesWithRestrictedCompatibleBuildRange, "productProperties.productLayout.pluginModulesWithRestrictedCompatibleBuildRange")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
-      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
+      checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
     }

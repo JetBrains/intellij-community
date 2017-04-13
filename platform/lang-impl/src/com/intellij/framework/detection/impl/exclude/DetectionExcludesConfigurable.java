@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.*;
@@ -45,7 +45,9 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -203,10 +205,10 @@ public class DetectionExcludesConfigurable implements Configurable {
         }
       }
       else if (itemFile != null) {
-        if (VfsUtil.isAncestor(file, itemFile, false) && (frameworkType == null || frameworkType.getId().equals(itemTypeId))) {
+        if (VfsUtilCore.isAncestor(file, itemFile, false) && (frameworkType == null || frameworkType.getId().equals(itemTypeId))) {
           iterator.remove();
         }
-        if (VfsUtil.isAncestor(itemFile, file, false) && (itemTypeId == null || frameworkType != null && itemTypeId.equals(frameworkType.getId()))) {
+        if (VfsUtilCore.isAncestor(itemFile, file, false) && (itemTypeId == null || frameworkType != null && itemTypeId.equals(frameworkType.getId()))) {
           add = false;
         }
       }
@@ -275,18 +277,9 @@ public class DetectionExcludesConfigurable implements Configurable {
     }
   }
 
-  @Override
-  public void disposeUIResources() {
-  }
-
   @Nls
   @Override
   public String getDisplayName() {
     return "Framework Detection Excludes";
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;
   }
 }

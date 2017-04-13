@@ -211,7 +211,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         params.setJdk(usedIdeaJdk);
 
         if (fromIdeaProject) {
-          OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively();
+          OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).productionOnly().recursively();
           for (VirtualFile file : enumerator.getAllLibrariesAndSdkClassesRoots()) {
             params.getClassPath().add(file);
           }

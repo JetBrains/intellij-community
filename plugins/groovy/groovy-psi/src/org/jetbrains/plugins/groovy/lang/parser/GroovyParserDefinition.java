@@ -33,13 +33,11 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
@@ -47,7 +45,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
  * @author ilyas
  */
 public class GroovyParserDefinition implements ParserDefinition {
-  public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
+  public static final IStubFileElementType GROOVY_FILE = GroovyElementTypes.GROOVY_FILE;
   private static final IElementType[] STRINGS = new IElementType[]{
     GSTRING, REGEX, GSTRING_INJECTION, GroovyTokenTypes.mREGEX_LITERAL, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL
   };

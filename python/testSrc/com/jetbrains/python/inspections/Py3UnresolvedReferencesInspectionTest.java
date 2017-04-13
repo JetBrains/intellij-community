@@ -205,4 +205,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testTypingGenericDunderGetItem() {
     doTest();
   }
+
+  // PY-22899, PY-22937
+  public void testCallTypeGetAttributeAndSetAttrInInheritor() {
+    doTest();
+  }
 }

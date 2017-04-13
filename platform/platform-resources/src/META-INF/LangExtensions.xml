@@ -115,6 +115,7 @@
     <pathMacroFilter implementation="com.intellij.find.impl.FindInProjectSettingsBase$FindInProjectPathMacroFilter"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.CodeInsightWorkspaceSettings"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.ExportableApplicationLibraryTable"/>
@@ -700,9 +701,6 @@
       <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.hints.EnableCustomHintsOption</className>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <category>Language Injection</category>
     </intentionAction>
@@ -874,6 +872,7 @@
     <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.fileTypes.FileTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector$ProjectUsages"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -971,7 +970,10 @@
     <previewPanelProvider implementation="com.intellij.find.UsagesPreviewPanelProvider"/>
     <projectService serviceInterface="com.intellij.openapi.preview.PreviewManager"
                     serviceImplementation="com.intellij.openapi.preview.impl.PreviewManagerImpl"/>
-    
+
+    <applicationService serviceInterface="com.intellij.find.impl.FindPopupScopeUIProvider"
+                        serviceImplementation="com.intellij.find.impl.FindPopupScopeUIProviderImpl"/>
+
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>

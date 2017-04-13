@@ -586,6 +586,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
+    SelectInTarget target = mySelectInTargets.get(id);
+    if (target instanceof ProjectViewSelectInTarget) {
+      ((ProjectViewSelectInTarget)target).setSubId(subId);
+    }
     if (isAutoscrollFromSource(id)) {
       myAutoScrollFromSourceHandler.scrollFromSource();
     }
@@ -1801,8 +1805,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-        final MySelectInContext selectInContext = new MySelectInContext(file, editor);
+      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+        PsiFile restoredPsi = pointer.getElement();
+        if (restoredPsi == null) return;
+
+        final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
 
         final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
         if (target != null && target.canSelect(selectInContext)) {
