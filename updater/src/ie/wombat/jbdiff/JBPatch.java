@@ -74,19 +74,7 @@ public class JBPatch {
     in = new ByteArrayInputStream(diffData);
     in.skip(diffBlockLen + ctrlBlockLen + 32);
     GZIPInputStream extraBlockIn = new GZIPInputStream(in);
-
-    /*
-                 * Read in old file (file to be patched) to oldBuf
-                 */
-    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream();
-    try {
-      Utils.copyStream(oldFileIn, oldFileByteOut);
-    }
-    finally {
-      oldFileByteOut.close();
-    }
-    byte[] oldBuf = oldFileByteOut.toByteArray();
-    oldFileByteOut = null; // workaround for OOME, necessary since we are loading whole file in memory
+    byte[] oldBuf = realAllFileContent(oldFileIn);
     int oldsize = oldBuf.length;
 
     byte[] newBuf = new byte[newsize + 1];
@@ -172,6 +160,19 @@ public class JBPatch {
       newFileOut.write(newBuf, offset, chunkSize);
       offset += chunkSize;
     }
+  }
+
+  private static byte[] realAllFileContent(InputStream oldFileIn) throws IOException {
+    // Important: oldFileIn may be very large: so use max size (to avoid allocating memory to next power of 2) +
+    // do not hold reference for oldFileByteOut on stack
+    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream(Math.max(oldFileIn.available(), 32));
+    try {
+      Utils.copyStream(oldFileIn, oldFileByteOut);
+    }
+    finally {
+      oldFileByteOut.close();
+    }
+    return oldFileByteOut.toByteArray();
   }
 }
 
