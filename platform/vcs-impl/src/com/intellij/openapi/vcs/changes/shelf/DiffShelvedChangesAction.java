@@ -26,7 +26,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
-import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -34,6 +33,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -51,7 +51,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
+import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
+import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +66,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.diff.tools.util.DiffNotifications.createNotification;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createConflictDiffRequest;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createDiffRequest;
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -188,7 +191,16 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           @Override
           public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
             throws DiffRequestProducerException, ProcessCanceledException {
-            throw new DiffRequestProducerException("Cannot find base for '" + (beforePath != null ? beforePath : afterPath) + "'");
+            try {
+              TextFilePatch patch = preloader.getPatch(shelvedChange, new CommitContext());
+              PatchDiffRequest patchDiffRequest = new PatchDiffRequest(createAppliedTextPatch(patch), getName());
+              DiffUtil.addNotification(createNotification("Cannot find local file for '" + chooseNotNull(beforePath, afterPath) + "'"),
+                                       patchDiffRequest);
+              return patchDiffRequest;
+            }
+            catch (VcsException e) {
+              throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);
+            }
           }
         });
         continue;
@@ -261,15 +273,23 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                                       ? createConflictDiffRequest(project, file, patch, SHELVED_VERSION, texts, getName())
                                       : createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
             if (!withLocal) {
-              DiffUtil
-                .addNotification(DiffNotifications.createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"),
-                                 diffRequest);
+              DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
             }
             return diffRequest;
           }
         }
       });
     }
+  }
+
+  /**
+   * Simple way to reuse patch parser from GPA ->  apply onto empty text
+   */
+  @NotNull
+  private static AppliedTextPatch createAppliedTextPatch(@NotNull TextFilePatch patch) {
+    final GenericPatchApplier applier = new GenericPatchApplier("", patch.getHunks());
+    applier.execute();
+    return AppliedTextPatch.create(applier.getAppliedInfo());
   }
 
   private static class PatchesPreloader {
