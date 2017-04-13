@@ -34,8 +34,6 @@ class MockRunManager : RunManagerEx() {
 
   override fun getConfigurationsList(type: ConfigurationType) = emptyList<RunConfiguration>()
 
-  override fun makeStable(configuration: RunConfiguration) {}
-
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
 
   override val configurationFactories: Array<ConfigurationType>
