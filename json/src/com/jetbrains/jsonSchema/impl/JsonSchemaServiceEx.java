@@ -21,7 +21,6 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -32,13 +31,10 @@ public interface JsonSchemaServiceEx extends JsonSchemaService {
   void visitSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Processor<JsonSchemaObject> consumer);
 
   //! the only point for refreshing json schema caches
-  void dropProviderFromCache(@NotNull VirtualFile schemaFile);
+  void reset(@NotNull VirtualFile schemaFile);
 
   @Nullable
   VirtualFile getSchemaFileById(@NotNull String id, VirtualFile referent);
-
-  @NotNull
-  Collection<VirtualFile> getSchemaFilesForFile(@NotNull final VirtualFile file);
 
   Set<VirtualFile> getSchemaFiles();
 

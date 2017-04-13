@@ -6,15 +6,18 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface JsonSchemaService {
+
+  @NotNull
+  Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
 
   class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
@@ -35,7 +38,7 @@ public interface JsonSchemaService {
   DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file);
 
   @Nullable
-  List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file);
+  JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
 
   void reset();
 }

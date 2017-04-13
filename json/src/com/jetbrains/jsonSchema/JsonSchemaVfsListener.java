@@ -102,7 +102,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
 
     protected void onFileChange(@NotNull final VirtualFile schemaFile) {
       if (myMappingsProjectConfiguration.isRegisteredSchemaFile(schemaFile)) {
-        myService.dropProviderFromCache(schemaFile);
+        myService.reset(schemaFile);
         myDirtySchemas.add(schemaFile);
         myUpdater.queue(myRunnable);
       }

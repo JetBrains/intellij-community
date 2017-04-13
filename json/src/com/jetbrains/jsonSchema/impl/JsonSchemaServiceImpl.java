@@ -47,7 +47,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private final Project myProject;
   private final Object myLock;
   private final Map<VirtualFile, CodeInsightProviders> myWrappers = new HashMap<>();
-  private final Set<VirtualFile> mySchemaFiles = ContainerUtil.newConcurrentSet();
+  private final Map<VirtualFile, JsonSchemaFileProvider> mySchemaFiles = ContainerUtil.newConcurrentMap();
   private volatile boolean initialized;
   private final JsonSchemaExportedDefinitions myDefinitions;
 
@@ -92,7 +92,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
         for (JsonSchemaFileProvider provider : getProviders()) {
           final VirtualFile schemaFile = provider.getSchemaFile();
           if (schemaFile != null) {
-            mySchemaFiles.add(schemaFile);
+            mySchemaFiles.put(schemaFile, provider);
             // this will make it refresh
             myDefinitions.dropKey(schemaFile);
             myWrappers.remove(schemaFile);
@@ -119,11 +119,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   @Nullable
   @Override
-  public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
-    final List<CodeInsightProviders> wrappers = getWrappers(file);
-    if (wrappers.isEmpty()) return null;
-    return ContainerUtil.map(wrappers, (NotNullFunction<CodeInsightProviders, Pair<Boolean, String>>)
-      wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
+  public JsonSchemaFileProvider getSchemaProvider(@NotNull VirtualFile schemaFile) {
+    synchronized (myLock) {
+      ensureSchemaFiles();
+      return mySchemaFiles.get(schemaFile);
+    }
   }
 
   @Nullable
@@ -185,7 +185,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   //! the only point for refreshing json schema caches
   @Override
-  public void dropProviderFromCache(@NotNull final VirtualFile schemaFile) {
+  public void reset(@NotNull final VirtualFile schemaFile) {
     synchronized (myLock) {
       myDefinitions.dropKey(schemaFile);
       myWrappers.remove(schemaFile);
@@ -382,7 +382,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     if (!initialized) {
       ensureSchemaFiles();
     }
-    return Collections.unmodifiableSet(mySchemaFiles);
+    return Collections.unmodifiableSet(mySchemaFiles.keySet());
   }
 
   @Override
