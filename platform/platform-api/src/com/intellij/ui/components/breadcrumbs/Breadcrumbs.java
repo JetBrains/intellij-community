@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
@@ -192,12 +193,20 @@ public class Breadcrumbs extends JComponent {
 
   protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
     if (thickness > 0) {
-      Color foreground = getForeground(crumb);
+      Color foreground = getMarkerForeground(crumb);
       if (foreground != null) {
-        g.setColor(ColorUtil.toAlpha(foreground, (int)(.6 * foreground.getAlpha())));
+        g.setColor(foreground);
         g.fillRect(x, y + height - thickness, width, thickness);
       }
     }
+  }
+
+  protected Color getMarkerForeground(Crumb crumb) {
+    if (!Registry.is("editor.breadcrumbs.marker")) return null;
+    Color foreground = getForeground(crumb);
+    if (foreground == null) return null;
+    double alpha = Registry.doubleValue("editor.breadcrumbs.marker.alpha");
+    return ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha()));
   }
 
   protected Font getFont(Crumb crumb) {

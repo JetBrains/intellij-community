@@ -18,9 +18,9 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.EmptyBorder;
 import java.awt.Color;
@@ -45,9 +45,17 @@ final class PsiBreadcrumbs extends Breadcrumbs {
 
   @Override
   public void setFont(Font font) {
-    super.setFont(Registry.is("editor.breadcrumbs.small")
-                  ? RelativeFont.SMALL.derive(font)
-                  : font);
+    if (font != null) {
+      float size = font.getSize2D();
+      if (Registry.is("editor.breadcrumbs.system.font")) {
+        Font system = UIUtil.getLabelFont();
+        if (system != null) font = system;
+      }
+      if (Registry.is("editor.breadcrumbs.small.font")) {
+        font = font.deriveFont(size / 1.09f);
+      }
+    }
+    super.setFont(font);
   }
 
   @Override
