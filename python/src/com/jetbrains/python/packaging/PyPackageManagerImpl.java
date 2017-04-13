@@ -41,8 +41,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -471,6 +473,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       PythonEnvUtil.resetHomePathChanges(homePath, environment);
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      if (flavor != null && flavor.commandLinePatcher() != null) {
+        flavor.commandLinePatcher().patchCommandLine(commandLine);
+      }
       final Process process;
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
