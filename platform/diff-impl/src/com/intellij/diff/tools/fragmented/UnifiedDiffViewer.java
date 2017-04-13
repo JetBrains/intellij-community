@@ -957,11 +957,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     protected int getEndLine(@NotNull UnifiedDiffChange change) {
       return change.getLine2();
     }
-
-    @Override
-    protected void scrollToChange(@NotNull UnifiedDiffChange change) {
-      DiffUtil.scrollEditor(myEditor, change.getLine1(), true);
-    }
   }
 
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
