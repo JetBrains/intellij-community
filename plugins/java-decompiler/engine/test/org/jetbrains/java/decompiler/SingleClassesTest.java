@@ -101,6 +101,7 @@ public class SingleClassesTest {
   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+  @Test public void testPrimitives() { doTest("pkg/TestPrimitives"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
