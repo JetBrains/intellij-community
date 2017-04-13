@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
@@ -35,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
@@ -230,6 +230,18 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     };
   }
 
+  @Nullable
+  @Override
+  public Boolean isCollapsedByDefault(@NotNull FoldRegion region) {
+    return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+  }
+
+  @Override
+  public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
+    editor.putUserData(FoldingUpdate.CODE_FOLDING_KEY, null);
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
+  }
+
   private void initFolding(@NotNull final Editor editor) {
     final Document document = editor.getDocument();
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
@@ -286,12 +298,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
       for (FoldRegion region : regions) {
-        PsiElement element = foldingInfo.getPsiElement(region);
-        if (element != null) {
-          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
-        }
+        Boolean collapsedByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+        if (collapsedByDefault != null) region.setExpanded(!collapsedByDefault);
       }
     });
   }
