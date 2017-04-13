@@ -17,11 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -277,7 +273,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-
+      setupJbreDependencies()
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -306,6 +302,13 @@ idea.fatal.error.notification=disabled
           buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
         }
       }
+    }
+  }
+  
+  private void setupJbreDependencies() {
+    buildContext.messages.info("Setting up installer dependencies")    
+    if (!BuildUtils.runDependenciesGradle(buildContext.paths.communityHome, 'setupJbre')) {
+      buildContext.messages.error("Cannot setup installer dependencies")
     }
   }
 

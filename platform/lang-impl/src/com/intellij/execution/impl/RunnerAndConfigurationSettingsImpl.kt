@@ -54,14 +54,15 @@ internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
 val SINGLETON = "singleton"
 
+enum class RunConfigurationLevel {
+  WORKSPACE, PROJECT, TEMPORARY
+}
+
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var singleton: Boolean = false) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, Scheme, SerializableScheme {
-  enum class Level {
-    WORKSPACE, PROJECT, TEMPORARY
-  }
-
+                                                                   private var singleton: Boolean = false,
+                                                                   var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, Scheme, SerializableScheme {
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -70,7 +71,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     override fun createSettings(runner: ProgramRunner<*>) = configuration.createRunnerSettings(InfoProvider(runner))
   }
 
-  var level = Level.WORKSPACE
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
   private var wasSingletonSpecifiedExplicitly = false
@@ -82,12 +82,21 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun isTemplate() = isTemplate
 
-  override fun isTemporary() = level == Level.TEMPORARY
+  override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
 
-  override fun isShared() = level == Level.PROJECT
+  override fun isShared() = level == RunConfigurationLevel.PROJECT
 
   override fun setTemporary(value: Boolean) {
-    level = if (value) Level.TEMPORARY else Level.WORKSPACE
+    level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
+  }
+
+  fun setShared(value: Boolean) {
+    if (value) {
+      level = RunConfigurationLevel.PROJECT
+    }
+    else if (level == RunConfigurationLevel.PROJECT) {
+      level = RunConfigurationLevel.WORKSPACE
+    }
   }
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.FACTORY.createTemplateConfiguration(manager.project)
@@ -148,10 +157,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     isTemplate = element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE).toBoolean()
 
     if (isShared) {
-      level = Level.PROJECT
+      level = RunConfigurationLevel.PROJECT
     }
     else {
-      level = if (element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name) Level.TEMPORARY else Level.WORKSPACE
+      level = if (element.getAttributeValue(TEMPORARY_ATTRIBUTE).toBoolean() || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
     }
 
     isEditBeforeRun = (element.getAttributeValue(EDIT_BEFORE_RUN)).toBoolean()
@@ -208,6 +217,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   // do not call directly
+  // cannot be private - used externally
   fun writeExternal(element: Element) {
     val configuration = configuration
     val factory = configuration.factory
@@ -248,6 +258,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       runnerSettings.getState(element)
       configurationPerRunnerSettings.getState(element)
     }
+
+    if (configuration !is UnknownRunConfiguration) {
+      manager.writeBeforeRunTasks(this, configuration)?.let {
+        element.addContent(it)
+      }
+    }
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
@@ -262,13 +278,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun writeScheme(): Element {
     val element = Element("configuration")
     writeExternal(element)
-
-    val configuration = _configuration
-    if (configuration != null && configuration !is UnknownRunConfiguration) {
-      manager.writeBeforeRunTasks(this, configuration)?.let {
-        element.addContent(it)
-      }
-    }
     return element
   }
 
@@ -367,13 +376,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
     
     if (isTemplate && _configuration != null) {
-      val templateConfiguration = configuration.factory.createTemplateConfiguration(manager.project, manager)
-
-      val templateState = Element("state")
-      serializeConfigurationInto(templateConfiguration, templateState)
-
-      val state = writeScheme()
-      if (JDOMUtil.areElementsEqual(state, templateState)) {
+      // todo optimize
+      val templateSettings = manager.createTemplateSettings(configuration.factory)
+      if (JDOMUtil.areElementsEqual(writeScheme(), templateSettings.writeScheme())) {
+        // this state doesn't mean that scheme will be removed - SchemeManager doesn't expect that scheme can be NON_PERSISTENT after UNCHANGED
+        // todo definitely, SchemeManager should be improved to support this case, but it is not safe to do right now
         return SchemeState.NON_PERSISTENT
       }
     }

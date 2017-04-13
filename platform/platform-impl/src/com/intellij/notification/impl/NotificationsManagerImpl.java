@@ -1072,8 +1072,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void showPopup(@NotNull LinkLabel link, @NotNull DefaultActionGroup group) {
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-    menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
+    if (link.isShowing()) {
+      ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
+    }
   }
 
   private static class MyNotificationListener extends NotificationsAdapter {

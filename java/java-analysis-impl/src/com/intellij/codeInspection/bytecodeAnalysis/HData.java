@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -90,6 +91,8 @@ final class HKey {
  * Represents a lattice product of a constant {@link #value} and all {@link #ids}.
  */
 final class HComponent {
+  static final HComponent[] EMPTY_ARRAY = new HComponent[0];
+  static final ArrayFactory<HComponent> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new HComponent[count];
   @NotNull Value value;
   @NotNull final HKey[] ids;
 

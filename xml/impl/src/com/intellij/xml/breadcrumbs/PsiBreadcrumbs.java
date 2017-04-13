@@ -39,13 +39,15 @@ final class PsiBreadcrumbs extends Breadcrumbs {
   }
 
   @Override
-  protected void paint(Graphics2D g, int x, int y, int width, int height, int thickness) {
-    super.paint(g, x, y, width, above ? height : thickness, thickness);
+  protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
+    super.paint(g, x, y, width, above ? height : thickness, crumb, thickness);
   }
 
   @Override
   public void setFont(Font font) {
-    super.setFont(RelativeFont.SMALL.derive(font));
+    super.setFont(Registry.is("editor.breadcrumbs.small")
+                  ? RelativeFont.SMALL.derive(font)
+                  : font);
   }
 
   @Override

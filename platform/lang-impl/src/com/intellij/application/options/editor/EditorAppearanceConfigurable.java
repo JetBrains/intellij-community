@@ -179,8 +179,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       lafSettingsModified = true;
     }
     
-    if(editorSettings.isBreadcrumbsShown() != myShowBreadcrumbsCheckBox.isSelected()) {
-      editorSettings.setBreadcrumbsShown(myShowBreadcrumbsCheckBox.isSelected());
+    if(editorSettings.setBreadcrumbsShown(myShowBreadcrumbsCheckBox.isSelected())) {
       uiSettingsModified = true;
     }
 

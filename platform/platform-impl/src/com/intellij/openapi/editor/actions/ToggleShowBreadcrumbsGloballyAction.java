@@ -29,7 +29,8 @@ public class ToggleShowBreadcrumbsGloballyAction extends ToggleAction implements
 
   @Override
   public void setSelected(AnActionEvent event, boolean selected) {
-    EditorSettingsExternalizable.getInstance().setBreadcrumbsShown(selected);
-    UISettings.getInstance().fireUISettingsChanged();
+    if (EditorSettingsExternalizable.getInstance().setBreadcrumbsShown(selected)) {
+      UISettings.getInstance().fireUISettingsChanged();
+    }
   }
 }

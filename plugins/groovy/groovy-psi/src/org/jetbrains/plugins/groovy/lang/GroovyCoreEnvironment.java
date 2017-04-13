@@ -85,12 +85,17 @@ import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger;
 import org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrWithTraitTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
@@ -106,6 +111,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuil
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
+import org.jetbrains.plugins.groovy.lang.typing.GrClosureDelegateTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor;
@@ -219,7 +228,6 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(GrCallExpressionTypeCalculator.EP_NAME, new GrWithTraitTypeCalculator());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrExpressionTypeCalculator.EP_NAME, GrExpressionTypeCalculator.class);
-      appEnvironment.addExtension(GrExpressionTypeCalculator.EP_NAME, new GrClosureDelegateTypeCalculator());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyClassDescriptor.EP_NAME,
                                                         GroovyClassDescriptor.class);
@@ -343,6 +351,11 @@ public class GroovyCoreEnvironment {
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ReadWriteAccessDetector.EP_NAME, ReadWriteAccessDetector.class);
       appEnvironment.addExtension(ReadWriteAccessDetector.EP_NAME, new GroovyReadWriteAccessDetector());
+
+      appEnvironment.addExplicitExtension(GrTypeCalculator.EP, GrReferenceExpression.class, new GrClosureDelegateTypeCalculator());
+      appEnvironment.addExplicitExtension(GrTypeCalculator.EP, GrReferenceExpression.class, new ReferenceExpressionTypeCalculator());
+      appEnvironment.addExplicitExtension(GrTypeCalculator.EP, GrMethodCall.class, new MethodCallTypeCalculator());
+
       if (GroovyElementTypes.ADDITIVE_EXPRESSION == null) throw new IllegalStateException(); // initialize tokens
     }
 

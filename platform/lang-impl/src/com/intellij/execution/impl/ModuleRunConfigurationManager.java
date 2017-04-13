@@ -58,11 +58,11 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
+          Collection<? extends RunnerAndConfigurationSettings> moduleRunConfigurations;
           synchronized (LOCK) {
-            for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-              myManager.removeConfiguration(settings);
-            }
+            moduleRunConfigurations = getModuleRunConfigurationSettings();
           }
+          myManager.removeConfigurations(moduleRunConfigurations);
         }
       }
     });

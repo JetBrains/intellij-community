@@ -503,7 +503,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class ToggleDetailsAction extends ToggleAction implements DumbAware {
     private ToggleDetailsAction() {
-      super("Preview Diff", null, AllIcons.Actions.PreviewDetails);
+      super("Preview Diff", null, AllIcons.Actions.DiffPreview);
     }
 
     @Override

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 public interface GrImportStatement extends GrTopStatement {
   GrImportStatement[] EMPTY_ARRAY = new GrImportStatement[0];
 
-  ArrayFactory<GrImportStatement> ARRAY_FACTORY = count -> new GrImportStatement[count];
+  ArrayFactory<GrImportStatement> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrImportStatement[count];
 
   @Nullable
   GrCodeReferenceElement getImportReference();

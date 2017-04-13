@@ -115,13 +115,6 @@ abstract class RunManager {
   abstract val tempConfigurationsList: List<RunnerAndConfigurationSettings>
 
   /**
-   * Saves the specified temporary run configuration and makes it a permanent one.
-   * @param configuration the temporary run configuration to save.
-   */
-  @Deprecated("")
-  abstract fun makeStable(configuration: RunConfiguration)
-
-  /**
    * Saves the specified temporary run settings and makes it a permanent one.
    * @param settings the temporary settings to save.
    */

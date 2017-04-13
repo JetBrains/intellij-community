@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import gnu.trove.THashMap;
@@ -67,7 +66,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -96,13 +94,14 @@ public class JarRepositoryManager {
       return null;
     }
 
-    final List<RemoteRepositoryDescription> repositories = dialog.getRepositories();
     final String coord = dialog.getCoordinateText();
     final boolean attachSources = dialog.getAttachSources();
     final boolean attachJavaDoc = dialog.getAttachJavaDoc();
     final String copyTo = dialog.getDirectoryPath();
 
-    final NewLibraryConfiguration config = resolveAndDownload(project, coord, attachSources, attachJavaDoc, copyTo, repositories);
+    final NewLibraryConfiguration config = resolveAndDownload(
+      project, coord, attachSources, attachJavaDoc, copyTo, RemoteRepositoryDescription.DEFAULT_REPOSITORIES
+    );
     if (config == null) {
       Messages.showErrorDialog(parentComponent, "No files were downloaded for " + coord, CommonBundle.getErrorTitle());
     }
@@ -277,7 +276,7 @@ public class JarRepositoryManager {
     Notifications.Bus.notify(new Notification("Repository", title, sb.toString(), NotificationType.INFORMATION), project);
   }
 
-  public static void searchArtifacts(final Project project, String coord, final PairProcessor<Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>, Boolean> resultProcessor) {
+  public static void searchArtifacts(final Project project, String coord, final Consumer<Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
     if (coord == null || coord.length() == 0) {
       return;
     }
@@ -291,30 +290,18 @@ public class JarRepositoryManager {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        String[] urls = MavenRepositoryServicesManager.getServiceUrls();
-        boolean tooManyResults = false;
-        final AtomicBoolean proceedFlag = new AtomicBoolean(true);
-
-        for (int i = 0, length = urls.length; i < length; i++) {
-          if (!proceedFlag.get()) break;
-          final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
-          try {
-            String serviceUrl = urls[i];
-            final List<RepositoryArtifactDescription> artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
-            if (!artifacts.isEmpty()) {
-              if (!proceedFlag.get()) {
-                break;
-              }
-              final List<RemoteRepositoryDescription> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
-              Map<String, RemoteRepositoryDescription> map = new THashMap<>();
-              for (RemoteRepositoryDescription repository : repositories) {
-                map.put(repository.getId(), repository);
-              }
-              for (RepositoryArtifactDescription artifact : artifacts) {
-                if (artifact == null) {
-                  tooManyResults = true;
+        final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
+        try {
+          for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
+            try {
+              final List<RepositoryArtifactDescription> artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
+              if (!artifacts.isEmpty()) {
+                final List<RemoteRepositoryDescription> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
+                final Map<String, RemoteRepositoryDescription> map = new THashMap<>();
+                for (RemoteRepositoryDescription repository : repositories) {
+                  map.put(repository.getId(), repository);
                 }
-                else {
+                for (RepositoryArtifactDescription artifact : artifacts) {
                   final RemoteRepositoryDescription repository = map.get(artifact.getRepositoryId());
                   // if the artifact is provided by an unsupported repository just skip it
                   // because it won't be resolved anyway
@@ -324,38 +311,32 @@ public class JarRepositoryManager {
                 }
               }
             }
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-          finally {
-            if (!proceedFlag.get()) {
-              break;
+            catch (Exception e) {
+              LOG.error(e);
             }
-            final Boolean aBoolean = i == length - 1 ? tooManyResults : null;
-            ApplicationManager.getApplication().invokeLater(
-              () -> proceedFlag.set(resultProcessor.process(resultList, aBoolean)), o -> !proceedFlag.get()
-            );
           }
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(() -> resultProcessor.accept(resultList));
         }
       }
     });
   }
 
-  public static void searchRepositories(final Project project, final Collection<String> nexusUrls, final Processor<Collection<RemoteRepositoryDescription>> resultProcessor) {
+  public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<Collection<RemoteRepositoryDescription>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.<RemoteRepositoryDescription>emptyList());
         try {
           final ArrayList<RemoteRepositoryDescription> repoList = new ArrayList<>();
-          for (String nexusUrl : nexusUrls) {
+          for (String url : serviceUrls) {
             final List<RemoteRepositoryDescription> repositories;
             try {
-              repositories = MavenRepositoryServicesManager.getRepositories(nexusUrl);
+              repositories = MavenRepositoryServicesManager.getRepositories(url);
             }
             catch (Exception ex) {
-              LOG.warn("Accessing Service at: " + nexusUrl, ex);
+              LOG.warn("Accessing Service at: " + url, ex);
               continue;
             }
             repoList.addAll(repositories);

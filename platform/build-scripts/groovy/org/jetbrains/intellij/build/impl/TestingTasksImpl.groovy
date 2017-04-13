@@ -50,6 +50,7 @@ class TestingTasksImpl extends TestingTasks {
     else {
       compilationTasks.compileAllModulesAndTests()
     }
+    setupTestingDependencies()
 
     def mainModule = options.mainModule ?: defaultMainModule
     List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
@@ -170,6 +171,18 @@ class TestingTasksImpl extends TestingTasks {
 
       test(name: 'com.intellij.tests.BootstrapTests')
     }
+  }
+  
+  static boolean dependenciesInstalled
+
+  private def setupTestingDependencies() {
+    if (dependenciesInstalled) return
+    dependenciesInstalled = true
+    context.messages.info("Setting up testing dependencies")
+    if (!BuildUtils.runDependenciesGradle(context.paths.communityHome, 'setupKotlinPlugin')) {
+      context.messages.error("Cannot setup testing dependencies")
+    }
+    dependenciesInstalled = true
   }
 
   static boolean taskDefined

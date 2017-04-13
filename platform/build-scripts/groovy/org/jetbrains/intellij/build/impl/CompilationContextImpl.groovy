@@ -66,26 +66,30 @@ class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
+    if (!options.isInDevelopmentMode) {
+      setupCompilationDependencies(messages, communityHome)
+    }
+
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
+    def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
 
-    setupDependencies(messages, communityHome)
     if (project.modules.isEmpty()) {
-      loadProject(communityHome, projectHome, jdk8Home, project, global, messages)
+      loadProject(projectHome, jdk8Home, kotlinHome, project, global, messages)
     }
     else {
       //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
       messages.info("Skipping loading project because it's already loaded")
     }
 
-    def context = new CompilationContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, jdk8Home, messages,
+    def context = new CompilationContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, jdk8Home, kotlinHome, messages,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     return context
   }
 
   private CompilationContextImpl(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                 String communityHome, String projectHome, String jdk8Home, BuildMessages messages,
+                                 String communityHome, String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
     this.project = project
@@ -94,23 +98,18 @@ class CompilationContextImpl implements CompilationContext {
     this.projectBuilder = projectBuilder
     this.messages = messages
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
+    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home, kotlinHome)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome,
-                                      messages, buildOutputRootEvaluator, options)
+    return new CompilationContextImpl(ant, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome, 
+                                      paths.kotlinHome, messages, buildOutputRootEvaluator, options)
   }
 
-  private static void loadProject(String communityHome, String projectHome, String jdkHome, JpsProject project, JpsGlobal global,
+  private static void loadProject(String projectHome, String jdkHome, String kotlinHome, JpsProject project, JpsGlobal global, 
                                   BuildMessages messages) {
-    def bundledKotlinPath = "$communityHome/build/dependencies/build/kotlin/Kotlin/kotlinc"
-    if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
-      messages.error(
-        "Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
-    }
-    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
+    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
 
     JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(global, "1.8", jdkHome)
@@ -120,9 +119,12 @@ class CompilationContextImpl implements CompilationContext {
     messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
   }
 
-  private static void setupDependencies(BuildMessages messages, String communityHome) {
+  static boolean dependenciesInstalled
+  static void setupCompilationDependencies(BuildMessages messages, String communityHome) {
+    if (dependenciesInstalled) return
+    dependenciesInstalled = true
     messages.info("Setting up compilation dependencies")    
-    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupJdks', 'setupKotlinPlugin')) {
+    if (!BuildUtils.runDependenciesGradle(communityHome, 'setupJdks', 'setupKotlinPlugin')) {
       messages.error("Cannot setup compilation dependencies")
     }
   }
@@ -240,17 +242,18 @@ class CompilationContextImpl implements CompilationContext {
     messages.artifactBuild(relativePath)
   }
 
-  private static String toCanonicalPath(String communityHome) {
-    FileUtil.toSystemIndependentName(new File(communityHome).canonicalPath)
+  private static String toCanonicalPath(String path) {
+    FileUtil.toSystemIndependentName(new File(path).canonicalPath)
   }
 }
 
 class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
     this.communityHome = communityHome
     this.projectHome = projectHome
     this.buildOutputRoot = buildOutputRoot
     this.jdkHome = jdkHome
+    this.kotlinHome = kotlinHome
     artifacts = "$buildOutputRoot/artifacts"
     distAll = "$buildOutputRoot/dist.all"
     temp = "$buildOutputRoot/temp"

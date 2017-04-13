@@ -216,9 +216,16 @@ public class JBUI {
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
-      if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
-        if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
-          return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
+      if (SystemInfo.isMac) {
+        switch (gc.getDevice().getType()) {
+          case GraphicsDevice.TYPE_RASTER_SCREEN:
+            if (UIUtil.isJreHiDPI_earlierVersion()) {
+              return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
+            }
+            break;
+          case GraphicsDevice.TYPE_PRINTER:
+            // workaround for mac: default tx for PrinterGraphicsConfig may be uninitialized yet
+            return sysScale();
         }
       }
       return (float)gc.getDefaultTransform().getScaleX();

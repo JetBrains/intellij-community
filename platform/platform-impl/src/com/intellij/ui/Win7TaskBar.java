@@ -27,6 +27,8 @@ import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
+import org.jetbrains.annotations.NotNull;
+import sun.awt.AWTAccessor;
 
 import java.awt.*;
 import java.awt.peer.ComponentPeer;
@@ -177,9 +179,10 @@ class Win7TaskBar {
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  private static WinDef.HWND getHandle(IdeFrame frame) {
+  private static WinDef.HWND getHandle(@NotNull IdeFrame frame) {
+    Component component = (Component)frame;
     try {
-      ComponentPeer peer = ((Component)frame).getPeer();
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(component);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
       return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
     }

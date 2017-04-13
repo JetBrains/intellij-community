@@ -1045,7 +1045,7 @@
         <option name="BREADCRUMBS_HOVERED">
            <value>
              <option name="FOREGROUND" value="585858"/>
-             <option name="FONT_TYPE" value="1"/>
+             <option name="BACKGROUND" value="dedede"/>
            </value>
         </option>
         <option name="BREADCRUMBS_CURRENT">
@@ -2152,7 +2152,7 @@
       <option name="BREADCRUMBS_HOVERED">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="FONT_TYPE" value="1"/>
+           <option name="BACKGROUND" value="44474a"/>
          </value>
       </option>
       <option name="BREADCRUMBS_CURRENT">
