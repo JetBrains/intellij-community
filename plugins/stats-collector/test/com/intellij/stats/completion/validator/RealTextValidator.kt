@@ -41,18 +41,6 @@ class RealTextValidator {
 
         Assertions.assertThat(err.size()).isEqualTo(0)
     }
-    
-    
-//    @Test
-//    fun test_DumpErr() {
-//        val file = File("completion_data.txt")
-//        val output = ByteArrayOutputStream()
-//        val err = FileOutputStream(File("err"))
-//        val separator = ErrorSessionDumper(FileInputStream(file), output, err)         
-//        separator.processInput()
-//
-//        println("Failed: ${separator.totalFailedSessions} Success: ${separator.totalSuccessSessions}")   
-//    }
 
 }
 
