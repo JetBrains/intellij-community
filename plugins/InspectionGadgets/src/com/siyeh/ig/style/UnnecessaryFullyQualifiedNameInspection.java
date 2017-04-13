@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -241,10 +242,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
-      if (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
-        return;
-      }
-      final List<PsiJavaCodeReferenceElement> references = new ArrayList<>(2);
+      final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
       references.add(reference);
       if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);
@@ -265,9 +263,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
+          final ProblemHighlightType highlightType =
+            (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null)
+            ? ProblemHighlightType.INFORMATION
+            : ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
                                      ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
-          registerError(qualifier1, ProblemHighlightType.LIKE_UNUSED_SYMBOL, inSameFile);
+          registerError(qualifier1, highlightType, inSameFile);
         }
         break;
       }
