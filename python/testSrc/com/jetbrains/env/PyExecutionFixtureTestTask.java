@@ -96,6 +96,10 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myTimeout = LONG_TIMEOUT;
   }
 
+  public void useShortTimeout() {
+    myTimeout = 5000;
+  }
+
   /**
    * Returns virt file by path. May be relative or not.
    *
