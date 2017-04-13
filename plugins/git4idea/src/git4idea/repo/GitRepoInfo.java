@@ -175,7 +175,7 @@ public class GitRepoInfo {
       if (b1.getClass() != b2.getClass()) {
         return false;
       }
-      return b1.getKey().getName().equals(b2.getKey().getName()) && b2.getValue().equals(b2.getValue());
+      return b1.getKey().getName().equals(b2.getKey().getName()) && b1.getValue().equals(b2.getValue());
     }
   }
 
