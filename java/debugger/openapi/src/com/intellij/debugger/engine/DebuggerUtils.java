@@ -72,20 +72,19 @@ public abstract class DebuggerUtils {
         return ((StringReference)value).value();
       }
       if (isInteger(value)) {
-        long v = ((PrimitiveValue)value).longValue();
-        return String.valueOf(v);
+        return String.valueOf(((PrimitiveValue)value).longValue());
       }
-      if (isNumeric(value)) {
-        double v = ((PrimitiveValue)value).doubleValue();
-        return String.valueOf(v);
+      if (value instanceof FloatValue) {
+        return String.valueOf(((FloatValue)value).floatValue());
+      }
+      if (value instanceof DoubleValue) {
+        return String.valueOf(((DoubleValue)value).doubleValue());
       }
       if (value instanceof BooleanValue) {
-        boolean v = ((PrimitiveValue)value).booleanValue();
-        return String.valueOf(v);
+        return String.valueOf(((PrimitiveValue)value).booleanValue());
       }
       if (value instanceof CharValue) {
-        char v = ((PrimitiveValue)value).charValue();
-        return String.valueOf(v);
+        return String.valueOf(((PrimitiveValue)value).charValue());
       }
       if (value instanceof ObjectReference) {
         if (value instanceof ArrayReference) {

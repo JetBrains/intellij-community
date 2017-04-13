@@ -15,13 +15,12 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -78,25 +77,32 @@ public class UnBoxingEvaluator implements Evaluator {
                                           
   private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
-    final DebugProcessImpl process = context.getDebugProcess();
-    final ClassType wrapperClass = (ClassType)value.referenceType();
-
     // for speedup first try value field
-    Field valueField = wrapperClass.fieldByName("value");
-    if (valueField != null) {
-      Value primitiveValue = value.getValue(valueField);
-      if (primitiveValue != null) {
-        LOG.assertTrue(DebuggerUtilsEx.signatureToName(conversionMethodSignature).startsWith(primitiveValue.type().name()));
-        return primitiveValue;
-      }
+    Value primitiveValue = getInnerPrimitiveValue(value);
+    if (primitiveValue != null) {
+      return primitiveValue;
     }
 
-    Method method = wrapperClass.concreteMethodByName(conversionMethodName, conversionMethodSignature);
+    Method method = ((ClassType)value.referenceType()).concreteMethodByName(conversionMethodName, conversionMethodSignature);
     if (method == null) {
       throw new EvaluateException("Cannot convert to primitive value of type " + value.type() + ": Unable to find method " +
                                   conversionMethodName + conversionMethodSignature);
     }
 
-    return process.invokeMethod(context, value, method, Collections.emptyList());
+    return context.getDebugProcess().invokeMethod(context, value, method, Collections.emptyList());
+  }
+
+  @Nullable
+  public static PrimitiveValue getInnerPrimitiveValue(ObjectReference value) {
+    ReferenceType type = value.referenceType();
+    Field valueField = type.fieldByName("value");
+    if (valueField != null) {
+      Value primitiveValue = value.getValue(valueField);
+      if (primitiveValue instanceof PrimitiveValue) {
+        LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
+        return (PrimitiveValue)primitiveValue;
+      }
+    }
+    return null;
   }
 }
