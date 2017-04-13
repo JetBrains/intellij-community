@@ -17,6 +17,9 @@ package com.intellij.vcs.commit;
 
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class SubjectLimitInspection extends BaseCommitMessageInspection {
 
@@ -25,5 +28,11 @@ public class SubjectLimitInspection extends BaseCommitMessageInspection {
   @Override
   public String getDisplayName() {
     return "Limit subject line";
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SubjectLimitInspectionOptions().getMainPanel();
   }
 }

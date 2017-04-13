@@ -15,24 +15,21 @@
  */
 package com.intellij.vcs.commit;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.ui.JBIntSpinner;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class BodyLimitInspection extends BaseCommitMessageInspection {
+public class SubjectLimitInspectionOptions {
+  private JBIntSpinner myMarginSpinner;
+  private JPanel myMainPanel;
 
-  @Nls
   @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Limit body line";
+  public JPanel getMainPanel() {
+    return myMainPanel;
   }
 
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    return new BodyLimitInspectionOptions().getMainPanel();
+  private void createUIComponents() {
+    myMarginSpinner = new JBIntSpinner(0, 0, 10000);
   }
 }

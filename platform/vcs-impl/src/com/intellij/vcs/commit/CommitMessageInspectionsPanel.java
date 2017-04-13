@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.commit;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -28,8 +30,8 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.Panels;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,18 +39,31 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
+import java.util.Map;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
   @NotNull private final Project myProject;
   @NotNull private final CommitMessageInspectionProfile myProfile;
   @NotNull private final List<ToolDescriptors> myInitialToolDescriptors = newArrayList();
+  @NotNull private final Map<HighlightDisplayKey, CommitMessageInspectionDetails> myToolDetails = newHashMap();
   @NotNull private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group("");
   private InspectionProfileModifiableModel myModifiableModel;
   private InspectionsConfigTreeTable myInspectionsTable;
+  private Wrapper myDetailsPanel = new Wrapper() {
+    @Override
+    public boolean isNull() {
+      // make inspections table not to occupy all available width if there is no current details
+      return false;
+    }
+  };
+  private CommitMessageInspectionDetails myCurrentDetails;
 
   public CommitMessageInspectionsPanel(@NotNull Project project) {
     myProject = project;
@@ -84,12 +99,47 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     myInspectionsTable.setTreeCellRenderer(new MyInspectionsTreeRenderer());
     myInspectionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myInspectionsTable.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    myInspectionsTable.getTree().addTreeSelectionListener(e -> updateDetailsPanel());
 
     JBSplitter splitter = new JBSplitter("CommitMessageInspectionsPanelSplitter", 0.5f);
     splitter.setShowDividerIcon(false);
     splitter.setFirstComponent(myInspectionsTable);
-    splitter.setSecondComponent(Panels.simplePanel());
+    splitter.setSecondComponent(myDetailsPanel);
     addToCenter(splitter);
+  }
+
+  private void updateDetailsPanel() {
+    MyInspectionTreeNode node = getSelectedNode();
+
+    if (node == null && myCurrentDetails != null ||
+        node != null && (myCurrentDetails == null || node.getKey() != myCurrentDetails.getKey())) {
+      setDetails(node);
+    }
+
+    if (myCurrentDetails != null) {
+      myCurrentDetails.update();
+    }
+  }
+
+  private void setDetails(@Nullable MyInspectionTreeNode node) {
+    myCurrentDetails = node != null ? myToolDetails.computeIfAbsent(node.getKey(), key -> createDetails(node)) : null;
+
+    myDetailsPanel.setContent(myCurrentDetails != null ? myCurrentDetails.getMainPanel() : null);
+    myDetailsPanel.repaint();
+  }
+
+  @NotNull
+  private CommitMessageInspectionDetails createDetails(@NotNull MyInspectionTreeNode node) {
+    CommitMessageInspectionDetails details = new CommitMessageInspectionDetails(myProject, myModifiableModel, node.getDescriptors());
+    details.addListener(severity -> myInspectionsTable.updateUI());
+    return details;
+  }
+
+  @Nullable
+  private MyInspectionTreeNode getSelectedNode() {
+    TreePath selectedPath = myInspectionsTable.getTree().getPathForRow(myInspectionsTable.getSelectedRow());
+
+    return selectedPath != null ? (MyInspectionTreeNode)selectedPath.getLastPathComponent() : null;
   }
 
   @Override
@@ -136,12 +186,25 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
 
     @Override
     public void updateRightPanel() {
+      updateDetailsPanel();
     }
   }
 
   private static class MyInspectionTreeNode extends InspectionConfigTreeNode {
     public MyInspectionTreeNode(@NotNull ToolDescriptors descriptors) {
       setUserObject(descriptors);
+    }
+
+    @NotNull
+    @Override
+    public Descriptor getDefaultDescriptor() {
+      return notNull(super.getDefaultDescriptor());
+    }
+
+    @NotNull
+    @Override
+    public ToolDescriptors getDescriptors() {
+      return notNull(super.getDescriptors());
     }
   }
 
