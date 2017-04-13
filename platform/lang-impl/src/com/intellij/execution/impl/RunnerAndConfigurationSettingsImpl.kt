@@ -214,6 +214,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
+
+    configuration.beforeRunTasks = element.getChild(METHOD)?.let { manager.readStepsBeforeRun(it, this) } ?: emptyList()
   }
 
   // do not call directly

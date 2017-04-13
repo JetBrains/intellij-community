@@ -20,20 +20,46 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashSet
 import org.jdom.Element
 
-@State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
-class ProjectRunConfigurationManager(private val manager: RunManagerImpl) : PersistentStateComponent<Element> {
+internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAware {
+  override fun runActivity(project: Project) {
+    if (project.isDefault || !Registry.`is`("runManager.use.schemeManager", false)) {
+      return
+    }
 
+    val manager = RunManagerImpl.getInstanceImpl(project)
+    val schemeManager = SchemeManagerFactory.getInstance(manager.project).create("runConfigurations", RunConfigurationSchemeManager(manager, true), isUseOldFileNameSanitize = true)
+    manager.projectSchemeManager = schemeManager
+    schemeManager.loadSchemes()
+    manager.requestSort()
+  }
+}
+
+@State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
+internal class ProjectRunConfigurationManager(private val manager: RunManagerImpl) : PersistentStateComponent<Element> {
   override fun getState(): Element? {
+    if (Registry.`is`("runManager.use.schemeManager", false)) {
+      return null
+    }
+
     val state = Element("state")
     manager.writeConfigurations(state, manager.getSharedConfigurations())
     return state
   }
 
   override fun loadState(state: Element) {
+    if (Registry.`is`("runManager.use.schemeManager", false)) {
+      return
+    }
+
     val existing = THashSet<String>()
     for (child in state.getChildren(RunManagerImpl.CONFIGURATION)) {
       existing.add(manager.loadConfiguration(child, true).uniqueID)

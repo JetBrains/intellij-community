@@ -17,8 +17,6 @@
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
-import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SchemeManagerIprProvider
 import com.intellij.configurationStore.save
 import com.intellij.execution.*
@@ -31,13 +29,13 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -49,14 +47,12 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import java.util.function.Function
 import javax.swing.Icon
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private val LOG = logger<RunManagerImpl>()
 private val SELECTED_ATTR = "selected"
-private val METHOD = "method"
+internal val METHOD = "method"
 private val OPTION = "option"
 
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
@@ -67,6 +63,8 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     private val RECENT = "recent_temporary"
     @JvmField
     val NAME_ATTR = "name"
+
+    internal val LOG = logger<RunManagerImpl>()
 
     @JvmStatic
     fun getInstanceImpl(project: Project) = RunManager.getInstance(project) as RunManagerImpl
@@ -133,38 +131,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
-  private val schemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-                                                                               object : LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>() {
-      override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
-        val settings = RunnerAndConfigurationSettingsImpl(this@RunManagerImpl)
-        val element = dataHolder.read()
-        try {
-          settings.readExternal(element, false)
-        }
-        catch (e: InvalidDataException) {
-          LOG.error(e)
-        }
+  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
 
-        //val factory = settings.factory ?: return UnknownRunConfigurationScheme(name)
-        doLoadConfiguration(element, settings)
-        return settings
-      }
-
-      override fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
-        var name = attributeProvider.apply("name")
-        if (name == "<template>" || name == null) {
-          attributeProvider.apply("type")?.let {
-            if (name == null) {
-              name = "<template>"
-            }
-            name += " of type ${it}"
-          }
-        }
-        return name ?: throw IllegalStateException("name is missed in the scheme data")
-      }
-
-      override fun isExternalizable(scheme: RunnerAndConfigurationSettingsImpl) = true
-  }, streamProvider = schemeManagerProvider, autoSave = false)
+  internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
 
   private val stringIdToBeforeRunProvider by lazy {
     val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
@@ -272,7 +241,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           it.isDoNotStore = true
         }
 
-        schemeManager.addScheme(template)
+        workspaceSchemeManager.addScheme(template)
 
         template
       }
@@ -310,11 +279,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         refreshUsagesList(settings)
       }
 
-      if (!settings.isShared && existingId == null) {
-        schemeManager.addScheme(settings as RunnerAndConfigurationSettingsImpl)
+      if (existingId == null) {
+        settings.schemeManager?.addScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
-      if (settings.isShared && existingId != null) {
-        schemeManager.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
+      else {
+        (if (settings.isShared) workspaceSchemeManager else projectSchemeManager)?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
 
       checkRecentsLimit()
@@ -327,6 +296,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       myDispatcher.multicaster.runConfigurationChanged(settings, existingId)
     }
   }
+
+  private val RunnerAndConfigurationSettings.schemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>?
+    get() = if (isShared) projectSchemeManager else workspaceSchemeManager
 
   override fun refreshUsagesList(profile: RunProfile) {
     if (profile !is RunConfiguration) {
@@ -516,7 +488,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
   override fun getState(): Element {
     val element = Element("state")
 
-    schemeManager.save()
+    workspaceSchemeManager.save()
 
     lock.read {
       // backward compatibility - write templates in the end
@@ -642,7 +614,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
       name
     }
-    schemeManager.reload()
+    workspaceSchemeManager.reload()
 
     val order = ArrayList<String>()
     @Suppress("DEPRECATION")
@@ -757,17 +729,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     LOG.catchAndLog {
       settings.readExternal(element, isShared)
     }
-
-    if (isShared) {
-      settings.level = RunConfigurationLevel.PROJECT
-    }
-
-    doLoadConfiguration(element, settings)
+    addConfiguration(element, settings)
     return settings
   }
 
-  private fun doLoadConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl) {
-    settings.configuration.beforeRunTasks = element.getChild(METHOD)?.let { readStepsBeforeRun(it, settings) } ?: emptyList()
+  internal fun addConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl) {
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
@@ -783,7 +749,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
   }
 
-  private fun readStepsBeforeRun(child: Element, settings: RunnerAndConfigurationSettings): List<BeforeRunTask<*>> {
+  internal fun readStepsBeforeRun(child: Element, settings: RunnerAndConfigurationSettings): List<BeforeRunTask<*>> {
     var result: MutableList<BeforeRunTask<*>>? = null
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
@@ -1147,9 +1113,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           }
 
           iterator.remove()
-          if (!settings.isShared) {
-            schemeManager.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
-          }
+          settings.schemeManager?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
           recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
         }
