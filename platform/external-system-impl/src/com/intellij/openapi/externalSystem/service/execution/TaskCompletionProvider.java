@@ -32,7 +32,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import groovyjarjarcommonscli.Options;
 import icons.ExternalSystemIcons;
