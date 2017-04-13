@@ -343,6 +343,12 @@ public class AllIcons {
     public static final Icon ArrowRight = IconLoader.getIcon("/diff/arrowRight.png"); // 11x11
     public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.png"); // 11x11
     public static final Icon BranchDiff = IconLoader.getIcon("/diff/branchDiff.png"); // 16x16
+    public static final Icon Compare4LeftBottom = IconLoader.getIcon("/diff/compare4LeftBottom.png"); // 16x16
+    public static final Icon Compare4LeftMiddle = IconLoader.getIcon("/diff/compare4LeftMiddle.png"); // 16x16
+    public static final Icon Compare4LeftRight = IconLoader.getIcon("/diff/compare4LeftRight.png"); // 16x16
+    public static final Icon Compare4MiddleBottom = IconLoader.getIcon("/diff/compare4MiddleBottom.png"); // 16x16
+    public static final Icon Compare4MiddleRight = IconLoader.getIcon("/diff/compare4MiddleRight.png"); // 16x16
+    public static final Icon Compare4RightBottom = IconLoader.getIcon("/diff/compare4RightBottom.png"); // 16x16
     public static final Icon CurrentLine = IconLoader.getIcon("/diff/currentLine.png"); // 16x16
     
     @SuppressWarnings("unused")
