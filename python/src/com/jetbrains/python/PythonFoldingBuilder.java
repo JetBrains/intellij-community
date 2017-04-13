@@ -233,15 +233,15 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   @Override
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     if (isImport(node)) {
-      return CodeFoldingSettings.getInstance().isCollapseImports();
+      return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().isCollapseMethods()) {
+      if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().COLLAPSE_METHODS) {
         // method will be collapsed, no need to also collapse docstring
         return false;
       }
       if (getDocStringOwnerType(node) != null) {
-        return CodeFoldingSettings.getInstance().isCollapseDocComments();
+        return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
       }
       return PythonFoldingSettings.getInstance().isCollapseLongStrings();
     }
@@ -249,7 +249,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
     }
     if (node.getElementType() == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
-      return CodeFoldingSettings.getInstance().isCollapseMethods();
+      return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
     }
     if (FOLDABLE_COLLECTIONS_LITERALS.contains(node.getElementType())) {
       return PythonFoldingSettings.getInstance().isCollapseLongCollections();

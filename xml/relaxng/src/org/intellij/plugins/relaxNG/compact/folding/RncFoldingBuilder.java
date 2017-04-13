@@ -83,7 +83,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
 
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    return isCommentLike(node.getElementType()) && CodeFoldingSettings.getInstance().isCollapseDocComments();
+    return isCommentLike(node.getElementType()) && CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
   }
 
   private static void process(@Nullable ASTNode node, Document document, ArrayList<FoldingDescriptor> regions) {

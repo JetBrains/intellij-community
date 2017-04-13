@@ -31,10 +31,9 @@ import java.util.Set;
  * Defines a single folding region in the code.
  *
  * <p><a name="Dependencies"><b>Dependencies</b></a></p>
- * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker}), 
+ * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker}, 
+ * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}), 
  * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass). 
- * Changed dependency for a specific region causes its regeneration according to potentially updated folding rules, 
- * e.g. with regard to 'collapsed by default' state.
  * 
  * @author max
  * @see FoldingBuilder
@@ -61,23 +60,8 @@ public class FoldingDescriptor {
     this(node, range, null);
   }
 
-  /**
-   * @param dependency see <a href="#Dependencies">Dependencies</a>
-   */
-  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable Object dependency) {
-    this(node, range, null, dependency);
-  }
-
   public FoldingDescriptor(@NotNull PsiElement element, @NotNull TextRange range) {
     this(ObjectUtils.assertNotNull(element.getNode()), range, null);
-  }
-
-  /**
-   * @param dependency see <a href="#Dependencies">Dependencies</a>
-   */
-  public FoldingDescriptor(@NotNull PsiElement element, @NotNull TextRange range, @Nullable Object dependency) {
-    this(ObjectUtils.assertNotNull(element.getNode()), range, null, 
-         dependency == null ? Collections.emptySet() : Collections.singleton(dependency));
   }
 
   /**
@@ -91,13 +75,6 @@ public class FoldingDescriptor {
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
     this(node, range, group, Collections.emptySet());
-  }
-
-  /**
-   * @param dependency see <a href="#Dependencies">Dependencies</a>
-   */
-  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group, @Nullable Object dependency) {
-    this(node, range, group, dependency == null ? Collections.emptySet() : Collections.singleton(dependency));
   }
 
   /**
