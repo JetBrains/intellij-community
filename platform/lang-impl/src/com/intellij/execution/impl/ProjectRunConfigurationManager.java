@@ -13,61 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.impl;
+package com.intellij.execution.impl
 
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.UnknownRunConfiguration;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.StateSplitterEx;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.Pair;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.execution.configurations.UnknownRunConfiguration
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.util.Pair
+import gnu.trove.THashSet
+import org.jdom.Element
 
-import java.util.List;
-import java.util.Set;
+@State(name = "ProjectRunConfigurationManager",
+  storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
+class ProjectRunConfigurationManager(private val myManager: RunManagerImpl) : PersistentStateComponent<Element> {
 
-@State(name = "ProjectRunConfigurationManager", storages = @Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class))
-public class ProjectRunConfigurationManager implements PersistentStateComponent<Element> {
-  private final RunManagerImpl myManager;
-
-  public ProjectRunConfigurationManager(@NotNull RunManagerImpl manager) {
-    myManager = manager;
+  override fun getState(): Element? {
+    val state = Element("state")
+    myManager.writeConfigurations(state, myManager.getSharedConfigurations())
+    return state
   }
 
-  @Override
-  public Element getState() {
-    Element state = new Element("state");
-    myManager.writeConfigurations(state, myManager.getSharedConfigurations());
-    return state;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    Set<String> existing = new THashSet<>();
-    for (Element child : state.getChildren(RunManagerImpl.CONFIGURATION)) {
-      existing.add(myManager.loadConfiguration(child, true).getUniqueID());
+  override fun loadState(state: Element) {
+    val existing = THashSet<String>()
+    for (child in state.getChildren(RunManagerImpl.CONFIGURATION)) {
+      existing.add(myManager.loadConfiguration(child, true).uniqueID)
     }
 
-    myManager.removeNotExistingSharedConfigurations(existing);
-    myManager.requestSort();
+    myManager.removeNotExistingSharedConfigurations(existing)
+    myManager.requestSort()
 
-    if (myManager.getSelectedConfiguration() == null) {
-      for (RunnerAndConfigurationSettings settings : myManager.getAllSettings()) {
-        if (!(settings.getType() instanceof UnknownRunConfiguration)) {
-          myManager.setSelectedConfiguration(settings);
-          break;
+    if (myManager.selectedConfiguration == null) {
+      for (settings in myManager.allSettings) {
+        if (settings.type !is UnknownRunConfiguration) {
+          myManager.selectedConfiguration = settings
+          break
         }
       }
     }
   }
 
-  static class RunConfigurationStateSplitter extends StateSplitterEx {
-    @Override
-    public List<Pair<Element, String>> splitState(@NotNull Element state) {
-      return splitState(state, RunManagerImpl.NAME_ATTR);
+  internal class RunConfigurationStateSplitter : StateSplitterEx() {
+    override fun splitState(state: Element): List<Pair<Element, String>> {
+      return StateSplitterEx.splitState(state, RunManagerImpl.NAME_ATTR)
     }
   }
 }
