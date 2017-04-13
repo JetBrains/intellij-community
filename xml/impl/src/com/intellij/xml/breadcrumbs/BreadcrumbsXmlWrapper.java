@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -51,6 +50,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -63,6 +63,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -181,18 +182,28 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     EditorGutter gutter = editor.getGutter();
     if (gutter instanceof EditorGutterComponentEx) {
       EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)gutter;
+      MouseEventAdapter mouseListener = new MouseEventAdapter<EditorGutterComponentEx>(gutterComponent) {
+        @NotNull
+        @Override
+        protected MouseEvent convert(@NotNull MouseEvent event) {
+          return convert(event, gutterComponent);
+        }
+      };
       ComponentAdapter resizeListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent event) {
           breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+          breadcrumbs.setFont(getEditorFont(myEditor));
         }
       };
 
       addComponentListener(resizeListener);
       gutterComponent.addComponentListener(resizeListener);
+      breadcrumbs.addMouseListener(mouseListener);
       Disposer.register(this, () -> {
         removeComponentListener(resizeListener);
         gutterComponent.removeComponentListener(resizeListener);
+        breadcrumbs.removeMouseListener(mouseListener);
       });
       breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
     }
