@@ -53,7 +53,7 @@ class TestClass extends TestObject {
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, getConfiguration().getPersistentData().getMainClassName(), globalSearchScope);
     if (psiClass != null) {
       if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
-        return JUnitStarter.JUNIT5_RUNNER_NAME;
+        return JUnitStarter.JUNIT5_PARAMETER;
       }
       return JUnitStarter.JUNIT4_PARAMETER;
     }

@@ -57,7 +57,7 @@ class TestMethod extends TestObject {
     if (psiClass == null) return null;
 
     if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
-      return JUnitStarter.JUNIT5_RUNNER_NAME;
+      return JUnitStarter.JUNIT5_PARAMETER;
     }
 
     if (JUnitUtil.isJUnit4TestClass(psiClass)) {
