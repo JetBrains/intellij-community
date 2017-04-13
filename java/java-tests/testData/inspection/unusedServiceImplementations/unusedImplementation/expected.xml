@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>MyServiceImpl.java</file>
+    <line>4</line>
+    <entry_point TYPE="java.module" FQNAME="M2" />
+    <problem_class severity="WARNING">unused</problem_class>
+    <description>Unused declaration</description>
+  </problem>
+</problems>
