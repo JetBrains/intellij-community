@@ -103,19 +103,19 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Override
   public byte[] loadContent() throws IOException, VcsException {
-    if (myContent != null) return myContent;
-
-    if (myRevision instanceof ByteBackedContentRevision) {
-      myContent = ((ByteBackedContentRevision)myRevision).getContentAsBytes();
-    }
-    else {
-      String content = myRevision.getContent();
-      if (content != null) {
-        myContent = content.getBytes(myPath.getCharset().name());
-        return myContent;
+    if (myContent == null) {
+      if (myRevision instanceof ByteBackedContentRevision) {
+        myContent = ((ByteBackedContentRevision)myRevision).getContentAsBytes();
+      }
+      else {
+        String content = myRevision.getContent();
+        if (content != null) {
+          myContent = content.getBytes(myPath.getCharset().name());
+        }
       }
     }
-    return null;
+
+    return myContent;
   }
 
   @Nullable
