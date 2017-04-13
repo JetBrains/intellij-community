@@ -216,6 +216,11 @@ public class InvocationExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (isStatic) {
+      if (isBoxingCall()) {
+        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, tracer);
+        return buf;
+      }
+
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
         buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
@@ -356,6 +361,50 @@ public class InvocationExprent extends Exprent {
     buf.append(")");
 
     return buf;
+  }
+
+  private boolean isBoxingCall() {
+    if (isStatic && "valueOf".equals(name) && lstParameters.size() == 1) {
+      int paramType = lstParameters.get(0).getExprType().type;
+
+      // special handling for ambiguous types
+      if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+        if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
+          if (classname.equals("java/lang/Character")) {
+            return true;
+          }
+        }
+      }
+
+      return classname.equals(getClassNameForPrimitiveType(paramType));
+    }
+
+    return false;
+  }
+
+  // TODO: move to CodeConstants ???
+  private static String getClassNameForPrimitiveType(int type) {
+    switch (type) {
+      case CodeConstants.TYPE_BOOLEAN:
+        return "java/lang/Boolean";
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_BYTECHAR:
+        return "java/lang/Byte";
+      case CodeConstants.TYPE_CHAR:
+        return "java/lang/Character";
+      case CodeConstants.TYPE_SHORT:
+      case CodeConstants.TYPE_SHORTCHAR:
+        return "java/lang/Short";
+      case CodeConstants.TYPE_INT:
+        return "java/lang/Integer";
+      case CodeConstants.TYPE_LONG:
+        return "java/lang/Long";
+      case CodeConstants.TYPE_FLOAT:
+        return "java/lang/Float";
+      case CodeConstants.TYPE_DOUBLE:
+        return "java/lang/Double";
+    }
+    return null;
   }
 
   private BitSet getAmbiguousParameters() {

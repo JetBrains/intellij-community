@@ -10,39 +10,39 @@ public class TestPrimitives {
       this.printFloat(1.23F);// 11
       this.printDouble(1.23D);// 12
       this.printChar('Z');// 13
-      System.out.println(String.format("%b, %d, %d, %d", new Object[]{Boolean.valueOf(this.getBoolean()), Byte.valueOf(this.getByte()), Short.valueOf(this.getShort()), Integer.valueOf(this.getInt())}));// 15
+      System.out.println(String.format("%b, %d, %d, %d", new Object[]{this.getBoolean(), this.getByte(), this.getShort(), this.getInt()}));// 15
    }// 16
 
    public void printBoolean(boolean b) {
-      System.out.println(String.format("%b", new Object[]{Boolean.valueOf(b)}));// 19
+      System.out.println(String.format("%b", new Object[]{b}));// 19
    }// 20
 
    public void printByte(byte b) {
-      System.out.println(String.format("%d", new Object[]{Byte.valueOf(b)}));// 23
+      System.out.println(String.format("%d", new Object[]{b}));// 23
    }// 24
 
    public void printShort(short s) {
-      System.out.println(String.format("%d", new Object[]{Short.valueOf(s)}));// 27
+      System.out.println(String.format("%d", new Object[]{s}));// 27
    }// 28
 
    public void printInt(int i) {
-      System.out.println(String.format("%d", new Object[]{Integer.valueOf(i)}));// 31
+      System.out.println(String.format("%d", new Object[]{i}));// 31
    }// 32
 
    public void printLong(long l) {
-      System.out.println(String.format("%d", new Object[]{Long.valueOf(l)}));// 35
+      System.out.println(String.format("%d", new Object[]{l}));// 35
    }// 36
 
    public void printFloat(float f) {
-      System.out.println(String.format("%f", new Object[]{Float.valueOf(f)}));// 39
+      System.out.println(String.format("%f", new Object[]{f}));// 39
    }// 40
 
    public void printDouble(double d) {
-      System.out.println(String.format("%f", new Object[]{Double.valueOf(d)}));// 43
+      System.out.println(String.format("%f", new Object[]{d}));// 43
    }// 44
 
    public void printChar(char c) {
-      System.out.println(String.format("%c", new Object[]{Character.valueOf(c)}));// 47
+      System.out.println(String.format("%c", new Object[]{c}));// 47
    }// 48
 
    public boolean getBoolean() {
