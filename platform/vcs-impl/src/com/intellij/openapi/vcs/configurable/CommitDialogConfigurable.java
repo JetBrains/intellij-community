@@ -40,6 +40,6 @@ public class CommitDialogConfigurable extends ConfigurableBase<CommitDialogSetti
 
   @Override
   protected CommitDialogSettingsPanel createUi() {
-    return new CommitDialogSettingsPanel();
+    return new CommitDialogSettingsPanel(myProject);
   }
 }

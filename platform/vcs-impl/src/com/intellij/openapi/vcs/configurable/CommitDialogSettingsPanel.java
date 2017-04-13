@@ -15,36 +15,57 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.vcs.commit.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguration> {
+public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguration>, Disposable {
+  @NotNull private final Project myProject;
   private JBCheckBox myShowUnversionedFiles;
   private JPanel myMainPanel;
+  private CommitMessageInspectionsPanel myInspectionsPanel;
+
+  public CommitDialogSettingsPanel(@NotNull Project project) {
+    myProject = project;
+  }
 
   @Override
   public void reset(@NotNull VcsConfiguration settings) {
     myShowUnversionedFiles.setSelected(settings.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
+    myInspectionsPanel.reset();
   }
 
   @Override
   public boolean isModified(@NotNull VcsConfiguration settings) {
-    return settings.SHOW_UNVERSIONED_FILES_WHILE_COMMIT != myShowUnversionedFiles.isSelected();
+    return settings.SHOW_UNVERSIONED_FILES_WHILE_COMMIT != myShowUnversionedFiles.isSelected() || myInspectionsPanel.isModified();
   }
 
   @Override
   public void apply(@NotNull VcsConfiguration settings) throws ConfigurationException {
     settings.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
+    myInspectionsPanel.apply();
   }
 
   @NotNull
   @Override
   public JComponent getComponent() {
     return myMainPanel;
+  }
+
+  private void createUIComponents() {
+    myInspectionsPanel = new CommitMessageInspectionsPanel(myProject);
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(myInspectionsPanel);
   }
 }

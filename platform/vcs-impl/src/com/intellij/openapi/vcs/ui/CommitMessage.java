@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -29,6 +30,8 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import org.jetbrains.annotations.*;
 
@@ -137,6 +140,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+  }
+
+  public static boolean isCommitMessage(@NotNull PsiElement element) {
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+    return document != null && document.getUserData(DATA_KEY) != null;
   }
 
   @NotNull
