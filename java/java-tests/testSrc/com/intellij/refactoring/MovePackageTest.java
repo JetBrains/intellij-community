@@ -15,14 +15,16 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MovePackageTest extends MultiFileTestCase {
@@ -49,6 +51,12 @@ public class MovePackageTest extends MultiFileTestCase {
     doTest(new String[]{"a"}, "a.b");
   }
 
+  public void testPackageAndReferencedClass() throws Exception {
+    Project project = myPsiManager.getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    doTest((rootDir, rootAfter) -> performAction(new PsiElement[]{facade.findPackage("a"), facade.findClass("B", GlobalSearchScope.allScope(project))}, "b"));
+  }
+
   @NotNull
   @Override
   protected String getTestRoot() {
@@ -67,12 +75,16 @@ public class MovePackageTest extends MultiFileTestCase {
       assertNotNull("Package " + packageName + " not found", packages[i]);
     }
 
+    performAction(packages, newPackageName);
+  }
+
+  private void performAction(PsiElement[] packagesAndClasses, String newPackageName) {
     PsiPackage newParentPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(newPackageName);
     assertNotNull(newParentPackage);
     final PsiDirectory[] dirs = newParentPackage.getDirectories();
     assertEquals(dirs.length, 1);
 
-    new MoveClassesOrPackagesProcessor(myProject, packages,
+    new MoveClassesOrPackagesProcessor(myProject, packagesAndClasses,
                                        new SingleSourceRootMoveDestination(PackageWrapper.create(newParentPackage), dirs[0]),
                                        true, false, null).run();
     FileDocumentManager.getInstance().saveAllDocuments();
