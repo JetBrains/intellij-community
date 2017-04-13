@@ -523,7 +523,7 @@ public class GitHistoryUtils {
       catch (Throwable t) {
         if (parseError.isNull()) {
           parseError.set(t);
-          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(builder.toString()) + "\"\n" +
+          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(builder) + "\"\n" +
                     "Command " + handler.printableCommandLine(), t);
         }
       }
