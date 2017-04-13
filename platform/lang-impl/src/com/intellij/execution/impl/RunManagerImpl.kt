@@ -162,7 +162,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
         }
         return name ?: throw IllegalStateException("name is missed in the scheme data")
       }
-    }, streamProvider = schemeManagerProvider, autoSave = false)
+
+      override fun isExternalizable(scheme: RunnerAndConfigurationSettingsImpl) = true
+  }, streamProvider = schemeManagerProvider, autoSave = false)
 
   private val stringIdToBeforeRunProvider by lazy {
     val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
@@ -278,6 +280,11 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
   }
 
+  override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
+    (settings as RunnerAndConfigurationSettingsImpl).isShared = isShared
+    addConfiguration(settings)
+  }
+
   override fun addConfiguration(settings: RunnerAndConfigurationSettings) {
     val newId = settings.uniqueID
     var existingId: String? = null
@@ -303,6 +310,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
 
       if (!settings.isShared && existingId == null) {
         schemeManager.addScheme(settings as RunnerAndConfigurationSettingsImpl)
+      }
+      if (settings.isShared && existingId != null) {
+        schemeManager.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
 
       checkRecentsLimit()
@@ -749,7 +759,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     }
 
     if (isShared) {
-      settings.level = RunnerAndConfigurationSettingsImpl.Level.PROJECT
+      settings.level = RunConfigurationLevel.PROJECT
     }
 
     doLoadConfiguration(element, settings)
@@ -1026,7 +1036,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     if (value && settings.isTemporary) {
       doMakeStable(settings)
     }
-    (settings as RunnerAndConfigurationSettingsImpl).level = RunnerAndConfigurationSettingsImpl.Level.PROJECT
+    (settings as RunnerAndConfigurationSettingsImpl).level = RunConfigurationLevel.PROJECT
     fireRunConfigurationChanged(settings)
   }
 
@@ -1147,6 +1157,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
           }
 
           iterator.remove()
+          if (!settings.isShared) {
+            schemeManager.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
+          }
           recentlyUsedTemporaries.remove(settings.configuration)
           isRemoved = true
         }
