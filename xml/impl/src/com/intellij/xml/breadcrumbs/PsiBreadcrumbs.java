@@ -45,7 +45,9 @@ final class PsiBreadcrumbs extends Breadcrumbs {
 
   @Override
   public void setFont(Font font) {
-    super.setFont(RelativeFont.SMALL.derive(font));
+    super.setFont(Registry.is("editor.breadcrumbs.small")
+                  ? RelativeFont.SMALL.derive(font)
+                  : font);
   }
 
   @Override
