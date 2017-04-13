@@ -267,8 +267,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     val key = "${factory.type.id}.${factory.name}"
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
-        val template = RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(project, this), true)
-        template.isSingleton = factory.isConfigurationSingletonByDefault
+        val template = createTemplateSettings(factory)
         (template.configuration as? UnknownRunConfiguration)?.let {
           it.isDoNotStore = true
         }
@@ -279,6 +278,9 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
       }
     }
   }
+
+  internal fun createTemplateSettings(factory: ConfigurationFactory) = RunnerAndConfigurationSettingsImpl(this,
+    factory.createTemplateConfiguration(project, this), isTemplate = true, singleton = factory.isConfigurationSingletonByDefault)
 
   override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
     (settings as RunnerAndConfigurationSettingsImpl).isShared = isShared

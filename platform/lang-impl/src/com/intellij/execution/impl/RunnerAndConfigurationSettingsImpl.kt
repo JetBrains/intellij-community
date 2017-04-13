@@ -217,6 +217,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   // do not call directly
+  // cannot be private - used externally
   fun writeExternal(element: Element) {
     val configuration = configuration
     val factory = configuration.factory
@@ -257,6 +258,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       runnerSettings.getState(element)
       configurationPerRunnerSettings.getState(element)
     }
+
+    if (configuration !is UnknownRunConfiguration) {
+      manager.writeBeforeRunTasks(this, configuration)?.let {
+        element.addContent(it)
+      }
+    }
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
@@ -271,13 +278,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun writeScheme(): Element {
     val element = Element("configuration")
     writeExternal(element)
-
-    val configuration = _configuration
-    if (configuration != null && configuration !is UnknownRunConfiguration) {
-      manager.writeBeforeRunTasks(this, configuration)?.let {
-        element.addContent(it)
-      }
-    }
     return element
   }
 
@@ -376,13 +376,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
     
     if (isTemplate && _configuration != null) {
-      val templateConfiguration = configuration.factory.createTemplateConfiguration(manager.project, manager)
-
-      val templateState = Element("state")
-      serializeConfigurationInto(templateConfiguration, templateState)
-
-      val state = writeScheme()
-      if (JDOMUtil.areElementsEqual(state, templateState)) {
+      // todo optimize
+      val templateSettings = manager.createTemplateSettings(configuration.factory)
+      if (JDOMUtil.areElementsEqual(writeScheme(), templateSettings.writeScheme())) {
+        // this state doesn't mean that scheme will be removed - SchemeManager doesn't expect that scheme can be NON_PERSISTENT after UNCHANGED
+        // todo definitely, SchemeManager should be improved to support this case, but it is not safe to do right now
         return SchemeState.NON_PERSISTENT
       }
     }
