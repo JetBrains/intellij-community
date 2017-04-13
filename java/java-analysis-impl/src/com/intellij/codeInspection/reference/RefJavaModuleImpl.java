@@ -37,7 +37,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private Map<String, List<String>> myExportedPackageNames;
   private List<RequiredModule> myRequiredModules;
 
-  public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
+  RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getName(), javaModule, manager);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
   }
@@ -75,6 +75,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     return myExportedPackageNames != null ? myExportedPackageNames : Collections.emptyMap();
   }
 
+  @Override
   @NotNull
   public List<RequiredModule> getRequiredModules() {
     return myRequiredModules != null ? myRequiredModules : Collections.emptyList();

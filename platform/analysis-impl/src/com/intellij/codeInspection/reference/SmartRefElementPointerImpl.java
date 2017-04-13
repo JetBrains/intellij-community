@@ -58,13 +58,6 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
      myType = type;
    }
 
-  public SmartRefElementPointerImpl(final String type, final String fqName, final RefManager manager) {
-    myIsPersistent = false;
-    myFQName = fqName;
-    myType = type;
-    resolve(manager);
-  }
-
   @Override
   public boolean isPersistent() {
     return myIsPersistent;
@@ -91,8 +84,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
   @Override
   public boolean resolve(@NotNull RefManager manager) {
     if (myRefElement != null) {
-      if (myRefElement instanceof RefElement && myRefElement.isValid()) return true;
-      return false;
+      return myRefElement instanceof RefElement && myRefElement.isValid();
     }
     myRefElement = manager.getReference(myType, getFQName());
     return myRefElement != null;
