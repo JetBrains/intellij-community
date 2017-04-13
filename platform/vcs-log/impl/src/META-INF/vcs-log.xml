@@ -96,7 +96,7 @@
             use-shortcut-of="Annotate"
             text="Annotate" description="Annotate Revision" icon="AllIcons.Actions.Annotate"/>
     <action class="com.intellij.vcs.log.ui.actions.history.ShowAllAffectedFromHistoryAction" id="Vcs.Log.ShowAllAffected"
-            use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Vcs.AllRevisions" text="Show All Affected Files"
+            use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges" text="Show All Affected Files"
             description="Show all changes made in the chosen revision"/>
 
     <group id="Vcs.Log.Settings">
