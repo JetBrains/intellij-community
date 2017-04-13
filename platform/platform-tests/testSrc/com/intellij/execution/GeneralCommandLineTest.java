@@ -138,6 +138,10 @@ public class GeneralCommandLineTest {
     return new GeneralCommandLine(command);
   }
 
+  protected void assumeCanTestWindowsShell() {
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
+  }
+
   @NotNull
   protected String filterExpectedOutput(@NotNull String output) {
     return output;
@@ -212,7 +216,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String javaPath = command.first.getExePath();
@@ -224,7 +228,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughNestedWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String javaPath = command.first.getExePath();
@@ -239,7 +243,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
@@ -256,7 +260,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndNestedWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
@@ -276,11 +280,11 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToEchoThroughWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     for (String argument : ARGUMENTS) {
       if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
-      GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
+      GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
       String output = execAndGetOutput(commandLine);
       assertEquals(commandLine.getPreparedCommandLine(), argument + "\n", output);
     }
@@ -312,7 +316,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellCommand() {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     String string = "http://localhost/wtf?a=b&c=d";
     String echo = ExecUtil.execAndReadLine(createCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
@@ -321,7 +325,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellScriptQuoting() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     String scriptPrefix = "my_script";
     for (String scriptExt : new String[]{".cmd", ".bat"}) {
@@ -341,7 +345,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellQuotingWithExtraSwitch() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     String param = "a&b";
     GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
