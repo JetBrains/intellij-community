@@ -109,7 +109,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @Nullable
-  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position) {
+  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position, String frameName) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 
