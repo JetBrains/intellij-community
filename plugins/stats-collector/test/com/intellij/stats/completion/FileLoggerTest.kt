@@ -3,10 +3,11 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.testFramework.PlatformTestCase
-import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Matchers
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import java.io.File
 
 
@@ -21,9 +22,9 @@ class FileLoggerTest : PlatformTestCase() {
         dir = createTempDirectory()
         logFile = File(dir, "unique_1")
         
-        pathProvider = mock<FilePathProvider> {
-            on { getStatsDataDirectory() }.thenReturn(dir)
-            on { getUniqueFile() }.thenReturn(logFile)
+        pathProvider = mock(FilePathProvider::class.java).apply {
+            `when`(getStatsDataDirectory()).thenReturn(dir)
+            `when`(getUniqueFile()).thenReturn(logFile)
         }
     }
 
@@ -44,11 +45,11 @@ class FileLoggerTest : PlatformTestCase() {
         val loggerProvider = CompletionFileLoggerProvider(logFileManager)
         val logger = loggerProvider.newCompletionLogger()
         
-        val lookup = mock<LookupImpl> {
-            on { getRelevanceObjects(Matchers.any(), Matchers.anyBoolean()) }.thenReturn(emptyMap())
-            on { items }.thenReturn(emptyList())
-            on { psiFile }.thenReturn(null)
-            on { editor }.thenReturn(mock<Editor>())
+        val lookup = mock(LookupImpl::class.java).apply {
+            `when`(getRelevanceObjects(Matchers.any(), Matchers.anyBoolean())).thenReturn(emptyMap())
+            `when`(items).thenReturn(emptyList())
+            `when`(psiFile).thenReturn(null)
+            `when`(editor).thenReturn(mock(Editor::class.java))
         }
         
         logger.completionStarted(lookup, true, 2)

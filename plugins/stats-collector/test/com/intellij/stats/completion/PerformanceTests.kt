@@ -3,9 +3,8 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.UsefulTestCase
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.any
-import org.mockito.ArgumentMatchers.anyMap
+import org.mockito.Matchers
+import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
 
@@ -44,14 +43,15 @@ class Test {
     fun `test do not block EDT on logging`() {
         myFixture.configureByText("Test.java", text)
         myFixture.addClass(runnable)
-        
-        val requestService = mock<RequestService> {
-            on { postZipped(any<String>(), any<File>()) }.then { 
+
+
+        val requestService = mock(RequestService::class.java).apply {
+            `when`(postZipped(anyString(), any() ?: File("."))).then {
                 Thread.sleep(5000)
                 ResponseData(200)
             }
-            
-            on { post(any<String>(), anyMap<String, String>()) }.then { 
+
+            `when`(post(Matchers.anyString(), anyMapOf(String::class.java, String::class.java))).then {
                 Thread.sleep(5000)
                 ResponseData(200)
             }

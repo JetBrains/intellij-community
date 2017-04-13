@@ -1,10 +1,9 @@
 package com.intellij.stats.completion
 
 import com.intellij.testFramework.LightPlatformTestCase
-import com.nhaarman.mockito_kotlin.doReturn
-import com.nhaarman.mockito_kotlin.doThrow
-import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions.assertThat
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import java.io.File
 
 class TestFilePathProvider: UniqueFilesProvider("chunk", File(".")) {
@@ -29,6 +28,7 @@ class TestFilePathProvider: UniqueFilesProvider("chunk", File(".")) {
 class StatisticsSenderTest: LightPlatformTestCase() {
     lateinit var firstFile: File
     lateinit var secondFile: File
+    lateinit var filePathProvider: FilePathProvider
     
     val test_url = "http://xxx.com" 
 
@@ -42,6 +42,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         secondFile = File("second_file")
         secondFile.createNewFile()
         secondFile.writeText("text")
+
+        filePathProvider = mock(FilePathProvider::class.java).apply {
+            `when`(getDataFiles()).thenReturn(listOf(firstFile, secondFile))
+        }
     }
 
     override fun tearDown() {
@@ -55,13 +59,9 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
     fun `test removed if every file send response was ok`() {
-        val filePathProvider = mock<FilePathProvider> {
-            on { getDataFiles() }.doReturn(listOf(firstFile, secondFile))
-        }
-
-        val requestService = mock<RequestService> {
-            on { postZipped(test_url, firstFile) }.doReturn(okResponse())
-            on { postZipped(test_url, secondFile) }.doReturn(okResponse())
+        val requestService = mock(RequestService::class.java).apply {
+            `when`(postZipped(test_url, firstFile)).thenReturn(okResponse())
+            `when`(postZipped(test_url, secondFile)).thenReturn(okResponse())
         }
         
         val sender = StatisticSender(requestService, filePathProvider)
@@ -73,12 +73,9 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
 
     fun `test removed first if only first is sent`() {
-        val filePathProvider = mock<FilePathProvider> {
-            on { getDataFiles() }.doReturn(listOf(firstFile, secondFile))
-        }
-        val requestService = mock<RequestService> {
-            on { postZipped(test_url, firstFile) }.doReturn(okResponse())
-            on { postZipped(test_url, secondFile) }.doReturn(failResponse())
+        val requestService = mock(RequestService::class.java).apply {
+            `when`(postZipped(test_url, firstFile)).thenReturn(okResponse())
+            `when`(postZipped(test_url, secondFile)).thenReturn(failResponse())
         }
         
         val sender = StatisticSender(requestService, filePathProvider)
@@ -89,15 +86,11 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
     fun `test none is removed if all send failed`() {
-        val filePathProvider = mock<FilePathProvider> {
-            on { getDataFiles() }.doReturn(listOf(firstFile, secondFile))
+        val requestService = mock(RequestService::class.java).apply {
+            `when`(postZipped(test_url, firstFile)).thenReturn(failResponse())
+            `when`(postZipped(test_url, secondFile)).thenThrow(IllegalStateException("Should not be invoked"))
         }
-        
-        val requestService = mock<RequestService> {
-            on { postZipped(test_url, firstFile) }.doReturn(failResponse())
-            on { postZipped(test_url, secondFile) }.doThrow(IllegalStateException("Should not be invoked"))
-        }
-        
+
         val sender = StatisticSender(requestService, filePathProvider)
         sender.sendStatsData(test_url)
 
