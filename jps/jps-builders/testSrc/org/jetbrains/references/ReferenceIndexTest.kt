@@ -161,5 +161,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testUnqualifiedMethodCallResolution5() {
     assertIndexOnRebuild("Foo.java")
   }
+
+  fun testQualifierResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 
