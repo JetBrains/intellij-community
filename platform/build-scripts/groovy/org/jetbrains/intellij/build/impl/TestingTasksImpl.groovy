@@ -179,7 +179,7 @@ class TestingTasksImpl extends TestingTasks {
     if (dependenciesInstalled) return
     dependenciesInstalled = true
     context.messages.info("Setting up testing dependencies")
-    if (!BuildUtils.runGradle(new File(context.paths.communityHome, 'build/dependencies/'), 'setupKotlinPlugin')) {
+    if (!BuildUtils.runDependenciesGradle(context.paths.communityHome, 'setupKotlinPlugin')) {
       context.messages.error("Cannot setup testing dependencies")
     }
     dependenciesInstalled = true

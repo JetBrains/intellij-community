@@ -66,6 +66,10 @@ class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
+    if (!options.isInDevelopmentMode) {
+      setupCompilationDependencies(messages, communityHome)
+    }
+
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
@@ -113,6 +117,16 @@ class CompilationContextImpl implements CompilationContext {
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
     messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
+  }
+
+  static boolean dependenciesInstalled
+  static void setupCompilationDependencies(BuildMessages messages, String communityHome) {
+    if (dependenciesInstalled) return
+    dependenciesInstalled = true
+    messages.info("Setting up compilation dependencies")    
+    if (!BuildUtils.runDependenciesGradle(communityHome, 'setupJdks', 'setupKotlinPlugin')) {
+      messages.error("Cannot setup compilation dependencies")
+    }
   }
 
   void prepareForBuild() {

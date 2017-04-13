@@ -307,7 +307,7 @@ idea.fatal.error.notification=disabled
   
   private void setupJbreDependencies() {
     buildContext.messages.info("Setting up installer dependencies")    
-    if (!BuildUtils.runGradle(new File(buildContext.paths.communityHome, 'build/dependencies/'), 'setupJbre')) {
+    if (!BuildUtils.runDependenciesGradle(buildContext.paths.communityHome, 'setupJbre')) {
       buildContext.messages.error("Cannot setup installer dependencies")
     }
   }
