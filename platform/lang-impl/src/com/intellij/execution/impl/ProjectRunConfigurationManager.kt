@@ -24,29 +24,28 @@ import com.intellij.openapi.util.Pair
 import gnu.trove.THashSet
 import org.jdom.Element
 
-@State(name = "ProjectRunConfigurationManager",
-  storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
-class ProjectRunConfigurationManager(private val myManager: RunManagerImpl) : PersistentStateComponent<Element> {
+@State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
+class ProjectRunConfigurationManager(private val manager: RunManagerImpl) : PersistentStateComponent<Element> {
 
   override fun getState(): Element? {
     val state = Element("state")
-    myManager.writeConfigurations(state, myManager.getSharedConfigurations())
+    manager.writeConfigurations(state, manager.getSharedConfigurations())
     return state
   }
 
   override fun loadState(state: Element) {
     val existing = THashSet<String>()
     for (child in state.getChildren(RunManagerImpl.CONFIGURATION)) {
-      existing.add(myManager.loadConfiguration(child, true).uniqueID)
+      existing.add(manager.loadConfiguration(child, true).uniqueID)
     }
 
-    myManager.removeNotExistingSharedConfigurations(existing)
-    myManager.requestSort()
+    manager.removeNotExistingSharedConfigurations(existing)
+    manager.requestSort()
 
-    if (myManager.selectedConfiguration == null) {
-      for (settings in myManager.allSettings) {
+    if (manager.selectedConfiguration == null) {
+      for (settings in manager.allSettings) {
         if (settings.type !is UnknownRunConfiguration) {
-          myManager.selectedConfiguration = settings
+          manager.selectedConfiguration = settings
           break
         }
       }
