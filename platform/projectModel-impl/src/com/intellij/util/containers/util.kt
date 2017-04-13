@@ -178,8 +178,11 @@ inline fun <T, R : Any> Collection<T>.mapSmartNotNull(transform: (T) -> R?): Lis
 }
 
 fun <T> List<T>.toMutableSmartList(): MutableList<T> {
-  val size = size
-  return if (size == 1) SmartList(first()) else if (size == 0) SmartList() else ArrayList(this)
+  return when (size) {
+    1 -> SmartList(first())
+    0 -> SmartList()
+    else -> ArrayList(this)
+  }
 }
 
 inline fun <T> Collection<T>.filterSmart(predicate: (T) -> Boolean): List<T> {
