@@ -68,8 +68,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return super.isModified();
   }
 
-  void applySnapshotToComparison(RunnerAndConfigurationSettings original,
-                                 RunnerAndConfigurationSettings snapshot) {}
+  void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {}
 
   boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
                                          RunnerAndConfigurationSettings original,
