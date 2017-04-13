@@ -16,16 +16,16 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.AnalysisScope
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.idea.Bombed
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.loadFileText
+import com.intellij.testFramework.InspectionTestCase
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 
@@ -78,7 +78,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
     val implText = String(loadFileText(sourceFile!!))
     addFile("my/impl/MyServiceImpl.java", implText, M2)
 
-    val toolWrapper = GlobalInspectionToolWrapper(UnusedDeclarationInspection())
+    val toolWrapper = InspectionTestCase.getUnusedDeclarationWrapper()
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
