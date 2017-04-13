@@ -120,7 +120,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   public Tree visitMethodInvocation(MethodInvocationTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
     if (node.getMethodSelect() instanceof IdentifierTree) {
       Element element = collector.getReferencedElement(node.getMethodSelect());
-      if (element.getKind() != ElementKind.CONSTRUCTOR) {
+      if (element != null && element.getKind() != ElementKind.CONSTRUCTOR) {
         Set<Modifier> modifiers = element.getModifiers();
         if (!modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.PRIVATE)) {
           TypeElement currentClass = myCurrentEnclosingElement.peek();
