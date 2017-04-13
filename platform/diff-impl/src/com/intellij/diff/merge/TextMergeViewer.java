@@ -243,7 +243,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(myEditorSettingsAction);
 
       DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
-      diffGroup.getTemplatePresentation().setIcon(AllIcons.Diff.Diff);
+      diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
