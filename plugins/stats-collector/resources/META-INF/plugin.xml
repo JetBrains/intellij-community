@@ -1,0 +1,88 @@
+<idea-plugin>
+  <id>com.intellij.stats.completion</id>
+  <name>Completion Stats Collector</name>
+  <version>0.0.49</version>
+  <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+
+  <description><![CDATA[
+      This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
+    ]]></description>
+  
+  <change-notes><![CDATA[
+      improved logging, fixed couple exceptions
+    ]]>
+  </change-notes>
+  
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+  
+  <idea-version since-build="171.0"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider" 
+                        serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
+    </applicationService>
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider" 
+                        serviceImplementation="com.intellij.stats.completion.InternalUrlProvider">
+    </applicationService>
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" 
+                        serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider" 
+                        testServiceImplementation="com.intellij.stats.completion.TestFilePathProvider">
+    </applicationService>
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.LogFileManager" 
+                        serviceImplementation="com.intellij.stats.completion.LogFileManagerImpl">
+    </applicationService>
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender" 
+                        serviceImplementation="com.intellij.stats.completion.StatisticSender">
+    </applicationService>
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.experiment.StatusInfoProvider" 
+                        serviceImplementation="com.intellij.stats.completion.experiment.StatusInfoProvider">
+    </applicationService>
+    
+    <applicationService serviceInterface="com.intellij.stats.completion.RequestService" 
+                        serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
+    </applicationService>
+
+    <!--<applicationService serviceInterface="com.intellij.sorting.Ranker"-->
+                        <!--serviceImplementation="com.intellij.sorting.MLRanker">-->
+    <!--</applicationService>-->
+    
+    <!--<applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory" -->
+                        <!--serviceImplementation="com.intellij.sorting.MLSorterFactory">-->
+    <!--</applicationService>-->
+    
+    
+    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+    <!--<applicationConfigurable instance="com.intellij.plugin.PluginSettingsConfigurable"/>-->
+
+  </extensions>
+
+  <!--<actions>-->
+    <!--<action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>-->
+  <!--</actions>-->
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+  </project-components>
+  
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
+    </component>
+    
+    <!--<component>-->
+      <!--<implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>-->
+    <!--</component>-->
+    
+  </application-components>
+
+</idea-plugin>
