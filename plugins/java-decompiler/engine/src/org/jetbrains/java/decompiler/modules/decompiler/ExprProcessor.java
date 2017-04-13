@@ -876,7 +876,7 @@ public class ExprProcessor implements CodeConstants {
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
-      (isIntConstant(exprent) && rightType.isStrictSuperset(leftType));
+      (isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
