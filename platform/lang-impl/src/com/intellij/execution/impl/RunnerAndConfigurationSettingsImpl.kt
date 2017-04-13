@@ -107,6 +107,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   override fun setName(name: String) {
+    uniqueId = null
     configuration.name = name
   }
 

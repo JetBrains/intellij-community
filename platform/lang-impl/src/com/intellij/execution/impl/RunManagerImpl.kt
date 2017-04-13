@@ -236,6 +236,7 @@ class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persistent
     val key = "${factory.type.id}.${factory.name}"
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
+        LOG.info("Create template configuration for $key")
         val template = createTemplateSettings(factory)
         (template.configuration as? UnknownRunConfiguration)?.let {
           it.isDoNotStore = true
