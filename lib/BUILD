@@ -300,13 +300,6 @@ java_import(
 )
 
 java_import(
-    name = "netty-all-4.1.6.Final.Patched",
-    jars = ["netty-all-4.1.6.Final.Patched.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "proxy-vole_20131209",
     jars = ["proxy-vole_20131209.jar"],
     tags = ["managed"],
@@ -673,6 +666,13 @@ java_import(
 java_import(
     name = "fest-util-1.3.0-SNAPSHOT",
     jars = ["fest-util-1.3.0-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "netty-all-4.1.9.Final",
+    jars = ["netty-all-4.1.9.Final.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

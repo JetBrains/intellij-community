@@ -471,8 +471,8 @@ java_library(
     name = "Netty",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:netty-all-4.1.6.Final.Patched"],
-    runtime_deps = ["//tools/idea/lib:netty-all-4.1.6.Final.Patched"],
+    exports = ["//tools/idea/lib:netty-all-4.1.9.Final"],
+    runtime_deps = ["//tools/idea/lib:netty-all-4.1.9.Final"],
 )
 
 java_library(
@@ -853,21 +853,23 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M3",
+        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-suite-api-1.0.0-M4",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M3",
-        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M3",
+        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-engine-5.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-commons-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-engine-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-launcher-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-runner-1.0.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-vintage-engine-4.12.0-M4",
+        "//tools/idea/plugins/junit5_rt/lib:junit-platform-suite-api-1.0.0-M4",
     ],
 )
 
@@ -875,8 +877,8 @@ java_library(
     name = "opentest4j",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M1"],
-    runtime_deps = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M1"],
+    exports = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M2"],
+    runtime_deps = ["//tools/idea/plugins/junit5_rt/lib:opentest4j-1.0.0-M2"],
 )
 
 java_library(
@@ -1069,34 +1071,34 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-core-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-messaging-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-model-core-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-process-services-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-resources-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-cli-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-logging-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-version-info-3.5",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-cli-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-core-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-logging-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-messaging-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-model-core-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-model-groovy-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-base-services-groovy-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-process-services-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-resources-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-cli-3.5",
-        "//tools/idea/plugins/gradle/lib:gradle-logging-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-tooling-api-3.5",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-3.5",
         "//tools/idea/plugins/gradle/lib:gradle-version-info-3.5",
     ],
 )
@@ -1151,4 +1153,12 @@ java_library(
         "//tools/idea/lib:fest-swing-1.4-SNAPSHOT",
         "//tools/idea/lib:fest-util-1.3.0-SNAPSHOT",
     ],
+)
+
+java_library(
+    name = "gradle-api",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/external/gradle:gradle-api-3.4.1"],
+    runtime_deps = ["//tools/external/gradle:gradle-api-3.4.1"],
 )
