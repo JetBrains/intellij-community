@@ -158,8 +158,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
     GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
-    if (JUnitUtil.isJUnit5(globalSearchScope, project)) {
-      javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
+    String preferredRunner = getPreferredRunner(globalSearchScope);
+    if (JUnitStarter.JUNIT5_RUNNER_NAME.equals(preferredRunner)) {
       //detect junit 5 rt without dependency on junit5_rt module
       File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
       String junit5Name = junit4Rt.getName().replace("junit", "junit5");
@@ -191,8 +191,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         }
       }
     }
+    if (preferredRunner != null) {
+      javaParameters.getProgramParametersList().add(preferredRunner);
+    }
     
     return javaParameters;
+  }
+
+  @Nullable
+  protected String getPreferredRunner(GlobalSearchScope globalSearchScope) {
+    return JUnitUtil.isJUnit5(globalSearchScope, getConfiguration().getProject()) ? JUnitStarter.JUNIT5_RUNNER_NAME : null;
   }
 
   private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
