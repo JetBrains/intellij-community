@@ -174,15 +174,11 @@ class TestingTasksImpl extends TestingTasks {
   }
   
   static boolean dependenciesInstalled
-
   private def setupTestingDependencies() {
-    if (dependenciesInstalled) return
-    dependenciesInstalled = true
-    context.messages.info("Setting up testing dependencies")
-    if (!BuildUtils.runDependenciesGradle(context.paths.communityHome, 'setupKotlinPlugin')) {
-      context.messages.error("Cannot setup testing dependencies")
+    if (!dependenciesInstalled) {
+      dependenciesInstalled = true
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
     }
-    dependenciesInstalled = true
   }
 
   static boolean taskDefined

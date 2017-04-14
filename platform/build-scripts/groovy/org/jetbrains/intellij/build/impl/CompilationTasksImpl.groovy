@@ -40,7 +40,7 @@ class CompilationTasksImpl extends CompilationTasks {
       return
     }
 
-    CompilationContextImpl.setupCompilationDependencies(context.messages, context.paths.communityHome)
+    CompilationContextImpl.setupCompilationDependencies(context.gradle)
     ensureKotlinCompilerAddedToClassPath()
 
     context.messages.progress("Compiling project")

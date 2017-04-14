@@ -19,10 +19,7 @@ import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.codehaus.gant.GantBinding
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.model.JpsGlobal
@@ -34,12 +31,14 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
 @CompileStatic
 class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
+  final GradleRunner gradle
   final BuildOptions options
   final BuildMessages messages
   final BuildPaths paths
@@ -66,8 +65,9 @@ class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
+    GradleRunner gradle = new GradleRunner(new File(communityHome, 'build/dependencies'), messages)
     if (!options.isInDevelopmentMode) {
-      setupCompilationDependencies(messages, communityHome)
+      setupCompilationDependencies(gradle)
     }
 
     projectHome = toCanonicalPath(projectHome)
@@ -82,16 +82,18 @@ class CompilationContextImpl implements CompilationContext {
       messages.info("Skipping loading project because it's already loaded")
     }
 
-    def context = new CompilationContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, jdk8Home, kotlinHome, messages,
+    def context = new CompilationContextImpl(ant, gradle, projectBuilder, project, global, communityHome, projectHome, jdk8Home, kotlinHome, messages,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     return context
   }
 
-  private CompilationContextImpl(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                 String communityHome, String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
-                                 BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
+  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsGantProjectBuilder projectBuilder, JpsProject project, 
+                                 JpsGlobal global, String communityHome, String projectHome, String jdk8Home, String kotlinHome, 
+                                 BuildMessages messages, BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, 
+                                 BuildOptions options) {
     this.ant = ant
+    this.gradle = gradle
     this.project = project
     this.global = global
     this.options = options
@@ -103,7 +105,7 @@ class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome, 
+    return new CompilationContextImpl(ant, gradle, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome, 
                                       paths.kotlinHome, messages, buildOutputRootEvaluator, options)
   }
 
@@ -120,12 +122,10 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   static boolean dependenciesInstalled
-  static void setupCompilationDependencies(BuildMessages messages, String communityHome) {
-    if (dependenciesInstalled) return
-    dependenciesInstalled = true
-    messages.info("Setting up compilation dependencies")    
-    if (!BuildUtils.runDependenciesGradle(communityHome, 'setupJdks', 'setupKotlinPlugin')) {
-      messages.error("Cannot setup compilation dependencies")
+  static void setupCompilationDependencies(GradleRunner gradle) {
+    if (!dependenciesInstalled) {
+      dependenciesInstalled = true
+      gradle.run('Setting up compilation dependencies', 'setupJdks', 'setupKotlinPlugin')
     }
   }
 

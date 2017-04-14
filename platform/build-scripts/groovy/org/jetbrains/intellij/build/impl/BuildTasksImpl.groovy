@@ -273,7 +273,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-      setupJbreDependencies()
+      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre')
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -302,13 +302,6 @@ idea.fatal.error.notification=disabled
           buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
         }
       }
-    }
-  }
-  
-  private void setupJbreDependencies() {
-    buildContext.messages.info("Setting up installer dependencies")    
-    if (!BuildUtils.runDependenciesGradle(buildContext.paths.communityHome, 'setupJbre')) {
-      buildContext.messages.error("Cannot setup installer dependencies")
     }
   }
 
