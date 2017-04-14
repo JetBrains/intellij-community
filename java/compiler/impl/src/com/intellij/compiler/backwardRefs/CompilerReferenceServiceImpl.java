@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -156,12 +157,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           });
         });
       }
-    }
-  }
 
-  @Override
-  public void projectClosed() {
-    closeReaderIfNeed(false);
+      Disposer.register(myProject, () -> closeReaderIfNeed(false));
+    }
   }
 
   @Nullable
