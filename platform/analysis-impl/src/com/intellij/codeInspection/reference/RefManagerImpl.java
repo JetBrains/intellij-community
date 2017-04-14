@@ -77,11 +77,10 @@ public class RefManagerImpl extends RefManager {
   private AnalysisScope myScope;
   private RefProject myRefProject;
 
-  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<>(); // guarded by myRefTableLock
-  private final Map<PsiElement, RefElement> myPsiToRefTable = new THashMap<>(); // replacement of myRefTable, guarded by myRefTableLock
-  private final Object myRefTableLock = new Object();
-  
-  private List<RefElement> mySortedRefs; // guarded by myRefTable
+  private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<PsiElement, RefElement> myPsiToRefTable = ContainerUtil.newConcurrentMap(); // replacement of myRefTable
+
+  private volatile List<RefElement> mySortedRefs;
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
   private final ProjectIterator myProjectIterator = new ProjectIterator();
@@ -147,10 +146,8 @@ public class RefManagerImpl extends RefManager {
   public void cleanup() {
     myScope = null;
     myRefProject = null;
-    synchronized (myRefTableLock) {
-      (usePsiAsKey() ? myPsiToRefTable : myRefTable).clear();
-      mySortedRefs = null;
-    }
+    (usePsiAsKey() ? myPsiToRefTable : myRefTable).clear();
+    mySortedRefs = null;
     myModules.clear();
     myContext = null;
 
@@ -356,9 +353,7 @@ public class RefManagerImpl extends RefManager {
     myIsInProcess = false;
     if (myScope != null) myScope.invalidate();
 
-    synchronized (myRefTableLock) {
-      mySortedRefs = null;
-    }
+    mySortedRefs = null;
   }
 
   public void startOfflineView() {
@@ -387,20 +382,18 @@ public class RefManagerImpl extends RefManager {
 
   @NotNull
   List<RefElement> getSortedElements() {
-    List<RefElement> answer;
-    synchronized (myRefTableLock) {
-      if (mySortedRefs != null) return mySortedRefs;
+    List<RefElement> answer = mySortedRefs;
+    if (answer != null) return answer;
 
-      answer = new ArrayList<>(usePsiAsKey() ? myPsiToRefTable.values() : myRefTable.values());
-    }
-    ReadAction.run(() -> ContainerUtil.quickSort(answer, (o1, o2) -> {
+    answer = new ArrayList<>(usePsiAsKey() ? myPsiToRefTable.values() : myRefTable.values());
+    List<RefElement> list = answer;
+    ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
       return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
     }));
-    synchronized (myRefTableLock) {
-      return mySortedRefs = Collections.unmodifiableList(answer);
-    }
+    mySortedRefs = answer = Collections.unmodifiableList(answer);
+    return answer;
   }
 
   @NotNull
@@ -416,32 +409,31 @@ public class RefManagerImpl extends RefManager {
       extension.removeReference(refElem);
     }
 
-    synchronized (myRefTableLock) {
-      mySortedRefs = null;
-      if (element != null &&
-          (usePsiAsKey() ? myPsiToRefTable.remove(element) : myRefTable.remove(createAnchor(element))) != null) return;
+    if (element != null &&
+        (usePsiAsKey() ? myPsiToRefTable.remove(element) : myRefTable.remove(createAnchor(element))) != null) return;
 
-      //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-      if (usePsiAsKey()) {
-        for (Map.Entry<PsiElement, RefElement> entry : myPsiToRefTable.entrySet()) {
-          RefElement value = entry.getValue();
-          PsiElement anchor = entry.getKey();
-          if (value == refElem) {
-            myPsiToRefTable.remove(anchor);
-            break;
-          }
-        }
-      } else {
-        for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
-          RefElement value = entry.getValue();
-          PsiAnchor anchor = entry.getKey();
-          if (value == refElem) {
-            myRefTable.remove(anchor);
-            break;
-          }
+    //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
+    if (usePsiAsKey()) {
+      for (Map.Entry<PsiElement, RefElement> entry : myPsiToRefTable.entrySet()) {
+        RefElement value = entry.getValue();
+        PsiElement anchor = entry.getKey();
+        if (value == refElem) {
+          myPsiToRefTable.remove(anchor);
+          break;
         }
       }
     }
+    else {
+      for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
+        RefElement value = entry.getValue();
+        PsiAnchor anchor = entry.getKey();
+        if (value == refElem) {
+          myRefTable.remove(anchor);
+          break;
+        }
+      }
+    }
+    mySortedRefs = null;
   }
 
   @NotNull
@@ -572,31 +564,27 @@ public class RefManagerImpl extends RefManager {
                                                           @Nullable Consumer<T> whenCached) {
 
     PsiAnchor psiAnchor = createAnchor(element);
-    T result;
-    synchronized (myRefTableLock) {
+    //noinspection unchecked
+    T result = (T)(usePsiAsKey() ? myPsiToRefTable.get(element) : myRefTable.get(psiAnchor));
+
+    if (result != null) return result;
+
+    if (!isValidPointForReference()) {
+      //LOG.assertTrue(true, "References may become invalid after process is finished");
+      return null;
+    }
+
+    result = factory.create();
+    if (result == null) return null;
+
+    mySortedRefs = null;
+    RefElement prev = usePsiAsKey() ? myPsiToRefTable.putIfAbsent(element, result) : myRefTable.putIfAbsent(psiAnchor, result);
+    if (prev != null) {
       //noinspection unchecked
-      result = (T) (usePsiAsKey() ? myPsiToRefTable.get(element) : myRefTable.get(psiAnchor));
-
-      if (result != null) return result;
-
-      if (!isValidPointForReference()) {
-        //LOG.assertTrue(true, "References may become invalid after process is finished");
-        return null;
-      }
-
-      result = factory.create();
-      if (result == null) return null;
-
-      if (usePsiAsKey()) {
-        myPsiToRefTable.put(element, result);
-      } else {
-        myRefTable.put(psiAnchor, result);
-      }
-      mySortedRefs = null;
-
-      if (whenCached != null) {
-        whenCached.consume(result);
-      }
+      result = (T)prev;
+    }
+    else if (whenCached != null) {
+      whenCached.consume(result);
     }
 
     return result;
