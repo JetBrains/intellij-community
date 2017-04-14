@@ -152,6 +152,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
+    // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
+    if (myDropdownPopup != null && !isCloseByFocusLost()) {
+      Dimension currentSize = myDropdownPopup.getSize();
+      if (preferredScrollPaneSize.width < currentSize.width) preferredScrollPaneSize.width = currentSize.width;
+      if (preferredScrollPaneSize.height < currentSize.height) preferredScrollPaneSize.height = currentSize.height;
+    }
+
     Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
     Rectangle original = new Rectangle(preferredBounds);
 
@@ -190,13 +197,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
     else {
       myDropdownPopup.setLocation(preferredBounds.getLocation());
-
-      // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
-      final Dimension currentSize = myDropdownPopup.getSize();
-      if (UISettings.getInstance().getHideNavigationOnFocusLoss() ||
-          preferredBounds.width > currentSize.width || preferredBounds.height > currentSize.height) {
-        myDropdownPopup.setSize(preferredBounds.getSize());
-      }
+      myDropdownPopup.setSize(preferredBounds.getSize());
     }
   }
 

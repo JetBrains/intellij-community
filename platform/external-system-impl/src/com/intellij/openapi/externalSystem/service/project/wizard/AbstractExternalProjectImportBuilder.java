@@ -13,11 +13,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -70,6 +66,15 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
   private DataNode<ProjectData> myExternalProjectNode;
+
+  /**
+   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, AbstractImportFromExternalSystemControl, ProjectSystemId)}
+   */
+  public AbstractExternalProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager projectDataManager,
+                                              @NotNull C control,
+                                              @NotNull ProjectSystemId externalSystemId) {
+    this((ProjectDataManager)projectDataManager, control, externalSystemId);
+  }
 
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull C control,

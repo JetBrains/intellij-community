@@ -48,11 +48,15 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
 
   fun testProvider() = doTest()
 
+  fun testVarargConstructor() = doTest()
+
   fun testUnusedImplementation() = doTest(false)
 
   fun testUnusedConstructor() = doTest(false)
 
   fun testUnusedProvider() = doTest(false)
+
+  fun testUnusedVarargConstructor() = doTest(false)
 
   fun testExternalImplementation() = doTest(sameModule = false)
 

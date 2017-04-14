@@ -337,6 +337,12 @@ public class HgLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
+  public VcsLogDiffHandler getDiffHandler() {
+    return null;
+  }
+
+  @Nullable
+  @Override
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
     if (property == VcsLogProperties.CASE_INSENSITIVE_REGEX) {
       return (T)Boolean.FALSE;

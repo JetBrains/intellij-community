@@ -1314,7 +1314,7 @@ public class AbstractPopup implements JBPopup {
       }
     }
 
-    size = computeWindowSize(size);
+    size.height += getAdComponentHeight();
 
     final Window window = getContentWindow(myContent);
     if (window != null) {
@@ -1590,27 +1590,27 @@ public class AbstractPopup implements JBPopup {
     }
     else {
       if (adjustByContent) {
-        toSet = computeWindowSize(toSet);
+        toSet.height += getAdComponentHeight();
       }
       updateMaskAndAlpha(setSize(myContent, toSet));
     }
   }
 
-  private Dimension computeWindowSize(Dimension size) {
-    if (myAdComponent != null && myAdComponent.isShowing()) {
-      size.height += myAdComponent.getPreferredSize().height + 1;
-    }
-    return size;
+  private int getAdComponentHeight() {
+    return myAdComponent != null && myAdComponent.isShowing() ? myAdComponent.getPreferredSize().height + 1 : 0;
   }
 
   @Override
   public Dimension getSize() {
     if (myPopup != null) {
       final Window popupWindow = getContentWindow(myContent);
-      return (popupWindow == null) ? myForcedSize : popupWindow.getSize();
-    } else {
-      return myForcedSize;
+      if (popupWindow != null) {
+        Dimension size = popupWindow.getSize();
+        size.height -= getAdComponentHeight();
+        return size;
+      }
     }
+    return myForcedSize;
   }
 
   @Override

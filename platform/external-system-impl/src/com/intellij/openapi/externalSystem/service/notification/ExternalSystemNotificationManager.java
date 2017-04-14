@@ -28,7 +28,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -156,7 +156,7 @@ public class ExternalSystemNotificationManager implements Disposable {
           NotificationGroup group;
           if (notificationData.getBalloonGroup() == null) {
             ExternalProjectsView externalProjectsView =
-              ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
+              ExternalProjectsManagerImpl.getInstance(myProject).getExternalProjectsView(externalSystemId);
             group = externalProjectsView instanceof ExternalProjectsViewImpl ?
                     ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
           }

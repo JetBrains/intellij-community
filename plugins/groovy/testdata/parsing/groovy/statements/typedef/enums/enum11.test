@@ -20,15 +20,21 @@ Groovy script
       PsiWhiteSpace('\n  ')
       Enumeration constants
         Enumeration constant
+          Modifiers
+            <empty list>
           PsiElement(identifier)('Const1')
         PsiElement(new line)('\n  ')
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         Enumeration constant
+          Modifiers
+            <empty list>
           PsiElement(identifier)('Const2')
         PsiElement(,)(',')
         Enumeration constant
           PsiElement(new line)('\n  ')
+          Modifiers
+            <empty list>
           PsiElement(identifier)('Const3')
       PsiElement(new line)('\n  ')
       Variable definitions

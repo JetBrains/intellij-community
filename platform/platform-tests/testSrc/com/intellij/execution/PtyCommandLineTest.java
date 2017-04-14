@@ -32,7 +32,7 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
   @NotNull
   @Override
   protected String filterExpectedOutput(@NotNull String output) {
-    if (SystemInfo.isWindows) output = expandTabs(output, 8);
+    if (SystemInfo.isWindows) output = StringUtil.trimTrailing(expandTabs(output, 8));
     return output;
   }
 

@@ -1,6 +1,5 @@
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -15,7 +14,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -139,7 +138,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       final long currentTimeMillis = System.currentTimeMillis();
       projectInfo.setLastImportTimestamp(currentTimeMillis);
       projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
-      ProjectDataManager.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+      ProjectDataManagerImpl.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
     }
   }
 }

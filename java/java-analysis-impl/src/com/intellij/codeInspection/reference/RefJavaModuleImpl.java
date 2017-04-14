@@ -127,14 +127,28 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
               for (PsiJavaCodeReferenceElement implementationReference : implementationList.getReferenceElements()) {
                 final PsiElement implementationClass = implementationReference.resolve();
                 if (implementationClass instanceof PsiClass) {
+                  RefElement refTargetElement = null;
                   PsiElement targetElement = getProviderMethod((PsiClass)implementationClass);
+
                   if (targetElement == null) {
-                    targetElement = getDefaultConstructor((PsiClass)implementationClass);
-                    if (targetElement == null) {
-                      targetElement = implementationClass;
+                    final RefElement refClass = getRefManager().getReference(implementationClass);
+                    if (refClass instanceof RefClassImpl) {
+                      final RefMethod refConstructor = ((RefClassImpl)refClass).getDefaultConstructor();
+                      if (refConstructor != null) {
+                        final PsiModifierListOwner constructorElement = refConstructor.getElement();
+                        if (constructorElement != null && constructorElement.hasModifierProperty(PsiModifier.PUBLIC)) {
+                          refTargetElement = refConstructor;
+                          targetElement = constructorElement;
+                        }
+                      }
                     }
                   }
-                  final RefElement refTargetElement = getRefManager().getReference(targetElement);
+                  if (targetElement == null) {
+                    targetElement = implementationClass;
+                  }
+                  if (refTargetElement == null) {
+                    refTargetElement = getRefManager().getReference(targetElement);
+                  }
                   if (refTargetElement != null) {
                     ((RefJavaElementImpl)refInterface)
                       .addReference(refTargetElement, targetElement, providerInterface, false, true, null);
@@ -186,12 +200,5 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     return ContainerUtil.find(methods, m -> m.hasModifierProperty(PsiModifier.PUBLIC) &&
                                             m.hasModifierProperty(PsiModifier.STATIC) &&
                                             m.getParameterList().getParametersCount() == 0);
-  }
-
-  @Nullable
-  private static PsiMethod getDefaultConstructor(@NotNull PsiClass psiClass) {
-    final PsiMethod[] constructors = psiClass.getConstructors();
-    return ContainerUtil.find(constructors, m -> m.hasModifierProperty(PsiModifier.PUBLIC) &&
-                                                 m.getParameterList().getParametersCount() == 0);
   }
 }
