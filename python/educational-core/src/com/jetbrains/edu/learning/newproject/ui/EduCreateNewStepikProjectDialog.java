@@ -62,4 +62,13 @@ public class EduCreateNewStepikProjectDialog extends EduCreateNewProjectDialog {
         }, "Getting Available Courses", true, defaultProject)
     );
   }
+
+  @Override
+  public void show() {
+    if (myCourse != null) {
+      super.show();
+    } else {
+      doCancelAction();
+    }
+  }
 }

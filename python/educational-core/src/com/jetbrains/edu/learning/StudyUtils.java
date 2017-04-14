@@ -84,6 +84,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTask;
+
 public class StudyUtils {
   private StudyUtils() {
   }
@@ -820,5 +822,26 @@ public class StudyUtils {
         }
       }
     }
+  }
+
+  public static void navigateToStep(@NotNull Project project, @NotNull Course course, int stepId) {
+    if (stepId == 0 || course.isAdaptive()) {
+      return;
+    }
+    Task task = getTask(course, stepId);
+    if (task != null) {
+      navigateToTask(project, task);
+    }
+  }
+
+  @Nullable
+  private static Task getTask(@NotNull Course course, int stepId) {
+    for (Lesson lesson : course.getLessons()) {
+      Task task = lesson.getTask(stepId);
+      if (task != null) {
+        return task;
+      }
+    }
+    return null;
   }
 }

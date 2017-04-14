@@ -43,15 +43,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 
 public class EduCreateNewProjectDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(EduCreateNewProjectDialog.class);
-  private Project myProject;
-  private Course myCourse;
-  private final List<EduCreateNewProjectListener> myListeners = new ArrayList<>();
+  protected Project myProject;
+  protected Course myCourse;
   private final EduCreateNewProjectPanel myPanel;
 
   public EduCreateNewProjectDialog() {
@@ -69,12 +66,8 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public void addListener(@NotNull EduCreateNewProjectListener listener) {
-    myListeners.add(listener);
-  }
-
   public void setCourse(@Nullable Course course) {
-    this.myCourse = course;
+    myCourse = course;
   }
 
   @Override
@@ -107,7 +100,6 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
       myPanel.setError("Project did't created");
       return;
     }
-    notifyCreated();
     super.doOKAction();
   }
 
@@ -179,9 +171,5 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
     myProject = PlatformProjectOpenProcessor.doOpenProject(baseDir, null, -1, callback, options);
     return null;
-  }
-
-  private void notifyCreated() {
-    myListeners.forEach(listener -> listener.created(myProject));
   }
 }

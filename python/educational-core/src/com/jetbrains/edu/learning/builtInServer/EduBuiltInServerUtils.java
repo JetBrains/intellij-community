@@ -24,11 +24,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.newproject.ui.EduCreateNewProjectDialog;
-import com.jetbrains.edu.learning.newproject.ui.EduCreateNewProjectListener;
 import com.jetbrains.edu.learning.newproject.ui.EduCreateNewStepikProjectDialog;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -41,8 +38,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import static com.jetbrains.edu.learning.StudyUtils.navigateToStep;
 import static com.jetbrains.edu.learning.core.EduNames.STUDY_PROJECT_XML_PATH;
-import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTask;
 
 public class EduBuiltInServerUtils {
   public static boolean focusOpenProject(int courseId, int stepId) {
@@ -96,8 +93,6 @@ public class EduBuiltInServerUtils {
 
     List<String> recentPaths = state.recentPaths;
 
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    StudyTaskManager taskManager = new StudyTaskManager(defaultProject);
     SAXBuilder parser = new SAXBuilder();
 
     for (String projectPath : recentPaths) {
@@ -105,23 +100,20 @@ public class EduBuiltInServerUtils {
       if (component == null) {
         continue;
       }
+      StudyTaskManager taskManager = getDefaultTaskManager();
       int courseId = getCourseId(taskManager, component);
 
       if (courseId == targetCourseId) {
+        taskManager.setStepId(stepId);
         Project project = openProject(projectPath);
         if (project != null) {
-          Course course = taskManager.getCourse();
-          if (course != null) {
-            ApplicationManager.getApplication().invokeLater(() ->
-              navigateToStep(project, course, stepId)
-            );
-          }
           return true;
         }
       }
     }
     return false;
   }
+
 
   @Nullable
   private static Element readComponent(@NotNull SAXBuilder parser, @NotNull String projectPath) {
@@ -154,44 +146,16 @@ public class EduBuiltInServerUtils {
 
   public static boolean createProject(int courseId, int stepId) {
     ApplicationManager.getApplication().invokeLater(() -> {
+      getDefaultTaskManager().setStepId(stepId);
       EduCreateNewProjectDialog createNewProjectDlg = new EduCreateNewStepikProjectDialog(courseId);
-      EduCreateNewProjectListener listener = new EduCreateNewProjectListener() {
-        @Override
-        public void created(@NotNull Project project) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-            Course targetCourse = taskManager.getCourse();
-            if (targetCourse != null) {
-              navigateToStep(project, targetCourse, stepId);
-            }
-          });
-        }
-      };
-      createNewProjectDlg.addListener(listener);
       createNewProjectDlg.show();
     });
 
     return true;
   }
-
-  private static void navigateToStep(@NotNull Project project, @NotNull Course course, int stepId) {
-    if (stepId == 0 || course.isAdaptive()) {
-      return;
-    }
-    Task task = getTask(course, stepId);
-    if (task != null) {
-      navigateToTask(project, task);
-    }
-  }
-
-  @Nullable
-  private static Task getTask(@NotNull Course course, int stepId) {
-    for (Lesson lesson : course.getLessons()) {
-      Task task = lesson.getTask(stepId);
-      if (task != null) {
-        return task;
-      }
-    }
-    return null;
+  @NotNull
+  private static StudyTaskManager getDefaultTaskManager() {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    return StudyTaskManager.getInstance(defaultProject);
   }
 }
