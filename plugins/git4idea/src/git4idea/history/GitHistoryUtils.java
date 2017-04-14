@@ -525,35 +525,21 @@ public class GitHistoryUtils {
     handler.endOptions();
 
     MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
-      List<TimedVcsCommit> commits = parseCommit(parser, output, userConsumer, refConsumer, factory, root);
-      for (TimedVcsCommit commit : commits) {
-        commitConsumer.consume(commit);
+      List<GitLogRecord> records = parser.parse(output);
+      for (GitLogRecord record : records) {
+        if (record == null) continue;
+
+        Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(record, factory, root);
+
+        commitConsumer.consume(pair.first);
+        for (VcsRef ref : pair.second) {
+          refConsumer.consume(ref);
+        }
+        userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
       }
     }, 1000);
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
-  }
-
-  @NotNull
-  private static List<TimedVcsCommit> parseCommit(@NotNull GitLogParser parser,
-                                                  @NotNull StringBuilder record,
-                                                  @NotNull Consumer<VcsUser> userRegistry,
-                                                  @NotNull Consumer<VcsRef> refConsumer,
-                                                  @NotNull VcsLogObjectsFactory factory,
-                                                  @NotNull VirtualFile root) {
-    List<GitLogRecord> gitLogRecords = parser.parse(record);
-    return ContainerUtil.mapNotNull(gitLogRecords, gitLogRecord -> {
-      if (gitLogRecord == null) {
-        return null;
-      }
-      Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(gitLogRecord, factory, root);
-      TimedVcsCommit commit = pair.first;
-      for (VcsRef ref : pair.second) {
-        refConsumer.consume(ref);
-      }
-      userRegistry.consume(factory.createUser(gitLogRecord.getAuthorName(), gitLogRecord.getAuthorEmail()));
-      return commit;
-    });
   }
 
   @NotNull
