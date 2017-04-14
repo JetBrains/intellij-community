@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
@@ -73,7 +74,6 @@ public class PathManager {
   private static String ourScratchPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
-  private static String ourOsSpecificBinPath;
 
   // IDE installation paths
 
@@ -123,34 +123,104 @@ public class PathManager {
   }
 
   private static boolean isIdeaHome(final File root) {
-    return new File(root, FileUtil.toSystemDependentName("bin/" + PROPERTIES_FILE_NAME)).exists() ||
-           new File(root, FileUtil.toSystemDependentName("bin/" + getOsSpecificBinSubdirName() + "/" + PROPERTIES_FILE_NAME)).exists() ||
-           new File(root, FileUtil.toSystemDependentName("community/bin/" + PROPERTIES_FILE_NAME)).exists();
+    for (final File file : getBinFileLocations(root, PROPERTIES_FILE_NAME)) {
+      if (file.exists()) {
+        return true;
+      }
+    }
+    return false;
   }
 
+
+  /**
+   * Get all possible locations of some binary file relative to root <strong>not</strong> including
+   * {@link #getBinPath()}
+   */
+  @NotNull
+  private static File[] getBinFileLocations(@NotNull final File root, @NotNull final String fileName) {
+    final File[] binFolders = {
+      new File(root, FileUtil.toSystemDependentName(BIN_FOLDER)),
+      new File(root, FileUtil.toSystemDependentName("community/bin/")),
+      new File(root, FileUtil.toSystemDependentName("ultimate/community/bin/"))
+    };
+    final List<File> result = new ArrayList<File>(binFolders.length * 2);
+    for (final File binFolder : binFolders) {
+      result.add(new File(binFolder, fileName));
+      result.add(new File(new File(binFolder, getOSSpecificBinSubdir()), fileName));
+    }
+
+    return result.toArray(new File[result.size()]);
+  }
+
+
+  /**
+   * Get all possible locations of some binary file relative to home <strong>including</strong> {@link #getBinPath()}
+   * @see #getBinFileLocationsString(String)
+   */
+  @NotNull
+  private static File[] getBinFileLocations(@NotNull final String fileName) {
+    return ArrayUtil.mergeArrays(getBinFileLocations(new File(getHomePath()), fileName), new File[]{new File(getBinPath(), fileName)});
+  }
+
+  /**
+   * Same as {@link #getBinFileLocations(String)}
+   */
+  @NotNull
+  private static String[] getBinFileLocationsString(@NotNull final String fileName) {
+    final Collection<String> pathsList = new ArrayList<String>();
+    for (final File possibleFileLocation : getBinFileLocations(fileName)) {
+      pathsList.add(possibleFileLocation.getAbsolutePath());
+    }
+
+    return ArrayUtil.toStringArray(pathsList);
+  }
+
+  /**
+   * Looks for file in all possible bin locations
+   * @return first that exists or null if not found
+   * @see #findBinFileWithException(String)
+   */
+  @Nullable
+  public static File findBinFile(@NotNull final String fileName) {
+    return findBinFileInternal(fileName).first;
+  }
+
+  /**
+   * Looks for file in all possible bin locations
+   * @return first that exists
+   * @see #findBinFile(String)
+   * @throws FileNotFoundException if no file found
+   */
+  @NotNull
+  public static File findBinFileWithException(@NotNull final String fileName) throws FileNotFoundException {
+    final Pair<File, String[]> pair = findBinFileInternal(fileName);
+    if (pair.first != null) {
+      return pair.first;
+    }
+    final String joinedPaths = StringUtil.join(pair.second, "\n");
+    throw new FileNotFoundException(String.format("'%s' not found in directories:\n%s", fileName, joinedPaths));
+  }
+
+  /**
+   * @see  #findBinFile(String)
+   * @return [file (may be null), paths where file was searched]
+   */
+  @NotNull
+  private static Pair<File, String[]>  findBinFileInternal(@NotNull final String fileName) {
+    final String[] paths = getBinFileLocationsString(fileName);
+    final File result = FileUtil.findFirstThatExist(paths);
+    return Pair.create(result, paths);
+  }
+
+  /**
+   * Bin path may be incorrect when launched locally, use {@link #findBinFileWithException(String)} if possible
+   */
   @NotNull
   public static String getBinPath() {
     return getHomePath() + File.separator + BIN_FOLDER;
   }
 
-  @NotNull
-  public static String getOsSpecificBinPath() {
-    if (ourOsSpecificBinPath == null) {
-      ourOsSpecificBinPath = getBinPath(); // fallback
-
-      String homePath = getHomePath();
-      boolean isRunningFromSource = new File(homePath, ".idea").isDirectory();
-      if (isRunningFromSource) {
-        String osSpecificBinSubdir = getOsSpecificBinSubdirName();
-        File binSubdir = FileUtil.findFirstThatExist(homePath + "/bin/" + osSpecificBinSubdir,
-                                                     homePath + "/community/bin/" + osSpecificBinSubdir);
-        if (binSubdir != null) ourOsSpecificBinPath = binSubdir.getPath();
-      }
-    }
-    return ourOsSpecificBinPath;
-  }
-
-  private static String getOsSpecificBinSubdirName() {
+  private static String getOSSpecificBinSubdir() {
     if (SystemInfo.isWindows) return "win";
     if (SystemInfo.isMac) return "mac";
     return "linux";
@@ -355,14 +425,14 @@ public class PathManager {
     return StringUtil.trimEnd(resultPath, File.separator);
   }
 
+
   public static void loadProperties() {
-    String[] propFiles = {
-      System.getProperty(PROPERTIES_FILE),
-      getCustomPropertiesFile(),
-      getUserHome() + "/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/bin/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/bin/" + getOsSpecificBinSubdirName() + "/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/community/bin/" + PROPERTIES_FILE_NAME};
+    String[] propFiles = ArrayUtil.mergeArrays(
+      new String[]{System.getProperty(PROPERTIES_FILE),
+        getCustomPropertiesFile(),
+        getUserHome() + "/" + PROPERTIES_FILE_NAME},
+      getBinFileLocationsString(PROPERTIES_FILE_NAME));
+
 
     for (String path : propFiles) {
       if (path != null) {

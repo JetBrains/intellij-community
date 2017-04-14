@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
@@ -93,12 +94,13 @@ public class RunnerMediator {
       }
       LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
     }
-    File runnerw = new File(PathManager.getOsSpecificBinPath(), STANDARD_RUNNERW);
-    if (runnerw.exists()) {
-      return runnerw.getPath();
+    try {
+      return PathManager.findBinFileWithException(STANDARD_RUNNERW).getPath();
     }
-    LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by default path (" + runnerw.getAbsolutePath() + ")");
-    return null;
+    catch (FileNotFoundException e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 
   static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
