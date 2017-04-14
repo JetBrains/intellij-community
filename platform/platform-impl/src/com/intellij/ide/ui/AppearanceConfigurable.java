@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
@@ -198,9 +199,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setAllowMergeButtons(myComponent.myAllowMergeButtons.isSelected());
     update |= settings.getCycleScrolling() != myComponent.myCycleScrollingCheckBox.isSelected();
     settings.setCycleScrolling(myComponent.myCycleScrollingCheckBox.isSelected());
+    boolean shouldResetLafFonts = false;
     if (settings.getOverrideLafFonts() != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
       update = true;
+      shouldResetLafFonts = !myComponent.myOverrideLAFFonts.isSelected();
     }
     settings.setOverrideLafFonts(myComponent.myOverrideLAFFonts.isSelected());
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
@@ -252,6 +255,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     if (shouldUpdateUI) {
       lafManager.updateUI();
+      if (shouldResetLafFonts) {
+        int defSize = JBUI.Fonts.label().getSize();
+        settings.setFontSize(defSize);
+        myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
+        String defName = JBUI.Fonts.label().getFontName();
+        settings.setFontFace(defName);
+        myComponent.myFontCombo.setFontName(defName);
+      }
     }
 
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {

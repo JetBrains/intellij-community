@@ -152,6 +152,8 @@ public class JBUI {
 
   static {
     setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
+    LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
+             (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
   }
 
   /**
@@ -308,7 +310,7 @@ public class JBUI {
 
   private static void setUserScaleFactorProperty(float scale) {
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
-    LOG.info("UI scale factor: " + userScaleFactor);
+    LOG.info("User scale factor: " + userScaleFactor);
   }
 
   /**
