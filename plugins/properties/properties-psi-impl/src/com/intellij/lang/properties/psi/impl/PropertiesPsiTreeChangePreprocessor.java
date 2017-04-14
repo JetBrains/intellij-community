@@ -59,7 +59,7 @@ public class PropertiesPsiTreeChangePreprocessor extends PsiTreeChangePreprocess
         if (isCodeBlock(event.getChild())) return;
         break;
       case CHILDREN_CHANGED:
-        if (isCodeBlock(event.getChild())) return;
+        if (isCodeBlock(event.getParent())) return;
       case PROPERTY_CHANGED:
         break;
     }
