@@ -16,6 +16,9 @@
 package com.intellij.vcs.commit;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -100,5 +103,12 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
   @Nullable
   private static Document getDocument(@NotNull PsiElement element) {
     return PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+  }
+
+  public static class EmptyIntentionActionFilter implements IntentionActionFilter {
+    @Override
+    public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
+      return file == null || !isCommitMessage(file) || !(intentionAction instanceof EmptyIntentionAction);
+    }
   }
 }

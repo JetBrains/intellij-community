@@ -30,6 +30,8 @@
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener" />
     <projectService serviceImplementation="com.intellij.vcs.commit.CommitMessageInspectionProfile"/>
 
+    <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
+
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
 
