@@ -492,6 +492,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     try {
       if (myProject.isOpen()) {
         myReader = CompilerReferenceReader.create(myProject);
+        LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
     } finally {
       myOpenCloseLock.unlock();
@@ -663,10 +664,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
 
     Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
+    LOG.error("an exception during " + actionName + " calculation", e);
     if (unwrapped instanceof PersistentEnumeratorBase.CorruptedException || unwrapped instanceof StorageException) {
       closeReaderIfNeed(true);
     }
-    LOG.error("an exception during " + actionName + " calculation", e);
     return null;
   }
 
