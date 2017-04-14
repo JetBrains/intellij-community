@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -54,7 +55,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
  * @since 10/23/2014
  */
 @State(name = "ExternalProjectsManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ExternalProjectsManager implements PersistentStateComponent<ExternalProjectsState>, Disposable {
+public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
@@ -71,12 +72,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
   private ExternalSystemProjectsWatcher myWatcher;
 
-
-  public static ExternalProjectsManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExternalProjectsManager.class);
-  }
-
-  public ExternalProjectsManager(@NotNull Project project) {
+  public ExternalProjectsManagerImpl(@NotNull Project project) {
     myProject = project;
     myShortcutsManager = new ExternalSystemShortcutsManager(project);
     Disposer.register(this, myShortcutsManager);
@@ -84,7 +80,13 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
   }
 
+  public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
+    ExternalProjectsManager service = ServiceManager.getService(project, ExternalProjectsManager.class);
+    return (ExternalProjectsManagerImpl)service;
+  }
+
   @NotNull
+  @Override
   public Project getProject() {
     return myProject;
   }
@@ -112,7 +114,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   @Nullable
   public ExternalProjectsView getExternalProjectsView(@NotNull ProjectSystemId systemId) {
     for (ExternalProjectsView projectsView : myProjectsViews) {
-      if(projectsView.getSystemId().equals(systemId)) return projectsView;
+      if (projectsView.getSystemId().equals(systemId)) return projectsView;
     }
     return null;
   }
@@ -155,8 +157,14 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
     }
   }
 
+  @Override
+  public void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
+    ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
+  }
+
+  @Override
   public void runWhenInitialized(Runnable runnable) {
-    synchronized(isInitializationFinished) {
+    synchronized (isInitializationFinished) {
       if (isInitializationFinished.get()) {
         ApplicationManager.getApplication().executeOnPooledThread(runnable);
       }
@@ -213,7 +221,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
           .collect(Collectors.toMap(o -> o.getSystemId().getId(), o -> o.getSystemId()));
         for (Map.Entry<String, ExternalProjectsState.State> systemState : myState.getExternalSystemsState().entrySet()) {
           ProjectSystemId systemId = systemIds.get(systemState.getKey());
-          if(systemId == null) continue;
+          if (systemId == null) continue;
 
           for (Map.Entry<String, TaskActivationState> activationStateEntry : systemState.getValue().getExternalSystemsTaskActivation()
             .entrySet()) {
@@ -243,6 +251,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
     };
   }
 
+  @Override
   public boolean isIgnored(@NotNull ProjectSystemId systemId, @NotNull String projectPath) {
     final ExternalProjectInfo projectInfo = ExternalSystemUtil.getExternalProjectInfo(myProject, systemId, projectPath);
     if (projectInfo == null) return true;
@@ -250,6 +259,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
     return ExternalProjectsDataStorage.getInstance(myProject).isIgnored(projectInfo.getExternalProjectPath(), projectPath, MODULE);
   }
 
+  @Override
   public void setIgnored(@NotNull DataNode<?> dataNode, boolean isIgnored) {
     ExternalProjectsDataStorage.getInstance(myProject).setIgnored(dataNode, isIgnored);
     ExternalSystemKeymapExtension.updateActions(myProject, ExternalSystemApiUtil.findAllRecursively(dataNode, TASK));
@@ -264,7 +274,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   public void dispose() {
     myProjectsViews.clear();
     myRunManagerListener.detach();
-    if(myWatcher != null) {
+    if (myWatcher != null) {
       myWatcher.stop();
     }
     myWatcher = null;
