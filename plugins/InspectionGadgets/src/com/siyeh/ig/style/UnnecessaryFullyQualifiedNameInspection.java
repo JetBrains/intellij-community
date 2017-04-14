@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -177,15 +176,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (qualifier == null) {
         return;
       }
-      try {
-        qualifier.delete();
-      }
-      catch (IncorrectOperationException e) {
-        final Class<? extends QualificationRemover> aClass = getClass();
-        final String className = aClass.getName();
-        final Logger logger = Logger.getInstance(className);
-        logger.error(e);
-      }
+      qualifier.delete();
       shortenedElements.add(reference);
     }
   }
