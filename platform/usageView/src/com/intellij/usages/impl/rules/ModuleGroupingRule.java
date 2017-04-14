@@ -21,39 +21,74 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author max
  */
 public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
+  private final ModuleGrouper myGrouper;
+  private final boolean myFlattenModules;
+
+  public ModuleGroupingRule(Project project, boolean flattenModules) {
+    myGrouper = ModuleGrouper.instanceFor(project);
+    myFlattenModules = flattenModules;
+  }
+
+  @Nullable
   @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof UsageInModule) {
       UsageInModule usageInModule = (UsageInModule)usage;
       Module module = usageInModule.getModule();
-      if (module != null) return new ModuleUsageGroup(module);
+      if (module != null) {
+        if (myFlattenModules) {
+          return Collections.singletonList(new ModuleUsageGroup(module, null));
+        }
+        else {
+          List<String> groupPath = myGrouper.getGroupPath(module);
+          List<UsageGroup> parentGroups = new ArrayList<>(groupPath.size() + 1);
+          for (int i = 1; i <= groupPath.size(); i++) {
+            parentGroups.add(new ModuleGroupUsageGroup(groupPath.subList(0, i)));
+          }
+          parentGroups.add(new ModuleUsageGroup(module, myGrouper));
+          return parentGroups;
+        }
+      }
     }
 
     if (usage instanceof UsageInLibrary) {
       UsageInLibrary usageInLibrary = (UsageInLibrary)usage;
       OrderEntry entry = usageInLibrary.getLibraryEntry();
-      if (entry != null) return new LibraryUsageGroup(entry);
+      if (entry != null) return Collections.singletonList(new LibraryUsageGroup(entry));
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   private static class LibraryUsageGroup extends UsageGroupBase {
@@ -65,7 +100,7 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     }
 
     public LibraryUsageGroup(@NotNull OrderEntry entry) {
-      super(1);
+      super(2);
       myEntry = entry;
     }
 
@@ -92,10 +127,12 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
 
   private static class ModuleUsageGroup extends UsageGroupBase implements TypeSafeDataProvider {
     private final Module myModule;
+    private final ModuleGrouper myGrouper;
 
-    public ModuleUsageGroup(@NotNull Module module) {
-      super(0);
+    public ModuleUsageGroup(@NotNull Module module, @Nullable ModuleGrouper grouper) {
+      super(1);
       myModule = module;
+      myGrouper = grouper;
     }
 
     public boolean equals(Object o) {
@@ -119,7 +156,7 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return myModule.isDisposed() ? "" : myModule.getName();
+      return myModule.isDisposed() ? "" : myGrouper != null ? myGrouper.getShortenedName(myModule) : myModule.getName();
     }
 
     @Override
@@ -137,6 +174,39 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
       if (LangDataKeys.MODULE_CONTEXT == key) {
         sink.put(LangDataKeys.MODULE_CONTEXT, myModule);
       }
+    }
+  }
+
+  private static class ModuleGroupUsageGroup extends UsageGroupBase {
+    private final List<String> myGroupPath;
+
+    public ModuleGroupUsageGroup(@NotNull List<String> groupPath) {
+      super(0);
+      myGroupPath = groupPath;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o instanceof ModuleGroupUsageGroup && myGroupPath.equals(((ModuleGroupUsageGroup)o).myGroupPath);
+    }
+
+    public int hashCode() {
+      return myGroupPath.hashCode();
+    }
+
+    @Override
+    public Icon getIcon(boolean isOpen) {
+      return AllIcons.Nodes.ModuleGroup;
+    }
+
+    @Override
+    @NotNull
+    public String getText(UsageView view) {
+      return myGroupPath.get(myGroupPath.size()-1);
+    }
+
+    public String toString() {
+      return UsageViewBundle.message("node.group.module.group") + getText(null);
     }
   }
 }

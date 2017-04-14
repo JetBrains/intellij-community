@@ -56,30 +56,58 @@ public class UsageViewTreeTest extends UsefulTestCase {
     };
     myFixture.setUp();
     disposeOnTearDown(myDisposable);
-    UsageViewSettings oldSettings = new UsageViewSettings();
-    XmlSerializerUtil.copyBean(UsageViewSettings.getInstance().getState(), oldSettings);
-    disposeOnTearDown(() -> UsageViewSettings.getInstance().loadState(oldSettings));
-  }
-
-  public void testSingleModule() throws Exception {
-    String tempDirPath = myFixture.getTempDirPath();
-    EmptyModuleFixtureBuilder moduleBuilder = myFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class);
-    moduleBuilder.addSourceContentRoot(tempDirPath);
-    moduleBuilder.getFixture().setUp();
-    ModuleGroupTestsKt.renameModule(myFixture.getModule(), "main");
-    PsiFile file = myFixture.addFileToProject("A.txt", "hello");
-    Usage[] usages = new Usage[] {new UsageInfo2UsageAdapter(new UsageInfo(file))};
+    UsageViewSettings oldSettingsState = new UsageViewSettings();
     UsageViewSettings settings = UsageViewSettings.getInstance();
+    XmlSerializerUtil.copyBean(settings.getState(), oldSettingsState);
+    disposeOnTearDown(() -> settings.loadState(oldSettingsState));
+
     settings.GROUP_BY_FILE_STRUCTURE = false;
     settings.GROUP_BY_USAGE_TYPE = false;
     settings.GROUP_BY_PACKAGE = false;
-    UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(myFixture.getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
+  }
+
+  public void testSimpleModule() throws Exception {
+    addModule("main");
+    PsiFile file = myFixture.addFileToProject("main/A.txt", "hello");
+    Usage[] usages = new Usage[] {new UsageInfo2UsageAdapter(new UsageInfo(file))};
+    assertUsageViewStructureEquals(usages, "Usage (1 usage)\n" +
+                                           " Non-code usages (1 usage)\n" +
+                                           "  main (1 usage)\n" +
+                                           "   A.txt (1 usage)\n" +
+                                           "    1hello\n");
+  }
+
+  public void testModuleWithQualifiedName() throws Exception {
+    addModule("xxx.main");
+    PsiFile file = myFixture.addFileToProject("xxx.main/A.txt", "hello");
+    Usage[] usages = new Usage[] {new UsageInfo2UsageAdapter(new UsageInfo(file))};
+    UsageViewSettings.getInstance().FLATTEN_MODULES = false;
+    ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> {
+      assertUsageViewStructureEquals(usages, "Usage (1 usage)\n" +
+                                             " Non-code usages (1 usage)\n" +
+                                             "  xxx (1 usage)\n" +
+                                             "   main (1 usage)\n" +
+                                             "    A.txt (1 usage)\n" +
+                                             "     1hello\n");
+      return null;
+    });
+  }
+
+  private void assertUsageViewStructureEquals(Usage[] usages, String expected) {
+    UsageViewImpl usageView = (UsageViewImpl)UsageViewManager
+      .getInstance(myFixture.getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
     Disposer.register(myDisposable, usageView);
     usageView.expandAll();
-    TreeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).assertStructureEquals("Usage (1 usage)\n" +
-                                                                                                        " Non-code usages (1 usage)\n" +
-                                                                                                        "  main (1 usage)\n" +
-                                                                                                        "   A.txt (1 usage)\n" +
-                                                                                                        "    1hello\n");
+    TreeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).assertStructureEquals(expected);
+  }
+
+  private void addModule(String name) throws Exception {
+    String tempDirPath = myFixture.getTempDirPath();
+    EmptyModuleFixtureBuilder moduleBuilder = myFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class);
+    String sourceRoot = tempDirPath + "/" + name;
+    //FileUtil.createDirectory(new File(sourceRoot));
+    moduleBuilder.addSourceContentRoot(sourceRoot);
+    moduleBuilder.getFixture().setUp();
+    ModuleGroupTestsKt.renameModule(myFixture.getModule(), name);
   }
 }
