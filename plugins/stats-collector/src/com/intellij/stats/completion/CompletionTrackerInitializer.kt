@@ -37,6 +37,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
     }
 
     override fun initComponent() {
+        if (!ApplicationManager.getApplication().isUnitTestMode) return
+
         ActionManager.getInstance().addAnActionListener(actionListener)
         ProjectManager.getInstance().addProjectManagerListener(object : ProjectManagerListener {
             override fun projectOpened(project: Project) {
@@ -52,6 +54,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
     }
 
     override fun disposeComponent() {
+        if (!ApplicationManager.getApplication().isUnitTestMode) return
+
         ActionManager.getInstance().removeAnActionListener(actionListener)
     }
 

@@ -42,13 +42,14 @@
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
 
-    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+    <!--<postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>-->
+
   </extensions>
 
   <application-components>
-    <component>
-      <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
-    </component>
+    <!--<component>-->
+      <!--<implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>-->
+    <!--</component>-->
 
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
