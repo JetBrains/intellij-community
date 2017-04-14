@@ -167,5 +167,10 @@ public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
         sink.put(CommonDataKeys.PSI_ELEMENT, getDirectory());
       }
     }
+
+    @Override
+    public String toString() {
+      return "Directory:" + myDir.getName();
+    }
   }
 }
