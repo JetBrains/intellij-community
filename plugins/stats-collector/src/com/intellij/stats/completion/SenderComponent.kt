@@ -6,7 +6,7 @@ import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.stats.completion.experiment.StatusInfoProvider
+import com.intellij.stats.completion.experiment.WebServiceStatusProvider
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.commons.codec.binary.Base64OutputStream
@@ -27,7 +27,7 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatisticSender, val statusHelper: StatusInfoProvider) : ApplicationComponent {
+class SenderComponent(val sender: StatisticSender, val statusHelper: WebServiceStatusProvider) : ApplicationComponent {
     private val LOG = logger<SenderComponent>()
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)

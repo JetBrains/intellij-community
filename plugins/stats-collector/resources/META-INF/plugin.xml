@@ -41,7 +41,7 @@
                         serviceImplementation="com.intellij.stats.completion.StatisticSender">
     </applicationService>
     
-    <applicationService serviceInterface="com.intellij.stats.completion.experiment.StatusInfoProvider" 
+    <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatusProvider"
                         serviceImplementation="com.intellij.stats.completion.experiment.StatusInfoProvider">
     </applicationService>
     

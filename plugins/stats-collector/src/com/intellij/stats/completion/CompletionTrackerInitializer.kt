@@ -14,11 +14,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.stats.completion.experiment.StatusInfoProvider
+import com.intellij.stats.completion.experiment.WebServiceStatusProvider
+import com.intellij.stats.completion.experiment.isPerformExperiment
 import java.beans.PropertyChangeListener
 
 
-class CompletionTrackerInitializer(experimentHelper: StatusInfoProvider): ApplicationComponent {
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): ApplicationComponent {
     private val actionListener = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
@@ -132,7 +133,7 @@ class LookupActionsListener : AnActionListener.Adapter() {
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger,
-                               private val experimentHelper: StatusInfoProvider) 
+                               private val experimentHelper: WebServiceStatusProvider)
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {

@@ -7,7 +7,24 @@ import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.assertNotEDT
 
-class StatusInfoProvider(private val requestSender: RequestService) {
+interface WebServiceStatusProvider {
+    fun updateStatus()
+
+    fun getDataServerUrl(): String
+    fun getExperimentVersion(): Int
+    fun isServerOk(): Boolean
+    fun getSalt(): String
+}
+
+
+fun WebServiceStatusProvider.isPerformExperiment(): Boolean {
+    val uid = PermanentInstallationID.get()
+    val hash = (uid + getSalt()).hashCode()
+    return hash % 2 == 0
+}
+
+
+class StatusInfoProvider(private val requestSender: RequestService): WebServiceStatusProvider {
 
     companion object {
         private val gson = Gson()
@@ -22,19 +39,15 @@ class StatusInfoProvider(private val requestSender: RequestService) {
     @Volatile private var serverStatus = ""
     @Volatile private var dataServerUrl = ""
 
-    fun getExperimentVersion() = statusInfo.experimentVersion
+    override fun getExperimentVersion() = statusInfo.experimentVersion
     
-    fun getDataServerUrl(): String = dataServerUrl
+    override fun getDataServerUrl(): String = dataServerUrl
     
-    fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
-    
-    fun isPerformExperiment(): Boolean {
-        val uid = PermanentInstallationID.get()
-        val hash = (uid + statusInfo.salt).hashCode()
-        return hash % 2 == 0
-    }
-    
-    fun updateStatus() {
+    override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
+
+    override fun getSalt() = statusInfo.salt
+
+    override fun updateStatus() {
         serverStatus = ""
         dataServerUrl = ""
         
