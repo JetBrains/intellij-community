@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -34,52 +35,15 @@ import org.jetbrains.annotations.Nullable;
 public class PropertiesFormattingModelBuilder implements FormattingModelBuilder {
   @NotNull
   @Override
-  public PropertiesFormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
+  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     final ASTNode root = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     final FormattingDocumentModelImpl documentModel = FormattingDocumentModelImpl.createOn(element.getContainingFile());
-    return new PropertiesFormattingModel(root, documentModel, settings);
+    return new PsiBasedFormattingModel(element.getContainingFile(), new PropertiesRootBlock(root, settings), documentModel);
   }
 
   @Nullable
   @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;
-  }
-
-  private static class PropertiesFormattingModel implements FormattingModel {
-    private final FormattingDocumentModelImpl myDocumentModel;
-    private PropertiesRootBlock myRoot;
-
-    public PropertiesFormattingModel(ASTNode root, FormattingDocumentModelImpl documentModel, CodeStyleSettings settings) {
-      myRoot = new PropertiesRootBlock(root, settings);
-      myDocumentModel = documentModel;
-    }
-
-    @NotNull
-    @Override
-    public Block getRootBlock() {
-      return myRoot;
-    }
-
-    @NotNull
-    @Override
-    public FormattingDocumentModel getDocumentModel() {
-      return myDocumentModel;
-    }
-
-    @Override
-    public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
-      return textRange;
-    }
-
-    @Override
-    public TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent) {
-      return null;
-    }
-
-    @Override
-    public void commitChanges() {
-
-    }
   }
 }
