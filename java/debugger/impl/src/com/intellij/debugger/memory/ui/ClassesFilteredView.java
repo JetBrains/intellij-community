@@ -235,12 +235,9 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myDebugSessionListener = new MyDebuggerSessionListener();
     debugSession.addSessionListener(myDebugSessionListener, this);
 
-    mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
-      final SuspendContextImpl suspendContext = debugProcess.getDebuggerContext().getSuspendContext();
-      if (suspendContext != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
-        managerThread.schedule(new MyUpdateClassesCommand(suspendContext));
-      }
+    mySingleAlarm = new SingleAlarmWithMutableDelay(suspendContext -> {
+      ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
+      suspendContext.getDebugProcess().getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
     }, this);
 
     myTable.addMouseListener(new PopupHandler() {
@@ -316,8 +313,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       if (debugSession != null) {
         final DebugProcess debugProcess = DebuggerManager.getInstance(myProject)
           .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-        if (debugProcess != null && debugProcess.isAttached()) {
-          mySingleAlarm.cancelAndRequest();
+        if (debugProcess != null && debugProcess.isAttached() && debugProcess instanceof DebugProcessImpl) {
+          final DebugProcessImpl process = (DebugProcessImpl)debugProcess;
+          final SuspendContextImpl context = process.getDebuggerContext().getSuspendContext();
+          if (context != null) {
+            mySingleAlarm.cancelAndRequest(context);
+          }
         }
       }
     }, x -> myProject.isDisposed());
