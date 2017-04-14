@@ -16,11 +16,11 @@
 package com.jetbrains.edu.learning.newproject.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,22 +33,31 @@ import java.io.File;
 
 public class EduCreateNewProjectPanel extends JPanel {
   private JPanel myPanel;
-  private JTextField myNameField;
   private TextFieldWithBrowseButton myLocationField;
   private JLabel myErrorIcon;
   private JLabel myErrorLabel;
+  private JTextPane myDescription;
 
   public EduCreateNewProjectPanel(@NotNull final Project project, @NotNull EduCreateNewProjectDialog dialog) {
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
     myErrorIcon.setIcon(AllIcons.Actions.Lightning);
     resetError();
-    String location = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
+    String location = findSequentNonExistingUntitled().toString();
     myLocationField.setText(location);
-    String name = ProjectWizardUtil.findNonExistingFileName(location, "course", "");
-    myNameField.setText(name);
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener("Choose Location Folder", null, project, descriptor);
+    final int index = location.lastIndexOf(File.separator);
+    if (index > 0) {
+      JTextField textField = myLocationField.getTextField();
+      textField.select(index + 1, location.length());
+      textField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
+    }
+
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    myLocationField.addBrowseFolderListener("Select Base Directory",
+                                            "Select base directory for the project",
+                                            project,
+                                            descriptor);
+
     myLocationField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -65,6 +74,11 @@ public class EduCreateNewProjectPanel extends JPanel {
     });
   }
 
+  @NotNull
+  protected File findSequentNonExistingUntitled() {
+    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "course", "");
+  }
+
   private void setState(boolean isVisible) {
     myErrorIcon.setVisible(isVisible);
     myErrorLabel.setVisible(isVisible);
@@ -75,15 +89,15 @@ public class EduCreateNewProjectPanel extends JPanel {
     setState(true);
   }
 
-  public String getName() {
-    return myNameField.getText();
-  }
-
   public String getLocationPath() {
     return myLocationField.getText();
   }
 
   public void resetError() {
     setState(false);
+  }
+
+  public void setDescription(@NotNull String description) {
+    myDescription.setText(description);
   }
 }

@@ -68,6 +68,8 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
 
   public void setCourse(@Nullable Course course) {
     myCourse = course;
+    String description = course != null ? course.getDescription() : "";
+    myPanel.setDescription(description);
   }
 
   @Override
@@ -103,25 +105,23 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-
   /**
    * @param projectGenerator
    * @return error message if didn't create project else return null
    */
   @Nullable
   private String createProject(@NotNull final EduCourseProjectGenerator projectGenerator) {
-    String name = myPanel.getName();
-    String path = FileUtil.join(FileUtil.toSystemDependentName(myPanel.getLocationPath()), name);
+    String location = FileUtil.toSystemDependentName(myPanel.getLocationPath());
 
     ValidationResult result = projectGenerator.validate();
     if (!result.isOk()) {
       return result.getErrorMessage();
     }
 
-    final File location = new File(path);
-    if (!location.exists() && !location.mkdirs()) {
+    final File directory = new File(location);
+    if (!FileUtil.createDirectory(directory)) {
       String message = "Can't create a project directory";
-      LOG.error(message + ": " + path);
+      LOG.error(message + ": " + location);
       return message;
     }
 
@@ -129,18 +129,19 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
 
     final VirtualFile baseDir = ApplicationManager.getApplication()
       .runWriteAction((Computable<VirtualFile>)() ->
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location)
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory)
       );
 
     if (baseDir == null) {
-      LOG.error("Couldn't find '" + location + "' in VFS");
+      LOG.error("Couldn't find '" + directory + "' in VFS");
       return "Couldn't find in VFS";
     }
     VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
 
     if (baseDir.getChildren().length > 0) {
       String message =
-        String.format("Directory '%s' is not empty.\nFiles and directories will remove.\nDo you want continue?", location.getAbsolutePath());
+        String.format("Directory '%s' is not empty.\nFiles and directories will remove.\nDo you want continue?",
+                      directory.getAbsolutePath());
       int rc = Messages.showYesNoDialog((Project)null, message, "New Project", Messages.getQuestionIcon());
       if (rc != Messages.YES) {
         myPanel.resetError();
@@ -153,11 +154,11 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     String generatorName = ConvertUsagesUtil.ensureProperKey(generator.getName());
     UsageTrigger.trigger("AbstractNewProjectStep." + generatorName);
 
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(directory.getParent());
 
     ProjectOpenedCallback callback = null;
     if(generator instanceof TemplateProjectDirectoryGenerator){
-      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), path);
+      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), location);
     } else {
       callback = (project, module) -> {
         if (projectGenerator.beforeProjectGenerated()) {
