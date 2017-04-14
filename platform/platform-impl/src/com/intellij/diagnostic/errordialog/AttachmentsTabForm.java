@@ -14,6 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -78,11 +79,11 @@ public class AttachmentsTabForm {
         if (e.getValueIsAdjusting()) {
           return;
         }
-        LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, true);
+        LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, false);
         Attachment attachment = myTable.getSelectedObject();
         if (attachment != null) {
           try {
-            LabeledTextComponent.setText(myFileTextArea.getTextComponent(), attachment.getDisplayText(), true);
+            LabeledTextComponent.setText(myFileTextArea.getTextComponent(), attachment.getDisplayText(), false);
           }
           catch (Throwable th) {
             LOG.warn(th);
@@ -107,6 +108,7 @@ public class AttachmentsTabForm {
         myTable.repaint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+    myContentPane.setPreferredSize(new Dimension(200, 210)); // limit growth due to large attachment
   }
 
   public JComponent getPreferredFocusedComponent() {
