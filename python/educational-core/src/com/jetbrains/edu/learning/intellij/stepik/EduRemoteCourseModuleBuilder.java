@@ -65,7 +65,7 @@ class EduRemoteCourseModuleBuilder extends ModuleBuilder {
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    return myModuleBuilder.modifySettingsStep(settingsStep);
+    return myModuleBuilder.modifyProjectTypeStep(settingsStep);
   }
 
   @NotNull
