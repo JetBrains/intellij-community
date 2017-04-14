@@ -36,9 +36,7 @@
       </grid>
       <component id="628ab" class="javax.swing.JLabel">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="58" height="67"/>
-          </grid>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Location:"/>
@@ -48,7 +46,7 @@
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <minimum-size width="400" height="-1"/>
-            <preferred-size width="400" height="67"/>
+            <preferred-size width="400" height="-1"/>
           </grid>
         </constraints>
         <properties/>
