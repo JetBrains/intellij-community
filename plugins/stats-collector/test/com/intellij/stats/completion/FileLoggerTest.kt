@@ -41,8 +41,9 @@ class FileLoggerTest : PlatformTestCase() {
     fun testLogging() {
         val fileLengthBefore = logFile.length()
         
-        val logFileManager = LogFileManagerImpl(pathProvider)
-        val loggerProvider = CompletionFileLoggerProvider(logFileManager)
+        val loggerProvider = CompletionFileLoggerProvider(pathProvider)
+        loggerProvider.initComponent()
+
         val logger = loggerProvider.newCompletionLogger()
         
         val lookup = mock(LookupImpl::class.java).apply {
@@ -55,8 +56,8 @@ class FileLoggerTest : PlatformTestCase() {
         logger.completionStarted(lookup, true, 2)
         
         logger.completionCancelled()
-        loggerProvider.dispose()
-        
+        loggerProvider.disposeComponent()
+
         assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
     }
     

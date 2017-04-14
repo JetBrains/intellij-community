@@ -35,7 +35,7 @@ class Test {
             super.tearDown()
         } finally {
             CompletionLoggerProvider.getInstance().dispose()
-        val statsDir = pathProvider.getStatsDataDirectory()
+            val statsDir = pathProvider.getStatsDataDirectory()
             statsDir.deleteRecursively()
         }
     }

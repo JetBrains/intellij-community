@@ -53,7 +53,6 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
 
     override fun disposeComponent() {
         ActionManager.getInstance().removeAnActionListener(actionListener)
-        CompletionLoggerProvider.getInstance().dispose()
     }
 
 }

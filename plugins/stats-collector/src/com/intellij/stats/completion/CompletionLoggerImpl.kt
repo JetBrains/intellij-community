@@ -5,17 +5,18 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.application.PermanentInstallationID
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
 import java.util.*
 
 
-class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) : CompletionLoggerProvider() {
-    override fun dispose() {
+class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : ApplicationComponent, CompletionLoggerProvider() {
+    private val logFileManager = LogFileManagerImpl(filePathProvider)
+
+    override fun disposeComponent() {
         logFileManager.dispose()
     }
 
