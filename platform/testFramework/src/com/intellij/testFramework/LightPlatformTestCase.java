@@ -429,6 +429,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> ourTestCase = null).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
+      append(UIUtil::dispatchAllInvocationEvents).
       append(() -> {
         if (ourTestCount++ % 100 == 0) {
           // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
