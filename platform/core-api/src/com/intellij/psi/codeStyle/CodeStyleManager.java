@@ -279,6 +279,15 @@ public abstract class CodeStyleManager  {
   }
 
   /**
+   * Calculates minimum number of line feeds that should precede block starting at given offset, as dictated by formatting model.
+   * Returns <code>-1</code>, if required block cannot be found at provided offset,
+   * or spacing cannot be calculated due to some other reason.
+   */
+  public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
+    return -1;
+  }
+
+  /**
    * Retrieves the current formatting mode.
    * 
    * @param project The current project used to obtain {@code CodeStyleManager} instance.

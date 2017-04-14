@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,23 +166,43 @@ class DeclarationMover extends LineMover {
     }
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     info.toMove = range;
-    try {
-      LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, down, areWeMovingClass);
-      if (intraClassRange == null) {
-        info.toMove2 = new LineRange(sibling, sibling, document);
-        if (down && sibling.getNextSibling() == null) return false;
-      }
-      else {
-        info.toMove2 = intraClassRange;
-      }
-      if (down ? info.toMove2.startLine < info.toMove.endLine : info.toMove2.endLine > info.toMove.startLine) {
-        return false;
-      }
+    
+    int neibourghLine = down ? range.endLine : range.startLine - 1;
+    if (neibourghLine >= 0 && neibourghLine < document.getLineCount() && 
+        CharArrayUtil.containsOnlyWhiteSpaces(document.getImmutableCharSequence().subSequence(document.getLineStartOffset(neibourghLine), 
+                                                                                              document.getLineEndOffset(neibourghLine))) &&
+      emptyLineCanBeDeletedAccordingToCodeStyle(file, document, document.getLineEndOffset(neibourghLine))) {      
+      info.toMove2 = new LineRange(neibourghLine, neibourghLine + 1);
     }
-    catch (IllegalMoveException e) {
-      info.toMove2 = null;
+    else {
+      try {
+        LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, down, areWeMovingClass);
+        if (intraClassRange == null) {
+          info.toMove2 = new LineRange(sibling, sibling, document);
+          if (down && sibling.getNextSibling() == null) return false;
+        }
+        else {
+          info.toMove2 = intraClassRange;
+        }
+        if (down ? info.toMove2.startLine < info.toMove.endLine : info.toMove2.endLine > info.toMove.startLine) {
+          return false;
+        }
+      }
+      catch (IllegalMoveException e) {
+        info.toMove2 = null;
+      }
     }
     return true;
+  }
+
+  private static boolean emptyLineCanBeDeletedAccordingToCodeStyle(PsiFile file, Document document, int offset) {
+    CharSequence text = document.getImmutableCharSequence();
+    String whitespace = " \t\n";
+    int whitespaceStartOffset = CharArrayUtil.shiftBackward(text, offset - 1, whitespace) + 1;
+    int whitespaceEndOffset = CharArrayUtil.shiftForward(text, offset, whitespace);
+    int minLineFeeds = CodeStyleManager.getInstance(file.getProject()).getMinLineFeeds(file, whitespaceEndOffset);
+    int actualLineFeeds = StringUtil.countNewLines(text.subSequence(whitespaceStartOffset, whitespaceEndOffset));
+    return actualLineFeeds > minLineFeeds;
   }
 
   private static LineRange memberRange(@NotNull PsiElement member, Editor editor, LineRange lineRange) {
