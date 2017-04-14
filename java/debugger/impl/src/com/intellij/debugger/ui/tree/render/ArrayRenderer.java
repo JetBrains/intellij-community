@@ -37,6 +37,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
@@ -45,8 +46,7 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * User: lex
@@ -99,7 +99,6 @@ public class ArrayRenderer extends NodeRendererImpl{
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    List<DebuggerTreeNode> children = new ArrayList<>();
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
@@ -133,7 +132,7 @@ public class ArrayRenderer extends NodeRendererImpl{
             continue;
           }
 
-          children.add(arrayItemNode);
+          builder.addChildren(Collections.singletonList(arrayItemNode), false);
           added++;
           if (added > ENTRIES_LIMIT) {
             break;
@@ -141,24 +140,26 @@ public class ArrayRenderer extends NodeRendererImpl{
         }
       }
 
+      builder.addChildren(Collections.emptyList(), true);
+
       if (added == 0) {
         if (START_INDEX == 0 && array.length() - 1 <= END_INDEX) {
-          children.add(nodeManager.createMessageNode(ALL_ELEMENTS_IN_RANGE_ARE_NULL));
+          builder.setMessage(DebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
         else {
-          children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX)));
+          builder.setMessage(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
+                             SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
       }
       else {
         if (hiddenNulls) {
-          children.add(0, nodeManager.createMessageNode(HIDDEN_NULL_ELEMENTS));
+          builder.setMessage(DebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
         if (!myForced && END_INDEX < array.length() - 1) {
           builder.setRemaining(array.length() - 1 - END_INDEX);
         }
       }
     }
-    builder.setChildren(children);
   }
 
   private static boolean elementIsNull(ArrayReference arrayReference, int index) {

@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
 import com.intellij.icons.AllIcons;
@@ -62,7 +63,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   @Nullable
-  public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {
+  public static Icon getDescriptorIcon(NodeDescriptor descriptor) {
     Icon nodeIcon = null;
     if (descriptor instanceof ThreadGroupDescriptorImpl) {
       nodeIcon = (((ThreadGroupDescriptorImpl)descriptor).isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup);
