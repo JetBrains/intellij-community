@@ -121,7 +121,7 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     String name = myPanel.getName();
     String path = FileUtil.join(FileUtil.toSystemDependentName(myPanel.getLocationPath()), name);
 
-    ValidationResult result = projectGenerator.validate(path);
+    ValidationResult result = projectGenerator.validate();
     if (!result.isOk()) {
       return result.getErrorMessage();
     }
@@ -170,6 +170,7 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
       callback = (project, module) -> {
         if (projectGenerator.beforeProjectGenerated()) {
           Object settings = projectGenerator.getProjectSettings();
+          //noinspection unchecked
           generator.generateProject(project, baseDir, settings, module);
           projectGenerator.afterProjectGenerated(project);
         }

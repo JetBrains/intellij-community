@@ -31,7 +31,7 @@ public interface EduCourseProjectGenerator {
 
   void setCourse(@NotNull Course course);
 
-  ValidationResult validate(@NotNull String path);
+  ValidationResult validate();
 
   boolean beforeProjectGenerated();
 

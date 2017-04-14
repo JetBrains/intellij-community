@@ -18,8 +18,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
@@ -27,6 +29,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
@@ -38,6 +41,7 @@ import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -51,7 +55,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
+public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>
+  implements EduCourseProjectGenerator {
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
@@ -113,14 +118,59 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
 
   @NotNull
   @Override
-  public ValidationResult validate(@NotNull String s) {
+  public DirectoryProjectGenerator getDirectoryProjectGenerator() {
+    return this;
+  }
+
+  public ValidationResult validate() {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+
+    ValidationResult validationResult;
     if (sdks.isEmpty()) {
-      myValidationResult = new ValidationResult(NO_PYTHON_INTERPRETER);
+      validationResult = new ValidationResult(NO_PYTHON_INTERPRETER);
+    } else {
+      validationResult = ValidationResult.OK;
+    }
+
+    return validationResult;
+  }
+
+  @NotNull
+  @Override
+  public ValidationResult validate(@NotNull String s) {
+    ValidationResult validationResult = validate();
+    if (!validationResult.isOk()) {
+      myValidationResult = validationResult;
     }
 
     return myValidationResult;
+  }
+
+  @Override
+  public boolean beforeProjectGenerated() {
+    BooleanFunction<PythonProjectGenerator> function = beforeProjectGenerated(null);
+    return function != null && function.fun(this);
+  }
+
+  @Override
+  public void afterProjectGenerated(@NotNull Project project) {
+    PyNewProjectSettings settings = (PyNewProjectSettings)getProjectSettings();
+    Sdk sdk = settings.getSdk();
+
+    if (sdk == null) {
+      createAndAddVirtualEnv(project, settings);
+      sdk = settings.getSdk();
+    }
+
+    SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
+    final List<Sdk> sdks = PythonSdkType.getAllSdks();
+    for (Sdk s : sdks) {
+      final SdkAdditionalData additionalData = s.getSdkAdditionalData();
+      if (additionalData instanceof PythonSdkAdditionalData) {
+        ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(project);
+      }
+    }
   }
 
   public void setValidationResult(ValidationResult validationResult) {
@@ -172,7 +222,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     return mySettingsPanel;
   }
 
-  public void setSelectedCourse(Course course) {
+  public void setCourse(@NotNull Course course) {
     myGenerator.setSelectedCourse(course);
   }
 
