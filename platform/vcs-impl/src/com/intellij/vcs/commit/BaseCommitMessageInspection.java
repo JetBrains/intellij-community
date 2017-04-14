@@ -16,14 +16,22 @@
 package com.intellij.vcs.commit;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.longLine.LongLineInspection;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.openapi.vcs.ui.CommitMessage.isCommitMessage;
 
 public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
@@ -57,5 +65,40 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
   @Nullable
   public ConfigurableUi<Project> createOptionsConfigurable() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    Document document = getDocument(file);
+
+    return document != null ? checkFile(file, document, manager, isOnTheFly) : null;
+  }
+
+  @Nullable
+  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
+                                          @NotNull Document document,
+                                          @NotNull InspectionManager manager,
+                                          boolean isOnTheFly) {
+    return null;
+  }
+
+  @Nullable
+  protected static ProblemDescriptor checkRightMargin(@NotNull PsiFile file,
+                                               @NotNull Document document,
+                                               @NotNull InspectionManager manager,
+                                               boolean isOnTheFly,
+                                               int line,
+                                               int rightMargin,
+                                               @NotNull String problemText) {
+    TextRange exceedingRange = LongLineInspection.getExceedingRange(document, line, rightMargin);
+
+    return !exceedingRange.isEmpty() ? manager
+      .createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly) : null;
+  }
+
+  @Nullable
+  private static Document getDocument(@NotNull PsiElement element) {
+    return PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
   }
 }

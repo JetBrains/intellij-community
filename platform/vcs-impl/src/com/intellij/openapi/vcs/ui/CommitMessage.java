@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,7 +35,9 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -139,6 +144,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
     features.add(MonospaceEditorCustomization.getInstance());
     features.add(ErrorStripeEditorCustomization.ENABLED);
+    features.add(new InspectionCustomization(project));
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
@@ -192,5 +198,24 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @CalledWithReadLock
   public List<ChangeList> getChangeLists() {
     return myChangeLists;
+  }
+
+  private static class InspectionCustomization implements EditorCustomization {
+    @NotNull private final Project myProject;
+
+    public InspectionCustomization(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void customize(@NotNull EditorEx editor) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+
+      if (file != null) {
+        file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY,
+                         profile -> new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
+      }
+      editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
+    }
   }
 }

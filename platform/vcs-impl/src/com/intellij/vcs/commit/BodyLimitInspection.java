@@ -15,10 +15,20 @@
  */
 package com.intellij.vcs.commit;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
+import static java.lang.String.format;
+import static java.util.stream.IntStream.range;
 
 public class BodyLimitInspection extends BaseCommitMessageInspection {
 
@@ -35,5 +45,18 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
   @Override
   public ConfigurableUi<Project> createOptionsConfigurable() {
     return new BodyLimitInspectionOptions(this);
+  }
+
+  @Nullable
+  @Override
+  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
+                                          @NotNull Document document,
+                                          @NotNull InspectionManager manager,
+                                          boolean isOnTheFly) {
+    return range(1, document.getLineCount())
+      .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
+                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN)))
+      .filter(Objects::nonNull)
+      .toArray(ProblemDescriptor[]::new);
   }
 }

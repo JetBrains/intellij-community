@@ -15,8 +15,15 @@
  */
 package com.intellij.vcs.commit;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.containers.ContainerUtil.ar;
 
 public class SubjectBodySeparationInspection extends BaseCommitMessageInspection {
   @Nls
@@ -24,5 +31,19 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
   @Override
   public String getDisplayName() {
     return "Blank line between subject and body";
+  }
+
+  @Nullable
+  @Override
+  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
+                                          @NotNull Document document,
+                                          @NotNull InspectionManager manager,
+                                          boolean isOnTheFly) {
+    ProblemDescriptor descriptor = document.getLineCount() > 1
+                                   ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
+                                                      "Missing blank line between subject and body")
+                                   : null;
+
+    return descriptor != null ? ar(descriptor) : null;
   }
 }
