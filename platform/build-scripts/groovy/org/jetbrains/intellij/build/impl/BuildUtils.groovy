@@ -93,6 +93,7 @@ class BuildUtils {
     List<String> command = new ArrayList()
     command.add("${projectDir.absolutePath}/$gradleScript".toString())
     command.addAll(tasks)
+    command.add('--stacktrace')
     def process = new ProcessBuilder(command).directory(projectDir).start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
