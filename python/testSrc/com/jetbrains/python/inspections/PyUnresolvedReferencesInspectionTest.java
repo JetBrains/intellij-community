@@ -758,6 +758,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     assertNotParsed((PyFile)fooPsiFile);
   }
 
+  // PY-23164
+  public void testInstanceAttributeCreatedInsideWithStatement() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

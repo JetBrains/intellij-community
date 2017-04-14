@@ -40,11 +40,9 @@ public class RainbowColorsInSchemeState {
     myOriginalScheme = originalScheme;
   }
 
-  public void apply(@NotNull EditorColorsScheme scheme) {
-    if (scheme != myEditedScheme) {
-      scheme.getMetaProperties().clear();
-      //noinspection UseOfPropertiesAsHashtable
-      scheme.getMetaProperties().putAll(myEditedScheme.getMetaProperties());
+  public void apply(@Nullable EditorColorsScheme scheme) {
+    if (scheme != null && scheme != myEditedScheme) {
+      RainbowHighlighter.transferRainbowState(scheme, myEditedScheme);
       for (TextAttributesKey key : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
         Color color = myEditedScheme.getAttributes(key).getForegroundColor();
         if (!color.equals(scheme.getAttributes(key).getForegroundColor()) ) {

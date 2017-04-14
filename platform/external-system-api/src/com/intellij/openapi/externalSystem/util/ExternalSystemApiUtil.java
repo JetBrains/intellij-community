@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -651,6 +651,9 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return stacktraceAsString(unwrapped);
+    }
     String reason = unwrapped.getLocalizedMessage();
     if (!StringUtil.isEmpty(reason)) {
       return reason;
@@ -659,10 +662,14 @@ public class ExternalSystemApiUtil {
       return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
     }
     else {
-      StringWriter writer = new StringWriter();
-      unwrapped.printStackTrace(new PrintWriter(writer));
-      return writer.toString();
+      return stacktraceAsString(unwrapped);
     }
+  }
+
+  private static String stacktraceAsString(Throwable unwrapped) {
+    StringWriter writer = new StringWriter();
+    unwrapped.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
   }
 
   @SuppressWarnings("unchecked")

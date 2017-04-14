@@ -113,6 +113,8 @@ public final class NavigationUtil {
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
+    assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
+
     final JList list = new JBList(elements);
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
     list.setCellRenderer(renderer);
@@ -144,7 +146,12 @@ public final class NavigationUtil {
     builder.getScrollPane().setBorder(null);
     builder.getScrollPane().setViewportBorder(null);
 
-    Project project = elements[0].getProject();
+    hidePopupIfDumbModeStarts(popup, elements[0].getProject());
+
+    return popup;
+  }
+
+  public static void hidePopupIfDumbModeStarts(@NotNull JBPopup popup, @NotNull Project project) {
     if (!DumbService.isDumb(project)) {
       project.getMessageBus().connect(popup).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
@@ -153,8 +160,6 @@ public final class NavigationUtil {
         }
       });
     }
-
-    return popup;
   }
 
   public static boolean activateFileWithPsiElement(@NotNull PsiElement elt) {

@@ -17,9 +17,12 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
+import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdkTools.PyTestSdkTools;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
@@ -134,6 +137,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       assert file != null && file.exists() : String.format("Content root does not exist %s", file);
       PsiTestUtil.addContentRoot(module, file);
     }
+  }
+
+  @NotNull
+  public LanguageLevel getLevelForSdk() {
+    return PythonSdkType.getLanguageLevelForSdk(ModuleExtKt.getSdk(myFixture.getModule()));
   }
 
   /**

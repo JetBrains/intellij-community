@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -106,7 +105,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           // crazy things happen when running tests, like starting write action in one thread but firing its end in the other
           enable("Write action finished: " + action);
         }
-      }, DocumentCommitThread.this);
+      }, this);
 
       enable("Listener installed, started");
     });
@@ -395,22 +394,24 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       failureReason = ExceptionUtil.getThrowableText(e);
     }
 
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    if (!success && task != null && documentManager.isUncommited(document)) { // sync commit has not intervened
-      final Document finalDocument = document;
+    if (!success && task != null) {
       final Project finalProject = project;
-      final CharSequence[] lastCommittedText = {null};
-      List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes =
-        ApplicationManager.getApplication().runReadAction((Computable<List<Pair<PsiFileImpl, FileASTNode>>>)() -> {
-          if (finalProject.isDisposed()) return null;
-          lastCommittedText[0] = PsiDocumentManager.getInstance(finalProject).getLastCommittedText(finalDocument);
-          PsiFile file = documentManager.getPsiFile(finalDocument);
-          return file == null ? null : getAllFileNodes(file);
-        });
-      if (oldFileNodes != null) {
-        doQueue(project, document, oldFileNodes, "re-added on failure: " + failureReason, task.myCreationModalityState,
-                lastCommittedText[0]);
-      }
+      final Document finalDocument = document;
+      Object finalFailureReason = failureReason;
+      CommitTask finalTask = task;
+      ReadAction.run(() -> {
+        if (finalProject.isDisposed()) return;
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(finalProject);
+        if (documentManager.isCommitted(finalDocument)) return; // sync commit hasn't intervened
+        CharSequence lastCommittedText = documentManager.getLastCommittedText(finalDocument);
+        PsiFile file = documentManager.getPsiFile(finalDocument);
+        List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes = file == null ? null : getAllFileNodes(file);
+        if (oldFileNodes != null) {
+          doQueue(finalProject, finalDocument, oldFileNodes, "re-added on failure: " + finalFailureReason,
+                  finalTask.myCreationModalityState,
+                  lastCommittedText);
+        }
+      });
     }
     synchronized (lock) {
       currentTask = null; // do not cancel, it's being invokeLatered
@@ -506,7 +507,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
       Lock lock = getDocumentLock(document);
       if (!lock.tryLock()) {
-        task.cancel("Can't obtain document lock", DocumentCommitThread.this);
+        task.cancel("Can't obtain document lock", this);
         return;
       }
 
@@ -547,7 +548,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       finally {
         lock.unlock();
         if (canceled) {
-          task.cancel("Task invalidated", DocumentCommitThread.this);
+          task.cancel("Task invalidated", this);
         }
       }
     };
@@ -885,9 +886,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       boolean sameText = Comparing.equal(fileText, documentText);
       LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
                 "; node.length=" + oldFileNode.getTextLength() +
-                "; doc.text" + (sameText ? "==" : "!=") + "file.text",
-                new Attachment("file psi text", fileText),
-                new Attachment("old text", documentText));
+                "; doc.text" + (sameText ? "==" : "!=") + "file.text" +
+                "; file name:" + file.getName()+
+                "; type:"+file.getFileType()+
+                "; lang:"+file.getLanguage()
+                );
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {

@@ -185,6 +185,13 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       return true;
     }
 
+    if (myT instanceof PsiCapturedWildcardType) {
+      PsiType lowerBound = ((PsiCapturedWildcardType)myT).getLowerBound();
+      if (lowerBound != PsiType.NULL) {
+        constraints.add(new StrictSubtypingConstraint(lowerBound, myS));
+      }
+    }
+
     return true;
   }
 

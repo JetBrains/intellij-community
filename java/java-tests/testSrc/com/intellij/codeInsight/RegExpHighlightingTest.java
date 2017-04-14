@@ -214,7 +214,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("a{2147483647}");
     doTest("a{<error descr=\"Repetition value too large\">2147483648</error>}");
     doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}");
-    doTest("a{<error descr=\"Number expected\">,</error>}");
+    doTest("a<weak_warning descr=\"Repetition range replaceable by '*'\">{<error descr=\"Number expected\">,</error>}</weak_warning>");
   }
 
   public void testOptions() {

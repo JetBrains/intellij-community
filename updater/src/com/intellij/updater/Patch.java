@@ -91,7 +91,7 @@ public class Patch {
     File newerDir = new File(spec.getNewFolder());
     Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized(), ui);
     Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false, ui);
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), true);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), spec.getOptionalFiles(), true);
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -107,8 +107,8 @@ public class Patch {
 
     for (Map.Entry<String, DiffCalculator.Update> each : diff.filesToUpdate.entrySet()) {
       DiffCalculator.Update update = each.getValue();
-      if (!spec.isBinary() && Utils.isZipFile(each.getKey())) {
-        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum, update.move));
+      if (!spec.isBinary() && !update.move && Utils.isZipFile(each.getKey())) {
+        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum));
       }
       else {
         tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
@@ -348,6 +348,8 @@ public class Patch {
     boolean shouldRevert = false;
     boolean cancelled = false;
     try {
+      List<File> createdDirectories = new ArrayList<>();
+
       forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
         if ((action instanceof CreateAction) &&
             !new File(toDir, action.getPath()).getParentFile().exists()) {
@@ -359,8 +361,22 @@ public class Patch {
         } else {
           appliedActions.add(action);
           action.apply(patchFile, backupDir, toDir);
+
+          if (action instanceof CreateAction) {
+            File file = action.getFile(toDir);
+            if (file.isDirectory()) {
+              createdDirectories.add(0, file);
+            }
+          }
         }
       });
+
+      for (File directory : createdDirectories) {
+        if (Utils.isEmptyDirectory(directory)) {
+          Runner.logger().info("Pruning empty directory: " + directory);
+          Utils.delete(directory);
+        }
+      }
     }
     catch (OperationCancelledException e) {
       Runner.printStackTrace(e);

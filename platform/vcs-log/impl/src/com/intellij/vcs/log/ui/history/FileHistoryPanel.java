@@ -71,8 +71,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    myDetailsSplitter.setFirstComponent(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
-                                                                     logData, this));
+    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
+                                                                logData, this);
+    myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myUi.getProperties().get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
@@ -84,7 +85,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION)).
-      registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myGraphTable);
+      registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, tableWithProgress);
 
     Disposer.register(myUi, this);
   }

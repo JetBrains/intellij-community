@@ -24,6 +24,7 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.*;
 import org.junit.platform.launcher.TestIdentifier;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
@@ -101,18 +102,18 @@ class JUnit5NavigationTest {
   }
 
   @Test
-  void locationHintValueForFileSource() {
+  void locationHintValueForFileSource() throws IOException {
     myTestSource = new FileSource(Paths.get("/some/file.txt").toFile());
 
-    Assertions.assertEquals("file:///some/file.txt", locationHintValue());
+    Assertions.assertEquals("file://" + ((FileSource)myTestSource).getFile().getCanonicalPath(), locationHintValue());
   }
 
 
   @Test
-  void locationHintValueForFileSourceWithLineInformation() {
+  void locationHintValueForFileSourceWithLineInformation() throws IOException {
     myTestSource = new FileSource(Paths.get("/some/file.txt").toFile(), new FilePosition(22, 7));
 
-    Assertions.assertEquals("file:///some/file.txt:22", locationHintValue());
+    Assertions.assertEquals("file://" + ((FileSource)myTestSource).getFile().getCanonicalPath() +":22", locationHintValue());
   }
 
   @Test
@@ -179,13 +180,8 @@ class JUnit5NavigationTest {
     }
 
     @Override
-    public boolean isContainer() {
-      return false;
-    }
-
-    @Override
-    public boolean isTest() {
-      return myIsTest;
+    public Type getType() {
+      return myIsTest ? Type.TEST : Type.CONTAINER;
     }
 
     public void isTest(boolean isTest) {

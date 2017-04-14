@@ -56,7 +56,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
     Set<String> names = new HashSet<>();
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFileSystemItem)) return false;
+      if (!(element instanceof PsiDirectory || element instanceof PsiFile)) return false;
       if (!element.isValid()) return false;
       if (element instanceof PsiCompiledFile) return false;
 
@@ -237,7 +237,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     String title = RefactoringBundle.message(doClone ? "copy,handler.clone.files.directories" : "copy.handler.copy.files.directories");
     try {
       PsiFile firstFile = null;
-      final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
+      final int[] choice = elements.length > 1 || elements[0].getElement() instanceof PsiDirectory ? new int[]{-1} : null;
       for (SmartPsiElementPointer element : elements) {
         PsiElement psiElement = element.getElement();
         if (psiElement == null) continue;

@@ -76,6 +76,11 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   }
 
   @Override
+  public String toString() {
+    return getClass().getName() + "[" + myBaseScope + "]";
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

@@ -32,17 +32,14 @@ import org.apache.xerces.impl.XMLEntityManager;
 import org.apache.xerces.impl.XercesAccessor;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
-import org.apache.xerces.util.SecurityManager;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
 import org.apache.xerces.xni.grammars.XMLGrammarPool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXParseException;
+import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -59,7 +56,6 @@ public class ValidateXmlActionHandler {
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
   private static final String ENTITY_MANAGER_PROPERTY_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.ENTITY_MANAGER_PROPERTY;
-  private static final String SECURITY_MANAGER = Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
 
   private static final Key<XMLGrammarPool> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
@@ -230,14 +226,19 @@ public class ValidateXmlActionHandler {
         } catch(NoSuchMethodError ignore) {}
         schemaChecking = true;
       }
+      try {
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      } catch (Exception ignore) {
+      }
 
       SAXParser parser = factory.newSAXParser();
 
       parser.setProperty(ENTITY_RESOLVER_PROPERTY_NAME, myXmlResourceResolver);
 
-      SecurityManager securityManager = new SecurityManager();
-      securityManager.setEntityExpansionLimit(10000);
-      parser.setProperty(SECURITY_MANAGER, securityManager);
+      try {
+        parser.getXMLReader().setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      } catch (Exception ignore) {
+      }
 
       if (schemaChecking) { // when dtd checking schema refs could not be validated @see http://marc.theaimsgroup.com/?l=xerces-j-user&m=112504202423704&w=2
         XMLGrammarPool grammarPool = getGrammarPool(myFile, myForceChecking);

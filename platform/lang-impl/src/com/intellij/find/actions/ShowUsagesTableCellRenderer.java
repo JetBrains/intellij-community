@@ -16,12 +16,10 @@
 
 package com.intellij.find.actions;
 
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -223,11 +221,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
       if (virtualFile != null) {
         Project project = myUsageView.getProject();
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-        if (psiFile != null && psiFile.isValid()) {
-          final Color color = FileColorManager.getInstance(project).getRendererBackground(psiFile);
-          if (color != null) fileBgColor = color;
-        }
+        Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
+        if (color != null) fileBgColor = color;
       }
     }
     return fileBgColor;

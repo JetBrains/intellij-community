@@ -3,7 +3,7 @@ import re
 import sys
 
 import pytest
-from _pytest.config import _prepareconfig
+from _pytest.config import get_plugin_manager
 
 from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args
 from teamcity import pytest_plugin
@@ -22,6 +22,6 @@ if __name__ == '__main__':
     # plugin is discovered automatically in 3, but not in 2
     # to prevent "plugin already registered" problem we check it first
     plugins_to_load = []
-    if not _prepareconfig().pluginmanager.hasplugin("pytest-teamcity"):
+    if not get_plugin_manager().hasplugin("pytest-teamcity"):
         plugins_to_load.append(pytest_plugin)
     pytest.main(sys.argv[1:], plugins_to_load)

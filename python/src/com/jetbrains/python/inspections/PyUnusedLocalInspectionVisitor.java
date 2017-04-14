@@ -34,6 +34,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.doctest.PyDocReference;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
@@ -104,7 +105,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   public void visitPyStringLiteralExpression(PyStringLiteralExpression pyString) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(pyString);
     if (owner != null && !(owner instanceof PsiFile)) {
-      final PyStatement instrAnchor = PsiTreeUtil.getParentOfType(pyString, PyStatement.class);
+      final PsiElement instrAnchor = PyDocReference.getControlFlowAnchorForFString(pyString);
       if (instrAnchor == null) return;
       final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
       final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, instrAnchor);

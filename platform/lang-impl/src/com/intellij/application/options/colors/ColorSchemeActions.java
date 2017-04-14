@@ -78,10 +78,16 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
                                   });
           if (imported != null) {
             getOptions().addImportedScheme(imported);
+            getSchemesPanel()
+              .showStatus(
+                ApplicationBundle.message("settings.editor.scheme.import.success", importSource.getPresentableUrl(), imported.getName()),
+                MessageType.INFO);
           }
         }
         catch (SchemeImportException e) {
-          getSchemesPanel().showStatus("Import failed: " + e.getMessage(), MessageType.ERROR);
+          getSchemesPanel()
+            .showStatus(ApplicationBundle.message("settings.editor.scheme.import.failure", importSource.getPresentableUrl()),
+                        MessageType.ERROR);
         }
       }
     }
@@ -90,7 +96,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   private boolean tryImportWithImportHandler(@NotNull String importerName) {
      for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
        if (importerName.equals(importHandler.getTitle())) {
-         importHandler.performImport(getSchemesPanel(), scheme -> {
+         importHandler.performImport(getSchemesPanel().getToolbar(), scheme -> {
            if (scheme != null) getOptions().addImportedScheme(scheme);
          });
          return true;

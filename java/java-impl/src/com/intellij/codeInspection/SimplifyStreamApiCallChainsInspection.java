@@ -402,15 +402,15 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @NotNull
     @Override
     public String getName() {
-      return "Replace Collection.stream()." + myStreamMethod +
-             "() with Collection." + myCollectionMethod + "()" +
+      return "Replace 'stream()." + myStreamMethod +
+             "()' with '" + myCollectionMethod + "()'" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @NotNull
     public String getMessage() {
-      return "Collection.stream()." + myStreamMethod +
-             "() can be replaced with Collection." + myCollectionMethod + "()" +
+      return "The 'stream()." + myStreamMethod +
+             "()' chain can be replaced with '" + myCollectionMethod + "()'" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
@@ -463,8 +463,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @NotNull
     @Override
     public String getName() {
-      return "Replace Stream.collect(" + myCollector +
-             "()) with Stream." + myStreamSequenceStripped +
+      return "Replace 'collect(" + myCollector +
+             "())' with '" + myStreamSequenceStripped + "'" +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
 
@@ -514,8 +514,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     @NotNull
     public String getMessage() {
-      return "Stream.collect(" + myCollector +
-             "()) can be replaced with Stream." + myStreamSequenceStripped +
+      return "The 'collect(" + myCollector +
+             "())' call can be replaced with '" + myStreamSequenceStripped + "'" +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
 
@@ -536,7 +536,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @NotNull
     @Override
     public String getName() {
-      return "Replace Stream.filter()." + myFindMethodName + "().isPresent() with Stream.anyMatch()";
+      return "Replace 'filter()." + myFindMethodName + "().isPresent()' with 'anyMatch()'";
     }
 
     @Override
@@ -561,7 +561,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     @NotNull
     public String getMessage() {
-      return "Stream.filter()." + myFindMethodName + "().isPresent() can be replaced with Stream.anyMatch()";
+      return "The 'filter()." + myFindMethodName + "().isPresent()' chain can be replaced with 'anyMatch()'";
     }
   }
 
@@ -815,7 +815,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     @Override
     public String getName() {
-      return "Replace 'collection.stream().toArray()' with 'collection.toArray()'";
+      return "Replace 'stream().toArray()' with 'toArray()'";
     }
 
     @Override
@@ -898,8 +898,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private final String myName;
 
     public ReplaceWithElementIterationFix(IndexedContainer container, String name) {
-      PsiType type = container.getQualifier().getType();
-      String replacement = type instanceof PsiArrayType ? "Arrays.stream()" : "collection.stream()";
+      PsiExpression qualifier = container.getQualifier();
+      String qualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
+      PsiType type = qualifier.getType();
+      String replacement = type instanceof PsiArrayType ? "Arrays.stream(" + qualifierText + ")" : qualifierText + ".stream()";
       myName = "Replace IntStream.range()." + name + "() with " + replacement;
     }
 
@@ -1146,20 +1148,22 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       .parameterTypes("java.util.Spliterator", "boolean");
     private static final CallMatcher SPLITERATOR =
       instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "spliterator").parameterCount(0);
-    private boolean myParallel;
+    private final String myQualifierText;
+    private final boolean myParallel;
 
-    public ReplaceStreamSupportWithCollectionStreamFix(boolean parallel) {
+    public ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
+      myQualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       myParallel = parallel;
     }
 
     @Override
     public String getName() {
-      return "Replace with 'collection." + getMethodName() + "' call";
+      return "Replace with '" + myQualifierText + "." + getMethodName() + "' call";
     }
 
     @Override
     public String getMessage() {
-      return "Can be replaced with 'collection." + (getMethodName()) + "' call";
+      return "Can be replaced with '" + myQualifierText + "." + (getMethodName()) + "' call";
     }
 
     @NotNull
@@ -1185,9 +1189,9 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if (!ExpressionUtils.isLiteral(parallel, Boolean.TRUE) && !ExpressionUtils.isLiteral(parallel, Boolean.FALSE)) return null;
         PsiMethodCallExpression spliterator = tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiMethodCallExpression.class);
         if (!SPLITERATOR.test(spliterator)) return null;
-        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(spliterator.getMethodExpression().getQualifierExpression());
         if (qualifier == null || (qualifier instanceof PsiThisExpression)) return null;
-        return new ReplaceStreamSupportWithCollectionStreamFix(ExpressionUtils.isLiteral(parallel, Boolean.TRUE));
+        return new ReplaceStreamSupportWithCollectionStreamFix(qualifier, ExpressionUtils.isLiteral(parallel, Boolean.TRUE));
       });
     }
   }

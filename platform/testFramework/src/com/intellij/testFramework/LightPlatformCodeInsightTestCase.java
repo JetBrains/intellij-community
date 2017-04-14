@@ -124,10 +124,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  private static void checkCaseSensitiveFS(String fullPath, File ioFile) throws IOException {
-    fullPath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullPath));
-    if (!ioFile.getCanonicalPath().equals(fullPath)) {
-      throw new RuntimeException("Search for: " + fullPath + "; but found: " + ioFile.getCanonicalPath());
+  private static void checkCaseSensitiveFS(String fullOrRelativePath, File ioFile) throws IOException {
+    fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
+    if (!ioFile.getCanonicalPath().endsWith(fullOrRelativePath)) {
+      throw new RuntimeException("Search for: " + fullOrRelativePath + "; but found: " + ioFile.getCanonicalPath());
     }
   }
 

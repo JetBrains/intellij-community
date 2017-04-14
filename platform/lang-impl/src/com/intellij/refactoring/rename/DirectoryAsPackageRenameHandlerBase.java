@@ -41,16 +41,14 @@ import com.intellij.psi.impl.file.PsiPackageBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yole
@@ -87,14 +85,13 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     return false;
   }
 
-  private static PsiElement adjustForRename(DataContext dataContext, PsiElement element) {
+  private PsiElement adjustForRename(DataContext dataContext, PsiElement element) {
     if (element instanceof PsiDirectoryContainer) {
       final Module module = LangDataKeys.MODULE.getData(dataContext);
       if (module != null) {
-        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
-        if (directories.length >= 1) {
-          element = directories[0];
-        }
+        PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
+        Optional<PsiDirectory> directoryWithPackage = Arrays.stream(directories).filter(directory -> getPackage(directory) != null).findFirst();
+        return directoryWithPackage.orElse(null);
       }
     }
     return element;

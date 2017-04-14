@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -79,10 +78,6 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
   @Override
   public void apply() throws ConfigurationException {
     PythonDocumentationMap.getInstance().setEntries(myPanel.getData());
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 
   private static class PythonDocumentationTableModel extends AddEditRemovePanel.TableModel<PythonDocumentationMap.Entry> {

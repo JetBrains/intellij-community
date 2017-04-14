@@ -118,6 +118,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Override
   @Nullable
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final Ref<PyType> typeFromAnnotation = getParameterTypeFromAnnotation(param, context);
@@ -784,12 +785,28 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             continue;
           }
         }
+        if (isBuiltinPathLike(element)) {
+          // see https://github.com/python/typeshed/commit/41561f11c7b06368aebe512acf69d8010662266d
+          // or comment in typeshed/stdlib/3/builtins.pyi near _PathLike class
+          final QualifiedName osPathLikeQName = QualifiedName.fromComponents("os", PyNames.PATH_LIKE);
+          final PsiElement osPathLike = PyResolveImportUtil.resolveTopLevelMember(osPathLikeQName, PyResolveImportUtil.fromFoothold(element));
+          if (osPathLike != null) {
+            elements.add(osPathLike);
+            continue;
+          }
+        }
         if (element != null) {
           elements.add(element);
         }
       }
     }
     return !elements.isEmpty() ? elements : Collections.singletonList(expression);
+  }
+
+  private static boolean isBuiltinPathLike(@Nullable PsiElement element) {
+    return element instanceof PyClass &&
+           PyBuiltinCache.getInstance(element).isBuiltin(element) &&
+           ("_" + PyNames.PATH_LIKE).equals(((PyClass)element).getName());
   }
 
   @NotNull

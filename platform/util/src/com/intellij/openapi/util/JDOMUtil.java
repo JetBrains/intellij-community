@@ -26,8 +26,6 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.text.StringFactory;
-import com.sun.org.apache.xerces.internal.impl.Constants;
-import org.apache.xerces.util.SecurityManager;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -41,6 +39,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
+import javax.xml.XMLConstants;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.net.URL;
@@ -250,9 +249,7 @@ public class JDOMUtil {
         protected void configureParser(XMLReader parser, SAXHandler contentHandler) throws JDOMException {
           super.configureParser(parser, contentHandler);
           try {
-            SecurityManager manager = new SecurityManager();
-            manager.setEntityExpansionLimit(10000);
-            parser.setProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY, manager);
+            parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
           }
           catch (Exception ignore) {
           }

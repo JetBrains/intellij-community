@@ -48,6 +48,7 @@ from asyncio.tasks import (
     ALL_COMPLETED as ALL_COMPLETED,
     as_completed as as_completed,
     ensure_future as ensure_future,
+    ensure_future as async,
     gather as gather,
     run_coroutine_threadsafe as run_coroutine_threadsafe,
     shield as shield,

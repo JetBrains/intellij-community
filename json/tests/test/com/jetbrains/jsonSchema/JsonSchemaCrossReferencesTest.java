@@ -555,17 +555,81 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
+        final String midia = "midia";
+        checkNavigationIntoDefinition(midia);
+      }
+    });
+  }
+
+  private void checkNavigationIntoDefinition(String name) {
+    int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+    final PsiElement element = myFile.findElementAt(offset);
+    Assert.assertNotNull(element);
+
+    final PsiReference referenceAt = myFile.findReferenceAt(offset);
+    Assert.assertNotNull(referenceAt);
+    final PsiElement resolve = referenceAt.resolve();
+    Assert.assertNotNull(resolve);
+    Assert.assertEquals("\"" + name + "\"", resolve.getText());
+    final PsiElement parent = resolve.getParent();
+    Assert.assertTrue(parent instanceof JsonProperty);
+    Assert.assertEquals(name, ((JsonProperty) parent).getName());
+    Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
+    Assert.assertEquals("definitions", ((JsonProperty) parent.getParent().getParent()).getName());
+  }
+
+  public void testInsideCycledSchemaNavigation() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/insideCycledSchemaNavigationSchema.json",
+                                                                     false, Collections.emptyList()));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "insideCycledSchemaNavigationSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        checkNavigationIntoDefinition("all");
+      }
+    });
+  }
+
+  public void testNavigationIntoCycledSchema() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/cycledSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "testNavigationIntoCycled.json", "cycledSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
         int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiElement element = myFile.findElementAt(offset);
+        Assert.assertNotNull(element);
+
         final PsiReference referenceAt = myFile.findReferenceAt(offset);
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"midia\"", resolve.getText());
+        Assert.assertEquals("\"bbb\"", resolve.getText());
         final PsiElement parent = resolve.getParent();
         Assert.assertTrue(parent instanceof JsonProperty);
-        Assert.assertEquals("midia", ((JsonProperty) parent).getName());
+        Assert.assertEquals("bbb", ((JsonProperty) parent).getName());
         Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-        Assert.assertEquals("definitions", ((JsonProperty) parent.getParent().getParent()).getName());
+        Assert.assertEquals("properties", ((JsonProperty) parent.getParent().getParent()).getName());
       }
     });
   }

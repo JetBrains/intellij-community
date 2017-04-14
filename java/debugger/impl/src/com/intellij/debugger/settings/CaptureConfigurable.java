@@ -18,6 +18,7 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,12 +28,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -49,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -113,8 +117,8 @@ public class CaptureConfigurable implements SearchableConfigurable {
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> {
           try {
-            myTableModel.add(c.clone());
-            table.getSelectionModel().setSelectionInterval(table.getRowCount() - 1, table.getRowCount() - 1);
+            int idx = myTableModel.add(c.clone());
+            table.getSelectionModel().setSelectionInterval(idx, idx);
           }
           catch (CloneNotSupportedException ex) {
             LOG.error(ex);
@@ -123,10 +127,48 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
+    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected", "Enable Selected", PlatformIcons.SELECT_ALL_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = true);
+        table.repaint();
+      }
+    });
+    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected", "Disable Selected", PlatformIcons.UNSELECT_ALL_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = false);
+        table.repaint();
+      }
+    });
+
+    new DumbAwareAction("Toggle") {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() == 1);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = !c.myEnabled);
+        table.repaint();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
+
     decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return super.isFileVisible(file, showHiddenFiles) &&
@@ -141,19 +183,24 @@ public class CaptureConfigurable implements SearchableConfigurable {
         descriptor.setDescription("Please select a file to import.");
         descriptor.setTitle("Import Capture Points");
 
-        VirtualFile file = FileChooser.chooseFile(descriptor, e.getProject(), null);
-        if (file == null) return;
-        try {
-          Document document = JDOMUtil.loadDocument(file.getInputStream());
-          table.getSelectionModel().clearSelection();
-          int start = table.getRowCount();
-          List<Element> children = document.getRootElement().getChildren();
-          children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
-          table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
-        }
-        catch (Exception ex) {
-          final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+        VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
+        if (ArrayUtil.isEmpty(files)) return;
+
+        table.getSelectionModel().clearSelection();
+
+        for (VirtualFile file : files) {
+          try {
+            Document document = JDOMUtil.loadDocument(file.getInputStream());
+            List<Element> children = document.getRootElement().getChildren();
+            children.forEach(element -> {
+              int idx = myTableModel.addIfNeeded(XmlSerializer.deserialize(element, CapturePoint.class));
+              table.getSelectionModel().addSelectionInterval(idx, idx);
+            });
+          }
+          catch (Exception ex) {
+            final String msg = ex.getLocalizedMessage();
+            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          }
         }
       }
     });
@@ -293,10 +340,30 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return myCapturePoints.get(idx);
     }
 
-    public void add(CapturePoint p) {
+    int add(CapturePoint p) {
       myCapturePoints.add(p);
       int lastRow = getRowCount() - 1;
       fireTableRowsInserted(lastRow, lastRow);
+      return lastRow;
+    }
+
+    int addIfNeeded(CapturePoint p) {
+      CapturePoint clone = p;
+      try {
+        clone = p.clone();
+        clone.myEnabled = !clone.myEnabled;
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+      }
+      int idx = myCapturePoints.indexOf(p);
+      if (idx < 0) {
+        idx = myCapturePoints.indexOf(clone);
+      }
+      if (idx < 0) {
+        idx = add(p);
+      }
+      return idx;
     }
 
     public void addRow() {

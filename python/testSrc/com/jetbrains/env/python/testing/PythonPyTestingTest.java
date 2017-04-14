@@ -29,12 +29,51 @@ import static org.junit.Assert.assertEquals;
  * User : catherine
  */
 @EnvTestTagsRequired(tags = "pytest")
-public class PythonPyTestingTest extends PyEnvTestCase {
+public final class PythonPyTestingTest extends PyEnvTestCase {
+
+  // Ensure slow test is not run when -m "not slow" is provided
+  @Test
+  public void testMarkerWithSpaces() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/test_with_markers", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_with_markers.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setAdditionalArguments("-m 'not slow'");
+            }
+          };
+        }
+
+
+        @Override
+        protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                        @NotNull String stdout,
+                                        @NotNull String stderr,
+                                        @NotNull String all) {
+          Assert.assertEquals("Marker support broken", "Test tree:\n" +
+                                  "[root]\n" +
+                                  ".test_with_markers\n" +
+                                  "..test_fast(+)\n",
+                              runner.getFormattedTestTree());
+        }
+      });
+  }
 
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test
+  public void testMultipleCases() throws Exception {
+    runPythonTest(
+      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
   }
 
   /**
@@ -43,11 +82,18 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs",
+                                                                                                 "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-          return new PyTestTestProcessRunner("tests", 0);
+          return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -58,11 +104,17 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-          return new PyTestTestProcessRunner("tests", 0);
+          return new PyTestTestProcessRunner(toFullPath("tests"), 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
         }
       });
   }
@@ -85,25 +137,27 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PY_TEST_NAME,
-                                                                                 PyUniversalPyTestConfiguration.class));
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                                     PyUniversalPyTestConfiguration.class));
   }
 
   @Test
   public void testProduceConfigurationOnFile() throws Exception {
-    runPythonTest(new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "spam.py"){
-      @NotNull
-      @Override
-      protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
-        return myFixture.configureByFile(fileName);
-      }
-    });
+    runPythonTest(
+      new CreateConfigurationByFileTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                        PyUniversalPyTestConfiguration.class, "spam.py") {
+        @NotNull
+        @Override
+        protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
+          return myFixture.configureByFile(fileName);
+        }
+      });
   }
 
   @Test
   public void testRenameClass() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PY_TEST_NAME,
         PyUniversalPyTestConfiguration.class));
   }
@@ -211,6 +265,47 @@ public class PythonPyTestingTest extends PyEnvTestCase {
         // This test has "sleep(1)", so duration should be >=1000
         final AbstractTestProxy testForOneSecond = runner.findTestByName("testOne");
         Assert.assertThat("Wrong duration", testForOneSecond.getDuration(), Matchers.greaterThanOrEqualTo(1000L));
+      }
+    });
+  }
+
+  /**
+   * Ensure we can run path like "spam.bar" where "spam" is folder with out of init.py
+   */
+  @Test
+  public void testPyTestFolderNoInitPy() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        if (getLevelForSdk().isPy3K()) {
+          return new PyTestTestProcessRunner("folder_no_init_py/test_test.py", 2);
+        }
+        else {
+          return new PyTestTestProcessRunner(toFullPath("folder_no_init_py/test_test.py"), 2) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setWorkingDirectory(getWorkingFolderForScript());
+            }
+          };
+        }
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(runner.getFormattedTestTree(), 1, runner.getFailedTestsCount());
+        if (runner.getCurrentRerunStep() == 0) {
+          assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
+        }
+        else {
+          assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
+        }
       }
     });
   }

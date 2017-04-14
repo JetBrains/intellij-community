@@ -251,7 +251,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   synchronized int incrementAndGetReferenceCount(int delta) {
     if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
-    if (myReferenceCount == 0) return 0; // disposed, not to be reused again
+    if (myReferenceCount == 0) return -1; // disposed, not to be reused again
     return myReferenceCount += delta;
   }
 

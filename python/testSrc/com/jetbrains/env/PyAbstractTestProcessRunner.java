@@ -142,7 +142,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     builder.append(StringUtil.repeat(".", level));
     builder.append(test.getName());
     if (test.isLeaf()) {
-      builder.append(test.isPassed() ? "(+)" : "(-)");
+      builder.append(test.isPassed() ? "(+)" : (test.isIgnored() ? "(~)" : "(-)"));
     }
     builder.append('\n');
     for (SMTestProxy child : test.getChildren()) {
@@ -184,6 +184,10 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
    */
   public int getPassedTestsCount() {
     return myProxyManager.getPassedTestsCount();
+  }
+
+  public int getIgnoredTestsCount() {
+    return myProxyManager.getIgnoredTestsCount();
   }
 
   /**

@@ -1,0 +1,6 @@
+{
+  "aaa": 1,
+  "bbb": true,
+  "s": 1,
+  "ccc": <warning descr="Type is not allowed">"3"</warning>
+}

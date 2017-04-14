@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,12 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
     Set<VirtualFile> realFiles = new THashSet<>(files.length);
     for (VirtualFile file : files) {
+      if (file instanceof LightVirtualFile) {
+        VirtualFile originalFile = ((LightVirtualFile)file).getOriginalFile();
+        if (originalFile != null) {
+          file = originalFile;
+        }
+      }
       if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
       if (file != null) {
         realFiles.add(file);

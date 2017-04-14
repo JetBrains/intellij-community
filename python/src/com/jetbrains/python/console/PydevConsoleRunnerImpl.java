@@ -328,7 +328,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
 
-  private void showContentDescriptor(RunContentDescriptor contentDescriptor) {
+  protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
     ToolWindow toolwindow = PythonConsoleToolWindow.getToolWindow(myProject);
     if (toolwindow != null) {
       PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);

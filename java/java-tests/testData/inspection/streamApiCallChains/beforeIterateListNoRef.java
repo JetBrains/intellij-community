@@ -1,4 +1,4 @@
-// "Replace IntStream.range().mapToLong() with collection.stream()" "false"
+// "Fix all 'Simplify stream API call chains' problems in file" "false"
 
 import java.util.ArrayList;
 import java.util.List;

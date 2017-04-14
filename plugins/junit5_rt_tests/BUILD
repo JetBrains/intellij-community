@@ -8,7 +8,7 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-api-5.0.0-M3[test]",
+        "//tools/idea/plugins/junit5_rt/lib:junit-jupiter-api-5.0.0-M4[test]",
         "//tools/idea/plugins/junit5_rt[module]",
         "//tools/idea/.idea/libraries:junit5_rt",
         "//tools/idea/.idea/libraries:opentest4j",

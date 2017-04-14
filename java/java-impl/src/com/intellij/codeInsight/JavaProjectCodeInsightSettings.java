@@ -84,7 +84,7 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
       return excluded.length();
     }
 
-    if (excluded.indexOf('*') > 0) {
+    if (excluded.indexOf('*') >= 0) {
       Matcher matcher = ourPatterns.get(excluded).matcher(name);
       if (matcher.lookingAt()) {
         return matcher.end();

@@ -22,6 +22,7 @@ import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
+import java.io.IOException;
 import java.util.*;
 
 public class BackwardReferenceIndexUtil {
@@ -29,47 +30,53 @@ public class BackwardReferenceIndexUtil {
                            Collection<? extends JavacRef> refs,
                            List<JavacDef> defs,
                            final BackwardReferenceIndexWriter writer) {
-    final int fileId = writer.enumeratePath(filePath);
-    int funExprId = 0;
 
-    final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
-    final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
+    try {
+      final int fileId = writer.enumeratePath(filePath);
+      int funExprId = 0;
 
-    for (JavacDef def : defs) {
-      if (def instanceof JavacDef.JavacClassDef) {
-        JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
-        final LightRef.JavaLightClassRef aClass = writer.asClassUsage(sym);
-        definitions.put(aClass, null);
+      final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
+      final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
 
-        final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
-        for (JavacRef superClass : superClasses) {
-          LightRef.JavaLightClassRef superClassRef = writer.asClassUsage(superClass);
+      for (JavacDef def : defs) {
+        if (def instanceof JavacDef.JavacClassDef) {
+          JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
+          final LightRef.JavaLightClassRef aClass = writer.asClassUsage(sym);
+          definitions.put(aClass, null);
 
-          Collection<LightRef> children = backwardHierarchyMap.get(superClassRef);
-          if (children == null) {
-            backwardHierarchyMap.put(superClassRef, children = new SmartList<>());
+          final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
+          for (JavacRef superClass : superClasses) {
+            LightRef.JavaLightClassRef superClassRef = writer.asClassUsage(superClass);
+
+            Collection<LightRef> children = backwardHierarchyMap.get(superClassRef);
+            if (children == null) {
+              backwardHierarchyMap.put(superClassRef, children = new SmartList<>());
+            }
+            children.add(aClass);
           }
-          children.add(aClass);
+        }
+        else if (def instanceof JavacDef.JavacFunExprDef) {
+          final LightRef.JavaLightClassRef functionalType = writer.asClassUsage(def.getDefinedElement());
+          int id = funExprId++;
+          LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
+          definitions.put(result, null);
+
+          ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
+                                    (Factory<Collection<LightRef>>)() -> new SmartList<>()).add(result);
         }
       }
-      else if (def instanceof JavacDef.JavacFunExprDef) {
-        final LightRef.JavaLightClassRef functionalType = writer.asClassUsage(def.getDefinedElement());
-        int id = funExprId++;
-        LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
-        definitions.put(result, null);
 
-        ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
-                                  (Factory<Collection<LightRef>>)() -> new SmartList<>()).add(result);
+      Map<LightRef, Void> convertedRefs = new HashMap<>(refs.size());
+      for (JavacRef ref : refs) {
+        LightRef key = writer.enumerateNames(ref);
+        if (key != null) {
+          convertedRefs.put(key, null);
+        }
       }
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
     }
-
-    Map<LightRef, Void> convertedRefs = new HashMap<>(refs.size());
-    for (JavacRef ref : refs) {
-      LightRef key = writer.enumerateNames(ref);
-      if (key != null) {
-        convertedRefs.put(key, null);
-      }
+    catch (IOException e) {
+      writer.setRebuildCause(e);
     }
-    writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
   }
 }

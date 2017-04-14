@@ -364,6 +364,12 @@ public class CodeInsightUtil {
       for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
         for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
           final PsiType substituted = superSubstitutor.substitute(baseParameter);
+          PsiClass inheritorCandidateParameter = PsiUtil.resolveClassInType(substituted);
+          if (inheritorCandidateParameter instanceof PsiTypeParameter &&
+              ((PsiTypeParameter)inheritorCandidateParameter).getOwner() == inheritor &&
+               inheritorCandidateParameter != inheritorParameter) {
+            continue;
+          }
           PsiType arg = baseSubstitutor.substitute(baseParameter);
           if (arg instanceof PsiWildcardType) {
             PsiType bound = ((PsiWildcardType)arg).getBound();
@@ -374,7 +380,7 @@ public class CodeInsightUtil {
                                                                                arg,
                                                                                true,
                                                                                PsiUtil.getLanguageLevel(context));
-          if (PsiType.NULL.equals(substitution) || substitution != null && substitution.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || substitution instanceof PsiWildcardType) continue;
+          if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
           if (substitution == null) {
             result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
             return true;

@@ -78,7 +78,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public boolean isValid() {
-    return myFile.isValid();
+    return myFile.isValid() && !getProject().isDisposed();
   }
 
   @Override

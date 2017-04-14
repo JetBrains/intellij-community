@@ -809,13 +809,20 @@ class DependencyResolverImpl implements DependencyResolver {
             def group = componentResult.moduleVersion.group
             def version = componentResult.moduleVersion.version
             def selectionReason = componentResult.selectionReason.description
+            def resolveFromArtifacts = componentSelector instanceof ModuleComponentSelector
             if (componentSelector instanceof ProjectComponentSelector) {
               def projectDependencies = configurationProjectDependencies.get(componentIdentifier)
               Collection<Configuration> dependencyConfigurations
               if(projectDependencies.isEmpty()) {
                 def dependencyProject = myProject.findProject(componentSelector.projectPath)
-                def dependencyProjectConfiguration = dependencyProject.getConfigurations().getByName(Dependency.DEFAULT_CONFIGURATION)
-                dependencyConfigurations = [dependencyProjectConfiguration]
+                if(dependencyProject) {
+                  def dependencyProjectConfiguration = dependencyProject.getConfigurations().getByName(Dependency.DEFAULT_CONFIGURATION)
+                  dependencyConfigurations = [dependencyProjectConfiguration]
+                } else {
+                  dependencyConfigurations = []
+                  resolveFromArtifacts = true
+                  selectionReason = "composite build substitution"
+                }
               } else {
                 dependencyConfigurations = projectDependencies.collect {it.projectConfiguration}
               }
@@ -913,7 +920,7 @@ class DependencyResolverImpl implements DependencyResolver {
                 }
               }
             }
-            if (componentSelector instanceof ModuleComponentSelector) {
+            if (resolveFromArtifacts) {
               def artifacts = artifactMap.get(componentResult.moduleVersion)
               def artifact = artifacts?.find { true }
 

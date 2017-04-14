@@ -2,7 +2,7 @@
 
 # Based on http://docs.python.org/3.2/library/shlex.html
 
-from typing import List, Tuple, Any, TextIO
+from typing import List, Tuple, Any, TextIO, Union, Optional
 
 def split(s: str, comments: bool = ...,
           posix: bool = ...) -> List[str]: ...
@@ -26,7 +26,7 @@ class shlex:
     token = ...  # type: str
     eof = ...  # type: str
 
-    def __init__(self, instream=..., infile=...,
+    def __init__(self, instream: Union[str, TextIO] = ..., infile: Optional[str] = ...,
                  posix: bool = ...) -> None: ...
     def get_token(self) -> str: ...
     def push_token(self, tok: str) -> None: ...

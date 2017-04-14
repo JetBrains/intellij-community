@@ -27,7 +27,9 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testModuleInfo() {
-    def module = configureFile("module M { }").moduleDeclaration
+    def file = configureFile("module M { }")
+    assert file.packageName == ""
+    def module = file.moduleDeclaration
     assert module != null
     assert module.name == "M"
     assert module.modifierList != null

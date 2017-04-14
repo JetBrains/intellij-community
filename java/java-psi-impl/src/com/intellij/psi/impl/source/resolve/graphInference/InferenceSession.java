@@ -1607,7 +1607,8 @@ public class InferenceSession {
         if (receiverSubstitutor != null) {
           if (!method.hasTypeParameters()) {
             if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {
-              return receiverSubstitutor;
+              return methodContainingClass != null ? JavaClassSupers.getInstance().getSuperClassSubstitutor(methodContainingClass, containingClass, reference.getResolveScope(), receiverSubstitutor)
+                                                   : receiverSubstitutor;
             }
           }
           mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);

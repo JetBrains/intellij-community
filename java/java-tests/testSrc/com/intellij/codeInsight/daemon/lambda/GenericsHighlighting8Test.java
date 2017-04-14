@@ -1005,6 +1005,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testLowerBoundOfCapturedWildcardInSubtypingConstraint() throws Exception {
+    doTest(true);
+  }
+
   public void testMembersContainedInCapturedWildcardType() throws Exception {
     doTest();
   }

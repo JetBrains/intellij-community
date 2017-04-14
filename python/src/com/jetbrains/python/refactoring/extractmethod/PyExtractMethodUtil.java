@@ -25,7 +25,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -497,8 +496,8 @@ public class PyExtractMethodUtil {
       final PsiElement target = parent instanceof PyClass ? ((PyClass)parent).getStatementList() : parent;
       final PsiElement insertionAnchor = PyPsiUtils.getParentRightBefore(anchor, target);
       assert insertionAnchor != null;
-      final Couple<PsiComment> comments = PyPsiUtils.getPrecedingComments(insertionAnchor);
-      result = insertionAnchor.getParent().addBefore(generatedMethod, comments != null ? comments.getFirst() : insertionAnchor);
+      final List<PsiComment> comments = PyPsiUtils.getPrecedingComments(insertionAnchor);
+      result = insertionAnchor.getParent().addBefore(generatedMethod, !comments.isEmpty() ? comments.get(0) : insertionAnchor);
     }
     // to ensure correct reformatting, mark the entire method as generated
     result.accept(new PsiRecursiveElementVisitor() {

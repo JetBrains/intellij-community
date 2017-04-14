@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -40,10 +41,11 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   private final InspectionListCellRenderer myListCellRenderer = new InspectionListCellRenderer();
 
 
-  public GotoInspectionModel(Project project) {
+  public GotoInspectionModel(@NotNull Project project) {
     super(project, IdeBundle.message("prompt.goto.inspection.enter.name"), "goto.inspection.help.id");
-    final InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance().getCurrentProfile();
-    for (ScopeToolState state : rootProfile.getAllTools(project)) {
+
+    InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance().getCurrentProfile();
+    for (ScopeToolState state : rootProfile.getAllTools()) {
       InspectionToolWrapper tool = LocalInspectionToolWrapper.findTool2RunInBatch(project, null, rootProfile, state.getTool());
       if (tool != null) {
         String name = tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ");

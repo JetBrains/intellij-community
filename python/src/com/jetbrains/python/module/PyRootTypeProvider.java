@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,6 @@ import java.awt.*;
 public abstract class PyRootTypeProvider {
   public static final ExtensionPointName<PyRootTypeProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyRootTypeProvider");
   protected final VirtualFilePointerListener DUMMY_LISTENER = new VirtualFilePointerListener() {
-    @Override
-    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-    }
-
-    @Override
-    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-    }
   };
 
   public abstract void reset(@NotNull final Disposable disposable, PyContentEntriesEditor editor, @NotNull Module module);

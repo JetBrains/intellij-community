@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.util.XML11Char;
@@ -124,7 +126,10 @@ public class ZenCodingUtil {
 
   public static boolean isHtml(CustomTemplateCallback callback) {
     FileType type = callback.getFileType();
-    return type == StdFileTypes.HTML || type == StdFileTypes.XHTML;
+    if (type == StdFileTypes.HTML || type == StdFileTypes.XHTML) {
+      return true;
+    }
+    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(HTMLLanguage.INSTANCE);
   }
 
   public static boolean checkFilterSuffix(@NotNull String suffix) {

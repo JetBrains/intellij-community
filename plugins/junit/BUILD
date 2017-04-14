@@ -22,7 +22,6 @@ iml_module(
         "//tools/idea:java-impl[module]",
         "//tools/idea/java/java-indexing-api[module]",
         "//tools/idea/platform/smRunner[module]",
-        "//tools/idea/plugins/junit5_rt[module]",
-        "//tools/idea/.idea/libraries:junit5_rt",
+        "//tools/idea/.idea/libraries:opentest4j",
     ],
 )

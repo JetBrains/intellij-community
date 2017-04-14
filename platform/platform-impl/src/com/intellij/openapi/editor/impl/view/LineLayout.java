@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
@@ -213,8 +215,10 @@ abstract class LineLayout {
     if (token1 == null || token2 == null) return true;
     if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(token1) ||
         StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(token2)) return false;
-    if (!token1.getLanguage().is(token2.getLanguage())) return true;
-    BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(token1.getLanguage());
+    if (token1 != TokenType.WHITE_SPACE && token2 != TokenType.WHITE_SPACE && !token1.getLanguage().is(token2.getLanguage())) return true;
+    Language language = token1.getLanguage();
+    if (language == Language.ANY) language = token2.getLanguage();
+    BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(language);
     return separator.createBorderBetweenTokens(token1, token2);
   }
   

@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.file.exclude.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager.isApplicableFor;
 
 /**
  * @author Rustam Vishnyakov
@@ -31,43 +33,25 @@ import java.util.Collection;
 public class MarkAsPlainTextAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (selectedFiles == null || selectedFiles.length == 0) return;
+    Project project = e.getProject();
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    assert typeManager != null;
-    Collection<VirtualFile> filesToMark = new ArrayList<>();
-    for (VirtualFile file : selectedFiles) {
-      if (file != null &&
-          !file.isDirectory() &&
-          EnforcedPlainTextFileTypeManager.isApplicableFor(file) &&
-          !typeManager.isMarkedAsPlainText(file)) {
-        filesToMark.add(file);
-      }
-    }
-    if (project != null) {
-      typeManager.markAsPlainText(project, filesToMark.toArray(new VirtualFile[filesToMark.size()]));
-    }
+    if (project == null || typeManager == null) return;
+    JBIterable<VirtualFile> selectedFiles =
+      JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
+              .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
+    typeManager.markAsPlainText(project, VfsUtilCore.toVirtualFileArray(selectedFiles.toList()));
   }
 
   @Override
   public void update(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    final Presentation presentation = e.getPresentation();
-    final EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    presentation.setVisible(false);
-    if (typeManager == null || selectedFiles == null || selectedFiles.length == 0) {
-      return;
-    }
-    for (VirtualFile file : selectedFiles) {
-      if (!EnforcedPlainTextFileTypeManager.isApplicableFor(file) || typeManager.isMarkedAsPlainText(file)) {
-        return;
-      }
-    }
-    presentation.setVisible(true);
-    presentation.setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);
+    EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
+    JBIterable<VirtualFile> selectedFiles =
+      typeManager == null ? JBIterable.empty() :
+      JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
+        .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
+    boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
+    e.getPresentation().setEnabledAndVisible(enabled);
+    e.getPresentation().setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);
   }
     
 }

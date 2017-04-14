@@ -378,6 +378,13 @@ public class JavaDebugProcess extends XDebugProcess {
 
         final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
         process.putUserData(MemoryViewDebugProcessData.KEY, data);
+        session.addSessionListener(new XDebugSessionListener() {
+          @Override
+          public void sessionStopped() {
+            session.removeSessionListener(this);
+            data.getTrackedStacks().clear();
+          }
+        }, memoryViewContent);
 
         ui.addListener(new ContentManagerAdapter() {
           @Override
@@ -397,12 +404,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
           private void changeMemoryViewMode(@Nullable ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
-              final ContentManagerEvent.ContentOperation operation = event.getOperation();
-              final boolean isAddOperation = operation.equals(ContentManagerEvent.ContentOperation.add);
-
-              if (isAddOperation || operation.equals(ContentManagerEvent.ContentOperation.remove)) {
-                classesFilteredView.setActive(isAddOperation, process.getManagerThread());
-              }
+              classesFilteredView.setActive(memoryViewContent.isSelected(), process);
             }
           }
         }, classesFilteredView);

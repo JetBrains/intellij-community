@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -42,7 +41,7 @@ public class SurroundWithUtil {
   private SurroundWithUtil() {
   }
 
-  static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
+  public static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
     try{
       PsiManager psiManager = block.getManager();
       PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();

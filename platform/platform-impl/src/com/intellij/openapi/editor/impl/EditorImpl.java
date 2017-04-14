@@ -3870,7 +3870,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void mouseDragged(@NotNull MouseEvent e) {
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
-      runMouseDraggedCommand(e);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseDragged(e);
@@ -4296,22 +4296,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
         return true;
       }
+
+      //should be used a better representation class
+      if (Registry.is("debugger.click.disable.breakpoints") && ArrayUtil.contains(GutterDraggableObject.flavor, transferFlavors)) {
+        return true;
+      }
+
       if (editor.isViewer()) return false;
 
       int offset = editor.getCaretModel().getOffset();
       if (editor.getDocument().getRangeGuard(offset, offset) != null) return false;
 
-      for (DataFlavor transferFlavor : transferFlavors) {
-        if (transferFlavor.equals(DataFlavor.stringFlavor)) return true;
-        if (Registry.is("debugger.click.disable.breakpoints")) {
-          //should be used a better representation class
-          if (GutterDraggableObject.flavor.equals(transferFlavor)) {
-            return true;
-          }
-        }
-      }
-
-      return false;
+      return ArrayUtil.contains(DataFlavor.stringFlavor, transferFlavors);
     }
 
     @Override

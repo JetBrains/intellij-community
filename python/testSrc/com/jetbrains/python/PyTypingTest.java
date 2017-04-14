@@ -868,6 +868,30 @@ public class PyTypingTest extends PyTestCase {
            "    expr = x");
   }
 
+  // PY-23053
+  public void testUnboundGenericMatchesClassObjectTypes() {
+    doTest("Type[str]",
+           "from typing import Generic, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Holder(Generic[T]):\n" +
+           "    def __init__(self, value: T):\n" +
+           "        self._value = value\n" +
+           "\n" +
+           "    def get(self) -> T:\n" +
+           "        return self._value\n" +
+           "\n" +
+           "expr = Holder(str).get()\n");
+  }
+
+  // PY-23053
+  public void testListContainingClasses() {
+    doTest("Type[str]", 
+           "xs = [str]\n" +
+           "expr = xs.pop()");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

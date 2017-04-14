@@ -18,12 +18,13 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
 import com.intellij.application.options.editor.JavaAutoImportOptions;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -158,6 +159,7 @@ public class AddImportAction implements QuestionAction {
         };
       }
     };
+    NavigationUtil.hidePopupIfDumbModeStarts(popup, myProject);
     popup.showInBestPositionFor(myEditor);
   }
 
@@ -232,7 +234,7 @@ public class AddImportAction implements QuestionAction {
 
     try{
       bindReference(ref, targetClass);
-      if (CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
+      if (CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly) {
         Document document = myEditor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -257,6 +258,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
   }
 
   private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgressImpl progress) {
+    UsageTrigger.trigger("debugger.reload.classes");
     ProgressManager.getInstance().runProcess(() -> {
       HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);
       progress.finished();

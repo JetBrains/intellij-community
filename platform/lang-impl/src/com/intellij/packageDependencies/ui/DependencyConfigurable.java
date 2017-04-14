@@ -170,10 +170,6 @@ public class DependencyConfigurable extends BaseConfigurable {
     return !Arrays.asList(validationManager.getAllRules()).equals(rules);
   }
 
-  @Override
-  public void disposeUIResources() {
-  }
-
   private static final DefaultTableCellRenderer
     CELL_RENDERER = new DefaultTableCellRenderer() {
       @Override

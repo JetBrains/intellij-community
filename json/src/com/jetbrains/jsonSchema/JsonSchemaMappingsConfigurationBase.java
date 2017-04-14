@@ -149,7 +149,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
           }
 
           final String path = FileUtilRt.toSystemIndependentName(pattern.getPath());
-          final List<String> parts = ContainerUtil.filter(path.split("/"), s -> !".".equals(s));
+          final List<String> parts = ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
           final VirtualFile relativeFile;
           if (parts.isEmpty()) {
             relativeFile = project.getBaseDir();
@@ -171,7 +171,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
     @Nullable
     public VirtualFile getSchemaFile(@NotNull final Project project) {
       final String pathToSchema = FileUtil.toSystemIndependentName(getRelativePathToSchema());
-      final List<String> strings = ContainerUtil.filter(pathToSchema.split("/"), s -> !StringUtil.isEmptyOrSpaces(s));
+      final List<String> strings = ContainerUtil.filter(StringUtil.split(pathToSchema, "/"), s -> !StringUtil.isEmptyOrSpaces(s));
       return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(strings));
     }
 

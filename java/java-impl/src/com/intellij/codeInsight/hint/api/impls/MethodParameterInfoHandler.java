@@ -486,7 +486,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (element != null) {
         final PsiElement resolved = element.resolve();
         if (resolved instanceof PsiClass &&
-            (!JavaDocInfoGenerator.isDocumentedAnnotationType(resolved) ||
+            (!JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)resolved) ||
              AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
         }

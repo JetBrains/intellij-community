@@ -145,6 +145,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     PsiFile containingFile = pointer.getContainingFile();
     int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
+    if (refCount == -1) {
+      LOG.error("Double smart pointer removal: " + pointer);
+      return;
+    }
+
     if (refCount == 0) {
       PsiElement element = ((SmartPointerEx)pointer).getCachedElement();
       if (element != null) {
@@ -155,11 +160,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       info.cleanup();
 
       if (containingFile == null) return;
+
+      assert containingFile.getProject() == myProject : "Project mismatch: expected " + myProject + ", got " + containingFile.getProject();
+
       VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
       SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
       if (pointers != null && reference != null) {
-        pointers.removeReference(reference);
+        pointers.removeReference(reference, POINTERS_KEY);
       }
     }
   }

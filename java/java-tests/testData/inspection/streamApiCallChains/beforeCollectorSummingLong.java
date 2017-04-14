@@ -1,4 +1,4 @@
-// "Replace Stream.collect(summingLong()) with Stream.mapToLong().sum()" "true"
+// "Replace 'collect(summingLong())' with 'mapToLong().sum()'" "true"
 
 import java.util.List;
 import java.util.stream.Collectors;

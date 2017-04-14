@@ -172,7 +172,6 @@ public class GradleExecutionHelper {
       operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
 
-    listener.onStart(id);
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
       operation.setJavaHome(new File(javaHome));

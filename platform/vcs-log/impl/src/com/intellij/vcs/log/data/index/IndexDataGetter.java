@@ -21,11 +21,13 @@ import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +85,7 @@ public class IndexDataGetter {
     if (myRoots.contains(root)) {
       try {
         myIndexStorage.paths.iterateCommits(Collections.singleton(path), (paths, commit) -> result.add(commit, paths));
+        result.pack();
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
@@ -93,6 +96,7 @@ public class IndexDataGetter {
   }
 
   public static class FileNamesData {
+    @NotNull private final Interner<Set<FilePath>> myPathsInterner = new Interner<>();
     @NotNull private final TIntObjectHashMap<Set<FilePath>> myCommitsToPaths;
     @NotNull private final TIntObjectHashMap<Set<UnorderedPair<FilePath>>> myCommitsToRenames;
 
@@ -117,13 +121,13 @@ public class IndexDataGetter {
     private void addRename(int commit, @NotNull Couple<FilePath> path) {
       Set<UnorderedPair<FilePath>> paths = myCommitsToRenames.get(commit);
       if (paths == null) {
-        paths = new SmartHashSet<>();
+        paths = ContainerUtil.newHashSet();
         myCommitsToRenames.put(commit, paths);
       }
       paths.add(new UnorderedPair<>(path.first, path.second));
     }
 
-    public void add(int commit, @NotNull Couple<FilePath> paths) {
+    private void add(int commit, @NotNull Couple<FilePath> paths) {
       if (paths.second == null) {
         addPath(commit, paths.first);
       }
@@ -164,7 +168,7 @@ public class IndexDataGetter {
 
     public void retain(int commit, @NotNull FilePath path, @NotNull FilePath previousPath) {
       if (path.equals(previousPath)) {
-        myCommitsToPaths.put(commit, ContainerUtil.set(path));
+        myCommitsToPaths.put(commit, myPathsInterner.intern(ContainerUtil.set(path)));
         myCommitsToRenames.remove(commit);
       }
       else {
@@ -189,6 +193,14 @@ public class IndexDataGetter {
       }
 
       return result;
+    }
+
+    void pack() {
+      TIntObjectIterator<Set<FilePath>> iterator = myCommitsToPaths.iterator();
+      while (iterator.hasNext()) {
+        iterator.advance();
+        iterator.setValue(myPathsInterner.intern(iterator.value()));
+      }
     }
   }
 }

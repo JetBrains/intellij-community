@@ -33,7 +33,7 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
     myIndex = projectFileIndex;
   }
 
-  boolean hasProjectContaining(@NotNull VirtualFile file) {
+  boolean isInContent(@NotNull VirtualFile file) {
     return myIndex.isInContent(file);
   }
 

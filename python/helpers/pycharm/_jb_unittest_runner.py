@@ -18,6 +18,7 @@ if __name__ == '__main__':
             discovery_args += [os.path.dirname(path), "-p", os.path.basename(path)]
         else:
             discovery_args.append(path)
+        discovery_args += ["-t", os.getcwd()]  # To force unit calculate path relative to this folder
         additional_args = discovery_args + additional_args
     elif targets:
         additional_args += targets

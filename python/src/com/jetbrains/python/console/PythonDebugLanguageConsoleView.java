@@ -61,7 +61,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   @Override
   public void executeCode(@NotNull String code, @Nullable Editor e) {
     enableConsole(false);
-    getPydevConsoleView().executeCode(code, e);
+    getPydevConsoleView().executeInConsole(code);
   }
 
   @NotNull

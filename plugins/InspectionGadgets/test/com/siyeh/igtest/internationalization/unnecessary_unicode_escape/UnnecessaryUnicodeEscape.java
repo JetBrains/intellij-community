@@ -5,6 +5,9 @@ class UnnecessaryUnicodeEscape {
   // control char & not representable char: \u0010 \u00e4
 
   char[] surrogates = new char[]{'\ud800','\udc00'};
+
+  String t = "<warning descr="Unicode escape sequence '\u0020' can be replaced with ' '">\u0020</warning>";
+  String u = "\u200B\u200E\u00A0\u200F";
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")
 class Suppress {

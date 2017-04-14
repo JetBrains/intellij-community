@@ -50,7 +50,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private long myCurrentTestStart;
   private int myFinishCount;
   private String myRootName;
-  private Set<TestIdentifier> myRoots;
+  private Set<TestIdentifier> myRoots = new HashSet<>();
   private boolean mySuccessful;
 
   public JUnit5TestExecutionListener() {
@@ -219,7 +219,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (ex != null) {
         ComparisonFailureData failureData = null;
         if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
-          for (AssertionError assertionError : ((MultipleFailuresError)ex).getFailures()) {
+          for (Throwable assertionError : ((MultipleFailuresError)ex).getFailures()) {
             testFailure(methodName, id, messageName, assertionError, duration, reason, false);
           }
         }

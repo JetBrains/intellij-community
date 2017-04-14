@@ -18,13 +18,14 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.WriteExternalException
+import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
-abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
+abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor, LargeFileWriteRequestor {
   override final fun setState(component: Any?, componentName: String, state: Any) {
     val element: Element?
     try {

@@ -25,6 +25,8 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
@@ -1291,10 +1293,26 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
-    return processFilesRecursively(root, processor, null);
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return new JBTreeTraverser<File>(FILE_CHILDREN).withRoot(root);
   }
 
+  private static final Function<File, Iterable<File>> FILE_CHILDREN = new Function<File, Iterable<File>>() {
+    @Override
+    public Iterable<File> fun(File file) {
+      return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
+    }
+  };
+
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
+    return fileTraverser(root).bfsTraversal().processEach(processor);
+  }
+
+  /**
+   * @see FileUtil#fileTraverser(File)
+   */
+  @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
                                                 @Nullable final Processor<File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();

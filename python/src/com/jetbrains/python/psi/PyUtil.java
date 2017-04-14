@@ -852,7 +852,15 @@ public class PyUtil {
       // concurrent hash map is a null-hostile collection
       return CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return cache.computeIfAbsent(Optional.ofNullable(param), p -> Optional.ofNullable(f.fun(param))).orElse(null);
+    // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key 
+    // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
+    final Optional<P> wrappedParam = Optional.ofNullable(param);
+    Optional<T> value = cache.get(wrappedParam);
+    if (value == null) {
+      value = Optional.ofNullable(f.fun(param));
+      cache.put(wrappedParam, value);
+    }
+    return value.orElse(null);
   }
 
   /**
@@ -900,6 +908,25 @@ public class PyUtil {
   public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
     final PyStatementList statementList = container.getStatementList();
     return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
+  }
+
+  /**
+   * Retrieve the document from {@link PsiDocumentManager} using the anchor PSI element and pass it to the consumer function
+   * first releasing it from pending PSI modifications it with {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}
+   * and then committing in try/finally block, so that subsequent operations over the PSI can be performed.
+   */
+  public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<Document> consumer) {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
+    final Document document = manager.getDocument(anchor.getContainingFile());
+    if (document != null) {
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      try {
+        consumer.consume(document);
+      }
+      finally {
+        manager.commitDocument(document);
+      }
+    }
   }
 
   public static class KnownDecoratorProviderHolder {

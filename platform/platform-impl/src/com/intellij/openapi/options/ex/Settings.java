@@ -69,4 +69,9 @@ public abstract class Settings {
   private static Configurable choose(Configurable configurable, Configurable variant) {
     return variant != null ? variant : configurable;
   }
+
+  /**
+   * Used to handle programmatic settings changes when no UI events are sent.
+   */
+  public void revalidate() {}
 }

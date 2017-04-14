@@ -44,8 +44,8 @@ class B extends A {
 }
 class C extends FinalizeCallsSuperFinalize {
   @Override
-  protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() {
-    new Object() {
+  protected void <warning descr="Method 'finalize()' does not call 'super.finalize()'">finalize</warning>() throws Throwable {
+    new C() {
       @Override
       protected void finalize() throws Throwable {
         super.finalize();

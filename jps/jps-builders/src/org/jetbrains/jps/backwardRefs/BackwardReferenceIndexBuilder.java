@@ -71,7 +71,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
       myCompiledTargets.clear();
     }
 
-    BackwardReferenceIndexWriter.closeIfNeed();
+    BackwardReferenceIndexWriter.closeIfNeed(false);
   }
 
   @Override
@@ -88,7 +88,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
     if (writer != null) {
       final Exception cause = writer.getRebuildRequestCause();
       if (cause != null) {
-        throw new RebuildRequestedException(cause);
+        BackwardReferenceIndexWriter.closeIfNeed(true);
       }
 
       if (dirtyFilesHolder.hasRemovedFiles()) {

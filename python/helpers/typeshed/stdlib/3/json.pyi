@@ -31,7 +31,7 @@ def dump(obj: Any,
     sort_keys: bool = ...,
     **kwds: Any) -> None: ...
 
-def loads(s: str,
+def loads(s: Union[str, bytes, bytearray],
     encoding: Any = ...,  # ignored and deprecated
     cls: Any = ...,
     object_hook: Optional[Callable[[Dict], Any]] = ...,
@@ -50,7 +50,7 @@ def load(fp: IO[str],
     object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]] = ...,
     **kwds: Any) -> Any: ...
 
-class JSONEncoder(object):
+class JSONEncoder:
     item_separator = ...  # type: str
     key_separator = ...  # type: str
 
@@ -69,7 +69,7 @@ class JSONEncoder(object):
     def encode(self, o: Any) -> str: ...
     def iterencode(self, o: Any, _one_shot: bool=False) -> Iterator[str]: ...
 
-class JSONDecoder(object):
+class JSONDecoder:
 
     object_hook = None  # type: Callable[[Dict[str, Any]], Any]
     parse_float = ...  # Callable[[str], Any]

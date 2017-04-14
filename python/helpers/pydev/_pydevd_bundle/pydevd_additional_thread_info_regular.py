@@ -5,6 +5,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
+version = 1
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo

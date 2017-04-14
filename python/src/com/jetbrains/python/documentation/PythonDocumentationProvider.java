@@ -91,7 +91,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
       }
       String summary = "";
-      final PyStringLiteralExpression docStringExpression = func.getDocStringExpression();
+      final PyStringLiteralExpression docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(func);
       if (docStringExpression != null) {
         final StructuredDocString docString = DocStringUtil.parse(docStringExpression.getStringValue(), docStringExpression);
         summary = docString.getSummary();
@@ -102,11 +102,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     else if (element instanceof PyClass) {
       final PyClass cls = (PyClass)element;
       String summary = "";
-      PyStringLiteralExpression docStringExpression = cls.getDocStringExpression();
+      PyStringLiteralExpression docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(cls);
       if (docStringExpression == null) {
         final PyFunction initOrNew = cls.findInitOrNew(false, null);
         if (initOrNew != null) {
-          docStringExpression = initOrNew.getDocStringExpression();
+          docStringExpression = PyDocumentationBuilder.getEffectiveDocStringExpression(initOrNew);
         }
       }
       if (docStringExpression != null) {

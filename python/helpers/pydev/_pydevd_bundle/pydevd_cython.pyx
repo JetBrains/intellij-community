@@ -9,6 +9,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
+version = 1
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
@@ -187,7 +188,7 @@ cdef class PyDBFrame:
 
     def trace_return(self, frame, event, arg):
         if event == 'return':
-            main_debugger, filename, info, thread = self._args
+            main_debugger, filename = self._args[0], self._args[1]
             send_signature_return_trace(main_debugger, frame, filename, arg)
         return self.trace_return
 
@@ -448,7 +449,7 @@ cdef class PyDBFrame:
             line_cache_key = (frame_cache_key, line)
 
             if main_debugger._finish_debugging_session:
-                    return None
+                return None
 
             plugin_manager = main_debugger.plugin
 
@@ -797,13 +798,13 @@ cdef class PyDBFrame:
                 else:
                     stop = False
 
-                    if is_return and hasattr(frame, "f_back"):
-                        f_code = getattr(frame.f_back, 'f_code', None)
-                        if f_code is not None:
-                            back_filename = os.path.basename(f_code.co_filename)
-                            file_type = get_file_type(back_filename)
-                            if file_type == PYDEV_FILE:
-                                stop = False
+                if step_cmd != -1 and is_return and IS_PY3K and hasattr(frame, "f_back"):
+                    f_code = getattr(frame.f_back, 'f_code', None)
+                    if f_code is not None:
+                        back_filename = os.path.basename(f_code.co_filename)
+                        file_type = get_file_type(back_filename)
+                        if file_type == PYDEV_FILE:
+                            stop = False
 
                 if plugin_stop:
                     stopped_on_plugin = plugin_manager.stop(main_debugger, frame, event, self._args, stop_info, arg, step_cmd)

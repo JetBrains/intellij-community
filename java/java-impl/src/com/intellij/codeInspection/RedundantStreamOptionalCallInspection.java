@@ -42,7 +42,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final Set<String> INTERESTING_NAMES =
-    ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered");
+    ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered", "flatMap");
   private static final Set<String> CALLS_MAKING_SORT_USELESS = ContainerUtil.set("sorted", "anyMatch", "allMatch", "noneMatch", "count");
   private static final Set<String> CALLS_KEEPING_SORT_ORDER =
     ContainerUtil.set("filter", "distinct", "boxed", "asLongStream", "asDoubleStream");
@@ -97,6 +97,18 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
               USELESS_BOXING_IN_STREAM_MAP || optional || StreamApiUtil.getStreamElementType(call.getType()) instanceof PsiPrimitiveType;
             if (args.length == 1 && isIdentityMapping(args[0], allowBoxUnbox)) {
               register(call, null);
+            }
+            break;
+          case "flatMap":
+            if (args.length == 1) {
+              if (optional) {
+                if (FunctionalExpressionUtils
+                      .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_OPTIONAL, null, "of", new PsiType[1]) ||
+                    FunctionalExpressionUtils
+                      .isFunctionalReferenceTo(args[0], CommonClassNames.JAVA_UTIL_OPTIONAL, null, "ofNullable", new PsiType[1])) {
+                  register(call, null);
+                }
+              }
             }
             break;
           case "sorted":
@@ -161,7 +173,10 @@ public class RedundantStreamOptionalCallInspection extends BaseJavaBatchLocalIns
       String name = chainCall.getMethodExpression().getReferenceName();
       if (name == null) return null;
       if (isWantedCall.test(name)) return chainCall;
-      if (!isAllowedIntermediateCall.test(name)) return null;
+      if (!isAllowedIntermediateCall.test(name) ||
+          !InheritanceUtil.isInheritor(chainCall.getType(), CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return null;
+      }
     }
     return null;
   }

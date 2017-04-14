@@ -18,6 +18,10 @@ class P2 {
     });
     test(this::<warning descr="Method annotated with @Nullable must not override @NotNull method">getNull</warning>);
     test(this::getPrimitive);
+    test(this::<warning descr="Not annotated method is used as an override for a method annotated with NotNull">getNonAnnotated</warning>);
+
+    test(WithImplicitConstructor::new);
+    test(WithExplicitConstructor::new);
   }
 
   @Nullable
@@ -29,3 +33,6 @@ class P2 {
 
   private void test(final NonnullInterface function) { }
 }
+
+class WithImplicitConstructor {}
+class WithExplicitConstructor { WithExplicitConstructor() {} }

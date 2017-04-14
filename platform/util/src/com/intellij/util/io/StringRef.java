@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,12 +93,12 @@ public class StringRef {
     return that == this || that instanceof StringRef && toString().equals(that.toString());
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static String toString(@Nullable StringRef ref) {
     return ref != null ? ref.getString() : null;
   }
 
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static StringRef fromString(@Nullable String source) {
     return source == null ? null : new StringRef(source);
   }

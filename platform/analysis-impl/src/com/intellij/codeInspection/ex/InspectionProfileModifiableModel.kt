@@ -100,7 +100,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
   fun resetToEmpty(project: Project) {
     initInspectionTools(project)
     for (toolWrapper in getInspectionTools(null)) {
-      disableTool(toolWrapper.shortName, project)
+      setToolEnabled(toolWrapper.shortName, false, project, fireEvents = false)
     }
   }
 

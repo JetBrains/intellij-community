@@ -69,8 +69,8 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
     new RunAll()
       .append(() -> UsefulTestCase.checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
-      .append(() -> UsefulTestCase.checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance()))
-      .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true))
+      .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(super::tearDown)
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
       .append(() -> PersistentFS.getInstance().clearIdCache())

@@ -67,6 +67,8 @@ import com.intellij.util.FileContentUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.impl.MapIndexStorage
+import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.*
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -675,6 +677,19 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertInstanceOf(rebuildException, StorageException.class)
       def rebuildCause = rebuildException.getCause()
       assertInstanceOf(rebuildCause, IncorrectOperationException.class)
+    } finally {
+      index.dispose()
+    }
+  }
+
+  void "test read-only index has read-only storages"() {
+    def index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true).getIndex()
+
+    try {
+      MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
+      def map = storage.getIndexMap()
+      assertTrue(map.getReadOnly())
+      assertTrue(map.getValueStorage().isReadOnly())
     } finally {
       index.dispose()
     }

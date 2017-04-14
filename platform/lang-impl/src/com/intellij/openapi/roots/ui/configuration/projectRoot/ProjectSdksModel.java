@@ -21,7 +21,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -240,13 +242,21 @@ public class ProjectSdksModel implements SdkModel {
                                @NotNull final JComponent parent,
                                @NotNull final Consumer<Sdk> updateTree,
                                @Nullable Condition<SdkTypeId> filter) {
+    createAddActions(group, parent, null, updateTree, filter);
+  }
+
+  public void createAddActions(@NotNull DefaultActionGroup group,
+                               @NotNull final JComponent parent,
+                               @Nullable final Sdk selectedSdk,
+                               @NotNull final Consumer<Sdk> updateTree,
+                               @Nullable Condition<SdkTypeId> filter) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
       if (filter != null && !filter.value(type)) continue;
       final AnAction addAction = new DumbAwareAction(type.getPresentableName(), null, type.getIconForAddAction()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          doAdd(parent, type, updateTree);
+          doAdd(parent, selectedSdk, type, updateTree);
         }
       };
       group.add(addAction);
@@ -254,9 +264,13 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void doAdd(@NotNull JComponent parent, @NotNull final SdkType type, @NotNull final Consumer<Sdk> callback) {
+    doAdd(parent, null, type, callback);
+  }
+
+  public void doAdd(@NotNull JComponent parent, @Nullable final Sdk selectedSdk, @NotNull final SdkType type, @NotNull final Consumer<Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
-      type.showCustomCreateUI(this, parent, sdk -> setupSdk(sdk, callback));
+      type.showCustomCreateUI(this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
     }
     else {
       SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));

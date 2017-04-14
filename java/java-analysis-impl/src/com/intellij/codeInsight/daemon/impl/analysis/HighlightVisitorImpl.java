@@ -984,7 +984,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitPackageStatement(statement);
     myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement, myFile));
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageStatement(statement, myFile));
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
     }
   }
 
@@ -1295,6 +1295,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
     }
+
+    if (!myHolder.hasErrorResults() && resolved != null && myJavaModule != null) {
+      myHolder.add(ModuleHighlightUtil.checkPackageAccessibility(expression, resolved, myJavaModule));
+    }
   }
 
   @Override
@@ -1369,7 +1373,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (errorMessage != null) {
         final HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create();
-        if (method instanceof PsiMethod && !((PsiMethod)method).isConstructor() && 
+        if (method instanceof PsiMethod && !((PsiMethod)method).isConstructor() &&
             !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
           final boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
           final LocalQuickFixAndIntentionActionOnPsiElement fixStaticModifier =
@@ -1673,6 +1677,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkDuplicateStatements(module));
+    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkClashingReads(module));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkUnusedServices(module));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }

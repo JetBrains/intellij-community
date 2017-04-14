@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -231,7 +232,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       });
 
-      if (!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) {
+      if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) &&
+          JpsJavaSdkType.parseVersion(getLanguageLevel(ContainerUtil.getFirstItem(chunk.getModules()))) >= 9) {
         // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
         JavaModuleIndex index = getJavaModuleIndex(context);
         for (JpsModule module : chunk.getModules()) {
@@ -1025,11 +1027,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
     if (customArgs != null) {
-      final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
       boolean skip = false;
       boolean targetOptionFound = false;
-      while (customOptsTokenizer.hasMoreTokens()) {
-        final String userOption = customOptsTokenizer.nextToken();
+      for (final String userOption : ParametersListUtil.parse(customArgs)) {
         if (FILTERED_OPTIONS.contains(userOption)) {
           skip = true;
           targetOptionFound = "-target".equals(userOption);

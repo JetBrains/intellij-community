@@ -1,10 +1,11 @@
 0(1) element: null
-1(2) READ ACCESS: isinstance
-2(3) READ ACCESS: s
-3(4) READ ACCESS: basestring
-4(5) READ ACCESS: isinstance
-5(6) READ ACCESS: x
-6(7) READ ACCESS: int
-7(8) ASSERTTYPE ACCESS: s
-8(9) ASSERTTYPE ACCESS: x
-9() element: null
+1(2) element: PyAssertStatement
+2(3) READ ACCESS: isinstance
+3(4) READ ACCESS: s
+4(5) READ ACCESS: basestring
+5(6) READ ACCESS: isinstance
+6(7) READ ACCESS: x
+7(8) READ ACCESS: int
+8(9) ASSERTTYPE ACCESS: s
+9(10) ASSERTTYPE ACCESS: x
+10() element: null
