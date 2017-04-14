@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -185,9 +186,10 @@ public class FileTemplatesLoader {
             final String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
             final String extension = myTypeManager.getExtension(filename);
             final String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-            final URL templateUrl = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+            final URL templateUrl = UrlClassLoader.internProtocol(new URL(StringUtil.trimTrailing(root.toExternalForm(),'/') + "/" + path));
             final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-            final URL descriptionUrl = descriptionPath != null ? UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + descriptionPath)) : null;
+            final URL descriptionUrl = descriptionPath == null ? null :
+                                       UrlClassLoader.internProtocol(new URL(StringUtil.trimTrailing(root.toExternalForm(),'/') + "/" + descriptionPath));
             assert templateUrl != null;
             entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
           }
@@ -198,7 +200,7 @@ public class FileTemplatesLoader {
   }
 
   private static boolean matchesPrefix(String path, String prefix) {
-    if (prefix.length() == 0) {
+    if (prefix.isEmpty()) {
       return !path.contains("/");
     }
     return FileUtil.startsWith(path, prefix) && !path.substring(prefix.length()).contains("/");
@@ -212,19 +214,19 @@ public class FileTemplatesLoader {
     String descName = MessageFormat
       .format("{0}.{1}_{2}_{3}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension,
               locale.getLanguage(), locale.getCountry());
-    String descPath = pathPrefix.length() > 0 ? pathPrefix + descName : descName;
+    String descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
 
     descName = MessageFormat.format("{0}.{1}_{2}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension, locale.getLanguage());
-    descPath = pathPrefix.length() > 0 ? pathPrefix + descName : descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
 
     descName = templateName + "." + templateExtension + DESCRIPTION_EXTENSION_SUFFIX;
-    descPath = pathPrefix.length() > 0 ? pathPrefix + descName : descName;
+    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + descName;
     if (descriptionPaths.contains(descPath)) {
       return descPath;
     }
