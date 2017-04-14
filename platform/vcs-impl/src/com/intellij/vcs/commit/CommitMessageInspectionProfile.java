@@ -115,7 +115,8 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     @NotNull
     @Override
     public List<InspectionToolWrapper> createTools() {
-      return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection())
+      return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection(),
+                       new CommitMessageSpellCheckingInspection())
         .map(LocalInspectionToolWrapper::new)
         .collect(toList());
     }
