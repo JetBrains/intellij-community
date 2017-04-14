@@ -287,13 +287,13 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       final PyTargetExpressionStub stub = target.getStub();
 
       if (stub != null) {
-        return getNamedTupleTypeFromStub(target, stub.getCustomStub(PyNamedTupleStub.class), 1);
+        return getNamedTupleTypeFromStub(target, stub.getCustomStub(PyNamedTupleStub.class), PyNamedTupleType.DefinitionLevel.NEW_TYPE);
       } else {
-        return getNamedTupleTypeFromAST(target, context, 1);
+        return getNamedTupleTypeFromAST(target, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE);
       }
     }
     else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
-      return getNamedTupleTypeFromAST((PyCallExpression)anchor, context, 2);
+      return getNamedTupleTypeFromAST((PyCallExpression)anchor, context, PyNamedTupleType.DefinitionLevel.AS_SUPERCLASS);
     }
     return null;
   }
@@ -332,7 +332,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNamedTupleTypeFromStub(@NotNull PsiElement referenceTarget,
                                                   @Nullable PyNamedTupleStub stub,
-                                                  int definitionLevel) {
+                                                  @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (stub == null) {
       return null;
     }
@@ -349,7 +349,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNamedTupleTypeFromAST(@NotNull PyTargetExpression expression,
                                                  @NotNull TypeEvalContext context,
-                                                 int definitionLevel) {
+                                                 @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (context.maySwitchToAST(expression)) {
       return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
     }
@@ -360,7 +360,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNamedTupleTypeFromAST(@NotNull PyCallExpression expression,
                                                  @NotNull TypeEvalContext context,
-                                                 int definitionLevel) {
+                                                 @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (context.maySwitchToAST(expression)) {
       return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
     }
