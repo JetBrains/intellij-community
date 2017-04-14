@@ -224,7 +224,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void writeExternal(@NotNull Element element) {
     // must be first - compatibility
-    element.setAttribute(VERSION_TAG, VALID_VERSION);
+    writeVersion(element);
 
     mySerializer.writeExternal(this, element);
 
@@ -274,6 +274,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }
     getPathMacroManager().collapsePaths(element);
+  }
+
+  protected static void writeVersion(@NotNull Element element) {
+    element.setAttribute(VERSION_TAG, VALID_VERSION);
   }
 
   private void markSettingsMerged(@NotNull String toolName, @NotNull Element element) {

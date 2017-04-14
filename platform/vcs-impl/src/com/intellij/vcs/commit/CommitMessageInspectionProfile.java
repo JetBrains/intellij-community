@@ -19,8 +19,14 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,12 +36,19 @@ import static com.intellij.codeInspection.InspectionProfileEntry.getShortName;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.toList;
 
-public class CommitMessageInspectionProfile extends InspectionProfileImpl {
+@State(name = "CommitMessageInspectionProfile", storages = @Storage("vcs.xml"))
+public class CommitMessageInspectionProfile extends InspectionProfileImpl
+  implements PersistentStateComponent<CommitMessageInspectionProfile.State> {
+
+  public static final String PROFILE_NAME = "Commit Dialog";
+  public static final InspectionProfileImpl DEFAULT =
+    new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolRegistrar(), (InspectionProfileImpl)null);
 
   @NotNull private final Project myProject;
+  @NotNull private State myState = new State();
 
   public CommitMessageInspectionProfile(@NotNull Project project) {
-    super("Commit Dialog", new CommitMessageInspectionToolRegistrar(), (InspectionProfileImpl)null);
+    super(PROFILE_NAME, new CommitMessageInspectionToolRegistrar(), DEFAULT);
     myProject = project;
   }
 
@@ -57,6 +70,45 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl {
     InspectionToolWrapper toolWrapper = getInspectionTool(getShortName(BodyLimitInspection.class.getSimpleName()), myProject);
 
     return ((BodyLimitInspection)notNull(toolWrapper).getTool()).RIGHT_MARGIN;
+  }
+
+  @NotNull
+  @Override
+  @Transient
+  public String getName() {
+    return super.getName();
+  }
+
+  @NotNull
+  @Override
+  public State getState() {
+    Element element = newProfileElement();
+    writeExternal(element);
+    myState.myProfile = element;
+
+    return myState;
+  }
+
+  @Override
+  public void loadState(@NotNull State state) {
+    readExternal(state.myProfile);
+  }
+
+  public static class State {
+    @Tag(PROFILE)
+    public Element myProfile = newProfileWithVersionElement();
+  }
+
+  @NotNull
+  private static Element newProfileElement() {
+    return new Element(PROFILE);
+  }
+
+  @NotNull
+  private static Element newProfileWithVersionElement() {
+    Element result = newProfileElement();
+    writeVersion(result);
+    return result;
   }
 
   private static class CommitMessageInspectionToolRegistrar extends InspectionToolRegistrar {
