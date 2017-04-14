@@ -31,31 +31,28 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 
-/**
- * @author meanmail
- */
 public class EduCreateNewProjectPanel extends JPanel {
-  private JPanel panel;
-  private JTextField nameField;
-  private TextFieldWithBrowseButton locationField;
-  private JLabel errorIcon;
-  private JLabel errorLabel;
+  private JPanel myPanel;
+  private JTextField myNameField;
+  private TextFieldWithBrowseButton myLocationField;
+  private JLabel myErrorIcon;
+  private JLabel myErrorLabel;
 
   public EduCreateNewProjectPanel(@NotNull final Project project, @NotNull EduCreateNewProjectDialog dialog) {
     setLayout(new BorderLayout());
-    add(panel, BorderLayout.CENTER);
-    errorIcon.setIcon(AllIcons.Actions.Lightning);
+    add(myPanel, BorderLayout.CENTER);
+    myErrorIcon.setIcon(AllIcons.Actions.Lightning);
     resetError();
     String location = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
-    locationField.setText(location);
+    myLocationField.setText(location);
     String name = ProjectWizardUtil.findNonExistingFileName(location, "course", "");
-    nameField.setText(name);
+    myNameField.setText(name);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    locationField.addBrowseFolderListener("Choose Location Folder", null, project, descriptor);
-    locationField.addFocusListener(new FocusAdapter() {
+    myLocationField.addBrowseFolderListener("Choose Location Folder", null, project, descriptor);
+    myLocationField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        String location = FileUtil.toSystemDependentName(locationField.getText());
+        String location = FileUtil.toSystemDependentName(myLocationField.getText());
         File file = new File(location);
         if (!FileUtil.ensureCanCreateFile(file)) {
           dialog.setOKActionEnabled(false);
@@ -69,21 +66,21 @@ public class EduCreateNewProjectPanel extends JPanel {
   }
 
   private void setState(boolean isVisible) {
-    errorIcon.setVisible(isVisible);
-    errorLabel.setVisible(isVisible);
+    myErrorIcon.setVisible(isVisible);
+    myErrorLabel.setVisible(isVisible);
   }
 
   void setError(@NotNull String message) {
-    errorLabel.setText(message);
+    myErrorLabel.setText(message);
     setState(true);
   }
 
   public String getName() {
-    return nameField.getText();
+    return myNameField.getText();
   }
 
   public String getLocationPath() {
-    return locationField.getText();
+    return myLocationField.getText();
   }
 
   public void resetError() {

@@ -22,9 +22,6 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author meanmail
- */
 public interface EduCourseProjectGenerator {
   @NotNull
   DirectoryProjectGenerator getDirectoryProjectGenerator();

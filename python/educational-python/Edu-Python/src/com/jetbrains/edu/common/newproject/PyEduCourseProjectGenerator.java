@@ -34,53 +34,50 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author meanmail
- */
 public class PyEduCourseProjectGenerator implements EduCourseProjectGenerator {
-  private final PyStudyDirectoryProjectGenerator generator;
+  private final PyStudyDirectoryProjectGenerator myGenerator;
 
   public PyEduCourseProjectGenerator() {
-    this.generator = new PyStudyDirectoryProjectGenerator();
+    this.myGenerator = new PyStudyDirectoryProjectGenerator();
   }
 
   @NotNull
   @Override
   public DirectoryProjectGenerator getDirectoryProjectGenerator() {
-    return generator;
+    return myGenerator;
   }
 
   @Nullable
   @Override
   public Object getProjectSettings() {
-    return generator.getProjectSettings();
+    return myGenerator.getProjectSettings();
   }
 
   @Override
   public void setCourse(@NotNull Course course) {
-    generator.setSelectedCourse(course);
+    myGenerator.setSelectedCourse(course);
   }
 
   @Override
   public ValidationResult validate(@NotNull String path) {
-    generator.setValidationResult(ValidationResult.OK);
-    return generator.validate(path);
+    myGenerator.setValidationResult(ValidationResult.OK);
+    return myGenerator.validate(path);
   }
 
   @Override
   public boolean beforeProjectGenerated() {
     BooleanFunction<PythonProjectGenerator> function =
-      generator.beforeProjectGenerated(null);
-    return function != null && function.fun(generator);
+      myGenerator.beforeProjectGenerated(null);
+    return function != null && function.fun(myGenerator);
   }
 
   @Override
   public void afterProjectGenerated(@NotNull Project project) {
-    PyNewProjectSettings settings = (PyNewProjectSettings)generator.getProjectSettings();
+    PyNewProjectSettings settings = (PyNewProjectSettings)myGenerator.getProjectSettings();
     Sdk sdk = settings.getSdk();
 
     if (sdk == null) {
-      generator.createAndAddVirtualEnv(project, settings);
+      myGenerator.createAndAddVirtualEnv(project, settings);
       sdk = settings.getSdk();
     }
 

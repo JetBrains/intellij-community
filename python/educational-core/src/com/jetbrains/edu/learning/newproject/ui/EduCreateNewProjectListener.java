@@ -18,9 +18,6 @@ package com.jetbrains.edu.learning.newproject.ui;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author meanmail
- */
 public interface EduCreateNewProjectListener {
   void created(@NotNull Project project);
 }

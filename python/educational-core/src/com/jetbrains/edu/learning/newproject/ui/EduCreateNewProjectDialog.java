@@ -47,21 +47,18 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author meanmail
- */
 public class EduCreateNewProjectDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(EduCreateNewProjectDialog.class);
-  private Project project;
-  private Course course;
-  private final List<EduCreateNewProjectListener> listeners = new ArrayList<>();
-  private final EduCreateNewProjectPanel panel;
+  private Project myProject;
+  private Course myCourse;
+  private final List<EduCreateNewProjectListener> myListeners = new ArrayList<>();
+  private final EduCreateNewProjectPanel myPanel;
 
   public EduCreateNewProjectDialog() {
     super(false);
-    setTitle("New project");
+    setTitle("New Project");
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    panel = new EduCreateNewProjectPanel(defaultProject, this);
+    myPanel = new EduCreateNewProjectPanel(defaultProject, this);
     setOKButtonText("Create");
     init();
   }
@@ -69,45 +66,45 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    return panel;
+    return myPanel;
   }
 
   public void addListener(@NotNull EduCreateNewProjectListener listener) {
-    listeners.add(listener);
+    myListeners.add(listener);
   }
 
   public void setCourse(@Nullable Course course) {
-    this.course = course;
+    this.myCourse = course;
   }
 
   @Override
   protected void doOKAction() {
-    if (course == null) {
-      panel.setError("Selected course is null");
+    if (myCourse == null) {
+      myPanel.setError("Selected course is null");
       return;
     }
-    Language language = course.getLanguageById();
+    Language language = myCourse.getLanguageById();
     if (language == null) {
       String message = "Selected course don't have language";
-      panel.setError(message);
+      myPanel.setError(message);
       LOG.warn(message);
       return;
     }
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     if (configurator == null) {
       String message = "A configurator for the selected course not found";
-      panel.setError(message);
+      myPanel.setError(message);
       LOG.warn(message + ": " + language);
       return;
     }
     EduCourseProjectGenerator projectGenerator = configurator.getEduCourseProjectGenerator();
     String errorMessage = createProject(projectGenerator);
     if (errorMessage != null) {
-      panel.setError(errorMessage);
+      myPanel.setError(errorMessage);
       return;
     }
-    if (project == null) {
-      panel.setError("Project did't created");
+    if (myProject == null) {
+      myPanel.setError("Project did't created");
       return;
     }
     notifyCreated();
@@ -121,8 +118,8 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
    */
   @Nullable
   private String createProject(@NotNull final EduCourseProjectGenerator projectGenerator) {
-    String name = panel.getName();
-    String path = FileUtil.join(FileUtil.toSystemDependentName(panel.getLocationPath()), name);
+    String name = myPanel.getName();
+    String path = FileUtil.join(FileUtil.toSystemDependentName(myPanel.getLocationPath()), name);
 
     ValidationResult result = projectGenerator.validate(path);
     if (!result.isOk()) {
@@ -136,7 +133,7 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
       return message;
     }
 
-    projectGenerator.setCourse(course);
+    projectGenerator.setCourse(myCourse);
 
     final VirtualFile baseDir = ApplicationManager.getApplication()
       .runWriteAction((Computable<VirtualFile>)() ->
@@ -152,9 +149,9 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     if (baseDir.getChildren().length > 0) {
       String message =
         String.format("Directory '%s' is not empty.\nFiles and directories will remove.\nDo you want continue?", location.getAbsolutePath());
-      int rc = Messages.showYesNoDialog((Project)null, message, "New project", Messages.getQuestionIcon());
+      int rc = Messages.showYesNoDialog((Project)null, message, "New Project", Messages.getQuestionIcon());
       if (rc != Messages.YES) {
-        panel.resetError();
+        myPanel.resetError();
         return "Canceled by user";
       }
     }
@@ -179,11 +176,11 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
       };
     }
     EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-    project = PlatformProjectOpenProcessor.doOpenProject(baseDir, null, -1, callback, options);
+    myProject = PlatformProjectOpenProcessor.doOpenProject(baseDir, null, -1, callback, options);
     return null;
   }
 
   private void notifyCreated() {
-    listeners.forEach(listener -> listener.created(project));
+    myListeners.forEach(listener -> listener.created(myProject));
   }
 }

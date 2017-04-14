@@ -29,9 +29,6 @@ import java.io.IOException;
 
 import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 
-/**
- * @author meanmail
- */
 public class EduCreateNewStepikProjectDialog extends EduCreateNewProjectDialog {
   private static final Logger LOG = Logger.getInstance(EduCreateNewStepikProjectDialog.class);
 
@@ -52,7 +49,7 @@ public class EduCreateNewStepikProjectDialog extends EduCreateNewProjectDialog {
             try {
               Course course = EduStepicConnector.getCourseFromStepik(user, courseId);
               if (course != null) {
-                setTitle("New project - " + course.getName());
+                setTitle("New Project - " + course.getName());
               }
 
               setCourse(course);

@@ -44,9 +44,6 @@ import java.util.List;
 import static com.jetbrains.edu.learning.core.EduNames.STUDY_PROJECT_XML_PATH;
 import static com.jetbrains.edu.learning.navigation.StudyNavigator.navigateToTask;
 
-/**
- * @author meanmail
- */
 public class EduBuiltInServerUtils {
   public static boolean focusOpenProject(int courseId, int stepId) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();

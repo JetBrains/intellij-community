@@ -51,7 +51,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-
 public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;

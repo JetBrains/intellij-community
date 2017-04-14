@@ -34,12 +34,9 @@ import static com.jetbrains.edu.learning.builtInServer.EduBuiltInServerUtils.*;
 import static com.jetbrains.edu.learning.stepic.EduStepicNames.EDU_STEPIK_SERVICE_NAME;
 import static com.jetbrains.edu.learning.stepic.EduStepicNames.STEP_ID;
 
-/**
- * @author meanmail
- */
 public class EduStepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(EduStepikRestService.class.getName());
-  private static final Pattern OPEN_COURSE = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "/course/(\\d+)");
+  private static final Pattern OPEN_COURSE_PATTERN = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "/course/(\\d+)");
 
   @NotNull
   @Override
@@ -64,7 +61,7 @@ public class EduStepikRestService extends RestService {
     LOG.info("Request: " + urlDecoder.uri());
 
     String path = urlDecoder.path();
-    Matcher matcher = OPEN_COURSE.matcher(path);
+    Matcher matcher = OPEN_COURSE_PATTERN.matcher(path);
     if (matcher.matches()) {
       int courseId = Integer.parseInt(matcher.group(1));
       List<String> stepIds = urlDecoder.parameters().get(STEP_ID);
