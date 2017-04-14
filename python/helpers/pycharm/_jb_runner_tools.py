@@ -309,64 +309,10 @@ messages.TeamcityServiceMessages = NewTeamcityServiceMessages
 
 # Monkeypatched
 
-
-class _SymbolNameSplitter(object):
-    """
-    Strategy to split symbol name to package/module part and symbols part.
-        
-    """
-    def check_is_importable(self, parts, current_step, separator):
-        """
-        
-        Run this method for each name part. Method throws ImportError when name is not importable. 
-        That means previous name is where module name ends.
-        :param parts: list of module name parts
-        :param current_step: from 0 to len(parts)
-        :param separator: module name separator (".")
-        """
-        raise NotImplementedError()
-
-
-class _SymbolName2KSplitter(_SymbolNameSplitter):
-    """
-    Based on imp which works in 2, but not 3.
-    It also emulates packages for folders with out of __init__.py.
-    Say, you have Python path "spam.eggs" where "spam" is plain folder.
-    It works for Py3, but not Py2.
-    find_module for "spam" raises exception which is processed then (see "_symbol_processed") 
-    """
-    def __init__(self):
-        super(_SymbolNameSplitter, self).__init__()
-        self._path = None
-        # Set to True when at least one find_module success, so we have at least one symbol
-        self._symbol_processed = False
-
-    def check_is_importable(self, parts, current_step, separator):
-        import imp
-        module_to_import = parts[current_step]
-        (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
-        self._symbol_processed = True
-        if desc[2] == imp.PKG_DIRECTORY:
-            # Package
-            self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
-
-
-
-class _SymbolName3KSplitter(_SymbolNameSplitter):
-    """
-    Based on importlib which works in 3, but not 2
-    """
-    def check_is_importable(self, parts, current_step, separator):
-        import importlib
-        module_to_import = separator.join(parts[:current_step + 1])
-        importlib.import_module(module_to_import)
-
-
 def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     """
-    Targets are always dot separated according to manual.
-    However, some runners may need different separators.
-    This function splits target to file/symbol parts and glues them using provided glues.
+    Converts python target if format "/path/foo.py::parts.to.python" provided by Java to 
+    python specific format
 
     :param targets: list of dot-separated targets
     :param fs_glue: how to glue fs parts of target. I.e.: module "eggs" in "spam" package is "spam[fs_glue]eggs"
@@ -378,19 +324,15 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
         return []
 
     def _patch_target(target):
-        _jb_utils.VersionAgnosticUtils.is_py3k()
-        splitter = _SymbolName3KSplitter() if _jb_utils.VersionAgnosticUtils.is_py3k() else _SymbolName2KSplitter()
-
-        separator = "."
-        parts = target.split(separator)
-        for i in range(0, len(parts)):
-            try:
-                splitter.check_is_importable(parts, i, separator)
-            except ImportError:
-                fs_part = fs_glue.join(parts[:i])
-                python_path = python_glue.join(parts[i:])
-                return fs_part + fs_to_python_glue + python_path if python_path else fs_part
-        return target
+        # /path/foo.py::parts.to.python
+        match = re.match("^(:?(.+)[.]py::)?(.+)$", target)
+        assert match, "unexpected string: {0}".format(target)
+        fs_part = match.group(2)
+        python_part = match.group(3).replace(".", python_glue)
+        if fs_part:
+            return fs_part.replace("/", fs_glue) + fs_to_python_glue + python_part
+        else:
+            return python_part
 
     return map(_patch_target, targets)
 

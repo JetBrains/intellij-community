@@ -43,7 +43,7 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
   protected final String myScriptName;
 
   PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToTestData, @NotNull final String scriptName) {
-    super(relativePathToTestData, SdkCreationType.EMPTY_SDK);
+    super(relativePathToTestData, SdkCreationType.SDK_PACKAGES_ONLY);
     myScriptName = scriptName;
   }
 
