@@ -218,6 +218,11 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     public ToolDescriptors getDescriptors() {
       return notNull(super.getDescriptors());
     }
+
+    @Override
+    public boolean isProperSetting() {
+      return false;
+    }
   }
 
   private static class MyInspectionsTreeRenderer extends InspectionsConfigTreeRenderer {
