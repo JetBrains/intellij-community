@@ -111,14 +111,16 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
   @NotNull
   @Override
-  public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return getTitle(VcsUtil.getFilePath(file1), VcsUtil.getFilePath(file2), " vs ");
+  public String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
+    FilePath path1 = file1 != null ? VcsUtil.getFilePath(file1) : null;
+    FilePath path2 = file2 != null ? VcsUtil.getFilePath(file2) : null;
+    return getTitle(path1, path2, " vs ");
   }
 
   @NotNull
   @Override
   public String getTitle(@NotNull VirtualFile file) {
-    return getTitle(file, file);
+    return getTitle(file, null);
   }
 
   @NotNull
