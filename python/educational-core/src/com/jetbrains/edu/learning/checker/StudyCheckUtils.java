@@ -231,7 +231,9 @@ public class StudyCheckUtils {
                                                                  @NotNull String commandLine,
                                                                  boolean isAdaptive) {
     final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess, null, commandLine);
-    final ProcessOutput output = handler.runProcessWithProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
+    final ProcessOutput output = ProgressManager.getInstance().hasProgressIndicator() ? handler
+      .runProcessWithProgressIndicator(ProgressManager.getInstance().getProgressIndicator()) :
+                                 handler.runProcess();
     final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, isAdaptive);
     String stderr = output.getStderr();
     if (!stderr.isEmpty() && output.getStdout().isEmpty()) {
