@@ -12,7 +12,6 @@ public class EduStepicNames {
   public static final String ATTEMPTS = "/attempts";
   public static final String SUBMISSIONS = "/submissions";
   public static final String UNITS = "/units";
-  public static final String DEFAULT_TASKFILE_NAME = "code.py";
   public static final String USERS = "/users/";
   public static final String STEP_SOURCES = "/step-sources/";
   public static final String CURRENT_USER = "/stepics/1";
@@ -20,10 +19,13 @@ public class EduStepicNames {
   public static final String STEPS = "/steps/";
   public static final String SECTIONS = "/sections/";
   public static final String ENROLLMENTS = "/enrollments";
-  public static final String STEPIC_REGISTRATION_LINK = "https://stepic.org/registration?next=%2Fexplore%2Fcourses";
-
   public static final String PYCHARM_PREFIX = "pycharm";
-
   public static final String EDU_STEPIK_SERVICE_NAME = "edu/stepik";
   public static final String STEP_ID = "step_id";
+  public static final String CLIENT_ID = "Xqr8Ez716cUJHezxCDnK8bKfMAMqpBYxWQmUxZ8D";
+  public static final String REDIRECT_URL = "https://example.com";
+  public static final String IMPLICIT_GRANT_URL = "https://stepik.org/oauth2/authorize/" +
+                                                  "?client_id=" + CLIENT_ID +
+                                                  "&redirect_uri=" + REDIRECT_URL +
+                                                  "&response_type=code";
 }

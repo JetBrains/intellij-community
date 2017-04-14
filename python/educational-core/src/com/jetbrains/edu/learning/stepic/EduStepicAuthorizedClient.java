@@ -25,7 +25,7 @@ import static com.jetbrains.edu.learning.stepic.EduStepicClient.getBuilder;
 
 public class EduStepicAuthorizedClient {
   private static final Logger LOG = Logger.getInstance(EduStepicAuthorizedClient.class.getName());
-  private static final String ourClientId = "hUCWcq3hZHCmz0DKrDtwOWITLcYutzot7p4n59vU";
+
   private static CloseableHttpClient ourClient;
 
   private EduStepicAuthorizedClient() {
@@ -118,33 +118,33 @@ public class EduStepicAuthorizedClient {
   private static StepicUser showLoginDialog() {
     final StepicUser[] stepicUser = new StepicUser[1];
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final LoginDialog dialog = new LoginDialog();
-      dialog.show();
-      stepicUser[0] = dialog.getStepicUser();
+      final OAuthDialog dialog = new OAuthDialog("Authorize on Stepik");
+      if (dialog.showAndGet()) {
+        stepicUser[0] = dialog.getStepicUser();
+      }
     });
     return stepicUser[0];
   }
 
   @Nullable
-  public static StepicUser login(@NotNull final String email, @NotNull final String password) {
-    invalidateClient();
+  public static StepicUser login(@NotNull final String code) {
     final List<NameValuePair> parameters = new ArrayList<>();
-    if (password.isEmpty()) return null;
-    parameters.add(new BasicNameValuePair("client_id", ourClientId));
-    parameters.add(new BasicNameValuePair("grant_type", "password"));
-    parameters.add(new BasicNameValuePair("username", email));
-    parameters.add(new BasicNameValuePair("password", password));
+    parameters.add(new BasicNameValuePair("grant_type", "authorization_code"));
+    parameters.add(new BasicNameValuePair("code", code));
+    parameters.add(new BasicNameValuePair("redirect_uri", EduStepicNames.REDIRECT_URL));
+    parameters.add(new BasicNameValuePair("client_id", EduStepicNames.CLIENT_ID));
 
-    final StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
+    StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
     if (tokenInfo != null) {
-      final StepicUser user = new StepicUser(email, password, tokenInfo);
+      final StepicUser user = new StepicUser(tokenInfo);
       ourClient = createInitializedClient(user.getAccessToken());
 
       final StepicUser currentUser = getCurrentUser();
       if (currentUser != null) {
         user.setId(currentUser.getId());
+        user.setFirstName(currentUser.getFirstName());
+        user.setLastName(currentUser.getLastName());
       }
-
       return user;
     }
 
@@ -158,7 +158,7 @@ public class EduStepicAuthorizedClient {
   @Nullable
   private static StepicWrappers.TokenInfo getUpdatedTokens(@NotNull final String refreshToken) {
     final List<NameValuePair> parameters = new ArrayList<>();
-    parameters.add(new BasicNameValuePair("client_id", ourClientId));
+    parameters.add(new BasicNameValuePair("client_id", EduStepicNames.CLIENT_ID));
     parameters.add(new BasicNameValuePair("content-type", "application/json"));
     parameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
     parameters.add(new BasicNameValuePair("refresh_token", refreshToken));
