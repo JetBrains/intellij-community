@@ -1,17 +1,17 @@
 package com.jetbrains.edu.learning.intellij.stepik;
 
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -23,13 +23,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-class EduRemoteCourseModuleBuilder extends JavaModuleBuilder {
+class EduRemoteCourseModuleBuilder extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance(EduRemoteCourseModuleBuilder.class);
   private final Course myCourse;
+  private final ModuleType myModuleType;
+  private final ModuleBuilder myModuleBuilder;
   private EduProjectGenerator myGenerator = new EduProjectGenerator();
 
   public EduRemoteCourseModuleBuilder(Course course) {
     myCourse = course;
+    myModuleType = EduPluginConfigurator.INSTANCE.forLanguage(myCourse.getLanguageById()).getModuleType();
+    myModuleBuilder = myModuleType.createModuleBuilder();
   }
 
   @Nullable
@@ -61,7 +65,7 @@ class EduRemoteCourseModuleBuilder extends JavaModuleBuilder {
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, this, Conditions.alwaysTrue());
+    return myModuleBuilder.modifySettingsStep(settingsStep);
   }
 
   @NotNull
@@ -86,5 +90,21 @@ class EduRemoteCourseModuleBuilder extends JavaModuleBuilder {
       }
     }
     return baseModule;
+  }
+
+  @Override
+  public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+    myModuleBuilder.setupRootModel(modifiableRootModel);
+  }
+
+  @Override
+  public ModuleType getModuleType() {
+    return myModuleType;
+  }
+
+  @Override
+  public void setContentEntryPath(String moduleRootPath) {
+    myModuleBuilder.setContentEntryPath(moduleRootPath);
+    super.setContentEntryPath(moduleRootPath);
   }
 }
