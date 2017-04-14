@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -57,11 +56,6 @@ public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
-
-  public static final MessageDescriptor ALL_ELEMENTS_IN_RANGE_ARE_NULL =
-    new MessageDescriptor(DebuggerBundle.message("message.node.all.elements.null"));
-  public static final MessageDescriptor HIDDEN_NULL_ELEMENTS =
-    new MessageDescriptor(DebuggerBundle.message("message.node.elements.null.hidden"));
 
   public int START_INDEX = 0;
   public int END_INDEX   = 100;
@@ -201,6 +195,6 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   public boolean isApplicable(Type type) {
-    return (type instanceof ArrayType);
+    return type instanceof ArrayType;
   }
 }
