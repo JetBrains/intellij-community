@@ -67,16 +67,14 @@
     <!--<action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>-->
   <!--</actions>-->
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-  </project-components>
-  
+
   <application-components>
     <component>
       <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
     </component>
     
     <!--<component>-->

@@ -1,6 +1,6 @@
 package com.intellij.stats.completion.storage
 
-import com.intellij.stats.completion.AsciiMessageCharStorage
+import com.intellij.stats.completion.LineStorage
 import com.intellij.stats.completion.LogFileManager
 import com.intellij.stats.completion.LogFileManagerImpl
 import com.intellij.stats.completion.UniqueFilesProvider
@@ -43,12 +43,12 @@ class FilesProviderTest {
 
 class AsciiMessageStorageTest {
     
-    lateinit var storage: AsciiMessageCharStorage
+    lateinit var storage: LineStorage
     lateinit var tmpFile: File
 
     @Before
     fun setUp() {
-        storage = AsciiMessageCharStorage()
+        storage = LineStorage()
         tmpFile = File("tmp_test")
         tmpFile.delete()
     }

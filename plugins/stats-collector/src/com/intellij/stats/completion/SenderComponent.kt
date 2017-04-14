@@ -3,8 +3,8 @@ package com.intellij.stats.completion
 import com.google.common.net.HttpHeaders
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.intellij.util.Alarm
@@ -27,8 +27,8 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatisticSender, val statusHelper: StatusInfoProvider) : ApplicationComponent.Adapter() {
-    private val LOG = Logger.getInstance(SenderComponent::class.java)
+class SenderComponent(val sender: StatisticSender, val statusHelper: StatusInfoProvider) : ApplicationComponent {
+    private val LOG = logger<SenderComponent>()
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
     private val sendInterval = 5 * Time.MINUTE

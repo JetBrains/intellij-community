@@ -7,8 +7,8 @@ interface LogFileManager {
     fun dispose()
 }
 
-class AsciiMessageCharStorage {
-    
+class LineStorage {
+
     private val lines = mutableListOf<String>()
     var size: Int = 0
         private set
@@ -36,7 +36,7 @@ class AsciiMessageCharStorage {
 class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFileManager {
     
     private val MAX_SIZE_BYTE = 250 * 1024
-    private val storage = AsciiMessageCharStorage()
+    private val storage = LineStorage()
 
     override fun println(message: String) {
         if (storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
@@ -53,7 +53,7 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
         storage.clear()
     }
 
-    private fun saveDataChunk(storage: AsciiMessageCharStorage) {
+    private fun saveDataChunk(storage: LineStorage) {
         val dir = filePathProvider.getStatsDataDirectory()
         val tmp = File(dir, "tmp_data")
         storage.dump(tmp)
