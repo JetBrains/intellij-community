@@ -529,27 +529,19 @@ public class GitHistoryUtils {
       for (GitLogRecord record : records) {
         if (record == null) continue;
 
-        Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(record, factory, root);
+        Hash hash = HashImpl.build(record.getHash());
+        List<Hash> parents = getParentHashes(factory, record);
+        commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
-        commitConsumer.consume(pair.first);
-        for (VcsRef ref : pair.second) {
+        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
           refConsumer.consume(ref);
         }
+        
         userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
       }
     }, 1000);
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
-  }
-
-  @NotNull
-  private static Pair<TimedVcsCommit, Collection<VcsRef>> convert(@NotNull GitLogRecord rec,
-                                                                  @NotNull VcsLogObjectsFactory factory,
-                                                                  @NotNull VirtualFile root) {
-    Hash hash = HashImpl.build(rec.getHash());
-    List<Hash> parents = getParentHashes(factory, rec);
-    TimedVcsCommit commit = factory.createTimedCommit(hash, parents, rec.getCommitTime());
-    return Pair.create(commit, parseRefs(rec.getRefs(), hash, factory, root));
   }
 
   @NotNull
