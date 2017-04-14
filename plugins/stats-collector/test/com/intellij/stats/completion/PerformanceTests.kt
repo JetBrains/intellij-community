@@ -7,6 +7,7 @@ import org.mockito.Matchers
 import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class PerformanceTests : LightFixtureCompletionTestCase() {
@@ -40,41 +41,46 @@ class Test {
         }
     }
 
-    fun `test do not block EDT on logging`() {
+    fun `test do not block EDT on data send`() {
         myFixture.configureByText("Test.java", text)
         myFixture.addClass(runnable)
 
-
-        val requestService = mock(RequestService::class.java).apply {
-            `when`(postZipped(anyString(), any() ?: File("."))).then {
-                Thread.sleep(5000)
-                ResponseData(200)
-            }
-
-            `when`(post(Matchers.anyString(), anyMapOf(String::class.java, String::class.java))).then {
-                Thread.sleep(5000)
-                ResponseData(200)
-            }
-        }
+        val requestService = slowRequestService()
 
         val file = pathProvider.getUniqueFile()
         file.writeText("Some existing data to send")
         
         val sender = StatisticSender(requestService, pathProvider)
-        
-        ApplicationManager.getApplication().executeOnPooledThread { 
+
+        val isSendFinished = AtomicBoolean(false)
+
+        val lock = Object()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            synchronized(lock, { lock.notify() })
             sender.sendStatsData("")
+            isSendFinished.set(true)
         }
-        Thread.sleep(300)
-        
-        val start = System.currentTimeMillis()
+        synchronized(lock, { lock.wait() })
+
         myFixture.type('.')
         myFixture.completeBasic()
-        myFixture.type("xxxx")
-        val end = System.currentTimeMillis()
+        myFixture.type("xx")
 
-        val delta = end - start
-        UsefulTestCase.assertTrue("Time on typing: $delta", delta < 2000)
+        UsefulTestCase.assertFalse(isSendFinished.get())
+    }
+
+    private fun slowRequestService(): RequestService {
+        return mock(RequestService::class.java).apply {
+            `when`(postZipped(anyString(), any() ?: File("."))).then {
+                Thread.sleep(1000)
+                ResponseData(200)
+            }
+
+            `when`(post(Matchers.anyString(), anyMapOf(String::class.java, String::class.java))).then {
+                Thread.sleep(1000)
+                ResponseData(200)
+            }
+        }
     }
 
 }
