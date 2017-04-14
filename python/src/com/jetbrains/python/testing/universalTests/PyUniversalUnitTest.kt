@@ -24,7 +24,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiElement
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
 
@@ -76,9 +75,8 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
 
   override fun isFrameworkInstalled() = true //Unittest is always available
 
-  // See loader.py:     is_not_importable = not os.path.isfile(os.path.join(start_dir, '__init__.py'))
-  // https://mail.python.org/pipermail/python-dev/2017-March/147656.html
-  override fun packageOnlyIfInitPy(anchor: PsiElement) = true
+  // Unittest does not support filesystem path. It needs qname resolvable against root or workdir
+  override fun isFSPartOfTargetShouldBeSeparated() = false
 }
 
 object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {
