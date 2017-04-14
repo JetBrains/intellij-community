@@ -536,10 +536,10 @@ public class GitHistoryUtils {
         for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
           refConsumer.consume(ref);
         }
-        
+
         userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
       }
-    }, 1000);
+    });
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
   }
@@ -845,7 +845,7 @@ public class GitHistoryUtils {
                     "Command " + handler.printableCommandLine(), t);
         }
       }
-    }, 0);
+    });
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
 
@@ -925,21 +925,17 @@ public class GitHistoryUtils {
   private static class MyGitLineHandlerListener implements GitLineHandlerListener {
     @NotNull private final GitLineHandler myHandler;
     @NotNull private final Consumer<StringBuilder> myRecordConsumer;
-    private final int myBufferSize;
 
     @NotNull private final StringBuilder myOutput = new StringBuilder();
     @NotNull private final StringBuilder myErrors = new StringBuilder();
     @Nullable private VcsException myException = null;
 
-    private int myRecords = 0;
     private boolean myIsInsideBody = true;
 
     public MyGitLineHandlerListener(@NotNull GitLineHandler handler,
-                                    @NotNull Consumer<StringBuilder> recordConsumer,
-                                    int bufferSize) {
+                                    @NotNull Consumer<StringBuilder> recordConsumer) {
       myHandler = handler;
       myRecordConsumer = recordConsumer;
-      myBufferSize = bufferSize;
 
       myHandler.addLineListener(this);
     }
@@ -984,10 +980,8 @@ public class GitHistoryUtils {
         int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
         if (nextRecordStart >= 0) {
           myOutput.append(line.substring(0, nextRecordStart));
-          if (++myRecords > myBufferSize) {
-            myRecordConsumer.consume(myOutput);
-            myOutput.setLength(0);
-          }
+          myRecordConsumer.consume(myOutput);
+          myOutput.setLength(0);
           myIsInsideBody = true;
           processOutputLine(line.substring(nextRecordStart));
         }
