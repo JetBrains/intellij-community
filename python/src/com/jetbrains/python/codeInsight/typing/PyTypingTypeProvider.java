@@ -23,7 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -55,6 +58,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final Object RECURSION_KEY = new Object();
 
+  public static final String TYPING = "typing";
+
   public static final String GENERATOR = "typing.Generator";
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
   public static final String COROUTINE = "typing.Coroutine";
@@ -62,6 +67,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String GENERIC = "typing.Generic";
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
+
+  public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 

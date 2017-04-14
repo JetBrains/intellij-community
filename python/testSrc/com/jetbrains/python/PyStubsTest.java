@@ -490,12 +490,104 @@ public class PyStubsTest extends PyTestCase {
     doTestUnsupportedNamedTuple();
   }
 
+  public void testFullyQualifiedTypingNamedTuple() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("typing.NamedTuple")
+    );
+  }
+
+  public void testFullyQualifiedTypingNamedTupleWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("T.NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTuple() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTupleWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("NT")
+    );
+  }
+
+  public void testTypingNamedTupleNameReference() {
+    doTestNamedTypingTupleArguments();
+  }
+
+  public void testTypingNamedTupleFieldsReference() {
+    doTestNamedTypingTupleArguments();
+  }
+
+  public void testTypingNamedTupleNameChain() {
+    doTestNamedTypingTupleArguments();
+  }
+
+  public void testTypingNamedTupleFieldsChain() {
+    doTestNamedTypingTupleArguments();
+  }
+
+  public void _testImportedTypingNamedTupleName() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void _testImportedTypingNamedTupleFields() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void testFullyQualifiedTypingNamedTupleKwargs() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("typing.NamedTuple")
+    );
+  }
+
+  public void testFullyQualifiedTypingNamedTupleKwargsWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromDottedString("T.NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTupleKwargs() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTupleKwargsWithAs() {
+    doTestNamedTuple(
+      QualifiedName.fromComponents("NT")
+    );
+  }
+
+  public void testTypingNamedTupleKwargsNameReference() {
+    doTestNamedTypingTupleArguments();
+  }
+
+  public void testTypingNamedTupleKwargsNameChain() {
+    doTestNamedTypingTupleArguments();
+  }
+
+  public void _testImportedTypingNamedTupleKwargsName() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void _testImportedTypingNamedTupleKwargsFields() {
+    doTestUnsupportedNamedTuple();
+  }
+
   private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
     doTestNamedTuple("name", Collections.singletonList("field"), expectedCalleeName);
   }
 
   private void doTestNamedTupleArguments() {
     doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("namedtuple"));
+  }
+
+  private void doTestNamedTypingTupleArguments() {
+    doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("NamedTuple"));
   }
 
   private void doTestNamedTuple(@NotNull String expectedName,
