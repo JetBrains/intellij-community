@@ -3,7 +3,6 @@ package com.intellij.stats.completion
 import com.google.common.net.HttpHeaders
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.stats.completion.experiment.WebServiceStatusProvider
@@ -100,7 +99,7 @@ abstract class RequestService {
 }
 
 class SimpleRequestService: RequestService() {
-    private val LOG = Logger.getInstance(SimpleRequestService::class.java)
+    private val LOG = logger<SimpleRequestService>()
 
     override fun post(url: String, params: Map<String, String>): ResponseData? {
         val form = Form.form()
