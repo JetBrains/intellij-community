@@ -16,11 +16,8 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   
-  <idea-version since-build="171.0"/>
-
   <extensions defaultExtensionNs="com.intellij">
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider" 
+    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
     
@@ -46,7 +43,6 @@
     </applicationService>
 
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
-
   </extensions>
 
   <application-components>
