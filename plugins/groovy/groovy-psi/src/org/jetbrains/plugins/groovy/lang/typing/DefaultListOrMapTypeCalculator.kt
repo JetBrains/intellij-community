@@ -16,11 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiUtil.substituteTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
@@ -34,7 +36,7 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
       return getMapTypeFromDiamond(expression) ?: GrMapType.createFromNamedArgs(expression, expression.namedArguments)
     }
     else {
-      return getArrayTypeFromDeclaration(expression) ?: getListTypeFromDiamond(expression) ?: getTupleType(expression)
+      return getListTypeFromDiamond(expression) ?: getTupleType(expression)
     }
   }
 
@@ -72,11 +74,6 @@ class DefaultListOrMapTypeCalculator : GrTypeCalculator<GrListOrMap> {
       arrayList,
       substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_LIST, 0, false)
     )
-  }
-
-  private fun getArrayTypeFromDeclaration(expression: GrListOrMap): PsiType? {
-    val parent = expression.parent?.parent as? GrVariableDeclaration
-    return parent?.typeElementGroovy?.type as? PsiArrayType
   }
 
   private fun getTupleType(expression: GrListOrMap): PsiType? {
