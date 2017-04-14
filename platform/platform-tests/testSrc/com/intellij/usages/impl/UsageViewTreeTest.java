@@ -18,6 +18,7 @@ package com.intellij.usages.impl;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TreeTester;
 import com.intellij.testFramework.UsefulTestCase;
@@ -29,6 +30,8 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+
+import java.io.File;
 
 /**
  * @author nik
@@ -105,7 +108,7 @@ public class UsageViewTreeTest extends UsefulTestCase {
     String tempDirPath = myFixture.getTempDirPath();
     EmptyModuleFixtureBuilder moduleBuilder = myFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class);
     String sourceRoot = tempDirPath + "/" + name;
-    //FileUtil.createDirectory(new File(sourceRoot));
+    FileUtil.createDirectory(new File(sourceRoot));
     moduleBuilder.addSourceContentRoot(sourceRoot);
     moduleBuilder.getFixture().setUp();
     ModuleGroupTestsKt.renameModule(myFixture.getModule(), name);
