@@ -8,50 +8,53 @@ import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.AbstractProjectComponent
+import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import java.beans.PropertyChangeListener
 
 
-class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInfoProvider): AbstractProjectComponent(project) {
-    private val lookupActionsTracker = LookupActionsListener()
+class CompletionTrackerInitializer(experimentHelper: StatusInfoProvider): ApplicationComponent {
+    private val actionListener = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup == null) {
-            lookupActionsTracker.listener = CompletionPopupListener.Adapter()
+            actionListener.listener = CompletionPopupListener.Adapter()
         }
         else if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
             val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
-            lookupActionsTracker.listener = tracker
+            actionListener.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
         }
     }
 
     override fun initComponent() {
-        ActionManager.getInstance().addAnActionListener(lookupActionsTracker)
+        ActionManager.getInstance().addAnActionListener(actionListener)
+        ProjectManager.getInstance().addProjectManagerListener(object : ProjectManagerListener {
+            override fun projectOpened(project: Project) {
+                val lookupManager = LookupManager.getInstance(project)
+                lookupManager.addPropertyChangeListener(lookupTrackerInitializer)
+            }
+
+            override fun projectClosed(project: Project) {
+                val lookupManager = LookupManager.getInstance(project)
+                lookupManager.removePropertyChangeListener(lookupTrackerInitializer)
+            }
+        })
     }
 
     override fun disposeComponent() {
-        ActionManager.getInstance().removeAnActionListener(lookupActionsTracker)
+        ActionManager.getInstance().removeAnActionListener(actionListener)
         CompletionLoggerProvider.getInstance().dispose()
     }
 
-    override fun projectOpened() {
-        val manager = LookupManager.getInstance(myProject)
-        manager.addPropertyChangeListener(lookupTrackerInitializer)
-    }
-    
-    override fun projectClosed() {
-        val manager = LookupManager.getInstance(myProject)
-        manager.removePropertyChangeListener(lookupTrackerInitializer)
-    }
-    
 }
 
 
