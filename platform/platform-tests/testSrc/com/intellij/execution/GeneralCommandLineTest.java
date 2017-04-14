@@ -277,7 +277,7 @@ public class GeneralCommandLineTest {
       if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
       GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
       String output = execAndGetOutput(commandLine);
-      assertEquals(commandLine.getPreparedCommandLine(), argument + "\n", output);
+      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput(argument) + "\n", output);
     }
   }
 
@@ -291,7 +291,7 @@ public class GeneralCommandLineTest {
     for (String argument : ARGUMENTS) {
       GeneralCommandLine commandLine = createCommandLine(cygwinPrintf.getPath(), "[%s]\\\\n", argument);
       String output = execAndGetOutput(commandLine);
-      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput("[" + argument + "]\n"), output);
+      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput("[" + argument + "]") + "\n", output);
     }
   }
 
