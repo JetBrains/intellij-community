@@ -14,7 +14,7 @@ import java.util.*
 
 
 class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : ApplicationComponent, CompletionLoggerProvider() {
-    private val logFileManager = LogFileManagerImpl(filePathProvider)
+    private val logFileManager = LogFileManager(filePathProvider)
 
     override fun disposeComponent() {
         logFileManager.dispose()

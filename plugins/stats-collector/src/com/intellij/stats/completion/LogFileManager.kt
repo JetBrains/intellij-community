@@ -2,10 +2,6 @@ package com.intellij.stats.completion
 
 import java.io.File
 
-interface LogFileManager {
-    fun println(message: String)
-    fun dispose()
-}
 
 class LineStorage {
 
@@ -33,12 +29,12 @@ class LineStorage {
     
 }
 
-class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFileManager {
+class LogFileManager(private val filePathProvider: FilePathProvider) {
     
     private val MAX_SIZE_BYTE = 250 * 1024
     private val storage = LineStorage()
 
-    override fun println(message: String) {
+    fun println(message: String) {
         if (storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
             saveDataChunk(storage)
             storage.clear()
@@ -46,7 +42,7 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
         storage.appendLine(message)
     }
 
-    override fun dispose() {
+    fun dispose() {
         if (storage.size > 0) {
             saveDataChunk(storage)
         }

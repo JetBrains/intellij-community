@@ -2,7 +2,6 @@ package com.intellij.stats.completion.storage
 
 import com.intellij.stats.completion.LineStorage
 import com.intellij.stats.completion.LogFileManager
-import com.intellij.stats.completion.LogFileManagerImpl
 import com.intellij.stats.completion.UniqueFilesProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -12,8 +11,6 @@ import java.io.File
 
 
 class FilesProviderTest {
-    
-    var root = File(".")
     
     lateinit var provider: UniqueFilesProvider
 
@@ -87,7 +84,7 @@ class FileLoggerTest {
     @Before
     fun setUp() {
         filesProvider = UniqueFilesProvider("chunk", ".")
-        fileLogger = LogFileManagerImpl(filesProvider)
+        fileLogger = LogFileManager(filesProvider)
     }
 
     @After
