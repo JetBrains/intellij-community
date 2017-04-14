@@ -21,7 +21,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
 import com.jetbrains.python.testing.VFSTestFrameworkListener
 
@@ -58,18 +57,6 @@ class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalPyTes
 
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)
 
-  override fun getWorkingDirectorySafe(): String {
-    val dirProvidedByUser = super.getWorkingDirectory()
-    if (! dirProvidedByUser.isNullOrEmpty()) {
-      return dirProvidedByUser
-    }
-    // If dir is not set then find closest src because pytest resolves files against workdir and no sys.path
-    val module = module ?: return super.getWorkingDirectorySafe()
-    val context = TypeEvalContext.userInitiated(project, null)
-    val targetElement = target.asPsiElement(module, context, null) ?: return super.getWorkingDirectorySafe()
-    val root = findVFSItemRoot(targetElement.containingFile.virtualFile, project)?: return super.getWorkingDirectorySafe()
-    return root.path
-  }
 }
 
 object PyUniversalPyTestFactory : PyUniversalTestFactory<PyUniversalPyTestConfiguration>() {

@@ -50,6 +50,17 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testRerunSubfolder() throws Exception {
+    runPythonTest(new RerunSubfolderTask<PyTestTestProcessRunner>(2) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(".", 1);
+      }
+    });
+  }
+
   // Ensure slow test is not run when -m "not slow" is provided
   @Test
   public void testMarkerWithSpaces() throws Exception {
@@ -302,7 +313,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   /**
-   * Ensure project dir is used as curdir even if not set explicitly
+   * Ensure element dir is used as curdir even if not set explicitly
    */
   @Test
   public void testCurrentDir() throws Exception {
@@ -328,7 +339,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        final String projectDir = myFixture.getProject().getBaseDir().getPath();
+        final String projectDir = myFixture.getTempDirFixture().getTempDirPath();
         Assert.assertThat("No directory found in output", runner.getConsole().getText(),
                           Matchers.containsString(String.format("Directory %s", PathUtil.toSystemDependentName(projectDir))));
       }
