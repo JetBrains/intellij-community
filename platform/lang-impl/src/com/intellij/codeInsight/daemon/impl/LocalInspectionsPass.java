@@ -71,6 +71,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+
 /**
  * @author max
  */
@@ -554,11 +556,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
-    @NonNls final String link = " <a "
-                                +"href=\"#inspection/" + tool.getShortName() + "\""
-                                + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
-                                +">" + DaemonBundle.message("inspection.extended.description")
-                                +"</a> " + myShortcutText;
+    @NonNls String link = "";
+    if (!isEmpty(tool.loadDescription())) {
+      link = " <a "
+             + "href=\"#inspection/" + tool.getShortName() + "\""
+             + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
+             + ">" + DaemonBundle.message("inspection.extended.description")
+             + "</a> " + myShortcutText;
+    }
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {
