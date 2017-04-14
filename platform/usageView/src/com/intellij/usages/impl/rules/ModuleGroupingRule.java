@@ -24,7 +24,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -57,7 +56,7 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     return null;
   }
 
-  private static class LibraryUsageGroup implements UsageGroup {
+  private static class LibraryUsageGroup extends UsageGroupBase {
 
     private final OrderEntry myEntry;
 
@@ -66,6 +65,7 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     }
 
     public LibraryUsageGroup(@NotNull OrderEntry entry) {
+      super(1);
       myEntry = entry;
     }
 
@@ -80,41 +80,9 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
       return myEntry.getPresentableName();
     }
 
-    @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
-    public boolean isValid() {
-      return true;
-    }
-
-    @Override
-    public int compareTo(@NotNull UsageGroup usageGroup) {
-      if (usageGroup instanceof ModuleUsageGroup) return 1;
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return canNavigate();
-    }
-
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof LibraryUsageGroup)) return false;
-
-      return myEntry.equals(((LibraryUsageGroup)o).myEntry);
+      return o instanceof LibraryUsageGroup && myEntry.equals(((LibraryUsageGroup)o).myEntry);
     }
 
     public int hashCode() {
@@ -122,15 +90,12 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     }
   }
 
-  private static class ModuleUsageGroup implements UsageGroup, TypeSafeDataProvider {
+  private static class ModuleUsageGroup extends UsageGroupBase implements TypeSafeDataProvider {
     private final Module myModule;
 
     public ModuleUsageGroup(@NotNull Module module) {
+      super(0);
       myModule = module;
-    }
-
-    @Override
-    public void update() {
     }
 
     public boolean equals(Object o) {
@@ -158,33 +123,8 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     }
 
     @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
     public boolean isValid() {
       return !myModule.isDisposed();
-    }
-
-    @Override
-    public void navigate(boolean focus) throws UnsupportedOperationException {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
-    public int compareTo(@NotNull UsageGroup o) {
-      if (o instanceof LibraryUsageGroup) return -1;
-      return getText(null).compareToIgnoreCase(o.getText(null));
     }
 
     public String toString() {
