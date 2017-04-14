@@ -205,32 +205,29 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return test_name
 
     # Blocks are used for 2 cases now:
-    # 1) Unittest subtests
+    # 1) Unittest subtests (only closed, opened by subTestBlockOpened)
     # 2) setup/teardown (does not work, see https://github.com/JetBrains/teamcity-messages/issues/114)
     # def blockOpened(self, name, flowId=None):
     #      self.testStarted(".".join(TREE_MANAGER.current_branch + [self._fix_setup_teardown_name(name)]))
 
     def blockClosed(self, name, flowId=None):
+
+        # If _latest_subtest_result is not set or does not exist we closing setup method, not a subtest
+        try:
+            if not self._latest_subtest_result:
+                return
+        except AttributeError:
+            return
+
+        # If we here that means we are closing subtest
         test_name = ".".join(TREE_MANAGER.current_branch)
         if self._latest_subtest_result == "Failure":
             self.testFailed(test_name)
+        if self._latest_subtest_result == "Skip":
+            self.testIgnored(test_name)
 
         self.testFinished(test_name)
         self._latest_subtest_result = None
-
-
-    def testIgnored(self, testName, message='', flowId=None):
-        import re
-        # Skipped subtest of unittest in format "test_name.test_name (subtestInfo)" should be processed as special case:
-        # start, ignore like test_name.test_name.(subtestInfo), stop
-        match_result = re.match(r"^([^(]+\s)*([(][^)]+[)])$", str(testName))
-        if match_result:
-            test_to_skip = ".".join(TREE_MANAGER.current_branch + [match_result.group(2)])
-            self.testStarted(test_to_skip)
-            super(NewTeamcityServiceMessages, self).testIgnored(test_to_skip, message, flowId)
-            self.testFinished(test_to_skip)
-        else:
-            super(NewTeamcityServiceMessages, self).testIgnored(testName, message, flowId) # For all other cases leave same behaviour
 
     def subTestBlockOpened(self, name, subTestResult, flowId=None):
         self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.configurations;
 
 import com.intellij.icons.AllIcons;
@@ -26,10 +25,21 @@ import javax.swing.*;
  * @author spleaner
  */
 public class UnknownConfigurationType implements ConfigurationType {
-
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
   public static final String NAME = "Unknown";
+
+  public static final ConfigurationFactory FACTORY = new ConfigurationFactory(new UnknownConfigurationType()) {
+    @Override
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      return new UnknownRunConfiguration(this, project);
+    }
+
+    @Override
+    public boolean canConfigurationBeSingleton() {
+      return false;
+    }
+  };
 
   @Override
   public String getDisplayName() {
@@ -54,16 +64,6 @@ public class UnknownConfigurationType implements ConfigurationType {
 
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[] {new ConfigurationFactory(new UnknownConfigurationType()) {
-      @Override
-      public RunConfiguration createTemplateConfiguration(final Project project) {
-        return new UnknownRunConfiguration(this, project);
-      }
-
-      @Override
-      public boolean canConfigurationBeSingleton() {
-        return false;
-      }
-    }};
+    return new ConfigurationFactory[] {FACTORY};
   }
 }

@@ -90,17 +90,15 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   }
 
   public void testMethodReference() throws Exception {
-    try {
-      doTest(true, 0);
-      fail("Conflict was not detected");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method reference would be broken after move", e.getMessage());
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 0));
   }
 
   public void testThisMethodReferenceWithTargetField() throws Exception {
     doTest(false, 0);
+  }
+
+  public void testMethodReferenceToExpandToLambda() throws Exception {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 1));
   }
 
   public void testForeignMethodReferenceWithTargetField() throws Exception {

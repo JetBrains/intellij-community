@@ -48,16 +48,14 @@ public interface DfaMemoryState {
 
   boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
 
-  void applyIsPresentCheck(boolean present, DfaValue qualifier);
-
   boolean applyCondition(DfaValue dfaCond);
+
+  boolean applyContractCondition(DfaValue dfaCond);
 
   ThreeState checkOptional(DfaValue value);
 
   @Nullable
   LongRangeSet getRange(DfaValue value);
-
-  DfaValue getStringLength(DfaValue value);
 
   void flushFields();
 

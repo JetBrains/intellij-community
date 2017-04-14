@@ -62,7 +62,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
   private EntryPoint myUnusedCodeExtension;
   private VirtualFile ext_src;
 
-  protected static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
+  public static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
     InspectionEP ep = new InspectionEP();
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();

@@ -73,6 +73,7 @@ public class PathManager {
   private static String ourScratchPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
+  private static String ourOsSpecificBinPath;
 
   // IDE installation paths
 
@@ -123,7 +124,7 @@ public class PathManager {
 
   private static boolean isIdeaHome(final File root) {
     return new File(root, FileUtil.toSystemDependentName("bin/" + PROPERTIES_FILE_NAME)).exists() ||
-           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME)).exists() ||
+           new File(root, FileUtil.toSystemDependentName("bin/" + getOsSpecificBinSubdirName() + "/" + PROPERTIES_FILE_NAME)).exists() ||
            new File(root, FileUtil.toSystemDependentName("community/bin/" + PROPERTIES_FILE_NAME)).exists();
   }
 
@@ -132,7 +133,24 @@ public class PathManager {
     return getHomePath() + File.separator + BIN_FOLDER;
   }
 
-  private static String getOSSpecificBinSubdir() {
+  @NotNull
+  public static String getOsSpecificBinPath() {
+    if (ourOsSpecificBinPath == null) {
+      ourOsSpecificBinPath = getBinPath(); // fallback
+
+      String homePath = getHomePath();
+      boolean isRunningFromSource = new File(homePath, ".idea").isDirectory();
+      if (isRunningFromSource) {
+        String osSpecificBinSubdir = getOsSpecificBinSubdirName();
+        File binSubdir = FileUtil.findFirstThatExist(homePath + "/bin/" + osSpecificBinSubdir,
+                                                     homePath + "/community/bin/" + osSpecificBinSubdir);
+        if (binSubdir != null) ourOsSpecificBinPath = binSubdir.getPath();
+      }
+    }
+    return ourOsSpecificBinPath;
+  }
+
+  private static String getOsSpecificBinSubdirName() {
     if (SystemInfo.isWindows) return "win";
     if (SystemInfo.isMac) return "mac";
     return "linux";
@@ -231,7 +249,7 @@ public class PathManager {
   @Nullable
   public static String getCustomOptionsDirectory() {
     // do not use getConfigPath() here - as it may be not yet defined
-    return PATHS_SELECTOR != null ? platformPath(PATHS_SELECTOR, "Library/Preferences", "") : null;
+    return PATHS_SELECTOR != null ? getDefaultConfigPathFor(PATHS_SELECTOR) : null;
   }
 
   // runtime paths
@@ -343,7 +361,7 @@ public class PathManager {
       getCustomPropertiesFile(),
       getUserHome() + "/" + PROPERTIES_FILE_NAME,
       getHomePath() + "/bin/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME,
+      getHomePath() + "/bin/" + getOsSpecificBinSubdirName() + "/" + PROPERTIES_FILE_NAME,
       getHomePath() + "/community/bin/" + PROPERTIES_FILE_NAME};
 
     for (String path : propFiles) {

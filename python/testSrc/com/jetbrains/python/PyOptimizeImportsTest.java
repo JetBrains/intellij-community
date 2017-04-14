@@ -88,11 +88,7 @@ public class PyOptimizeImportsTest extends PyTestCase {
 
   // PY-16351
   public void testNoExtraBlankLineAfterImportBlock() {
-    final String testName = getTestName(true);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doMultiFileTest();
   }
 
   // PY-18521
@@ -296,6 +292,24 @@ public class PyOptimizeImportsTest extends PyTestCase {
   // PY-23125
   public void testStackDanglingCommentsAtEnd() {
     doTest();
+  }
+
+  // PY-23578
+  public void testBlankLineBetweenDocstringAndFirstImportPreserved() {
+    doTest();
+  }
+
+  // PY-23636
+  public void testBlankLineBetweenEncodingDeclarationAndFirstImportPreserved() {
+    doTest();
+  }
+
+  private void doMultiFileTest() {
+    final String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile("main.py");
+    OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
+    myFixture.checkResultByFile(testName + "/main.after.py");
   }
 
   private void doTest() {

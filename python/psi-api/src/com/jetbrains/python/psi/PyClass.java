@@ -39,7 +39,8 @@ import java.util.Map;
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
                                  ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
-  ArrayFactory<PyClass> ARRAY_FACTORY = count -> new PyClass[count];
+  PyClass[] EMPTY_ARRAY = new PyClass[0];
+  ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
   @Nullable
   ASTNode getNameNode();

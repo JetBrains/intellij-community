@@ -411,7 +411,8 @@ public class CodeStyleSettingPresentation {
 
     result.put(new SettingsGroup(WRAPPING_SWITCH_STATEMENT), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch")),
-      new CodeStyleSettingPresentation("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case"))
+      new CodeStyleSettingPresentation("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case")),
+      new CodeStyleSettingPresentation("CASE_STATEMENT_ON_NEW_LINE", ApplicationBundle.message("wrapping.case.statements.on.one.line"))
     ));
 
     putGroupTop(result, "RESOURCE_LIST_WRAP", WRAPPING_TRY_RESOURCE_LIST, WRAP_VALUES, WRAP_OPTIONS);

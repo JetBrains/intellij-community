@@ -27,6 +27,8 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.*;
@@ -40,6 +42,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -71,6 +74,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
@@ -1400,5 +1404,25 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public String toString() {
       return "Color And Fonts for "+getDisplayName();
     }
+  }
+
+  public static Runnable getColorSelector(DataProvider provider, String search, String name) {
+    return getSelector(Settings.KEY.getData(provider), search, options -> options.findSubConfigurable(name));
+  }
+
+  public static Runnable getColorSelector(DataContext context, String search, Class<?> type) {
+    return getSelector(Settings.KEY.getData(context), search, options -> options.findSubConfigurable(type));
+  }
+
+  private static Runnable getSelector(Settings settings, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+    if (settings == null) return null;
+
+    ColorAndFontOptions options = settings.find(ColorAndFontOptions.class);
+    if (options == null) return null;
+
+    SearchableConfigurable page = function.apply(options);
+    if (page == null) return null;
+
+    return () -> settings.select(page, search);
   }
 }

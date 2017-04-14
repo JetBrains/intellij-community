@@ -18,17 +18,26 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+import java.util.List;
 
+import static com.intellij.util.ui.MacUIUtil.MAC_FILL_BORDER;
 import static javax.swing.SwingConstants.EAST;
 import static javax.swing.SwingConstants.WEST;
 
@@ -183,5 +192,77 @@ public class DarculaUIUtil {
       }
     }
     return -1;
+  }
+
+  public static class EditorTextFieldBorder implements Border {
+    private final JComponent myEnabledComponent;
+
+    public EditorTextFieldBorder(JComponent enabledComponent) {
+      myEnabledComponent = enabledComponent;
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
+          g2.setColor(UIUtil.getPanelBackground());
+          g2.fillRect(x, y, width, height);
+        }
+
+        Rectangle2D rect = new Rectangle2D.Double(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(6), height - JBUI.scale(6));
+        g2.setColor(c.getBackground());
+        g2.fill(rect);
+
+        if (!myEnabledComponent.isEnabled()) {
+          ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        }
+
+        double bw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+        Path2D outline = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        outline.append(rect, false);
+        outline.append(new Rectangle2D.Double(rect.getX() + bw,
+                                              rect.getY() + bw,
+                                              rect.getWidth() - 2*bw,
+                                              rect.getHeight() - 2*bw), false);
+        g2.setColor(Gray.xBC);
+        g2.fill(outline);
+
+        if (myEnabledComponent.isEnabled() && myEnabledComponent.isVisible() && hasFocus(myEnabledComponent)) {
+          g2.translate(x, y);
+          paintFocusBorder(g2, width, height, 0, true);
+        }
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return new JBInsets(6, 7, 6, 7);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
+    }
+  }
+
+  private static boolean hasFocus(@NotNull Component component) {
+    if (component.hasFocus()) return true;
+    if (!(component instanceof JComponent)) return false;
+
+    List<Component> children;
+    synchronized (component.getTreeLock()) {
+      children = Arrays.asList(((Container)component).getComponents());
+    }
+
+    for (Component c : children) {
+      if (hasFocus(c)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

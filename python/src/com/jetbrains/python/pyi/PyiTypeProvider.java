@@ -27,10 +27,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -119,9 +116,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
       for (PyFunction overload : overloads) {
         final PyType returnType = context.getReturnType(overload);
-        if (!PyTypeChecker.hasGenerics(returnType, context)) {
-          allReturnTypes.add(returnType);
-        }
+        allReturnTypes.add(PyTypeChecker.substitute(returnType, new HashMap<>(), context));
 
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
         final PyCallExpressionHelper.ArgumentMappingResults mapping = mapArguments(callSite, overload, context);
@@ -129,11 +124,11 @@ public class PyiTypeProvider extends PyTypeProviderBase {
           continue;
         }
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping.getMappedParameters(), context);
-
-        final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
-        if (unifiedType != null) {
-          matchedReturnTypes.add(unifiedType);
+        if (substitutions == null) {
+          continue;
         }
+        final PyType unifiedType = PyTypeChecker.substitute(returnType, substitutions, context);
+        matchedReturnTypes.add(unifiedType);
       }
 
       return Ref.create(PyUnionType.union(matchedReturnTypes.isEmpty() ? allReturnTypes : matchedReturnTypes));

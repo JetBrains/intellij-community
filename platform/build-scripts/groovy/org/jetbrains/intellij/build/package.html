@@ -3,7 +3,7 @@
 <body>
 This package contains groovy scripts which build distributions of products based on IntelliJ Platform.
 <p>
-If you want to build a product from sources locally, run the corresponding *.gant file from IntelliJ IDEA (e.g. dist.gant to build IDEA Community).
+If you want to build a product from sources locally, run the corresponding *.gant file from IntelliJ IDEA (e.g. idea_community.gant to build IDEA Community).
   Do not forget to add 'Build Project' step to 'Before Launch' section of the created Run configuration to ensure that changed groovy scripts are copied to the output.
   It makes sense to add {@linkplain org.jetbrains.intellij.build.BuildOptions#USE_COMPILED_CLASSES_PROPERTY '-Dintellij.build.use.compiled.classes=true'} to 'VM Options'
   to skip compilation and use the compiled classes from the project output. Also you may use {@linkplain org.jetbrains.intellij.build.BuildOptions#targetOS 'intellij.build.target.os'}

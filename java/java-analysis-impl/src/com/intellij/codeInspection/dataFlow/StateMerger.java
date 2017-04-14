@@ -17,9 +17,9 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UnorderedPair;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -119,7 +119,7 @@ class StateMerger {
     if (inequalitiesToRestore != null) {
       DfaRelationValue.Factory relationFactory = state.getFactory().getRelationFactory();
       for (DfaConstValue toRestore : inequalitiesToRestore) {
-        state.applyCondition(relationFactory.createRelation(removedFact.myVar, toRestore, JavaTokenType.EQEQ, true));
+        state.applyCondition(relationFactory.createRelation(removedFact.myVar, RelationType.NE, toRestore));
       }
     }
   }

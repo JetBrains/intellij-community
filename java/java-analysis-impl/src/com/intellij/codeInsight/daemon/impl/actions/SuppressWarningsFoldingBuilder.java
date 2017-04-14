@@ -49,8 +49,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         if (Comparing.strEqual(annotation.getQualifiedName(), SuppressWarnings.class.getName())) {
-          result.add(new FoldingDescriptor(annotation, annotation.getTextRange(), 
-                                           JavaCodeFoldingSettings.getInstance().getCollapseSuppressWarningsProperty()));
+          result.add(new FoldingDescriptor(annotation, annotation.getTextRange()));
         }
         super.visitAnnotation(annotation);
       }

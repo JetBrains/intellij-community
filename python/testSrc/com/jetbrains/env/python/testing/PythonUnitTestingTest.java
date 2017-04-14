@@ -48,6 +48,18 @@ import static org.junit.Assert.assertEquals;
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
+  // Ensures setup/teardown does not break anything
+  @Test
+  public void testSetupTearDown() throws Exception {
+    runPythonTest(new SetupTearDownTestTask<PyUnitTestProcessRunner>(){
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
   public void testSubtest() throws Exception {

@@ -61,7 +61,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   protected boolean myBackgrounded;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
-  private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
   @FunctionalInterface
   public interface Listener {
@@ -293,7 +293,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
   }
 
-  private boolean isDialogShowing() {
+  protected boolean isDialogShowing() {
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
   }
 

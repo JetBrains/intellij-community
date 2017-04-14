@@ -629,6 +629,22 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myJdkTableMultiListener.removeListener(jdkTableListener);
   }
 
+  protected void assertListenersAreDisposed() {
+    if (!myRegisteredRootProviders.isEmpty()) {
+      StringBuilder details = new StringBuilder();
+      for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
+        details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
+        for (OrderEntry orderEntry : entry.getValue()) {
+          details.append("   ").append(orderEntry).append("\n");
+        }
+      }
+      LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers aren't disposed:" + details);
+      for (RootProvider provider : myRegisteredRootProviders.keySet()) {
+        provider.removeRootSetChangedListener(myRootProviderChangeListener);
+      }
+    }
+  }
+
   private class RootProviderChangeListener implements RootProvider.RootSetChangedListener {
     private boolean myInsideRootsChange;
 

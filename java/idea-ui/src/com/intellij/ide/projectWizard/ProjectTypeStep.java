@@ -45,6 +45,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListSpeedSearch;
@@ -123,6 +124,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     myTemplatesMap = new ConcurrentMultiMap<>();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
+    LOG.debug("groups=" + groups);
 
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
@@ -232,6 +234,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     }
 
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
+    LOG.debug("saved groupId=" + groupId);
     if (groupId != null) {
       TemplatesGroup group = ContainerUtil.find(groups, group1 -> groupId.equals(group1.getId()));
       if (group != null) {
@@ -374,6 +377,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     if (group == null || group == myLastSelectedGroup) return;
     myLastSelectedGroup = group;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("projectTypeChanged: " + group.getId() + " " + DebugUtil.currentStackTrace());
+    }
     ModuleBuilder groupModuleBuilder = group.getModuleBuilder();
 
     mySettingsStep = null;
@@ -644,6 +650,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     }
 
     ModuleBuilder builder = getSelectedBuilder();
+    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedGroup() + "; groupIndex=" + myProjectTypeList.getMinSelectionIndex());
+
     myContext.setProjectBuilder(builder);
     if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());

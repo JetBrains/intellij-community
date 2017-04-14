@@ -21,30 +21,28 @@ import com.intellij.ide.ui.LafManagerListener;
 import javax.swing.*;
 
 public class HeadlessLafManagerImpl extends LafManager {
+  @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
   }
 
+  @Override
   public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
     return null;
   }
 
-  public boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    return true;
-  }
+  @Override
+  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) { }
 
-  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
-  }
+  @Override
+  public void updateUI() { }
 
-  public void updateUI() {
-  }
+  @Override
+  public void repaintUI() { }
 
-  public void repaintUI() {
-  }
+  @Override
+  public void addLafManagerListener(LafManagerListener l) { }
 
-  public void addLafManagerListener(LafManagerListener l) {
-  }
-
-  public void removeLafManagerListener(LafManagerListener l) {
-  }
+  @Override
+  public void removeLafManagerListener(LafManagerListener l) { }
 }

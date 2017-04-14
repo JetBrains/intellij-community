@@ -33,9 +33,9 @@ import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -521,29 +521,26 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-          evaluationExpression = ApplicationManager.getApplication().runReadAction(new Computable<XExpression>() {
-            @Override
-            public XExpression compute() {
-              try {
-                PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
-                if (psiExpression != null) {
-                  XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
-                  // add runtime imports if any
-                  Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
-                  if (imports != null && res != null) {
-                    if (res.getCustomInfo() != null) {
-                      imports.add(res.getCustomInfo());
-                    }
-                    res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+          evaluationExpression = ReadAction.compute(() -> {
+            try {
+              PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
+              if (psiExpression != null) {
+                XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                // add runtime imports if any
+                Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
+                if (imports != null && res != null) {
+                  if (res.getCustomInfo() != null) {
+                    imports.add(res.getCustomInfo());
                   }
-                  return res;
+                  res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
                 }
+                return res;
               }
-              catch (EvaluateException e) {
-                LOG.info(e);
-              }
-              return null;
             }
+            catch (EvaluateException e) {
+              LOG.info(e);
+            }
+            return null;
           });
           res.setResult(evaluationExpression);
         }

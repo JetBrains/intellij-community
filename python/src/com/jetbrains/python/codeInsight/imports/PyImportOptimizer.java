@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -286,7 +283,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       final PyImportStatementBase lastImport = ContainerUtil.getLastItem(myImportBlock);
       assert lastImport != null;
       addImportsAfter(lastImport);
-      myFile.deleteChildRange(firstElementToRemove, PyPsiUtils.getNextNonWhitespaceSibling(lastImport).getPrevSibling());
+      deleteRangeThroughDocument(firstElementToRemove, PyPsiUtils.getNextNonWhitespaceSibling(lastImport).getPrevSibling());
     }
 
     private void addImportsAfter(@NotNull PsiElement anchor) {
@@ -330,6 +327,12 @@ public class PyImportOptimizer implements ImportOptimizer {
       assert newImportBlock != null;
 
       myFile.addRangeAfter(reformattedFile.getFirstChild(), reformattedFile.getLastChild(), anchor);
+    }
+
+    private static void deleteRangeThroughDocument(@NotNull PsiElement first, @NotNull PsiElement last) {
+      PyUtil.updateDocumentUnblockedAndCommitted(first, document -> {
+        document.deleteString(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
+      });
     }
   }
 }

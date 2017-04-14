@@ -95,7 +95,7 @@ internal fun findPathWithPackagesByFsItem(elementPath: PsiFileSystemItem): Virtu
 /**
  * Finds root closest to some file
  */
-private fun findVFSItemRoot(virtualFile: VirtualFile, project: Project): VirtualFile? {
+internal fun findVFSItemRoot(virtualFile: VirtualFile, project: Project): VirtualFile? {
   val module = ModuleUtil.findModuleForFile(virtualFile, project)
   if (module == null) {
     Logger.getInstance(PyUniversalTestConfiguration::class.java).warn("No module for " + virtualFile)
@@ -103,21 +103,24 @@ private fun findVFSItemRoot(virtualFile: VirtualFile, project: Project): Virtual
   }
   return PyUtil.getSourceRoots(module)
            .map {
-             val path = VfsUtil.getRelativePath(virtualFile, it) ?: return null
-             com.intellij.openapi.util.Pair(path, it)
+             val path = VfsUtil.getRelativePath(virtualFile, it)
+             if (path != null) com.intellij.openapi.util.Pair(path, it)
+             else {
+               null
+             }
            }
            .filterNotNull()
            .sortedBy {
              it.first.length
            }
            .map(com.intellij.openapi.util.Pair<String, VirtualFile>::second)
-           .firstOrNull() ?: return null
-
+           .firstOrNull()
 }
 
 
+//TODO: Migrate to [ParametersListUtil#parse] but support single quotes
 /**
- * Emulates command line processor by parsing command line to arguments that can be provided as argv.
+ * Emulates command line processor (cmd, bash) by parsing command line to arguments that can be provided as argv.
  * Escape chars are not supported but quotes work.
  * @throws ExecutionException if can't be parsed
  */

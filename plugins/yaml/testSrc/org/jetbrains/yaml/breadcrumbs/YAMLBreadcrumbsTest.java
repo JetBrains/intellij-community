@@ -100,8 +100,7 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
     }
     final Language language = element.getContainingFile().getLanguage();
 
-    final BreadcrumbsInfoProvider provider = ContainerUtil.find(Extensions.getExtensions(BreadcrumbsInfoProvider.EP_NAME),
-                                                                (p) -> Arrays.asList(p.getLanguages()).contains(language));
+    final BreadcrumbsInfoProvider provider = BreadcrumbsInfoProvider.find(language::equals);
     if (provider == null) {
       return Collections.emptyList();
     }

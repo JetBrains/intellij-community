@@ -17,6 +17,11 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 public class CCVirtualFileListener implements VirtualFileListener {
+  private final Project myProject;
+
+  public CCVirtualFileListener(Project project) {
+    myProject = project;
+  }
 
   @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -27,18 +32,14 @@ public class CCVirtualFileListener implements VirtualFileListener {
     if (createdFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
       return;
     }
-    Project project = ProjectUtil.guessProjectForFile(createdFile);
-    if (project == null) {
+    if (myProject.getBasePath() !=null && !FileUtil.isAncestor(myProject.getBasePath(), createdFile.getPath(), true)) {
       return;
     }
-    if (project.getBasePath() !=null && !FileUtil.isAncestor(project.getBasePath(), createdFile.getPath(), true)) {
-      return;
-    }
-    Course course = StudyTaskManager.getInstance(project).getCourse();
+    Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course == null) {
       return;
     }
-    TaskFile taskFile = StudyUtils.getTaskFile(project, createdFile);
+    TaskFile taskFile = StudyUtils.getTaskFile(myProject, createdFile);
     if (taskFile != null) {
       return;
     }
@@ -50,7 +51,7 @@ public class CCVirtualFileListener implements VirtualFileListener {
       return;
     }
 
-    if (CCUtils.isTestsFile(project, createdFile)
+    if (CCUtils.isTestsFile(myProject, createdFile)
         || StudyUtils.isTaskDescriptionFile(createdFile.getName())
         || taskRelativePath.contains(EduNames.WINDOW_POSTFIX)
         || taskRelativePath.contains(EduNames.WINDOWS_POSTFIX)
@@ -61,7 +62,7 @@ public class CCVirtualFileListener implements VirtualFileListener {
     if (taskVF == null) {
       return;
     }
-    Task task = StudyUtils.getTask(project, taskVF);
+    Task task = StudyUtils.getTask(myProject, taskVF);
     if (task == null) {
       return;
     }

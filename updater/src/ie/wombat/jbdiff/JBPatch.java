@@ -70,18 +70,9 @@ public class JBPatch {
     in.skip(diffBlockLen + ctrlBlockLen + 32);
     GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
-    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream();
-    try {
-      Utils.copyStream(oldFileIn, oldFileByteOut);
-    }
-    finally {
-      oldFileByteOut.close();
-    }
-
-    final byte[] oldBuf = oldFileByteOut.toByteArray();
+    final byte[] oldBuf = realAllFileContent(oldFileIn);
     final int oldsize = oldBuf.length;
 
-    oldFileByteOut = null; // avoid OOME, nullify reference to another large array with file content
     final byte[] newBuf = new byte[block_size];
 
     oldpos = 0;
@@ -146,5 +137,18 @@ public class JBPatch {
     diffBlockIn.close();
     extraBlockIn.close();
     diffIn.close();
+  }
+
+  private static byte[] realAllFileContent(InputStream oldFileIn) throws IOException {
+    // Important: oldFileIn may be very large: so use max size (to avoid allocating memory to next power of 2) +
+    // do not hold reference for oldFileByteOut on stack
+    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream(Math.max(oldFileIn.available(), 32));
+    try {
+      Utils.copyStream(oldFileIn, oldFileByteOut);
+    }
+    finally {
+      oldFileByteOut.close();
+    }
+    return oldFileByteOut.toByteArray();
   }
 }

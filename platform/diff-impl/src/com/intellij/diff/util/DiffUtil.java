@@ -120,7 +120,6 @@ public class DiffUtil {
   @NotNull
   private static List<Image> loadDiffFrameImages() {
     return ContainerUtil.list(
-      ImageLoader.loadFromResource("/diff_frame16.png"),
       ImageLoader.loadFromResource("/diff_frame32.png"),
       ImageLoader.loadFromResource("/diff_frame64.png"),
       ImageLoader.loadFromResource("/diff_frame128.png")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,12 +56,6 @@ public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
     ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)myConsoleProperties.getConfiguration();
     final List<AbstractTestProxy> failedTests = getFailedTests(configuration.getProject());
     return new MyRunProfile(configuration) {
-      @NotNull
-      @Override
-      public Module[] getModules() {
-        return Module.EMPTY_ARRAY;
-      }
-
       @Nullable
       @Override
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment)

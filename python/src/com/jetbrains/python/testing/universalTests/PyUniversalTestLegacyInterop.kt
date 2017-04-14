@@ -1,7 +1,23 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.testing.universalTests
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
@@ -155,7 +171,14 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
   }
 
   override fun readExternal(element: Element) {
-    (configManager.legacyConfig as JDOMExternalizable).readExternal(element)
+    val legacyConfig = configManager.legacyConfig
+    if (legacyConfig is RunConfiguration) {
+      (legacyConfig as RunConfiguration).readExternal(element)
+    }
+    else {
+      (legacyConfig as JDOMExternalizable).readExternal(element)
+    }
+
     containsLegacyInformation = configManager.isLoaded()
     if (project.isInitialized) {
       copyFromLegacyIfNeeded()
@@ -164,7 +187,13 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
 
   override fun writeExternal(element: Element) {
     if (containsLegacyInformation ?: return) {
-      (configManager.legacyConfig as JDOMExternalizable).writeExternal(element)
+      val legacyConfig = configManager.legacyConfig
+      if (legacyConfig is RunConfiguration) {
+        (legacyConfig as RunConfiguration).writeExternal(element)
+      }
+      else {
+        (legacyConfig as JDOMExternalizable).writeExternal(element)
+      }
     }
   }
 

@@ -39,7 +39,7 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitMethod(PsiMethod method) {
-        for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+        for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
           Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, false);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
             PsiElement element = entry.getKey();
@@ -78,16 +78,16 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Nullable
   public static String checkContract(PsiMethod method, String text) {
-    List<MethodContract> contracts;
+    List<StandardMethodContract> contracts;
     try {
-      contracts = MethodContract.parseContract(text);
+      contracts = StandardMethodContract.parseContract(text);
     }
-    catch (MethodContract.ParseException e) {
+    catch (StandardMethodContract.ParseException e) {
       return e.getMessage();
     }
     int paramCount = method.getParameterList().getParametersCount();
     for (int i = 0; i < contracts.size(); i++) {
-      MethodContract contract = contracts.get(i);
+      StandardMethodContract contract = contracts.get(i);
       if (contract.arguments.length != paramCount) {
         return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
       }

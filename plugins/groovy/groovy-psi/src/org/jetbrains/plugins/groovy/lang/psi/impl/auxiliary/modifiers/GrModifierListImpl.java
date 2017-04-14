@@ -23,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -57,7 +56,6 @@ import java.util.Map;
 public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
-  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = GrAnnotation[]::new;
 
   private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<>(16);
 
@@ -208,7 +206,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @NotNull
   @Override
   public GrAnnotation[] getRawAnnotations() {
-    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, GrAnnotation.ARRAY_FACTORY);
   }
 
   private void setModifierPropertyInternal(String name, boolean doSet) {

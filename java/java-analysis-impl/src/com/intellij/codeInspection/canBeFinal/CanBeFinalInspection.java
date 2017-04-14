@@ -39,8 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
@@ -70,34 +68,19 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
       myReportClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
-      myReportClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_CLASSES = myReportClassesCheckbox.isSelected();
-        }
-      });
+      myReportClassesCheckbox.getModel().addItemListener(e -> REPORT_CLASSES = myReportClassesCheckbox.isSelected());
       gc.gridy = 0;
       add(myReportClassesCheckbox, gc);
 
       myReportMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
-      myReportMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_METHODS = myReportMethodsCheckbox.isSelected();
-        }
-      });
+      myReportMethodsCheckbox.getModel().addItemListener(e -> REPORT_METHODS = myReportMethodsCheckbox.isSelected());
       gc.gridy++;
       add(myReportMethodsCheckbox, gc);
 
       myReportFieldsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
-      myReportFieldsCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_FIELDS = myReportFieldsCheckbox.isSelected();
-        }
-      });
+      myReportFieldsCheckbox.getModel().addItemListener(e -> REPORT_FIELDS = myReportFieldsCheckbox.isSelected());
 
       gc.weighty = 1;
       gc.gridy++;

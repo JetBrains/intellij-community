@@ -40,7 +40,7 @@
   </macrodef>
 
   <target name="build" depends="init">
-    <call_gant script="${project.home}/build/scripts/dist.gant"/>
+    <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 
   <target name="test" depends="init">

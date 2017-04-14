@@ -49,7 +49,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   // should be stored or shouldn't by the provided filter only.
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_FACE")
-  var fontFace by storedProperty<String?>()
+  var fontFace by string()
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")

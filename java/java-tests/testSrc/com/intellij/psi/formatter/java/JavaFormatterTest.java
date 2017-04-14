@@ -192,7 +192,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testWrapAssertion() throws Exception {
     doTest();
   }
-
+  
   public void testIfElse() throws Exception {
     final CommonCodeStyleSettings settings = getSettings();
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
@@ -2303,7 +2303,8 @@ public void testSCR260() throws Exception {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    
     doTextTest("class Foo{\n" +
                "void foo() {\n" +
                "if(a) {return;}\n" +
@@ -2317,11 +2318,7 @@ public void testSCR260() throws Exception {
      "    void foo() {\n" +
      "        if (a) {return;}\n" +
      "        for (a = 0; a < 10; a++) {return;}\n" +
-     "        switch (a)\n" +
-     "            {\n" +
-     "                case 1:\n" +
-     "                    return;\n" +
-     "            }\n" +
+     "        switch (a) {case 1: return;}\n" +
      "        do {return;} while (a);\n" +
      "        while (a) {return;}\n" +
      "        try {return;} catch (Ex e) {return;} finally {return;}\n" +
@@ -3327,6 +3324,45 @@ public void testSCR260() throws Exception {
       "    }\n" +
       "}"
     );
+  }
+  
+  public void testKeepSimpleSwitchInOneLine() {
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    doMethodTest(
+      "switch (b) {\n" +
+      "case 1: case 2: break;\n" +
+      "}",
+      "switch (b) {\n" +
+      "    case 1: case 2: break;\n" +
+      "}");
+  }
+  
+  public void testExpandSwitch() {
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    doMethodTest(
+      "switch (b) {\n" +
+      "case 1: { println(1); } case 2: break;\n" +
+      "}", 
+      "switch (b) {\n" +
+      "    case 1: {\n" +
+      "        println(1);\n" +
+      "    }\n" +
+      "    case 2: break;\n" +
+      "}");
+  }
+
+  public void testKeepBreakOnSameLine() {
+    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    doMethodTest(
+      "switch (b) {\n" +
+      "case 1: case 2:\n" +
+      "\n\n\n\n\n\n" +
+      "break;\n" +
+      "}",
+      "switch (b) {\n" +
+      "    case 1: case 2:\n\n\n" +
+      "        break;\n" +
+      "}");
   }
   
 }

@@ -32,6 +32,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +43,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -247,7 +247,7 @@ public class BreakpointManager {
   public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
-    return ApplicationManager.getApplication().runWriteAction((Computable<ExceptionBreakpoint>)() -> {
+    return WriteAction.compute(() -> {
       XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
         .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
       Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
@@ -279,7 +279,7 @@ public class BreakpointManager {
   private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B,?>> typeCls, Document document, final int lineIndex) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return ApplicationManager.getApplication().runWriteAction((Computable<XLineBreakpoint>)() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()
+    return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()
       .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex,
                          ((XLineBreakpointType)type).createBreakpointProperties(file, lineIndex)));
   }
@@ -443,7 +443,7 @@ public class BreakpointManager {
 
   private <B extends XBreakpoint<?>> XBreakpoint createXBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
-    return ApplicationManager.getApplication().runWriteAction((Computable<XBreakpoint>)() -> XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties()));
+    return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties()));
   }
 
   private <B extends XBreakpoint<?>> XLineBreakpoint createXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls,
@@ -479,7 +479,7 @@ public class BreakpointManager {
     if (breakpoint == null) {
       return;
     }
-    ApplicationManager.getApplication().runWriteAction(() -> getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint));
+    WriteAction.run(() -> getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint));
   }
 
   public void writeExternal(@NotNull final Element parentNode) {

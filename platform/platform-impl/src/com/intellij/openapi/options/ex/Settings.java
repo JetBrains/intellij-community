@@ -18,6 +18,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,17 @@ public abstract class Settings {
     return configurable != null
            ? selectImpl(choose(configurable, myMap.get(configurable)))
            : ActionCallback.REJECTED;
+  }
+
+  @NotNull
+  public final ActionCallback select(Configurable configurable, String option) {
+    ActionCallback callback = select(configurable);
+    if (configurable instanceof SearchableConfigurable) {
+      SearchableConfigurable searchable = (SearchableConfigurable)configurable;
+      Runnable search = searchable.enableSearch(option);
+      if (search != null) callback.doWhenDone(search);
+    }
+    return callback;
   }
 
   protected abstract ActionCallback selectImpl(Configurable configurable);

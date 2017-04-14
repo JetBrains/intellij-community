@@ -33,11 +33,6 @@ public class NamedFoldingDescriptor extends FoldingDescriptor {
     this(e.getNode(), new TextRange(start, end), group, placeholderText);
   }
 
-  public NamedFoldingDescriptor(@NotNull PsiElement e, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText,
-                                @Nullable Object dependency) {
-    this(e.getNode(), new TextRange(start, end), group, placeholderText, dependency);
-  }
-
   public NamedFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
     this(node, new TextRange(start, end), group, placeholderText);
   }
@@ -46,15 +41,7 @@ public class NamedFoldingDescriptor extends FoldingDescriptor {
                          @NotNull final TextRange range,
                          @Nullable FoldingGroup group,
                          @NotNull String placeholderText) {
-    this(node, range, group, placeholderText, null);
-  }
-
-  public NamedFoldingDescriptor(@NotNull ASTNode node,
-                         @NotNull final TextRange range,
-                         @Nullable FoldingGroup group,
-                         @NotNull String placeholderText,
-                         @Nullable Object dependency) {
-    super(node, range, group, dependency);
+    super(node, range, group);
     myPlaceholderText = placeholderText;
   }
 

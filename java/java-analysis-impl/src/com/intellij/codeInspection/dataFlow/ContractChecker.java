@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,18 +32,18 @@ import java.util.Set;
 */
 class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
-  private final MethodContract myContract;
+  private final StandardMethodContract myContract;
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
-  private ContractChecker(PsiMethod method, MethodContract contract) {
+  private ContractChecker(PsiMethod method, StandardMethodContract contract) {
     super(false, true);
     myMethod = method;
     myContract = contract;
   }
 
-  static Map<PsiElement, String> checkContractClause(PsiMethod method, MethodContract contract, boolean ignoreAssertions) {
+  static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ignoreAssertions) {
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
@@ -58,7 +59,7 @@ class ContractChecker extends DataFlowRunner {
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i], false);
-        initialState.applyCondition(factory.getRelationFactory().createRelation(dfaParam, comparisonValue, JavaTokenType.EQEQ, negated));
+        initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
       }
     }
 

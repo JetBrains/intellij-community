@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1558,6 +1558,20 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return result.isEmpty() ? ContainerUtil.<T>emptyList() : result;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <E extends Enum<E>> EnumSet<E> intersection(@NotNull EnumSet<E> collection1, @NotNull EnumSet<E> collection2) {
+    if (collection1.isEmpty()) return collection1;
+    if (collection2.isEmpty()) return collection2;
+
+    EnumSet<E> smallerCollection = collection1.size() < collection2.size() ? collection1 : collection2;
+    EnumSet<E> biggerCollection  = collection1.size() < collection2.size() ? collection2 : collection1;
+
+    EnumSet<E> result = EnumSet.copyOf(smallerCollection);
+    result.removeAll(EnumSet.complementOf(biggerCollection));
+    return result;
   }
 
   @Nullable

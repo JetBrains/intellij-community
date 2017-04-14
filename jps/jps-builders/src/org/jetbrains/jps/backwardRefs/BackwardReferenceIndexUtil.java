@@ -89,7 +89,8 @@ public class BackwardReferenceIndexUtil {
         try {
           lightRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
           if (lightRef != null) {
-            convertedRefs.put(lightRef, count);
+            Integer old = convertedRefs.get(lightRef);
+            convertedRefs.put(lightRef, old == null ? count : (old + count));
           }
         }
         catch (IOException e) {

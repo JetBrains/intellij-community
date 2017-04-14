@@ -24,9 +24,6 @@ public interface Serializer {
   @NotNull
   Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor);
 
-  @NotNull
-  Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType);
-
   Binding getClassBinding(@NotNull Class<?> aClass);
 
   @Nullable

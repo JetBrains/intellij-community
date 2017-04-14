@@ -77,14 +77,16 @@ public class RepositoryAttachHandler {
     ));
   }
 
-
   public static void searchArtifacts(final Project project, String coord, final PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean> resultProcessor) {
-    JarRepositoryManager.searchArtifacts(project, coord, (pairs, aBoolean) -> resultProcessor.process(convert(pairs), aBoolean));
+    JarRepositoryManager.searchArtifacts(
+      project, coord, (pairs) -> resultProcessor.process(convert(pairs), Boolean.FALSE)
+    );
   }
 
   public static void searchRepositories(final Project project, final Collection<String> nexusUrls, final Processor<Collection<MavenRepositoryInfo>> resultProcessor) {
-    JarRepositoryManager.searchRepositories(project, nexusUrls, descriptions -> resultProcessor.process(
-      convertRepositoryList(descriptions)));
+    JarRepositoryManager.searchRepositories(
+      project, nexusUrls, descriptions -> resultProcessor.process(convertRepositoryList(descriptions))
+    );
   }
 
   public static MavenId getMavenId(@NotNull String coord) {

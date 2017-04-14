@@ -20,13 +20,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventHandler;
-import com.intellij.util.ui.RegionPainter;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 
 import java.awt.Color;
@@ -52,7 +52,7 @@ import static javax.swing.SwingUtilities.isLeftMouseButton;
 /**
  * @author Sergey.Malenkov
  */
-public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
+public class Breadcrumbs extends JComponent {
   @SuppressWarnings("FieldCanBeLocal")
   private final MouseHandler containerMouseHandler = new MouseHandler(event -> getCrumb(event.getX(), event.getY()));
   private final MouseHandler componentMouseHandler = new MouseHandler(event -> getCrumb(event.getComponent()));
@@ -144,8 +144,7 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     super.paintComponent(g);
   }
 
-  @Override
-  public void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb) {
+  protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb) {
     int scale = getScale(this);
     EffectType type = getEffectType(crumb);
     Color color = getEffectColor(crumb);
@@ -179,23 +178,35 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     }
     else if (background != null) {
       g.setColor(background);
-      g.fillRect(x + scale, y, width - 2 * scale, height);
+      g.fillRect(x, y, width, height);
+      if (isSelected(crumb)) {
+        paint(g, x, y, width, height, crumb, scale * 2);
+      }
     }
-    else {
-      int thickness = scale * getThickness(crumb);
-      if (thickness > 0) {
-        Color foreground = getForeground(crumb);
-        if (foreground != null) {
-          g.setColor(ColorUtil.toAlpha(foreground, (int)(.6 * foreground.getAlpha())));
-          paint(g, x, y, width, height, thickness);
-        }
+    else if (isSelected(crumb)) {
+      paint(g, x, y, width, height, crumb, scale * 2);
+    }
+    else if (isHovered(crumb)) {
+      paint(g, x, y, width, height, crumb, scale);
+    }
+  }
+
+  protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
+    if (thickness > 0) {
+      Color foreground = getMarkerForeground(crumb);
+      if (foreground != null) {
+        g.setColor(foreground);
+        g.fillRect(x, y + height - thickness, width, thickness);
       }
     }
   }
 
-  protected void paint(Graphics2D g, int x, int y, int width, int height, int thickness) {
-    int offset = 4 * getScale(this);
-    g.fillRect(x + offset, y + height - thickness, width - offset - offset, thickness);
+  protected Color getMarkerForeground(Crumb crumb) {
+    if (!Registry.is("editor.breadcrumbs.marker")) return null;
+    Color foreground = getForeground(crumb);
+    if (foreground == null) return null;
+    double alpha = Registry.doubleValue("editor.breadcrumbs.marker.alpha");
+    return ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha()));
   }
 
   protected Font getFont(Crumb crumb) {
@@ -265,12 +276,6 @@ public class Breadcrumbs extends JComponent implements RegionPainter<Crumb> {
     if (isSelected(crumb)) return EditorColors.BREADCRUMBS_CURRENT;
     if (isAfterSelected(crumb)) return EditorColors.BREADCRUMBS_INACTIVE;
     return EditorColors.BREADCRUMBS_DEFAULT;
-  }
-
-  protected int getThickness(Crumb crumb) {
-    if (isSelected(crumb)) return 2;
-    if (isHovered(crumb)) return 1;
-    return 0;
   }
 
   private Crumb getCrumb(int x, int y) {

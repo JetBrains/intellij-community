@@ -182,7 +182,7 @@ class RunConfigurable extends BaseConfigurable {
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;
-              shared = runManager.isConfigurationShared(settings);
+              shared = settings.isShared();
               setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
               configuration = settings;
             }
@@ -204,8 +204,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     final RunManagerEx manager = getRunManager();
-    final ConfigurationType[] factories = manager.getConfigurationFactories();
-    for (ConfigurationType type : factories) {
+    for (ConfigurationType type : manager.getConfigurationFactories()) {
       final List<RunnerAndConfigurationSettings> configurations = manager.getConfigurationSettingsList(type);
       if (!configurations.isEmpty()) {
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
@@ -232,16 +231,13 @@ class RunConfigurable extends BaseConfigurable {
 
     // add defaults
     final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode(DEFAULTS);
-    final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
-    for (final ConfigurationType type : configurationTypes) {
-      if (!(type instanceof UnknownConfigurationType)) {
-        ConfigurationFactory[] configurationFactories = type.getConfigurationFactories();
-        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
-        defaults.add(typeNode);
-        if (configurationFactories.length != 1) {
-          for (ConfigurationFactory factory : configurationFactories) {
-            typeNode.add(new DefaultMutableTreeNode(factory));
-          }
+    for (final ConfigurationType type : RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactoriesWithoutUnknown()) {
+      ConfigurationFactory[] configurationFactories = type.getConfigurationFactories();
+      DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
+      defaults.add(typeNode);
+      if (configurationFactories.length != 1) {
+        for (ConfigurationFactory factory : configurationFactories) {
+          typeNode.add(new DefaultMutableTreeNode(factory));
         }
       }
     }
@@ -668,7 +664,6 @@ class RunConfigurable extends BaseConfigurable {
       updateActiveConfigurationFromSelected();
 
       final RunManagerImpl manager = getRunManager();
-      final ConfigurationType[] types = manager.getConfigurationFactories();
       List<ConfigurationType> configurationTypes = new ArrayList<>();
       for (int i = 0; i < myRoot.getChildCount(); i++) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
@@ -677,7 +672,7 @@ class RunConfigurable extends BaseConfigurable {
           configurationTypes.add((ConfigurationType)userObject);
         }
       }
-      for (ConfigurationType type : types) {
+      for (ConfigurationType type : manager.getConfigurationFactories()) {
         if (!configurationTypes.contains(type))
           configurationTypes.add(type);
       }
@@ -709,7 +704,7 @@ class RunConfigurable extends BaseConfigurable {
         each.first.apply();
       }
 
-      manager.saveOrder();
+      manager.setOrder(null);
     }
     finally {
       getRunManager().fireEndUpdate();
@@ -752,7 +747,7 @@ class RunConfigurable extends BaseConfigurable {
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
           settings = (RunnerAndConfigurationSettings)userObject;
           configurationBean = new RunConfigurationBean(settings,
-                                                       manager.isConfigurationShared(settings),
+                                                       settings.isShared(),
                                                        manager.getBeforeRunTasks(settings.getConfiguration()));
 
         }
@@ -807,9 +802,7 @@ class RunConfigurable extends BaseConfigurable {
       toDeleteSettings.remove(each.getSettings());
     }
 
-    for (RunnerAndConfigurationSettings each : toDeleteSettings) {
-      manager.removeConfiguration(each);
-    }
+    manager.removeConfigurations(toDeleteSettings);
   }
 
   static void collectNodesRecursively(DefaultMutableTreeNode parentNode, List<DefaultMutableTreeNode> nodes, NodeKind... allowed) {
@@ -1126,10 +1119,10 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     private void showAddPopup(final boolean showApplicableTypesOnly) {
-      ConfigurationType[] allTypes = getRunManager().getConfigurationFactories(false);
+      List<ConfigurationType> allTypes = getRunManager().getConfigurationFactoriesWithoutUnknown();
       final List<ConfigurationType> configurationTypes = getTypesToShow(showApplicableTypesOnly, allTypes);
       Collections.sort(configurationTypes, (type1, type2) -> type1.getDisplayName().compareToIgnoreCase(type2.getDisplayName()));
-      final int hiddenCount = allTypes.length - configurationTypes.size();
+      final int hiddenCount = allTypes.size() - configurationTypes.size();
       if (hiddenCount > 0) {
         configurationTypes.add(null);
       }
@@ -1140,7 +1133,7 @@ class RunConfigurable extends BaseConfigurable {
       popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
     }
 
-    private List<ConfigurationType> getTypesToShow(boolean showApplicableTypesOnly, ConfigurationType[] allTypes) {
+    private List<ConfigurationType> getTypesToShow(boolean showApplicableTypesOnly, @NotNull List<ConfigurationType> allTypes) {
       if (showApplicableTypesOnly) {
         List<ConfigurationType> applicableTypes = new ArrayList<>();
         for (ConfigurationType type : allTypes) {
@@ -1148,11 +1141,11 @@ class RunConfigurable extends BaseConfigurable {
             applicableTypes.add(type);
           }
         }
-        if (applicableTypes.size() < allTypes.length - 3) {
+        if (applicableTypes.size() < allTypes.size() - 3) {
           return applicableTypes;
         }
       }
-      return new ArrayList<>(Arrays.asList(allTypes));
+      return allTypes;
     }
 
     private boolean isApplicable(ConfigurationType type) {
@@ -1672,7 +1665,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public RunConfigurationBean(final RunnerAndConfigurationSettings settings,
                                 final boolean shared,
-                                final List<BeforeRunTask> stepsBeforeLaunch) {
+                                final List<BeforeRunTask<?>> stepsBeforeLaunch) {
       mySettings = settings;
       myShared = shared;
       myStepsBeforeLaunch = Collections.unmodifiableList(stepsBeforeLaunch);

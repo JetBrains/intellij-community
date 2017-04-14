@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class CCProjectComponent extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance(CCProjectComponent.class);
-  private final CCVirtualFileListener myTaskFileLifeListener = new CCVirtualFileListener();
+  private CCVirtualFileListener myTaskFileLifeListener;
   private final Project myProject;
 
   protected CCProjectComponent(Project project) {
@@ -106,12 +106,21 @@ public class CCProjectComponent extends AbstractProjectComponent {
   public void projectOpened() {
     migrateIfNeeded();
     if (CCUtils.isCourseCreator(myProject)) {
-      VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
+      registerListener();
       EduUsagesCollector.projectTypeOpened(CCUtils.COURSE_MODE);
     }
   }
 
+  public void registerListener() {
+    if (myTaskFileLifeListener == null) {
+      myTaskFileLifeListener = new CCVirtualFileListener(myProject);
+      VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
+    }
+  }
+
   public void projectClosed() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
+    if (myTaskFileLifeListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
+    }
   }
 }

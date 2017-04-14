@@ -15,19 +15,9 @@
  */
 package com.intellij.lang;
 
-import com.intellij.util.BooleanTrackableProperty;
-
 public interface XmlCodeFoldingSettings {
   boolean isCollapseXmlTags();
-  void setCollapseXmlTags(boolean value);
-  BooleanTrackableProperty getCollapseXmlTagsProperty();
   boolean isCollapseHtmlStyleAttribute();
-  void setCollapseHtmlStyleAttribute(boolean value);
-  BooleanTrackableProperty getCollapseHtmlStyleAttributeProperty();
   boolean isCollapseEntities();
-  void setCollapseEntities(boolean value);
-  BooleanTrackableProperty getCollapseEntitiesProperty();
   boolean isCollapseDataUri();
-  void setCollapseDataUri(boolean value);
-  BooleanTrackableProperty getCollapseDataUriProperty();
 }

@@ -158,7 +158,7 @@ public class Alarm implements Disposable {
     if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
       final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
       final MessageBusConnection connection = bus.connect(this);
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           connection.disconnect();
@@ -378,9 +378,7 @@ public class Alarm implements Disposable {
             }
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
-              EdtInvocationManager.getInstance().invokeLater(() -> {
-                runSafely(task);
-              });
+              EdtInvocationManager.getInstance().invokeLater(() -> runSafely(task));
             }
             else {
               runSafely(task);
@@ -422,7 +420,7 @@ public class Alarm implements Disposable {
       finally {
         // remove from the list after execution to be able for waitForAllExecuted() to wait for completion
         synchronized (LOCK) {
-          myRequests.remove(Request.this);
+          myRequests.remove(this);
           myFuture = null;
         }
       }
