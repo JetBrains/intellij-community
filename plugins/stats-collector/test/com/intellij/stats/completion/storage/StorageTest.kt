@@ -19,7 +19,7 @@ class FilesProviderTest {
 
     @Before
     fun setUp() {
-        provider = UniqueFilesProvider("chunk", root)
+        provider = UniqueFilesProvider("chunk", ".")
         provider.getStatsDataDirectory().deleteRecursively()
     }
 
@@ -86,7 +86,7 @@ class FileLoggerTest {
 
     @Before
     fun setUp() {
-        filesProvider = UniqueFilesProvider("chunk", File("."))
+        filesProvider = UniqueFilesProvider("chunk", ".")
         fileLogger = LogFileManagerImpl(filesProvider)
     }
 

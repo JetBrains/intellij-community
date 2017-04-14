@@ -1,7 +1,6 @@
 package com.intellij.stats.completion
 
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.PathManager
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Files
@@ -19,11 +18,10 @@ abstract class FilePathProvider {
 }
 
 class InternalUrlProvider: UrlProvider() {
-    private val localhost = "http://localhost"
     private val internalHost = "http://unit-617.labs.intellij.net"
 
     private val host: String
-        get() = if (isPropertyExists("stats.collector.localhost.server")) localhost else internalHost
+        get() = internalHost
     
     
     override val statsServerPostUrl = "http://test.jetstat-resty.aws.intellij.net/uploadstats"
@@ -31,13 +29,11 @@ class InternalUrlProvider: UrlProvider() {
 }
 
 
-class PluginDirectoryFilePathProvider : UniqueFilesProvider("chunk", { getPluginDir() })
+class PluginDirectoryFilePathProvider : UniqueFilesProvider("chunk", PathManager.getSystemPath())
 
 open class UniqueFilesProvider(private val baseName: String, 
-                               private val rootDirectoryComputer: () -> File) : FilePathProvider() {
+                               private val rootDirectoryPath: String) : FilePathProvider() {
     
-    constructor(baseName: String, rootDir: File) : this(baseName, { rootDir })
-
     private val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
     
     override fun cleanupOldFiles() {
@@ -63,7 +59,7 @@ open class UniqueFilesProvider(private val baseName: String,
                 .filter { it.name.startsWith(baseName) }
                 .map { it.name.substringAfter('_') }
                 .filter { it.isIntConvertable() }
-                .map { it.toInt() }
+                .map(String::toInt)
                 .max()
         
         val newIndex = if (currentMaxIndex != null) currentMaxIndex + 1 else 0
@@ -81,7 +77,7 @@ open class UniqueFilesProvider(private val baseName: String,
     }
 
     override fun getStatsDataDirectory(): File {
-        val dir = File(rootDirectoryComputer(), "completion-stats-data")
+        val dir = File(rootDirectoryPath, "completion-stats-data")
         if (!dir.exists()) {
             dir.mkdir()
         }
@@ -98,14 +94,4 @@ open class UniqueFilesProvider(private val baseName: String,
             return false
         }
     }
-
 }
-
-
-fun getPluginDir(): File {
-    val id = PluginManager.getPluginByClassName(CompletionLoggerProvider::class.java.name)
-    val descriptor = PluginManager.getPlugin(id)
-    return descriptor!!.path.parentFile
-}
-
-fun isPropertyExists(name: String) = System.getProperty(name) != null

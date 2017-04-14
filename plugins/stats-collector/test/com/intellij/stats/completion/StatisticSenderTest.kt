@@ -6,7 +6,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
 
-class TestFilePathProvider: UniqueFilesProvider("chunk", File(".")) {
+class TestFilePathProvider: UniqueFilesProvider("chunk", ".") {
 
     override fun cleanupOldFiles() {
         super.cleanupOldFiles()
