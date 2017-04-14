@@ -28,7 +28,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -39,6 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 /**
  * @author vlan
@@ -206,7 +206,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private static boolean callDoesNotHaveUnmappedArgumentsAndUnfilledParameters(@NotNull PyTypeChecker.AnalyzeCallResults callResults) {
-      final PyCallExpressionHelper.ArgumentMappingResults mapping = callResults.getMapping();
+      final ArgumentMappingResults mapping = callResults.getMapping();
       return mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty();
     }
 
@@ -214,13 +214,55 @@ public class PyTypeCheckerInspection extends PyInspection {
     private AnalyzeCalleeResults analyzeCallee(@NotNull PyTypeChecker.AnalyzeCallResults results) {
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext);
-
-      for (Map.Entry<PyExpression, PyNamedParameter> entry : results.getMapping().getMappedParameters().entrySet()) {
-        final AnalyzeArgumentResult argumentResult = analyzeArgument(entry.getValue(), entry.getKey(), substitutions);
-        result.add(argumentResult);
+      final Map<PyExpression, PyNamedParameter> mapping = results.getMapping().getMappedParameters();
+      for (Map.Entry<PyExpression, PyNamedParameter> entry : getRegularMappedParameters(mapping).entrySet()) {
+        final PyExpression argument = entry.getKey();
+        final PyNamedParameter parameter = entry.getValue();
+        final PyType expected = parameter.getArgumentType(myTypeEvalContext);
+        final PyType actual = myTypeEvalContext.getType(argument);
+        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
-
+      final PyNamedParameter positionalContainer = getMappedPositionalContainer(mapping);
+      if (positionalContainer != null) {
+        result.addAll(analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mapping), substitutions));
+      }
+      final PyNamedParameter keywordContainer = getMappedKeywordContainer(mapping);
+      if (keywordContainer != null) {
+        result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mapping), substitutions));
+      }
       return new AnalyzeCalleeResults(results.getCallable(), result);
+    }
+
+    @NotNull
+    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyNamedParameter container, @NotNull List<PyExpression> arguments,
+                                                                @NotNull Map<PyGenericType, PyType> substitutions) {
+      final PyType expected = container.getArgumentType(myTypeEvalContext);
+      final PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
+      // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
+      if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
+        final PyType actual = PyUnionType.union(arguments.stream().map(e -> myTypeEvalContext.getType(e)).collect(Collectors.toList()));
+        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        return arguments.stream()
+          .map(argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched))
+          .collect(Collectors.toList());
+      }
+      else {
+        return arguments.stream()
+          .map(argument -> {
+            final PyType actual = myTypeEvalContext.getType(argument);
+            final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+            return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
+          })
+          .collect(Collectors.toList());
+      }
+    }
+
+    @Nullable
+    private PyType substituteGenerics(@Nullable PyType expectedArgumentType, @NotNull Map<PyGenericType, PyType> substitutions) {
+      return PyTypeChecker.hasGenerics(expectedArgumentType, myTypeEvalContext)
+             ? PyTypeChecker.substitute(expectedArgumentType, substitutions, myTypeEvalContext)
+             : null;
     }
 
     private static boolean matchedCalleeResultsExist(@NotNull List<AnalyzeCalleeResults> calleesResults) {
@@ -239,19 +281,6 @@ public class PyTypeCheckerInspection extends PyInspection {
         .stream()
         .map(AnalyzeArgumentResult::getActualType)
         .collect(Collectors.toList());
-    }
-
-    @NotNull
-    private AnalyzeArgumentResult analyzeArgument(@NotNull PyNamedParameter parameter,
-                                                  @NotNull PyExpression argument,
-                                                  @NotNull Map<PyGenericType, PyType> substitutions) {
-      final PyType expectedArgumentType = parameter.getArgumentType(myTypeEvalContext);
-      final PyType actualArgumentType = myTypeEvalContext.getType(argument);
-      final PyType expectedTypeAfterSubstitution = PyTypeChecker.hasGenerics(expectedArgumentType, myTypeEvalContext)
-                                                   ? PyTypeChecker.substitute(expectedArgumentType, substitutions, myTypeEvalContext)
-                                                   : null;
-      final boolean isMatched = PyTypeChecker.match(expectedArgumentType, actualArgumentType, myTypeEvalContext, substitutions);
-      return new AnalyzeArgumentResult(argument, expectedArgumentType, expectedTypeAfterSubstitution, actualArgumentType, isMatched);
     }
   }
 
