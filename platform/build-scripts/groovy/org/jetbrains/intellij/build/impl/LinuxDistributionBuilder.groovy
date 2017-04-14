@@ -136,10 +136,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
+    /* Android Studio: our JDK layout in prebuilts doesn't match the expected layout, so we copy it manually below.
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
       extraBins += "jre64/bin/*"
-    }
+    } */
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar $description")
@@ -168,7 +169,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           }
         }
 
-        // Bundle JDK
+        // Android Studio: bundle the JDK
         def binaries = ["bin/*", "jre/bin/*", "jre/lib/jexec"]
         tarfileset(dir: jreDirectoryPath, prefix: "$tarRoot/jre") {
           binaries.each {
