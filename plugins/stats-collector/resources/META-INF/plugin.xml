@@ -49,24 +49,9 @@
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
 
-    <!--<applicationService serviceInterface="com.intellij.sorting.Ranker"-->
-                        <!--serviceImplementation="com.intellij.sorting.MLRanker">-->
-    <!--</applicationService>-->
-    
-    <!--<applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory" -->
-                        <!--serviceImplementation="com.intellij.sorting.MLSorterFactory">-->
-    <!--</applicationService>-->
-    
-    
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
-    <!--<applicationConfigurable instance="com.intellij.plugin.PluginSettingsConfigurable"/>-->
 
   </extensions>
-
-  <!--<actions>-->
-    <!--<action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>-->
-  <!--</actions>-->
-
 
   <application-components>
     <component>
@@ -76,11 +61,6 @@
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
     </component>
-    
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>-->
-    <!--</component>-->
-    
   </application-components>
 
 </idea-plugin>
