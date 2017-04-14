@@ -88,12 +88,20 @@ public class MergePackageAccessibilityStatementsFix
         if (packageName != null) {
           final List<String> moduleNames = statement.getModuleNames();
           if (!moduleNames.isEmpty()) {
+            PsiPackageAccessibilityStatement targetStatement = null;
             for (PsiPackageAccessibilityStatement candidate : getStatements(javaModule, statement.getRole())) {
-              if (candidate != statement &&
-                  packageName.equals(candidate.getPackageName()) &&
-                  candidate.getModuleNames().iterator().hasNext()) {
-                return new MergePackageAccessibilityStatementsFix(statement, packageName, moduleNames, candidate);
+              if (candidate != statement && packageName.equals(candidate.getPackageName())) {
+                if (candidate.getModuleNames().isEmpty()) {
+                  // merging with a statement that has no target modules is equivalent to deletion; deletion is a different fix
+                  return null;
+                }
+                if (targetStatement == null) {
+                  targetStatement = candidate;
+                }
               }
+            }
+            if (targetStatement != null) {
+              return new MergePackageAccessibilityStatementsFix(statement, packageName, moduleNames, targetStatement);
             }
           }
         }
