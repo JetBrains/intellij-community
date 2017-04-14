@@ -664,6 +664,43 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
+  public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+    return mapping.entrySet().stream()
+      .filter(e -> e.getValue().isPositionalContainer())
+      .map(e -> e.getKey()).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+    return mapping.entrySet().stream()
+      .filter(e -> e.getValue().isKeywordContainer())
+      .map(e -> e.getKey()).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static Map<PyExpression, PyNamedParameter> getRegularMappedParameters(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+    final Map<PyExpression, PyNamedParameter> result = new LinkedHashMap<>();
+    for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
+      final PyExpression argument = entry.getKey();
+      final PyNamedParameter parameter = entry.getValue();
+      if (!parameter.isPositionalContainer() && !parameter.isKeywordContainer()) {
+        result.put(argument, parameter);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static PyNamedParameter getMappedPositionalContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+    return mapping.values().stream().filter(p -> p.isPositionalContainer()).findFirst().orElse(null);
+  }
+
+  @Nullable
+  public static PyNamedParameter getMappedKeywordContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+    return mapping.values().stream().filter(p -> p.isKeywordContainer()).findFirst().orElse(null);
+  }
+
+  @NotNull
   private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments, @NotNull List<PyParameter> parameters) {
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
