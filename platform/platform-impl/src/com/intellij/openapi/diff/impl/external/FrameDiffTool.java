@@ -18,12 +18,10 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -38,6 +36,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class FrameDiffTool implements DiffTool {
   public void show(DiffRequest request) {
@@ -68,8 +68,7 @@ public class FrameDiffTool implements DiffTool {
         public void actionPerformed(final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
-                                  diffPanel.getComponent());
+      }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
       showDiffDialog(builder, hints);
     }
     else {
@@ -86,8 +85,7 @@ public class FrameDiffTool implements DiffTool {
         public void actionPerformed(final AnActionEvent e) {
           frameWrapper.getFrame().dispose();
         }
-      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
-                                  diffPanel.getComponent());
+      }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
 
       frameWrapper.show();
     }
@@ -115,8 +113,7 @@ public class FrameDiffTool implements DiffTool {
       public void actionPerformed(final AnActionEvent e) {
         frameWrapper.getFrame().dispose();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
-                                diffPanel.getComponent());
+    }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
 
     frameWrapper.show();
   }*/

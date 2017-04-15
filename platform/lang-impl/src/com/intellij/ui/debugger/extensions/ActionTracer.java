@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 
@@ -27,6 +26,8 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * Created by IntelliJ IDEA.
@@ -82,7 +83,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     out.append("id=").append(id);
     if (id != null) {
       out.append("; shortcuts:");
-      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
+      final Shortcut[] shortcuts = getActiveKeymapShortcuts(id).getShortcuts();
       for (int i = 0; i < shortcuts.length; i++) {
         Shortcut shortcut = shortcuts[i];
         out.append(shortcut);

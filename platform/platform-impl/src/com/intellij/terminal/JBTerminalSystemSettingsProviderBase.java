@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
@@ -44,6 +43,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author traff
@@ -109,7 +110,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
     java.util.List<KeyStroke> keyStrokes = new ArrayList<>();
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
         KeyStroke ks = ((KeyboardShortcut)sc).getFirstKeyStroke();

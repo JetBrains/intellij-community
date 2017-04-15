@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -54,6 +53,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
   private static final Icon ourCheckedIcon = JBUI.scale(new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18));
@@ -157,7 +158,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
-      setAcceleratorFromShortcuts(KeymapManager.getInstance().getActiveKeymap().getShortcuts(id));
+      setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
     }
     else {
       final ShortcutSet shortcutSet = action.getShortcutSet();

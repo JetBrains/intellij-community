@@ -31,7 +31,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -94,6 +93,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
@@ -1124,7 +1125,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
                                               @NotNull JComponent component,
                                               @NotNull Runnable postProcessor) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     if (action == null || shortcuts.length == 0) return false;
     AnAction wrapper = new AnAction() {
       @Override
