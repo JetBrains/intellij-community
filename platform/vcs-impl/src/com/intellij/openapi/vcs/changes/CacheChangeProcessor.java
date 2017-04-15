@@ -16,12 +16,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -33,14 +31,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<CacheChangeProcessor.ChangeWrapper> {
-  private static final Logger LOG = Logger.getInstance(CacheChangeProcessor.class);
+public abstract class CacheChangeProcessor extends CacheDiffRefreshableRequestProcessor<CacheChangeProcessor.ChangeWrapper> {
 
   @Nullable private Change myCurrentChange;
-
-  public CacheChangeProcessor(@NotNull Project project) {
-    super(project);
-  }
 
   public CacheChangeProcessor(@NotNull Project project, @NotNull String place) {
     super(project, place);
@@ -121,11 +114,14 @@ public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<Cac
    * current element should always be among allChanges and selection (if they are not empty)
    */
 
+  @CalledInAwt
+  @Override
   public void clear() {
     myCurrentChange = null;
     updateRequest();
   }
 
+  @Override
   @CalledInAwt
   public void refresh() {
     List<Change> selectedChanges = getSelectedChanges();
