@@ -22,18 +22,23 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.longLine.LongLineInspection;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.ui.CommitMessage.isCommitMessage;
 import static com.intellij.util.ArrayUtil.isEmpty;
 
@@ -143,7 +148,8 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     public abstract void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor);
   }
 
-  protected static class ReformatCommitMessageQuickFix extends BaseCommitMessageQuickFix implements LowPriorityAction {
+  protected static class ReformatCommitMessageQuickFix extends BaseCommitMessageQuickFix
+    implements LowPriorityAction, IntentionAction, ShortcutProvider {
     protected ReformatCommitMessageQuickFix() {
       super(ReformatCommitMessageAction.NAME);
     }
@@ -151,6 +157,38 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     @Override
     public void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor) {
       ReformatCommitMessageAction.reformat(project, document);
+    }
+
+    @Nullable
+    @Override
+    public ShortcutSet getShortcut() {
+      return getActiveKeymapShortcuts("Vcs.ReformatCommitMessage");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getText() {
+      return getName();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+      Document document = getDocument(file);
+
+      if (document != null) {
+        doApplyFix(project, document, null);
+      }
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
     }
   }
 }
