@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -141,26 +141,20 @@ public class ParametersListUtil {
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
-    final List<Character> possibleQuoteChars = new ArrayList<Character>(Collections.singletonList('"'));
+    final TIntHashSet possibleQuoteChars = new TIntHashSet();
+    possibleQuoteChars.add('"');
     if (supportSingleQuotes) {
       possibleQuoteChars.add('\'');
     }
-    final Collection<Character> quoteChars = new HashSet<Character>(possibleQuoteChars);
+    char currentQuote = 0;
     boolean nonEmpty = false;
 
     for (int i = 0; i < parameterString.length(); i++) {
       final char ch = parameterString.charAt(i);
-
-      if (quoteChars.contains(ch)) {
+      if ((inQuotes ? currentQuote == ch : possibleQuoteChars.contains(ch))) {
         if (!escapedQuote) {
           inQuotes = !inQuotes;
-          quoteChars.clear();
-          if (inQuotes) {
-            quoteChars.add(ch);
-          }
-          else {
-            quoteChars.addAll(possibleQuoteChars);
-          }
+          currentQuote = ch;
           nonEmpty = true;
           if (!keepQuotes) {
             continue;
@@ -178,8 +172,9 @@ public class ParametersListUtil {
           continue;
         }
       }
-      else if (ch == '\\') {
-        if (i < parameterString.length() - 1 && quoteChars.contains(parameterString.charAt(i + 1))) {
+      else if (ch == '\\' && i < parameterString.length() - 1) {
+        final char nextchar = parameterString.charAt(i + 1);
+        if (inQuotes ? currentQuote == nextchar : possibleQuoteChars.contains(nextchar)) {
           escapedQuote = true;
           if (!keepQuotes) {
             continue;

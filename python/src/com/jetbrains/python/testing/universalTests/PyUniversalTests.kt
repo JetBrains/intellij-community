@@ -50,15 +50,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
+import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.splitNameParts
 import com.jetbrains.extenstions.toElement
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
@@ -486,7 +484,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   private fun generateRawArguments(): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString()
     if (rawArguments.isNotBlank()) {
-      return listOf("--") + getParsedAdditionalArguments(project, rawArguments)
+      return listOf("--") + ParametersListUtil.parse(rawArguments, false, true)
     }
     return emptyList()
   }
