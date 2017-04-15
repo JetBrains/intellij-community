@@ -97,6 +97,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
 
         result.stopHere()
 
+        MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
         val searchText = CompletionUtil.findReferenceOrAlphanumericPrefix(params)
         val searcher = MavenArtifactSearcher()
         val searchResults = searcher.search(params.position.project, searchText, MAX_RESULT)
