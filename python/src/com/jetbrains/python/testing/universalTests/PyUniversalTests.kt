@@ -292,6 +292,11 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
       val fileSystemPartOfTarget = (if (workingDir != null) VfsUtil.getRelativePath(elementFile, workingDir) else null)
                                    ?: elementFile.path
 
+      if (pyTarget.componentCount == 0) {
+        // If python part is empty we are launching file. To prevent junk like "foo.py::" we run it as file instead
+        return listOf("--path", fileSystemPartOfTarget)
+      }
+
       return listOf("--target", "$fileSystemPartOfTarget::$pyTarget")
 
     }

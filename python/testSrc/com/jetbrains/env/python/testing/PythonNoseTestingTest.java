@@ -6,6 +6,7 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
+import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
@@ -32,6 +33,20 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
         return new PyNoseTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
+  /**
+   * Ensures that python target pointing to module works correctly
+   */
+  @Test
+  public void testRunModuleAsFile() throws Exception {
+    runPythonTest(new RunModuleAsFileTask<PyNoseTestProcessRunner>(){
+      @NotNull
+      @Override
+      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+        return new PyNoseTestProcessRunner(TARGET, 0);
       }
     });
   }

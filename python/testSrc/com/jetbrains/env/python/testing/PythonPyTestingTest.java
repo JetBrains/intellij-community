@@ -12,6 +12,7 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -49,6 +50,21 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       }
     });
   }
+
+  /**
+   * Ensures that python target pointing to module works correctly
+   */
+  @Test
+  public void testRunModuleAsFile() throws Exception {
+    runPythonTest(new RunModuleAsFileTask<PyTestTestProcessRunner>(){
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(TARGET, 0);
+      }
+    });
+  }
+
 
   @Test
   public void testRerunSubfolder() throws Exception {
