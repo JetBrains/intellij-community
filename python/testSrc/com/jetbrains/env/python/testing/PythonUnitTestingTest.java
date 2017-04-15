@@ -23,8 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
+import com.jetbrains.env.ProcessWithConsoleRunner;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -39,6 +39,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 
@@ -55,6 +56,21 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
         return new PyUnitTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
+
+  /**
+   * Ensures that python target pointing to module works correctly
+   */
+  @Test
+  public void testRunModuleAsFile() throws Exception {
+    runPythonTest(new RunModuleAsFileTask<PyUnitTestProcessRunner>(){
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(TARGET, 0);
       }
     });
   }
@@ -443,7 +459,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testClass() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit",
-                                                           PyScriptTestProcessRunner.TEST_TARGET_PREFIX + "test_file.GoodTest") {
+                                                           TEST_TARGET_PREFIX + "test_file.GoodTest") {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -459,7 +475,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testMethod() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit",
-                                                           PyScriptTestProcessRunner.TEST_TARGET_PREFIX +
+                                                           TEST_TARGET_PREFIX +
                                                            "test_file.GoodTest.test_passes") {
 
       @Override
