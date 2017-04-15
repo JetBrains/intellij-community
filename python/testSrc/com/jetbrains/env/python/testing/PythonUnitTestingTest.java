@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
-import com.jetbrains.env.ProcessWithConsoleRunner;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
@@ -61,6 +60,41 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  /**
+   * Make sure test rerun works when pattern is enabled (PY-23416)
+   */
+  @Test
+  @EnvTestTagsRequired(tags = "python3")
+  public void testScriptWithHyphen() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withHyphen", "test-foobar.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        if (runner.getCurrentRerunStep() == 0) {
+          Assert.assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
+          Assert.assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
+          Assert.assertEquals(runner.getFormattedTestTree(), 1, runner.getFailedTestsCount());
+        }
+        else {
+          Assert.assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
+          Assert.assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
+          Assert.assertEquals(runner.getFormattedTestTree(), 1, runner.getFailedTestsCount());
+        }
+      }
+    });
+  }
+
+
   /**
    * Make sure test rerun works when pattern is enabled (PY-23416)
    */
@@ -74,7 +108,8 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(myScriptName), 2) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalUnitTestConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalUnitTestConfiguration configuration)
+            throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setPattern("test*");
           }
@@ -101,7 +136,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testRunModuleAsFile() throws Exception {
-    runPythonTest(new RunModuleAsFileTask<PyUnitTestProcessRunner>(){
+    runPythonTest(new RunModuleAsFileTask<PyUnitTestProcessRunner>() {
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
