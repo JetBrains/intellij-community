@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -27,7 +26,6 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNo
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -62,11 +60,6 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent implements
     super(project);
     myRemoteRepositories = Collections.emptySet();
     myNotIndexedUrls = Collections.emptySet();
-    if (ExternalSystemUtil.isNoBackgroundMode() || project.isDefault()) return;
-
-    NotificationsConfiguration.getNotificationsConfiguration().register(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
-                                                                        NotificationDisplayType.STICKY_BALLOON,
-                                                                        true);
   }
 
   public void updateNotIndexedUrls(List<String> repositories) {
