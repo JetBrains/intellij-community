@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
   <version>0.1</version>
@@ -12,7 +12,7 @@
 
       <h2>Features</h2>
       <ul>
-        <li>getenv() and env() parameters completion, based from .env file keys</li>
+        <li>getenv() and env() parameters completion, based on .env file keys</li>
       </ul>
     ]]></description>
 
@@ -24,9 +24,16 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.CompletionContributor"/>
+    <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
-    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotenvKeysIndex"/>
+    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
+    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
+    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>
+
+    <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
+    <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
   </extensions>
 
   <actions>

@@ -1,17 +1,20 @@
 package ru.adelf.idea.dotenv.indexing;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.DotEnvFileType;
+import ru.adelf.idea.dotenv.psi.DotEnvFile;
+import ru.adelf.idea.dotenv.util.DotEnvPsiElementsVisitor;
 
-import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DotenvKeysIndex extends FileBasedIndexExtension<String, Void> {
+public class DotEnvKeysIndex extends FileBasedIndexExtension<String, Void> {
 
     public static final ID<String, Void> KEY = ID.create("ru.adelf.idea.php.dotenv.keys");
     private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
@@ -28,23 +31,18 @@ public class DotenvKeysIndex extends FileBasedIndexExtension<String, Void> {
         return fileContent -> {
             final Map<String, Void> map = new HashMap<>();
 
-            try {
-                BufferedReader reader = new BufferedReader(new CharSequenceReader(fileContent.getContentAsText()));
-                String line;
+            PsiFile psiFile = fileContent.getPsiFile();
 
-                while((line = reader.readLine()) != null) {
-                    String[] splitParts = line.split("=");
-
-                    if(splitParts.length < 2) continue;
-
-                    String key = splitParts[0].trim();
-
-                    if(!"".equals(key) && key.charAt(0) != '#') {
-                        map.put(key, null);
-                    }
-                }
-            } catch(Exception e) {
+            if(!(psiFile instanceof DotEnvFile)) {
                 return map;
+            }
+
+            DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
+
+            psiFile.acceptChildren(visitor);
+
+            for(String key: visitor.getKeys()) {
+                map.put(key, null);
             }
 
             return map;
@@ -60,12 +58,14 @@ public class DotenvKeysIndex extends FileBasedIndexExtension<String, Void> {
     @NotNull
     @Override
     public DataExternalizer<Void> getValueExternalizer() {
-        return ScalarIndexExtension.VOID_DATA_EXTERNALIZER;
+        return VoidDataExternalizer.INSTANCE;
     }
 
     @NotNull
     @Override
-    public FileBasedIndex.InputFilter getInputFilter() { return file -> ".env".equals(file.getName()) || ".env.example".equals(file.getName()); }
+    public FileBasedIndex.InputFilter getInputFilter() {
+        return file -> file.getFileType().equals(DotEnvFileType.INSTANCE);
+    }
 
     @Override
     public boolean dependsOnFileContent() {

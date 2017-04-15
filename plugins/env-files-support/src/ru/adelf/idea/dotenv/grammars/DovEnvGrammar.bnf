@@ -1,0 +1,27 @@
+{
+  parserClass="ru.adelf.idea.dotenv.parser.DotEnvParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="DotEnv"
+  psiImplClassSuffix="Impl"
+  psiPackage="ru.adelf.idea.dotenv.psi"
+  psiImplPackage="ru.adelf.idea.dotenv.psi.impl"
+
+  elementTypeHolderClass="ru.adelf.idea.dotenv.psi.DotEnvTypes"
+  elementTypeClass="ru.adelf.idea.dotenv.psi.DotEnvElementType"
+  tokenTypeClass="ru.adelf.idea.dotenv.psi.DotEnvTokenType"
+
+  tokens = [
+    LINE_COMMENT="regexp://.*"
+    VALUE="regexp:.+"
+  ]
+}
+
+dotEnvFile ::= (property|comment|empty_line)*
+
+empty_line ::= SPACE
+
+comment ::= LINE_COMMENT
+
+property ::= VALUE
