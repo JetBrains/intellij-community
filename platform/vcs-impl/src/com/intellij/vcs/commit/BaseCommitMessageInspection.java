@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.longLine.LongLineInspection;
 import com.intellij.openapi.editor.Document;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.openapi.vcs.ui.CommitMessage.isCommitMessage;
+import static com.intellij.util.ArrayUtil.isEmpty;
 
 public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
 
@@ -99,6 +101,19 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
       .createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly, fixes) : null;
   }
 
+  public boolean canReformat(@NotNull Project project, @NotNull Document document) {
+    return false;
+  }
+
+  public void reformat(@NotNull Project project, @NotNull Document document) {
+  }
+
+  protected boolean hasProblems(@NotNull Project project, @NotNull Document document) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+    return file != null && !isEmpty(checkFile(file, document, InspectionManager.getInstance(project), false));
+  }
+
   @Nullable
   private static Document getDocument(@NotNull PsiElement element) {
     return PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
@@ -125,6 +140,17 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
       }
     }
 
-    public abstract void doApplyFix(@NotNull Project project, @NotNull Document document, @NotNull ProblemDescriptor descriptor);
+    public abstract void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor);
+  }
+
+  protected static class ReformatCommitMessageQuickFix extends BaseCommitMessageQuickFix implements LowPriorityAction {
+    protected ReformatCommitMessageQuickFix() {
+      super(ReformatCommitMessageAction.NAME);
+    }
+
+    @Override
+    public void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor) {
+      ReformatCommitMessageAction.reformat(project, document);
+    }
   }
 }

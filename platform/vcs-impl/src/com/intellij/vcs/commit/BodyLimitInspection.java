@@ -65,9 +65,20 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                                           boolean isOnTheFly) {
     return range(1, document.getLineCount())
       .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
-                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix()))
+                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix(),
+                                         new ReformatCommitMessageQuickFix()))
       .filter(Objects::nonNull)
       .toArray(ProblemDescriptor[]::new);
+  }
+
+  @Override
+  public boolean canReformat(@NotNull Project project, @NotNull Document document) {
+    return hasProblems(project, document);
+  }
+
+  @Override
+  public void reformat(@NotNull Project project, @NotNull Document document) {
+    new WrapLineQuickFix().doApplyFix(project, document, null);
   }
 
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
@@ -76,16 +87,23 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
     }
 
     @Override
-    public void doApplyFix(@NotNull Project project, @NotNull Document document, @NotNull ProblemDescriptor descriptor) {
+    public void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor) {
       Editor editor = CommitMessage.getEditor(document);
 
       if (editor != null) {
-        TextRange range = descriptor.getLineNumber() >= 0 ? getLineTextRange(document, descriptor.getLineNumber()) : EMPTY_RANGE;
+        TextRange range = descriptor != null && descriptor.getLineNumber() >= 0
+                          ? getLineTextRange(document, descriptor.getLineNumber())
+                          : getBodyRange(document);
 
         if (!range.isEmpty()) {
           wrapLines(project, editor, document, RIGHT_MARGIN, range);
         }
       }
+    }
+
+    @NotNull
+    private TextRange getBodyRange(@NotNull Document document) {
+      return document.getLineCount() > 1 ? TextRange.create(document.getLineStartOffset(1), document.getTextLength()) : EMPTY_RANGE;
     }
 
     private void wrapLines(@NotNull Project project,

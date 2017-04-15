@@ -44,10 +44,21 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
                                           boolean isOnTheFly) {
     ProblemDescriptor descriptor = document.getLineCount() > 1
                                    ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
-                                                      "Missing blank line between subject and body", new AddBlankLineQuickFix())
+                                                      "Missing blank line between subject and body", new AddBlankLineQuickFix(),
+                                                      new ReformatCommitMessageQuickFix())
                                    : null;
 
     return descriptor != null ? ar(descriptor) : null;
+  }
+
+  @Override
+  public boolean canReformat(@NotNull Project project, @NotNull Document document) {
+    return hasProblems(project, document);
+  }
+
+  @Override
+  public void reformat(@NotNull Project project, @NotNull Document document) {
+    new AddBlankLineQuickFix().doApplyFix(project, document, null);
   }
 
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
@@ -56,14 +67,20 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
     }
 
     @Override
-    public void doApplyFix(@NotNull Project project, @NotNull Document document, @NotNull ProblemDescriptor descriptor) {
-      if (descriptor.getLineNumber() >= 0) {
-        TextRange lineRange = getLineTextRange(document, descriptor.getLineNumber());
+    public void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor) {
+      int line = descriptor != null && descriptor.getLineNumber() >= 0 ? descriptor.getLineNumber() : getFirstLine(document);
+
+      if (line >= 0) {
+        TextRange lineRange = getLineTextRange(document, line);
 
         if (!lineRange.isEmpty()) {
           document.insertString(lineRange.getStartOffset(), "\n");
         }
       }
+    }
+
+    private static int getFirstLine(@NotNull Document document) {
+      return document.getLineCount() > 1 ? 1 : -1;
     }
   }
 }
