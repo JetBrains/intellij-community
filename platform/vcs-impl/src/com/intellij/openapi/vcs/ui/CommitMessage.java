@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
@@ -24,6 +27,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -48,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
@@ -223,6 +228,33 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
                          profile -> new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
+      ((EditorMarkupModelImpl)editor.getMarkupModel())
+        .setErrorStripeRenderer(new ConditionalTrafficLightRenderer(myProject, editor.getDocument(), file));
+    }
+  }
+
+  private static class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
+    public ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document, @Nullable PsiFile file) {
+      super(project, document, file);
+    }
+
+    @Override
+    protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
+      super.refresh(editorMarkupModel);
+      if (editorMarkupModel != null) {
+        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(errorCount));
+      }
+    }
+
+    private boolean hasHighSeverities(@NotNull int[] errorCount) {
+      HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
+
+      for (int i = 0; i < errorCount.length; i++) {
+        if (errorCount[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) > 0) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }
