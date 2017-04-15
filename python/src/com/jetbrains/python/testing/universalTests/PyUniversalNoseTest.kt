@@ -51,7 +51,7 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNos
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalNoseTestSettingsEditor(this)
 
-  override fun getCustomRawArgumentsString(): String =
+  override fun getCustomRawArgumentsString(forRerun: Boolean): String =
     when {
       regexPattern.isEmpty() -> ""
       else -> "-m $regexPattern"

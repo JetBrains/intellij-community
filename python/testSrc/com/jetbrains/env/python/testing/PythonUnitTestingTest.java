@@ -61,6 +61,40 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Make sure test rerun works when pattern is enabled (PY-23416)
+   */
+  @Test
+  public void testPatternRerun() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/patternRerun", ".") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        // Full pass is required because it is folder
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 2) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalUnitTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setPattern("test*");
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        if (runner.getCurrentRerunStep() == 0) {
+          Assert.assertEquals(stderr, 2, runner.getAllTestsCount());
+        }
+        else {
+          Assert.assertEquals(stderr, 1, runner.getAllTestsCount());
+        }
+      }
+    });
+  }
 
   /**
    * Ensures that python target pointing to module works correctly

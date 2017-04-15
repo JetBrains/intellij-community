@@ -54,11 +54,12 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalUnitTestSettingsEditor(this)
 
-  override fun getCustomRawArgumentsString(): String {
+  override fun getCustomRawArgumentsString(forRerun: Boolean): String {
     // Pattern can only be used with folders ("all in folder" in legacy terms)
     if ((!pattern.isNullOrEmpty()) && target.targetType != TestTargetType.CUSTOM) {
       val path = LocalFileSystem.getInstance().findFileByPath(target.target) ?: return ""
-      return if (path.isDirectory) "-p $pattern" else ""
+      // "Pattern" works only for "discovery" mode and for "rerun" we are using "python" targets ("concrete" tests)
+      return if (path.isDirectory && !forRerun) "-p $pattern" else ""
     }
     else {
       return ""
