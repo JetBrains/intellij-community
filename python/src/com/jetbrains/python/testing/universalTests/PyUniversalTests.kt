@@ -478,7 +478,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
     locations.map { it.first }.distinctBy { it.psiElement }.map { getTestSpecForPythonTarget(it) }.filterNotNull().forEach {
       result.addAll(it)
     }
-    return result + generateRawArguments()
+    return result + generateRawArguments(true)
   }
 
   fun getTestSpec(): List<String> {
@@ -488,8 +488,8 @@ abstract class PyUniversalTestConfiguration(project: Project,
   /**
    * raw arguments to be added after "--" and passed to runner directly
    */
-  private fun generateRawArguments(): List<String> {
-    val rawArguments = additionalArguments + " " + getCustomRawArgumentsString()
+  private fun generateRawArguments(forRerun: Boolean = false): List<String> {
+    val rawArguments = additionalArguments + " " + getCustomRawArgumentsString(forRerun)
     if (rawArguments.isNotBlank()) {
       return listOf("--") + getParsedAdditionalArguments(project, rawArguments)
     }
@@ -514,7 +514,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   /**
    * @return configuration-specific arguments
    */
-  protected open fun getCustomRawArgumentsString() = ""
+  protected open fun getCustomRawArgumentsString(forRerun: Boolean = false) = ""
 
   fun reset() {
     target.target = DEFAULT_PATH
