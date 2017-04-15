@@ -19,9 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.longLine.LongLineInspection;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurableUi;
@@ -93,11 +91,12 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
                                                boolean isOnTheFly,
                                                int line,
                                                int rightMargin,
-                                               @NotNull String problemText) {
+                                               @NotNull String problemText,
+                                               @NotNull LocalQuickFix... fixes) {
     TextRange exceedingRange = LongLineInspection.getExceedingRange(document, line, rightMargin);
 
     return !exceedingRange.isEmpty() ? manager
-      .createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly) : null;
+      .createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly, fixes) : null;
   }
 
   @Nullable
@@ -110,5 +109,22 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
       return file == null || !isCommitMessage(file) || !(intentionAction instanceof EmptyIntentionAction);
     }
+  }
+
+  protected static abstract class BaseCommitMessageQuickFix extends LocalQuickFixBase {
+    protected BaseCommitMessageQuickFix(@NotNull String name) {
+      super(name);
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      Document document = getDocument(descriptor.getPsiElement());
+
+      if (document != null) {
+        doApplyFix(project, document, descriptor);
+      }
+    }
+
+    public abstract void doApplyFix(@NotNull Project project, @NotNull Document document, @NotNull ProblemDescriptor descriptor);
   }
 }

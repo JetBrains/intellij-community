@@ -18,11 +18,14 @@ package com.intellij.vcs.commit;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.DocumentUtil.getLineTextRange;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
 public class SubjectBodySeparationInspection extends BaseCommitMessageInspection {
@@ -41,9 +44,26 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
                                           boolean isOnTheFly) {
     ProblemDescriptor descriptor = document.getLineCount() > 1
                                    ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
-                                                      "Missing blank line between subject and body")
+                                                      "Missing blank line between subject and body", new AddBlankLineQuickFix())
                                    : null;
 
     return descriptor != null ? ar(descriptor) : null;
+  }
+
+  protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
+    protected AddBlankLineQuickFix() {
+      super("Add blank line");
+    }
+
+    @Override
+    public void doApplyFix(@NotNull Project project, @NotNull Document document, @NotNull ProblemDescriptor descriptor) {
+      if (descriptor.getLineNumber() >= 0) {
+        TextRange lineRange = getLineTextRange(document, descriptor.getLineNumber());
+
+        if (!lineRange.isEmpty()) {
+          document.insertString(lineRange.getStartOffset(), "\n");
+        }
+      }
+    }
   }
 }

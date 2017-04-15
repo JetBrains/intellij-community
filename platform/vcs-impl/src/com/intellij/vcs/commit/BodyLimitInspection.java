@@ -17,17 +17,27 @@ package com.intellij.vcs.commit;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.TextRange.EMPTY_RANGE;
+import static com.intellij.util.DocumentUtil.getLineTextRange;
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 import static java.util.stream.IntStream.range;
 
 public class BodyLimitInspection extends BaseCommitMessageInspection {
@@ -55,8 +65,43 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                                           boolean isOnTheFly) {
     return range(1, document.getLineCount())
       .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
-                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN)))
+                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix()))
       .filter(Objects::nonNull)
       .toArray(ProblemDescriptor[]::new);
+  }
+
+  protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
+    protected WrapLineQuickFix() {
+      super("Wrap line");
+    }
+
+    @Override
+    public void doApplyFix(@NotNull Project project, @NotNull Document document, @NotNull ProblemDescriptor descriptor) {
+      Editor editor = CommitMessage.getEditor(document);
+
+      if (editor != null) {
+        TextRange range = descriptor.getLineNumber() >= 0 ? getLineTextRange(document, descriptor.getLineNumber()) : EMPTY_RANGE;
+
+        if (!range.isEmpty()) {
+          wrapLines(project, editor, document, RIGHT_MARGIN, range);
+        }
+      }
+    }
+
+    private void wrapLines(@NotNull Project project,
+                           @NotNull Editor editor,
+                           @NotNull Document document,
+                           int rightMargin,
+                           @NotNull TextRange range) {
+      CodeFormatterFacade codeFormatter = new CodeFormatterFacade(new CodeStyleSettings(false) {
+        @Override
+        public int getRightMargin(@Nullable Language language) {
+          return rightMargin;
+        }
+      }, null);
+      List<TextRange> enabledRanges = singletonList(TextRange.create(0, document.getTextLength()));
+
+      codeFormatter.doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(), enabledRanges);
+    }
   }
 }

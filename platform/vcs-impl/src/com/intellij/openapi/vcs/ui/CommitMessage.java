@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -153,6 +154,12 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   public static boolean isCommitMessage(@NotNull PsiElement element) {
     Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
     return document != null && document.getUserData(DATA_KEY) != null;
+  }
+
+  @Nullable
+  public static Editor getEditor(@NotNull Document document) {
+    CommitMessage commitMessage = document.getUserData(DATA_KEY);
+    return commitMessage != null ? commitMessage.getEditorField().getEditor() : null;
   }
 
   @NotNull
