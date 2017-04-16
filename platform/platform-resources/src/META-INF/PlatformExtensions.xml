@@ -429,8 +429,6 @@
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
-    <lang.lineWrapStrategy language="TEXT" implementationClass="com.intellij.openapi.editor.TextLineWrapPositionStrategy"/>
-
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
