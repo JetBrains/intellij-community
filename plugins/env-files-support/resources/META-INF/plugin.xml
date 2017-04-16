@@ -1,22 +1,27 @@
 <idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
-  <version>0.1</version>
+  <version>0.2</version>
   <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
 
   <description><![CDATA[
       <h1>.env files support</h1><br>
-    <br/>
-    <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>
-    <br/>
 
-      <h2>Features</h2>
+      <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
+      <br/>
+      <h4>Features</h4>
       <ul>
         <li>getenv() and env() parameters completion, based on .env file keys</li>
+        <li>Go to declaration(in .env file) and usages(in php files), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
       </ul>
     ]]></description>
 
-  <change-notes><![CDATA[]]></change-notes>
+  <change-notes><![CDATA[
+      <h4>0.2</h4>
+      <ul>
+        <li>Go to declaration(in .env file) and usages(in php files), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
+      </ul>
+  ]]></change-notes>
 
   <idea-version since-build="145.0"/>
 
