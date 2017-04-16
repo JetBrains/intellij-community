@@ -115,24 +115,24 @@ public class HgRefManager implements VcsLogRefManager {
   @Override
   public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
-    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
 
-    // find head and tip, separate them from other refs
-    List<Map.Entry<VcsRefType, Collection<VcsRef>>> headAndTip =
-      ContainerUtil.filter(groupedRefs.entrySet(), entry -> entry.getKey().equals(HEAD) || entry.getKey().equals(TIP));
-    headAndTip.forEach(entry -> groupedRefs.remove(entry.getKey()));
+    List<VcsRef> headAndTip = ContainerUtil.newArrayList();
+    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, ref -> {
+      if (ref.getType().equals(HEAD) || ref.getType().equals(TIP)) {
+        headAndTip.add(ref);
+        return null;
+      }
+      return ref.getType();
+    });
 
     List<RefGroup> result = ContainerUtil.newArrayList();
     SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
-
-    // now add head and tip either to the first existing group or to the new one
     RefGroup firstGroup = ContainerUtil.getFirstItem(result);
-    List<VcsRef> headAndTipCollection = headAndTip.stream().flatMap(entry -> entry.getValue().stream()).collect(Collectors.toList());
     if (firstGroup != null) {
-      firstGroup.getRefs().addAll(0, headAndTipCollection);
+      firstGroup.getRefs().addAll(0, headAndTip);
     }
     else {
-      result.add(new SimpleRefGroup("", headAndTipCollection));
+      result.add(new SimpleRefGroup("", headAndTip));
     }
 
     return result;
