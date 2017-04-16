@@ -442,7 +442,7 @@ nowrap
 nullabilities
 nullability
 nullif
-nullptr
+nullp
 nvarchar
 oauth
 objc
@@ -513,6 +513,7 @@ progressbar
 proto
 proven
 proxool
+ptrdiff
 pycharm
 queryable
 radiobutton
