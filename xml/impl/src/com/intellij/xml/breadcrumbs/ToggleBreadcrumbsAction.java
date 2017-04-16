@@ -13,24 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.actions;
+package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
-public class ToggleShowBreadcrumbsGloballyAction extends ToggleAction implements DumbAware {
+final class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent event) {
-    return EditorSettingsExternalizable.getInstance().isBreadcrumbsShown();
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    return settings.isBreadcrumbsShown();
   }
 
   @Override
   public void setSelected(AnActionEvent event, boolean selected) {
-    if (EditorSettingsExternalizable.getInstance().setBreadcrumbsShown(selected)) {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (settings.setBreadcrumbsShown(selected)) {
       UISettings.getInstance().fireUISettingsChanged();
     }
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    super.update(event);
+
+    Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
+    event.getPresentation().setEnabled(editor != null);
   }
 }
