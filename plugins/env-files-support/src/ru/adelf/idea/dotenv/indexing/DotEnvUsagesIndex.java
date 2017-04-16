@@ -6,6 +6,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
+import com.jetbrains.php.lang.PhpFileType;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.util.DotEnvCallsVisitor;
 
@@ -58,7 +59,7 @@ public class DotEnvUsagesIndex extends FileBasedIndexExtension<String, Void> {
     @NotNull
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
-        return file -> true;
+        return file -> file.getFileType().equals(PhpFileType.INSTANCE);
     }
 
     @Override
@@ -68,6 +69,6 @@ public class DotEnvUsagesIndex extends FileBasedIndexExtension<String, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 1;
     }
 }
