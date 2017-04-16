@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 
 class AddImportActionTest extends LightCodeInsightFixtureTestCase {
   private CodeStyleSettings settings
@@ -256,7 +258,7 @@ class C {
 
     myFixture.configureByText 'a.java', '''
       class Test {
-          java.util.@TA <caret>Collection<@TA String> c;
+          java.u<caret>til.@TA Collection<@TA String> c;
       }'''.stripIndent().trim()
 
     reimportClass()
@@ -390,7 +392,7 @@ class Test {
 class Test {
 
   /**
-   * {@link java.util.Ma<caret>p}
+   * {@link java.uti<caret>l.Map}
    */
   void run() {
   }
@@ -416,13 +418,14 @@ class Test {
 class Test {
 
   /**
-   * {@link java.lang.Ma<caret>th}
+   * {@link java.l<caret>ang.Math}
    */
   void run() {
   }
 }
 '''
-    reimportClass()
+    myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection())
+    myFixture.launchAction(myFixture.findSingleIntention("Remove qualification"))
     myFixture.checkResult '''
 class Test {
 
@@ -488,6 +491,8 @@ class Tq {
   void setUp() throws Exception {
     super.setUp()
     settings = new CodeStyleSettings()
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
     CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings)
   }
 
@@ -503,7 +508,8 @@ class Tq {
   }
 
   private def reimportClass() {
-    myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with 'import'"))
+    myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection())
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with import"))
   }
 
   void "test disprefer deprecated classes"() {
