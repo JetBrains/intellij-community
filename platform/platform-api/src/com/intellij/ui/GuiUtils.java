@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,6 +221,10 @@ public class GuiUtils {
   }
 
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root) {
+    replaceJSplitPaneWithIDEASplitter(root, false);
+  }
+
+  public static void replaceJSplitPaneWithIDEASplitter(JComponent root, boolean useOnePixelDivider) {
     final Container parent = root.getParent();
     if (root instanceof JSplitPane) {
       // we can painlessly replace only splitter which is the only child in container
@@ -231,7 +235,8 @@ public class GuiUtils {
       final Component component1 = pane.getTopComponent();
       final Component component2 = pane.getBottomComponent();
       final int orientation = pane.getOrientation();
-      final Splitter splitter = new JBSplitter(orientation == JSplitPane.VERTICAL_SPLIT);
+      boolean vertical = orientation == JSplitPane.VERTICAL_SPLIT;
+      final Splitter splitter = useOnePixelDivider ? new OnePixelSplitter(vertical) : new JBSplitter(vertical);
       splitter.setFirstComponent((JComponent) component1);
       splitter.setSecondComponent((JComponent) component2);
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
@@ -265,14 +270,14 @@ public class GuiUtils {
         parent.setLayout(new BorderLayout());
         parent.add(splitter, BorderLayout.CENTER);
       }
-      replaceJSplitPaneWithIDEASplitter((JComponent) component1);
-      replaceJSplitPaneWithIDEASplitter((JComponent) component2);
+      replaceJSplitPaneWithIDEASplitter((JComponent) component1, useOnePixelDivider);
+      replaceJSplitPaneWithIDEASplitter((JComponent) component2, useOnePixelDivider);
     }
     else {
       final Component[] components = root.getComponents();
       for (Component component : components) {
         if (component instanceof JComponent) {
-          replaceJSplitPaneWithIDEASplitter((JComponent)component);
+          replaceJSplitPaneWithIDEASplitter((JComponent)component, useOnePixelDivider);
         }
       }
     }

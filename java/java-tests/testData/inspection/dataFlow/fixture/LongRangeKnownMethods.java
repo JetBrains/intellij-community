@@ -1,5 +1,6 @@
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Scanner;
 
 public class LongRangeKnownMethods {
   void testIndexOf(String s) {
@@ -81,7 +82,7 @@ public class LongRangeKnownMethods {
   }
 
   void testEqualsIgnoreCase(String s) {
-    if(s.equalsIgnoreCase("xyz") && s.isEmpty()) {
+    if(<warning descr="Condition 's.equalsIgnoreCase(\"xyz\") && s.isEmpty()' is always 'false'">s.equalsIgnoreCase("xyz") && <warning descr="Condition 's.isEmpty()' is always 'false' when reached">s.isEmpty()</warning></warning>) {
       System.out.println("Never");
     }
   }
@@ -148,6 +149,43 @@ public class LongRangeKnownMethods {
       System.out.println("possible");
     } else if(<warning descr="Condition 'y < 0' is always 'false'">y < 0</warning>) {
       System.out.println("impossible");
+    }
+  }
+
+  void testStringComparison(String name) {
+    // Parentheses misplaced -- found in AndroidStudio
+    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(name.equals("layout_height"))</warning> &&
+          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(name.equals("id"))</warning>)) {
+      System.out.println("ok");
+    }
+  }
+
+  void testFlush(MyReader r) {
+    if(r.getValue().equals("abc")) {
+      r.readNext();
+      if(r.getValue().equals("abcd")) {
+        System.out.println("ok");
+      }
+    }
+  }
+
+  void testNoFlush(MyReader r) {
+    if(r.getValue().equals("abc")) {
+      if(<warning descr="Condition 'r.getValue().equals(\"abcd\")' is always 'false'">r.getValue().equals("abcd")</warning>) {
+        System.out.println("ok");
+      }
+    }
+  }
+
+  static class MyReader {
+    private String value = "";
+
+    final String getValue() {
+      return value;
+    }
+
+    void readNext() {
+      value = new Scanner(System.in).next();
     }
   }
 }

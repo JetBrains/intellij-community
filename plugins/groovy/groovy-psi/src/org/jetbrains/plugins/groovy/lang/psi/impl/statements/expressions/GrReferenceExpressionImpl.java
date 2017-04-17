@@ -53,11 +53,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
 
@@ -363,10 +363,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
 
-    for (GrExpressionTypeCalculator calculator : GrExpressionTypeCalculator.EP_NAME.getExtensions()) {
-      PsiType type = calculator.calculateType(refExpr, resolved);
-      if (type != null) return type;
-    }
+    PsiType typeFromCalculators = GrTypeCalculator.getTypeFromCalculators(refExpr);
+    if (typeFromCalculators != null) return typeFromCalculators;
 
     if (ResolveUtil.isClassReference(refExpr)) {
       GrExpression qualifier = refExpr.getQualifier();
@@ -527,7 +525,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     GroovyResolveResult[] results = multiResolve(false);
 
     for (GroovyResolveResult result : results) {
-      if (!result.isValidResult()) continue;
       PsiElement baseTarget = result.getElement();
       if (baseTarget == null) continue;
       if (getManager().areElementsEquivalent(element, baseTarget)) {

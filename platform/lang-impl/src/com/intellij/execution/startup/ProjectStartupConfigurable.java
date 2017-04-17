@@ -20,7 +20,6 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
@@ -220,20 +219,17 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        final ConfigurationType[] factories = runManager.getConfigurationFactories();
         final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
           private final RunnerRegistry myRegistry = RunnerRegistry.getInstance();
 
           @Override
           public boolean value(ConfigurationType configurationType) {
             ConfigurationFactory factory;
-            return !UnknownConfigurationType.INSTANCE.equals(configurationType) &&
-                   ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
+            return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
                    myRegistry.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
           }
         };
-        final List<ConfigurationType> factoriesList = ContainerUtil.filter(Arrays.asList(factories), filter);
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "",
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
                                                                           final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
                                                                           if (dialog.showAndGet()) {

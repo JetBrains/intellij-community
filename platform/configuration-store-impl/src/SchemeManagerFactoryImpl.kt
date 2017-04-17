@@ -46,7 +46,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                        roamingType: RoamingType,
                                                        isUseOldFileNameSanitize: Boolean,
                                                        streamProvider: StreamProvider?,
-                                                       directoryPath: Path?): SchemeManager<T> {
+                                                       directoryPath: Path?,
+                                                       autoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
@@ -56,8 +57,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     presentableName,
                                     isUseOldFileNameSanitize,
                                     componentManager?.messageBus)
-    @Suppress("UNCHECKED_CAST")
-    managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
+    if (autoSave) {
+      @Suppress("UNCHECKED_CAST")
+      managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
+    }
     return manager
   }
 

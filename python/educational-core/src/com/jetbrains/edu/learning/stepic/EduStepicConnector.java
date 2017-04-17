@@ -242,6 +242,8 @@ public class EduStepicConnector {
   }
 
   public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse remoteCourse) {
+    final List<Lesson> lessons = remoteCourse.getLessons(true);
+    if (!lessons.isEmpty()) return remoteCourse;
     if (!remoteCourse.isAdaptive()) {
       try {
         for (Integer section : remoteCourse.getSections()) {

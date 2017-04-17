@@ -18,7 +18,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -206,8 +205,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-    manager.removeConfiguration(configurationSettings);
+    RunManagerEx.getInstanceEx(project).removeConfiguration(configurationSettings);
   }
 
   @Override
@@ -981,36 +979,34 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
-    for (ConfigurationType type : manager.getConfigurationFactories()) {
-      if (!(type instanceof UnknownConfigurationType)) {
-        Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
-        for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-          if (entry.getValue().isEmpty()) {
-            continue;
-          }
+    for (ConfigurationType type : manager.getConfigurationFactoriesWithoutUnknown()) {
+      Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
+      for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
+        if (entry.getValue().isEmpty()) {
+          continue;
+        }
 
-          final String key = entry.getKey();
-          if (key != null) {
-            boolean isSelected = entry.getValue().contains(selectedConfiguration);
-            if (isSelected) {
-              assert selectedConfiguration != null;
-            }
-            FolderWrapper folderWrapper = new FolderWrapper(project, executorProvider,
-                                                            key + (isSelected ? "  (mnemonic is to \"" + selectedConfiguration.getName() + "\")" : ""),
-                                                            entry.getValue());
-            if (isSelected) {
-              folderWrapper.setMnemonic(1);
-            }
-            result.add(folderWrapper);
+        final String key = entry.getKey();
+        if (key != null) {
+          boolean isSelected = entry.getValue().contains(selectedConfiguration);
+          if (isSelected) {
+            assert selectedConfiguration != null;
           }
-          else {
-            for (RunnerAndConfigurationSettings configuration : entry.getValue()) {
-              final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
-              if (configuration == selectedConfiguration) {
-                wrapped.setMnemonic(1);
-              }
-              wrappedExisting.put(configuration, wrapped);
+          FolderWrapper folderWrapper = new FolderWrapper(project, executorProvider,
+                                                          key + (isSelected ? "  (mnemonic is to \"" + selectedConfiguration.getName() + "\")" : ""),
+                                                          entry.getValue());
+          if (isSelected) {
+            folderWrapper.setMnemonic(1);
+          }
+          result.add(folderWrapper);
+        }
+        else {
+          for (RunnerAndConfigurationSettings configuration : entry.getValue()) {
+            final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
+            if (configuration == selectedConfiguration) {
+              wrapped.setMnemonic(1);
             }
+            wrappedExisting.put(configuration, wrapped);
           }
         }
       }

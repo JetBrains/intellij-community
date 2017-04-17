@@ -869,10 +869,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     }
-    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT
-             && myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT)
-    {
-      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
+    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
+      if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
+        myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
+      }
+      else {
+        int lineFeeds = mySettings.CASE_STATEMENT_ON_NEW_LINE ? 1 : 0;
+        myResult = Spacing.createSpacing(1, 1, lineFeeds, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
     }
     else if (lhsStatement && rhsStatement) {
       int minSpaces = 0;

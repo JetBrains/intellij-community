@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
@@ -115,6 +116,18 @@ abstract class DiffTestCase : TestCase() {
     }
   }
 
+  fun assertSetsEquals(expected: BitSet, actual: BitSet, message: String = "") {
+    val sb = StringBuilder(message)
+    sb.append(": \"")
+    for (i in 0..actual.length()) {
+      sb.append(if (actual[i]) '-' else ' ')
+    }
+    sb.append('"')
+    val fullMessage = sb.toString()
+
+    assertEquals(expected, actual, fullMessage)
+  }
+
   //
   // Parsing
   //
@@ -140,7 +153,7 @@ abstract class DiffTestCase : TestCase() {
     return Math.max(1, document.lineCount)
   }
 
-  infix fun Int.until(a: Int): IntRange = this..a - 1
+  fun createFilePath(path: String) = LocalFilePath(path, path.endsWith('/') || path.endsWith('\\'))
 
   //
   // AutoTests
@@ -210,7 +223,7 @@ abstract class DiffTestCase : TestCase() {
     }
   }
 
-  class DebugData() {
+  class DebugData {
     private val data: MutableList<Pair<String, Any>> = ArrayList()
 
     fun put(key: String, value: Any) {

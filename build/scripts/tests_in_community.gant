@@ -17,6 +17,10 @@ import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.jps.idea.IdeaProjectLoader
 
+/**
+ * Compiles the sources and runs tests from 'community' project. Look at org.jetbrains.intellij.build.TestingOptions to see which options are
+ * supported.
+ */
 target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)
   String outputDir = "$home/out/tests"

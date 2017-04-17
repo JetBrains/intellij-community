@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,7 +269,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean USE_FQ_CLASS_NAMES;
-  
+
+  /** @deprecated use com.intellij.psi.codeStyle.JavaCodeStyleSettings.CLASS_NAMES_IN_JAVADOC */
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;

@@ -58,7 +58,10 @@ public class AllIcons {
     public static final Icon CreatePatch = IconLoader.getIcon("/actions/createPatch.png"); // 16x16
     public static final Icon Cross = IconLoader.getIcon("/actions/cross.png"); // 12x12
     public static final Icon Delete = IconLoader.getIcon("/actions/delete.png"); // 16x16
+    public static final Icon DiagramDiff = IconLoader.getIcon("/actions/diagramDiff.png"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.png"); // 16x16
+    public static final Icon DiffPreview = IconLoader.getIcon("/actions/diffPreview.png"); // 16x16
+    public static final Icon DiffWithClipboard = IconLoader.getIcon("/actions/diffWithClipboard.png"); // 16x16
     public static final Icon DiffWithCurrent = IconLoader.getIcon("/actions/diffWithCurrent.png"); // 16x16
     public static final Icon Down = IconLoader.getIcon("/actions/down.png"); // 16x16
     public static final Icon Download = IconLoader.getIcon("/actions/download.png"); // 16x16
@@ -96,6 +99,7 @@ public class AllIcons {
     public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.png"); // 16x16
     public static final Icon Left = IconLoader.getIcon("/actions/left.png"); // 16x16
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.png"); // 16x16
+    public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.png"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.png"); // 16x16
     public static final Icon Menu_find = IconLoader.getIcon("/actions/menu-find.png"); // 16x16
     public static final Icon Menu_help = IconLoader.getIcon("/actions/menu-help.png"); // 16x16
@@ -339,7 +343,16 @@ public class AllIcons {
     public static final Icon ArrowRight = IconLoader.getIcon("/diff/arrowRight.png"); // 11x11
     public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.png"); // 11x11
     public static final Icon BranchDiff = IconLoader.getIcon("/diff/branchDiff.png"); // 16x16
+    public static final Icon Compare4LeftBottom = IconLoader.getIcon("/diff/compare4LeftBottom.png"); // 16x16
+    public static final Icon Compare4LeftMiddle = IconLoader.getIcon("/diff/compare4LeftMiddle.png"); // 16x16
+    public static final Icon Compare4LeftRight = IconLoader.getIcon("/diff/compare4LeftRight.png"); // 16x16
+    public static final Icon Compare4MiddleBottom = IconLoader.getIcon("/diff/compare4MiddleBottom.png"); // 16x16
+    public static final Icon Compare4MiddleRight = IconLoader.getIcon("/diff/compare4MiddleRight.png"); // 16x16
+    public static final Icon Compare4RightBottom = IconLoader.getIcon("/diff/compare4RightBottom.png"); // 16x16
     public static final Icon CurrentLine = IconLoader.getIcon("/diff/currentLine.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
     public static final Icon LeftDiff = IconLoader.getIcon("/diff/leftDiff.png"); // 16x16
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.png"); // 12x12
@@ -1248,7 +1261,6 @@ public class AllIcons {
   }
   
   public static class Vcs {
-    public static final Icon AllRevisions = IconLoader.getIcon("/vcs/allRevisions.png"); // 16x16
     public static final Icon Arrow_left = IconLoader.getIcon("/vcs/arrow_left.png"); // 16x16
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16

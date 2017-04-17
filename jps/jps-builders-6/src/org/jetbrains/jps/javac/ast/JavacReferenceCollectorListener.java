@@ -196,7 +196,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
-                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, myNameTableCache));
+                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache));
               }
             }
           }
@@ -213,7 +213,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     for (Element element = baseImport;
          element != null && element.getKind() != ElementKind.PACKAGE;
          element = element.getEnclosingElement()) {
-      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache));
+      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache));
     }
   }
 
@@ -243,13 +243,18 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     @Nullable
     JavacRef.JavacElementRefBase asJavacRef(Element element) {
-      return JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache);
+      return asJavacRef(element, null);
+    }
+
+    @Nullable
+    JavacRef.JavacElementRefBase asJavacRef(Element element, Element qualifier) {
+      return JavacRef.JavacElementRefBase.fromElement(element, qualifier, myNameTableCache);
     }
 
     @Nullable
     JavacRef.JavacElementRefBase asJavacRef(TypeMirror typeMirror) {
       final Element element = getTypeUtility().asElement(typeMirror);
-      return element == null ? null : JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache);
+      return element == null ? null : JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache);
     }
 
     Element getReferencedElement(Tree tree) {

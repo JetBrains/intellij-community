@@ -341,24 +341,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   public static String getRequestTitle(@NotNull Change change) {
     ContentRevision bRev = change.getBeforeRevision();
     ContentRevision aRev = change.getAfterRevision();
-
-    assert bRev != null || aRev != null;
-    if (bRev != null && aRev != null) {
-      FilePath bPath = bRev.getFile();
-      FilePath aPath = aRev.getFile();
-      if (bPath.equals(aPath)) {
-        return DiffRequestFactoryImpl.getContentTitle(bPath);
-      }
-      else {
-        return DiffRequestFactoryImpl.getTitle(bPath, aPath, " -> ");
-      }
-    }
-    else if (bRev != null) {
-      return DiffRequestFactoryImpl.getContentTitle(bRev.getFile());
-    }
-    else {
-      return DiffRequestFactoryImpl.getContentTitle(aRev.getFile());
-    }
+    FilePath bPath = bRev != null ? bRev.getFile() : null;
+    FilePath aPath = aRev != null ? aRev.getFile() : null;
+    return DiffRequestFactoryImpl.getTitle(bPath, aPath, " -> ");
   }
 
   @NotNull

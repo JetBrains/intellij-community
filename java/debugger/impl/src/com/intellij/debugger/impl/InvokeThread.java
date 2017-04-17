@@ -133,6 +133,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
+    String oldThreadName = Thread.currentThread().getName();
+    Thread.currentThread().setName("DebuggerManagerThread");
+
     try {
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       while(true) {
@@ -183,6 +186,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
       LOG.debug("Request " + toString() + " exited");
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
+      Thread.currentThread().setName(oldThreadName);
     }
 
   }

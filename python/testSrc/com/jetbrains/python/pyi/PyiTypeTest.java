@@ -113,4 +113,9 @@ public class PyiTypeTest extends PyTestCase {
   public void testOverloadedReturnType() {
     doTest("str");
   }
+
+  // PY-22808
+  public void testOverloadedNotMatchedType() {
+    doTest("Union[list, Any]");
+  }
 }

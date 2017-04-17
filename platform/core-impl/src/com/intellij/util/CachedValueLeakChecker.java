@@ -43,7 +43,6 @@ class CachedValueLeakChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.CachedValueChecker");
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
   private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
-  private static final boolean JAVA9 = SystemInfo.isJavaVersionAtLeast("9");
 
   static void checkProvider(@NotNull final CachedValueProvider provider,
                             @NotNull final Key key,
@@ -51,7 +50,7 @@ class CachedValueLeakChecker {
     if (!DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;
     if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
 
-    if (!JAVA9) {
+    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
       findReferencedPsi(provider, userDataHolder, 5);
     }
   }

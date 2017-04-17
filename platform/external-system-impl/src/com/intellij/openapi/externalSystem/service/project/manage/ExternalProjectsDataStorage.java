@@ -19,7 +19,10 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
@@ -35,7 +38,8 @@ import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -105,7 +109,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       final DataNode<ProjectData> projectStructure = externalProjectInfo.getExternalProjectStructure();
       if (projectStructure == null) return false;
 
-      ProjectDataManager.getInstance().ensureTheDataIsReadyToUse(projectStructure);
+      ProjectDataManagerImpl.getInstance().ensureTheDataIsReadyToUse(projectStructure);
       return externalProjectInfo.getExternalProjectPath().equals(projectStructure.getData().getLinkedExternalProjectPath());
     }
     catch (Exception e) {
@@ -262,7 +266,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
         if (linkedProjectSettings != null && ContainerUtil.isEmpty(linkedProjectSettings.getModules())) {
 
           final Set<String> modulePaths = ContainerUtil.map2Set(
-            ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE),
+            ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), MODULE),
             node -> node.getData().getLinkedExternalProjectPath());
           linkedProjectSettings.setModules(modulePaths);
         }

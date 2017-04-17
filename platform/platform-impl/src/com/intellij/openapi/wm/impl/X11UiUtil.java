@@ -337,7 +337,7 @@ public class X11UiUtil {
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
-      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = frame.getPeer();
       long window = (Long)X11.getWindow.invoke(peer);
       long[] values = X11.getLongArrayProperty(window, name, XA_ATOM);
       if (values != null) {
@@ -357,7 +357,7 @@ public class X11UiUtil {
     if (X11 == null) return;
 
     try {
-      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = frame.getPeer();
       long window = (Long)X11.getWindow.invoke(peer);
       long screen = (Long)X11.getScreenNumber.invoke(peer);
       long rootWindow = X11.getRootWindow(screen);

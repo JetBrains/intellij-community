@@ -56,7 +56,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -71,6 +74,7 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -1876,6 +1880,11 @@ public class UsageViewImpl implements UsageView {
 
   public GroupNode getRoot() {
     return myRoot;
+  }
+
+  @TestOnly
+  public String getNodeText(TreeNode node) {
+    return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }
 
   public boolean isVisible(@NotNull Usage usage) {

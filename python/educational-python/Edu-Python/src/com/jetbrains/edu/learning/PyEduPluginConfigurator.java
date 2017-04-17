@@ -7,7 +7,10 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -22,6 +25,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
+import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,5 +153,28 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   @Override
   public EduCourseProjectGenerator getEduCourseProjectGenerator() {
     return new PyStudyDirectoryProjectGenerator();
+  }
+
+  public ModuleType getModuleType() {
+    return PythonModuleTypeBase.getInstance();
+  }
+
+  @Override
+  public void configureModule(@NotNull Module module) {
+    final Project project = module.getProject();
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+      final VirtualFile baseDir = project.getBaseDir();
+      final String testHelper = EduNames.TEST_HELPER;
+      if (baseDir.findChild(testHelper) != null) return;
+      final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
+      final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
+      if (projectDir == null) return;
+      try {
+        FileTemplateUtil.createFromTemplate(template, testHelper, null, projectDir);
+      }
+      catch (Exception exception) {
+        LOG.error("Can't copy test_helper.py " + exception.getMessage());
+      }
+    });
   }
 }

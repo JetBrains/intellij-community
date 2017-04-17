@@ -249,6 +249,7 @@ public abstract class AbstractValueHint {
 
   protected JComponent createExpandableHintComponent(final SimpleColoredText text, final Runnable expand) {
     final JComponent component = HintUtil.createInformationLabel(text, IconUtil.getAddIcon());
+    component.setCursor(hintCursor());
     addClickListenerToHierarchy(component, new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {

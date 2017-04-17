@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
@@ -29,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
-import static com.intellij.psi.JavaTokenType.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 /**
@@ -84,10 +84,10 @@ public class CustomMethodHandlers {
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ends ? leftConst.endsWith(rightConst) : leftConst.startsWith(rightConst)));
     }
-    DfaValue leftLength = memState.getStringLength(qualifier);
-    DfaValue rightLength = memState.getStringLength(arg);
-    DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, GE, false);
-    DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, LT, false);
+    DfaValue leftLength = factory.createStringLength(qualifier);
+    DfaValue rightLength = factory.createStringLength(arg);
+    DfaValue trueRelation = factory.createCondition(leftLength, RelationType.GE, rightLength);
+    DfaValue falseRelation = factory.createCondition(leftLength, RelationType.LT, rightLength);
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
   }
 
@@ -103,30 +103,30 @@ public class CustomMethodHandlers {
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ignoreCase ? leftConst.equalsIgnoreCase(rightConst) : leftConst.equals(rightConst)));
     }
-    DfaValue leftLength = memState.getStringLength(qualifier);
-    DfaValue rightLength = memState.getStringLength(arg);
-    DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, EQ, false);
-    DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, NE, false);
+    DfaValue leftLength = factory.createStringLength(qualifier);
+    DfaValue rightLength = factory.createStringLength(arg);
+    DfaValue trueRelation = factory.createCondition(leftLength, RelationType.EQ, rightLength);
+    DfaValue falseRelation = factory.createCondition(leftLength, RelationType.NE, rightLength);
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
   }
 
   private static List<DfaMemoryState> stringIndexOf(DfaValue qualifier,
                                                     DfaMemoryState memState,
                                                     DfaValueFactory factory) {
-    DfaValue length = memState.getStringLength(qualifier);
+    DfaValue length = factory.createStringLength(qualifier);
     LongRangeSet range = memState.getRange(length);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
     return singleResult(memState, factory.getRangeFactory().create(LongRangeSet.range(-1, maxLen - 1)));
   }
 
   private static List<DfaMemoryState> stringIsEmpty(DfaValue qualifier, DfaMemoryState memState, DfaValueFactory factory) {
-    DfaValue length = memState.getStringLength(qualifier);
+    DfaValue length = factory.createStringLength(qualifier);
     if (length == DfaUnknownValue.getInstance()) {
       return singleResult(memState, DfaUnknownValue.getInstance());
     }
     DfaConstValue zero = factory.getConstFactory().createFromValue(0, PsiType.INT, null);
-    DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(length, zero, EQEQ, false);
-    DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(length, zero, NE, false);
+    DfaValue trueRelation = factory.createCondition(length, RelationType.EQ, zero);
+    DfaValue falseRelation = factory.createCondition(length, RelationType.NE, zero);
     return applyCondition(memState, trueRelation, factory.getBoolean(true), falseRelation, factory.getBoolean(false));
   }
 
@@ -156,17 +156,17 @@ public class CustomMethodHandlers {
 
   @NotNull
   private static List<DfaMemoryState> applyCondition(DfaMemoryState memState,
-                                                     DfaRelationValue trueRelation,
+                                                     DfaValue trueCondition,
                                                      DfaValue trueResult,
-                                                     DfaRelationValue falseRelation,
+                                                     DfaValue falseCondition,
                                                      DfaValue falseResult) {
     DfaMemoryState falseState = memState.createCopy();
     List<DfaMemoryState> result = new ArrayList<>(2);
-    if (memState.applyCondition(trueRelation)) {
+    if (memState.applyCondition(trueCondition)) {
       memState.push(trueResult);
       result.add(memState);
     }
-    if (falseState.applyCondition(falseRelation)) {
+    if (falseState.applyCondition(falseCondition)) {
       falseState.push(falseResult);
       result.add(falseState);
     }

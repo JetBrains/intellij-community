@@ -38,7 +38,7 @@ public class KeyboardInternationalizationNotificationManager {
   private KeyboardInternationalizationNotificationManager() {
   }
 
-  public static void showNotification() {
+/*  public static void showNotification() {
 
     Window mostRecentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
     if (notificationHasBeenShown || (mostRecentFocusedWindow != null && !KeyboardSettingsExternalizable.isSupportedKeyboardLayout(mostRecentFocusedWindow))) return;
@@ -48,9 +48,9 @@ public class KeyboardInternationalizationNotificationManager {
 
     Notifications.Bus.notify(createNotification(LOCALIZATION_GROUP_DISPLAY_ID, listener));
     notificationHasBeenShown = true;
-  }
+  }*/
 
-  public static Notification createNotification(@NotNull final String groupDisplayId, @Nullable NotificationListener listener) {
+/*  public static Notification createNotification(@NotNull final String groupDisplayId, @Nullable NotificationListener listener) {
 
     Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
@@ -71,7 +71,7 @@ public class KeyboardInternationalizationNotificationManager {
                             text,
                             NotificationType.INFORMATION,
                             listener);
-  }
+  }*/
 
   private static class MyNotificationListener implements NotificationListener {
 

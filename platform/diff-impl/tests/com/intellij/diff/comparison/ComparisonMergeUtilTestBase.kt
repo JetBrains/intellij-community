@@ -73,12 +73,12 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     val sets = Trio(BitSet(), BitSet(), BitSet())
 
     for (change in changes) {
-      sets.forEach({ set: BitSet, side: ThreeSide -> set.set(change.start(side), change.end(side)) })
+      sets.forEach { set: BitSet, side: ThreeSide -> set.set(change.start(side), change.end(side)) }
     }
 
-    assertEquals(matchings.data1, sets.data1)
-    assertEquals(matchings.data2, sets.data2)
-    assertEquals(matchings.data3, sets.data3)
+    assertSetsEquals(matchings.data1, sets.data1, "Left")
+    assertSetsEquals(matchings.data2, sets.data2, "Base")
+    assertSetsEquals(matchings.data3, sets.data3, "Right")
   }
 
   private fun convertDiffFragments(fragments: List<MergeRange>): List<Change> {

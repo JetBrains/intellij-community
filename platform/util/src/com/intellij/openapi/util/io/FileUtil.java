@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1193,12 +1193,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name) {
     return sanitizeFileName(name, true);
   }
-
-  /** @deprecated use {@link #sanitizeFileName(String, boolean)} (to be removed in IDEA 17) */
-  public static String sanitizeName(@NotNull String name) {
-    return sanitizeFileName(name, false);
-  }
-
+  
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     StringBuilder result = null;

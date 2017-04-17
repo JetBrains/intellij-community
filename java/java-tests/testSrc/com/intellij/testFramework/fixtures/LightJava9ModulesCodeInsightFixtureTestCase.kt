@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,5 +30,8 @@ abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightCodeInsightFix
   }
 
   protected fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
-      VfsTestUtil.createFile(module.root(), path, text)
+    VfsTestUtil.createFile(module.root(), path, text)
+
+  protected fun addTestFile(path: String, text: String): VirtualFile =
+    VfsTestUtil.createFile(MAIN.testRoot()!!, path, text)
 }

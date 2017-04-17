@@ -75,15 +75,18 @@ class PluginLayout extends BaseLayout {
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
     /**
-     * Name of the directory (under 'plugins' directory) where the plugin should be placed
+     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used.
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String directoryName
     /**
-     * Name of the main plugin JAR file
+     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used.
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String mainJarName
     /**
-     * Version of the plugin if it differs from the global build number
+     * Version of the plugin if it differs from the global build number.
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
      */
     String version
 

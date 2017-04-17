@@ -64,6 +64,7 @@ import java.util.*;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
+  @SuppressWarnings("RedundantStringConstructorCall")
   static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;

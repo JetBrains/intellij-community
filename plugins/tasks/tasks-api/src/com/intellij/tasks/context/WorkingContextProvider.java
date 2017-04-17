@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class WorkingContextProvider {
-
   public static final ExtensionPointName<WorkingContextProvider> EP_NAME = ExtensionPointName.create("com.intellij.tasks.contextProvider");
 
   /**
@@ -52,9 +47,10 @@ public abstract class WorkingContextProvider {
    * May delegate to {@link com.intellij.openapi.util.JDOMExternalizable#writeExternal(org.jdom.Element)}
    * @param toElement
    */
-  public abstract void saveContext(Element toElement) throws WriteExternalException;
+  public abstract void saveContext(Element toElement);
 
-  public abstract void loadContext(Element fromElement) throws InvalidDataException;
+  public abstract void loadContext(Element fromElement);
 
-  public abstract void clearContext();
+  public void clearContext() {
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -485,8 +485,12 @@ public class CompilerManagerImpl extends CompilerManager {
     public byte[] getContent() {
       return myBytes;
     }
-  }
 
+    @Override
+    public String toString() {
+      return getClassName();
+    }
+  }
 
   private class ListenerNotificator implements CompileStatusNotification {
     private final @Nullable CompileStatusNotification myDelegate;

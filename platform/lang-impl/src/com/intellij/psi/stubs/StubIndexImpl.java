@@ -344,6 +344,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
                                        @Nullable final GlobalSearchScope scope,
                                        @NotNull StubIdListContainerAction action) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);

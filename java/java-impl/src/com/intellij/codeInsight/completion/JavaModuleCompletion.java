@@ -30,8 +30,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.completion.BasicExpressionCompletionContributor.createKeywordLookupItem;
@@ -110,12 +112,18 @@ class JavaModuleCompletion {
         Project project = context.getProject();
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
+        Set<String> candidateNames = new THashSet<>();
         index.processAllKeys(project, name -> {
-          if (!name.equals(hostName) && index.get(name, project, scope).size() == 1) {
-            result.consume(new OverrideableSpace(LookupElementBuilder.create(name), TailType.SEMICOLON));
+          if (!name.equals(hostName)) {
+            candidateNames.add(name);
           }
           return true;
         });
+        for(String candidateName:candidateNames) {
+          if(index.get(candidateName, project, scope).size() == 1) {
+            result.consume(new OverrideableSpace(LookupElementBuilder.create(candidateName), TailType.SEMICOLON));
+          }
+        }
       }
     }
   }

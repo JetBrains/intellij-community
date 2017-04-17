@@ -31,7 +31,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,7 +38,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -269,46 +267,42 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
-      @Override
-      @Nullable
-      public Collection<VirtualFile> compute() {
-        final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
+    return ReadAction.compute(() -> {
+      final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Found "+ classes.length + " classes " + topLevelClassName + " in scope "+scope);
+      }
+      if (classes.length == 0) {
+        return null;
+      }
+      final List<VirtualFile> list = new ArrayList<>(classes.length);
+      for (PsiClass aClass : classes) {
+        final PsiFile psiFile = aClass.getContainingFile();
+
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Found "+ classes.length + " classes " + topLevelClassName + " in scope "+scope);
+          final StringBuilder msg = new StringBuilder();
+          msg.append("Checking class ").append(aClass.getQualifiedName());
+          msg.append("\n\t").append("PsiFile=").append(psiFile);
+          if (psiFile != null) {
+            final VirtualFile vFile = psiFile.getVirtualFile();
+            msg.append("\n\t").append("VirtualFile=").append(vFile);
+            if (vFile != null) {
+              msg.append("\n\t").append("isInSourceContent=").append(fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES));
+            }
+          }
+          LOG.debug(msg.toString());
         }
-        if (classes.length == 0) {
+
+        if (psiFile == null) {
           return null;
         }
-        final List<VirtualFile> list = new ArrayList<>(classes.length);
-        for (PsiClass aClass : classes) {
-          final PsiFile psiFile = aClass.getContainingFile();
-          
-          if (LOG.isDebugEnabled()) {
-            final StringBuilder msg = new StringBuilder();
-            msg.append("Checking class ").append(aClass.getQualifiedName());
-            msg.append("\n\t").append("PsiFile=").append(psiFile);
-            if (psiFile != null) {
-              final VirtualFile vFile = psiFile.getVirtualFile();
-              msg.append("\n\t").append("VirtualFile=").append(vFile);
-              if (vFile != null) {
-                msg.append("\n\t").append("isInSourceContent=").append(fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES));
-              }
-            }
-            LOG.debug(msg.toString());
-          }
-          
-          if (psiFile == null) {
-            return null;
-          }
-          final VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile == null || !fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES)) {
-            return null; // this will switch off the check if at least one class is from libraries
-          }
-          list.add(vFile);
+        final VirtualFile vFile = psiFile.getVirtualFile();
+        if (vFile == null || !fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES)) {
+          return null; // this will switch off the check if at least one class is from libraries
         }
-        return list;
+        list.add(vFile);
       }
+      return list;
     });
   }
 

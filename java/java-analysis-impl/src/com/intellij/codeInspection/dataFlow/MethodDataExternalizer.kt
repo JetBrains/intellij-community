@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
   }
   private fun readContract(input: DataInput): PreContract = when (input.readByte().toInt()) {
     0 -> DelegationContract(readRange(input), input.readBoolean())
-    1 -> KnownContract(MethodContract(readContractArguments(input).toTypedArray(), readValueConstraint(input)))
+    1 -> KnownContract(StandardMethodContract(readContractArguments(input).toTypedArray(), readValueConstraint(input)))
     2 -> MethodCallContract(readRange(input), readSeq(input) { readContractArguments(input) })
     3 -> NegatingContract(readContract(input))
     else -> SideEffectFilter(readRanges(input), readSeq(input) { readContract(input) })

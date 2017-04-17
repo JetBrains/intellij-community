@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,42 +17,31 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 /**
  * @author ilyas
  */
 public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
-  private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
   private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
   private volatile GrExpression[] myInitializers;
@@ -99,7 +88,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, GrTypeCalculator::getTypeFromCalculators);
   }
 
   @Override
@@ -160,86 +149,5 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   public void subtreeChanged() {
     myInitializers = null;
     myNamedArguments = null;
-  }
-
-  private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {
-    @Override
-    @Nullable
-    public PsiType fun(GrListOrMapImpl listOrMap) {
-      if (listOrMap.isMap()) {
-        return inferMapInitializerType(listOrMap);
-      }
-
-      PsiElement parent = listOrMap.getParent();
-      if (parent.getParent() instanceof GrVariableDeclaration) {
-        GrTypeElement typeElement = ((GrVariableDeclaration)parent.getParent()).getTypeElementGroovy();
-        if (typeElement != null) {
-          PsiType declaredType = typeElement.getType();
-          if (declaredType instanceof PsiArrayType) return declaredType;
-        }
-      }
-
-      return getTupleType(listOrMap.getInitializers(), listOrMap);
-    }
-
-    @Nullable
-    private static PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap) {
-      GrNamedArgument[] namedArgs = listOrMap.getNamedArguments();
-
-      if (namedArgs.length == 0) {
-        PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond(listOrMap);
-
-        if (lType instanceof PsiClassType && InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_MAP)) {
-          GlobalSearchScope scope = listOrMap.getResolveScope();
-          JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
-          PsiClass hashMap = facade.findClass(GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope);
-          if (hashMap != null) {
-            PsiSubstitutor mapSubstitutor = PsiSubstitutor.EMPTY.
-              put(hashMap.getTypeParameters()[0], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType,  CommonClassNames.JAVA_UTIL_MAP, 0, false)).
-              put(hashMap.getTypeParameters()[1], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType,  CommonClassNames.JAVA_UTIL_MAP, 1, false));
-            return facade.getElementFactory().createType(hashMap, mapSubstitutor);
-          }
-        }
-      }
-
-      return GrMapType.createFromNamedArgs(listOrMap, namedArgs);
-    }
-
-
-    private static PsiClassType getTupleType(final GrExpression[] initializers, GrListOrMap listOrMap) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
-      GlobalSearchScope scope = listOrMap.getResolveScope();
-
-      if (initializers.length == 0) {
-        PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond(listOrMap);
-
-        if (lType instanceof PsiClassType && InheritanceUtil.isInheritor(lType, CommonClassNames.JAVA_UTIL_LIST)) {
-          PsiClass arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, scope);
-          if (arrayList == null) arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, scope);
-          if (arrayList != null) {
-            PsiSubstitutor arrayListSubstitutor = PsiSubstitutor.EMPTY.
-              put(arrayList.getTypeParameters()[0], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_LIST, 0, false));
-            return facade.getElementFactory().createType(arrayList, arrayListSubstitutor);
-          }
-        }
-      }
-
-      return new GrTupleType(scope, facade) {
-        @NotNull
-        @Override
-        protected PsiType[] inferComponents() {
-          return ContainerUtil.map(initializers, expression -> RecursionManager.doPreventingRecursion(expression, false,
-                                                                                                      () -> TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope)), new PsiType[initializers.length]);
-        }
-
-        @Override
-        public boolean isValid() {
-          for (GrExpression initializer : initializers) {
-            if (!initializer.isValid()) return false;
-          }
-          return true;
-        }
-      };
-    }
   }
 }

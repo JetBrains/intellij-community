@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.EXCEPT_CARET_REGION;
 import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.NO;
@@ -54,7 +54,7 @@ import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.A
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
-  private static final Key<ParameterizedCachedValue<Runnable, Couple<Boolean>>> CODE_FOLDING_KEY = Key.create("code folding");
+  static final Key<ParameterizedCachedValue<Runnable, Boolean>> CODE_FOLDING_KEY = Key.create("code folding");
   private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
@@ -79,7 +79,7 @@ public class FoldingUpdate {
       currentFileExtension = virtualFile.getExtension();
     }
 
-    ParameterizedCachedValue<Runnable, Couple<Boolean>> value = editor.getUserData(CODE_FOLDING_KEY);
+    ParameterizedCachedValue<Runnable, Boolean> value = editor.getUserData(CODE_FOLDING_KEY);
     if (value != null) {
       // There was a problem that old fold regions have been cached on file extension change (e.g. *.java -> *.groovy).
       // We want to drop them in such circumstances.
@@ -91,15 +91,15 @@ public class FoldingUpdate {
     }
     editor.putUserData(CODE_FOLDING_FILE_EXTENSION_KEY, currentFileExtension);
     
-    if (value != null && value.hasUpToDateValue() && !applyDefaultState) return null;
+    if (value != null && value.hasUpToDateValue() && !applyDefaultState) return value.getValue(null); // param shouldn't matter, as the value is up-to-date
     if (quick) return getUpdateResult(file, document, true, project, editor, applyDefaultState).getValue();
     
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(
       editor, CODE_FOLDING_KEY, param -> {
         Document document1 = editor.getDocument();
         PsiFile file1 = PsiDocumentManager.getInstance(project).getPsiFile(document1);
-        return getUpdateResult(file1, document1, param.first, project, editor, param.second);
-      }, false, Couple.of(false, applyDefaultState));
+        return getUpdateResult(file1, document1, false, project, editor, param);
+      }, false, applyDefaultState);
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,
@@ -113,12 +113,17 @@ public class FoldingUpdate {
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap,
                                                                                 applyDefaultState ? EXCEPT_CARET_REGION : NO, 
                                                                                 !applyDefaultState, false);
-    Runnable runnable = () -> editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+    AtomicBoolean alreadyExecuted = new AtomicBoolean();
+    Runnable runnable = () -> {
+      if (alreadyExecuted.compareAndSet(false, true)) {
+        editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+      }
+    };
     Set<Object> dependencies = new HashSet<>();
     dependencies.add(document);
     dependencies.add(editor.getFoldingModel());
-    for (FoldingDescriptor descriptor : elementsToFoldMap.values()) {
-      dependencies.addAll(descriptor.getDependencies());
+    for (RegionInfo info : elementsToFoldMap.values()) {
+      dependencies.addAll(info.descriptor.getDependencies());
     }
     return CachedValueProvider.Result.create(runnable, ArrayUtil.toObjectArray(dependencies));
   }
@@ -243,7 +248,8 @@ public class FoldingUpdate {
             diagnoseIncorrectRange(psi, document, language, foldingBuilder, descriptor, psiElement);
             continue;
           }
-          elementsToFoldMap.putValue(psiElement, descriptor);
+          RegionInfo regionInfo = new RegionInfo(descriptor, psiElement);
+          elementsToFoldMap.putValue(psiElement, regionInfo);
         }
       }
     }
@@ -264,7 +270,7 @@ public class FoldingUpdate {
                                : Attachment.EMPTY_ARRAY);
   }
 
-  static class FoldingMap extends MultiMap<PsiElement, FoldingDescriptor>{
+  static class FoldingMap extends MultiMap<PsiElement, RegionInfo>{    
     FoldingMap() {
     }
 
@@ -274,14 +280,30 @@ public class FoldingUpdate {
     
     @NotNull
     @Override
-    protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {
+    protected Map<PsiElement, Collection<RegionInfo>> createMap() {
       return new TreeMap<>(COMPARE_BY_OFFSET_REVERSED);
     }
 
     @NotNull
     @Override
-    protected Collection<FoldingDescriptor> createCollection() {
+    protected Collection<RegionInfo> createCollection() {
       return new ArrayList<>(1);
+    }
+  }
+
+  static class RegionInfo {
+    @NotNull
+    public final FoldingDescriptor descriptor;
+    public final boolean collapsedByDefault;
+
+    private RegionInfo(@NotNull FoldingDescriptor descriptor, @NotNull PsiElement psiElement) {
+      this.descriptor = descriptor;
+      this.collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
+    }
+
+    @Override
+    public String toString() {
+      return descriptor + ", collapsedByDefault=" + collapsedByDefault;
     }
   }
 }

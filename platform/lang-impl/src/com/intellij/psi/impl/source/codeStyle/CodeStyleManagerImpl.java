@@ -883,10 +883,21 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public int getSpacing(@NotNull PsiFile file, int offset) {
+    FormattingModel model = createFormattingModel(file);
+    return model == null ? -1 : FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+  }
+
+  @Override
+  public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
+    FormattingModel model = createFormattingModel(file);
+    return model == null ? -1 : FormatterEx.getInstance().getMinLineFeedsBeforeBlockAtOffset(model, offset);
+  }
+
+  @Nullable
+  private static FormattingModel createFormattingModel(@NotNull PsiFile file) {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder == null) return -1;
+    if (builder == null) return null;
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-    FormattingModel model = builder.createModel(file, settings);
-    return FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+    return builder.createModel(file, settings);
   }
 }

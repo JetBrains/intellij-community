@@ -115,19 +115,24 @@ public class HgRefManager implements VcsLogRefManager {
   @Override
   public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
-    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
+
+    List<VcsRef> headAndTip = ContainerUtil.newArrayList();
+    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, ref -> {
+      if (ref.getType().equals(HEAD) || ref.getType().equals(TIP)) {
+        headAndTip.add(ref);
+        return null;
+      }
+      return ref.getType();
+    });
 
     List<RefGroup> result = ContainerUtil.newArrayList();
-
-    List<Map.Entry<VcsRefType, Collection<VcsRef>>> headAndTip =
-      ContainerUtil.filter(groupedRefs.entrySet(), entry -> entry.getKey().equals(HEAD) || entry.getKey().equals(TIP));
-    headAndTip.forEach(entry -> groupedRefs.remove(entry.getKey()));
-
     SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
-
     RefGroup firstGroup = ContainerUtil.getFirstItem(result);
     if (firstGroup != null) {
-      firstGroup.getRefs().addAll(0, headAndTip.stream().flatMap(entry -> entry.getValue().stream()).collect(Collectors.toList()));
+      firstGroup.getRefs().addAll(0, headAndTip);
+    }
+    else {
+      result.add(new SimpleRefGroup("", headAndTip));
     }
 
     return result;

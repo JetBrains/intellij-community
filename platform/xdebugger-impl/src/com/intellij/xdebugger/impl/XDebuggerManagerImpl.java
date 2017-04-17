@@ -48,6 +48,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -261,6 +262,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   private void onActiveSessionChanged() {
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
+    ValueLookupManager.getInstance(myProject).hideHint();
   }
 
   @Override

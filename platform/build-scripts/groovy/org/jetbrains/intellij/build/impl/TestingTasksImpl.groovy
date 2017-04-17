@@ -50,6 +50,7 @@ class TestingTasksImpl extends TestingTasks {
     else {
       compilationTasks.compileAllModulesAndTests()
     }
+    setupTestingDependencies()
 
     def mainModule = options.mainModule ?: defaultMainModule
     List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
@@ -88,8 +89,8 @@ class TestingTasksImpl extends TestingTasks {
       "idea.home.path"                         : context.paths.projectHome,
       "idea.config.path"                       : "$tempDir/config".toString(),
       "idea.system.path"                       : "$tempDir/system".toString(),
-      "idea.test.patterns"                     : options.testPatterns,
-      "idea.test.group"                        : options.testGroup,
+      "intellij.build.test.patterns"           : options.testPatterns,
+      "intellij.build.test.groups"             : options.testGroups,
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "bootstrap.testcases"                    : "com.intellij.AllTests",
@@ -133,7 +134,7 @@ class TestingTasksImpl extends TestingTasks {
       suspendDebugProcess = false
     }
 
-    context.messages.info("Starting ${options.testGroup != null ? "test from groups '$options.testGroup'" : "all tests"}")
+    context.messages.info("Starting ${options.testGroups != null ? "test from groups '$options.testGroups'" : "all tests"}")
     context.messages.info("JVM options: $jvmArgs")
     context.messages.info("System properties: $systemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
@@ -169,6 +170,14 @@ class TestingTasksImpl extends TestingTasks {
       }
 
       test(name: 'com.intellij.tests.BootstrapTests')
+    }
+  }
+  
+  static boolean dependenciesInstalled
+  private def setupTestingDependencies() {
+    if (!dependenciesInstalled) {
+      dependenciesInstalled = true
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
     }
   }
 

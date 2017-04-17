@@ -218,13 +218,6 @@
     </intentionAction>
 
     <!-- Imports -->
-
-    <intentionAction>
-      <className>com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.imports</categoryKey>
-    </intentionAction>
-
     <intentionAction>
       <className>com.siyeh.ipp.imports.ReplaceOnDemandImportIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>

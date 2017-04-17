@@ -169,13 +169,19 @@ public class CompilerBackwardReferenceIndex {
     try {
       final DataInputStream is = new DataInputStream(new FileInputStream(versionFile));
       try {
-        return is.readInt() != CompilerIndices.VERSION;
+        int currentIndexVersion = is.readInt();
+        boolean isDiffer = currentIndexVersion != CompilerIndices.VERSION;
+        if (isDiffer) {
+          LOG.info("backward reference index version differ, expected = " + CompilerIndices.VERSION + ", current = " + currentIndexVersion);
+        }
+        return isDiffer;
       }
       finally {
         is.close();
       }
     }
     catch (IOException ignored) {
+      LOG.info("backward reference index version differ due to: " + ignored.getClass());
     }
     return true;
   }

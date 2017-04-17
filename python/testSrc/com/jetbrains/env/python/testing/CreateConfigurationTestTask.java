@@ -98,7 +98,7 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
     final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
       .filter(o -> expectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
       .findFirst();
-    Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
+    Assert.assertTrue("No configuration of expected type created for element " + elementToRightClickOn, maybeConfig.isPresent());
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
 
 

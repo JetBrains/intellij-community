@@ -297,7 +297,7 @@ public class ExtractLightMethodObjectHandler {
     @NotNull
     @Override
     public String getVisibility() {
-      return PsiModifier.PUBLIC;
+      return PsiModifier.PACKAGE_LOCAL;
     }
 
     @Override

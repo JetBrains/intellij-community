@@ -33,7 +33,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -609,22 +609,20 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile != null) {
       final CRC32 crc32 = new CRC32();
-      ApplicationManager.getApplication().runReadAction(() -> {
-        psiFile.acceptChildren(new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitElement(PsiElement element) {
-            if (element instanceof LeafElement && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
-              String text = element.getText();
-              if (!text.trim().isEmpty()) {
-                for (int i = 0, end = text.length(); i < end; i++) {
-                  crc32.update(text.charAt(i));
-                }
+      ApplicationManager.getApplication().runReadAction(() -> psiFile.acceptChildren(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof LeafElement && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
+            String text = element.getText();
+            if (!text.trim().isEmpty()) {
+              for (int i = 0, end = text.length(); i < end; i++) {
+                crc32.update(text.charAt(i));
               }
             }
-            super.visitElement(element);
           }
-        });
-      });
+          super.visitElement(element);
+        }
+      }));
       newCrc = crc32.getValue();
     }
     else {

@@ -58,7 +58,8 @@ public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSet
                                @Nullable final PyProjectSynchronizer synchronizer) {
     final Course course = getCourse(project, mySettingsPanel);
     EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
-
+    final CCProjectComponent component = project.getComponent(CCProjectComponent.class);
+    component.registerListener();
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;
     new WriteCommandAction.Simple(project) {

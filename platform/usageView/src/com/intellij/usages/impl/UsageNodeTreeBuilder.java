@@ -23,9 +23,10 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleEx;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author max
@@ -79,10 +80,8 @@ class UsageNodeTreeBuilder {
       UsageGroupingRule rule = myGroupingRules[i];
       if (dumb && !DumbService.isDumbAware(rule)) continue;
 
-      UsageGroup group = rule instanceof UsageGroupingRuleEx ?
-                         ((UsageGroupingRuleEx)rule).groupUsage(usage, myTargets) :
-                         rule.groupUsage(usage);
-      if (group != null) {
+      List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
+      for (UsageGroup group : groups) {
         groupNode = groupNode.addOrGetGroup(group, i, edtInsertedUnderQueue);
       }
     }

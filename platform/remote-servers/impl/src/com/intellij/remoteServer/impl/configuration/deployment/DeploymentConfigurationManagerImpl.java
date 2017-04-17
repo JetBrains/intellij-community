@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     }
     if (RunDialog.editConfiguration(myProject, settings, "Create Deployment Configuration",
                                     DefaultRunExecutor.getRunExecutorInstance())) {
-      runManager.addConfiguration(settings, runManager.isConfigurationShared(settings), runManager.getBeforeRunTasks(runConfiguration),
-                                  false);
+      runManager.addConfiguration(settings, settings.isShared());
       runManager.setSelectedConfiguration(settings);
       ProgramRunnerUtil.executeConfiguration(myProject, settings, DefaultRunExecutor.getRunExecutorInstance());
     }

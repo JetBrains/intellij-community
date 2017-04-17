@@ -32,7 +32,7 @@ public class CommandLineUtil {
   private static final char INESCAPABLE_QUOTE = '\uEFEF';  // a random char, which is unlikely to encounter in an argument
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
-  private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|]");
+  private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
@@ -122,7 +122,7 @@ public class CommandLineUtil {
    *   *** In case a command line is wrapped using CMD.EXE call (that is, `cmd /d /c call executable args...`, which
    *       is quite common), additional escaping rules apply.
    *
-   *       CMD.EXE treat few chars in a special way (piping, command chaining, etc.), these are: [&<>()@|^].
+   *       CMD.EXE treats few chars in a special way (piping, command chaining, etc.), these are: [&<>()@|^].
    *       The CMD.EXE command line parser has two means of escaping these special chars: quote flag and caret-escaping.
    *       The main rules in a nutshell are:
    *
@@ -212,6 +212,7 @@ public class CommandLineUtil {
    *
    *   * https://ss64.com/nt/syntax-esc.html  Syntax : Escape Characters, Delimiters and Quotes
    *   * http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
+   *   * https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
 
   private static void addToWindowsCommandLine(@NotNull List<String> parameters,

@@ -207,7 +207,7 @@
 
     <group id="Vcs.History">
       <action id="VcsHistory.ShowAllAffected" class="com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction"
-              icon="AllIcons.Vcs.AllRevisions" />
+              icon="AllIcons.Actions.ListChanges" />
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>

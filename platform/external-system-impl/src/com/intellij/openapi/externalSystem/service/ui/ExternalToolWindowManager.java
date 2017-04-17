@@ -37,28 +37,22 @@ public class ExternalToolWindowManager {
       settings.subscribe(new ExternalSystemSettingsListenerAdapter() {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
-          if (settings.getLinkedProjectsSettings().size() != 1) {
-            return;
-          }
           ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
           if (toolWindow != null) {
             toolWindow.setAvailable(true, null);
           }
           else {
-            StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-              @Override
-              public void run() {
-                if (project.isDisposed()) return;
+            StartupManager.getInstance(project).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+              if (project.isDisposed()) return;
 
-                ExternalSystemUtil.ensureToolWindowInitialized(project, manager.getSystemId());
-                ToolWindowManager.getInstance(project).invokeLater(() -> {
-                  if (project.isDisposed()) return;
-                  ToolWindow toolWindow1 = getToolWindow(project, manager.getSystemId());
-                  if (toolWindow1 != null) {
-                    toolWindow1.setAvailable(true, null);
-                  }
-                });
-              }
+              ExternalSystemUtil.ensureToolWindowInitialized(project, manager.getSystemId());
+              ToolWindowManager.getInstance(project).invokeLater(() -> {
+                if (project.isDisposed()) return;
+                ToolWindow toolWindow1 = getToolWindow(project, manager.getSystemId());
+                if (toolWindow1 != null) {
+                  toolWindow1.setAvailable(true, null);
+                }
+              });
             });
           }
         }

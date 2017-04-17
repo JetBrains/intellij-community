@@ -24,16 +24,16 @@ import java.lang.reflect.Method;
  *
  * @author yole
  */
-@SuppressWarnings("UnusedDeclaration")
 public class WindowsCommandLineProcessor {
   // The WindowsCommandLineProcessor class which is loaded in the main IDEA (non-bootstrap) classloader.
-  public static Class<?> ourMirrorClass = null;
+  public static Class<?> ourMirrorClass;
 
-  public static WindowsCommandLineListener LISTENER = null;
+  public static WindowsCommandLineListener LISTENER;
 
   /**
    * NOTE: This method is called through JNI by the Windows launcher. Please do not delete or rename it.
    */
+  @SuppressWarnings("unused")
   public static void processWindowsLauncherCommandLine(final String currentDirectory, final String commandLine) {
     if (ourMirrorClass != null) {
       try {
