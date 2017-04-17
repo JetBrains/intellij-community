@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
@@ -27,12 +27,13 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   private final Project myProject;
@@ -151,62 +152,39 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     return myMappings;
   }
 
-  private Configurable createVcsConfigurableWrapper(final VcsDescriptor vcs) {
-    final NotNullLazyValue<Configurable> delegate = new NotNullLazyValue<Configurable>() {
-      @NotNull
-      @Override
-      protected Configurable compute() {
-        return ProjectLevelVcsManager.getInstance(myProject).findVcsByName(vcs.getName()).getConfigurable();
-      }
-    };
-    return new SearchableConfigurable(){
+  private Configurable createVcsConfigurableWrapper(@NotNull VcsDescriptor descriptor) {
+    return wrapConfigurable(new VcsConfigurableEP(myProject, descriptor));
+  }
 
-      @Override
-      @Nls
-      public String getDisplayName() {
-        return vcs.getDisplayName();
-      }
+  private static class VcsConfigurableEP extends ConfigurableEP<Configurable> {
+    @NotNull private final VcsDescriptor myDescriptor;
 
-      @Override
-      public String getHelpTopic() {
-        return delegate.getValue().getHelpTopic();
-      }
+    public VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
+      super(project);
+      myDescriptor = descriptor;
+      displayName = descriptor.getDisplayName();
+      id = "vcs." + displayName;
+    }
 
-      @Override
-      public JComponent createComponent() {
-        return delegate.getValue().createComponent();
-      }
+    @NotNull
+    @Override
+    protected ConfigurableEP.ObjectProducer createProducer() {
+      return new ObjectProducer() {
+        @Override
+        protected Object createElement() {
+          return ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName()).getConfigurable();
+        }
 
-      @Override
-      public boolean isModified() {
-        return delegate.getValue().isModified();
-      }
+        @Override
+        protected boolean canCreateElement() {
+          return true;
+        }
 
-      @Override
-      public void apply() throws ConfigurationException {
-        delegate.getValue().apply();
-      }
-
-      @Override
-      public void reset() {
-        delegate.getValue().reset();
-      }
-
-      @Override
-      public void disposeUIResources() {
-        delegate.getValue().disposeUIResources();
-      }
-
-      @Override
-      @NotNull
-      public String getId() {
-        return "vcs." + getDisplayName();
-      }
-
-      @Override
-      public String toString() {
-        return "VcsConfigurable for "+vcs.getDisplayName();
-      }
-    };
+        @Override
+        protected Class<?> getType() {
+          return SearchableConfigurable.class;
+        }
+      };
+    }
   }
 }
