@@ -171,14 +171,14 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   public void addToCache(final ArrayChunk chunk) {
     Object[][] data = chunk.getData();
-    int cols = data.length;
-    int rows = data[0].length;
+    int rows = data.length;
+    int cols = data[0].length;
     for (int roffset = 0; roffset < rows / CHUNK_ROW_SIZE; roffset++) {
       for (int coffset = 0; coffset < cols / CHUNK_COL_SIZE; coffset++) {
         Pair<Integer, Integer> key = itemToChunkKey(roffset * CHUNK_ROW_SIZE, coffset * CHUNK_COL_SIZE);
         final Object[][] chunkData = new Object[CHUNK_ROW_SIZE][CHUNK_COL_SIZE];
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
-          System.arraycopy(data[roffset * CHUNK_ROW_SIZE + r], coffset * 30, chunkData[r], 0, CHUNK_COL_SIZE);
+          System.arraycopy(data[roffset * CHUNK_ROW_SIZE + r], coffset * CHUNK_COL_SIZE, chunkData[r], 0, CHUNK_COL_SIZE);
         }
         myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
           @Override
