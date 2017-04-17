@@ -28,7 +28,6 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsMan
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import gnu.trove.TIntArrayList;
@@ -80,7 +79,6 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowColumns(false);
     setShowGrid(false);
-    setBorder(IdeBorderFactory.createBorder());
     setSurrendersFocusOnKeystroke(true);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
@@ -375,12 +373,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     myEditorRow = rowToEdit + 1;
     ArrangementEditorComponent editorComponent = new ArrangementEditorComponent(this, myEditorRow, editor);
-    int width = getBounds().width;
-    JScrollPane scrollPane = JBScrollPane.findScrollPane(getParent());
-    if (scrollPane != null) {
-      width -= scrollPane.getVerticalScrollBar().getWidth();
-    }
-    editorComponent.applyAvailableWidth(width);
+    editorComponent.applyAvailableWidth(getWidth());
     editor.reset(rowToEdit);
     mySkipSelectionChange = true;
     try {
