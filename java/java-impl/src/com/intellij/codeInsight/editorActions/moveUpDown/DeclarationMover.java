@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -150,8 +152,10 @@ class DeclarationMover extends LineMover {
     }
     Document document = editor.getDocument();
 
-    PsiElement sibling = down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
-    sibling = firstNonWhiteElement(sibling, down);
+    PsiElement sibling = (down ? range.endLine >= document.getLineCount() : range.startLine == 0) ? null : 
+                         firstNonWhiteElement(down ? document.getLineStartOffset(range.endLine) 
+                                                   : document.getLineEndOffset(range.startLine - 1), 
+                                              file, down);
     if (range.lastElement instanceof PsiEnumConstant && sibling instanceof PsiJavaToken) {
       final PsiJavaToken token = (PsiJavaToken)sibling;
       final IElementType tokenType = token.getTokenType();
@@ -178,7 +182,8 @@ class DeclarationMover extends LineMover {
       try {
         LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, down, areWeMovingClass);
         if (intraClassRange == null) {
-          info.toMove2 = new LineRange(sibling, sibling, document);
+          Couple<LineRange> splitRange = extractCommentRange(sibling);
+          info.toMove2 = splitRange.first.startLine == splitRange.first.endLine || !down ? splitRange.second : splitRange.first;
           if (down && sibling.getNextSibling() == null) return false;
         }
         else {
@@ -208,13 +213,32 @@ class DeclarationMover extends LineMover {
   private static LineRange memberRange(@NotNull PsiElement member, Editor editor, LineRange lineRange) {
     final TextRange textRange = member.getTextRange();
     if (editor.getDocument().getTextLength() < textRange.getEndOffset()) return null;
-    final int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
-    final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line+1;
+    int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
+    int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line+1;
+    
+    // if member includes a comment (non-javadoc) and it wasn't selected by user, don't move it with member
+    Couple<LineRange> splitRanges = extractCommentRange(member);
+    if (lineRange.startLine >= splitRanges.first.endLine) startLine = splitRanges.second.startLine;
+    else if (lineRange.endLine < splitRanges.second.startLine) endLine = splitRanges.first.endLine;
+
     if (!isInsideDeclaration(member, startLine, endLine, lineRange, editor)) return null;
 
     return new LineRange(startLine, endLine);
   }
 
+  
+  private static Couple<LineRange> extractCommentRange(@NotNull PsiElement member) {
+    PsiElement firstChild = member.getFirstChild();
+    if (firstChild instanceof PsiComment && !(firstChild instanceof PsiDocComment)) {
+      PsiElement nextElement = firstNonWhiteElement(firstChild.getNextSibling(), true);
+      if (nextElement != null) {
+        return Couple.of(new LineRange(firstChild), new LineRange(nextElement, member));
+      }
+    }
+    LineRange wholeRange = new LineRange(member);
+    return Couple.of(new LineRange(wholeRange.startLine, wholeRange.startLine), wholeRange);
+  }
+  
   private static boolean isInsideDeclaration(@NotNull final PsiElement member,
                                              final int startLine,
                                              final int endLine,
