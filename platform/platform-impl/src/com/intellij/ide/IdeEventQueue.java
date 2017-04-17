@@ -348,8 +348,6 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    e = fixNonEnglishKeyboardLayouts(e);
-
     e = mapEvent(e);
     if (Registry.is("keymap.windows.as.meta")) {
       e = mapMetaState(e);
@@ -426,9 +424,6 @@ public class IdeEventQueue extends EventQueue {
   @NotNull
   private static AWTEvent fixNonEnglishKeyboardLayouts(@NotNull AWTEvent e) {
     if (!(e instanceof KeyEvent)) return e;
-
-    KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
-    if (!Registry.is("ide.non.english.keyboard.layout.fix") || externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
     KeyEvent ke = (KeyEvent)e;
 

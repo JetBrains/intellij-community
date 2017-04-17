@@ -928,7 +928,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (e.getKeyCode() >= KeyEvent.VK_A && e.getKeyCode() <= KeyEvent.VK_Z) {
           myCharKeyPressed = true;
         }
-        KeyboardInternationalizationNotificationManager.showNotification();
       }
 
       @Override
