@@ -22,19 +22,35 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 final class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent event) {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    return settings.isBreadcrumbsShown();
+
+    boolean selected = settings.isBreadcrumbsShown();
+    if (!selected) return false;
+
+    String languageID = findLanguageID(event);
+    return languageID == null || settings.isBreadcrumbsShownFor(languageID);
   }
 
   @Override
   public void setSelected(AnActionEvent event, boolean selected) {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (settings.setBreadcrumbsShown(selected)) {
+
+    boolean modified;
+    String languageID = findLanguageID(event);
+    if (languageID == null) {
+      modified = settings.setBreadcrumbsShown(selected);
+    }
+    else {
+      modified = settings.setBreadcrumbsShownFor(languageID, selected);
+      if (selected && settings.setBreadcrumbsShown(true)) modified = true;
+    }
+    if (modified) {
       UISettings.getInstance().fireUISettingsChanged();
     }
   }
@@ -43,7 +59,16 @@ final class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
 
-    Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
+    Editor editor = findEditor(event);
     event.getPresentation().setEnabled(editor != null);
+  }
+
+  private static Editor findEditor(AnActionEvent event) {
+    return event == null ? null : event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
+  }
+
+  private static String findLanguageID(AnActionEvent event) {
+    FileViewProvider provider = BreadcrumbsXmlWrapper.findViewProvider(findEditor(event));
+    return provider == null ? null : provider.getBaseLanguage().getID();
   }
 }

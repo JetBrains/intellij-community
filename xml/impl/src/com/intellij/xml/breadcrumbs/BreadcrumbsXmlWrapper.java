@@ -20,7 +20,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -102,8 +101,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     assert project != null;
     myProject = project;
 
-    Document document = myEditor.getDocument();
-    myFile = FileDocumentManager.getInstance().getFile(document);
+    myFile = getVirtualFile(myEditor);
 
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
@@ -113,7 +111,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       }
     }, this);
 
-    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
+    myInfoProvider = findInfoProvider(myFile, myProject);
 
     final CaretListener caretListener = new CaretAdapter() {
       @Override
@@ -370,6 +368,26 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     return PsiManager.getInstance(project).findViewProvider(file);
   }
 
+  @Nullable
+  static FileViewProvider findViewProvider(Editor editor) {
+    if (editor == null) return null;
+
+    Project project = editor.getProject();
+    if (project == null) return null;
+
+    VirtualFile file = getVirtualFile(editor);
+    return findViewProvider(file, project);
+  }
+
+  @Nullable
+  static BreadcrumbsInfoProvider findInfoProvider(VirtualFile file, Project project) {
+    return project == null ? null : findInfoProvider(findViewProvider(file, project));
+  }
+
+  private static VirtualFile getVirtualFile(@NotNull Editor editor) {
+    return FileDocumentManager.getInstance().getFile(editor.getDocument());
+  }
+
   private void updateCrumbs(final LogicalPosition position) {
     if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
@@ -381,20 +399,24 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
-    if (EditorSettingsExternalizable.getInstance().isBreadcrumbsShown() && viewProvider != null) {
-      final Language baseLang = viewProvider.getBaseLanguage();
-      BreadcrumbsInfoProvider provider = getInfoProvider(baseLang);
-      if (provider != null) {
-        return provider;
-      }
-      for (final Language language : viewProvider.getLanguages()) {
-        provider = getInfoProvider(language);
-        if (provider != null) {
-          return provider;
+    if (viewProvider == null) return null;
+
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (!settings.isBreadcrumbsShown()) return null;
+
+    Language baseLang = viewProvider.getBaseLanguage();
+    if (!settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
+
+    BreadcrumbsInfoProvider provider = getInfoProvider(baseLang);
+    if (provider == null) {
+      for (Language language : viewProvider.getLanguages()) {
+        if (settings.isBreadcrumbsShownFor(language.getID())) {
+          provider = getInfoProvider(language);
+          if (provider != null) break;
         }
       }
     }
-    return null;
+    return provider;
   }
 
   @Deprecated
