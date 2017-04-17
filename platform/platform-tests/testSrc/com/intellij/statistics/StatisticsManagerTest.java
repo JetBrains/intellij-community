@@ -69,4 +69,7 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
     assertEquals(Integer.MAX_VALUE, new StatisticsInfo("anotherContext", "value0").getLastUseRecency());
   }
 
+  public void testBadHashValue() {
+    StatisticsManager.getInstance().getUseCount(new StatisticsInfo("MVFOFVB", ""));
+  }
 }

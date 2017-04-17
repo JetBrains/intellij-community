@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,6 +77,10 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
       "}", true, true);
   }
 
+  public void testBadStringHashValue() {
+    int color = UsedColors.getOrAddColorIndex(new UserDataHolderBase(), "JHZaWC", 5);
+    assertEquals(3, color);
+  }
 
   void checkRainbow(@NotNull String code, boolean isRainbowOn, boolean withColor) throws Exception {
     myFixture.testRainbow(
