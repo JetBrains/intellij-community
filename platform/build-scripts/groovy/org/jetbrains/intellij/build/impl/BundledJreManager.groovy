@@ -139,16 +139,22 @@ class BundledJreManager {
     return jreArchive
   }
 
-  private static String getExpectedJreVersion(File dependenciesDir) {
-    def properties = new Properties()
-    def stream = new File(dependenciesDir, 'gradle.properties').newInputStream()
-    try {
-      properties.load(stream)
-      return properties.get("jdkBuild", "")
+  private String expectedJreVersion
+  private String getExpectedJreVersion(File dependenciesDir) {
+    if (expectedJreVersion == null) {
+      def dependenciesFile = new File(dependenciesDir, 'build/dependencies.properties')
+      buildContext.gradle.run('Preparing dependencies file', 'dependenciesFile')
+      def properties = new Properties()
+      def stream = dependenciesFile.newInputStream()
+      try {
+        properties.load(stream)
+        expectedJreVersion = properties.get("jdkBuild", "")
+      }
+      finally {
+        stream.close()
+      }
     }
-    finally {
-      stream.close()
-    }
+    return expectedJreVersion
   }
 
   private enum JreVendor {
