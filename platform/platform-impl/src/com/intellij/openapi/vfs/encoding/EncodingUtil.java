@@ -50,6 +50,7 @@ public class EncodingUtil {
   private static final String REASON_HARDCODED_IN_TEXT = "hard-coded";
   private static final String REASON_HARDCODED_FOR_FILE = "%s";
 
+  // the result of wild guess
   enum Magic8 {
     ABSOLUTELY,
     WELL_IF_YOU_INSIST,
@@ -57,7 +58,10 @@ public class EncodingUtil {
   }
 
   // check if file can be loaded in the encoding correctly:
-  // returns true if bytes on disk, converted to text with the charset, converted back to bytes matched
+  // returns ABSOLUTELY if bytes on disk, converted to text with the charset, converted back to bytes matched
+  // returns NO_WAY if the new encoding is incompatible (bytes on disk will differ)
+  // returns WELL_IF_YOU_INSIST if the bytes on disk remain the same but the text will change
+  @NotNull
   static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull String text, @NotNull byte[] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
     byte[] bom = virtualFile.getBOM();
@@ -91,6 +95,7 @@ public class EncodingUtil {
     return !Arrays.equals(bytesToSave, bytes) ? Magic8.NO_WAY : loaded.equals(text) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
   }
 
+  @NotNull
   static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull String text, @NotNull byte[] bytesOnDisk, @NotNull Charset charset) {
     try {
       String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
