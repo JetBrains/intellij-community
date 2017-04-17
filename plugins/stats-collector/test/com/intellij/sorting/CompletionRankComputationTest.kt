@@ -128,6 +128,9 @@ class X {
 
             assert(ranks.size == 1)
             assert(ranks.first() == FeatureUtils.UNDEFINED)
+            
+            val items = lookup.items.map { it.lookupString }
+            assertThat(items).isEqualTo(listOf("qqqq", "runq", "test", "qwrt"))
         }
         finally {
             point.unregisterExtension(fakeWeigherExt)
