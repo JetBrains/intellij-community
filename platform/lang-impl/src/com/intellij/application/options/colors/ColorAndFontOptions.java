@@ -512,7 +512,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(options, true);
+      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
       return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, "Font", null, null){
         @Override
         public boolean containsFontOptions() {
@@ -532,7 +532,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(options, false) {
+      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), false) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
@@ -1082,8 +1082,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme);
 
-      parentScheme.getFontPreferences().copyTo(getFontPreferences());
-
       if (parentScheme.isUseEditorFontPreferencesInConsole()) {
         setUseEditorFontPreferencesInConsole();
       }
@@ -1091,6 +1089,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         setConsoleFontPreferences(parentScheme.getConsoleFontPreferences());
       }
       setConsoleLineSpacing(parentScheme.getConsoleLineSpacing());
+
+      if (parentScheme.isUseAppFontPreferencesInEditor()) {
+        setUseAppFontPreferencesInEditor();
+      }
+      else {
+        setFontPreferences(parentScheme.getFontPreferences());
+      }
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
@@ -1149,11 +1154,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     private boolean isFontModified() {
-      return !getFontPreferences().equals(myParentScheme.getFontPreferences());
+      return !areDelegatingOrEqual(getFontPreferences(), myParentScheme.getFontPreferences());
     }
 
     private boolean isConsoleFontModified() {
-      return !getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences());
+      return !areDelegatingOrEqual(getConsoleFontPreferences(), myParentScheme.getConsoleFontPreferences());
     }
 
     private boolean apply() {
@@ -1166,7 +1171,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private boolean apply(@NotNull EditorColorsScheme scheme) {
       boolean isModified = isFontModified() || isConsoleFontModified();
 
-      scheme.setFontPreferences(getFontPreferences());
+      if (isUseAppFontPreferencesInEditor()) {
+        scheme.setUseAppFontPreferencesInEditor();
+      }
+      else {
+        scheme.setFontPreferences(getFontPreferences());
+      }
 
       if (isUseEditorFontPreferencesInConsole()) {
         scheme.setUseEditorFontPreferencesInConsole();

@@ -34,6 +34,7 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +54,7 @@ import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
 @SuppressWarnings("UseJBColor")
-public abstract class AbstractColorsScheme implements EditorColorsScheme, SerializableScheme {
+public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
   private static final int CURR_VERSION = 142;
 
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
@@ -62,12 +63,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   protected FontSize myQuickDocFontSize = DEFAULT_FONT_SIZE;
 
-  @NotNull private final Map<EditorFontType, Font> myFonts                  = new EnumMap<>(EditorFontType.class);
-  @NotNull private FontPreferencesImpl             myFontPreferences        = new FontPreferencesImpl();
-  @NotNull private FontPreferences                 myConsoleFontPreferences = new DelegatingFontPreferences(myFontPreferences);
+  @NotNull private FontPreferences                 myFontPreferences
+    = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
+  @NotNull private FontPreferences                 myConsoleFontPreferences = new DelegatingFontPreferences(() -> myFontPreferences);
 
   private final ValueElementReader myValueReader = new TextAttributesReader();
-  private String myFallbackFontName;
   private String mySchemeName;
 
   private boolean myIsSaveNeeded;
@@ -124,7 +124,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
     myParentScheme = parentScheme;
-    myFontPreferences.setChangeListener(() -> initFonts());
   }
 
   public AbstractColorsScheme() {
@@ -161,14 +160,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public void setFont(EditorFontType key, Font font) {
-    myFonts.put(key, font);
   }
 
   @Override
   public abstract Object clone();
 
   public void copyTo(AbstractColorsScheme newScheme) {
-    myFontPreferences.copyTo(newScheme.myFontPreferences);
     newScheme.myQuickDocFontSize = myQuickDocFontSize;
     if (myConsoleFontPreferences instanceof DelegatingFontPreferences) {
       newScheme.setUseEditorFontPreferencesInConsole();
@@ -176,11 +173,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     else {
       newScheme.setConsoleFontPreferences(myConsoleFontPreferences);
     }
-
-    final Set<EditorFontType> types = myFonts.keySet();
-    for (EditorFontType type : types) {
-      Font font = myFonts.get(type);
-      newScheme.setFont(type, font);
+    if (myFontPreferences instanceof DelegatingFontPreferences) {
+      newScheme.setUseAppFontPreferencesInEditor();
+    }
+    else {
+      newScheme.setFontPreferences(myFontPreferences);
     }
 
     newScheme.myAttributesMap = new THashMap<>(myAttributesMap);
@@ -191,16 +188,27 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @Override
   public void setEditorFontName(String fontName) {
     int editorFontSize = getEditorFontSize();
-    myFontPreferences.clear();
-    myFontPreferences.register(fontName, editorFontSize);
+    ensureEditableFontPreferences().clear();
+    ensureEditableFontPreferences().register(fontName, editorFontSize);
     initFonts();
   }
 
   @Override
   public void setEditorFontSize(int fontSize) {
     fontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
-    myFontPreferences.register(getEditorFontName(), fontSize);
+    ensureEditableFontPreferences().register(myFontPreferences.getFontFamily(), fontSize);
     initFonts();
+  }
+
+  @Override
+  public void setUseAppFontPreferencesInEditor() {
+    myFontPreferences = new DelegatingFontPreferences(()-> AppEditorFontOptions.getInstance().getFontPreferences());
+    initFonts();
+  }
+
+  @Override
+  public boolean isUseAppFontPreferencesInEditor() {
+    return myFontPreferences instanceof DelegatingFontPreferences;
   }
 
   @Override
@@ -216,14 +224,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     myFontPreferences.setLineSpacing(lineSpacing);
   }
 
+  @NotNull
   @Override
   public Font getFont(EditorFontType key) {
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getPresentationMode()) {
-      final Font font = myFonts.get(key);
-      return new Font(font.getName(), font.getStyle(), uiSettings.getPresentationModeFontSize());
-    }
-    return myFonts.get(key);
+    return myFontPreferences instanceof DelegatingFontPreferences ? EditorFontCache.getInstance().getFont(key) : super.getFont(key);
   }
 
   @Override
@@ -239,21 +243,18 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public void setFontPreferences(@NotNull FontPreferences preferences) {
-    preferences.copyTo(myFontPreferences);
+    preferences.copyTo(ensureEditableFontPreferences());
     initFonts();
   }
 
   @Override
   public String getEditorFontName() {
-    if (myFallbackFontName != null) {
-      return myFallbackFontName;
-    }
-    return myFontPreferences.getFontFamily();
+    return getFont(EditorFontType.PLAIN).getFontName();
   }
 
   @Override
   public int getEditorFontSize() {
-    return myFontPreferences.getSize(getEditorFontName());
+    return myFontPreferences.getSize(myFontPreferences.getFontFamily());
   }
 
   @NotNull
@@ -268,35 +269,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   }
 
   protected void initFonts() {
-    String editorFontName = getEditorFontName();
-    int editorFontSize = getEditorFontSize();
+    reset();
+  }
 
-    myFallbackFontName = FontPreferences.getFallbackName(editorFontName, editorFontSize, myParentScheme);
-    if (myFallbackFontName != null) {
-      editorFontName = myFallbackFontName;
-    }
-    Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
-    Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
-    Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
-    Font boldItalicFont = new Font(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize);
-
-    myFonts.put(EditorFontType.PLAIN, plainFont);
-    myFonts.put(EditorFontType.BOLD, boldFont);
-    myFonts.put(EditorFontType.ITALIC, italicFont);
-    myFonts.put(EditorFontType.BOLD_ITALIC, boldItalicFont);
-
-    String consoleFontName = getConsoleFontName();
-    int consoleFontSize = getConsoleFontSize();
-
-    Font consolePlainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
-    Font consoleBoldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);
-    Font consoleItalicFont = new Font(consoleFontName, Font.ITALIC, consoleFontSize);
-    Font consoleBoldItalicFont = new Font(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize);
-
-    myFonts.put(EditorFontType.CONSOLE_PLAIN, consolePlainFont);
-    myFonts.put(EditorFontType.CONSOLE_BOLD, consoleBoldFont);
-    myFonts.put(EditorFontType.CONSOLE_ITALIC, consoleItalicFont);
-    myFonts.put(EditorFontType.CONSOLE_BOLD_ITALIC, consoleBoldItalicFont);
+  @Override
+  protected EditorColorsScheme getFontCacheScheme() {
+    return this;
   }
 
   public String toString() {
@@ -508,7 +486,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       }
       case EDITOR_LIGATURES: {
         Boolean value = myValueReader.read(Boolean.class, childNode);
-        if (value != null) myFontPreferences.setUseLigatures(value);
+        if (value != null) ensureEditableFontPreferences().setUseLigatures(value);
         break;
       }
       case CONSOLE_LIGATURES: {
@@ -531,7 +509,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
     return UISettings.restoreFontSize(intSize, fontScale);
   }
-  
+
   private FontPreferencesImpl readFontSettings(@NotNull Element element,
                                                boolean isDefaultScheme,
                                                @Nullable Float fontScale) {
@@ -571,7 +549,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
      * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
      * FONT_SCALE value should also be written by that reason.
      */
-    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getNormalizingScale())); // must precede font options
+    if (!(myFontPreferences instanceof DelegatingFontPreferences) || !(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
+      JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
+    }
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
@@ -589,13 +569,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     // to specify fonts sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
     // That's why we want to use old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = myFontPreferences.getEffectiveFontFamilies().size() <= 1;
-    if (useOldFontFormat) {
-      JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
+    if (!(myFontPreferences instanceof DelegatingFontPreferences)) {
+      if (useOldFontFormat) {
+        JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
+        JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, myFontPreferences.getFontFamily());
+      }
+      else {
+        writeFontPreferences(EDITOR_FONT, parentNode, myFontPreferences);
+      }
+      writeLigaturesPreferences(parentNode, myFontPreferences, EDITOR_LIGATURES);
     }
-    else {
-      writeFontPreferences(EDITOR_FONT, parentNode, myFontPreferences);
-    }
-    writeLigaturesPreferences(parentNode, myFontPreferences, EDITOR_LIGATURES);
     
     if (!(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
       if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
@@ -619,7 +602,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
 
     if (useOldFontFormat) {
-      JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, getEditorFontName());
+      JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, myFontPreferences.getFontFamily());
     }
 
     Element colorElements = new Element(COLORS_ELEMENT);
@@ -762,6 +745,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return true;
   }
 
+  private ModifiableFontPreferences ensureEditableFontPreferences() {
+    if (!(myFontPreferences instanceof ModifiableFontPreferences)) {
+      ModifiableFontPreferences editablePrefs = new FontPreferencesImpl();
+      myFontPreferences.copyTo(editablePrefs);
+      myFontPreferences = editablePrefs;
+      ((FontPreferencesImpl)myFontPreferences).setChangeListener(() -> initFonts());
+    }
+    return (ModifiableFontPreferences)myFontPreferences;
+  }
+
   @NotNull
   @Override
   public FontPreferences getConsoleFontPreferences() {
@@ -770,7 +763,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   
   @Override
   public void setUseEditorFontPreferencesInConsole() {
-    myConsoleFontPreferences = new DelegatingFontPreferences(myFontPreferences);
+    myConsoleFontPreferences = new DelegatingFontPreferences(() -> myFontPreferences);
     initFonts();
   }
 
@@ -939,12 +932,17 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       }
     }
 
-    return myFontPreferences.equals(otherScheme.getFontPreferences()) &&
-           myConsoleFontPreferences.equals(otherScheme.getConsoleFontPreferences()) &&
+    return areDelegatingOrEqual(myFontPreferences, otherScheme.getFontPreferences()) &&
+           areDelegatingOrEqual(myConsoleFontPreferences, otherScheme.getConsoleFontPreferences()) &&
            attributesEqual(otherScheme) &&
-           colorsEqual(otherScheme) &&
-           myFontPreferences.equals(otherScheme.myFontPreferences);
+           colorsEqual(otherScheme);
   }
+
+  protected static boolean areDelegatingOrEqual(@NotNull FontPreferences preferences1, @NotNull FontPreferences preferences2) {
+      boolean isDelegating1 = preferences1 instanceof DelegatingFontPreferences;
+      boolean isDelegating2 = preferences2 instanceof DelegatingFontPreferences;
+      return isDelegating1 || isDelegating2 ? isDelegating1 && isDelegating2 : preferences1.equals(preferences2);
+    }
 
   protected boolean attributesEqual(AbstractColorsScheme otherScheme) {
     return myAttributesMap.equals(otherScheme.myAttributesMap);
