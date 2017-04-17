@@ -12,7 +12,6 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
-import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -42,7 +41,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   // Ensures setup/teardown does not break anything
   @Test
   public void testSetupTearDown() throws Exception {
-    runPythonTest(new SetupTearDownTestTask<PyTestTestProcessRunner>(){
+    runPythonTest(new SetupTearDownTestTask<PyTestTestProcessRunner>() {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
@@ -56,7 +55,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
    */
   @Test
   public void testRunModuleAsFile() throws Exception {
-    runPythonTest(new RunModuleAsFileTask<PyTestTestProcessRunner>(){
+    runPythonTest(new RunModuleAsFileTask<PyTestTestProcessRunner>() {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
@@ -75,6 +74,29 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         return new PyTestTestProcessRunner(".", 1);
       }
     });
+  }
+
+
+  // Ensure test survives patched strftime
+  @Test
+  public void testMonkeyPatch() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/monkeyPatch", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_test.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                        @NotNull String stdout,
+                                        @NotNull String stderr,
+                                        @NotNull String all) {
+          assertEquals("Monkeypatch broke the test: " + stderr, 1, runner.getPassedTestsCount());
+        }
+      });
   }
 
   // Ensure slow test is not run when -m "not slow" is provided
