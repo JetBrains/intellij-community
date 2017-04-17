@@ -567,7 +567,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
   @NotNull
-  PsiFile getHostPsiFile() {
+  public PsiFile getHostPsiFile() {
     return myHostPsiFile;
   }
 
