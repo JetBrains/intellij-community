@@ -31,7 +31,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class HgRefManager implements VcsLogRefManager {
   private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0x823139), new Color(0xff5f6f));
@@ -117,13 +116,15 @@ public class HgRefManager implements VcsLogRefManager {
     List<VcsRef> sortedReferences = sort(references);
 
     List<VcsRef> headAndTip = ContainerUtil.newArrayList();
-    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, ref -> {
+    MultiMap<VcsRefType, VcsRef> groupedRefs = MultiMap.createLinked();
+    for (VcsRef ref : sortedReferences) {
       if (ref.getType().equals(HEAD) || ref.getType().equals(TIP)) {
         headAndTip.add(ref);
-        return null;
       }
-      return ref.getType();
-    });
+      else {
+        groupedRefs.putValue(ref.getType(), ref);
+      }
+    }
 
     List<RefGroup> result = ContainerUtil.newArrayList();
     SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
