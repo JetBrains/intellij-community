@@ -1,10 +1,7 @@
 <component name="CopyrightManager">
-  <settings default="">
+  <settings>
     <module2copyright>
-      <element module="idea openapi" copyright="openapi" />
-      <element module="community except testdata" copyright="openapi" />
-      <element module="spring-api" copyright="openapi" />
-      <element module="contrib" copyright="openapi" />
+      <element module="All" copyright="stream-debugger" />
     </module2copyright>
     <LanguageOptions name="HTML">
       <option name="fileTypeOverride" value="1" />
