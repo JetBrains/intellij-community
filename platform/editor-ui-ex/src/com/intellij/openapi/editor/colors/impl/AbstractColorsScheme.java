@@ -249,7 +249,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public String getEditorFontName() {
-    return getFont(EditorFontType.PLAIN).getFontName();
+    return getFont(EditorFontType.PLAIN).getFamily();
   }
 
   @Override
@@ -599,10 +599,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     if (DEFAULT_FONT_SIZE != getQuickDocFontSize()) {
       JdomKt.addOptionTag(parentNode, EDITOR_QUICK_JAVADOC_FONT_SIZE, getQuickDocFontSize().toString());
-    }
-
-    if (useOldFontFormat) {
-      JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, myFontPreferences.getFontFamily());
     }
 
     Element colorElements = new Element(COLORS_ELEMENT);
