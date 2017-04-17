@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.List;
 public class AlternativeJreClassFinder extends NonClasspathClassFinder {
   public AlternativeJreClassFinder(Project project, DebuggerManagerEx manager) {
     super(project);
-    manager.addDebuggerManagerListener(new DebuggerManagerAdapter() {
+    manager.addDebuggerManagerListener(new DebuggerManagerListener() {
       @Override
       public void sessionCreated(DebuggerSession session) {
         clearCache();
