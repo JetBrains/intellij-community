@@ -65,36 +65,16 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   // Ensure slow test is not run when --attr="!slow"  is provided
   @Test
   public void testMarkerWithSlow() throws Exception {
-    runPythonTest(
-      new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose/test_with_slow", SdkCreationType.EMPTY_SDK) {
-
-        @NotNull
-        @Override
-        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-          return new PyNoseTestProcessRunner("test_with_slow.py", 0) {
-            @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalNoseTestConfiguration configuration) throws IOException {
-              super.configurationCreatedAndWillLaunch(configuration);
-              configuration.setAdditionalArguments("--attr=\"!slow\"");
-            }
-          };
-        }
-
-
-        @Override
-        protected void checkTestResults(@NotNull PyNoseTestProcessRunner runner,
-                                        @NotNull String stdout,
-                                        @NotNull String stderr,
-                                        @NotNull String all) {
-          Assert.assertEquals("--slow runner borken", "Test tree:\n" +
-                                                      "[root]\n" +
-                                                      ".test_with_slow\n" +
-                                                      "..test_fast(+)\n",
-                              runner.getFormattedTestTree());
-        }
-      });
+    runPythonTest(new SlowRunnerTask("--attr=\"!slow\" -vvv"));
   }
-
+  @Test
+  public void testMarkerWithSlowSingleQuotes() throws Exception {
+    runPythonTest(new SlowRunnerTask("--attr='!slow' -vvv"));
+  }
+  @Test
+  public void testMarkerWithSlowRegexp() throws Exception {
+    runPythonTest(new SlowRunnerTask("--attr='!slow' -vvv -m \"(?:^|[\\b_\\./-])[Tt]est\""));
+  }
 
   @Test
   public void testMultipleCases() throws Exception {
@@ -224,5 +204,40 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
         assertEquals(3, runner.getFailedTestsCount());
       }
     });
+  }
+
+  private static class SlowRunnerTask extends PyProcessWithConsoleTestTask<PyNoseTestProcessRunner> {
+    @NotNull
+    private final String myArguments;
+
+    SlowRunnerTask(@NotNull final String arguments) {
+      super("/testRunner/env/nose/test_with_slow", SdkCreationType.EMPTY_SDK);
+      myArguments = arguments;
+    }
+
+    @NotNull
+    @Override
+    protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+      return new PyNoseTestProcessRunner("test_with_slow.py", 0) {
+        @Override
+        protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalNoseTestConfiguration configuration) throws IOException {
+          super.configurationCreatedAndWillLaunch(configuration);
+          configuration.setAdditionalArguments(myArguments);
+        }
+      };
+    }
+
+
+    @Override
+    protected void checkTestResults(@NotNull PyNoseTestProcessRunner runner,
+                                    @NotNull String stdout,
+                                    @NotNull String stderr,
+                                    @NotNull String all) {
+      Assert.assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
+                                                  "[root]\n" +
+                                                  ".test_with_slow\n" +
+                                                  "..test_fast(+)\n",
+                          runner.getFormattedTestTree());
+    }
   }
 }
