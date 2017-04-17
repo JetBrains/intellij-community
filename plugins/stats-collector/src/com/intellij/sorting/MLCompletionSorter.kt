@@ -27,7 +27,7 @@ interface Ranker {
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
      */
-    fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double
+    fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double?
 
     companion object {
         fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
@@ -60,12 +60,12 @@ class MLRanker(val provider: FeatureTransformerProvider): Ranker {
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
     
-    override fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double {
+    override fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double? {
         val featureArray = featureTransformer.toFeatureArray(state, lookupRelevance)
         if (featureArray != null) {
             return ranker.rank(featureArray)  
         }
-        throw IllegalStateException("No feature array created $lookupRelevance")
+        return null
     }
     
 }

@@ -1,11 +1,24 @@
 package com.intellij.sorting
 
+import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.Weigher
+import com.intellij.psi.WeigherExtensionPoint
 import com.intellij.sorting.Ranker
 import com.jetbrains.completion.ranker.features.CompletionState
+import com.jetbrains.completion.ranker.features.FeatureUtils
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
@@ -74,6 +87,55 @@ class X {
     }
 
 
+    fun `test do not rerank if encountered unknown features`() { 
+        val classText = """
+public class Test {
+    public void test(int a, int b) {}
+    public void runq(int c) {}
+    public void qqqq() {}
+    public void qwrt(int a, int b, int c) {}
+}
+"""
+        myFixture.addClass(classText)
+
+        val text = """
+class X {
+    public void t() {
+        Test test = new Test();
+        test.<caret>
+    }
+}
+"""
+
+        val fakeWeigherExt = WeigherExtensionPoint().apply { 
+            id = "fake"
+            key = "completion"
+            implementationClass = "com.intellij.sorting.FakeWeighter"
+        }
+        
+        val name = ExtensionPointName<WeigherExtensionPoint>("com.intellij.weigher")
+        val point = Extensions.getRootArea().getExtensionPoint(name)
+        point.registerExtension(fakeWeigherExt, LoadingOrder.before("templates"))
+        
+        try {
+            myFixture.configureByText(JavaFileType.INSTANCE, text)
+            myFixture.completeBasic()
+
+            val lookup = myFixture.lookup as LookupImpl
+
+            val objects = lookup.getRelevanceObjects(lookup.items, false)
+            val ranks = objects.map { it.value.find { it.first == FeatureUtils.ML_RANK }!!.second }.toSet()
+
+            assert(ranks.size == 1)
+            assert(ranks.first() == FeatureUtils.UNDEFINED)
+        }
+        finally {
+            point.unregisterExtension(fakeWeigherExt)
+        }
+    }
+
+    
+
     private fun checkMlRanking(prefixLength: Int) {
         val lookup = myFixture.lookup as LookupImpl
         assertThat(lookup.items.size > 0)
@@ -83,14 +145,30 @@ class X {
 
         lookupElements.forEach { element, relevance ->
             val weights = relevance.associate { it.first to it.second }
+            val ml_rank = weights["ml_rank"]?.toString()
+            if (ml_rank == "UNDEFINED") {
+                throw UnsupportedOperationException("Ranking failed")
+            }
+            
             val old_order = weights["before_rerank_order"].toString().toInt()
 
             val state = CompletionState(old_order, prefixLength, 0, element.lookupString.length)
             val calculated_ml_rank = ranker.rank(state, weights)
-
-            val ml_rank_from_weights = weights["ml_rank"].toString().toDouble()
-
-            TestCase.assertTrue(calculated_ml_rank == ml_rank_from_weights)
+            
+            TestCase.assertTrue(
+                    "Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}", 
+                    calculated_ml_rank == ml_rank?.toDouble())
         }
     }
 }
+
+
+class FakeWeighter : CompletionWeigher() {
+
+    override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing> {
+        val psiElement = element.psiElement as? PsiMethod ?: return 0
+        return psiElement.name.length - psiElement.parameterList.parametersCount
+    }
+
+}
+

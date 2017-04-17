@@ -22,6 +22,12 @@ class MLSorter : CompletionFinalSorter() {
 
     override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
         if (!isMlSortingEnabled()) return emptyMap()
+        
+        val isUnknownFeaturesPresent = items.find { cachedScore[it] == null } != null
+        if (isUnknownFeaturesPresent) {
+            return items.associate { it to listOf(Pair.create("ml_rank", "UNDEFINED" as Any)) }
+        }
+        
         return items.associate {
             val result = mutableListOf<Pair<String, Any>>()
             val cached = cachedScore[it]
@@ -44,12 +50,13 @@ class MLSorter : CompletionFinalSorter() {
 
     private fun sortInner(items: MutableIterable<LookupElement>, 
                           lookup: LookupImpl, 
-                          relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): List<LookupElement> 
+                          relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): Iterable<LookupElement> 
     {
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
-                    lookupElement to calculateElementRank(lookup, lookupElement, index, relevance)
+                    val rank = calculateElementRank(lookup, lookupElement, index, relevance) ?: return items
+                    lookupElement to rank
                 }
                 .sortedByDescending { it.second }
                 .map { it.first }
@@ -68,7 +75,7 @@ class MLSorter : CompletionFinalSorter() {
     }
 
 
-    private fun calculateElementRank(lookup: LookupImpl, element: LookupElement, position: Int, relevance: LookupElementRelevance): Double {
+    private fun calculateElementRank(lookup: LookupImpl, element: LookupElement, position: Int, relevance: LookupElementRelevance): Double? {
         val cachedWeight = getCachedRankInfo(lookup, element)
         if (cachedWeight != null) {
             return cachedWeight.mlRank
@@ -79,7 +86,7 @@ class MLSorter : CompletionFinalSorter() {
 
         val state = CompletionState(position, query_length = prefixLength, cerp_length = 0, result_length = elementLength)
         val relevanceMap = relevance.groupBy { it.first }
-        val mlRank = ranker.rank(state, relevanceMap)
+        val mlRank = ranker.rank(state, relevanceMap) ?: return null
 
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
