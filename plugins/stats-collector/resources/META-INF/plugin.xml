@@ -7,12 +7,7 @@
   <description><![CDATA[
       This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
     ]]></description>
-  
-  <change-notes><![CDATA[
-      improved logging, fixed couple exceptions
-    ]]>
-  </change-notes>
-  
+
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
   
