@@ -260,6 +260,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         }
 
         int finalParent = parent;
+        moves.forEach(move -> {
+          changedPaths.add(PathUtil.getParentPath(move.first));
+          changedPaths.add(PathUtil.getParentPath(move.second));
+          // we need to index all parents for the moves
+          // so it makes sense to add them there
+        });
         getParentPaths(changedPaths).forEach(changedPath -> {
           try {
             addChangeToResult(result, finalParent, changedPath, null);
@@ -311,6 +317,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       for (int i = data.size(); i < parent; i++) {
         data.add(null);
       }
+      LOG.assertTrue(data.size() == parent);
       return data;
     }
 
