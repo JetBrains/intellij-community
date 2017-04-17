@@ -36,6 +36,7 @@ public class LibraryTableImplUtil {
   private LibraryTableImplUtil() {
   }
 
+  @NotNull
   public static Library loadLibrary(@NotNull Element rootElement, @NotNull RootModelImpl rootModel) throws InvalidDataException {
     final List children = rootElement.getChildren(LibraryImpl.ELEMENT);
     if (children.size() != 1) throw new InvalidDataException();
@@ -43,6 +44,7 @@ public class LibraryTableImplUtil {
     return new LibraryImpl(null, element, rootModel);
   }
 
+  @NotNull
   public static Library createModuleLevelLibrary(@Nullable String name,
                                                  PersistentLibraryKind kind,
                                                  @NotNull RootModelImpl rootModel) {

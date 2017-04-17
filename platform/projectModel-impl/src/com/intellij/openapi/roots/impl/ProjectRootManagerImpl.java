@@ -55,7 +55,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
   @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls public static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
   protected final Project myProject;
 
@@ -93,7 +93,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
-          WriteAction.run(() -> fireChange());
+          WriteAction.run(this::fireChange);
         }
         finally {
           myChanged = false;
@@ -442,7 +442,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return ModuleManager.getInstance(myProject);
   }
 
-  void subscribeToRootProvider(OrderEntry owner, final RootProvider provider) {
+  void subscribeToRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
     Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
     if (owners == null) {
       owners = new HashSet<>();
@@ -452,7 +452,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     owners.add(owner);
   }
 
-  void unsubscribeFromRootProvider(OrderEntry owner, final RootProvider provider) {
+  void unsubscribeFromRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
     Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
     if (owners != null) {
       owners.remove(owner);
@@ -463,8 +463,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  void addListenerForTable(LibraryTable.Listener libraryListener,
-                           final LibraryTable libraryTable) {
+  void addListenerForTable(@NotNull LibraryTable.Listener libraryListener, @NotNull LibraryTable libraryTable) {
     synchronized (myLibraryTableListenersLock) {
       LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
       if (multiListener == null) {
@@ -476,8 +475,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  void removeListenerForTable(LibraryTable.Listener libraryListener,
-                              final LibraryTable libraryTable) {
+  void removeListenerForTable(@NotNull LibraryTable.Listener libraryListener, @NotNull LibraryTable libraryTable) {
     synchronized (myLibraryTableListenersLock) {
       LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
       if (multiListener != null) {
@@ -497,19 +495,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<>();
     private LibraryTable.Listener[] myListenersArray;
 
-    private synchronized void addListener(LibraryTable.Listener listener) {
+    private synchronized void addListener(@NotNull LibraryTable.Listener listener) {
       myListeners.add(listener);
       myListenersArray = null;
     }
 
-    private synchronized boolean removeListener(LibraryTable.Listener listener) {
+    private synchronized boolean removeListener(@NotNull LibraryTable.Listener listener) {
       myListeners.remove(listener);
       myListenersArray = null;
       return myListeners.isEmpty();
     }
 
     @Override
-    public void afterLibraryAdded(final Library newLibrary) {
+    public void afterLibraryAdded(@NotNull final Library newLibrary) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -526,7 +524,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void afterLibraryRenamed(final Library library) {
+    public void afterLibraryRenamed(@NotNull final Library library) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -536,7 +534,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void beforeLibraryRemoved(final Library library) {
+    public void beforeLibraryRemoved(@NotNull final Library library) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -546,7 +544,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void afterLibraryRemoved(final Library library) {
+    public void afterLibraryRemoved(@NotNull final Library library) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -629,7 +627,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myJdkTableMultiListener.removeListener(jdkTableListener);
   }
 
-  protected void assertListenersAreDisposed() {
+  void assertListenersAreDisposed() {
     if (!myRegisteredRootProviders.isEmpty()) {
       StringBuilder details = new StringBuilder();
       for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
@@ -649,7 +647,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     private boolean myInsideRootsChange;
 
     @Override
-    public void rootSetChanged(final RootProvider wrapper) {
+    public void rootSetChanged(@NotNull final RootProvider wrapper) {
       if (myInsideRootsChange) return;
       myInsideRootsChange = true;
       try {

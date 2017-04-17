@@ -275,7 +275,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
 
     @Override
-    public void beforeLibraryRemoved(Library library) {
+    public void beforeLibraryRemoved(@NotNull Library library) {
       LibraryOrderEntryImpl.this.beforeLibraryRemoved(library);
     }
   }
