@@ -318,6 +318,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (qualifier instanceof GrReferenceExpression) {
       if (((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return null;
     }
+    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return null;
     if (qualifier != null) {
       PsiType qType = qualifier.getType();
       if (qType instanceof PsiClassType) {
