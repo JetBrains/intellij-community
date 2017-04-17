@@ -380,14 +380,15 @@ public class JavaDebugProcess extends XDebugProcess {
             session.removeSessionListener(this);
             data.getTrackedStacks().clear();
           }
-        }, memoryViewContent);
+        });
 
         ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
+        final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
         ui.addListener(new ContentManagerAdapter() {
           @Override
           public void selectionChanged(ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
-              classesFilteredView.setActive(memoryViewContent.isSelected(), process);
+              classesFilteredView.setActive(memoryViewContent.isSelected(), managerThread);
             }
           }
         }, memoryViewContent);

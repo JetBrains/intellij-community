@@ -140,9 +140,18 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
     };
 
+    debugSession.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionStopped() {
+        debugSession.removeSessionListener(this);
+        myInstancesTracker.removeTrackerListener(instancesTrackerListener);
+      }
+    });
+
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void processAttached(DebugProcess process) {
+        debugProcess.removeDebugProcessListener(this);
         managerThread.invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() throws Exception {
@@ -160,7 +169,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
               }
             });
 
-            tracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
+            tracker.addTrackerListener(instancesTrackerListener);
           }
         });
       }
@@ -354,14 +363,14 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.clear();
   }
 
-  public void setActive(boolean active, @NotNull DebugProcessImpl process) {
+  public void setActive(boolean active, @NotNull DebuggerManagerThreadImpl managerThread) {
     if (myIsActive == active) {
       return;
     }
 
     myIsActive = active;
 
-    process.getManagerThread().schedule(new DebuggerCommandImpl() {
+    managerThread.schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
         if (active) {
