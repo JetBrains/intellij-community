@@ -10,7 +10,8 @@ from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_P
 
 AVOID_RECURSION = [
     'pydevd_additional_thread_info_regular.py',
-    'threading.py',
+    '/threading.py',
+    '\\threading.py',
     '_weakrefset.py'
 ]
 
