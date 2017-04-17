@@ -267,7 +267,7 @@ class C {
       import java.util.Collection;
 
       class Test {
-          @TA <caret>Collection<@TA String> c;
+          <caret>@TA Collection<@TA String> c;
       }'''.stripIndent().trim()
   }
 
