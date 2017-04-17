@@ -64,9 +64,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
           synchronized (LOCK) {
-            for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-              myManager.removeConfiguration(settings);
-            }
+            getModuleRunConfigurationSettings().forEach(settings -> myManager.removeConfiguration(settings));
           }
         }
       }
@@ -110,15 +108,11 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public Element writeExternal(@NotNull final Element element, boolean isShared) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
-    for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-      if (myManager.isConfigurationShared(settings) == isShared) {
-        myManager.addConfigurationElement(element, settings);
-      }
-    }
+    getModuleRunConfigurationSettings().stream()
+      .filter(settings -> myManager.isConfigurationShared(settings) == isShared)
+      .forEach(settings -> myManager.addConfigurationElement(element, settings));
     if (myUnloadedElements != null) {
-      for (final Element unloadedElement : myUnloadedElements) {
-        element.addContent(unloadedElement.clone());
-      }
+      myUnloadedElements.forEach(unloadedElement -> element.addContent(unloadedElement.clone()));
     }
     return element;
   }
