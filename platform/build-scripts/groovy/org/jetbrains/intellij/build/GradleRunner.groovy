@@ -32,22 +32,24 @@ class GradleRunner {
    * Invokes Gradle tasks on {@link #projectDir} project.
    * Logs error and stops the build process if Gradle process is failed.
    */
-  def run(String title, String... tasks) {
-    runInner(title, false, tasks)
+  boolean run(String title, String... tasks) {
+    return runInner(title, false, tasks)
   }
   
   /**
    * Invokes Gradle tasks on {@link #projectDir} project.
    * Ignores the result of running Gradle.
    */
-  def forceRun(String title, String... tasks) {
-    runInner(title, true, tasks)
+  boolean forceRun(String title, String... tasks) {
+    return runInner(title, true, tasks)
   }
 
-  private def runInner(String title, boolean force, String... tasks) {
+  private boolean runInner(String title, boolean force, String... tasks) {
+    def result = false
     messages.block("Gradle $tasks") {
       messages.progress(title)
-      if (!runInner(tasks)) {
+      result = runInner(tasks)
+      if (!result) {
         def errorMessage = "Failed to complete `gradle ${tasks.join(' ')}`"
         if (!force) {
           messages.warning(errorMessage)
@@ -57,9 +59,10 @@ class GradleRunner {
         }
       }
     }
+    return result
   }
 
-  private def runInner(String... tasks) {
+  private boolean runInner(String... tasks) {
     def gradleScript = SystemInfo.isWindows ? 'gradlew.bat' : 'gradlew'
     List<String> command = new ArrayList()
     command.add("${projectDir.absolutePath}/$gradleScript".toString())

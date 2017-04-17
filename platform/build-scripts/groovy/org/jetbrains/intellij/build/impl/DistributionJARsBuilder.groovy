@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,6 +179,8 @@ class DistributionJARsBuilder {
   }
 
   void buildAdditionalArtifacts() {
+    copyDependenciesFile()
+
     def productProperties = buildContext.productProperties
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
@@ -510,5 +512,13 @@ class DistributionJARsBuilder {
     FileUtil.createParentDirs(targetFile)
     targetFile.text = defaultKeymapContent
     return patchedKeyMapDir
+  }
+
+  private def copyDependenciesFile() {
+    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
+      buildContext.notifyArtifactBuilt(outputFile)
+    }
   }
 }
