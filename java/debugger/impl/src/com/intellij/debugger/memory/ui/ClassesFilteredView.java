@@ -18,13 +18,13 @@ package com.intellij.debugger.memory.ui;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.component.MemoryViewManager;
 import com.intellij.debugger.memory.component.MemoryViewManagerState;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.event.MemoryViewManagerListener;
-import com.intellij.debugger.memory.tracking.ClassPreparedListener;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
 import com.intellij.debugger.memory.tracking.TrackingType;
@@ -32,6 +32,7 @@ import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.KeyboardUtils;
 import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.memory.utils.SingleAlarmWithMutableDelay;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -49,6 +50,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,33 +142,60 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
     };
 
-    managerThread.schedule(new DebuggerCommandImpl() {
+    debugSession.addSessionListener(new XDebugSessionListener() {
       @Override
-      public Priority getPriority() {
-        return Priority.LOWEST;
+      public void sessionStopped() {
+        debugSession.removeSessionListener(this);
+        myInstancesTracker.removeTrackerListener(instancesTrackerListener);
       }
+    });
 
+    debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      protected void action() throws Exception {
-        final boolean activated = myIsTrackersActivated.get();
-        tracker.getTrackedClasses().forEach((className, type) -> {
-          List<ReferenceType> classes = debugProcess.getVirtualMachineProxy().classesByName(className);
-          if (classes.isEmpty()) {
-            new ClassPreparedListener(className, debugSession) {
-              @Override
-              public void onClassPrepared(@NotNull ReferenceType referenceType, @NotNull XDebugSession session) {
-                trackClass(session, referenceType, type, myIsTrackersActivated.get());
+      public void processAttached(DebugProcess process) {
+        debugProcess.removeDebugProcessListener(this);
+        managerThread.invoke(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            final boolean activated = myIsTrackersActivated.get();
+            final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+            tracker.getTrackedClasses().forEach((className, type) -> {
+              List<ReferenceType> classes = proxy.classesByName(className);
+              if (classes.isEmpty()) {
+                trackWhenPrepared(className, debugSession, debugProcess, type);
               }
-            };
-          }
-          else {
-            for (ReferenceType ref : classes) {
-              trackClass(debugSession, ref, type, activated);
-            }
+              else {
+                for (ReferenceType ref : classes) {
+                  trackClass(debugSession, ref, type, activated);
+                }
+              }
+            });
+
+            tracker.addTrackerListener(instancesTrackerListener);
           }
         });
+      }
 
-        tracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
+      private void trackWhenPrepared(@NotNull String className,
+                                     @NotNull XDebugSession session,
+                                     @NotNull DebugProcessImpl process,
+                                     @NotNull TrackingType type) {
+        final ClassPrepareRequestor request = new ClassPrepareRequestor() {
+          @Override
+          public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+            process.getRequestsManager().deleteRequest(this);
+            trackClass(session, referenceType, type, myIsTrackersActivated.get());
+          }
+        };
+
+        final ClassPrepareRequest classPrepareRequest = process.getRequestsManager()
+          .createClassPrepareRequest(request, className);
+        if (classPrepareRequest != null) {
+          classPrepareRequest.enable();
+        }
+        else {
+          LOG.warn("Cannot create a 'class prepare' request. Class " + className + " not tracked.");
+        }
       }
     });
 
@@ -334,14 +363,14 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.clear();
   }
 
-  public void setActive(boolean active, @NotNull DebugProcessImpl process) {
+  public void setActive(boolean active, @NotNull DebuggerManagerThreadImpl managerThread) {
     if (myIsActive == active) {
       return;
     }
 
     myIsActive = active;
 
-    process.getManagerThread().schedule(new DebuggerCommandImpl() {
+    managerThread.schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() throws Exception {
         if (active) {
