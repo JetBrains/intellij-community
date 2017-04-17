@@ -303,7 +303,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public abstract SelectInTarget createSelectInTarget();
 
   public final TreePath getSelectedPath() {
-    return TreeUtil.getSelectedPathIfOne(myTree);
+    return myTree == null ? null : TreeUtil.getSelectedPathIfOne(myTree);
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
