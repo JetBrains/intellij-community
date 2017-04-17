@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
@@ -63,6 +64,8 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent implements
   }
 
   public void updateNotIndexedUrls(List<String> repositories) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     if (repositories.isEmpty()) {
       myNotIndexedUrls = Collections.emptySet();
       ExternalSystemNotificationManager.getInstance(myProject).clearNotifications(
@@ -74,6 +77,8 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent implements
   }
 
   public void checkNotIndexedRepositories() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(myProject);
     if (ContainerUtil.isEmpty(myNotIndexedUrls)) {
       return;
@@ -137,10 +142,11 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent implements
 
   @Override
   public void dispose() {
-    ExternalSystemNotificationManager.getInstance(myProject).clearNotifications(
-      UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ExternalSystemNotificationManager.getInstance(myProject).clearNotifications(
+        UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP, NotificationSource.PROJECT_SYNC, GradleConstants.SYSTEM_ID);
+    }
   }
-
 
   public static MavenRepositoriesHolder getInstance(Project p) {
     return p.getComponent(MavenRepositoriesHolder.class);
