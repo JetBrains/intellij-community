@@ -68,7 +68,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun `check resolve conflicts and commit`() {
     val commit = prepareConflict()
-    vcsHelper.onMerge { git("add -u .") }
+    `mark as resolved on merge`()
     vcsHelper.onCommit { msg ->
       git("commit -am '$msg'")
       true

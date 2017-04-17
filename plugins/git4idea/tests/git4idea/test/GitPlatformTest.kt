@@ -163,6 +163,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     vcsHelper.onMerge{}
   }
 
+  protected fun `mark as resolved on merge`() {
+    vcsHelper.onMerge { git("add -u .") }
+  }
+
   protected fun `assert merge dialog was shown`() {
     assertTrue("Merge dialog was not shown", vcsHelper.mergeDialogWasShown())
   }
