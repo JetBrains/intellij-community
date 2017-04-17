@@ -760,4 +760,9 @@ def foo(List list) {
     doExprTest "'a'..'z'", "groovy.lang.Range<java.lang.String>"
     doExprTest "'b'..1", "groovy.lang.Range<java.io.Serializable>"
   }
+
+  void 'test list with spread'() {
+    doExprTest 'def l = [1, 2]; [*l]', 'java.util.List<java.lang.Integer>'
+    doExprTest 'def l = [1, 2]; [*[*[*l]]]', 'java.util.List<java.lang.Integer>'
+  }
 }
