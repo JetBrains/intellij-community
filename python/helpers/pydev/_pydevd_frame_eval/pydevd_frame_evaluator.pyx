@@ -10,8 +10,7 @@ from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_P
 
 AVOID_RECURSION = [
     'pydevd_additional_thread_info_regular.py',
-    '/threading.py',
-    '\\threading.py',
+    'threading.py',
     '_weakrefset.py'
 ]
 
@@ -70,9 +69,10 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
 
     for file in AVOID_RECURSION:
         # we can't call any other function without this check, because we can get stack overflow
-        if filepath.endswith(file):
-            skip_file = True
-            break
+        for path_separator in ('/', '\\'):
+            if filepath.endswith(path_separator + file):
+                skip_file = True
+                break
 
     if not skip_file:
         try:
