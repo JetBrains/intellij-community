@@ -151,7 +151,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
-        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]");
+        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
       }
     }
     return null;
@@ -163,7 +163,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context).getMappedParameters(), callSite);
+        final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
+        return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite, context);
       }
       else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
@@ -301,7 +302,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static Ref<PyType> getOpenFunctionType(@NotNull String callQName,
                                                  @NotNull Map<PyExpression, PyNamedParameter> arguments,
-                                                 @NotNull PsiElement anchor) {
+                                                 @NotNull PsiElement anchor,
+                                                 @NotNull TypeEvalContext context) {
     String mode = "r";
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
@@ -319,14 +321,14 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
     if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName) || "_io.open".equals(callQName)) {
       if (mode.contains("b")) {
-        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE));
+        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE, context));
       }
       else {
-        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE));
+        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE, context));
       }
     }
 
-    return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE));
+    return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE, context));
   }
 
   @Nullable

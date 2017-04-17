@@ -486,7 +486,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
       }
-      final PyType builtinCollection = getBuiltinCollection(resolved);
+      final PyType builtinCollection = getBuiltinCollection(resolved, context.getTypeContext());
       if (builtinCollection != null) {
         return Ref.create(builtinCollection);
       }
@@ -750,10 +750,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getBuiltinCollection(@NotNull PsiElement element) {
+  private static PyType getBuiltinCollection(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final String collectionName = getQualifiedName(element);
     final String builtinName = COLLECTION_CLASSES.get(collectionName);
-    return builtinName != null ? PyTypeParser.getTypeByName(element, builtinName) : null;
+    return builtinName != null ? PyTypeParser.getTypeByName(element, builtinName, context) : null;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,25 +116,45 @@ public class PyTypeParser {
    * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
    */
   @Nullable
-  public static PyType getTypeByName(@Nullable final PsiElement anchor, @NotNull String type) {
+  public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type) {
+    if (anchor == null) return EMPTY_RESULT.getType();
     return parse(anchor, type).getType();
   }
 
   /**
-   * @param  anchor should never be null or null will be returned
+   * @param anchor  should never be null or null will be returned
+   * @param context type evaluation context
+   * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
+   */
+  @Nullable
+  public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
+    if (anchor == null) return EMPTY_RESULT.getType();
+    return parse(anchor, type, context).getType();
+  }
+
+  /**
+   * @param anchor should never be null or {@link PyTypeParser#EMPTY_RESULT} will be returned
+   * @param type   representation of the type to parse
    */
   @NotNull
-  public static ParseResult parse(@Nullable final PsiElement anchor, @NotNull String type) {
+  public static ParseResult parse(@NotNull PsiElement anchor, @NotNull String type) {
+    return parse(anchor, type, TypeEvalContext.codeInsightFallback(anchor.getProject()));
+  }
+
+  /**
+   * @param anchor  should never be null or {@link PyTypeParser#EMPTY_RESULT} will be returned
+   * @param type    representation of the type to parse
+   * @param context type evaluation context
+   */
+  @NotNull
+  public static ParseResult parse(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
     PyPsiUtils.assertValid(anchor);
-    if (anchor == null) {
-      return EMPTY_RESULT;
-    }
 
     final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
 
     final FunctionalParser<ParseResult, PyElementType> classType =
       token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
-        .map(new MakeSimpleType(anchor))
+        .map(new MakeSimpleType(anchor, context))
         .cached()
         .named("class-type");
 
@@ -304,9 +324,11 @@ public class PyTypeParser {
 
   private static class MakeSimpleType implements Function<Pair<Token<PyElementType>, List<Token<PyElementType>>>, ParseResult> {
     @NotNull private final PsiElement myAnchor;
+    @NotNull private final TypeEvalContext myContext;
 
-    public MakeSimpleType(@NotNull PsiElement anchor) {
+    public MakeSimpleType(@NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
       myAnchor = anchor;
+      myContext = context;
     }
 
     @Nullable
@@ -331,15 +353,14 @@ public class PyTypeParser {
 
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
-        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
         final Map<TextRange, PyType> types = new HashMap<>();
         final Map<PyType, TextRange> fullRanges = new HashMap<>();
         final Map<PyType, PyImportElement> imports = new HashMap<>();
 
-        PyType type = resolveQualifierType(tokens, pyFile, context, types, fullRanges, imports);
+        PyType type = resolveQualifierType(tokens, pyFile, myContext, types, fullRanges, imports);
 
         if (type != null) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myContext);
           final PyExpression expression = myAnchor instanceof PyExpression ? (PyExpression)myAnchor : null;
 
           for (Token<PyElementType> token : tokens) {
@@ -350,7 +371,7 @@ public class PyTypeParser {
             if (results != null && !results.isEmpty()) {
               final PsiElement resolved = results.get(0).getElement();
               if (resolved instanceof PyTypedElement) {
-                type = context.getType((PyTypedElement)resolved);
+                type = myContext.getType((PyTypedElement)resolved);
                 if (type != null && !allowResolveToType(type)) {
                   type = null;
                   break;
