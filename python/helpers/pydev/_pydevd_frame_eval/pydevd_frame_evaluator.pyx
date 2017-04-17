@@ -50,6 +50,10 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
     cdef int* extra_value = NULL
     cdef int thread_index = -1
 
+    if is_use_code_extra is None or AVOID_RECURSION is None:
+        # Sometimes during process shutdown these global variables become None
+        return _PyEval_EvalFrameDefault(frame_obj, exc)
+
     if is_use_code_extra():
         extra = PyMem_Malloc(sizeof(int))
         try:
