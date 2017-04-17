@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -160,6 +161,7 @@ public class JavaReflectionReferenceUtil {
     return null;
   }
 
+  @Contract("null,_->null")
   @Nullable
   public static <T> T computeConstantExpression(@Nullable PsiExpression expression, @NotNull Class<T> expectedType) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -310,6 +312,10 @@ public class JavaReflectionReferenceUtil {
   public static String getMethodTypeExpressionText(@NotNull ReflectiveSignature signature) {
     final String types = signature.getText(true, type -> type + ".class");
     return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + types;
+  }
+
+  public static boolean isCallToMethod(@NotNull PsiMethodCallExpression methodCall, @NotNull String className, @NotNull String methodName) {
+    return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
   }
 
 

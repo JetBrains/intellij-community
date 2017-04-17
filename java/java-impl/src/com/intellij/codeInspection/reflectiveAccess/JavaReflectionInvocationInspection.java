@@ -20,7 +20,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,10 +210,6 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
       }
     }
     return null;
-  }
-
-  private static boolean isCallToMethod(PsiMethodCallExpression methodCall, String className, String methodName) {
-    return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
   }
 
   private static class Arguments {

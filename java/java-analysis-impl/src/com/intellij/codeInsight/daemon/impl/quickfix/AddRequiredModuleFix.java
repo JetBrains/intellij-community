@@ -16,12 +16,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +29,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Pavel.Dolgov
  */
-public class AddRequiredModuleFix implements IntentionAction {
-  private final SmartPsiElementPointer<PsiJavaModule> myModulePointer;
+public class AddRequiredModuleFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myRequiredName;
 
   public AddRequiredModuleFix(PsiJavaModule module, String requiredName) {
-    myModulePointer = SmartPointerManager.getInstance(module.getProject()).createSmartPsiElementPointer(module);
+    super(module);
     myRequiredName = requiredName;
   }
 
@@ -54,16 +52,23 @@ public class AddRequiredModuleFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!PsiUtil.isLanguageLevel9OrHigher(file)) return false;
-    PsiJavaModule module = myModulePointer.getElement();
-    return module != null && module.isValid() && module.getManager().isInProject(module) && getLBrace(module) != null;
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return PsiUtil.isLanguageLevel9OrHigher(file) &&
+           startElement instanceof PsiJavaModule &&
+           startElement.getManager().isInProject(startElement) &&
+           getLBrace((PsiJavaModule)startElement) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiJavaModule module = myModulePointer.getElement();
-    if (module == null) return;
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    PsiJavaModule module = (PsiJavaModule)startElement;
 
     PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
     PsiJavaModule tempModule = parserFacade.createModuleFromText("module " + module.getName() + " { requires " + myRequiredName + "; }");
