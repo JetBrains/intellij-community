@@ -376,7 +376,7 @@ public class JavaDebugProcess extends XDebugProcess {
         memoryViewContent.setPinned(true);
         memoryViewContent.setShouldDisposeContent(true);
 
-        final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
+        final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData();
         process.putUserData(MemoryViewDebugProcessData.KEY, data);
         session.addSessionListener(new XDebugSessionListener() {
           @Override
