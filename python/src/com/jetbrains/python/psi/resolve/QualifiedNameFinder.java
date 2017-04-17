@@ -31,11 +31,15 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -47,7 +51,7 @@ public class QualifiedNameFinder {
    * @param foothold an element in the file to import to (maybe the file itself); used to determine module, roots, etc.
    * @param vfile    file which importable name we want to find.
    * @return a possibly qualified name under which the file may be imported, or null. If there's more than one way (overlapping roots),
-   *         the name with fewest qualifiers is selected.
+   * the name with fewest qualifiers is selected.
    */
   @Nullable
   public static String findShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
@@ -137,22 +141,8 @@ public class QualifiedNameFinder {
           toplevel = containingClass;
         }
       }
-      PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
-      while (dir != null) {
-        PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
-        if (initPy == null) {
-          break;
-        }
-        if (initPy instanceof PyFile) {
-          //noinspection ConstantConditions
-          final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(((PsiNamedElement)toplevel).getName());
-          final PsiElement finalTopLevel = toplevel;
-          if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
-            virtualFile = dir.getVirtualFile();
-          }
-        }
-        dir = dir.getParentDirectory();
-      }
+      VirtualFile topMostPackage = findTopMostContainingPackage((PsiFile)srcfile, (PsiNamedElement)toplevel);
+      virtualFile = topMostPackage != null ? topMostPackage : virtualFile;
     }
     final QualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
@@ -164,6 +154,29 @@ public class QualifiedNameFinder {
       }
     }
     return qname;
+  }
+
+  private static VirtualFile findTopMostContainingPackage(final PsiFile foothold, @NotNull final PsiNamedElement target) {
+    String targetName = target.getName();
+    if (targetName == null) {
+      return null;
+    }
+
+    PsiDirectory dir = foothold.getContainingDirectory();
+    List<PsiFile> initFiles =
+      StreamEx.iterate(dir, Objects::nonNull, PsiDirectory::getParentDirectory).map(d -> d.findFile(PyNames.INIT_DOT_PY))
+        .takeWhile(Objects::nonNull).collect(
+        Collectors.toList());
+    Collections.reverse(initFiles);
+    for (PsiFile initPy : initFiles) {
+      if (initPy instanceof PyFile) {
+        final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(targetName);
+        if (resolved.stream().anyMatch(r -> r.getElement() == target)) {
+          return initPy.getContainingDirectory().getVirtualFile();
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
