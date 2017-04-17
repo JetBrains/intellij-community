@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -62,7 +63,7 @@ public class EncodingUtil {
   // returns NO_WAY if the new encoding is incompatible (bytes on disk will differ)
   // returns WELL_IF_YOU_INSIST if the bytes on disk remain the same but the text will change
   @NotNull
-  static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull String text, @NotNull byte[] bytes, @NotNull Charset charset) {
+  static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, @NotNull byte[] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
     byte[] bom = virtualFile.getBOM();
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
@@ -92,22 +93,22 @@ public class EncodingUtil {
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
 
-    return !Arrays.equals(bytesToSave, bytes) ? Magic8.NO_WAY : loaded.equals(text) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
+    return !Arrays.equals(bytesToSave, bytes) ? Magic8.NO_WAY : StringUtil.equals(loaded, text) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
   }
 
   @NotNull
-  static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull String text, @NotNull byte[] bytesOnDisk, @NotNull Charset charset) {
+  static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, @NotNull byte[] bytesOnDisk, @NotNull Charset charset) {
     try {
       String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
-      String textToSave = lineSeparator.equals("\n") ? text : StringUtil.convertLineSeparators(text, lineSeparator);
+      CharSequence textToSave = lineSeparator.equals("\n") ? text : StringUtilRt.convertLineSeparators(text, lineSeparator);
 
-      Pair<Charset, byte[]> chosen = LoadTextUtil.chooseMostlyHarmlessCharset(virtualFile.getCharset(), charset, textToSave);
+      Pair<Charset, byte[]> chosen = LoadTextUtil.chooseMostlyHarmlessCharset(virtualFile.getCharset(), charset, textToSave.toString());
 
       byte[] saved = chosen.second;
 
       CharSequence textLoadedBack = LoadTextUtil.getTextByBinaryPresentation(saved, charset);
 
-      return !text.equals(textLoadedBack.toString()) ? Magic8.NO_WAY : Arrays.equals(saved, bytesOnDisk) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
+      return !StringUtil.equals(text, textLoadedBack) ? Magic8.NO_WAY : Arrays.equals(saved, bytesOnDisk) ? Magic8.ABSOLUTELY : Magic8.WELL_IF_YOU_INSIST;
     }
     catch (UnsupportedOperationException e) { // unsupported encoding
       return Magic8.NO_WAY;
