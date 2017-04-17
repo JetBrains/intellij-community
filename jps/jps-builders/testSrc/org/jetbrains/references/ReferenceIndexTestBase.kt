@@ -18,7 +18,7 @@ package org.jetbrains.references
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathUtil
-import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.PersistentStringEnumerator
@@ -153,7 +153,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
     }
   }
 
-  private fun <K, V> storage(index: CompilerBackwardReferenceIndex, id: ID<K, V>) = (index[id] as MapReduceIndex<K, V, CompiledFileData>).storage as MapIndexStorage<K, V>
+  private fun <K, V> storage(index: CompilerBackwardReferenceIndex, id: IndexId<K, V>) = (index[id] as MapReduceIndex<K, V, CompiledFileData>).storage as MapIndexStorage<K, V>
 
   private fun getTestDataPath() = testDataRootPath + "/" + getTestName(true) + "/"
 

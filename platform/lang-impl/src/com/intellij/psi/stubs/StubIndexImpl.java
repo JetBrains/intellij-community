@@ -538,7 +538,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     final Set<String> indicesToDrop =
       new HashSet<>(myPreviouslyRegistered != null ? myPreviouslyRegistered.registeredIndices : Collections.emptyList());
     for (ID<?, ?> key : state.myIndices.keySet()) {
-      indicesToDrop.remove(key.toString());
+      indicesToDrop.remove(key.getName());
     }
 
     if (!indicesToDrop.isEmpty()) {

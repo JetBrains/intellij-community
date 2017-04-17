@@ -31,7 +31,7 @@ import java.io.*;
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2008
  */
-public class ID<K, V> {
+public class ID<K, V> implements IndexId<K,V> {
   private static final ConcurrentIntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
@@ -75,6 +75,12 @@ public class ID<K, V> {
         writeEnumFile();
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
   }
 
   private static File getEnumFile() {
@@ -155,8 +161,11 @@ public class ID<K, V> {
     return (int)myUniqueId;
   }
 
+  /**
+   * Consider to use {@link ID#getName()} instead of this method
+   */
   public String toString() {
-    return myName;
+    return getName();
   }
 
   public int getUniqueId() {
