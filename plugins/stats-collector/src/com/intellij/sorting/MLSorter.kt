@@ -27,7 +27,7 @@ class MLSorter : CompletionFinalSorter() {
             val cached = cachedScore[it]
             if (cached != null) {
                 result.add(Pair.create("ml_rank", cached.mlRank))
-                result.add(Pair.create("position_before", cached.positionBefore))
+                result.add(Pair.create("before_rerank_order", cached.positionBefore))
             }
             it to result
         }
