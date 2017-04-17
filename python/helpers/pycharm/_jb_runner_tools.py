@@ -219,7 +219,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         except AttributeError:
             return
 
-        # If we here that means we are closing subtest
+        # closing subtest
         test_name = ".".join(TREE_MANAGER.current_branch)
         if self._latest_subtest_result == "Failure":
             self.testFailed(test_name)
