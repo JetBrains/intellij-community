@@ -76,7 +76,8 @@ public class ArrangementAnimationPanel extends JPanel {
     myContent.paint(graphics);
     graphics.dispose();
     int expectedDurationMillis = 500;
-    myAnimationIterationStep = size.width / (expectedDurationMillis / ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS);
+    myAnimationIterationStep = Math.max(
+      (myHorizontal ? size.width : size.height) / (expectedDurationMillis / ArrangementConstants.ANIMATION_STEPS_TIME_GAP_MILLIS), 1);
 
     myContent.setBounds(bounds);
     applyDoubledBuffered(myContent, true);
