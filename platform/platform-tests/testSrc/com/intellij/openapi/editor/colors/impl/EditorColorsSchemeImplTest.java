@@ -64,6 +64,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   public void testSetFontPreferences() throws Exception {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
+    myScheme.setEditorFontName(fontName1);
     FontPreferences fontPreferences = myScheme.getFontPreferences();
     assertInstanceOf(fontPreferences, ModifiableFontPreferences.class);
     ((ModifiableFontPreferences)fontPreferences).register(fontName1, 25);
