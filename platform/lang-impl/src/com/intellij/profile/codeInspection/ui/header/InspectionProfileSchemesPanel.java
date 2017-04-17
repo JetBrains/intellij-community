@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.application.options.schemes.AbstractDescriptionAwareSchemesPanel;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.DescriptionAwareSchemeActions;
-import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
@@ -201,11 +200,14 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       }
 
       private void copyToAnotherLevel(InspectionProfileModifiableModel profile, boolean copyToProject) {
-        String name = SchemeNameGenerator.getUniqueName(profile.getName(), schemeName -> ((InspectionProfileSchemesModel)getModel()).hasName(schemeName, copyToProject));
-        final InspectionProfileModifiableModel newProfile = copyToNewProfile(profile, myProject, name, true);
-        addProfile(newProfile);
-        selectScheme(newProfile);
-        getSchemesPanel().startEdit();
+        getSchemesPanel().editNewSchemeName(
+          profile.getName(),
+          copyToProject,
+          newName -> {
+            final InspectionProfileModifiableModel newProfile = copyToNewProfile(profile, myProject, newName, true);
+            addProfile(newProfile);
+            selectScheme(newProfile);
+          });
       }
     };
   }
