@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -797,7 +798,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     private void restoreVisualPosition() {
       if (myVisualColumnToRestore < 0) {
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorUtil.runWithAnimationDisabled(myEditor, () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE));
         return;
       }
       VisualPosition position = myCaretModel.getVisualPosition();
