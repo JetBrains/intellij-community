@@ -55,8 +55,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PyDataViewerPanel extends JPanel {
-  private final static int COLUMNS_IN_DEFAULT_VIEW = 1000;
-  private final static int ROWS_IN_DEFAULT_VIEW = 1000;
   private static final Logger LOG = Logger.getInstance(PyDataViewerPanel.class);
   private final Project myProject;
   @NotNull private final PyFrameAccessor myFrameAccessor;
@@ -181,8 +179,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void updateUI(@NotNull ArrayChunk chunk, @NotNull PyDebugValue debugValue, @NotNull DataViewStrategy strategy) {
-    AsyncArrayTableModel model = strategy.createTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
-                                                           Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this, debugValue);
+    AsyncArrayTableModel model = strategy.createTableModel(chunk.getRows(), chunk.getColumns(), this, debugValue);
     model.addToCache(chunk);
 
     UIUtil.invokeLaterIfNeeded(() -> {
