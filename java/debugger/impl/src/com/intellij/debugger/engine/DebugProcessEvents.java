@@ -135,6 +135,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     @Override
     public void run() {
+      String oldThreadName = Thread.currentThread().getName();
+      Thread.currentThread().setName("DebugProcessEvents");
+
       try {
         EventQueue eventQueue = myVmProxy.eventQueue();
         while (!isStopped()) {
@@ -271,6 +274,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       finally {
         Thread.interrupted(); // reset interrupted status
+        Thread.currentThread().setName(oldThreadName);
       }
     }
 
