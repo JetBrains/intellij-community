@@ -15,9 +15,6 @@
  */
 package com.intellij.ui.components.breadcrumbs;
 
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
@@ -267,15 +264,7 @@ public class Breadcrumbs extends JComponent {
   }
 
   protected TextAttributes getAttributes(Crumb crumb) {
-    TextAttributesKey key = getKey(crumb);
-    return key == null ? null : EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
-  }
-
-  protected TextAttributesKey getKey(Crumb crumb) {
-    if (isHovered(crumb)) return EditorColors.BREADCRUMBS_HOVERED;
-    if (isSelected(crumb)) return EditorColors.BREADCRUMBS_CURRENT;
-    if (isAfterSelected(crumb)) return EditorColors.BREADCRUMBS_INACTIVE;
-    return EditorColors.BREADCRUMBS_DEFAULT;
+    return null;
   }
 
   private Crumb getCrumb(int x, int y) {

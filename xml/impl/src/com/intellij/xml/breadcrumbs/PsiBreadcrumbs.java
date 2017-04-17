@@ -17,6 +17,8 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -96,5 +98,18 @@ final class PsiBreadcrumbs extends Breadcrumbs {
     if (background == null) return null;
 
     return presentation.getBackgroundColor(isSelected(crumb), isHovered(crumb), isAfterSelected(crumb));
+  }
+
+  @Override
+  protected TextAttributes getAttributes(Crumb crumb) {
+    TextAttributesKey key = getKey(crumb);
+    return key == null ? null : EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+  }
+
+  private TextAttributesKey getKey(Crumb crumb) {
+    if (isHovered(crumb)) return EditorColors.BREADCRUMBS_HOVERED;
+    if (isSelected(crumb)) return EditorColors.BREADCRUMBS_CURRENT;
+    if (isAfterSelected(crumb)) return EditorColors.BREADCRUMBS_INACTIVE;
+    return EditorColors.BREADCRUMBS_DEFAULT;
   }
 }
