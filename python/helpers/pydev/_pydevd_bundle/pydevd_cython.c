@@ -1733,6 +1733,7 @@ static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper(P
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_ThreadTracer(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
+static PyObject *__pyx_int_2;
 static PyObject *__pyx_int_32;
 static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple__2;
@@ -22230,6 +22231,7 @@ static int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_32 = PyInt_FromLong(32); if (unlikely(!__pyx_int_32)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
@@ -22415,11 +22417,11 @@ PyMODINIT_FUNC PyInit_pydevd_cython(void)
   /* "_pydevd_bundle/pydevd_cython.pyx":12
  * # ENDIF
  * 
- * version = 1             # <<<<<<<<<<<<<<
+ * version = 2             # <<<<<<<<<<<<<<
  * 
  * #=======================================================================================================================
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_1) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_2) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
 
   /* "_pydevd_bundle/pydevd_cython.pyx":93
  *         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
