@@ -17,10 +17,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.Evaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -113,7 +110,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
             if (stacks == null) {
               stacks = new CapturedStacksMap();
-              process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
+              putProcessUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks), process);
             }
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
             if (key instanceof ObjectReference) {
@@ -190,9 +187,19 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
     if (bpts == null) {
       bpts = new CopyOnWriteArrayList<>();
-      debugProcess.putUserData(CAPTURE_BREAKPOINTS, bpts);
+      putProcessUserData(CAPTURE_BREAKPOINTS, bpts, debugProcess);
     }
     bpts.add(breakpoint);
+  }
+
+  public static <T> void putProcessUserData(@NotNull Key<T> key, @Nullable T value, DebugProcessImpl debugProcess) {
+    debugProcess.putUserData(key, value);
+    debugProcess.addDebugProcessListener(new DebugProcessListener() {
+      @Override
+      public void processDetached(DebugProcess process, boolean closedByUser) {
+        process.putUserData(key, null);
+      }
+    });
   }
 
   @Nullable
