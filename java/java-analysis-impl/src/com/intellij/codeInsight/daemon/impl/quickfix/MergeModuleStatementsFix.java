@@ -21,23 +21,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Pavel.Dolgov
  */
 public abstract class MergeModuleStatementsFix<T extends PsiElement> extends LocalQuickFixAndIntentionActionOnPsiElement {
-  protected final SmartPsiElementPointer<T> myOtherStatement;
 
-  protected MergeModuleStatementsFix(@NotNull T thisStatement, @NotNull T otherStatement) {
-    super(thisStatement);
-    final PsiFile file = otherStatement.getContainingFile();
-    myOtherStatement = SmartPointerManager.getInstance(otherStatement.getProject()).createSmartPsiElementPointer(otherStatement, file);
+  protected MergeModuleStatementsFix(@NotNull PsiJavaModule javaModule) {
+    super(javaModule);
   }
 
   @Override
@@ -45,49 +44,57 @@ public abstract class MergeModuleStatementsFix<T extends PsiElement> extends Loc
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    final T otherStatement = myOtherStatement.getElement();
-    return otherStatement != null && otherStatement.isValid() && PsiUtil.isLanguageLevel9OrHigher(file);
+    return PsiUtil.isLanguageLevel9OrHigher(file);
   }
 
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
-                     @NotNull PsiElement thisStatement,
+                     @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final T otherStatement = myOtherStatement.getElement();
+    if (startElement instanceof PsiJavaModule) {
+      final PsiJavaModule javaModule = (PsiJavaModule)startElement;
+      final List<T> statementsToMerge = getStatementsToMerge(javaModule);
+      LOG.assertTrue(!statementsToMerge.isEmpty());
 
-    if (otherStatement != null) {
-      final PsiElement parent = otherStatement.getParent();
-      if (parent instanceof PsiJavaModule) {
-        final String moduleName = ((PsiJavaModule)parent).getName();
-        final String moduleText = PsiKeyword.MODULE + " " + moduleName + " {" + getReplacementText(otherStatement) + "}";
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-        final PsiJavaModule tempModule = factory.createModuleFromText(moduleText);
+      final String tempModuleText = PsiKeyword.MODULE + " " + javaModule.getName() + " {" + getReplacementText(statementsToMerge) + "}";
+      final PsiJavaModule tempModule = JavaPsiFacade.getInstance(project).getElementFactory().createModuleFromText(tempModuleText);
 
-        final Iterator<T> statementIterator = getStatements(tempModule).iterator();
-        LOG.assertTrue(statementIterator.hasNext());
-        final T replacement = statementIterator.next();
+      final List<T> tempStatements = getStatementsToMerge(tempModule);
+      LOG.assertTrue(!tempStatements.isEmpty());
+      final T replacement = tempStatements.get(0);
 
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-        codeStyleManager.reformat(otherStatement.replace(replacement));
-        thisStatement.delete();
+      final T firstStatement = statementsToMerge.get(0);
+      final CommentTracker commentTracker = new CommentTracker();
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      final PsiElement resultingStatement = codeStyleManager.reformat(commentTracker.replace(firstStatement, replacement));
+
+      for (int i = 1; i < statementsToMerge.size(); i++) {
+        T statement = statementsToMerge.get(i);
+        commentTracker.delete(statement);
+      }
+      commentTracker.insertCommentsBefore(resultingStatement);
+
+      if (editor != null) {
+        final int offset = resultingStatement.getTextRange().getEndOffset();
+        editor.getCaretModel().moveToOffset(offset);
       }
     }
   }
 
   @NotNull
-  protected abstract String getReplacementText(@NotNull T otherStatement);
+  protected abstract String getReplacementText(List<T> statementsToMerge);
 
   @NotNull
-  protected abstract Iterable<T> getStatements(@NotNull PsiJavaModule javaModule);
+  protected abstract List<T> getStatementsToMerge(@NotNull PsiJavaModule javaModule);
 
   @NotNull
-  protected static String joinNames(@NotNull List<String> oldNames, @NotNull List<String> newNames) {
-    final StringJoiner joiner = new StringJoiner(",");
-    oldNames.forEach(joiner::add);
-    newNames.stream().filter(name -> !oldNames.contains(name)).forEach(joiner::add);
-    return joiner.toString();
+  protected static String joinUniqueNames(@NotNull List<String> names) {
+    final Set<String> unique = new THashSet<>();
+    return names.stream()
+      .filter(name -> unique.add(name))
+      .collect(Collectors.joining(","));
   }
 
   @Nullable

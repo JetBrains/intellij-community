@@ -28,14 +28,16 @@ class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase
   override fun getBasePath() = getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/mergeModuleStatementsFix"
 
   fun testExports1() = doTest("exports", "my.api")
-  fun testExports2() = doTest("exports", "my.api", false)
+  fun testExports2() = doTest("exports", "my.api")
+  fun testExports3() = doTest("exports", "my.api")
 
   fun testProvides1() = doTest("provides", "my.api.MyService")
   fun testProvides2() = doTest("provides", "my.api.MyService")
   fun testProvides3() = doTest("provides", "my.api.MyService")
 
   fun testOpens1() = doTest("opens", "my.api")
-  fun testOpens2() = doTest("opens", "my.api", false)
+  fun testOpens2() = doTest("opens", "my.api")
+  fun testOpens3() = doTest("opens", "my.api")
 
 
   override fun setUp() {
