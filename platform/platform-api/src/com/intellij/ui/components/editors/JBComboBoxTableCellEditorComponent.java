@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -32,9 +31,12 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.GraphicsUtil;
 
-import javax.accessibility.*;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
@@ -83,7 +85,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       } else {
         label.setIcon(getEmptyIcon());
       }
-      label.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+      GraphicsUtil.setAntialiasingType(label, AntialiasingType.getAAHintForSwingComponent());
       return label;
     }
 

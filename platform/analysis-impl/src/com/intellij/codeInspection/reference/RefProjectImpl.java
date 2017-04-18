@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class RefProjectImpl extends RefEntityImpl implements RefProject {
-  public RefProjectImpl(@NotNull RefManager refManager) {
+  RefProjectImpl(@NotNull RefManager refManager) {
     super(refManager.getProject().getName(), refManager);
   }
 

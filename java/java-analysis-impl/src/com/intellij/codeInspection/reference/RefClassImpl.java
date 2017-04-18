@@ -65,7 +65,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private Set<RefElement> myInTypeReferences;
   private Set<RefElement> myInstanceReferences;
   private List<RefJavaElement> myClassExporters;
-  private RefModule myRefModule;
+  private final RefModule myRefModule;
 
   RefClassImpl(PsiClass psiClass, RefManager manager) {
     super(psiClass, manager);
@@ -89,9 +89,10 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       } else if (psiParent instanceof PsiJavaFile) {
         PsiJavaFile psiFile = (PsiJavaFile) psiParent;
         String packageName = psiFile.getPackageName();
-        if (!"".equals(packageName)) {
+        if (!packageName.isEmpty()) {
           ((RefPackageImpl)getRefJavaManager().getPackage(packageName)).add(this);
-        } else {
+        }
+        else {
           ((RefPackageImpl)getRefJavaManager().getDefaultPackage()).add(this);
         }
       }
@@ -373,7 +374,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myInTypeReferences;
   }
 
-  public void addTypeReference(RefJavaElement from) {
+  void addTypeReference(RefJavaElement from) {
     if (from != null) {
       if (myInTypeReferences == null){
         myInTypeReferences = new THashSet<>(1);
@@ -391,7 +392,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myInstanceReferences;
   }
 
-  public void addInstanceReference(RefElement from) {
+  void addInstanceReference(RefElement from) {
     if (myInstanceReferences == null){
       myInstanceReferences = new THashSet<>(1);
     }
@@ -410,7 +411,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myConstructors.add(refConstructor);
   }
 
-  public void addLibraryOverrideMethod(RefMethod refMethod) {
+  void addLibraryOverrideMethod(RefMethod refMethod) {
     if (myOverridingMethods == null){
       myOverridingMethods = new ArrayList<>(2);
     }
@@ -457,7 +458,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
 
   @Nullable
-  public static RefClass classFromExternalName(RefManager manager, String externalName) {
+  static RefClass classFromExternalName(RefManager manager, String externalName) {
     return (RefClass) manager.getReference(ClassUtil.findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
@@ -485,7 +486,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
-  protected void methodRemoved(RefMethod method) {
+  void methodRemoved(RefMethod method) {
     getConstructors().remove(method);
     getLibraryMethods().remove(method);
 
@@ -542,7 +543,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return false;
   }
 
-  public void addClassExporter(RefJavaElement exporter) {
+  void addClassExporter(RefJavaElement exporter) {
     if (myClassExporters == null) myClassExporters = new ArrayList<>(1);
     if (myClassExporters.contains(exporter)) return;
     myClassExporters.add(exporter);

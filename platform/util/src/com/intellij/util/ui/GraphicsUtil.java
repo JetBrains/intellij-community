@@ -16,8 +16,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.MethodInvocator;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -122,5 +125,25 @@ public class GraphicsUtil {
     return ourSafelyGetGraphicsMethod.isAvailable()
            ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c)
            : c.getGraphics();
+  }
+
+  public static Object getAntialiasingType(@NotNull JComponent list) {
+    return SystemInfo.IS_AT_LEAST_JAVA9 ? null : list.getClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY);
+  }
+
+  public static void setAntialiasingType(@NotNull JComponent list, Object type) {
+    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
+      list.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, type);
+    }
+  }
+
+  public static void generatePropertiesForAntialiasing(Object type, @NotNull PairConsumer<Object, Object> propertySetter) {
+    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
+      propertySetter.consume(SwingUtilities2.AA_TEXT_PROPERTY_KEY, type);
+    }
+  }
+
+  public static Object createAATextInfo(@NotNull Object hint) {
+    return SystemInfo.IS_AT_LEAST_JAVA9 ? null : new SwingUtilities2.AATextInfo(hint, UIUtil.getLcdContrastValue());
   }
 }

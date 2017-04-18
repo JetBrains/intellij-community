@@ -28,7 +28,7 @@ public class RemoteRepositoryDescription {
   public static final RemoteRepositoryDescription MAVEN_CENTRAL = new RemoteRepositoryDescription(
     "central",
     "Maven Central repository",
-    "http://repo1.maven.org/maven2"
+    "https://repo1.maven.org/maven2"
   );
   public static final RemoteRepositoryDescription JBOSS_COMMUNITY = new RemoteRepositoryDescription(
     "jboss.community",

@@ -133,8 +133,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
       return false;
     }
 
-    final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(file);
-    return provider != null && BreadcrumbsXmlWrapper.findInfoProvider(provider) != null;
+    return BreadcrumbsXmlWrapper.findInfoProvider(file, project) != null;
   }
 
   private static void registerWrapper(@NotNull FileEditorManager fileEditorManager,

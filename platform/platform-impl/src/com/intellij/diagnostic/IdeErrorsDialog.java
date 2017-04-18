@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +107,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<>();
   private List<AbstractMessage> myRawMessages;
   private final MessagePool myMessagePool;
+  private final Set<AbstractMessage> myMessagesWithIncludedAttachments = new THashSet<>(1);
+
   private HeaderlessTabbedPane myTabs;
   @Nullable
   private CommentsTabForm myCommentsTabForm;
@@ -446,9 +449,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateAttachmentWarning(final AbstractMessage message) {
     if (message == null) return;
-    if (Registry.is("ide.diagnostics.suggest.sending.all.attachments") || myInternalMode) {
+
+    if (!myMessagesWithIncludedAttachments.contains(message) &&
+        (Registry.is("ide.diagnostics.suggest.sending.all.attachments") || myInternalMode)) {
       for(Attachment attachment:message.getAllAttachments()) attachment.setIncluded(true);
+      myMessagesWithIncludedAttachments.add(message);
     }
+    
     final List<Attachment> includedAttachments = message.getIncludedAttachments();
     if (!includedAttachments.isEmpty()) {
       myAttachmentWarningPanel.setVisible(true);

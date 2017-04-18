@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.*;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
@@ -63,6 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -115,7 +118,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private JButton myCopyButton;
   private JButton myDeleteButton;
   private JButton myResetToDefault;
-  private JCheckBox myNonEnglishKeyboardSupportOption;
+  private JCheckBox preferKeyPositionOverCharOption;
 
   private JLabel myBaseKeymapLabel;
 
@@ -132,6 +135,25 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     JPanel keymapPanel = new JPanel(new BorderLayout());
     keymapPanel.add(createKeymapListPanel(), BorderLayout.NORTH);
     keymapPanel.add(createKeymapSettingsPanel(), BorderLayout.CENTER);
+
+    IdeFrame ideFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    if (ideFrame != null && KeyboardSettingsExternalizable.isSupportedKeyboardLayout(ideFrame.getComponent())) {
+      preferKeyPositionOverCharOption = new JCheckBox(new AbstractAction(" " + KeyMapBundle.message("prefer.key.position")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          VMOptions.writeOption("com.jetbrains.use.old.keyevent.processing", "=",
+                                Boolean.toString(preferKeyPositionOverCharOption.isSelected()));
+          ApplicationManager.getApplication().invokeLater(
+            () -> ApplicationManager.getApplication().restart(),
+            ModalityState.NON_MODAL
+          );
+        }
+      });
+      //preferKeyPositionOverCharOption.setSelected();
+      preferKeyPositionOverCharOption.setBorder(new EmptyBorder(0, 0, 0, 0));
+      keymapPanel.add(preferKeyPositionOverCharOption, BorderLayout.SOUTH);
+    }
+
     add(keymapPanel, BorderLayout.CENTER);
     addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -269,18 +291,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     gc.weightx = 1;
     panel.add(myDeleteButton, gc);
     IdeFrame ideFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    if (ideFrame != null && KeyboardSettingsExternalizable.isSupportedKeyboardLayout(ideFrame.getComponent()))
-    {
-      String displayLanguage = ideFrame.getComponent().getInputContext().getLocale().getDisplayLanguage();
-      myNonEnglishKeyboardSupportOption = new JCheckBox(new AbstractAction(displayLanguage + " " + KeyMapBundle.message("use.non.english.keyboard.layout.support")) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          KeyboardSettingsExternalizable.getInstance().setNonEnglishKeyboardSupportEnabled(myNonEnglishKeyboardSupportOption.isSelected());
-        }
-      });
-      myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
-      panel.add(myNonEnglishKeyboardSupportOption, gc);
-    }
 
     myResetToDefault.addActionListener(new ActionListener() {
       @Override
@@ -663,8 +673,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public void reset() {
-    if (myNonEnglishKeyboardSupportOption != null) {
-      myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
+    if (preferKeyPositionOverCharOption != null) {
+      preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
     }
 
     Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();

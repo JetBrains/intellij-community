@@ -160,8 +160,9 @@ public class BuildManager implements Disposable {
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
   private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager requestProcessor pool");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
+  private volatile int myFileChangeCounter = 0;
 
-  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask(this) {
+  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
       return Registry.intValue("compiler.automake.trigger.delay");
@@ -173,7 +174,7 @@ public class BuildManager implements Disposable {
     }
   };
 
-  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask(this) {
+  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
     @Override
     protected int getDelay() {
       return Registry.intValue("compiler.document.save.trigger.delay");
@@ -303,7 +304,13 @@ public class BuildManager implements Disposable {
     conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
       @Override
       public void batchChangeStarted(Project project) {
+        myFileChangeCounter++;
         cancelAutoMakeTasks(project);
+      }
+
+      @Override
+      public void batchChangeCompleted(Project project) {
+        myFileChangeCounter--;
       }
     });
 
@@ -1438,7 +1445,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private abstract static class BuildManagerPeriodicTask implements Runnable {
+  private abstract class BuildManagerPeriodicTask implements Runnable {
     private final Alarm myAlarm;
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
     private final Runnable myTaskRunnable = () -> {
@@ -1450,8 +1457,8 @@ public class BuildManager implements Disposable {
       }
     };
 
-    protected BuildManagerPeriodicTask(@NotNull Disposable disposable) {
-      myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+    protected BuildManagerPeriodicTask() {
+      myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, BuildManager.this);
     }
 
     public final void schedule() {
@@ -1470,7 +1477,7 @@ public class BuildManager implements Disposable {
 
     @Override
     public final void run() {
-      if (!HeavyProcessLatch.INSTANCE.isRunning() && !myInProgress.getAndSet(true)) {
+      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFileChangeCounter <= 0 && !myInProgress.getAndSet(true)) {
         try {
           ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
         }

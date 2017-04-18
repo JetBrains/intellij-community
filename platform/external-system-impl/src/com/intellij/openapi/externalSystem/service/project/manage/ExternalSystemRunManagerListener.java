@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.ExternalProjectsStateProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.Pair;
@@ -42,11 +43,11 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
  */
 class ExternalSystemRunManagerListener implements RunManagerListener {
 
-  private ExternalProjectsManager myManager;
+  private ExternalProjectsManagerImpl myManager;
   private final Map<Integer, Pair<String, RunnerAndConfigurationSettings>> myMap;
 
   public ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
-    myManager = manager;
+    myManager = (ExternalProjectsManagerImpl)manager;
     myMap = ContainerUtil.newConcurrentMap();
   }
 
@@ -61,7 +62,7 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
       final Pair<String, RunnerAndConfigurationSettings> pair = myMap.remove(System.identityHashCode(settings));
       if (pair == null) return;
 
-      final ExternalProjectsManager.ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
+      final ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
       final ExternalSystemTaskExecutionSettings taskExecutionSettings =
         ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings();
 
@@ -87,7 +88,7 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
     if (settings.getConfiguration() instanceof ExternalSystemRunConfiguration) {
       final Pair<String, RunnerAndConfigurationSettings> pair = myMap.get(System.identityHashCode(settings));
       if (pair != null) {
-        final ExternalProjectsManager.ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
+        final ExternalProjectsStateProvider stateProvider = myManager.getStateProvider();
         final ExternalSystemTaskExecutionSettings taskExecutionSettings =
           ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings();
 

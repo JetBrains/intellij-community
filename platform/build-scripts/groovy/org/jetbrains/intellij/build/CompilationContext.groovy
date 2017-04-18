@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModule
 @CompileStatic
 interface CompilationContext {
   AntBuilder getAnt()
+  GradleRunner getGradle()
   BuildOptions getOptions()
   BuildMessages getMessages()
   BuildPaths getPaths()

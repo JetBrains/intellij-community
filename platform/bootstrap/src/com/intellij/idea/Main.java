@@ -115,7 +115,7 @@ public class Main {
            Comparing.strEqual(firstArg, "keymap") ||
            Comparing.strEqual(firstArg, "inspections") ||
            Comparing.strEqual(firstArg, "intentions") ||
-           (firstArg.length() < 20 && firstArg.endsWith("inspect"));
+           firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
   private static boolean isCommandLine(String[] args) {
@@ -136,7 +136,6 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void showMessage(String title, Throwable t) {
     StringWriter message = new StringWriter();
 

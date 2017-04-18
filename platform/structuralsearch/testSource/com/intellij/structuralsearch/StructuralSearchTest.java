@@ -587,6 +587,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find if statement with else", 2, findMatchesCount(in, "if ('_exp) { '_statement*; }"));
     assertEquals("Find if statement without else", 1,
                  findMatchesCount(in, "if ('_exp) { '_statement*; } else { '_statement2{0,0}; }"));
+
+    String in2 = "/**" +
+                 " * javadoc" +
+                 "*/" +
+                 "class A {" +
+                 "  /* comment */" +
+                 "" +
+                 "  void a() {" +
+                 "    System.out.println();\n" +
+                 "    // comment\n" +
+                 "  }" +
+                 "}";
+    assertEquals("Should find statements and comments in statement context only", 2, findMatchesCount(in2, "'_statement;"));
   }
 
   public void testSearchClass() {

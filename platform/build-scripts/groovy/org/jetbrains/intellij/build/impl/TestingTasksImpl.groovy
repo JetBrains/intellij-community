@@ -50,6 +50,7 @@ class TestingTasksImpl extends TestingTasks {
     else {
       compilationTasks.compileAllModulesAndTests()
     }
+    setupTestingDependencies()
 
     def mainModule = options.mainModule ?: defaultMainModule
     List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
@@ -169,6 +170,14 @@ class TestingTasksImpl extends TestingTasks {
       }
 
       test(name: 'com.intellij.tests.BootstrapTests')
+    }
+  }
+  
+  static boolean dependenciesInstalled
+  private def setupTestingDependencies() {
+    if (!dependenciesInstalled) {
+      dependenciesInstalled = true
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
     }
   }
 

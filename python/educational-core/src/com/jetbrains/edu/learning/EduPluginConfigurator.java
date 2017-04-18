@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -18,6 +20,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,9 +129,12 @@ public interface EduPluginConfigurator {
                                          @NotNull Project project,
                                          @NotNull Course course,
                                          @Nullable String moduleDir) {
+    StudyGenerator.createCourse(course, project.getBaseDir());
   }
 
   default List<String> getBundledCoursePaths() {
     return Collections.emptyList();
   }
+
+  default ModuleType getModuleType() {return StdModuleTypes.JAVA;}
 }

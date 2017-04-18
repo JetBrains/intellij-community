@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.google.common.primitives.Ints;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.UnorderedPair;
@@ -201,6 +202,11 @@ public class IndexDataGetter {
         iterator.advance();
         iterator.setValue(myPathsInterner.intern(iterator.value()));
       }
+    }
+
+    @NotNull
+    public Set<Integer> getCommits() {
+      return ContainerUtil.union(Ints.asList(myCommitsToPaths.keys()), Ints.asList(myCommitsToRenames.keys()));
     }
   }
 }

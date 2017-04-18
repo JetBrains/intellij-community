@@ -317,7 +317,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
-    manageSpaceBeforeCallLParenth();
+    if (myType1 == GroovyElementTypes.MODIFIERS) {
+      createSpaceInCode(true);
+    } else  {
+      manageSpaceBeforeCallLParenth();
+    }
   }
 
   @Override

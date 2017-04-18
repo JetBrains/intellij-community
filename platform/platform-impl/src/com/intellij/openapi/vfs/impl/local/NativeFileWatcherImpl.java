@@ -45,10 +45,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -145,36 +142,22 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (execPath != null) return new File(execPath);
 
     String[] names = null;
-    String subdir = null;
     if (SystemInfo.isWindows) {
       if ("win32-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier.exe"};
       else if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
-      subdir = "win";
     }
     else if (SystemInfo.isMac) {
       names = new String[]{"fsnotifier"};
-      subdir = "mac";
     }
     else if (SystemInfo.isLinux) {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier"};
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64"};
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier-arm"};
-      subdir = "linux";
     }
     if (names == null) return PLATFORM_NOT_SUPPORTED;
 
-    String[] dirs = {PathManager.getBinPath(),
-                     PathManager.getHomePath() + "/ultimate/community/bin/" + subdir,
-                     PathManager.getHomePath() + "/community/bin/" + subdir,
-                     PathManager.getBinPath() + '/' + subdir};
-    for (String dir : dirs) {
-      for (String name : names) {
-        File candidate = new File(dir, name);
-        if (candidate.exists()) return candidate;
-      }
-    }
 
-    return null;
+    return Arrays.stream(names).map(PathManager::findBinFile).filter(o -> o != null).findFirst().orElse(null);
   }
 
   /* internal stuff */

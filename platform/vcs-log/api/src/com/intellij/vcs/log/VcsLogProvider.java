@@ -147,6 +147,14 @@ public interface VcsLogProvider {
   @Nullable
   String getCurrentBranch(@NotNull VirtualFile root);
 
+  /**
+   * Returns {@link VcsLogDiffHandler} for this provider in order to support comparing commits and with local version from log-based file history.
+   *
+   * @return diff handler or null if unsupported.
+   */
+  @Nullable
+  VcsLogDiffHandler getDiffHandler();
+
   interface Requirements {
 
     /**

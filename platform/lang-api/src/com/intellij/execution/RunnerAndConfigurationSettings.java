@@ -31,11 +31,8 @@ import org.jetbrains.annotations.Nullable;
 public interface RunnerAndConfigurationSettings {
   /**
    * Returns the type of the run configuration.
-   *
-   * @return the type of the run configuration, or null if the settings object was loaded from disk and no plugin corresponding to the
-   * stored type of the run configuration is loaded.
    */
-  @Nullable
+  @NotNull
   ConfigurationType getType();
 
   /**
@@ -208,6 +205,4 @@ public interface RunnerAndConfigurationSettings {
    * @return the folder name, or null if the configuration is displayed on the top level.
    */
   @Nullable String getFolderName();
-
-
 }

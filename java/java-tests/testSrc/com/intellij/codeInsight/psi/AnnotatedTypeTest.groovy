@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.psi
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiImmediateClassType
@@ -102,6 +103,16 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
     def psi = factory.createMethodFromText("@A @TA(1) <T> @TA(2) String m() { return null; }", context)
     assertTypeText psi.returnType, "java.lang.@pkg.TA(1) @pkg.TA(2) String", "java.lang.String"
     assertAnnotations psi.returnType, "@TA(1)", "@TA(2)"
+  }
+
+  void testIsAnnotated() {
+    def unqualified = factory.createParameterFromText("@A @TA(1) String p", context)
+    assert AnnotationUtil.isAnnotated(unqualified, "pkg.A", false)
+    assert AnnotationUtil.isAnnotated(unqualified, "pkg.TA", false)
+
+    def qualified = factory.createParameterFromText("@A java.lang.@TA(1) String p", context)
+    assert AnnotationUtil.isAnnotated(qualified, "pkg.A", false)
+    assert AnnotationUtil.isAnnotated(qualified, "pkg.TA", false)
   }
 
   private void doTest(String text, String annotated, String canonical) {

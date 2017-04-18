@@ -29,6 +29,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class TestMethod extends TestObject {
   public TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -39,8 +40,6 @@ class TestMethod extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    RunConfigurationModule module = getConfiguration().getConfigurationModule();
-    addJUnit3Parameter(javaParameters, data, module.getProject());
     javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodNameWithSignature());
     return javaParameters;
   }
@@ -49,19 +48,30 @@ class TestMethod extends TestObject {
     return super.createJavaParameters();
   }
 
-  protected void addJUnit3Parameter(JavaParameters javaParameters, final JUnitConfiguration.Data data, Project project) throws ExecutionException {
-    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
-    if (psiClass == null || JUnitUtil.isJUnit4TestClass(psiClass) || JUnitUtil.isJUnit5(psiClass)) {
-      return;
+  @Nullable
+  @Override
+  protected String getPreferredRunner(GlobalSearchScope globalSearchScope) {
+    Project project = getConfiguration().getProject();
+    JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope);
+    if (psiClass == null) return null;
+
+    if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
+      return JUnitStarter.JUNIT5_PARAMETER;
     }
+
+    if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+      return JUnitStarter.JUNIT4_PARAMETER;
+    }
+
     final String methodName = data.getMethodName();
     final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
     for (PsiMethod method : methods) {
       if (JUnitUtil.isTestAnnotated(method)) {
-        return;
+        return JUnitStarter.JUNIT4_PARAMETER;
       }
     }
-    javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
+    return JUnitStarter.JUNIT3_PARAMETER;
   }
 
   @Override

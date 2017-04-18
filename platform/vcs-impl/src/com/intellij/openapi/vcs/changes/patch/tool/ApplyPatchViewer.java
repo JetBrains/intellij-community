@@ -664,7 +664,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ShowDiffWithLocalAction extends DumbAwareAction {
     public ShowDiffWithLocalAction() {
-      super("Compare with local content", null, AllIcons.Diff.Diff);
+      super("Compare with local content", null, AllIcons.Actions.Diff);
     }
 
     @Override

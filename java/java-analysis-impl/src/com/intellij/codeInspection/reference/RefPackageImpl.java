@@ -32,7 +32,7 @@ import javax.swing.*;
 
 
 public class RefPackageImpl extends RefEntityImpl implements RefPackage {
-  public RefPackageImpl(@NotNull String name, @NotNull RefManager refManager) {
+  RefPackageImpl(@NotNull String name, @NotNull RefManager refManager) {
     super(name, refManager);
   }
 
@@ -45,7 +45,7 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
     }
   }
 
-  public static RefEntity packageFromFQName(final RefManager manager, final String name) {
+  static RefEntity packageFromFQName(final RefManager manager, final String name) {
     return manager.getExtension(RefJavaManager.MANAGER).getPackage(name);
   }
 

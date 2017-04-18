@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.indices.MavenArtifactSearcher
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor
+import org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -54,12 +55,14 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
         result.stopHere()
 
         if (GROUP_LABEL == parent.labelName) {
+          MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
           val m = MavenProjectIndicesManager.getInstance(parent.project)
           for (groupId in m.groupIds) {
             result.addElement(LookupElementBuilder.create(groupId).withIcon(AllIcons.Nodes.PpLib))
           }
         }
         else if (NAME_LABEL == parent.labelName) {
+          MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
           val groupId = findNamedArgumentValue(parent.parent as GrNamedArgumentsOwner, GROUP_LABEL) ?: return
 
           val m = MavenProjectIndicesManager.getInstance(parent.project)
@@ -68,6 +71,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
           }
         }
         else if (VERSION_LABEL == parent.labelName) {
+          MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
           val namedArgumentsOwner = parent.parent as GrNamedArgumentsOwner
           val groupId = findNamedArgumentValue(namedArgumentsOwner, GROUP_LABEL) ?: return
           val artifactId = findNamedArgumentValue(namedArgumentsOwner, NAME_LABEL) ?: return
@@ -93,6 +97,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
 
         result.stopHere()
 
+        MavenRepositoriesHolder.getInstance(parent.project).checkNotIndexedRepositories()
         val searchText = CompletionUtil.findReferenceOrAlphanumericPrefix(params)
         val searcher = MavenArtifactSearcher()
         val searchResults = searcher.search(params.position.project, searchText, MAX_RESULT)

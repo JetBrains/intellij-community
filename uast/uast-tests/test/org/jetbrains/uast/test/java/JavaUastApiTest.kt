@@ -15,8 +15,11 @@
  */
 package org.jetbrains.uast.test.java
 
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.ULocalVariable
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByText
 import org.junit.Test
 
@@ -35,6 +38,18 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     @Test fun testFields() {
         doTest("Simple/Field.java") { name, file ->
             assertEquals(1, file.classes[0].fields.size)
+        }
+    }
+
+    @Test fun testCallExpression() {
+        doTest("Simple/CallExpression.java") { name, file ->
+            val index = file.psi.text.indexOf("format")
+            val callExpression = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), PsiCallExpression::class.java)!!
+            assertNotNull(callExpression.toUElementOfType<UCallExpression>())
+
+            val index2 = file.psi.text.indexOf("q")
+            val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
+            UsefulTestCase.assertInstanceOf(literal.toUElement(), ULiteralExpression::class.java)
         }
     }
 }

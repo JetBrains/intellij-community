@@ -462,9 +462,13 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected Module getModule(final String name) {
+    return getModule(myProject, name);
+  }
+
+  protected Module getModule(Project project, String name) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+      Module m = ModuleManager.getInstance(project).findModuleByName(name);
       assertNotNull("Module " + name + " not found", m);
       return m;
     }

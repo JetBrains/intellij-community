@@ -59,10 +59,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     }
   }
 
-  protected RefJavaElementImpl(PsiFile file, RefManager manager) {
-    super(file, manager);
-  }
-
   protected RefJavaElementImpl(PsiModifierListOwner elem, RefManager manager) {
     super(getName(elem), elem, manager);
 
@@ -85,7 +81,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return myOutTypeReferences;
   }
 
-  public void addOutTypeRefernce(RefClass refClass){
+  void addOutTypeRefernce(RefClass refClass){
     if (myOutTypeReferences == null){
       myOutTypeReferences = new THashSet<>();
     }
@@ -137,7 +133,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_USES_DEPRECATION_MASK);
   }
 
-  public void setUsesDeprecatedApi(boolean usesDeprecatedApi) {
+  void setUsesDeprecatedApi(boolean usesDeprecatedApi) {
     setFlag(usesDeprecatedApi, IS_USES_DEPRECATION_MASK);
   }
 
@@ -154,7 +150,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
-  public void setSyntheticJSP(boolean b) {
+  private void setSyntheticJSP(boolean b) {
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
@@ -262,7 +258,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting);
   }
 
-  protected void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {
+  void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {
     if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom != null &&
         expressionFrom.isQualified() && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
       setFlag(true, IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
@@ -273,7 +269,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
   }
   
-  protected RefJavaManager getRefJavaManager() {
+  RefJavaManager getRefJavaManager() {
     return getRefManager().getExtension(RefJavaManager.MANAGER);
   }
 

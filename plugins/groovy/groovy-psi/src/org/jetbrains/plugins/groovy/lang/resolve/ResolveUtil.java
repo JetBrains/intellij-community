@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -679,6 +680,7 @@ public class ResolveUtil {
     if (qualifier == null) return false;
     //key in 'java.util.Map.key' is not access to map, it is access to static property of field
     if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
+    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return false;
 
     final PsiType type = qualifier.getType();
     if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
@@ -697,6 +699,7 @@ public class ResolveUtil {
     final GrExpression qualifier = getSelfOrWithQualifier(ref);
     if (qualifier == null) return false;
     if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
+    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return false;
     return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
   }
 

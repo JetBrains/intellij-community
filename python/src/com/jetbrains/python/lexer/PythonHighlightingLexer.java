@@ -69,10 +69,6 @@ public class PythonHighlightingLexer extends PythonLexer {
     if (tokenType == PyTokenTypes.IDENTIFIER) {
       final String tokenText = getTokenText();
 
-      if (tokenText.equals("None")) return PyTokenTypes.NONE_KEYWORD;
-      if (tokenText.equals("True")) return PyTokenTypes.TRUE_KEYWORD;
-      if (tokenText.equals("False")) return PyTokenTypes.FALSE_KEYWORD;
-
       if (myLanguageLevel.hasWithStatement()) {
         if (tokenText.equals("with")) return PyTokenTypes.WITH_KEYWORD;
         if (tokenText.equals("as")) return PyTokenTypes.AS_KEYWORD;
@@ -83,6 +79,9 @@ public class PythonHighlightingLexer extends PythonLexer {
       }
 
       if (myLanguageLevel.isPy3K()) {
+        if (tokenText.equals("None")) return PyTokenTypes.NONE_KEYWORD;
+        if (tokenText.equals("True")) return PyTokenTypes.TRUE_KEYWORD;
+        if (tokenText.equals("False")) return PyTokenTypes.FALSE_KEYWORD;
         if (tokenText.equals("nonlocal")) return PyTokenTypes.NONLOCAL_KEYWORD;
         if (tokenText.equals("__debug__")) return PyTokenTypes.DEBUG_KEYWORD;
       }

@@ -127,29 +127,35 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
-    for (String contentRoot : myContentRoots) {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
-      Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
-      final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
+    try {
+      for (String contentRoot : myContentRoots) {
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
+        Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
+        final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
-      for (String sourceRoot: mySourceRoots) {
-        String s = contentRoot + "/" + sourceRoot;
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
-        if (vf == null) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
-          if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
-        }
-//        assert vf != null : "cannot find source root: " + sourceRoot;
-        if (vf != null) {
-          contentEntry.addSourceFolder(vf, false);
-        }
-        else {
-          // files are not created yet
-          contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+        for (String sourceRoot: mySourceRoots) {
+          String s = contentRoot + "/" + sourceRoot;
+          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
+          if (vf == null) {
+            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
+            if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
+          }
+  //        assert vf != null : "cannot find source root: " + sourceRoot;
+          if (vf != null) {
+            contentEntry.addSourceFolder(vf, false);
+          }
+          else {
+            // files are not created yet
+            contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+          }
         }
       }
+      setupRootModel(rootModel);
     }
-    setupRootModel(rootModel);
+    catch (Throwable e) {
+      rootModel.dispose();
+      throw e;
+    }
     rootModel.commit();
   }
 

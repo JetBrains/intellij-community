@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,6 +48,10 @@ public abstract class UniqueVFilePathBuilder {
   }
 
   @NotNull
+  public String getUniqueVirtualFilePath(@NotNull Project project, @NotNull VirtualFile vFile, @NotNull GlobalSearchScope scope) {
+    return getUniqueVirtualFilePath(project, vFile);
+  }
+  
   public abstract String getUniqueVirtualFilePath(Project project, VirtualFile vFile);
 
   @NotNull

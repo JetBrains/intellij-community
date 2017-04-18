@@ -47,18 +47,9 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract RunManagerConfig getConfig();
 
-  public final void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
-    if (isShared) {
-      ((RunnerAndConfigurationSettingsImpl)settings).setLevel(RunnerAndConfigurationSettingsImpl.Level.PROJECT);
-    }
-    addConfiguration(settings);
-  }
-
   @Deprecated
   public final void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
-    if (isShared) {
-      ((RunnerAndConfigurationSettingsImpl)settings).setLevel(RunnerAndConfigurationSettingsImpl.Level.PROJECT);
-    }
+    ((RunnerAndConfigurationSettingsImpl)settings).setShared(isShared);
     addConfiguration(settings, tasks, addTemplateTasksIfAbsent);
   }
 
@@ -108,8 +99,9 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings);
 
-  public abstract void addRunManagerListener(RunManagerListener listener);
-  public abstract void removeRunManagerListener(RunManagerListener listener);
+  public abstract void addRunManagerListener(@NotNull RunManagerListener listener);
+
+  public abstract void removeRunManagerListener(@NotNull RunManagerListener listener);
 
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);

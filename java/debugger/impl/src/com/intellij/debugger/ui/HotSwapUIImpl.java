@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.impl.DebuggerManagerAdapter;
+import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
@@ -66,7 +66,7 @@ public class HotSwapUIImpl extends HotSwapUI {
   public HotSwapUIImpl(final Project project, final MessageBus bus, DebuggerManager debugManager) {
     myProject = project;
 
-    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerAdapter() {
+    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerListener() {
       private MessageBusConnection myConn = null;
 
       @Override

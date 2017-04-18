@@ -99,12 +99,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public ConfigurationType getType() {
-    return myFactory.getType();
-  }
-
-  @Override
   public Icon getIcon() {
     return myIcon;
   }

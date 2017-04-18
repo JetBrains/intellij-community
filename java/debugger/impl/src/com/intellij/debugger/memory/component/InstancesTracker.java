@@ -78,8 +78,16 @@ public class InstancesTracker extends AbstractProjectComponent
     }
   }
 
+  public void addTrackerListener(@NotNull InstancesTrackerListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
   public void addTrackerListener(@NotNull InstancesTrackerListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
+  }
+
+  public void removeTrackerListener(@NotNull InstancesTrackerListener listener) {
+    myDispatcher.removeListener(listener);
   }
 
   public void setBackgroundTackingEnabled(boolean state) {
@@ -104,8 +112,8 @@ public class InstancesTracker extends AbstractProjectComponent
   static class MyState {
     boolean isBackgroundTrackingEnabled = false;
 
-    @AbstractCollection(surroundWithTag = false, elementTypes = {Map.Entry.class})
-    final Map<String, TrackingType> classes = new ConcurrentHashMap<>();
+    @AbstractCollection(surroundWithTag = false, elementTypes = {Map.Entry.class}) final Map<String, TrackingType> classes =
+      new ConcurrentHashMap<>();
 
     MyState() {
     }

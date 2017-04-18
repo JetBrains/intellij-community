@@ -33,6 +33,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,6 +127,14 @@ public class PySdkUtil {
     try {
 
       final GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
+
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(commandLine.getExePath());
+
+      final CommandLinePatcher cmdLinePatcher = flavor.commandLinePatcher();
+      if (cmdLinePatcher != null) {
+        cmdLinePatcher.patchCommandLine(cmd);
+      }
+
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();

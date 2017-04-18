@@ -39,7 +39,7 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
                                     PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
-  ArrayFactory<PyFunction> ARRAY_FACTORY = count -> new PyFunction[count];
+  ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];
 
   /**
    * Returns the AST node for the function name identifier.

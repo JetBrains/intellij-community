@@ -228,10 +228,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     try {
       final boolean qualified = isQualified();
 
-      if (!qualified && PyNames.NONE.equals(getReferencedName())) {
-        return PyNoneType.INSTANCE;
-      }
-
       final PyType providedType = getTypeFromProviders(context);
       if (providedType != null) {
         return providedType;

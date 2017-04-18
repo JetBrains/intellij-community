@@ -49,6 +49,8 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
       "class TestClass {\n" +
       "    private static int SFIELD = 1;\n" +
       "    private static int myField = 1;\n" +
+      "    private static Runnable myRunnable = () -> {int <rainbow>a</rainbow> = 0;\n" +
+      "                                                <rainbow>a</rainbow>++;};\n" +
       "    public void f(int <rainbow>param1</rainbow>,\n" +
       "                  int <rainbow>param2</rainbow>,\n" +
       "                  int <rainbow>param3</rainbow>) {\n" +

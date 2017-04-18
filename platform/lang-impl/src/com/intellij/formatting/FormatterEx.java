@@ -132,6 +132,13 @@ public abstract class FormatterEx{
    * or spacing cannot be calculated due to some other reason.
    */
   public abstract int getSpacingForBlockAtOffset(FormattingModel model, int offset);
+  
+  /**
+   * Calculates minimum number of line feeds that should precede block starting at given offset, as dictated by formatting model.
+   * Returns <code>-1</code>, if required block cannot be found at provided offset,
+   * or spacing cannot be calculated due to some other reason.
+   */
+  public abstract int getMinLineFeedsBeforeBlockAtOffset(FormattingModel model, int offset);
 
   public interface IndentInfoStorage {
     void saveIndentInfo(@Nullable IndentInfo info, int startOffset);

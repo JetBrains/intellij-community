@@ -265,10 +265,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     public void clear() {
     }
 
-    @Override
-    public void checkConfiguration() throws RuntimeConfigurationException {
-    }
-
     ///////////////////////////////////Delegates
     @Override
     public void readExternal(final Element element) throws InvalidDataException {

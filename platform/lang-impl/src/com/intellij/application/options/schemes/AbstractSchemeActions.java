@@ -195,16 +195,10 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void actionPerformed(AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
-        mySchemesPanel.cancelEdit();
-        final boolean isProjectScheme = mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme);
-        duplicateScheme(currentScheme,
-                        SchemeNameGenerator.getUniqueName(
-                      SchemeManager.getDisplayName(currentScheme), 
-                      name -> mySchemesPanel.getModel().containsScheme(name, isProjectScheme)));
-        currentScheme = getCurrentScheme();
-        if (currentScheme != null)  {
-          mySchemesPanel.startEdit();
-        }
+        mySchemesPanel.editNewSchemeName(
+          SchemeManager.getDisplayName(currentScheme),
+          mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme),
+          newName ->  duplicateScheme(currentScheme, newName));
       }
     }
 
@@ -224,10 +218,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      T currentScheme = getCurrentScheme();
-      if (currentScheme != null) {
-        mySchemesPanel.startEdit();
-      }
+      mySchemesPanel.editCurrentSchemeName(
+        (currentScheme, newName) -> renameScheme(currentScheme, newName));
     }
 
     @Override

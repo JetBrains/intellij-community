@@ -16,7 +16,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
-import com.intellij.jarRepository.propertiesEditor.RepositoryLibraryPropertiesDialog;
+import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;

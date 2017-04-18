@@ -53,7 +53,7 @@ import java.util.regex.Pattern;
  *
  * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #parseStatusBeforeName(boolean)} with
  * true or false respectively, because it also affects the output.</p>
- *  
+ *
  * @see git4idea.history.GitLogRecord
  */
 public class GitLogParser {
@@ -92,18 +92,24 @@ public class GitLogParser {
   private static final String PATHS =
     SINGLE_PATH +                    // First path - required.
     "(?:\t" + SINGLE_PATH + ")?" +   // Second path - optional. Paths are separated by tab.
-    "(?:" + EOL + ")?";                             // Path(s) information ends with a line terminator (possibly except the last path in the output).
+    "(?:" + EOL + ")?";              // Path(s) information ends with a line terminator (possibly except the last path in the output).
 
   private static Pattern NAME_ONLY = Pattern.compile(PATHS);
   private static Pattern NAME_STATUS = Pattern.compile("([\\S]+)\t" + PATHS);
 
   // --name-only, --name-status or no flag
   enum NameStatus {
-    /** No flag. */
+    /**
+     * No flag.
+     */
     NONE,
-    /** --name-only */
+    /**
+     * --name-only
+     */
     NAME,
-    /** --name-status */
+    /**
+     * --name-status
+     */
     STATUS
   }
 
@@ -117,8 +123,14 @@ public class GitLogParser {
     RAW_BODY("B");
 
     private String myPlaceholder;
-    GitLogOption(String placeholder) { myPlaceholder = placeholder; }
-    private String getPlaceholder() { return myPlaceholder; }
+
+    GitLogOption(String placeholder) {
+      myPlaceholder = placeholder;
+    }
+
+    private String getPlaceholder() {
+      return myPlaceholder;
+    }
   }
 
   /**
@@ -141,8 +153,9 @@ public class GitLogParser {
   }
 
   private static String makeFormatFromOptions(GitLogOption[] options) {
-    Function<GitLogOption,String> function = new Function<GitLogOption, String>() {
-      @Override public String fun(GitLogOption option) {
+    Function<GitLogOption, String> function = new Function<GitLogOption, String>() {
+      @Override
+      public String fun(GitLogOption option) {
         return "%" + option.getPlaceholder();
       }
     };
@@ -155,9 +168,10 @@ public class GitLogParser {
 
   /**
    * Parses the output returned from 'git log' which was executed with '--pretty=format:' pattern retrieved from {@link #getPretty()}.
+   *
    * @param output 'git log' output to be parsed.
    * @return The list of {@link GitLogRecord GitLogRecords} with information for each revision.
-   *         The list is sorted as usual for git log - the first is the newest, the last is the oldest.
+   * The list is sorted as usual for git log - the first is the newest, the last is the oldest.
    */
   @NotNull
   List<GitLogRecord> parse(@NotNull CharSequence output) {
@@ -192,6 +206,7 @@ public class GitLogParser {
   /**
    * Parses a single record returned by 'git log'. The record contains information from pattern and file status and path (if respective
    * flags --name-only or name-status were provided).
+   *
    * @param line record to be parsed.
    * @return GitLogRecord with information about the revision or {@code null} if the given line is empty.
    * @throws GitFormatException if the line is given in unexpected format.
@@ -276,7 +291,12 @@ public class GitLogParser {
     }
   }
 
-  private static void throwGFE(String message, @NotNull CharSequence line) {
+  private static void throwGFE(@NotNull String message, @NotNull CharSequence line) {
+    throw new GitFormatException(message + " [" + getTruncatedEscapedOutput(line) + "]");
+  }
+
+  @NotNull
+  public static String getTruncatedEscapedOutput(@NotNull CharSequence line) {
     String lineString;
 
     String formatString = "%s...(%d more characters)...%s";
@@ -288,6 +308,7 @@ public class GitLogParser {
     else {
       lineString = line.toString();
     }
-    throw new GitFormatException(message + " [" + StringUtil.escapeStringCharacters(lineString) + "]");
+
+    return StringUtil.escapeStringCharacters(lineString);
   }
 }

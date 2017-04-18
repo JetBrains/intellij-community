@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
@@ -31,8 +32,6 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.XmlCompilingVisitor;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.XmlLexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
@@ -52,12 +51,12 @@ import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSe
  */
 public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
-  private XmlLexicalNodesFilter myLexicalNodesFilter;
-
+  @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     elements[0].getParent().accept(new XmlCompilingVisitor(globalVisitor));
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new XmlMatchingVisitor(globalVisitor);
@@ -65,18 +64,17 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
-    if (myLexicalNodesFilter == null) {
-      myLexicalNodesFilter = new XmlLexicalNodesFilter(filter);
-    }
-    return myLexicalNodesFilter;
+  public NodeFilter getLexicalNodesFilter() {
+    return element -> element instanceof PsiWhiteSpace || element instanceof PsiErrorElement;
   }
 
+  @Override
   @NotNull
   public CompiledPattern createCompiledPattern() {
     return new XmlCompiledPattern();
   }
 
+  @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof XMLLanguage;
   }

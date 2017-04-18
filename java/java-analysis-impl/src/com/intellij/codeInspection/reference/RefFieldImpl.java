@@ -142,17 +142,14 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public String getExternalName() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        PsiField psiField = getElement();
-        return psiField != null ? PsiFormatUtil.getExternalName(psiField) : null;
-      }
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      PsiField psiField = getElement();
+      return psiField != null ? PsiFormatUtil.getExternalName(psiField) : null;
     });
   }
 
   @Nullable
-  public static RefField fieldFromExternalName(RefManager manager, String externalName) {
+  static RefField fieldFromExternalName(RefManager manager, String externalName) {
     return (RefField)manager.getReference(findPsiField(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
@@ -161,9 +158,9 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     int classNameDelimiter = externalName.lastIndexOf(' ');
     if (classNameDelimiter > 0 && classNameDelimiter < externalName.length() - 1) {
       final String className = externalName.substring(0, classNameDelimiter);
-      final String fieldName = externalName.substring(classNameDelimiter + 1);
       final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
       if (psiClass != null) {
+        final String fieldName = externalName.substring(classNameDelimiter + 1);
         return psiClass.findFieldByName(fieldName, false);
       }
     }
@@ -173,8 +170,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   @Override
   public boolean isSuspicious() {
     if (isEntry()) return false;
-    if (super.isSuspicious()) return true;
-    return isUsedForReading() != isUsedForWriting();
+    return super.isSuspicious() || isUsedForReading() != isUsedForWriting();
   }
 
   @Override
