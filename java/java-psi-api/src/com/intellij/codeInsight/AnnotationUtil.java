@@ -288,6 +288,11 @@ public class AnnotationUtil {
     PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
     if (annotation != null) return true;
 
+    PsiType type = null;
+    if (listOwner instanceof PsiMethod) type = ((PsiMethod)listOwner).getReturnType();
+    else if (listOwner instanceof PsiVariable) type = ((PsiVariable)listOwner).getType();
+    if (type != null && type.findAnnotation(annotationFQN) != null) return true;
+
     if (!skipExternal) {
       final Project project = listOwner.getProject();
       if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null ||
