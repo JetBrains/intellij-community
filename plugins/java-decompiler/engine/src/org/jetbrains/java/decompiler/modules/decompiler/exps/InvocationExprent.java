@@ -217,7 +217,9 @@ public class InvocationExprent extends Exprent {
 
     if (isStatic) {
       if (isBoxingCall()) {
-        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, tracer);
+        // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
+        // here 'byte' and 'short' values do not need an explicit narrowing type cast
+        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
         return buf;
       }
 
@@ -351,7 +353,14 @@ public class InvocationExprent extends Exprent {
 
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
+
+        Exprent param = lstParameters.get(i);
+        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+        if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
+          param = ((InvocationExprent)param).lstParameters.get(0);
+        }
+        // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
+        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
         buf.append(buff);
 
         firstParameter = false;

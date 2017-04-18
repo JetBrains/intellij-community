@@ -50,16 +50,21 @@ public class TestPrimitives {
    }
 
    public byte getByte() {
-      return (byte)-128;// 56
+      return -128;// 56
    }
 
    public short getShort() {
-      return (short)-32768;// 60
+      return -32768;// 60
    }
 
    public int getInt() {
       return 42;// 64
    }
+
+   public void printNarrowed() {
+      this.printByte((byte)this.getInt());// 68
+      this.printShort((short)this.getInt());// 69
+   }// 70
 }
 
 class 'pkg/TestPrimitives' {
@@ -186,6 +191,16 @@ class 'pkg/TestPrimitives' {
       0      60
       2      60
    }
+
+   method 'printNarrowed ()V' {
+      2      64
+      5      64
+      6      64
+      b      65
+      e      65
+      f      65
+      12      66
+   }
 }
 
 Lines mapping:
@@ -219,3 +234,6 @@ Lines mapping:
 56 <-> 53
 60 <-> 57
 64 <-> 61
+68 <-> 65
+69 <-> 66
+70 <-> 67
