@@ -103,7 +103,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     vcsHelper.onMerge {
         conflicts++
         myRepo.assertConflict("c.txt")
-        resolveConflicts(myRepo)
+      myRepo.resolveConflicts()
     }
 
     rebaseOnMaster()
@@ -117,7 +117,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.`prepare simple conflict`()
 
     vcsHelper.onMerge {
-        resolveConflicts(myRepo)
+        myRepo.resolveConflicts()
     }
 
     rebaseOnMaster()
@@ -163,7 +163,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     myRepo.`assert feature not rebased on master`()
     myRepo.assertRebaseInProgress()
-    resolveConflicts(myRepo)
+    myRepo.resolveConflicts()
 
     myGit.setShouldRebaseFail { true }
 
@@ -305,7 +305,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.assertConflict("c.txt")
 
     //manually resolve conflicts
-    resolveConflicts(myRepo)
+    myRepo.resolveConflicts()
     file("c.txt").append("more changes after resolving")
     // forget to git add afterwards
 
@@ -334,7 +334,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.assertConflict("c.txt")
 
     //manually resolve conflicts
-    resolveConflicts(myRepo)
+    myRepo.resolveConflicts()
     // add more changes to some other file
 
     file("d.txt").append("more changes after resolving")
@@ -355,7 +355,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myRepo.assertConflict("c.txt")
 
     vcsHelper.onMerge {
-      resolveConflicts(myRepo)
+      myRepo.resolveConflicts()
     }
     GitRebaseUtils.continueRebase(myProject)
 
@@ -380,7 +380,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     vcsHelper.onMerge {
       file("c.txt").write("base\nmaster")
-      resolveConflicts(myRepo)
+      myRepo.resolveConflicts()
     }
 
     rebaseOnMaster()
