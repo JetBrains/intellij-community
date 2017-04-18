@@ -76,8 +76,8 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
 
   override fun isFrameworkInstalled() = true //Unittest is always available
 
-  // Unittest does not support filesystem path. It needs qname resolvable against root or workdir
-  override fun isFSPartOfTargetShouldBeSeparated() = false
+  // Unittest does not support filesystem path. It needs qname resolvable against root or working directory
+  override fun shouldSeparateTargetPath() = false
 }
 
 object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {

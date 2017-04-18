@@ -25,7 +25,6 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveModuleAt
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
@@ -51,36 +50,6 @@ data class QNameResolveContext(
   val allowInaccurateResult:Boolean = false
 )
 
-data class QualifiedNameParts(val fileName:QualifiedName, val elementName:QualifiedName, val file: PyFile) {
-  override fun toString() = elementName.toString()
-
-  /**
-   * @return element qname + last part of file qname.
-   */
-  fun getElementNamePrependingFile() = QualifiedName.fromComponents(listOf(fileName.lastComponent!!) + elementName.components)!!
-}
-
-
-/**
- * Splits qname to [QualifiedNameParts]: filesystem part and element(symbol) part.
- * @see [com.jetbrains.python.psi.PyQualifiedNameOwner] similar extensions
- */
-fun QualifiedName.splitNameParts(context: QNameResolveContext): QualifiedNameParts? {
-   //TODO: May be slow, cache in this case
-
-  // Find first element that may be file
-  var i = this.componentCount
-  while (i > 0) {
-    val possibleFileName = this.subQualifiedName(0, i)
-    val possibleFile = possibleFileName.toElement(context)
-    if (possibleFile is PyFile) {
-      return QualifiedNameParts(possibleFileName, this.subQualifiedName(possibleFileName.componentCount, this.componentCount), possibleFile)
-    }
-    i--
-  }
-  return null
-}
-
 /**
  * @return qname part relative to root
  */
@@ -94,7 +63,7 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
 /**
  * Resolves qname of any symbol to appropriate PSI element.
  */
-fun QualifiedName.toElement(context: QNameResolveContext): PsiElement? {
+fun QualifiedName.resolveToElement(context: QNameResolveContext): PsiElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -153,7 +122,7 @@ fun QualifiedName.toElement(context: QNameResolveContext): PsiElement? {
     } else {
       pyFile.virtualFile.parent
     }
-    return toElement(context.copy(folderToStart = folder))
+    return resolveToElement(context.copy(folderToStart = folder))
   }
   return element
 }
