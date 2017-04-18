@@ -46,6 +46,7 @@ public class JavadocHighlightUtil {
   private static final TokenSet SEE_TAG_REFS = TokenSet.create(
     JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
 
+  @SuppressWarnings("SameParameterValue")
   public interface ProblemHolder {
     Project project();
     JavaDocLocalInspectionBase inspection();

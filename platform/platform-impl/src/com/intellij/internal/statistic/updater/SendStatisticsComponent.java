@@ -25,7 +25,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -38,7 +38,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-public class SendStatisticsComponent implements ApplicationComponentAdapter {
+public class SendStatisticsComponent implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance(SendStatisticsComponent.class);
 

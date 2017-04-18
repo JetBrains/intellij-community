@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 
@@ -103,11 +102,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
           font = font.deriveFont(font.getSize() + 1.0f);
         }
         super.setFont(font);
-      }
-
-      @Override
-      public DefaultMutableTreeNode getSelectedNode() {
-        return ProjectViewPane.this.getSelectedNode();
       }
     };
   }

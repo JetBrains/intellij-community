@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
@@ -65,11 +62,6 @@ public class FrozenDocument implements DocumentEx {
     return new FrozenDocument(newText, newLineSet, newStamp, null);
   }
 
-  @Override
-  public void setStripTrailingSpacesEnabled(boolean isEnabled) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
   public LineIterator createLineIterator() {
@@ -78,16 +70,6 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public void setModificationStamp(long modificationStamp) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     throw new UnsupportedOperationException();
   }
 
@@ -122,16 +104,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public boolean isInBulkUpdate() {
-    return false;
-  }
-
-  @Override
-  public void setInBulkUpdate(boolean value) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
     return true;
   }
@@ -160,6 +132,12 @@ public class FrozenDocument implements DocumentEx {
   @NotNull
   @Override
   public CharSequence getCharsSequence() {
+    return myText;
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getImmutableCharSequence() {
     return myText;
   }
 
@@ -216,26 +194,6 @@ public class FrozenDocument implements DocumentEx {
   @Override
   public long getModificationStamp() {
     return myStamp;
-  }
-
-  @Override
-  public void fireReadOnlyModificationAttempt() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addDocumentListener(@NotNull DocumentListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeDocumentListener(@NotNull DocumentListener listener) {
-    throw new UnsupportedOperationException();
   }
 
   @NotNull

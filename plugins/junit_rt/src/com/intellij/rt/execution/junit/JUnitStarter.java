@@ -177,8 +177,13 @@ public class JUnitStarter {
 
   public static boolean isJUnit5Preferred() {
     final String useJUnit5 = System.getProperty(JUNIT5_KEY);
-    final Boolean boolValue = useJUnit5 == null ? null : Boolean.valueOf(useJUnit5);
-    return boolValue != null && boolValue.booleanValue();
+    if (useJUnit5 == null) {
+      return JUnit5EngineDetector.hasCustomEngine();
+    }
+    else {
+      final Boolean boolValue = Boolean.valueOf(useJUnit5);
+      return boolValue != null && boolValue.booleanValue();
+    }
   }
 
   public static boolean checkVersion(String[] args, PrintStream printStream) {
@@ -247,12 +252,13 @@ public class JUnitStarter {
     return Class.forName(agentName);
   }
 
-  public static void printClassesList(List classNames, String packageName, String category, File tempFile) throws IOException {
+  public static void printClassesList(List classNames, String packageName, String category, String filters, File tempFile) throws IOException {
     final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
 
     try {
       writer.println(packageName); //package name
       writer.println(category); //category
+      writer.println(filters); //patterns
       for (int i = 0; i < classNames.size(); i++) {
         writer.println(classNames.get(i));
       }

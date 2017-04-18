@@ -123,6 +123,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testElseIf() throws Exception { doTest(); }
 
+  public void testBlockBeforeElseIf() { doTest(); }
+
   public void testIncompleteElseIf() throws Exception { doTest(); }
 
   public void testField() throws Exception { doTest(); }

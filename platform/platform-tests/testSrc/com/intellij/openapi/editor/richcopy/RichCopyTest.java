@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.editor.richcopy;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.richcopy.view.HtmlTransferableData;
 import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +101,6 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getHomePath(getClass()) + "/platform/platform-tests/testData/editor/richcopy/";
+    return PlatformTestUtil.getPlatformTestDataPath() + "editor/richcopy/";
   }
 }

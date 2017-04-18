@@ -24,10 +24,11 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
@@ -38,6 +39,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -153,10 +155,9 @@ public class DfaVariableValue extends DfaValue {
 
   private boolean hardEquals(PsiModifierListOwner psiVar, PsiType varType, boolean negated, DfaVariableValue qualifier) {
     return psiVar == myVariable &&
-           Comparing.equal(TypeConversionUtil.erasure(varType), TypeConversionUtil.erasure(myVarType)) &&
            negated == myIsNegated &&
-           (myQualifier == null ? qualifier == null : myQualifier.hardEquals(qualifier.getPsiVariable(), qualifier.getVariableType(),
-                                                                             qualifier.isNegated(), qualifier.getQualifier()));
+           qualifier == myQualifier &&
+           Comparing.equal(TypeConversionUtil.erasure(varType), TypeConversionUtil.erasure(myVarType));
   }
 
   @Nullable
@@ -230,8 +231,12 @@ public class DfaVariableValue extends DfaValue {
 
   private static boolean isOnlyImplicitlyInitialized(PsiField field) {
     return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null) && weAreSureThereAreNoExplicitWrites(field),
+      isImplicitlyInitializedNotNull(field) && weAreSureThereAreNoExplicitWrites(field),
       PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static boolean isImplicitlyInitializedNotNull(PsiField field) {
+    return ContainerUtil.exists(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME), p -> p.isImplicitlyNotNullInitialized(field));
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
@@ -268,10 +273,10 @@ public class DfaVariableValue extends DfaValue {
 
   public boolean isFlushableByCalls() {
     if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
-    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL)) {
+    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL) ||
+        myVariable instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)myVariable)) {
       return myQualifier != null && myQualifier.isFlushableByCalls();
     }
-    if (myVariable instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)myVariable)) return false;
     return true;
   }
 

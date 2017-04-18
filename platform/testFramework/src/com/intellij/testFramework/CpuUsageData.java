@@ -66,6 +66,12 @@ public class CpuUsageData {
     return indent + "GC: " + getGcStats() + "\n" + indent + "Threads: " + getThreadStats() + "\n" + indent + "JIT: " + myCompilationTime + "ms";
   }
 
+  boolean hasAnyActivityBesides(Thread thread) {
+    return myCompilationTime > 0 ||
+           myThreadTimes.stream().anyMatch(pair -> pair.first > 0 && !pair.second.equals(thread.getName())) ||
+           myGcTimes.stream().anyMatch(pair -> pair.first > 0);
+  }
+
   @NotNull
   private static String printLongestNames(List<Pair<Long, String>> times) {
     String stats = StreamEx.of(times)

@@ -927,6 +927,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(!findResult.isStringFound());
   }
 
+  public void testFindRegexpThatMatchesWholeFile() throws Exception {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("[^~]+\\Z");
+    findModel.setRegularExpressions(true);
+
+    createFile("a.java", "some text");
+
+    findModel.setRegularExpressions(true);
+    List<UsageInfo> usages = findUsages(findModel);
+    assertSize(1, usages);
+
+    assertTrue(usages.get(0).isValid());
+  }
+
   public void testRegExpMatchReplacement() throws InterruptedException, FindManager.MalformedReplacementStringException {
     String text = "final override val\n" +
                   "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";

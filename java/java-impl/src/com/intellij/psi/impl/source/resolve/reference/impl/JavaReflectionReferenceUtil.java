@@ -27,14 +27,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +78,8 @@ public class JavaReflectionReferenceUtil {
   public static final String GET_DECLARED_FIELD = "getDeclaredField";
   public static final String GET_METHOD = "getMethod";
   public static final String GET_DECLARED_METHOD = "getDeclaredMethod";
+  public static final String GET_CONSTRUCTOR = "getConstructor";
+  public static final String GET_DECLARED_CONSTRUCTOR = "getDeclaredConstructor";
 
   public static final String JAVA_LANG_CLASS_LOADER = "java.lang.ClassLoader";
   public static final String FOR_NAME = "forName";
@@ -161,6 +161,7 @@ public class JavaReflectionReferenceUtil {
     return null;
   }
 
+  @Contract("null,_->null")
   @Nullable
   public static <T> T computeConstantExpression(@Nullable PsiExpression expression, @NotNull Class<T> expectedType) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -176,8 +177,10 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   public static PsiExpression findDefinition(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiReferenceExpression) {
-      return findVariableDefinition((PsiReferenceExpression)expression);
+    int preventEndlessLoop = 5;
+    while (expression instanceof PsiReferenceExpression) {
+      if (--preventEndlessLoop == 0) return null;
+      expression = findVariableDefinition((PsiReferenceExpression)expression);
     }
     return expression;
   }
@@ -311,6 +314,10 @@ public class JavaReflectionReferenceUtil {
     return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + types;
   }
 
+  public static boolean isCallToMethod(@NotNull PsiMethodCallExpression methodCall, @NotNull String className, @NotNull String methodName) {
+    return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
+  }
+
 
   public static class ReflectiveType {
     final PsiClass myPsiClass;
@@ -367,6 +374,24 @@ public class JavaReflectionReferenceUtil {
         }
       }
       return false;
+    }
+
+    public boolean isAssignableFrom(@NotNull PsiType type) {
+      if (type.equals(PsiType.NULL)) {
+        return myPsiClass != null || myArrayDimensions != 0;
+      }
+      PsiType otherType = type;
+      for (int i = 0; i < myArrayDimensions; i++) {
+        if (!(otherType instanceof PsiArrayType)) {
+          return false;
+        }
+        otherType = ((PsiArrayType)otherType).getComponentType();
+      }
+      if (myPrimitiveType != null) {
+        return myPrimitiveType.isAssignableFrom(otherType);
+      }
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
+      return factory.createType(myPsiClass).isAssignableFrom(otherType);
     }
 
     @Nullable

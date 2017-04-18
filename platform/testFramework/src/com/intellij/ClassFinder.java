@@ -42,10 +42,10 @@ public class ClassFinder {
   private final int startPackageName;
   private final boolean includeUnconventionallyNamedTests;
 
-  public ClassFinder(final File classPathRoot, final String packageRoot, boolean includeUnconventionallyNamedTests) throws IOException {
+  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) throws IOException {
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
     startPackageName = classPathRoot.getAbsolutePath().length() + 1;
-    String directoryOffset = packageRoot.replace('.', File.separatorChar);
+    String directoryOffset = rootPackage.replace('.', File.separatorChar);
     findAndStoreTestClasses(new File(classPathRoot, directoryOffset));
   }
 

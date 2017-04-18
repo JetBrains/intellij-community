@@ -251,7 +251,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (selectionPaths == null) return null;
     List<Object> result = new ArrayList<>();
     for (TreePath selectionPath : selectionPaths) {
-      ContainerUtil.addIfNotNull(result, getNodeTreeValue((DefaultMutableTreeNode)selectionPath.getLastPathComponent()));
+      Object value = getNodeValue((DefaultMutableTreeNode)selectionPath.getLastPathComponent());
+      if (value instanceof StructureViewTreeElement) {
+        ContainerUtil.addIfNotNull(result, ((StructureViewTreeElement)value).getValue());
+      }
+      else if (value instanceof Group) {
+        ((Group)value).getChildren().stream()
+          .filter(element -> element instanceof StructureViewTreeElement)
+          .map(element -> ((StructureViewTreeElement)element).getValue())
+          .forEach(element -> ContainerUtil.addIfNotNull(result, element));
+      }
     }
     return ArrayUtil.toObjectArray(result);
   }
@@ -273,12 +282,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       userObject = ((FilteringTreeStructure.FilteringNode)userObject).getDelegate();
     }
     return userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() : null;
-  }
-
-  @Nullable
-  private static Object getNodeTreeValue(DefaultMutableTreeNode mutableTreeNode) {
-    Object value = getNodeValue(mutableTreeNode);
-    return value instanceof StructureViewTreeElement ? ((StructureViewTreeElement)value).getValue() : null;
   }
 
   private void addTreeMouseListeners() {

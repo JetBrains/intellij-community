@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dgm.DGMMemberContributor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
@@ -42,6 +43,9 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
+
+  private static final DGMMemberContributor myContributor = NonCodeMembersContributor.EP_NAME.findExtension(DGMMemberContributor.class);
+
   @Override
   public boolean execute(@NotNull SuperMethodsSearch.SearchParameters queryParameters, @NotNull Processor<MethodSignatureBackedByPsiMethod> consumer) {
     final PsiMethod method = queryParameters.getMethod();
@@ -61,7 +65,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     final String name = method.getName();
     final MethodResolverProcessor processor = new MethodResolverProcessor(name, ((GrMethod)method), false, null, null, PsiType.EMPTY_ARRAY);
-    ResolveUtil.processNonCodeMembers(JavaPsiFacade.getElementFactory(project).createType(psiClass), processor, (GrMethod)method,
+    myContributor.processDynamicElements(JavaPsiFacade.getElementFactory(project).createType(psiClass), psiClass, processor, method,
                                       ResolveState.initial());
 
     final GroovyResolveResult[] candidates = processor.getCandidates();

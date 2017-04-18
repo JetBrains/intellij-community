@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -30,15 +32,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Processor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,7 +51,6 @@ import java.awt.event.MouseMotionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -160,7 +157,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
 
   private void testServiceConnection(String url) {
     myTestButton.setEnabled(false);
-    RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), infos -> {
+    JarRepositoryManager.searchRepositories(myProject, Collections.singletonList(url), infos -> {
       myTestButton.setEnabled(true);
       if (infos.isEmpty()) {
         Messages.showMessageDialog("No repositories found", "Service Connection Failed", Messages.getWarningIcon());

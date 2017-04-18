@@ -21,6 +21,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.project.Project
+import com.intellij.ui.AppIcon
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
@@ -83,6 +84,7 @@ fun askCredentials(project: Project?,
       }
     }
 
+    AppIcon.getInstance().requestAttention(project, true)
     if (dialog(dialogTitle, project = project, panel = panel, focusedComponent = passwordField, errorText = error).showAndGet()) {
       val isMemoryOnly = store.isMemoryOnly || !rememberCheckBox!!.isSelected
       val credentials = Credentials(attributes.userName, passwordField.password.nullize())

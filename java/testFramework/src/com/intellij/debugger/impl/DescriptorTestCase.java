@@ -18,14 +18,10 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -128,21 +124,6 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
   private void printDescriptorLog(Pair<NodeDescriptorImpl, List<String>> pair) {
     for (String text : pair.getSecond()) {
       print(text, ProcessOutputTypes.SYSTEM);
-    }
-  }
-
-  protected LocalVariableDescriptorImpl localVar(DebuggerTree frameTree,
-                                               EvaluationContextImpl evaluationContext,
-                                               String name) {
-    try {
-      StackFrameProxy frameProxy = evaluationContext.getFrameProxy();
-      assert frameProxy != null;
-      LocalVariableDescriptorImpl local = frameTree.getNodeFactory().getLocalVariableDescriptor(null, frameProxy.visibleVariableByName(name));
-      local.setContext(evaluationContext);
-      return local;
-    } catch (EvaluateException e) {
-      error(e);
-      return null;
     }
   }
 

@@ -45,7 +45,7 @@ public abstract class TestAnonymousClass {
    };
 
    void foo(int var1) throws Exception {
-      if(var1 > 0) {// 10
+      if (var1 > 0) {// 10
          TestAnonymousClass.I var2 = new TestAnonymousClass.I() {
             public void foo() throws Exception {
                boolean var1 = true;// 13

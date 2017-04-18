@@ -16,11 +16,12 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 
 import javax.swing.*;
 
 /**
- * @author lex
+ * @deprecated use {@link ProgressWindow} and {@link ProgressIndicatorListener#installToProgress(ProgressIndicatorEx)}
  */
 public class ProgressWindowWithNotification extends ProgressWindow {
   public ProgressWindowWithNotification(boolean shouldShowCancel, Project project) {
@@ -40,19 +41,7 @@ public class ProgressWindowWithNotification extends ProgressWindow {
   }
 
   public void addListener(final ProgressIndicatorListener listener) {
-    addStateDelegate(new AbstractProgressIndicatorExBase(){
-      @Override
-      public void cancel() {
-        super.cancel();
-        listener.cancelled();
-      }
-
-      @Override
-      public void stop() {
-        super.stop();
-        listener.stopped();
-      }
-    });
+    listener.installToProgress(this);
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.InputValidator;
@@ -35,7 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
@@ -424,23 +424,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     if (toReorder == index + 1 && !above) return false;
     return true;
   }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
+  
   @Override
   @NotNull
   public String getComponentName() {
@@ -588,14 +572,11 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   public boolean contains(@NotNull String name, @NotNull final VirtualFile vFile) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final Set<Boolean> find = new HashSet<>();
-    final ContentIterator contentIterator = new ContentIterator() {
-      @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
-          find.add(Boolean.TRUE);
-        }
-        return true;
+    final ContentIterator contentIterator = fileOrDir -> {
+      if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
+        find.add(Boolean.TRUE);
       }
+      return true;
     };
 
     Collection<TreeItem<Pair<AbstractUrl, String>>> urls = getFavoritesListRootUrls(name);
@@ -610,7 +591,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
       Object element = path[path.length - 1];
       if (element instanceof SmartPsiElementPointer) {
-        final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(((SmartPsiElementPointer)element).getElement());
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(((SmartPsiElementPointer)element).getElement());
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())) {
           return true;
@@ -622,7 +603,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
 
       if (element instanceof PsiElement) {
-        final VirtualFile virtualFile = PsiUtilBase.getVirtualFile((PsiElement)element);
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)element);
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())) {
           return true;
@@ -693,7 +674,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       final PsiElement newParent = event.getNewParent();
       final PsiElement child = event.getChild();
       if (newParent instanceof PsiDirectory) {
-        final Module module = ModuleUtil.findModuleForPsiElement(newParent);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(newParent);
         if (module == null) return;
         AbstractUrl childUrl = null;
         if (child instanceof PsiFile) {
@@ -733,7 +714,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           event.getPropertyName().equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
         final PsiElement psiElement = event.getChild();
         if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
-          final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+          final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
           if (module == null) return;
           final String url = ((PsiDirectory)psiElement.getParent()).getVirtualFile().getUrl() + "/" + event.getNewValue();
           final AbstractUrl childUrl = psiElement instanceof PsiFile ? new PsiFileUrl(url) : new DirectoryUrl(url, module.getName());

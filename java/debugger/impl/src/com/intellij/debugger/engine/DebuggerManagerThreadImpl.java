@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -160,13 +161,18 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
   }
 
+  @Deprecated
   public void startProgress(final DebuggerCommandImpl command, final ProgressWindowWithNotification progressWindow) {
-    progressWindow.addListener(new ProgressIndicatorListenerAdapter() {
+    startProgress(command, (ProgressWindow)progressWindow);
+  }
+
+  public void startProgress(DebuggerCommandImpl command, ProgressWindow progressWindow) {
+    new ProgressIndicatorListenerAdapter() {
       @Override
       public void cancelled() {
         command.release();
       }
-    });
+    }.installToProgress(progressWindow);
 
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ProgressManager.getInstance().runProcess(() -> invokeAndWait(command), progressWindow));

@@ -1059,7 +1059,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  @Contract(pure = true)
   public static StringBuilder trimLeading(@NotNull StringBuilder builder, char symbol) {
     int index = 0;
     while (index < builder.length() && builder.charAt(index) == symbol) index++;
@@ -1090,7 +1089,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  @Contract(pure = true)
   public static StringBuilder trimTrailing(@NotNull StringBuilder builder, char symbol) {
     int index = builder.length() - 1;
     while (index >= 0 && builder.charAt(index) == symbol) index--;
@@ -2706,6 +2704,13 @@ public class StringUtil extends StringUtilRt {
     }
     return res;
   }
+
+  public static final Comparator<String> NATURAL_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return naturalCompare(o1, o2);
+    }
+  };
 
   /**
    * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html"/>

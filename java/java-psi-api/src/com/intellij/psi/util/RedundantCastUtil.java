@@ -738,7 +738,18 @@ public class RedundantCastUtil {
       PsiExpression lExpression = assignment.getLExpression();
       return lExpression instanceof PsiArrayAccessExpression &&
              PsiTreeUtil.isAncestor(lExpression, parent, false) &&
-             !PsiTreeUtil.isAncestor(((PsiArrayAccessExpression)lExpression).getIndexExpression(), element, false);
+             !isIndexExpression(element, (PsiArrayAccessExpression)lExpression);
+    }
+
+    private static boolean isIndexExpression(PsiElement element, PsiArrayAccessExpression arrayAccessExpression) {
+      if (PsiTreeUtil.isAncestor(arrayAccessExpression.getIndexExpression(), element, false)) {
+        return true;
+      }
+      PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
+      if (arrayExpression instanceof PsiArrayAccessExpression) {
+        return isIndexExpression(element, (PsiArrayAccessExpression)arrayExpression);
+      }
+      return false;
     }
   }
 

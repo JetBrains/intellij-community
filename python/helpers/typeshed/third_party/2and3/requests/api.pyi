@@ -1,0 +1,26 @@
+# Stubs for requests.api (Python 3)
+
+from typing import Optional, Union, Any, Iterable, Mapping, MutableMapping, Tuple, IO, Text
+
+from .models import Response
+
+_ParamsMappingValueType = Union[Text, bytes, int, float, Iterable[Union[Text, bytes, int, float]]]
+_Data = Union[None, bytes, MutableMapping[Text, Text], IO]
+
+def request(method: str, url: str, **kwargs) -> Response: ...
+def get(url: Union[Text, bytes],
+        params: Optional[
+            Union[Mapping[Union[Text, bytes, int, float], _ParamsMappingValueType],
+                  Union[Text, bytes],
+                  Tuple[Union[Text, bytes, int, float], _ParamsMappingValueType],
+                  Mapping[Text, _ParamsMappingValueType],
+                  Mapping[bytes, _ParamsMappingValueType],
+                  Mapping[int, _ParamsMappingValueType],
+                  Mapping[float, _ParamsMappingValueType]]] = None,
+        **kwargs) -> Response: ...
+def options(url: Union[str, Text], **kwargs) -> Response: ...
+def head(url: Union[str, Text], **kwargs) -> Response: ...
+def post(url: Union[str, Text], data: _Data = ..., json: Optional[MutableMapping] = ..., **kwargs) -> Response: ...
+def put(url: Union[str, Text], data: _Data = ..., **kwargs) -> Response: ...
+def patch(url: Union[str, Text], data: _Data = ..., **kwargs) -> Response: ...
+def delete(url: Union[str, Text], **kwargs) -> Response: ...

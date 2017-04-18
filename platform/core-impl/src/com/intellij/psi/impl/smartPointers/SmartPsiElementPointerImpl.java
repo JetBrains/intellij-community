@@ -28,10 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -209,18 +206,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Nullable
   private static SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
-    if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileWithStubSupport) {
-      PsiFileWithStubSupport stubFile = (PsiFileWithStubSupport)containingFile;
-      StubTree stubTree = stubFile.getStubTree();
-      if (stubTree != null) {
-        // use stubs when tree is not loaded
+    if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileImpl) {
+      IStubFileElementType stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
+      if (stubType != null && stubType.shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
         StubBasedPsiElement stubPsi = (StubBasedPsiElement)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
-        IStubElementType myStubElementType = stubPsi.getElementType();
-
-        IStubFileElementType elementTypeForStubBuilder = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
-        if (stubId != -1 && elementTypeForStubBuilder != null) { // TemplateDataElementType is not IStubFileElementType
-          return new AnchorElementInfo(element, stubFile, stubId, myStubElementType);
+        if (stubId != -1) {
+          return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getElementType());
         }
       }
     }

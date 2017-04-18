@@ -16,11 +16,8 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -201,29 +198,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
-  /**
-   * Searches for quickfix itetion by its class
-   *
-   * @param clazz quick fix class
-   * @param <T>   quick fix class
-   * @return quick fix or null if nothing found
-   */
-  @Nullable
-  public <T extends LocalQuickFix> T findQuickFixByClassInIntentions(@NotNull final Class<T> clazz) {
-
-    for (final IntentionAction action : myFixture.getAvailableIntentions()) {
-      if ((action instanceof QuickFixWrapper)) {
-        final QuickFixWrapper quickFixWrapper = (QuickFixWrapper)action;
-        final LocalQuickFix fix = quickFixWrapper.getFix();
-        if (clazz.isInstance(fix)) {
-          @SuppressWarnings("unchecked")
-          final T result = (T)fix;
-          return result;
-        }
-      }
-    }
-    return null;
-  }
 
 
   protected static void assertNotParsed(PyFile file) {

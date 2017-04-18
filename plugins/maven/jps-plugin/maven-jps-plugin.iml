@@ -23,6 +23,5 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
-    <orderEntry type="module" module-name="aether-dependency-resolver" />
   </component>
 </module>

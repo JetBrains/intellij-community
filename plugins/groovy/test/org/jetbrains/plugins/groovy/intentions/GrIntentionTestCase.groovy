@@ -41,11 +41,11 @@ abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
     myHint = intention.newInstance().text
   }
 
-  protected void doTest(@NotNull String hint = myHint, boolean intentionExists) {
+  protected void doTest(@NotNull String hint = myHint, boolean intentionShouldBeAvailable) {
     assertNotNull(hint)
     myFixture.configureByFile(getTestName(false) + ".groovy")
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
-    if (intentionExists) {
+    if (intentionShouldBeAvailable) {
       myFixture.launchAction(assertOneElement(list))
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy")

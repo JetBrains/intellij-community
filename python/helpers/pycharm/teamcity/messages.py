@@ -1,6 +1,6 @@
 # coding=utf-8
 import sys
-import datetime
+import time
 
 if sys.version_info < (3, ):
     # Python 2
@@ -10,6 +10,11 @@ else:
     text_type = str
 
 
+# Capture some time functions to allow monkeypatching them in tests
+_time = time.time
+_localtime = time.localtime
+_strftime = time.strftime
+
 _quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]'}
 
 def escape_value(value):
@@ -17,7 +22,7 @@ def escape_value(value):
 
 
 class TeamcityServiceMessages(object):
-    def __init__(self, output=sys.stdout, now=datetime.datetime.now, encoding='auto'):
+    def __init__(self, output=sys.stdout, now=_time, encoding='auto'):
         if sys.version_info < (3, ) or not hasattr(output, 'buffer'):
             self.output = output
         else:
@@ -52,7 +57,11 @@ class TeamcityServiceMessages(object):
             return escape_value(self.decode(value))
 
     def message(self, messageName, **properties):
-        timestamp = self.now().strftime("%Y-%m-%dT%H:%M:%S.") + "%03d" % (self.now().microsecond / 1000)
+        current_time = self.now()
+        (current_time_int, current_time_fraction) = divmod(current_time, 1)
+        current_time_struct = _localtime(current_time_int)
+
+        timestamp = _strftime("%Y-%m-%dT%H:%M:%S.", current_time_struct) + "%03d" % (int(current_time_fraction * 1000))
         message = ("##teamcity[%s timestamp='%s'" % (messageName, timestamp))
 
         for k in sorted(properties.keys()):
@@ -80,6 +89,10 @@ class TeamcityServiceMessages(object):
 
     def blockClosed(self, name, flowId=None):
         self.message('blockClosed', name=name, flowId=flowId)
+
+    # Special PyCharm-specific extension to track subtests, additional property is ignored by TeamCity
+    def subTestBlockOpened(self, name, subTestResult, flowId=None):
+        self.message('blockOpened', name=name, subTestResult=subTestResult, flowId=flowId)
 
     def block(self, name, flowId=None):
         import teamcity.context_managers as cm

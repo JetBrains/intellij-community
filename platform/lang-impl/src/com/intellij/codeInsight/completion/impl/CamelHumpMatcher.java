@@ -87,6 +87,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   @NotNull
   public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
+    if (prefix.equals(myPrefix)) {
+      return this;
+    }
+    
     return new CamelHumpMatcher(prefix, myCaseSensitive);
   }
 

@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
@@ -143,10 +144,6 @@ public class ParameterInfoController implements Disposable {
     myHint.setSelectingHint(true);
     myComponent.setParameterOwner(parameterOwner);
     myComponent.setHighlightedParameter(highlighted);
-    myComponent.update(); // to have correct preferred size
-    if (showHint) {
-      showHint(requestFocus);
-    }
 
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.add(this);
@@ -187,11 +184,15 @@ public class ParameterInfoController implements Disposable {
       }
     };
     LookupManager.getInstance(project).addPropertyChangeListener(lookupListener, this);
-
-    updateComponent();
     if (myEditor instanceof EditorImpl) {
       Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
     }
+
+    myComponent.update(); // to have correct preferred size
+    if (showHint) {
+      showHint(requestFocus);
+    }
+    updateComponent();
   }
 
   @Override
@@ -219,8 +220,13 @@ public class ParameterInfoController implements Disposable {
   }
 
   private void adjustPositionForLookup(@NotNull Lookup lookup) {
-    if (!myHint.isVisible() || myEditor.isDisposed()) {
+    if (myEditor.isDisposed()) {
       Disposer.dispose(this);
+      return;
+    }
+
+    if (!myHint.isVisible()) {
+      if (!myKeepOnHintHidden) Disposer.dispose(this);
       return;
     }
 
@@ -357,14 +363,16 @@ public class ParameterInfoController implements Disposable {
   private void moveToParameterAtOffset(int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argsList = findArgumentList(file, offset, -1);
-    if (argsList == null) return;
+    if (argsList == null && !Registry.is("java.completion.argument.hints")) return;
 
     offset = adjustOffsetToInlay(offset);
 
     myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset).leanForward(true));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
-    myHandler.updateParameterInfo(argsList, new MyUpdateParameterInfoContext(offset, file));
+    if (argsList != null) {
+      myHandler.updateParameterInfo(argsList, new MyUpdateParameterInfoContext(offset, file));
+    }
   }
 
   private int adjustOffsetToInlay(int offset) {
@@ -395,10 +403,22 @@ public class ParameterInfoController implements Disposable {
     int currentParameterIndex =
       noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
-
-    int prevOrNextParameterIndex = isNext && currentParameterIndex < parameters.length - 1 ? currentParameterIndex + 1 :
-                                   !isNext && currentParameterIndex > 0 ? currentParameterIndex - 1 : -1;
-    return prevOrNextParameterIndex != -1 ? parameters[prevOrNextParameterIndex].getTextRange().getStartOffset() : -1;
+    if (Registry.is("java.completion.argument.hints")) {
+      if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
+      int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
+      if (prevOrNextParameterIndex < 0 || prevOrNextParameterIndex >= parameters.length) {
+        PsiElement parameterOwner = myComponent.getParameterOwner();
+        return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
+      }
+      else {
+        return parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
+      }
+    }
+    else {
+      int prevOrNextParameterIndex = isNext && currentParameterIndex < parameters.length - 1 ? currentParameterIndex + 1 :
+                                     !isNext && currentParameterIndex > 0 ? currentParameterIndex - 1 : -1;
+      return prevOrNextParameterIndex != -1 ? parameters[prevOrNextParameterIndex].getTextRange().getStartOffset() : -1;
+    }
   }
 
   @Nullable
@@ -453,6 +473,7 @@ public class ParameterInfoController implements Disposable {
 
   /**
    * Returned Point is in layered pane coordinate system.
+   * Second value is a {@link com.intellij.codeInsight.hint.HintManager.PositionFlags position flag}.
    */
   static Pair<Point, Short> chooseBestHintPosition(Project project,
                                                    Editor editor,

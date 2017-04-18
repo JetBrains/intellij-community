@@ -34,12 +34,25 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 %type IElementType
 
 %{
+  @Override
   protected int getInitialState() {
     return YYINITIAL;
+  }
+
+  @Override
+  protected int getDivisionExpectedState() {
+    return DIVISION_EXPECTED;
+  }
+
+  @Override
+  protected int[] getDivisionStates() {
+    return new int[] {YYINITIAL, IN_INNER_BLOCK};
   }
 %}
 
 %state IN_INNER_BLOCK
+
+%xstate DIVISION_EXPECTED
 
 %xstate IN_SINGLE_GSTRING
 %xstate IN_TRIPLE_GSTRING
@@ -121,38 +134,20 @@ mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
 mSTRING_NL = {mONE_NL}
 mSTRING_ESC = \\ [^] | \\ ({WHITE_SPACE})+ (\n|\r)
 
-////////////////////////////////////////////////////////////////////////////
+mSINGLE_QUOTED_CONTENT = {mSTRING_ESC} | [^'\\\r\n]
+mSINGLE_QUOTED_LITERAL = \' {mSINGLE_QUOTED_CONTENT}* \'?
 
-mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
-    | "\""
-    | [^\\\'\r\n]
-    | "$")*
-mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
-mTRIPLE_QUOTED_STRING = \'\'\' ({mSTRING_ESC}
-    | [^\\']
-    | {mSTRING_NL}
-    | \'(\')?[^'] )* (\'{1,3} | \\)?
+mTRIPLE_SINGLE_QUOTED_CONTENT = {mSINGLE_QUOTED_CONTENT} | {mSTRING_NL} | \'(\')?[^']
+mTRIPLE_SINGLE_QUOTED_LITERAL = \'\'\' {mTRIPLE_SINGLE_QUOTED_CONTENT}* (\'{0,3} | \\?)
 
-mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING} | {mSINGLE_QUOTED_STRING}
+mDOUBLE_QUOTED_CONTENT = {mSTRING_ESC} | [^\"\\$\n\r]
+mDOUBLE_QUOTED_LITERAL = \" {mDOUBLE_QUOTED_CONTENT}* \"
 
-// Single-double-quoted GStrings
-mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
-    | [^\\\"\r\n"$"]
-    | "\'" )+
+mTRIPLE_DOUBLE_QUOTED_CONTENT = {mDOUBLE_QUOTED_CONTENT} | {mSTRING_NL} | \"(\")?[^\"\\$]
+mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 
-// Triple-double-quoted GStrings
-mGSTRING_TRIPLE_CONTENT = ({mSTRING_ESC}
-    | \'
-    | \" (\")? [^\""$"\\]
-    | [^\\\""$"]
-    | {mSTRING_NL})+
-
-mGSTRING_TRIPLE_CTOR_END = {mGSTRING_TRIPLE_CONTENT} \"\"\"
-
-mGSTRING_LITERAL = \"\"
-    | \" ([^\\\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
-    | \"\"\" {mGSTRING_TRIPLE_CTOR_END}
-
+mSTRING_LITERAL = {mSINGLE_QUOTED_LITERAL} | {mTRIPLE_SINGLE_QUOTED_LITERAL}
+mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 
 %%
 
@@ -405,7 +400,6 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {mSTRING_LITERAL}                         { return storeToken(mSTRING_LITERAL); }
-{mSINGLE_QUOTED_STRING_BEGIN}             { return storeToken(mSTRING_LITERAL); }
 {mGSTRING_LITERAL}                        { return storeToken(mGSTRING_LITERAL); }
 \"\"\"                                    {
                                             yybeginstate(IN_TRIPLE_GSTRING);
@@ -426,22 +420,32 @@ mGSTRING_LITERAL = \"\"
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+<DIVISION_EXPECTED> {
+  {WHITE_SPACE} {
+    return TokenType.WHITE_SPACE;
+  }
+  "/"/[^/*=] {
+    yyendstate(DIVISION_EXPECTED);
+    return storeToken(mDIV);
+  }
+  "$/" {
+    yypushback(1);
+    yyendstate(DIVISION_EXPECTED);
+    return storeToken(mDOLLAR);
+  }
+  [^] {
+    yypushback(1);
+    yyendstate(DIVISION_EXPECTED);
+  }
+}
+
 "/"                                       {
-                                            if (isRegexExpected()) {
-                                               yybeginstate(IN_SLASHY_STRING);
-                                               return storeToken(mREGEX_BEGIN);
-                                            } else {
-                                               return storeToken(mDIV);
-                                            }
+                                            yybeginstate(IN_SLASHY_STRING);
+                                            return storeToken(mREGEX_BEGIN);
                                           }
 "$/"                                      {
-                                            if (isRegexExpected()) {
-                                              yybeginstate(IN_DOLLAR_SLASH_STRING);
-                                              return storeToken(mDOLLAR_SLASH_REGEX_BEGIN);
-                                            } else {
-                                              yypushback(1);
-                                              return storeToken(mDOLLAR);
-                                            }
+                                            yybeginstate(IN_DOLLAR_SLASH_STRING);
+                                            return storeToken(mDOLLAR_SLASH_REGEX_BEGIN);
                                           }
 "{"                                       {
                                             yybeginstate(YYINITIAL, NLS_AFTER_LBRACE);

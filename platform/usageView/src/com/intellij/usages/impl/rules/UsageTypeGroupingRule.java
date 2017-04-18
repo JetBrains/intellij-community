@@ -142,5 +142,10 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
     public int hashCode() {
       return myUsageType.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return "Type:" + myUsageType.toString(new UsageViewPresentation());
+    }
   }
 }

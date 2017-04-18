@@ -34,7 +34,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -216,7 +215,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/fileEditorManager";
+    return PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager";
   }
 
   static class MyFileEditorProvider implements FileEditorProvider {

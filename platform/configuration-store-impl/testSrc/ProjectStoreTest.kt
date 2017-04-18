@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -81,6 +82,13 @@ internal class ProjectStoreTest {
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
+      
+      testComponent.state!!.value = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      project.saveStore()
+      
+      // we should save twice (first call - virtual file size is not yet set)
+      testComponent.state!!.value = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      project.saveStore()
     }
   }
 
@@ -151,7 +159,7 @@ internal class ProjectStoreTest {
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here
     assertThat(file.readText()).startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", ""))
-
+    
     return testComponent
   }
 }

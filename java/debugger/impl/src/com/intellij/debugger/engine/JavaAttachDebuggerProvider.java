@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,21 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DefaultDebugEnvironment;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
@@ -73,30 +65,18 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       //configuration.PORT = String.valueOf(address.second);
       //configuration.USE_SOCKET_TRANSPORT = true;
       //configuration.SERVER_MODE = false;
-      //
-      //ProgramRunnerUtil.executeConfiguration(project, runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
 
       String name = getAttachString(address);
       RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
         .createRunConfiguration(name, ConfigurationTypeUtil.findConfigurationType("Remote").getConfigurationFactories()[0]);
 
-      RemoteConnection remoteConnection = new RemoteConnection(true, address.first, String.valueOf(address.second), false);
-      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(project, DefaultDebugExecutor.getDebugExecutorInstance())
-        .runProfile(runSettings.getConfiguration())
-        .build();
-      DebugEnvironment environment = new DefaultDebugEnvironment(env, new RemoteStateState(project, remoteConnection), remoteConnection, 0);
-      final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
-      if (debuggerSession == null) {
-        return;
-      }
+      RunConfiguration remoteConfiguration = runSettings.getConfiguration();
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST", address.first);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "PORT", String.valueOf(address.second));
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT", true);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "SERVER_MODE", false);
 
-      XDebuggerManager.getInstance(project).startSessionAndShowTab(name, null, new XDebugProcessStarter() {
-        @Override
-        @NotNull
-        public XDebugProcess start(@NotNull XDebugSession session) {
-          return JavaDebugProcess.create(session, debuggerSession);
-        }
-      });
+      ProgramRunnerUtil.executeConfiguration(project, runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
     }
   };
 

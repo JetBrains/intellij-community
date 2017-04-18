@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,20 +134,17 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             LOG.debug(message);
           }
         }
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeDetails();
-          }
-        });
+        SwingUtilities.invokeLater(() -> changeDetails());
       }
     };
   }
 
+  @Override
   public void projectOpened() {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.addChangeListListener(myListener);
     Disposer.register(myProject, new Disposable() {
+      @Override
       public void dispose() {
         changeListManager.removeChangeListListener(myListener);
       }
@@ -158,26 +155,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager.addContent(myContent);
 
     scheduleRefresh();
-    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            refreshView();
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    });
+    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
+                                                  () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
 
     myDetailsOn = VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     changeDetails();
   }
 
+  @Override
   public void projectClosed() {
     myView.removeTreeSelectionListener(myTsl);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
 
+  @Override
   @NonNls @NotNull
   public String getComponentName() {
     return "ChangesViewManager";
@@ -275,40 +267,31 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private void updateProgressComponent(@NotNull final Factory<JComponent> progress) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myProgressLabel != null) {
-          myProgressLabel.removeAll();
-          myProgressLabel.add(progress.create());
-          myProgressLabel.setMinimumSize(JBUI.emptySize());
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (myProgressLabel != null) {
+        myProgressLabel.removeAll();
+        myProgressLabel.add(progress.create());
+        myProgressLabel.setMinimumSize(JBUI.emptySize());
       }
     });
   }
 
+  @Override
   public void updateProgressText(String text, boolean isError) {
     updateProgressComponent(createTextStatusFactory(text, isError));
   }
 
   @Override
   public void setBusy(final boolean b) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myView.setPaintBusy(b);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
   }
 
   @NotNull
   public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
-    return new Factory<JComponent>() {
-      @Override
-      public JComponent create() {
-        JLabel label = new JLabel(text);
-        label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
-        return label;
-      }
+    return () -> {
+      JLabel label = new JLabel(text);
+      label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
+      return label;
     };
   }
 
@@ -321,11 +304,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       LOG.debug("schedule refresh, was " + was);
     }
     if (!myRepaintAlarm.isDisposed()) {
-      myRepaintAlarm.addRequest(new Runnable() {
-        public void run() {
-          refreshView();
-        }
-      }, 100, ModalityState.NON_MODAL);
+      myRepaintAlarm.addRequest(() -> refreshView(), 100, ModalityState.NON_MODAL);
     }
   }
 
@@ -387,11 +366,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @Override
   public void refreshChangesViewNodeAsync(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        refreshChangesViewNode(file);
-      }
-    }, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> refreshChangesViewNode(file), myProject.getDisposed());
   }
 
   private void refreshChangesViewNode(@NotNull VirtualFile file) {
@@ -419,26 +394,32 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class MyChangeListListener extends ChangeListAdapter {
 
+    @Override
     public void changeListAdded(ChangeList list) {
       scheduleRefresh();
     }
 
+    @Override
     public void changeListRemoved(ChangeList list) {
       scheduleRefresh();
     }
 
+    @Override
     public void changeListRenamed(ChangeList list, String oldName) {
       scheduleRefresh();
     }
 
+    @Override
     public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
       scheduleRefresh();
     }
 
+    @Override
     public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
       scheduleRefresh();
     }
 
+    @Override
     public void changeListUpdateDone() {
       scheduleRefresh();
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
@@ -461,19 +442,23 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class Expander implements TreeExpander {
+    @Override
     public void expandAll() {
       TreeUtil.expandAll(myView);
     }
 
+    @Override
     public boolean canExpand() {
       return true;
     }
 
+    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
     }
 
+    @Override
     public boolean canCollapse() {
       return true;
     }
@@ -486,10 +471,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             AllIcons.Actions.GroupByPackage);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return !myState.myShowFlatten;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       setShowFlattenMode(!state);
     }
@@ -502,27 +489,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             AllIcons.Actions.ShowHiddens);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myState.myShowIgnored;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myState.myShowIgnored = state;
       refreshView();
     }
   }
 
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
   private class ToggleDetailsAction extends ToggleAction implements DumbAware {
     private ToggleDetailsAction() {
-      super("Preview Diff", null, AllIcons.Actions.PreviewDetails);
+      super("Preview Diff", null, AllIcons.Actions.DiffPreview);
     }
 
     @Override

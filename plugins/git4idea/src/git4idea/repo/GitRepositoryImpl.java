@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
@@ -202,14 +205,17 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
+    StopWatch sw = StopWatch.start("Reading Git repo info in " + getShortRepositoryName(this));
     File configFile = myRepositoryFiles.getConfigFile();
     GitConfig config = GitConfig.read(configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
+    GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
+    sw.report();
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules);
+                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo);
   }
 
   @NotNull

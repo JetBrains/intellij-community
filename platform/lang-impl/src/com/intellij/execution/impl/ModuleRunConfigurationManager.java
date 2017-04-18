@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,33 +25,29 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.SmartHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
+  private static final Object LOCK = new Object();
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
+  @NotNull
+  private final Module myModule;
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
     settings -> settings != null && usesMyModule(settings.getConfiguration());
   @NotNull
-  private final Module myModule;
-  @NotNull
   private final RunManagerImpl myManager;
-  @Nullable
-  private List<Element> myUnloadedElements = null;
 
   public ModuleRunConfigurationManager(@NotNull final Module module, @NotNull final RunManagerImpl runManager) {
     myModule = module;
@@ -62,9 +58,11 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
-          for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-            myManager.removeConfiguration(settings);
+          Collection<? extends RunnerAndConfigurationSettings> moduleRunConfigurations;
+          synchronized (LOCK) {
+            moduleRunConfigurations = getModuleRunConfigurationSettings();
           }
+          myManager.removeConfigurations(moduleRunConfigurations);
         }
       }
     });
@@ -96,7 +94,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   @NotNull
   private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
+    return ContainerUtil.filter(myManager.getAllSettings(), myModuleConfigCondition);
   }
 
   private boolean usesMyModule(RunConfiguration config) {
@@ -106,45 +104,30 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + ")");
-    for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-      myManager.addConfigurationElement(element, settings);
-    }
-    if (myUnloadedElements != null) {
-      for (final Element unloadedElement : myUnloadedElements) {
-        element.addContent(unloadedElement.clone());
-      }
-    }
+    myManager.writeConfigurations(element, getModuleRunConfigurationSettings());
   }
 
   public void readExternal(@NotNull final Element element) {
+    synchronized (LOCK) {
+      doReadExternal(element);
+    }
+  }
+
+  private void doReadExternal(@NotNull Element element) {
     LOG.debug("readExternal(" + myModule + ")");
-    myUnloadedElements = null;
-    final Set<String> existing = new HashSet<>();
+    final Set<String> existing = new SmartHashSet<>();
 
-    for (final Element child : element.getChildren()) {
-      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
-      if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
-        if (myUnloadedElements == null) myUnloadedElements = new ArrayList<>(2);
-        myUnloadedElements.add(element);
-      }
+    for (final Element child : element.getChildren(RunManagerImpl.CONFIGURATION)) {
+      existing.add(myManager.loadConfiguration(child, true).getUniqueID());
+    }
 
-      if (configuration != null) {
-        existing.add(configuration.getUniqueID());
+    for (RunnerAndConfigurationSettings settings : myManager.getAllSettings()) {
+      if (!usesMyModule(settings.getConfiguration())) {
+        existing.add(settings.getUniqueID());
       }
     }
 
-    for (final RunConfiguration configuration : myManager.getAllConfigurationsList()) {
-      if (!usesMyModule(configuration)) {
-        RunnerAndConfigurationSettings settings = myManager.getSettings(configuration);
-        if (settings != null) {
-          existing.add(settings.getUniqueID());
-        }
-      }
-    }
     myManager.removeNotExistingSharedConfigurations(existing);
-
-    // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
-    myManager.setOrdered(false);
-    myManager.getSortedConfigurations();
+    myManager.requestSort();
   }
 }

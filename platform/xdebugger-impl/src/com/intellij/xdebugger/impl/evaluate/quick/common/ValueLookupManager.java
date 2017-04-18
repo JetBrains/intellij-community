@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,13 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     }
 
     Point point = e.getMouseEvent().getPoint();
-    if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
-      hideHint();
+    if (myRequest != null) {
+      if (myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
+        return;
+      }
+      else if (!myRequest.isKeepHint(editor, point)) {
+        hideHint();
+      }
     }
 
     for (DebuggerSupport support : mySupports) {

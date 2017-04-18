@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,11 +182,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private List<AnnotationData> doCollect(@NotNull PsiModifierListOwner listOwner, boolean onlyWritable) {
-    String externalName = getExternalName(listOwner, false);
-    if (externalName == null) return NO_DATA;
-
     List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
     if (files == null) return NO_DATA;
+
+    String externalName = getExternalName(listOwner, false);
+    if (externalName == null) return NO_DATA;
 
     SmartList<AnnotationData> result = new SmartList<>();
     for (PsiFile file : files) {

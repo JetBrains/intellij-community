@@ -26,11 +26,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -39,7 +39,6 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
@@ -62,7 +61,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -88,8 +86,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
@@ -426,47 +422,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
   }
 
-  public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {
-    try {
-      final byte[] byteContent1 = VcsHistoryUtil.loadRevisionContent(version1);
-      final byte[] byteContent2 = VcsHistoryUtil.loadRevisionContent(version2);
-
-      if (Comparing.equal(byteContent1, byteContent2)) {
-        Messages.showInfoMessage(VcsBundle.message("message.text.versions.are.identical"), VcsBundle.message("message.title.diff"));
-      }
-
-      final SimpleDiffRequest request = new SimpleDiffRequest(myProject, file.getAbsolutePath());
-
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-      if (fileType.isBinary()) {
-        Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.differ"), VcsBundle.message("message.title.diff"));
-
-        return;
-      }
-
-      final DiffContent content1 = getContentForVersion(version1, file);
-      final DiffContent content2 = getContentForVersion(version2, file);
-
-      if (version2.getRevisionNumber().compareTo(version1.getRevisionNumber()) > 0) {
-        request.setContents(content2, content1);
-        request.setContentTitles(version2.getRevisionNumber().asString(), version1.getRevisionNumber().asString());
-      }
-      else {
-        request.setContents(content1, content2);
-        request.setContentTitles(version1.getRevisionNumber().asString(), version2.getRevisionNumber().asString());
-      }
-
-      DiffManager.getInstance().getDiffTool().show(request);
-    }
-    catch (VcsException e) {
-      showError(e, VcsBundle.message("message.title.diff"));
-    }
-    catch (IOException e) {
-      showError(new VcsException(e), VcsBundle.message("message.title.diff"));
-    }
-
-  }
-
   public void showChangesBrowser(List<CommittedChangeList> changelists) {
     showChangesBrowser(changelists, null);
   }
@@ -589,27 +544,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  @Nullable
-  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(@NotNull CommittedChangesProvider<T, U> provider,
-                                                                                                      RepositoryLocation location) {
-    final List<T> changes;
-    try {
-      changes = provider.getCommittedChanges(provider.createDefaultSettings(), location, 0);
-    }
-    catch (VcsException e) {
-      return null;
-    }
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, new CommittedChangesTableModel((List<CommittedChangeList>)changes,
-                                                                                                        provider.getColumns(), false),
-                                                              ChangesBrowserDialog.Mode.Choose, null);
-    if (dlg.showAndGet()) {
-      return (T)dlg.getSelectedChangeList();
-    }
-    else {
-      return null;
-    }
-  }
-
   @Override
   @NotNull
   public List<VirtualFile> showMergeDialog(@NotNull List<VirtualFile> files,
@@ -620,17 +554,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     fileMergeDialog.show();
     return fileMergeDialog.getProcessedFiles();
-  }
-
-  private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException, VcsException {
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
-      return new DocumentContent(FileDocumentManager.getInstance().getDocument(vFile), vFile.getFileType());
-    }
-    else {
-      return new SimpleContent(VcsHistoryUtil.loadRevisionContentGuessEncoding(version, vFile, null),
-                               FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
-    }
   }
 
   public void openCommittedChangesTab(final AbstractVcs vcs,

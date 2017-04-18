@@ -1,7 +1,6 @@
 class Test {
   /**
-  * <warning>@inheritDoc</warning>
-  */
-  void a() {
-  }
+   * <warning descr="Tag 'inheritDoc' is not allowed here">@inheritDoc</warning>
+   */
+  void a() {}
 }

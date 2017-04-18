@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.LargeFileWriteRequestor;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -34,7 +35,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -121,7 +125,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   @Override
   public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
-    checkNotTooLarge();
+    checkNotTooLarge(null);
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
     if (preloadedContent != null) return preloadedContent;
     return ourPersistence.contentsToByteArray(this, cacheContent);
@@ -130,19 +134,19 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
-    checkNotTooLarge();
+    checkNotTooLarge(requestor);
     return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp), this);
   }
 
   @Override
   public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
-    checkNotTooLarge();
+    checkNotTooLarge(requestor);
     super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
   }
 
   @Override
   public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
-    checkNotTooLarge();
+    checkNotTooLarge(null);
     super.setBinaryContent(content, newModificationStamp, newTimeStamp);
   }
 
@@ -178,8 +182,8 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return mySegment.changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
   }
 
-  private void checkNotTooLarge() throws FileTooBigException {
-    if (isTooLarge()) throw new FileTooBigException(getPath());
+  private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {
+    if (!(requestor instanceof LargeFileWriteRequestor) && isTooLarge()) throw new FileTooBigException(getPath());
   }
 
   private boolean isTooLarge() {

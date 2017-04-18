@@ -501,6 +501,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private class IndexingRequest {
     private static final int MAGIC_NUMBER = 150000;
     private static final int BATCH_SIZE = 1000;
+    private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private final Map<VirtualFile, TIntHashSet> myCommits;
     private final boolean myFull;
 
@@ -621,6 +622,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             if (notIndexed.contains(index)) {
               storeDetail(details);
               counter.newIndexedCommits++;
+
+              if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
             }
 
             counter.indicator.checkCanceled();

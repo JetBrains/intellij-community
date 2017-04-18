@@ -135,10 +135,11 @@ public abstract class PatchAction {
 
   protected abstract ValidationResult validate(File toDir) throws IOException;
 
-  protected ValidationResult doValidateAccess(File toFile, ValidationResult.Action action) {
+  protected ValidationResult doValidateAccess(File toFile, ValidationResult.Action action, boolean checkWriteable) {
     if (!toFile.exists() || toFile.isDirectory()) return null;
     ValidationResult result = validateProcessLock(toFile, action);
     if (result != null) return result;
+    if (!checkWriteable) return null;
     if (toFile.canRead() && toFile.canWrite() && isWritable(toFile)) return null;
     ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
     return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, ValidationResult.ACCESS_DENIED_MESSAGE, options);

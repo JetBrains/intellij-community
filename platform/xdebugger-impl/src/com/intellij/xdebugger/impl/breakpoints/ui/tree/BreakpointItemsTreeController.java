@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -229,11 +228,11 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     if (paths == null) return;
     final List<BreakpointItem> breakpoints = getSelectedBreakpoints(true);
     for (TreePath path : paths) {
-      final Object node = path.getLastPathComponent();
+      Object node = path.getLastPathComponent();
       if (node instanceof BreakpointItemNode) {
         final BreakpointItem item = ((BreakpointItemNode)node).getBreakpointItem();
         if (!item.allowedToRemove()) {
-          TreeUtil.unselect(myTreeView, (DefaultMutableTreeNode)node);
+          TreeUtil.unselectPath(myTreeView, path);
           breakpoints.remove(item);
         }
       }

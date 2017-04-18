@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
@@ -67,6 +68,10 @@ public class CheckBoxList<T> extends JBList {
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
+        SpeedSearchSupply supply = SpeedSearchSupply.getSupply(CheckBoxList.this);
+        if (supply != null && supply.isPopupActive()) {
+          return;
+        }
         if (e.getKeyChar() == ' ') {
           Boolean value = null;
           for (int index : getSelectedIndices()) {

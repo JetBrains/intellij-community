@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -45,7 +44,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.FrameState;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +55,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class FrameWrapper implements Disposable, DataProvider {
@@ -65,7 +65,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private JComponent myComponent = null;
   private JComponent myPreferredFocus = null;
   private String myTitle = "";
-  private Image myImage = ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl());
+  private List<Image> myImages = null;
   private boolean myCloseOnEsc = false;
   private Window myFrame;
   private final Map<String, Object> myDataMap = ContainerUtil.newHashMap();
@@ -81,7 +81,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   protected StatusBar myStatusBar;
   private boolean myShown;
   private boolean myIsDialog;
-  private boolean myImageWasChanged;
 
   public FrameWrapper(Project project) {
     this(project, null);
@@ -175,9 +174,9 @@ public class FrameWrapper implements Disposable, DataProvider {
     } else {
       ((JDialog)frame).setTitle(myTitle);
     }
-    if (myImageWasChanged && myImage != null) {
+    if (myImages != null) {
       // unwrap the image before setting as frame's icon
-      frame.setIconImage(ImageUtil.toBufferedImage(myImage));
+      frame.setIconImages(ContainerUtil.map(myImages, ImageUtil::toBufferedImage));
     }
     else {
       AppUIUtil.updateWindowIcon(myFrame);
@@ -230,7 +229,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myFocusedCallback = null;
     myFocusTrackback = null;
     myComponent = null;
-    myImage = null;
+    myImages = null;
     myDisposed = true;
 
     if (statusBar != null) {
@@ -333,8 +332,11 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void setImage(Image image) {
-    myImageWasChanged = true;
-    myImage = image;
+    setImages(image != null ? Collections.singletonList(image) : Collections.emptyList());
+  }
+
+  public void setImages(List<Image> images) {
+    myImages = images;
   }
 
   protected void loadFrameState() {

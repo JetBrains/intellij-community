@@ -9,7 +9,7 @@ from enum import Enum
 import sys
 
 mm = MutableMapping[str, Any]
-_D = TypeVar('_D', mm)
+_D = TypeVar('_D', bound=mm)
 if sys.version_info >= (3,):
     _Path = str
 else:

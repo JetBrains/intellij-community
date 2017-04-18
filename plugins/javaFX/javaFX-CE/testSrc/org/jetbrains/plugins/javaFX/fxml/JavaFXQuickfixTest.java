@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -121,7 +122,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(intention);
     Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
     assertContainsElements(languages, "groovy");
-    JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)intention;
+    JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
     languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }

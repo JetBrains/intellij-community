@@ -1,23 +1,24 @@
+from distutils.version import Version
 from typing import Any, Callable, Dict, List, TypeVar, Union
 
 from click.core import Command, Group, Argument, Option, Parameter, Context
 from click.types import ParamType
 
-T = TypeVar('T')
-Decorator = Callable[[T], T]
+_T = TypeVar('_T')
+_Decorator = Callable[[_T], _T]
 
 
-def pass_context(T) -> T:
+def pass_context(_T) -> _T:
     ...
 
 
-def pass_obj(T) -> T:
+def pass_obj(_T) -> _T:
     ...
 
 
 def make_pass_decorator(
     object_type: type, ensure: bool = False
-) -> Callable[[T], T]:
+) -> Callable[[_T], _T]:
     ...
 
 
@@ -33,7 +34,7 @@ def command(
     short_help: str = None,
     options_metavar: str = '[OPTIONS]',
     add_help_option: bool = True,
-) -> Decorator:
+) -> _Decorator:
     ...
 
 
@@ -56,7 +57,9 @@ def group(
     short_help: str = None,
     options_metavar: str = '[OPTIONS]',
     add_help_option: bool = True,
-) -> Decorator:
+    # User-defined
+    **kwargs: Any,
+) -> _Decorator:
     ...
 
 
@@ -74,7 +77,7 @@ def argument(
     expose_value: bool = True,
     is_eager: bool = False,
     envvar: Union[str, List[str]] = None
-) -> Decorator:
+) -> _Decorator:
     ...
 
 
@@ -101,7 +104,7 @@ def option(
     expose_value: bool = True,
     is_eager: bool = False,
     envvar: Union[str, List[str]] = None
-) -> Decorator:
+) -> _Decorator:
     ...
 
 
@@ -129,7 +132,7 @@ def confirmation_option(
     expose_value: bool = False,
     is_eager: bool = False,
     envvar: Union[str, List[str]] = None
-) -> Decorator:
+) -> _Decorator:
     ...
 
 
@@ -157,16 +160,17 @@ def password_option(
     expose_value: bool = True,
     is_eager: bool = False,
     envvar: Union[str, List[str]] = None
-) -> Decorator:
+) -> _Decorator:
     ...
 
 
 # Defaults copied from the decorator body.
 def version_option(
-    version: str = None,
+    version: Union[str, Version] = None,
     *param_decls: str,
     cls: type = Option,
     # Option
+    prog_name: str = None,
     show_default: bool = False,
     prompt: bool = False,
     confirmation_prompt: bool = False,
@@ -186,7 +190,7 @@ def version_option(
     expose_value: bool = False,
     is_eager: bool = True,
     envvar: Union[str, List[str]] = None
-) -> Decorator:
+) -> _Decorator:
     ...
 
 
@@ -214,5 +218,5 @@ def help_option(
     expose_value: bool = False,
     is_eager: bool = True,
     envvar: Union[str, List[str]] = None
-) -> Decorator:
+) -> _Decorator:
     ...

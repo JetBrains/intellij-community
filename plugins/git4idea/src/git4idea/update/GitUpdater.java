@@ -37,7 +37,6 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 import static git4idea.GitUtil.HEAD;
 
@@ -53,7 +52,7 @@ public abstract class GitUpdater {
   @NotNull protected final Git myGit;
   @NotNull protected final VirtualFile myRoot;
   @NotNull protected final GitRepository myRepository;
-  @NotNull protected final Map<VirtualFile, GitBranchPair> myTrackedBranches;
+  @NotNull protected final GitBranchPair myBranchPair;
   @NotNull protected final ProgressIndicator myProgressIndicator;
   @NotNull protected final UpdatedFiles myUpdatedFiles;
   @NotNull protected final AbstractVcsHelper myVcsHelper;
@@ -63,12 +62,12 @@ public abstract class GitUpdater {
   protected GitRevisionNumber myBefore; // The revision that was before update
 
   protected GitUpdater(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
-                       @NotNull Map<VirtualFile, GitBranchPair> trackedBranches, @NotNull ProgressIndicator progressIndicator,
+                       @NotNull GitBranchPair branchAndTracked, @NotNull ProgressIndicator progressIndicator,
                        @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myGit = git;
     myRoot = root;
-    myTrackedBranches = trackedBranches;
+    myBranchPair = branchAndTracked;
     myProgressIndicator = progressIndicator;
     myUpdatedFiles = updatedFiles;
     myVcsHelper = AbstractVcsHelper.getInstance(project);
@@ -84,7 +83,7 @@ public abstract class GitUpdater {
   @NotNull
   public static GitUpdater getUpdater(@NotNull Project project,
                                       @NotNull Git git,
-                                      @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
+                                      @NotNull GitBranchPair trackedBranches,
                                       @NotNull VirtualFile root,
                                       @NotNull ProgressIndicator progressIndicator,
                                       @NotNull UpdatedFiles updatedFiles,
@@ -136,7 +135,7 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded() throws VcsException {
-    GitBranch dest = myTrackedBranches.get(myRoot).getDest();
+    GitBranch dest = myBranchPair.getDest();
     assert dest != null;
     String remoteBranch = dest.getName();
     if (!hasRemoteChanges(remoteBranch)) {
@@ -154,7 +153,7 @@ public abstract class GitUpdater {
 
   @NotNull
   GitBranchPair getSourceAndTarget() {
-    return myTrackedBranches.get(myRoot);
+    return myBranchPair;
   }
 
   protected void markStart(VirtualFile root) throws VcsException {

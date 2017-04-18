@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -58,8 +59,11 @@ public class LargeFileNotificationProvider extends EditorNotifications.Provider 
       PropertiesComponent.getInstance().setValue(DISABLE_KEY, "true");
       update(file, project);
     });
-    return panel.text(String.format("This file is too large for editing (%s). Read only preview mode is activated.",
-                                    StringUtil.formatFileSize(file.getLength())));
+    return panel.text(String.format(
+      "The file is too large: %s. Showing a read-only preview of the first %s.",
+      StringUtil.formatFileSize(file.getLength()),
+      StringUtil.formatFileSize(FileUtilRt.LARGE_FILE_PREVIEW_SIZE)
+    ));
   }
 
   private static void update(@NotNull VirtualFile file, @NotNull Project project) {

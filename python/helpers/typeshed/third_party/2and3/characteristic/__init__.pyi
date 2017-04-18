@@ -9,7 +9,7 @@ def strip_leading_underscores(attribute_name: AnyStr) -> AnyStr: ...
 
 NOTHING = Any
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 def attributes(
     attrs: Sequence[Union[AnyStr, Attribute]],
@@ -18,7 +18,7 @@ def attributes(
     apply_with_repr: bool = True,
     apply_immutable: bool = False,
     store_attributes: Optional[Callable[[type, Attribute], Any]] = None,
-    **kw: Optional[dict]) -> Callable[[Type[T]], Type[T]]: ...
+    **kw: Optional[dict]) -> Callable[[Type[_T]], Type[_T]]: ...
 
 class Attribute:
     def __init__(

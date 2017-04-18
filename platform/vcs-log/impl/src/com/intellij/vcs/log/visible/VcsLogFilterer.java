@@ -75,10 +75,10 @@ public class VcsLogFilterer {
     Collection<VirtualFile> visibleRoots =
       VcsLogUtil.getAllVisibleRoots(dataPack.getLogProviders().keySet(), filters.getRootFilter(), filters.getStructureFilter());
     Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), visibleRoots, filters);
-    FilterResult filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads);
+    FilterByDetailsResult filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads);
 
     VisiblePack visiblePack =
-      createVisiblePack(dataPack, sortType, filters, matchingHeads, filterResult.matchingCommits, filterResult.canRequestMore);
+      createVisiblePack(dataPack, sortType, filters, matchingHeads, filterResult);
 
     LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters);
     return Pair.create(visiblePack, filterResult.commitCount);
@@ -89,10 +89,9 @@ public class VcsLogFilterer {
                                           @NotNull PermanentGraph.SortType sortType,
                                           @NotNull VcsLogFilterCollection filters,
                                           @Nullable Set<Integer> matchingHeads,
-                                          @Nullable Set<Integer> matchingCommits,
-                                          boolean canRequestMore) {
-    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, matchingCommits);
-    return new VisiblePack(dataPack, visibleGraph, canRequestMore, filters);
+                                          @NotNull FilterByDetailsResult filterResult) {
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits);
+    return new VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters);
   }
 
   @NotNull
@@ -111,13 +110,13 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  private FilterResult filterByDetails(@NotNull DataPack dataPack,
-                                       @NotNull VcsLogFilterCollection filters,
-                                       @NotNull CommitCountStage commitCount,
-                                       @NotNull Collection<VirtualFile> visibleRoots,
-                                       @Nullable Set<Integer> matchingHeads) {
+  protected FilterByDetailsResult filterByDetails(@NotNull DataPack dataPack,
+                                                  @NotNull VcsLogFilterCollection filters,
+                                                  @NotNull CommitCountStage commitCount,
+                                                  @NotNull Collection<VirtualFile> visibleRoots,
+                                                  @Nullable Set<Integer> matchingHeads) {
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
-    if (detailsFilters.isEmpty()) return new FilterResult(null, false, commitCount);
+    if (detailsFilters.isEmpty()) return new FilterByDetailsResult(null, false, commitCount);
 
     Set<Integer> filteredWidthIndex = null;
     if (myIndex.canFilter(detailsFilters)) {
@@ -125,12 +124,12 @@ public class VcsLogFilterer {
 
       if (notIndexedRoots.size() < visibleRoots.size()) {
         filteredWidthIndex = myIndex.filter(detailsFilters);
-        if (notIndexedRoots.isEmpty()) return new FilterResult(filteredWidthIndex, false, commitCount);
+        if (notIndexedRoots.isEmpty()) return new FilterByDetailsResult(filteredWidthIndex, false, commitCount);
         matchingHeads = getMatchingHeads(dataPack.getRefsModel(), notIndexedRoots, filters);
       }
     }
 
-    FilterResult filteredWithVcs = filterWithVcs(dataPack.getPermanentGraph(), filters, detailsFilters, matchingHeads, commitCount);
+    FilterByDetailsResult filteredWithVcs = filterWithVcs(dataPack.getPermanentGraph(), filters, detailsFilters, matchingHeads, commitCount);
 
     Set<Integer> filteredCommits;
     if (filteredWidthIndex == null) {
@@ -142,15 +141,15 @@ public class VcsLogFilterer {
     else {
       filteredCommits = ContainerUtil.union(filteredWidthIndex, filteredWithVcs.matchingCommits);
     }
-    return new FilterResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount);
+    return new FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount);
   }
 
   @NotNull
-  private FilterResult filterWithVcs(@NotNull PermanentGraph graph,
-                                     @NotNull VcsLogFilterCollection filters,
-                                     @NotNull List<VcsLogDetailsFilter> detailsFilters,
-                                     @Nullable Set<Integer> matchingHeads,
-                                     @NotNull CommitCountStage commitCount) {
+  private FilterByDetailsResult filterWithVcs(@NotNull PermanentGraph graph,
+                                              @NotNull VcsLogFilterCollection filters,
+                                              @NotNull List<VcsLogDetailsFilter> detailsFilters,
+                                              @Nullable Set<Integer> matchingHeads,
+                                              @NotNull CommitCountStage commitCount) {
     Set<Integer> matchingCommits = null;
     if (commitCount == CommitCountStage.INITIAL) {
       matchingCommits = getMatchedCommitIndex(filterInMemory(graph, detailsFilters, matchingHeads));
@@ -171,7 +170,7 @@ public class VcsLogFilterer {
       }
     }
 
-    return new FilterResult(matchingCommits, matchingCommits.size() >= commitCount.getCount(), commitCount);
+    return new FilterByDetailsResult(matchingCommits, matchingCommits.size() >= commitCount.getCount(), commitCount);
   }
 
   private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
@@ -329,12 +328,12 @@ public class VcsLogFilterer {
     return needsIndex;
   }
 
-  private static class FilterResult {
-    @Nullable private final Set<Integer> matchingCommits;
-    private final boolean canRequestMore;
+  protected static class FilterByDetailsResult {
+    @Nullable public final Set<Integer> matchingCommits;
+    public final boolean canRequestMore;
     @NotNull private final CommitCountStage commitCount;
 
-    private FilterResult(@Nullable Set<Integer> commits, boolean more, @NotNull CommitCountStage count) {
+    protected FilterByDetailsResult(@Nullable Set<Integer> commits, boolean more, @NotNull CommitCountStage count) {
       matchingCommits = commits;
       canRequestMore = more;
       commitCount = count;

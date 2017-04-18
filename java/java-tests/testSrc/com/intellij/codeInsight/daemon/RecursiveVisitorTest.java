@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 
 /**
  * @author cdr
  */
+@SkipSlowTestLocally
 public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
   public void testHugeConcatenationVisitingPerformance() throws IncorrectOperationException {
     StringBuilder text = new StringBuilder("String s = null");

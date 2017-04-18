@@ -32,7 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,9 +54,8 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
         unregisterConcatenationInjector(injector);
       }
     });
-    psiManagerEx.registerRunnableToRunOnAnyChange(() -> {
-      incModificationCount(); // clear caches even on non-physical changes
-    });
+    // clear caches even on non-physical changes
+    psiManagerEx.registerRunnableToRunOnAnyChange(this::incModificationCount);
   }
 
   public static JavaConcatenationInjectorManager getInstance(final Project project) {
@@ -117,8 +116,8 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
   public abstract static class BaseConcatenation2InjectorAdapter implements MultiHostInjector {
     private final JavaConcatenationInjectorManager myManager;
 
-    public BaseConcatenation2InjectorAdapter(Project project) {
-      myManager = getInstance(project);
+    public BaseConcatenation2InjectorAdapter(JavaConcatenationInjectorManager manager) {
+      myManager = manager;
     }
 
     @Override
@@ -141,12 +140,7 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
       else {
         data = anchor.getUserData(INJECTED_PSI_IN_CONCATENATION);
 
-        if (data == null) {
-          result = doCompute(containingFile, project, anchor, operands);
-        }
-        else {
-          result = data.getValue(context);
-        }
+        result = data == null ? doCompute(containingFile, project, anchor, operands) : data.getValue(context);
       }
       if (result != null && result.getResult() != null) {
         for (Pair<Place, PsiFile> p : result.getResult()) {
@@ -155,17 +149,14 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
 
         if (data == null) {
           CachedValueProvider.Result<MultiHostRegistrarImpl> cachedResult =
-            CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, getInstance(project));
+            CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, myManager);
           data = CachedValuesManager.getManager(project).createParameterizedCachedValue(
-            new ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement>() {
-              @Override
-              public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement context) {
-                PsiFile containingFile1 = context.getContainingFile();
-                Project project1 = containingFile1.getProject();
-                Pair<PsiElement, PsiElement[]> pair = computeAnchorAndOperands(context);
-                MultiHostRegistrarImpl registrar = pair.second.length == 0 ? null : doCompute(containingFile1, project1, pair.first, pair.second);
-                return registrar == null ? null : CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, getInstance(project1));
-              }
+            context1 -> {
+              PsiFile containingFile1 = context1.getContainingFile();
+              Project project1 = containingFile1.getProject();
+              Pair<PsiElement, PsiElement[]> pair1 = computeAnchorAndOperands(context1);
+              MultiHostRegistrarImpl registrar1 = pair1.second.length == 0 ? null : doCompute(containingFile1, project1, pair1.first, pair1.second);
+              return registrar1 == null ? null : CachedValueProvider.Result.create(registrar1, PsiModificationTracker.MODIFICATION_COUNT, myManager);
             }, false);
           ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)data).setValue(cachedResult);
 
@@ -188,9 +179,8 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
   }
 
   public static class Concatenation2InjectorAdapter extends BaseConcatenation2InjectorAdapter implements MultiHostInjector {
-
-    public Concatenation2InjectorAdapter(Project project) {
-      super(project);
+    public Concatenation2InjectorAdapter(JavaConcatenationInjectorManager manager) {
+      super(manager);
     }
 
     @Override
@@ -203,7 +193,7 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
     public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
       return LITERALS;
     }
-    private static final List<Class<PsiLiteralExpression>> LITERALS = Arrays.asList(PsiLiteralExpression.class);
+    private static final List<Class<PsiLiteralExpression>> LITERALS = Collections.singletonList(PsiLiteralExpression.class);
   }
 
   private final List<ConcatenationAwareInjector> myConcatenationInjectors = ContainerUtil.createLockFreeCopyOnWriteList();

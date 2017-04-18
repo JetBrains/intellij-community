@@ -100,7 +100,6 @@
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
-    <orderEntry type="module" module-name="community-tests" scope="TEST" />
     <orderEntry type="module" module-name="jira" />
     <orderEntry type="module" module-name="java-decompiler-plugin" />
     <orderEntry type="module" module-name="structuralsearch" />
@@ -124,5 +123,6 @@
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="javac-ref-scanner-8" scope="RUNTIME" />
     <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
+    <orderEntry type="module" module-name="android-plugin" />
   </component>
 </module>

@@ -42,6 +42,11 @@ public class DfaRangeValue extends DfaValue {
     return myValue;
   }
 
+  @Override
+  public String toString() {
+    return myValue.toString();
+  }
+
   public static class Factory {
     private Map<LongRangeSet, DfaRangeValue> myValues = new HashMap<>();
     private DfaValueFactory myFactory;

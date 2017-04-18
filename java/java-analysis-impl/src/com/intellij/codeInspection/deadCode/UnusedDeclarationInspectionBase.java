@@ -358,7 +358,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public boolean isEntryPoint(@NotNull RefElement owner) {
     final PsiElement element = owner.getElement();
-    if (isImplicitUsage(element)) return true;
+    if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(element.getProject());
       if (entryPointsManager.isEntryPoint(element)) {
@@ -384,11 +384,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     return false;
-  }
-
-  private static boolean isImplicitUsage(PsiElement element) {
-    return element instanceof PsiField ? RefUtil.isImplicitRead(element)
-                                       : RefUtil.isImplicitUsage(element);
   }
 
   public boolean isEntryPoint(@NotNull PsiElement element) {
@@ -419,7 +414,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
     }
-    return isImplicitUsage(element);
+    return RefUtil.isImplicitUsage(element);
   }
 
   public boolean isGlobalEnabledInEditor() {

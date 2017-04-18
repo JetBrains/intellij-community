@@ -16,16 +16,19 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.compiler.chainsSearch.OccurrencesAware;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -57,6 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.io.IOException;
 import java.util.*;
@@ -69,8 +74,8 @@ import java.util.stream.Stream;
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
-public class CompilerReferenceServiceImpl extends CompilerReferenceService implements ModificationTracker {
-  private final static Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
+public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx implements ModificationTracker {
+  private static final Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
 
   private final Set<FileType> myFileTypes;
   private final DirtyScopeHolder myDirtyScopeHolder;
@@ -152,12 +157,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
           });
         });
       }
-    }
-  }
 
-  @Override
-  public void projectClosed() {
-    closeReaderIfNeed(false);
+      Disposer.register(myProject, () -> closeReaderIfNeed(false));
+    }
   }
 
   @Nullable
@@ -170,9 +172,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                 () -> CachedValueProvider.Result.create(calculateScopeWithoutReferences(element),
                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
                                                                                         this));
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
     }
     catch (RuntimeException e) {
       return onException(e, "scope without code references");
@@ -198,6 +197,133 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   @Nullable
+  @Override
+  public Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
+    if (!isServiceEnabledFor(element)) return null;
+    try {
+      return CachedValuesManager.getCachedValue(element,
+                                                () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Boolean, Integer>() {
+                                                                                          @Nullable
+                                                                                          @Override
+                                                                                          protected Integer create(Boolean constructorSuggestion) {
+                                                                                            return calculateOccurrenceCount(element, constructorSuggestion.booleanValue());
+                                                                                          }
+                                                                                        },
+                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                        this)).get(Boolean.valueOf(isConstructorSuggestion));
+    }
+    catch (RuntimeException e) {
+      return onException(e, "weighting for completion");
+    }
+  }
+
+
+  @NotNull
+  @Override
+  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType) {
+    try {
+      myReadDataLock.lock();
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      try {
+        final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
+        if (type == 0) return Collections.emptySortedSet();
+        return Stream.of(new SignatureData(type, true), new SignatureData(type, false))
+          .flatMap(sd -> myReader.getMembersFor(sd)
+          .stream()
+          .filter(r -> r instanceof LightRef.JavaLightMethodRef)
+          .map(r -> new OccurrencesAware<>(
+            new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+            myReader.getOccurrenceCount(r))))
+          .collect(Collectors.toCollection(TreeSet::new));
+      }
+      catch (Exception e) {
+        //noinspection ConstantConditions
+        return onException(e, "find methods");
+      }
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  /**
+   * conditional probability P(ref1 | ref2) = P(ref1 * ref2) / P(ref2) > 1 - 1 / threshold
+   *
+   * where P(ref) is a probability that ref is occurred in a file.
+   */
+  @Override
+  public boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold) {
+    try {
+      myReadDataLock.lock();
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      try {
+        final TIntHashSet ids1 = myReader.getAllContainingFileIds(qualifier);
+        final TIntHashSet ids2 = myReader.getAllContainingFileIds(base);
+        final TIntHashSet intersection = intersection(ids1, ids2);
+
+        if ((ids2.size() - intersection.size()) * probabilityThreshold < ids2.size()) {
+          return true;
+        }
+        return false;
+      }
+      catch (Exception e) {
+        //noinspection ConstantConditions
+        return onException(e, "correlation");
+      }
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public String getName(int idx) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      return myReader.getNameEnumerator().getName(idx);
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  private Integer calculateOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
+    LanguageLightRefAdapter adapter = null;
+    if (isConstructorSuggestion) {
+      adapter = ReadAction.compute(() -> LanguageLightRefAdapter.findAdapter(element));
+      if (adapter == null || !adapter.isClass(element)) {
+        return null;
+      }
+    }
+    final CompilerElementInfo searchElementInfo = asCompilerElements(element, false, false);
+    if (searchElementInfo == null) return null;
+
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) return null;
+      try {
+        if (isConstructorSuggestion) {
+          int constructorOccurrences = 0;
+          for (PsiElement constructor : adapter.getInstantiableConstructors(element)) {
+            final LightRef lightConstructor = adapter.asLightUsage(constructor, myReader.getNameEnumerator());
+            if (lightConstructor != null) {
+              constructorOccurrences += myReader.getOccurrenceCount(lightConstructor);
+            }
+          }
+          final Integer anonymousCount = myReader.getAnonymousCount((LightRef.LightClassHierarchyElementDef)searchElementInfo.searchElements[0], searchElementInfo.place == ElementPlace.SRC);
+          return anonymousCount == null ? constructorOccurrences : (constructorOccurrences + anonymousCount);
+        } else {
+          return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Nullable
   private CompilerHierarchyInfoImpl getHierarchyInfo(@NotNull PsiNamedElement aClass,
                                                      @NotNull GlobalSearchScope useScope,
                                                      @NotNull GlobalSearchScope searchScope,
@@ -206,13 +332,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     try {
-      Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> {
+      Map<VirtualFile, SearchId[]> candidatesPerFile = ReadAction.compute(() -> {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-          new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, Object[]>>() {
+          new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, SearchId[]>>() {
             @Nullable
             @Override
-            protected Map<VirtualFile, Object[]> create(HierarchySearchKey key) {
+            protected Map<VirtualFile, SearchId[]> create(HierarchySearchKey key) {
               return calculateDirectInheritors(aClass,
                                                useScope,
                                                key.mySearchFileType,
@@ -237,20 +363,21 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
-    if (!isServiceEnabled()) return false;
+    if (!isActive()) return false;
     PsiFile file = ReadAction.compute(() -> element.getContainingFile());
     return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(file);
   }
 
-  private boolean isServiceEnabled() {
+  @Override
+  public boolean isActive() {
     return myReader != null && isEnabled();
   }
 
-  private Map<VirtualFile, Object[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
+  private Map<VirtualFile, SearchId[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
                                                                @NotNull GlobalSearchScope useScope,
                                                                @NotNull FileType searchFileType,
                                                                @NotNull CompilerHierarchySearchType searchType) {
-    final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false);
+    final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false, true);
     if (searchElementInfo == null) return null;
     LightRef searchElement = searchElementInfo.searchElements[0];
 
@@ -280,7 +407,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Nullable
   private TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
-    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true);
+    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true, true);
     if (compilerElementInfo == null) return null;
 
     myReadDataLock.lock();
@@ -305,17 +432,21 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   @Nullable
-  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement, boolean buildHierarchyForLibraryElements) {
+  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
+                                                 boolean buildHierarchyForLibraryElements,
+                                                 boolean checkNotDirty) {
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
       VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
       if (file == null) return null;
       ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
-      if (place == null || (place == ElementPlace.SRC && myDirtyScopeHolder.contains(file))) {
-        return null;
+      if (checkNotDirty) {
+        if (place == null || (place == ElementPlace.SRC && myDirtyScopeHolder.contains(file))) {
+          return null;
+        }
       }
-      final LanguageLightRefAdapter adapter = findAdapterForFileType(file.getFileType());
+      final LanguageLightRefAdapter adapter = LanguageLightRefAdapter.findAdapter(file);
       if (adapter == null) return null;
       final LightRef ref = adapter.asLightUsage(psiElement, myReader.getNameEnumerator());
       if (ref == null) return null;
@@ -361,6 +492,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     try {
       if (myProject.isOpen()) {
         myReader = CompilerReferenceReader.create(myProject);
+        LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
     } finally {
       myOpenCloseLock.unlock();
@@ -379,15 +511,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return myProject;
   }
 
-  @Nullable
-  static LanguageLightRefAdapter findAdapterForFileType(@NotNull FileType fileType) {
-    for (LanguageLightRefAdapter adapter : LanguageLightRefAdapter.INSTANCES) {
-      if (adapter.getFileTypes().contains(fileType)) {
-        return adapter;
-      }
-    }
-    return null;
-  }
+
 
   private static void executeOnBuildThread(Runnable compilationFinished) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -534,12 +658,23 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   @Nullable
-  private <T> T onException(@NotNull RuntimeException e, @NotNull String actionName) {
-    final Throwable cause = e.getCause();
-    if (cause instanceof PersistentEnumeratorBase.CorruptedException || cause instanceof StorageException) {
+  private <T> T onException(@NotNull Exception e, @NotNull String actionName) {
+    if (e instanceof ProcessCanceledException) {
+      throw (ProcessCanceledException)e;
+    }
+
+    Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
+    LOG.error("an exception during " + actionName + " calculation", e);
+    if (unwrapped instanceof PersistentEnumeratorBase.CorruptedException || unwrapped instanceof StorageException) {
       closeReaderIfNeed(true);
     }
-    LOG.error("an exception during " + actionName + " calculation", e);
     return null;
+  }
+
+  @NotNull
+  private static TIntHashSet intersection(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
+    TIntHashSet result = (TIntHashSet)set1.clone();
+    result.retainAll(set2.toArray());
+    return result;
   }
 }

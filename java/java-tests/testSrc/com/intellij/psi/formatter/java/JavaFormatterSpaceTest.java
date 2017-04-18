@@ -660,5 +660,29 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "public static void bar(@NonNls final String[] args) {\n" +
       "}");
   }
+
+  public void testEnumAnnotations() {
+    doTextTest("enum SampleEnum {\n" +
+               "    @Annotation(\"1\")ONE,\n" +
+               "    @Annotation(\"2\")TWO,\n" +
+               "    @Annotation THREE\n" +
+               "}",
+               "enum SampleEnum {\n" +
+               "    @Annotation(\"1\") ONE,\n" +
+               "    @Annotation(\"2\") TWO,\n" +
+               "    @Annotation THREE\n" +
+               "}");
+  }
+
+  public void testSpaceBeforeComma() {
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doClassTest(
+      "public void main(String[] args, String xxx) {\n" +
+      "  foo(100, 200);\n" +
+      "}",
+      "public void main(String[] args , String xxx) {\n" +
+      "    foo(100 , 200);\n" +
+      "}");
+  }
   
 }

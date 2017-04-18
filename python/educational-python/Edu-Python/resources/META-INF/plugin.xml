@@ -17,8 +17,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.python</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
-  <depends optional="true" config-file="course-creator.xml">com.jetbrains.edu.coursecreator</depends>
-
+  
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
     <localInspection shortName="PyStudyInterpreterInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyInterpreterInspection"/>
@@ -26,13 +25,16 @@
     <localInspection shortName="PyStudyLanguageLevelInspection" suppressId="PyStudyLanguageLevelInspection" enabledByDefault="true"
                      level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyLanguageLevelInspection"
                      displayName="Unsupported language level for a course" groupName="Inspection.Study.Python"/>
+    <!--course creator-->
+    <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
+    <configurationType implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationProducer"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>
     <importResolver implementation="com.jetbrains.edu.learning.PyStudyImportResolver"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
     <pluginConfigurator implementationClass="com.jetbrains.edu.learning.PyEduPluginConfigurator" language="Python"/>
   </extensions>
   <actions>
@@ -43,8 +45,13 @@
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
-    <action class="com.jetbrains.edu.learning.PyStudyCheckAction" id="PyCheckAction"
-            />
+    <action class="com.jetbrains.edu.learning.PyStudyCheckAction" id="PyCheckAction"/>
+    <!--course creator-->
+    <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu">
+      <add-to-group group-id="CCFileGroup" anchor="last"/>
+      <add-to-group group-id="CCProjectViewGroup" anchor="last"/>
+    </action>
+    <action class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo" id="ChangeCourseInfo" overrides="true"/>
   </actions>
 
   <project-components>

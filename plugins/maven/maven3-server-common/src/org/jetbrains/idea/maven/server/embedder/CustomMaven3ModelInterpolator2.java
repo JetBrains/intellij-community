@@ -36,6 +36,11 @@ public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolato
   private String localRepository;
 
   @Override
+  public void interpolateObject(Object obj, Model model, File projectDir, ModelBuildingRequest config, ModelProblemCollector problems) {
+    super.interpolateObject(obj, model, projectDir, config, problems);
+  }
+
+  @Override
   protected List<ValueSource> createValueSources(Model model,
                                                  File projectDir,
                                                  ModelBuildingRequest config,

@@ -97,7 +97,7 @@ class IntelliJCoreArtifactsBuilder {
 
         ant.fileset(dir: "$home/lib") {
           include(name: "asm-all.jar")
-          include(name: "guava-19.0.jar")
+          include(name: "guava-21.0.jar")
           include(name: "picocontainer.jar")
           include(name: "trove4j.jar")
           include(name: "cli-parser-1.1.jar")
@@ -106,7 +106,6 @@ class IntelliJCoreArtifactsBuilder {
           include(name: "imgscalr-lib-4.2.jar")
           include(name: "batik-all.jar")
           include(name: "xmlgraphics-commons-1.5.jar")
-          include(name: "xml-apis-ext.jar")
         }
       }
       buildContext.notifyArtifactBuilt(coreArtifactDir)

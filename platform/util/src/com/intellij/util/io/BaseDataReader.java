@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -55,15 +56,16 @@ public abstract class BaseDataReader {
       myFinishedFuture = executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          String oldThreadName = Thread.currentThread().getName();
-          if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-            Thread.currentThread().setName("BaseDataReader: " + presentableName);
-          }
-          try {
+          if (StringUtil.isEmptyOrSpaces(presentableName)) {
             doRun();
           }
-          finally {
-            Thread.currentThread().setName(oldThreadName);
+          else {
+            ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, new Runnable() {
+              @Override
+              public void run() {
+                doRun();
+              }
+            });
           }
         }
       });

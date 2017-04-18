@@ -15,61 +15,14 @@
  */
 package com.intellij.diff.tools.util.text;
 
-import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
+public interface LineOffsets {
+  int getLineStart(int line);
 
-public class LineOffsets {
-  private final int[] myLineEnds;
-  private final int myTextLength;
+  int getLineEnd(int line);
 
-  private LineOffsets(int[] ends, int length) {
-    myLineEnds = ends;
-    myTextLength = length;
-  }
+  int getLineNumber(int offset);
 
-  public int getLineStart(int line) {
-    checkLineIndex(line);
-    if (line == 0) return 0;
-    return myLineEnds[line - 1] + 1;
-  }
+  int getLineCount();
 
-  public int getLineEnd(int line) {
-    checkLineIndex(line);
-    return myLineEnds[line];
-  }
-
-  public int getLineCount() {
-    return myLineEnds.length;
-  }
-
-  public int getTextLength() {
-    return myTextLength;
-  }
-
-  private void checkLineIndex(int index) {
-    if (index < 0 || index >= getLineCount()) {
-      throw new IndexOutOfBoundsException("Wrong line: " + index + ". Available lines count: " + getLineCount());
-    }
-  }
-
-  @NotNull
-  public static LineOffsets create(@NotNull CharSequence text) {
-    TIntArrayList ends = new TIntArrayList();
-
-    int index = 0;
-    while (true) {
-      int lineEnd = StringUtil.indexOf(text, '\n', index);
-      if (lineEnd != -1) {
-        ends.add(lineEnd);
-        index = lineEnd + 1;
-      }
-      else {
-        ends.add(text.length());
-        break;
-      }
-    }
-
-    return new LineOffsets(ends.toNativeArray(), text.length());
-  }
+  int getTextLength();
 }

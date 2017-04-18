@@ -18,6 +18,8 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,8 +109,17 @@ public abstract class SemanticEditorPosition {
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                                            @NotNull SyntaxElement rightParenthesis) {
+                                                                           @NotNull SyntaxElement rightParenthesis) {
+    return findLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, Conditions.alwaysFalse());
+  }
+  
+  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                                           @NotNull SyntaxElement rightParenthesis,
+                                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
     while (!myIterator.atEnd()) {
+      if (terminationCondition.value(map(myIterator.getTokenType()))) {
+        break;
+      }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
         beforeParentheses(leftParenthesis, rightParenthesis);
       }
@@ -173,7 +184,7 @@ public abstract class SemanticEditorPosition {
   }
 
   public boolean hasEmptyLineAfter(int offset) {
-    for (int i = offset; i < myIterator.getEnd(); i ++) {
+    for (int i = offset + 1; i < myIterator.getEnd(); i++) {
       if (myChars.charAt(i) == '\n') return true;
     }
     return false;

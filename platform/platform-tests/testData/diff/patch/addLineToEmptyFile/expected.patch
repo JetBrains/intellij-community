@@ -1,0 +1,7 @@
+Index: before/1.txt
+===================================================================
+--- before/1.txt	(revision before)
++++ after/1.txt	(revision after)
+@@ -1,0 +1,2 @@
++first
++second

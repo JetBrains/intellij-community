@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModule
 @CompileStatic
 interface CompilationContext {
   AntBuilder getAnt()
+  GradleRunner getGradle()
   BuildOptions getOptions()
   BuildMessages getMessages()
   BuildPaths getPaths()
@@ -35,4 +36,6 @@ interface CompilationContext {
   JpsModule findRequiredModule(String name)
 
   JpsModule findModule(String name)
+
+  void notifyArtifactBuilt(String artifactPath)
 }

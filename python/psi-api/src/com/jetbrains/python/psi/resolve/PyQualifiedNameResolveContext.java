@@ -31,12 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public interface PyQualifiedNameResolveContext {
-  /**
-   * For mode when context resolves element relative to this directory
-   * @see #copyWithRelative(PsiDirectory)
-   */
-  @Nullable
-  PsiDirectory getRelativeDirectory();
   @Nullable
   PsiElement getFoothold();
   int getRelativeLevel();
@@ -77,10 +71,4 @@ public interface PyQualifiedNameResolveContext {
   PyQualifiedNameResolveContext copyWithRoots();
   @NotNull
   PyQualifiedNameResolveContext copyWithoutStubs();
-
-  /**
-   * @see #getRelativeDirectory()
-   */
-  @NotNull
-  PyQualifiedNameResolveContext copyWithRelative(@NotNull PsiDirectory directory);
 }

@@ -122,6 +122,36 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                                     "}");
   }
 
+  public void testNestedCompletion() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    myFixture.doHighlighting();
+    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+    myFixture.type("System.getPro");
+    complete("getProperty(String key, String def)");
+    myFixture.doHighlighting();
+    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
+  }
+
+  public void testTabWithNestedCompletion() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    myFixture.doHighlighting();
+    myFixture.type("System.getPro");
+    complete("getProperty(String key, String def)");
+    myFixture.doHighlighting();
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, <caret>), ) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, )<caret>, ) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), <caret>) } }");
+    myFixture.performEditorAction("NextParameter");
+    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), )<caret> } }");
+  }
+
   private void showParameterInfo() {
     myFixture.performEditorAction("ParameterInfo");
     UIUtil.dispatchAllInvocationEvents();

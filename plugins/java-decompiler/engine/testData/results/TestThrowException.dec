@@ -4,7 +4,7 @@ public class TestThrowException {
    Runnable r;
 
    public TestThrowException(int var1) {
-      if(var1 > 0) {// 9
+      if (var1 > 0) {// 9
          throw new IllegalArgumentException("xxx");// 10
       } else {
          this.r = new Runnable() {// 12

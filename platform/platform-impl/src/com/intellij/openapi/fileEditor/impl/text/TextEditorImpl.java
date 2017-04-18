@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -56,6 +57,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
+    Disposer.register(this, myComponent);
     myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
     myLoadingFinished = myAsyncLoader.start();
   }
@@ -76,7 +78,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public void dispose(){
-    myComponent.dispose();
   }
 
   @Override

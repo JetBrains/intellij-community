@@ -41,7 +41,7 @@ public class SchemeImportUtil {
                                                @Nullable VirtualFile preselect,
                                                @Nullable String description) {
     final Set<String> extensions = new HashSet<>(Arrays.asList(sourceExtensions));
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return
@@ -68,10 +68,16 @@ public class SchemeImportUtil {
       preselectFiles = VirtualFile.EMPTY_ARRAY;
     }
     final VirtualFile[] virtualFiles = fileChooser.choose(null, preselectFiles); 
-                                                          //CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
     if (virtualFiles.length != 1) return null;
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
+  }
+
+  private static boolean canSelectJarFile(@NotNull String[] sourceExtensions) {
+    for (String ext : sourceExtensions) {
+      if ("jar".equals(ext)) return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -85,7 +91,7 @@ public class SchemeImportUtil {
       return root;
     }
     catch (IOException | JDOMException e) {
-      throw new SchemeImportException("Can't read from" + file.getName() + ", " + e.getMessage());
+      throw new SchemeImportException();
     }
     finally {
       if (inputStream != null) {

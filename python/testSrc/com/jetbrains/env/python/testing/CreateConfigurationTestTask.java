@@ -22,11 +22,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -50,35 +46,21 @@ import java.util.Optional;
  *
  * @author Ilya.Kazakevich
  */
-class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
+public abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
   @NotNull
-  private final String[] myFileNames;
-  @NotNull
-  private final Class<? extends RunConfiguration> myExpectedConfigurationType;
+  private final Class<T> myExpectedConfigurationType;
 
   /**
    * @param testRunnerName            test runner name (to set as default to make sure producer launched)
    * @param expectedConfigurationType type configuration tha should be produced
    */
-  CreateConfigurationTestTask(@NotNull final String testRunnerName,
-                              @NotNull final Class<T> expectedConfigurationType) {
-    this(testRunnerName, expectedConfigurationType, "test_file.py", "test_class.py");
-  }
-
-  /**
-   * @param testRunnerName            test runner name (to set as default to make sure producer launched) or null if set nothing
-   * @param expectedConfigurationType type configuration tha should be produced
-   * @param fileNames                 python files with caret or folders to check right click on
-   */
   CreateConfigurationTestTask(@Nullable final String testRunnerName,
-                              @NotNull final Class<? extends RunConfiguration> expectedConfigurationType,
-                              @NotNull final String... fileNames) {
+                              @NotNull final Class<T> expectedConfigurationType) {
     super("/testRunner/env/createConfigurationTest/");
     myTestRunnerName = testRunnerName;
-    myFileNames = fileNames.clone();
     myExpectedConfigurationType = expectedConfigurationType;
   }
 
@@ -92,103 +74,56 @@ class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutio
     createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
 
-      for (final String fileName : myFileNames) {
+      for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
-
-        final PsiElement elementToRightClickOn = getElementToRightClickOnByFile(fileName);
-
-
-        final List<ConfigurationFromContext> configurationsFromContext =
-          new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
-        Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, configurationsFromContext);
-
-
-        final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
-          .filter(o -> myExpectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
-          .findFirst();
-        Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
-        RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
-
-
-        Assert.assertNotNull("Producers were not able to create any configuration in " + fileName, runnerAndConfigurationSettings);
-        final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
-        Assert.assertNotNull("No real configuration created", configuration);
-        Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
-        Assert.assertThat("Bad configuration type in " + fileName, configuration,
-                          Matchers.is(Matchers.instanceOf(myExpectedConfigurationType)));
-
-        RunManager.getInstance(getProject()).addConfiguration(runnerAndConfigurationSettings, false);
 
         @SuppressWarnings("unchecked") // Checked one line above
-        final T typedConfiguration = (T)configuration;
-        checkConfiguration(typedConfiguration);
+        final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
+        checkConfiguration(typedConfiguration, elementToRightClickOn);
       }
     }), ModalityState.NON_MODAL);
   }
 
   /**
-   * @param fileName file or folder name provided by class instantiator
-   * @return element to right click on to generate test
+   * Emulates right click and create configurwation
    */
   @NotNull
-  protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
-    final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(fileName);
-    assert virtualFile != null : "Can't find " + fileName;
+  public static <T extends RunConfiguration> T createConfigurationByElement(@NotNull final PsiElement elementToRightClickOn,
+                                                   @NotNull Class<T> expectedConfigurationType) {
+    final List<ConfigurationFromContext> configurationsFromContext =
+      new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
+    Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
 
-    // Configure context by folder in case of folder, or by element if file
-    final PsiElement elementToRightClickOn;
-    if (virtualFile.isDirectory()) {
-      elementToRightClickOn = PsiDirectoryFactory.getInstance(getProject()).createDirectory(virtualFile);
-    }
-    else {
-      myFixture.configureByFile(fileName);
-      elementToRightClickOn = myFixture.getElementAtCaret();
-    }
-    return elementToRightClickOn;
+
+    final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
+      .filter(o -> expectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
+      .findFirst();
+    Assert.assertTrue("No configuration of expected type created for element " + elementToRightClickOn, maybeConfig.isPresent());
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
+
+
+    Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
+    final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
+    Assert.assertNotNull("No real configuration created", configuration);
+    Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
+    Assert.assertThat("Bad configuration type in " + elementToRightClickOn, configuration,
+                      Matchers.is(Matchers.instanceOf(expectedConfigurationType)));
+
+    RunManager.getInstance(elementToRightClickOn.getProject()).addConfiguration(runnerAndConfigurationSettings, false);
+
+    @SuppressWarnings("unchecked") // Checked one line above
+    final T typedConfiguration = (T)configuration;
+    return typedConfiguration;
   }
 
-  protected void checkConfiguration(@NotNull final T configuration) {
+  @NotNull
+  protected abstract List<PsiElement> getPsiElementsToRightClickOn();
 
+
+  protected void checkConfiguration(@NotNull final T configuration, @NotNull final PsiElement elementToRightClickOn) {
+    // Configuration already checked when created, but you can do specific checks here
   }
 
-  static class CreateConfigurationTestAndRenameClassTask extends CreateConfigurationTestTask<PyUniversalTestConfiguration> {
-    CreateConfigurationTestAndRenameClassTask(@NotNull final String testRunnerName,
-                                              @NotNull final Class<? extends PyUniversalTestConfiguration> expectedConfigurationType) {
-      super(testRunnerName, expectedConfigurationType, "test_class.py");
-    }
-
-    @Override
-    protected void checkConfiguration(@NotNull PyUniversalTestConfiguration configuration) {
-      super.checkConfiguration(configuration);
-      Assert.assertThat("Wrong name generated", configuration.getName(), Matchers.containsString("TheTest"));
-      Assert.assertThat("Bad target generated", configuration.getTarget().getTarget(), Matchers.endsWith("TheTest"));
-      myFixture.renameElementAtCaret("FooTest");
-      Assert.assertThat("Name not renamed", configuration.getName(), Matchers.containsString("FooTest"));
-    }
-  }
-
-  static class CreateConfigurationTestAndRenameFolderTask
-    extends CreateConfigurationTestTask<PyUniversalTestConfiguration> {
-    CreateConfigurationTestAndRenameFolderTask(@Nullable final String testRunnerName,
-                                               @NotNull final Class<? extends PyUniversalTestConfiguration> expectedConfigurationType) {
-      super(testRunnerName, expectedConfigurationType, "folderWithTests");
-    }
-
-    @Override
-    protected void checkConfiguration(@NotNull final PyUniversalTestConfiguration configuration) {
-      super.checkConfiguration(configuration);
-      Assert.assertThat("Wrong name generated", configuration.getName(), Matchers.containsString("folderWithTests"));
-      Assert.assertThat("Bad target generated", configuration.getTarget().getTarget(), Matchers.containsString("folderWithTests"));
-
-      final VirtualFile virtualFolder = myFixture.getTempDirFixture().getFile("folderWithTests");
-      assert virtualFolder != null : "Can't find folder";
-      final PsiDirectory psiFolder = PsiManager.getInstance(getProject()).findDirectory(virtualFolder);
-      assert psiFolder != null : "No psi for folder found";
-      myFixture.renameElement(psiFolder, "newFolder");
-      Assert.assertThat("Name not renamed", configuration.getName(), Matchers.containsString("newFolder"));
-      Assert.assertThat("Target not renamed", configuration.getTarget().getTarget(), Matchers.containsString("newFolder"));
-    }
-  }
 
   /**
    * Task to create configuration

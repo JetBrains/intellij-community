@@ -22,4 +22,4 @@ def test(c):
     f2(<warning descr="Expected type 'str', got 'int' instead">x1.count('')</warning>)
     f3(x1.count(''))
     f2(x1.strip())
-    f3(<warning descr="Expected type 'int', got 'Union[str, unicode]' instead">x1.strip()</warning>)
+    f3(<warning descr="Expected type 'int', got 'str' instead">x1.strip()</warning>)

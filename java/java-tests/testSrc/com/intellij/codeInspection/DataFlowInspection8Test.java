@@ -61,6 +61,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
 
   public void testOptionalOfNullable() { doTest(); }
+  public void testOptionalOrElse() { doTest(); }
   public void testOptionalIsPresent() { doTest(); }
   public void testOptionalGetWithoutIsPresent() {
     myFixture.addClass("package org.junit;" +

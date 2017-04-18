@@ -31,17 +31,16 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,7 +77,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   @NotNull
   private final Project myProject;
   @NotNull
-  private final ExternalProjectsManager myProjectsManager;
+  private final ExternalProjectsManagerImpl myProjectsManager;
   @NotNull
   private final ToolWindowEx myToolWindow;
   @NotNull
@@ -102,7 +101,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     myToolWindow = toolWindow;
     myExternalSystemId = externalSystemId;
     myUiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
-    myProjectsManager = ExternalProjectsManager.getInstance(myProject);
+    myProjectsManager = ExternalProjectsManagerImpl.getInstance(myProject);
 
     String toolWindowId =
       toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : myExternalSystemId.getReadableName();
@@ -524,20 +523,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private void restoreTreeState() {
-    if (myState.treeState != null) {
-      TreeState treeState = new TreeState();
-      try {
-        treeState.readExternal(myState.treeState);
-        treeState.applyTo(myTree);
-      }
-      catch (InvalidDataException e) {
-        LOG.info(e);
-      }
-    }
+    TreeState.createFrom(myState.treeState).applyTo(myTree);
   }
 
   private <T extends ExternalSystemNode> List<T> getSelectedNodes(Class<T> aClass) {
-    return myStructure != null ? myStructure.getSelectedNodes(myTree, aClass) : ContainerUtil.<T>emptyList();
+    return myStructure != null ? myStructure.getSelectedNodes(myTree, aClass) : ContainerUtil.emptyList();
   }
 
   private List<ProjectNode> getSelectedProjectNodes() {

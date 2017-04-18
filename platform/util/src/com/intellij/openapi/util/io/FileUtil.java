@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
@@ -1191,12 +1193,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name) {
     return sanitizeFileName(name, true);
   }
-
-  /** @deprecated use {@link #sanitizeFileName(String, boolean)} (to be removed in IDEA 17) */
-  public static String sanitizeName(@NotNull String name) {
-    return sanitizeFileName(name, false);
-  }
-
+  
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     StringBuilder result = null;
@@ -1291,10 +1288,26 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
-    return processFilesRecursively(root, processor, null);
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return new JBTreeTraverser<File>(FILE_CHILDREN).withRoot(root);
   }
 
+  private static final Function<File, Iterable<File>> FILE_CHILDREN = new Function<File, Iterable<File>>() {
+    @Override
+    public Iterable<File> fun(File file) {
+      return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
+    }
+  };
+
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
+    return fileTraverser(root).bfsTraversal().processEach(processor);
+  }
+
+  /**
+   * @see FileUtil#fileTraverser(File)
+   */
+  @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
                                                 @Nullable final Processor<File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();

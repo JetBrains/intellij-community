@@ -18,6 +18,7 @@ import com.intellij.TestAll;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.Timings;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -79,6 +80,7 @@ public class _FirstInSuiteTest extends TestCase {
 
   // performance tests
   public void testNothingPerformance() throws Exception {
+    Timings.getStatistics();
     testNothing();
   }
 

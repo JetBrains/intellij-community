@@ -19,10 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -43,18 +40,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String HELP_ID = "reference.changesToolWindow.log";
 
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final VcsLogUi myUi;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
@@ -76,6 +74,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull VisiblePack initialDataPack) {
     // collect info
     myLogData = logData;
+    myUi = ui;
     myLog = log;
     myUiProperties = uiProperties;
 
@@ -221,9 +220,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class, VcsLogUtil::createCommittedChangeList);
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
-      int[] selectedRows = myGraphTable.getSelectedRows();
-      if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
+      Set<VirtualFile> roots = getSelectedRoots();
+      if (roots == null) return null;
       if (roots.size() == 1) {
         return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }
@@ -239,7 +237,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUiProperties;
     }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      Collection<VirtualFile> roots = chooseNotNull(getSelectedRoots(), VcsLogUtil.getVisibleRoots(myUi));
+      return toVirtualFileArray(roots);
+    }
     return null;
+  }
+
+  @Nullable
+  private Set<VirtualFile> getSelectedRoots() {
+    int[] selectedRows = myGraphTable.getSelectedRows();
+    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+    return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
   }
 
   @NotNull

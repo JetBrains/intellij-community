@@ -350,7 +350,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return sortInRegistrationOrder(list)
   }
   
-  override fun getActionIds(firstKeyStroke: KeyStroke) = getActionIds(firstKeyStroke, { keystrokeToIds }, { convertKeyStroke(it) })
+  override fun getActionIds(firstKeyStroke: KeyStroke) = getActionIds(firstKeyStroke, { it.keystrokeToIds }, KeymapImpl::convertKeyStroke)
   
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
     val ids = getActionIds(firstKeyStroke)
@@ -402,44 +402,35 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     while (true)
   }
   
-  override fun getActionIds(shortcut: MouseShortcut) = getActionIds(shortcut, { mouseShortcutToActionIds }, { convertMouseShortcut(it) })
-  
-  private inline fun <T> getActionIds(shortcut: T, shortcutToActionsIds: KeymapImpl.() -> Map<T, MutableList<String>>, convertShortcut: KeymapImpl.(shortcut: T) -> T): Array<String> {
-    var list = shortcutToActionsIds().get(shortcut)
-    var parent = parent ?: return sortInRegistrationOrder(list)
-    
-    var originalListInstance = list != null
-    var child = this
-    var convertedShortcut = convertShortcut(shortcut)
-    do {
-      for (id in (parent.shortcutToActionsIds().get(convertedShortcut)?.sortInRegistrationOrder() ?: emptyList<String>())) {
-        if (child.actionIdToShortcuts.containsKey(id) || actionIdToShortcuts.containsKey(keymapManager.getActionBinding(id))) {
-          // on remove shortcut we put empty list to actionIdToShortcuts, our mouseShortcutToActionIds doesn't contain mapping
-          // so, we add actions from parent keymap only if they are absent in this keymap
-          continue
-        }
+  override fun getActionIds(shortcut: MouseShortcut) = getActionIds(shortcut, { it.mouseShortcutToActionIds }, KeymapImpl::convertMouseShortcut)
 
-        if (list == null) {
-          list = SmartList<String>()
-        }
-        else if (list.contains(id)) {
-          continue
-        }
-        else if (originalListInstance) {
-          list = SmartList(list)
-          list.sortWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
-          originalListInstance = false
-        }
-        list.add(id)
+  private fun <T> getActionIds(shortcut: T, shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>, convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): Array<String> {
+    // first, get keystrokes from own map
+    var list = shortcutToActionIds(this).get(shortcut)
+    val parentIds = parent?.getActionIds(convertShortcut(this, shortcut), shortcutToActionIds, convertShortcut) ?: ArrayUtilRt.EMPTY_STRING_ARRAY
+    var isOriginalListInstance = list != null
+    for (id in parentIds) {
+      // add actions from parent keymap only if they are absent in this keymap
+      // do not add parent bind actions, if bind-on action is overwritten in the child
+      if (actionIdToShortcuts.containsKey(id) || actionIdToShortcuts.containsKey(keymapManager.getActionBinding(id))) {
+        continue
       }
 
-      child = parent
-      parent = child.parent ?: return ArrayUtilRt.toStringArray(list)
-      convertedShortcut = child.convertShortcut(shortcut)
-    }
-    while (true)
-  }
+      if (list == null) {
+        list = SmartList()
+      }
+      else if (isOriginalListInstance) {
+        list = SmartList(list)
+        isOriginalListInstance = false
+      }
 
+      if (!list.contains(id)) {
+        list.add(id)
+      }
+    }
+    return sortInRegistrationOrder(list)
+  }
+  
   fun isActionBound(actionId: String) = keymapManager.boundActions.contains(actionId)
 
   override fun getShortcuts(actionId: String?): Array<Shortcut> = getMutableShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
@@ -703,17 +694,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
 private fun sortInRegistrationOrder(ids: List<String>?): Array<String> {
   val array = ArrayUtilRt.toStringArray(ids)
-  if (array.size > 1) {
-    Arrays.sort(array, ActionManagerEx.getInstanceEx().registrationOrderComparator)
-  }
+  array.sortWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
   return array
-}
-
-private fun List<String>.sortInRegistrationOrder(): List<String> {
-  if (size > 1) {
-    return sortedWith(ActionManagerEx.getInstanceEx().registrationOrderComparator)
-  }
-  return this
 }
 
 // compare two lists in any order

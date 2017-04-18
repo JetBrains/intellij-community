@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ public class TypeUtils {
     return false;
   }
 
+  @Contract("null, _ -> false")
   public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
     return expressionHasTypeOrSubtype(expression, new String[] {typeName}) != null;
   }
@@ -129,8 +130,9 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    PsiType type = expression instanceof PsiFunctionalExpression ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                                                                 : expression.getType();
+    final PsiType type = expression instanceof PsiFunctionalExpression
+                         ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
+                         : expression.getType();
     if (type == null) {
       return null;
     }
@@ -236,7 +238,7 @@ public class TypeUtils {
     }
     final PsiClassType classType = (PsiClassType)type;
     final PsiClass aClass = classType.resolve();
-    return aClass != null && aClass instanceof PsiTypeParameter;
+    return aClass instanceof PsiTypeParameter;
   }
 
   /**

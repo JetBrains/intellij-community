@@ -26,7 +26,7 @@ import com.intellij.testFramework.UsefulTestCase;
 public class CoreJarFileSystemTest extends UsefulTestCase{
   public void testSimple() {
     CoreJarFileSystem fs = new CoreJarFileSystem();
-    String jarPath = PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/vfs/corejar/rt.jar";
+    String jarPath = PlatformTestUtil.getPlatformTestDataPath() + "vfs/corejar/rt.jar";
     VirtualFile root = fs.findFileByPath(jarPath + "!/");
     VirtualFile[] children = root.getChildren();
     assertEquals(4, children.length);

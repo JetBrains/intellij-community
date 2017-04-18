@@ -68,12 +68,27 @@ public class SuspiciousMethodCallUtil {
     if (mapClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(mapClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
+
       MethodSignature getSignature = MethodSignatureUtil.createMethodSignature("get", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod get = MethodSignatureUtil.findMethodBySignature(mapClass, getSignature, false);
       addMethod(get, 0, patternMethods, indices);
+
+      MethodSignature getOrDefaultSignature = MethodSignatureUtil.createMethodSignature("getOrDefault",
+                                                                                        new PsiType[] {PsiType.getJavaLangObject(manager, searchScope),
+                                                                                          PsiSubstitutor.EMPTY.substitute(mapClass.getTypeParameters()[1])}, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      PsiMethod getOrDefault = MethodSignatureUtil.findMethodBySignature(mapClass, getOrDefaultSignature, false);
+      addMethod(getOrDefault, 0, patternMethods, indices);
+
+      MethodSignature removeWithDefaultSignature = MethodSignatureUtil.createMethodSignature("remove",
+                                                                                             new PsiType[] {PsiType.getJavaLangObject(manager, searchScope), PsiType.getJavaLangObject(manager, searchScope)},
+                                                                                             PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      PsiMethod removeWithDefault = MethodSignatureUtil.findMethodBySignature(mapClass, removeWithDefaultSignature, false);
+      addMethod(removeWithDefault, 0, patternMethods, indices);
+
       MethodSignature containsKeySignature = MethodSignatureUtil.createMethodSignature("containsKey", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsKey = MethodSignatureUtil.findMethodBySignature(mapClass, containsKeySignature, false);
       addMethod(containsKey, 0, patternMethods, indices);
+
       MethodSignature containsValueSignature = MethodSignatureUtil.createMethodSignature("containsValue", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsValue = MethodSignatureUtil.findMethodBySignature(mapClass, containsValueSignature, false);
       addMethod(containsValue, 1, patternMethods, indices);

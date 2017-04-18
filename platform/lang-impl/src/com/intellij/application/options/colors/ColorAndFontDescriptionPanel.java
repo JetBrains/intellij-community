@@ -193,13 +193,10 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     updateColorChooser(myCbEffects, myEffectsColorChooser, description.isEffectsColorEnabled(),
                        description.isEffectsColorChecked(), description.getEffectColor());
 
-    if (description.isEffectsColorEnabled() && description.isEffectsColorChecked()) {
-      myEffectsCombo.setEnabled(description.isEditable());
-      myEffectsModel.setEffectName(ContainerUtil.reverseMap(myEffectsMap).get(effectType));
-    }
-    else {
-      myEffectsCombo.setEnabled(false);
-    }
+    String name = ContainerUtil.reverseMap(myEffectsMap).get(effectType);
+    myEffectsCombo.setSelectedItem(name);
+    myEffectsCombo
+      .setEnabled((description.isEffectsColorEnabled() && description.isEffectsColorChecked()) && description.isEditable());
     setInheritanceInfo(description);
     myLabelFont.setEnabled(myCbBold.isEnabled() || myCbItalic.isEnabled());
   }
@@ -309,16 +306,6 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
   private static class EffectsComboModel extends CollectionComboBoxModel<String> {
     public EffectsComboModel(List<String> names) {
       super(names);
-    }
-
-    /**
-     * Set the current effect name when a text attribute selection changes without notifying the listeners since otherwise it will
-     * be considered as an actual change and lead to unnecessary evens including 'read-only scheme' check.
-     *
-     * @param effectName
-     */
-    public void setEffectName(@NotNull String effectName) {
-      mySelection = effectName;
     }
   }
 }

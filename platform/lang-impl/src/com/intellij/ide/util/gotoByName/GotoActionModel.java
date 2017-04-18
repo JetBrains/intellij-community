@@ -90,13 +90,18 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return map;
   });
 
-  private final ModalityState myModality = ModalityState.defaultModalityState();
+  private final ModalityState myModality;
 
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
+    this(project, component, editor, file, ModalityState.defaultModalityState());
+  }
+
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
     myEditor = editor;
     myFile = file;
+    myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
   }
@@ -287,7 +292,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  String getGroupName(@NotNull OptionDescription description) {
+  public String getGroupName(@NotNull OptionDescription description) {
     String name = description.getGroupName();
     if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";

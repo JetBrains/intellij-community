@@ -19,7 +19,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -43,8 +43,8 @@ import java.util.Map;
   name = "NotificationConfiguration",
   storages = @Storage("notifications.xml")
 )
-public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ApplicationComponentAdapter, PersistentStateComponent<Element>,
-                                                                                          Disposable {
+public class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>,
+                                                                                          Disposable, ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";

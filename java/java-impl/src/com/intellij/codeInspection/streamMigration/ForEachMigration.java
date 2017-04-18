@@ -36,8 +36,8 @@ import static com.intellij.codeInspection.streamMigration.CollectMigration.getAd
 class ForEachMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(ForEachMigration.class);
 
-  protected ForEachMigration(String forEachMethodName) {
-    super(forEachMethodName);
+  protected ForEachMigration(boolean shouldWarn, String forEachMethodName) {
+    super(shouldWarn, forEachMethodName);
   }
 
   @Nullable

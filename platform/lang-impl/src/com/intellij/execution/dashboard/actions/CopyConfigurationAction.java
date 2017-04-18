@@ -49,8 +49,7 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
 
   @Override
   protected boolean isEnabled4(DashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).getAllConfigurationsList().contains(
-      node.getConfigurationSettings().getConfiguration());
+    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override
@@ -68,10 +67,8 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
       ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
     }
 
-    if (RunDialog.editConfiguration(node.getProject(), copiedSettings,
-                                    ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
-      runManager.addConfiguration(copiedSettings, runManager.isConfigurationShared(settings),
-                                  runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+    if (RunDialog.editConfiguration(node.getProject(), copiedSettings, ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
+      runManager.addConfiguration(copiedSettings, settings.isShared());
     }
   }
 }

@@ -55,6 +55,10 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 
+import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
+import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
+import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static java.util.stream.Collectors.toList;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
 import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
@@ -69,10 +73,10 @@ public class HgBranchPopupActions {
   }
 
   ActionGroup createActions() {
-    return createActions(null, "");
+    return createActions(null, "", false);
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo) {
+  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgNewBookmarkAction(Collections.singletonList(myRepository), myRepository));
@@ -83,24 +87,25 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Bookmarks" + repoInfo);
-    List<String> bookmarkNames = getSortedNamesWithoutHashes(myRepository.getBookmarks());
-    String currentBookmark = myRepository.getCurrentBookmark();
-    for (String bookmark : bookmarkNames) {
-      AnAction bookmarkAction = new BookmarkActions(myProject, Collections.singletonList(myRepository), bookmark);
-      if (bookmark.equals(currentBookmark)) {
-        bookmarkAction.getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
-      }
-      popupGroup.add(bookmarkAction);
-    }
+    List<HgCommonBranchActions> bookmarkActions = getSortedNamesWithoutHashes(myRepository.getBookmarks()).stream()
+      .map(bm -> new BookmarkActions(myProject, Collections.singletonList(myRepository), bm))
+      .collect(toList());
+    // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(bookmarkActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfTopShownBranches(bookmarkActions), firstLevelGroup ? HgBranchPopup.SHOW_ALL_BOOKMARKS_KEY : null,
+                               firstLevelGroup);
 
+    //only opened branches have to be shown
     popupGroup.addSeparator("Branches" + repoInfo);
-    List<String> branchNamesList = new ArrayList<>(myRepository.getOpenedBranches());//only opened branches have to be shown
-    Collections.sort(branchNamesList);
-    for (String branch : branchNamesList) {
-      if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
-        popupGroup.add(new HgCommonBranchActions(myProject, Collections.singletonList(myRepository), branch));
-      }
-    }
+    List<HgCommonBranchActions> branchActions =
+      myRepository.getOpenedBranches().stream()
+        .sorted()
+        .filter(b -> !b.equals(myRepository.getCurrentBranch()))
+        .map(b -> new BranchActions(myProject, Collections.singletonList(myRepository), b))
+        .collect(toList());
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(branchActions, FAVORITE_BRANCH_COMPARATOR),
+                               getNumOfTopShownBranches(branchActions), firstLevelGroup ? HgBranchPopup.SHOW_ALL_BRANCHES_KEY : null,
+                               firstLevelGroup);
     return popupGroup;
   }
 
@@ -269,13 +274,22 @@ public class HgBranchPopupActions {
     }
   }
 
+  static class BranchActions extends HgCommonBranchActions {
+    BranchActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+      super(project, repositories, branchName, HgBranchType.BRANCH);
+    }
+  }
+  
   /**
    * Actions available for  bookmarks.
    */
   static class BookmarkActions extends HgCommonBranchActions {
 
     BookmarkActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
-      super(project, repositories, branchName);
+      super(project, repositories, branchName, HgBranchType.BOOKMARK);
+      if (myRepositories.size() == 1 && branchName.equals(myRepositories.get(0).getCurrentBookmark())) {
+        getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
+      }
     }
 
     @NotNull

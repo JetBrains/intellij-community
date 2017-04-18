@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.PyUtil
 data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager, private val module: Module?,
                                              private val foothold: PsiElement?, private val sdk: Sdk?,
                                              private val relativeLevel : Int = -1,
-                                             private val relativeDirectory: PsiDirectory? = null,
                                              private val withoutRoots : Boolean = false,
                                              private val withoutForeign: Boolean = false,
                                              private val withMembers : Boolean = false,
@@ -48,8 +47,6 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
   override fun getWithoutForeign() = withoutForeign
 
   override fun getPsiManager() = psiManager
-
-  override fun getRelativeDirectory() = relativeDirectory
 
   override fun getWithMembers() = withMembers
 
@@ -79,8 +76,6 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
     val file = footholdFile ?: return null
     return if (relativeLevel > 0) ResolveImportUtil.stepBackFrom(file, relativeLevel) else file.containingDirectory
   }
-
-  override fun copyWithRelative(directory: PsiDirectory) = copy(relativeDirectory = directory)
 
   override fun getFootholdFile() = when (foothold) {
     is PsiDirectory -> foothold.findFile(PyNames.INIT_DOT_PY)

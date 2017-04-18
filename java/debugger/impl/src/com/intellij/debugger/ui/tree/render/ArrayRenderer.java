@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -37,6 +36,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
@@ -45,8 +45,7 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * User: lex
@@ -55,7 +54,7 @@ import java.util.List;
  */
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
-  
+
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
@@ -94,7 +93,6 @@ public class ArrayRenderer extends NodeRendererImpl{
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    List<DebuggerTreeNode> children = new ArrayList<>();
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
@@ -113,10 +111,12 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
 
       int added = 0;
+      boolean hiddenNulls = false;
       if (array.length() - 1 >= START_INDEX) {
         int end = array.length() - 1 < END_INDEX ? array.length() - 1 : END_INDEX;
         for (int idx = START_INDEX; idx <= end; idx++) {
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && elementIsNull(array, idx)) {
+            hiddenNulls = true;
             continue;
           }
 
@@ -126,24 +126,34 @@ public class ArrayRenderer extends NodeRendererImpl{
             continue;
           }
 
-          children.add(arrayItemNode);
+          builder.addChildren(Collections.singletonList(arrayItemNode), false);
           added++;
+          if (added > ENTRIES_LIMIT) {
+            break;
+          }
         }
       }
 
+      builder.addChildren(Collections.emptyList(), true);
+
       if (added == 0) {
         if (START_INDEX == 0 && array.length() - 1 <= END_INDEX) {
-          children.add(nodeManager.createMessageNode(MessageDescriptor.ALL_ELEMENTS_IN_RANGE_ARE_NULL));
+          builder.setMessage(DebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
         else {
-          children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX)));
+          builder.setMessage(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
+                             SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
       }
-      else if (!myForced && END_INDEX < array.length() - 1) {
-        builder.setRemaining(array.length() - 1 - END_INDEX);
+      else {
+        if (hiddenNulls) {
+          builder.setMessage(DebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+        }
+        if (!myForced && END_INDEX < array.length() - 1) {
+          builder.setRemaining(array.length() - 1 - END_INDEX);
+        }
       }
     }
-    builder.setChildren(children);
   }
 
   private static boolean elementIsNull(ArrayReference arrayReference, int index) {
@@ -185,6 +195,6 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   public boolean isApplicable(Type type) {
-    return (type instanceof ArrayType);
+    return type instanceof ArrayType;
   }
 }

@@ -292,9 +292,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
-    if (methodCall == null ||
+    if (methodCall == null || methodCall.getArgumentList() == null || !"()".equals(methodCall.getArgumentList().getText()) ||
         parametersCount == 0 ||
-        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
+        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
         Registry.is("java.completion.argument.live.template") ||
         !Registry.is("java.completion.argument.hints")) {
       return;

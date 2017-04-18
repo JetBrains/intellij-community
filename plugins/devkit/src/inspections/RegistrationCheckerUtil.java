@@ -39,6 +39,7 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -72,7 +73,13 @@ class RegistrationCheckerUtil {
   @Nullable
   private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, @Nullable Set<PsiClass> types, boolean includeActions) {
     final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (pluginXml == null) return null;
+    if (pluginXml == null) {
+      if (PsiUtil.isIdeaProject(module.getProject())) {
+        return Collections.emptySet();
+      }
+      return null;
+    }
+
     final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
     if (fileElement == null) return null;
 

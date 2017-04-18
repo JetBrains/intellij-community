@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,12 +110,6 @@ public abstract class DebuggerAction extends AnAction {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null ? (DebuggerManagerEx.getInstanceEx(project)).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }
-  }
-
-  @Nullable
-  public static DebuggerStateManager getContextManager(DataContext dataContext) {
-    DebuggerTreePanel panel = getPanel(dataContext);
-    return panel == null ? null : panel.getContextManager();
   }
 
   public static boolean isContextView(AnActionEvent e) {

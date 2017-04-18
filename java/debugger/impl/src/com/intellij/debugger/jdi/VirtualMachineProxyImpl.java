@@ -25,8 +25,8 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
@@ -57,7 +58,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
   @NotNull
-  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
+  private final Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
@@ -127,7 +128,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
-  public List<ReferenceType> classesByName(String s) {
+  public List<ReferenceType> classesByName(@NotNull String s) {
     String signature = JNITypeParserReflect.typeNameToSignature(s);
     if (signature != null) {
       if (myAllClassesByName == null) {
@@ -217,23 +218,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    */
   public Collection<ThreadReferenceProxyImpl> allThreads() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(myAllThreadsDirty) {
+    if (myAllThreadsDirty) {
       myAllThreadsDirty = false;
 
-      final List<ThreadReference> currentThreads = myVirtualMachine.allThreads();
-      final Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<>();
-
-      for (final ThreadReference threadReference : currentThreads) {
-        ThreadReferenceProxyImpl proxy = myAllThreads.get(threadReference);
-        if(proxy == null) {
-          proxy = new ThreadReferenceProxyImpl(this, threadReference);
-        }
-        result.put(threadReference, proxy);
+      for (ThreadReference threadReference : myVirtualMachine.allThreads()) {
+        getThreadReferenceProxy(threadReference); // add a proxy
       }
-      myAllThreads = result;
     }
 
-    return myAllThreads.values();
+    return new ArrayList<>(myAllThreads.values());
   }
 
   public void threadStarted(ThreadReference thread) {
@@ -364,13 +357,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.mirrorOf(s);
   }
 
-  public StringReference mirrorOfStringLiteral(String s, DebuggerUtilsImpl.SupplierThrowing<StringReference, EvaluateException> generator)
+  public StringReference mirrorOfStringLiteral(String s, ThrowableComputable<StringReference, EvaluateException> generator)
     throws EvaluateException {
     StringReference reference = myStringLiteralCache.get(s);
     if (reference != null && !reference.isCollected()) {
       return reference;
     }
-    reference = generator.get();
+    reference = generator.compute();
     myStringLiteralCache.put(s, reference);
     return reference;
   }

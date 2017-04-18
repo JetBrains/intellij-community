@@ -42,10 +42,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -79,6 +76,7 @@ import java.util.Map;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
+  private static final Key<Font> CUSTOM_FONT_KEY = Key.create("CustomLookupElementFont");
 
   private final LookupOffsets myOffsets;
   private final Project myProject;
@@ -123,8 +121,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myChangeGuard;
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
-  private final Map<LookupElement, Font> myCustomFonts = ContainerUtil.createConcurrentWeakMap(10, 0.75f, Runtime.getRuntime().availableProcessors(),
-    ContainerUtil.identityStrategy());
   private boolean myStartCompletionWhenNothingMatches;
   boolean myResizePending;
   private boolean myFinishing;
@@ -273,15 +269,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void updateLookupWidth(LookupElement item, LookupElementPresentation presentation) {
     final Font customFont = myCellRenderer.getFontAbleToDisplay(presentation);
     if (customFont != null) {
-      myCustomFonts.put(item, customFont);
+      item.putUserData(CUSTOM_FONT_KEY, customFont);
     }
     int maxWidth = myCellRenderer.updateMaximumWidth(presentation, item);
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
   }
 
   @Nullable
-  public Font getCustomFont(LookupElement item, boolean bold) {
-    Font font = myCustomFonts.get(item);
+  Font getCustomFont(LookupElement item, boolean bold) {
+    Font font = item.getUserData(CUSTOM_FONT_KEY);
     return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
 

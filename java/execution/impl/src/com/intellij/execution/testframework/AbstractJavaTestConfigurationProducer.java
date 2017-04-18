@@ -293,7 +293,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       return ClassUtil.getJVMClassName(containingClass) + "," + getMethodPresentation((PsiMember)psiMember);
     }
     else if (psiMember instanceof PsiPackage) {
-      return ((PsiPackage)psiMember).getQualifiedName();
+      return ((PsiPackage)psiMember).getQualifiedName() + ".*";
     }
     assert false;
     return null;

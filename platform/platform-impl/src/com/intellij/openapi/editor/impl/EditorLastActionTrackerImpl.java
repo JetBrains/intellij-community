@@ -19,7 +19,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorLastActionTracker;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EditorLastActionTrackerImpl extends EditorMouseAdapter
-  implements ApplicationComponentAdapter, AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker {
+  implements AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker, ApplicationComponent {
   private final ActionManager myActionManager;
   private final EditorEventMulticaster myEditorEventMulticaster;
 

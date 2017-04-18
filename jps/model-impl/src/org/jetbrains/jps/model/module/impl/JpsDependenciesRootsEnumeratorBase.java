@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.Collection;
@@ -49,8 +48,12 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
 
   @Override
   public Collection<File> getRoots() {
-    final Set<File> files = new LinkedHashSet<>();
-    processUrls(url -> files.add(JpsPathUtil.urlToFile(url)));
+    Set<File> files = new LinkedHashSet<>();
+    processUrls(url -> {
+      if (!JpsPathUtil.isJrtUrl(url)) {
+        files.add(JpsPathUtil.urlToFile(url));
+      }
+    });
     return files;
   }
 

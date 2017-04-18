@@ -49,7 +49,9 @@ import java.util.List;
 
 public class HgCommandExecutor {
   protected static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
-  private static final List<String> DEFAULT_OPTIONS = Arrays.asList("--config", "ui.merge=internal:merge");
+
+  // Other parts of the plugin count on the availability of the MQ extension, so make sure it is enabled
+  private static final List<String> DEFAULT_OPTIONS = Arrays.asList("--config", "extensions.mq=", "--config", "ui.merge=internal:merge");
 
   protected final Project myProject;
   protected final HgVcs myVcs;
@@ -95,15 +97,14 @@ public class HgCommandExecutor {
     myOutputAlwaysSuppressed = outputAlwaysSuppressed;
   }
 
-  public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
+  public void execute(@Nullable final VirtualFile repo,
+                      @NotNull final String operation,
+                      @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    HgUtil.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
-        if (handler != null) {
-          handler.process(result);
-        }
+    HgUtil.executeOnPooledThread(() -> {
+      HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
+      if (handler != null) {
+        handler.process(result);
       }
     }, myProject);
   }
@@ -111,10 +112,17 @@ public class HgCommandExecutor {
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
                                                 @NotNull final String operation,
                                                 @Nullable final List<String> arguments) {
-    HgCommandResult result = executeInCurrentThreadAndLog(repo, operation, arguments);
+    return executeInCurrentThread(repo, operation, arguments, false);
+  }
+
+  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
+                                                @NotNull final String operation,
+                                                @Nullable final List<String> arguments,
+                                                boolean ignoreDefaultOptions) {
+    HgCommandResult result = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions);
     if (HgErrorUtil.isUnknownEncodingError(result)) {
       setCharset(Charset.forName("utf8"));
-      result = executeInCurrentThreadAndLog(repo, operation, arguments);
+      result = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions);
     }
     return result;
   }
@@ -122,10 +130,11 @@ public class HgCommandExecutor {
   @Nullable
   private HgCommandResult executeInCurrentThreadAndLog(@Nullable final VirtualFile repo,
                                                        @NotNull final String operation,
-                                                       @Nullable final List<String> arguments) {
+                                                       @Nullable final List<String> arguments,
+                                                       boolean ignoreDefaultOptions) {
     if (myProject == null || myProject.isDisposed() || myVcs == null) return null;
 
-    ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments);
+    ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments, ignoreDefaultOptions);
     try {
       long startTime = System.currentTimeMillis();
       LOG.debug(String.format("hg %s started", operation));
@@ -153,7 +162,10 @@ public class HgCommandExecutor {
   }
 
   @NotNull
-  private ShellCommand createShellCommandWithArgs(@Nullable VirtualFile repo, @NotNull String operation, @Nullable List<String> arguments) {
+  private ShellCommand createShellCommandWithArgs(@Nullable VirtualFile repo,
+                                                  @NotNull String operation,
+                                                  @Nullable List<String> arguments,
+                                                  boolean ignoreDefaultOptions) {
 
     logCommand(operation, arguments);
 
@@ -164,11 +176,9 @@ public class HgCommandExecutor {
       cmdLine.add(repo.getPath());
     }
 
-    // Other parts of the plugin count on the availability of the MQ extension, so make sure it is enabled
-    cmdLine.add("--config");
-    cmdLine.add("extensions.mq=");
-
-    cmdLine.addAll(DEFAULT_OPTIONS);
+    if (!ignoreDefaultOptions) {
+      cmdLine.addAll(DEFAULT_OPTIONS);
+    }
     cmdLine.add(operation);
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);

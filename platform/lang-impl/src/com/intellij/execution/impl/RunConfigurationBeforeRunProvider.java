@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   public RunConfigurableBeforeRunTask createTask(RunConfiguration runConfiguration) {
     if (runConfiguration.getProject().isInitialized()) {
       Collection<RunnerAndConfigurationSettings> configurations =
-        RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getSortedConfigurations();
+        RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getAllSettings();
       if (configurations.isEmpty()
           || (configurations.size() == 1 && configurations.iterator().next().getConfiguration() == runConfiguration)) {
         return null;
@@ -144,7 +144,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return Collections.emptyList();
     }
 
-    List<RunnerAndConfigurationSettings> configurations = new ArrayList<>(RunManagerImpl.getInstanceImpl(project).getSortedConfigurations());
+    List<RunnerAndConfigurationSettings> configurations = new ArrayList<>(RunManagerImpl.getInstanceImpl(project).getAllSettings());
     String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
     for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
       RunnerAndConfigurationSettings settings = iterator.next();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -123,12 +123,7 @@ public class ValueHint extends AbstractValueHint {
           try {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
 
-            final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-              @Override
-              public String compute() {
-                return myCurrentExpression.getText();
-              }
-            });
+            final String expressionText = ReadAction.compute(() -> myCurrentExpression.getText());
             final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText);
             final Value value = myValueToShow != null? myValueToShow : evaluator.evaluate(evaluationContext);
 
@@ -194,13 +189,7 @@ public class ValueHint extends AbstractValueHint {
                           @Override
                           public void threadAction() {
                             descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                            final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-                              @Override
-                              public String compute() {
-                                return myCurrentExpression.getText();
-                              }
-                            });
-
+                            final String expressionText = ReadAction.compute(() -> myCurrentExpression.getText());
                             createAndShowTree(expressionText, descriptor);
                           }
                         });

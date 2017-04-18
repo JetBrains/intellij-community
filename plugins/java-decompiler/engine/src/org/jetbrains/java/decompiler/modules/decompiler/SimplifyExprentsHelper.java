@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -854,6 +854,11 @@ public class SimplifyExprentsHelper {
                 return false;
               }
 
+              // avoid flattening to 'iff' if any of the branches is an 'iff' already
+              if (isIff(ifex.getValue()) || isIff(elseex.getValue())) {
+                return false;
+              }
+
               List<Exprent> data = new ArrayList<>();
               data.addAll(stif.getFirst().getExprents());
 
@@ -878,6 +883,10 @@ public class SimplifyExprentsHelper {
     }
 
     return false;
+  }
+
+  private static boolean isIff(Exprent exp) {
+    return exp.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent) exp).getFuncType() == FunctionExprent.FUNCTION_IIF;
   }
 
   static {

@@ -219,7 +219,9 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     myNameField.addDataChangedListener(this::update);
 
     myVisibilityPanel = createVisibilityPanel();
-    myVisibilityPanel.registerUpDownActionsFor(myNameField);
+    if (!myNameField.hasSuggestions()) {
+      myVisibilityPanel.registerUpDownActionsFor(myNameField);
+    }
     final JPanel visibilityAndReturnType = new JPanel(new BorderLayout(2, 0));
     if (!myTargetClass.isInterface()) {
       visibilityAndReturnType.add(myVisibilityPanel, BorderLayout.WEST);

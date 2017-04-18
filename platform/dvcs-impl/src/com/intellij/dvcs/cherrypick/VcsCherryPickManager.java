@@ -59,7 +59,7 @@ public class VcsCherryPickManager {
       public void consume(List<VcsFullCommitDetails> details) {
         ProgressManager.getInstance().run(new CherryPickingTask(myProject, ContainerUtil.reverse(details)));
       }
-    }, null);
+    });
   }
 
   public boolean isCherryPickAlreadyStartedFor(@NotNull List<CommitId> commits) {

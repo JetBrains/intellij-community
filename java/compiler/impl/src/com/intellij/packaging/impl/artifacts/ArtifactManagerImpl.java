@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -51,7 +52,8 @@ import java.util.*;
  * @author nik
  */
 @State(name = ArtifactManagerImpl.COMPONENT_NAME, storages = @Storage(value = "artifacts", stateSplitter = ArtifactManagerStateSplitter.class))
-public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState> {
+public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState>,
+                                                                    Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.ArtifactManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
   @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
@@ -261,7 +263,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     LocalFileSystem.getInstance().removeWatchedRoots(myWatchedOutputs.values());
   }
 
@@ -300,14 +302,6 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     for (LocalFileSystem.WatchRequest request : newRequests) {
       myWatchedOutputs.put(request.getRootPath(), request);
     }
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override

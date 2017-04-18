@@ -204,9 +204,10 @@ public class JdkBundle {
 
   private static Pair<Pair<String, Boolean>, Pair<Version, Integer>> getJDKNameArchVersionAndUpdate(File jvm, String homeSubPath) {
     GeneralCommandLine commandLine = new GeneralCommandLine().withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);
-    File jvmPath = new File(jvm, homeSubPath + File.separator + "jre" + File.separator + "bin" + File.separator + "java");
+    String javaExecutable = "java" + (SystemInfo.isWindows ? ".exe" : "");
+    File jvmPath = new File(jvm, homeSubPath + File.separator + "jre" + File.separator + "bin" + File.separator + javaExecutable);
     if (!jvmPath.exists()) {
-      jvmPath = new File(jvm, homeSubPath + File.separator + "bin" + File.separator + "java");
+      jvmPath = new File(jvm, homeSubPath + File.separator + "bin" + File.separator + javaExecutable);
     }
     commandLine.setExePath(jvmPath.getAbsolutePath());
     commandLine.addParameter("-version");

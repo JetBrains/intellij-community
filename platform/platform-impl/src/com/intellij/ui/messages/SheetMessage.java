@@ -16,11 +16,12 @@
 package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -43,7 +44,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * Created by Denis Fokin
  */
-public class SheetMessage {
+public class SheetMessage implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
 
   private final JDialog myWindow;
@@ -54,18 +55,6 @@ public class SheetMessage {
 
   private Image staticImage;
   private int imageHeight;
-  private final boolean restoreFullScreenButton;
-  private final ComponentAdapter myPositionListener = new ComponentAdapter() {
-    @Override
-    public void componentResized(ComponentEvent event) {
-      setPositionRelativeToParent();
-    }
-
-    @Override
-    public void componentMoved(ComponentEvent event) {
-      setPositionRelativeToParent();
-    }
-  };
 
   public SheetMessage(final Window owner,
                       final String title,
@@ -85,21 +74,36 @@ public class SheetMessage {
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
-    myWindow.addWindowListener(new WindowAdapter() {
+    WindowAdapter windowListener = new WindowAdapter() {
       @Override
       public void windowActivated(@NotNull WindowEvent e) {
         super.windowActivated(e);
       }
-    });
+    };
+    myWindow.addWindowListener(windowListener);
+    Disposer.register(this, () -> myWindow.removeWindowListener(windowListener));
 
     myParent = owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
+    Disposer.register(this, myController);
 
     imageHeight = 0;
-    myParent.addComponentListener(myPositionListener);
+    ComponentAdapter componentAdapter = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent event) {
+        setPositionRelativeToParent();
+      }
+
+      @Override
+      public void componentMoved(ComponentEvent event) {
+        setPositionRelativeToParent();
+      }
+    };
+    myParent.addComponentListener(componentAdapter);
+    Disposer.register(this, () -> myParent.removeComponentListener(componentAdapter));
     myWindow.setFocusable(true);
     myWindow.setFocusableWindowState(true);
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
@@ -107,23 +111,25 @@ public class SheetMessage {
 
       setWindowOpacity(0.0f);
 
-      myWindow.addComponentListener(new ComponentAdapter() {
+      ComponentAdapter componentListener = new ComponentAdapter() {
         @Override
         public void componentShown(@NotNull ComponentEvent e) {
           super.componentShown(e);
           setWindowOpacity(1.0f);
           myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
         }
-      });
+      };
+      myWindow.addComponentListener(componentListener);
+      Disposer.register(this, () -> myWindow.removeComponentListener(componentListener));
     } else {
       myWindow.setModal(true);
       myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
       setPositionRelativeToParent();
     }
     startAnimation(true);
-    restoreFullScreenButton = couldBeInFullScreen();
-    if (restoreFullScreenButton) {
+    if (couldBeInFullScreen()) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
+      Disposer.register(this, () -> FullScreenUtilities.setWindowCanFullScreen(myParent, true));
     }
 
     LaterInvocator.enterModal(myWindow);
@@ -133,7 +139,7 @@ public class SheetMessage {
     Component focusCandidate = beforeShowFocusOwner.get();
 
     if (focusCandidate == null) {
-      focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
+      focusCandidate = getGlobalInstance().getLastFocusedFor(getGlobalInstance().getLastFocusedFrame());
     }
 
     final Component finalFocusCandidate = focusCandidate;
@@ -141,10 +147,14 @@ public class SheetMessage {
     // focusCandidate is null if a welcome screen is closed and ide frame is not opened.
     // this is ok. We set focus correctly on our frame activation.
     if (focusCandidate != null) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(finalFocusCandidate, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(finalFocusCandidate, true));
     }
+  }
+
+  @Override
+  public void dispose() {
+    DialogWrapper.cleanupRootPane(myWindow.getRootPane());
+    myWindow.dispose();
   }
 
   private static void maximizeIfNeeded(final Window owner) {
@@ -183,7 +193,7 @@ public class SheetMessage {
     return myController.getResult();
   }
 
-  void startAnimation (final boolean enlarge) {
+  void startAnimation(final boolean enlarge) {
     staticImage = myController.getStaticImage();
     JPanel staticPanel = new JPanel() {
       @Override
@@ -234,20 +244,14 @@ public class SheetMessage {
 
           IJSwingUtilities.moveMousePointerOn(myWindow.getRootPane().getDefaultButton());
           myController.requestFocus();
-        } else {
-          if (restoreFullScreenButton) {
-            FullScreenUtilities.setWindowCanFullScreen(myParent, true);
-          }
-          myParent.removeComponentListener(myPositionListener);
-          myController.dispose();
-          myWindow.dispose();
-          DialogWrapper.cleanupRootPane(myWindow.getRootPane());
+        } 
+        else {
+          Disposer.dispose(SheetMessage.this);
         }
       }
     };
-
+    Disposer.register(this, myAnimator);
     myAnimator.resume();
-
   }
 
   private void setPositionRelativeToParent () {

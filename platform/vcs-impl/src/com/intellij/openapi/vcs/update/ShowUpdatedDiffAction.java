@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -146,21 +145,21 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     }
 
     private class MyDiffRequestProducer implements DiffRequestProducer {
-      @NotNull private final VirtualFilePointer myFilePointer;
+      @NotNull private final String myName;
       @NotNull private final FileStatus myFileStatus;
       @NotNull private final FilePath myFilePath;
 
       public MyDiffRequestProducer(@NotNull VirtualFilePointer filePointer, @NotNull FileStatus fileStatus) {
-        myFilePointer = filePointer;
+        myName = filePointer.getPresentableUrl();
         myFileStatus = fileStatus;
 
-        myFilePath = VcsUtil.getFilePath(myFilePointer.getPresentableUrl(), false);
+        myFilePath = VcsUtil.getFilePath(filePointer.getPresentableUrl(), false);
       }
 
       @NotNull
       @Override
       public String getName() {
-        return myFilePointer.getUrl();
+        return myName;
       }
 
       @NotNull
@@ -187,7 +186,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
             content1 = contentFactory.createEmpty();
           }
           else {
-            byte[] bytes1 = loadContent(myFilePointer, myBefore);
+            byte[] bytes1 = loadContent(myFilePath, myBefore);
             content1 = contentFactory.createFromBytes(myProject, bytes1, myFilePath);
           }
 
@@ -195,7 +194,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
             content2 = contentFactory.createEmpty();
           }
           else {
-            byte[] bytes2 = loadContent(myFilePointer, myAfter);
+            byte[] bytes2 = loadContent(myFilePath, myAfter);
             content2 = contentFactory.createFromBytes(myProject, bytes2, myFilePath);
           }
 
@@ -209,9 +208,8 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static byte[] loadContent(@NotNull VirtualFilePointer filePointer, @NotNull Label label) throws DiffRequestProducerException {
-      String path = filePointer.getPresentableUrl();
-      ByteContent byteContent = label.getByteContent(FileUtil.toSystemIndependentName(path));
+    private static byte[] loadContent(@NotNull FilePath path, @NotNull Label label) throws DiffRequestProducerException {
+      ByteContent byteContent = label.getByteContent(path.getPath());
 
       if (byteContent == null || byteContent.isDirectory() || byteContent.getBytes() == null) {
         throw new DiffRequestProducerException("Can't load content");

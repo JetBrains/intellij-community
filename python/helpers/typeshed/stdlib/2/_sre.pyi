@@ -18,7 +18,7 @@ class SRE_Match(object):
     @overload
     def group(self, group: int = ...) -> Optional[str]: ...
     def groupdict(self) -> Dict[int, Optional[str]]: ...
-    def groups(self) -> Tuple[Optional[str]]: ...
+    def groups(self) -> Tuple[Optional[str], ...]: ...
     def span(self) -> Tuple[int, int]:
         raise IndexError()
 
@@ -31,7 +31,7 @@ class SRE_Pattern(object):
     pattern = ...  # type: str
     flags = ...  # type: int
     groups = ...  # type: int
-    groupindex = ...  # type: Mapping[int, int]
+    groupindex = ...  # type: Mapping[str, int]
     indexgroup = ...  # type: Sequence[int]
     def findall(self, source: str, pos: int = ..., endpos: int = ...) -> List[Union[tuple, str]]: ...
     def finditer(self, source: str, pos: int = ..., endpos: int = ...) -> Iterable[Union[tuple, str]]: ...
@@ -44,7 +44,7 @@ class SRE_Pattern(object):
 
 def compile(pattern: str, flags: int, code: List[int],
             groups: int = ...,
-            groupindex: Mapping[int, int] = ...,
+            groupindex: Mapping[str, int] = ...,
             indexgroup: Sequence[int] = ...) -> SRE_Pattern:
     raise OverflowError()
 

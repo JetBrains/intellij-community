@@ -6,7 +6,8 @@ import com.intellij.ide.plugins.PluginManagerCore;
 @SuppressWarnings("UnusedDeclaration")
 public class PyCharmEduConfigImportSettings extends ConfigImportSettings {
   public PyCharmEduConfigImportSettings() {
-    PluginManagerCore.disablePlugin("org.jetbrains.plugins.coursecreator");
+    PluginManagerCore.disablePlugin("com.jetbrains.edu.coursecreator");
+    PluginManagerCore.disablePlugin("com.jetbrains.edu.coursecreator.python");
   }
 
 }

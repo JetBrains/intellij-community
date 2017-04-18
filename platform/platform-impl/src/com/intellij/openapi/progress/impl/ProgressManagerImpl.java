@@ -19,15 +19,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
+import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +34,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
-  private final Set<PotemkinProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
+  private final Set<PingProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
 
   @Override
   public void setCancelButtonText(String cancelButtonText) {
@@ -59,8 +56,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
-    boolean edtProgress = progress instanceof PotemkinProgress && ApplicationManager.getApplication().isDispatchThread();
-    if (edtProgress) myEdtProgresses.add((PotemkinProgress)progress);
+    boolean edtProgress = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread();
+    if (edtProgress) myEdtProgresses.add((PingProgress)progress);
 
     try {
       super.executeProcessUnderProgress(process, progress);
@@ -184,9 +181,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     boolean hasEdtProgresses = !myEdtProgresses.isEmpty();
     if (shouldSleep && hasEdtProgresses) {
       //noinspection NonShortCircuitBooleanExpression
-      return () -> pingProgresses() | sleepIfNeeded();
+      return () -> pingProgresses() | sleepIfNeededToGivePriorityToAnotherThread();
     }
-    if (shouldSleep) return ProgressManagerImpl::sleepIfNeeded;
+    if (shouldSleep) return ProgressManagerImpl::sleepIfNeededToGivePriorityToAnotherThread;
     if (hasEdtProgresses) return this::pingProgresses;
     return null;
   }
@@ -195,16 +192,16 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     if (!ApplicationManager.getApplication().isDispatchThread()) return false;
 
     boolean hasProgresses = false;
-    for (PotemkinProgress progress : myEdtProgresses) {
+    for (PingProgress progress : myEdtProgresses) {
       hasProgresses = true;
       progress.interact();
     }
     return hasProgresses;
   }
 
-  private static boolean sleepIfNeeded() {
+  private static boolean sleepIfNeededToGivePriorityToAnotherThread() {
     if (HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
-      TimeoutUtil.sleep(1);
+      LockSupport.parkNanos(1_000_000);
       return true;
     }
     return false;

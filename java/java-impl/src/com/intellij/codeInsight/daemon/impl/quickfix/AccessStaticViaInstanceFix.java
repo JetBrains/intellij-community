@@ -96,7 +96,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         try {
           PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
           PsiElement qualifiedWithClassName = myExpression.copy();
-          if (myExpression.getTypeParameters().length == 0) {
+          if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
             newQualifier.delete();
             if (myExpression.resolve() != myMember) {
               myExpression.replace(qualifiedWithClassName);

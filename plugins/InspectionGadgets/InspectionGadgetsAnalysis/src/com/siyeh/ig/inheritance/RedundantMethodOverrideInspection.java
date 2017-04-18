@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 Bas Leijdekkers
+ * Copyright 2005-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,12 +125,12 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
 
       @Override
-      protected Decision referenceExpressionsAreEquivalentDecision(PsiReferenceExpression referenceExpression1,
-                                                                   PsiReferenceExpression referenceExpression2) {
+      protected Match referenceExpressionsMatch(PsiReferenceExpression referenceExpression1,
+                                                                PsiReferenceExpression referenceExpression2) {
         if (areSameParameters(referenceExpression1, referenceExpression2)) {
-          return EXACTLY_MATCHES;
+          return EXACT_MATCH;
         }
-        return super.referenceExpressionsAreEquivalentDecision(referenceExpression1, referenceExpression2);
+        return super.referenceExpressionsMatch(referenceExpression1, referenceExpression2);
       }
 
       private boolean areSameParameters(PsiReferenceExpression referenceExpression1, PsiReferenceExpression referenceExpression2) {

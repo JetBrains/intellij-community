@@ -18,6 +18,13 @@ public class TestIndex {
     e.getContainingFile();
     e.getContainingFile();
     e.getContainingFile();
+    e.getContainingFile();
+    e.getContainingFile();
+    e.getContainingFile();
+    e.getContainingFile();
+    e.getContainingFile();
+    e.getContainingFile();
+    e.getContainingFile();
   }
 
   void m2() {

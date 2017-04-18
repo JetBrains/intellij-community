@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
@@ -192,7 +191,7 @@ public class RequestHint {
       if (myMethodFilter != null &&
           frameProxy != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
-          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location()) &&
+          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location(), frameProxy::thisObject) &&
           !isTheSameFrame(context)
         ) {
         myTargetMethodMatched = true;
@@ -202,13 +201,11 @@ public class RequestHint {
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
         SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
         if (locationPosition != null) {
-          Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-            public Integer compute() {
-              if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
-                return isOnTheSameLine(locationPosition) ? myDepth : STOP;
-              }
-              return null;
+          Integer resultDepth = ReadAction.compute(() -> {
+            if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
+              return isOnTheSameLine(locationPosition) ? myDepth : STOP;
             }
+            return null;
           });
           if (resultDepth != null) {
             return resultDepth.intValue();
@@ -231,11 +228,9 @@ public class RequestHint {
 
       if (!myIgnoreFilters) {
         if(settings.SKIP_GETTERS) {
-          boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
-            public Boolean compute() {
-              PsiElement contextElement = ContextUtil.getContextElement(context);
-              return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
-            }
+          boolean isGetter = ReadAction.compute(() -> {
+            PsiElement contextElement = ContextUtil.getContextElement(context);
+            return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
           }).booleanValue();
 
           if(isGetter) {

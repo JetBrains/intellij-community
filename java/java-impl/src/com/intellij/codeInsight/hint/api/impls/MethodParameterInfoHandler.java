@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,23 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public PsiExpressionList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
-    return findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    if (expressionList == null) return null;
+    Object[] candidates = context.getObjectsToView();
+    if (candidates == null || candidates.length == 0) return null;
+    String originalMethodName = ((PsiMethod)((CandidateInfo)candidates[0]).getElement()).getName();
+    PsiQualifiedReference currentMethodReference = null;
+    PsiElement parent = expressionList.getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
+    }
+    else if (parent instanceof PsiNewExpression) {
+      currentMethodReference = ((PsiNewExpression)parent).getClassReference();
+    }
+    else if (parent instanceof PsiAnonymousClass) {
+      currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
+    }
+    return (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) ? expressionList : null;
   }
 
   @Override

@@ -143,7 +143,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   final PsiType[] argTypes = signature.getParameterTypes();
                   boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, qualifierResolveResult, reference);
 
-                  return MethodReferenceConflictResolver.isApplicableByFirstSearch(this, argTypes, hasReceiver, reference, interfaceMethod.isVarArgs()) != null;
+                  return MethodReferenceConflictResolver.isApplicableByFirstSearch(this, argTypes, hasReceiver, reference, interfaceMethod.isVarArgs(), interfaceMethod) != null;
                 }
               };
             }
@@ -192,8 +192,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                                                PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                PsiMethod interfaceMethod,
                                                MethodSignature signature) {
-    return new MethodReferenceConflictResolver(referenceExpression, qualifierResolveResult, signature,
-                                               interfaceMethod != null && interfaceMethod.isVarArgs());
+    return new MethodReferenceConflictResolver(referenceExpression, qualifierResolveResult, signature, interfaceMethod);
   }
 
   private static PsiClassType composeReturnType(PsiClass containingClass, PsiSubstitutor substitutor) {
@@ -203,18 +202,20 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
   private static class MethodReferenceConflictResolver extends JavaMethodsConflictResolver {
     private final MethodSignature mySignature;
+    private final PsiMethod myInterfaceMethod;
     private final PsiMethodReferenceExpressionImpl myReferenceExpression;
     private final PsiMethodReferenceUtil.QualifierResolveResult myQualifierResolveResult;
     private final boolean myFunctionalMethodVarArgs;
 
     private MethodReferenceConflictResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                             PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
-                                            @Nullable MethodSignature signature, boolean varArgs) {
+                                            @Nullable MethodSignature signature, PsiMethod interfaceMethod) {
       super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression));
       myReferenceExpression = referenceExpression;
       myQualifierResolveResult = qualifierResolveResult;
-      myFunctionalMethodVarArgs = varArgs;
+      myFunctionalMethodVarArgs =  interfaceMethod != null && interfaceMethod.isVarArgs();
       mySignature = signature;
+      myInterfaceMethod = interfaceMethod;
     }
 
     @Override
@@ -244,7 +245,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       for (CandidateInfo conflict : conflicts) {
         if (!(conflict instanceof MethodCandidateInfo)) continue;
-        final Boolean applicableByFirstSearch = isApplicableByFirstSearch(conflict, argTypes, hasReceiver, myReferenceExpression, myFunctionalMethodVarArgs);
+        final Boolean applicableByFirstSearch = isApplicableByFirstSearch(conflict, argTypes, hasReceiver, myReferenceExpression, myFunctionalMethodVarArgs, myInterfaceMethod);
         if (applicableByFirstSearch != null) {
           (applicableByFirstSearch ? firstCandidates : secondCandidates).add(conflict);
         }
@@ -286,7 +287,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                                                      PsiType[] functionalInterfaceParamTypes,
                                                      boolean hasReceiver,
                                                      PsiMethodReferenceExpression referenceExpression,
-                                                     boolean functionalMethodVarArgs) {
+                                                     boolean functionalMethodVarArgs,
+                                                     PsiMethod interfaceMethod) {
 
       final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
@@ -299,13 +301,13 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
 
       if ((varargs || functionalInterfaceParamTypes.length == parameterTypes.length) &&
-          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, varargs, referenceExpression, conflict, 0)) {
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, referenceExpression, conflict, 0)) {
         return true;
       }
 
       if (hasReceiver &&
           (varargs || functionalInterfaceParamTypes.length == parameterTypes.length + 1) &&
-          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, varargs, referenceExpression, conflict, 1)) {
+          isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, varargs, referenceExpression, conflict, 1)) {
         return false;
       }
       return null;
@@ -313,13 +315,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
     private static boolean isCorrectAssignment(PsiType[] parameterTypes,
                                                PsiType[] functionalInterfaceParamTypes,
+                                               PsiMethod interfaceMethod,
                                                boolean varargs,
                                                PsiMethodReferenceExpression referenceExpression,
                                                CandidateInfo conflict,
                                                int offset) {
       final int min = Math.min(parameterTypes.length, functionalInterfaceParamTypes.length - offset);
       for (int i = 0; i < min; i++) {
-        final PsiType argType = PsiUtil.captureToplevelWildcards(functionalInterfaceParamTypes[i + offset], referenceExpression);
+        final PsiType argType = PsiUtil.captureToplevelWildcards(functionalInterfaceParamTypes[i + offset], interfaceMethod.getParameterList().getParameters()[i]);
         final PsiType parameterType = parameterTypes[i];
         if (varargs && i == parameterTypes.length - 1) {
           if (!TypeConversionUtil.isAssignable(parameterType, argType) &&

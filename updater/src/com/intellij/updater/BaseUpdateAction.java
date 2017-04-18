@@ -103,10 +103,10 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   public ValidationResult validate(File toDir) throws IOException {
     File fromFile = getSource(toDir);
-    ValidationResult result = doValidateAccess(fromFile, ValidationResult.Action.UPDATE);
+    ValidationResult result = doValidateAccess(fromFile, ValidationResult.Action.UPDATE, true);
     if (result != null) return result;
     if (!mySource.isEmpty()) {
-      result = doValidateAccess(getFile(toDir), ValidationResult.Action.UPDATE);
+      result = doValidateAccess(getFile(toDir), ValidationResult.Action.UPDATE, true);
       if (result != null) return result;
     }
     return doValidateNotChanged(fromFile, ValidationResult.Kind.ERROR, ValidationResult.Action.UPDATE);

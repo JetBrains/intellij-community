@@ -84,7 +84,7 @@ public final class GitBranchWorker {
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       myGit.createNewTag(repository, name, null, reference);
-      repository.getRepositoryFiles().refresh(false);
+      repository.getRepositoryFiles().refresh();
     }
   }
 

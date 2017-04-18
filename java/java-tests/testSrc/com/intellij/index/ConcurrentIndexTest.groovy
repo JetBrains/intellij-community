@@ -48,6 +48,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test concurrent switching with checkCanceled"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
+    int halfN = N / 2
     for (iteration in 1..200) {
       def name = "Foo" + iteration
 //      if (iteration % 10 == 0) println "Finding $name"
@@ -57,7 +58,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       def futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
-      for(i in 1..N/2) {
+      for(i in 1.. halfN) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           sameStartCondition.countDown()
           sameStartCondition.await()
@@ -71,7 +72,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         })
       }
 
-      for(i in 1..N/2) {
+      for(i in 1..(N - halfN)) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           sameStartCondition.countDown()
           sameStartCondition.await()
@@ -95,6 +96,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test cancellable and non-cancellable progress"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
+    int halfN = N / 2
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -109,7 +111,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       def futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
-      for(j in 1..N/2) {
+      for(j in 1..halfN) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           new BombedProgressIndicator(10).runBombed {
             ApplicationManager.application.runReadAction {
@@ -121,7 +123,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         })
       }
 
-      for(j in 1..N/2) {
+      for(j in 1..(N - halfN)) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           ApplicationManager.application.runReadAction {
             sameStartCondition.countDown()
@@ -137,6 +139,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
     def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
+    int halfN = N / 2
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -153,7 +156,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       def futuresToWait = []
       def sameStartCondition = new CountDownLatch(N)
 
-      for(j in 1..N/2) {
+      for(j in 1..halfN) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           ApplicationManager.application.runReadAction {
             sameStartCondition.countDown()
@@ -163,7 +166,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         })
       }
 
-      for(j in 1..N/2) {
+      for(j in 1..(N - halfN)) {
         futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
           ApplicationManager.application.runReadAction {
             sameStartCondition.countDown()
@@ -180,7 +183,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   void "test concurrent light AST access during uncommitted document indexing"() {
     def clazz = myFixture.addClass('class Bar { void foo(Object o) {}}')
 
-    def text = " foo(null);";
+    def text = " foo(null);"
     for (i in 0..20) {
       text = "new Runnable() { void run() {\n " + text + "\n}}.run();"
     }

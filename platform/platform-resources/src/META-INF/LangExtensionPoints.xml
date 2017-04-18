@@ -902,6 +902,10 @@
 
     <extensionPoint name="sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
+
+    <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin"
+                    interface="org.jetbrains.uast.UastLanguagePlugin"/>
   </extensionPoints>
 </idea-plugin>
 

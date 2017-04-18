@@ -75,7 +75,7 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
-    if (!(exprList instanceof PsiExpressionList)) return;
+    if (!(exprList instanceof PsiExpressionList) || !(exprList.getParent() instanceof PsiCall)) return;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
     ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
@@ -88,13 +88,18 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     if (currentIndex < 0) return;
 
     PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
+    int currentMethodParameterCount = currentMethod.getParameterList().getParametersCount();
+    PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
+    int enteredCount = enteredExpressions.length;
+    if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1)) {
+      // when parameter list has been edited, but popup wasn't updated for some reason
+      return;
+    }
 
     Map<String, String> enteredParameters = exprList.getUserData(ENTERED_PARAMETERS);
     if (enteredParameters == null) {
       exprList.putUserData(ENTERED_PARAMETERS, enteredParameters = new HashMap<>());
     }
-    PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
-    assert enteredExpressions.length == 0 || enteredExpressions.length == currentMethod.getParameterList().getParametersCount();
     for (int i = 0; i < enteredExpressions.length; i++) {
       PsiExpression expression = enteredExpressions[i];
       String value = expression.getText().trim();

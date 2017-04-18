@@ -22,9 +22,8 @@ import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionUtil;
@@ -331,31 +330,28 @@ public class LocalVariablesUtil {
   private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
     SourcePosition position = ContextUtil.getSourcePosition(context);
     if (position != null) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
-        @Override
-        public MultiMap<Integer, String> compute() {
-          PsiElement element = position.getElementAt();
-          PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
-          if (method != null) {
-            MultiMap<Integer, String> res = new MultiMap<>();
-            int slot = Math.max(0, firstLocalsSlot - getParametersStackSize(method));
-            for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
-              res.putValue(slot, parameter.getName());
-              slot += getTypeSlotSize(parameter.getType());
-            }
-            PsiElement body = DebuggerUtilsEx.getBody(method);
-            if (body != null) {
-              try {
-                body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
-              }
-              catch (Exception e) {
-                LOG.info(e);
-              }
-            }
-            return res;
+      return ReadAction.compute(() -> {
+        PsiElement element = position.getElementAt();
+        PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
+        if (method != null) {
+          MultiMap<Integer, String> res = new MultiMap<>();
+          int slot = Math.max(0, firstLocalsSlot - getParametersStackSize(method));
+          for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
+            res.putValue(slot, parameter.getName());
+            slot += getTypeSlotSize(parameter.getType());
           }
-          return MultiMap.empty();
+          PsiElement body = DebuggerUtilsEx.getBody(method);
+          if (body != null) {
+            try {
+              body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
+            }
+            catch (Exception e) {
+              LOG.info(e);
+            }
+          }
+          return res;
         }
+        return MultiMap.empty();
       });
     }
     return MultiMap.empty();

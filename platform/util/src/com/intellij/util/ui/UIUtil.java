@@ -50,6 +50,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
@@ -61,13 +62,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -398,7 +399,7 @@ public class UIUtil {
     } catch (Throwable ignore) {
     }
     if (SystemInfo.isMac) {
-      return jreHiDPI = (SystemInfo.isAppleJvm ? false : true);
+      return jreHiDPI = (!SystemInfo.isAppleJvm);
     }
     return jreHiDPI;
   }
@@ -1227,7 +1228,7 @@ public class UIUtil {
   }
 
   public static Color getTextFieldBackground() {
-    return isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIManager.getColor("TextField.background");
+    return UIManager.getColor(isUnderGTKLookAndFeel() ? "EditorPane.background" : "TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -1680,15 +1681,15 @@ public class UIUtil {
       drawLine(g, i1, y, i1, y);
     }
 
-    for (i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2) {
+    for (i1 = y + (i1 != x1 + 1 ? 2 : 1); i1 <= y1; i1 += 2) {
       drawLine(g, x1, i1, x1, i1);
     }
 
-    for (i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2) {
+    for (i1 = x1 - (i1 != y1 + 1 ? 2 : 1); i1 >= x; i1 -= 2) {
       drawLine(g, i1, y1, i1, y1);
     }
 
-    for (i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2) {
+    for (i1 = y1 - (i1 != x - 1 ? 2 : 1); i1 >= y; i1 -= 2) {
       drawLine(g, x, i1, x, i1);
     }
   }
@@ -2515,25 +2516,65 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
-    Font font = getLabelFont();
-    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    final int size = font != null ? font.getSize() : JBUI.scale(11);
+    return new JBHtmlEditorKit(noGapsBetweenParagraphs);
+  }
 
-    String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
-    if (noGapsBetweenParagraphs) {
-      customCss += " p { margin-top: 0; }";
+  public static class JBHtmlEditorKit extends HTMLEditorKit {
+    private StyleSheet style;
+
+    public JBHtmlEditorKit() {
+      this(true);
     }
 
-    final StyleSheet style = new StyleSheet();
-    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
-    style.addRule(customCss);
+    public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
+      style = createStyleSheet();
+      if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+    }
 
-    return new HTMLEditorKit() {
-      @Override
-      public StyleSheet getStyleSheet() {
-        return style;
+    @Override
+    public StyleSheet getStyleSheet() {
+      return style;
+    }
+
+    public static StyleSheet createStyleSheet() {
+      StyleSheet style = new StyleSheet();
+      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+      style.addRule("code { font-size: 100%; }"); // small by Swing's default
+      style.addRule("small { font-size: small; }"); // x-small by Swing's default
+      return style;
+    }
+
+    @Override
+    public void install(final JEditorPane pane) {
+      super.install(pane);
+      if (pane != null) {
+        // JEditorPane.HONOR_DISPLAY_PROPERTIES must be set after HTMLEditorKit is completely installed
+        pane.addPropertyChangeListener("editorKit", new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent e) {
+            Font font = getLabelFont();
+            assert font instanceof FontUIResource;
+            if (SystemInfo.isWindows) {
+              font = new FontUIResource("Tahoma", font.getStyle(), font.getSize());
+            }
+            // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
+            // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
+            pane.setFont(font);
+
+            // let CSS font properties inherit from the pane's font
+            pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+            pane.removePropertyChangeListener(this);
+          }
+        });
       }
-    };
+    }
+  }
+  //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
+  public static Object htmlInjectionGuard(Object toRender) {
+    if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
+      toRender = "<html>" + StringUtil.escapeXml((String)toRender);
+    }
+    return toRender;
   }
 
   public static void removeScrollBorder(final Component c) {
@@ -3964,41 +4005,5 @@ public class UIUtil {
         source.removeKeyListener(keyAdapter);
       }
     });
-  }
-
-  /**
-   * Stroke for painting outer borders.
-   */
-  public static class OuterStroke implements Stroke {
-    private final BasicStroke stroke;
-
-    public OuterStroke(float width) {
-      stroke = new BasicStroke(width);
-    }
-
-    public Shape createStrokedShape(Shape s) {
-      float lw = stroke.getLineWidth();
-      float delta = lw / 2f;
-
-      if (s instanceof Rectangle2D) {
-        Rectangle2D rs = (Rectangle2D) s;
-        return stroke.createStrokedShape(
-          new Rectangle2D.Double(rs.getX() - delta,
-                                 rs.getY() - delta,
-                                 rs.getWidth() + lw,
-                                 rs.getHeight() + lw));
-      } else if (s instanceof RoundRectangle2D) {
-        RoundRectangle2D rrs = (RoundRectangle2D) s;
-        return stroke.createStrokedShape(
-          new RoundRectangle2D.Double(rrs.getX() - delta,
-                                      rrs.getY() - delta,
-                                      rrs.getWidth() + lw,
-                                      rrs.getHeight() + lw,
-                                      rrs.getArcWidth() + lw,
-                                      rrs.getArcHeight() + lw));
-      } else {
-        throw new UnsupportedOperationException("Shape is not supported");
-      }
-    }
   }
 }

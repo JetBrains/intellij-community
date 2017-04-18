@@ -1114,6 +1114,28 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(variants, "mod1", "mod2", "foo", "_bar");
   }
 
+  // PY-23150
+  public void testHeavyStarPropagation() {
+    doMultiFileTest();
+    assertSize(802, myFixture.getLookupElements());
+  }
+
+  // PY-22828
+  public void testNoImportedBuiltinNames() {
+    final List<String> suggested = doTestByText("T<caret>\n");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "TypeError");
+    assertDoesntContain(suggested, "TypeVar");
+  }
+
+  // PY-22828
+  public void testNoProtectedBuiltinNames() {
+    final List<String> suggested = doTestByText("_<caret>\n");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "__import__");
+    assertDoesntContain(suggested, "_T", "_KT");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

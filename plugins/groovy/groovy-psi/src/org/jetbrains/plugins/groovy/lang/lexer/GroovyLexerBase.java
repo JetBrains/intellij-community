@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.Stack;
 
+import static com.intellij.util.ArrayUtil.indexOf;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.KEYWORDS;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.LEFT_BRACES;
@@ -38,7 +39,6 @@ public abstract class GroovyLexerBase implements FlexLexer {
 
   public final Stack<Integer> stateStack = new Stack<>();
   private final Stack<IElementType> bracesStack = new Stack<>();
-  private IElementType lastToken = null;
 
   protected void yybeginstate(int... states) {
     for (int state : states) {
@@ -60,7 +60,6 @@ public abstract class GroovyLexerBase implements FlexLexer {
   protected void resetState() {
     stateStack.clear();
     bracesStack.clear();
-    lastToken = null;
   }
 
   protected IElementType storeToken(IElementType tokenType) {
@@ -81,12 +80,10 @@ public abstract class GroovyLexerBase implements FlexLexer {
         bracesStack.pop();
       }
     }
-    lastToken = tokenType;
+    if (indexOf(getDivisionStates(), yystate()) != -1 && DIVISION_IS_EXPECTED_AFTER.contains(tokenType)) {
+      yybeginstate(getDivisionExpectedState());
+    }
     return tokenType;
-  }
-
-  protected boolean isRegexExpected() {
-    return !DIVISION_IS_EXPECTED_AFTER.contains(lastToken);
   }
 
   protected boolean isWithinBraces() {
@@ -94,4 +91,8 @@ public abstract class GroovyLexerBase implements FlexLexer {
   }
 
   protected abstract int getInitialState();
+
+  protected abstract int[] getDivisionStates();
+
+  protected abstract int getDivisionExpectedState();
 }

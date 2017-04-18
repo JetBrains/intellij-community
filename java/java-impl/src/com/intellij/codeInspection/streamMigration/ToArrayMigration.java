@@ -30,8 +30,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Tagir Valeev
  */
 public class ToArrayMigration extends BaseStreamApiMigration {
-  protected ToArrayMigration() {
-    super("toArray");
+  protected ToArrayMigration(boolean shouldWarn) {
+    super(shouldWarn, "toArray");
   }
 
   @Override

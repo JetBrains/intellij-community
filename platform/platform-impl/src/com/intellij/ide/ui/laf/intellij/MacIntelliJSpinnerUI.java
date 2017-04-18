@@ -25,6 +25,8 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
+import java.awt.geom.Path2D;
+
 
 /**
  * @author Konstantin Bulenkov
@@ -42,21 +44,31 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     Container parent = c.getParent();
     if (c.isOpaque() && parent != null) {
       g.setColor(parent.getBackground());
-      g.fillRect(0,0,c.getWidth(),c.getHeight());
+      g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
 
     Insets i = c.getInsets();
-
     int x = c.getWidth() - DEFAULT_ICON.getIconWidth() - i.right;
-    Icon icon = MacIntelliJIconCache.getIcon("spinnerRight", false, false, c.isEnabled());
-    icon.paintIcon(c, g, x, i.top);
 
     if (c instanceof JSpinner) {
-      JComponent editor = ((JSpinner)c).getEditor();
-      Rectangle editorBounds = editor.getBounds();
-      g.setColor(UIManager.getColor("FormattedTextField.background"));
-      g.fillRect(i.left + JBUI.scale(1), i.top + JBUI.scale(1), x - JBUI.scale(1) - i.left, editorBounds.height + JBUI.scale(2));
+      Graphics2D g2 = (Graphics2D)g;
+      g2.setColor(UIManager.getColor("FormattedTextField.background"));
+
+      double arc = JBUI.scale(6);
+      Path2D rect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      rect.moveTo(x, i.top);
+      rect.lineTo(x, c.getHeight() - i.bottom);
+      rect.lineTo(i.left + arc, c.getHeight() - i.bottom);
+      rect.quadTo(i.left, c.getHeight() - i.bottom, i.left, c.getHeight() - i.bottom - arc);
+      rect.lineTo(i.left, i.top + arc);
+      rect.quadTo(i.left, i.top, i.left + arc, i.top);
+      rect.closePath();
+
+      g2.fill(rect);
     }
+
+    Icon icon = MacIntelliJIconCache.getIcon("spinnerRight", false, false, c.isEnabled());
+    icon.paintIcon(c, g, x, i.top);
   }
 
   @Override protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) {}

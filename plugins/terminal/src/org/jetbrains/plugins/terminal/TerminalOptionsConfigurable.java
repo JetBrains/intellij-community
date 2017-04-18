@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,7 @@ import javax.swing.*;
 /**
  * @author traff
  */
-public class TerminalOptionsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Disposable {
+public class TerminalOptionsConfigurable implements SearchableConfigurable, Disposable {
   public static final String TERMINAL_SETTINGS_HELP_REFERENCE = "reference.settings.terminal";
 
   private TerminalSettingsPanel myPanel;

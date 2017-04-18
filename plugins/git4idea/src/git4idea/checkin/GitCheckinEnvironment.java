@@ -21,6 +21,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -106,6 +107,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
+  private boolean myNextCommitSkipHook;
 
   public GitCheckinEnvironment(@NotNull Project project,
                                @NotNull final VcsDirtyScopeManager dirtyScopeManager,
@@ -258,10 +260,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
-      final List<GitRepository> preselectedRepositories = newArrayList(repositories);
-      GuiUtils.invokeLaterIfNeeded(() ->
-        new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
-        ModalityState.defaultModalityState());
+      ModalityState modality = ModalityState.defaultModalityState();
+      TransactionGuard.getInstance().assertWriteSafeContext(modality);
+
+      List<GitRepository> preselectedRepositories = newArrayList(repositories);
+      GuiUtils.invokeLaterIfNeeded(
+        () -> new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
+        modality);
     }
     return exceptions;
   }
@@ -478,6 +483,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     if (myNextCommitSignOff) {
       handler.addParameters("--signoff");
     }
+    if (myNextCommitSkipHook) {
+      handler.addParameters("--no-verify");
+    }
     handler.endOptions();
     handler.run();
   }
@@ -597,6 +605,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       else {
         amend = true;
       }
+      if (myNextCommitSkipHook) {
+        handler.addParameters("--no-verify");
+      }
       handler.addParameters("--only", "-F", message.getAbsolutePath());
       if (myNextCommitAuthor != null) {
         handler.addParameters("--author=" + myNextCommitAuthor);
@@ -694,6 +705,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAuthor = null;
     myNextCommitIsPushed = null;
     myNextCommitAuthorDate = null;
+    myNextCommitSkipHook = false;
   }
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
@@ -843,5 +855,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
     myNextCommitIsPushed = nextCommitIsPushed;
+  }
+
+  public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
+    myNextCommitSkipHook = skipHooksForNextCommit;
   }
 }

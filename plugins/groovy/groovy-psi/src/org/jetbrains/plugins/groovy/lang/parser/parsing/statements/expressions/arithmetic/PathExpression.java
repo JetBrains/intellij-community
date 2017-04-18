@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,14 +100,8 @@ public class PathExpression {
                                          @NotNull PsiBuilder.Marker marker,
                                          @NotNull GroovyParser parser,
                                          @NotNull Result result) {
-
-
     // Property reference
-    if (isQualificationDot(builder)) {
-      if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT)) {
-        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-      }
-      ParserUtils.getToken(builder, DOTS);
+    if (parseQualificationDot(builder)) {
       ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       TypeArguments.parseTypeArguments(builder, true);
       GroovyElementType res = namePartParse(builder, parser);
@@ -143,16 +137,20 @@ public class PathExpression {
     }
   }
 
+  private static boolean parseQualificationDot(@NotNull PsiBuilder builder) {
+    return ParserUtils.getToken(builder, DOTS) || ParserUtils.getToken(builder, GroovyTokenTypes.mNLS, DOTS);
+  }
+
   public static boolean isQualificationDotAhead(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker mark = builder.mark();
     builder.advanceLexer();
-    boolean result = isQualificationDot(builder);
+    boolean result = parseQualificationDot(builder);
     mark.rollbackTo();
     return result;
   }
 
   public static boolean isQualificationDot(@NotNull PsiBuilder builder) {
-    return DOTS.contains(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT);
+    return DOTS.contains(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, DOTS);
   }
 
   @NotNull
@@ -288,9 +286,16 @@ public class PathExpression {
    * @return
    */
   private static boolean isPathElementStart(@NotNull PsiBuilder builder) {
-    return (PATH_ELEMENT_START.contains(builder.getTokenType()) ||
-            ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT) ||
-            ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mLCURLY));
+    if (PATH_ELEMENT_START.contains(builder.getTokenType())) return true;
+    PsiBuilder.Marker marker = builder.mark();
+    try {
+      return ParserUtils.getToken(builder, GroovyTokenTypes.mNLS) && (
+        ParserUtils.getToken(builder, TokenSets.DOTS) ||
+        ParserUtils.getToken(builder, GroovyTokenTypes.mLCURLY)
+      );
+    }
+    finally {
+      marker.rollbackTo();
+    }
   }
-
 }

@@ -17,11 +17,10 @@ package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.action.HgLogSingleCommitAction;
 import org.zmlx.hg4idea.command.mq.HgQImportCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-public class HgQImportFromLogAction extends HgLogSingleCommitAction {
+public class HgQImportFromLogAction extends HgMqLogAction {
   @Override
   protected void actionPerformed(@NotNull HgRepository repository, @NotNull Hash commit) {
     String revisionHash = commit.asString();

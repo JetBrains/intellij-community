@@ -393,7 +393,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   private class MyDiffAction extends ToolbarDecorator.ElementActionButton implements DumbAware {
     MyDiffAction() {
-      super("View", "View commit contents", AllIcons.Actions.Diff);
+      super("View", "View commit contents", AllIcons.Actions.ListChanges);
       registerCustomShortcutSet(CommonShortcuts.getDiff(), myCommitsTable);
     }
 

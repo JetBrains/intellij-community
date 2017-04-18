@@ -374,4 +374,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
                                                   () -> EditorTestUtil.executeAction(editor, true, handler),
                                                   "", null, editor.getDocument());
   }
+
+  public void testCRPrintCR() throws Exception {
+    for (int i=0;i<25;i++) {
+      myConsole.print("\r"+i, ConsoleViewContentType.NORMAL_OUTPUT);
+      Thread.sleep(100);
+    }
+    myConsole.flushDeferredText();
+    myConsole.waitAllRequests();
+    assertEquals("24", myConsole.getText());
+  }
 }

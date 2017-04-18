@@ -1,0 +1,15 @@
+<html>
+<body>
+The inspection checks that the arguments provided to Method.invoke() and Constructor.newInstance()
+match the signature specified in Class.getMethod() and Class.getConstructor()
+<!-- tooltip end -->
+<p>Example:</p>
+<pre><code>
+  Method m = myObj.getClass().getMethod("myMethod", <b>int</b>.class);
+  <i>// the argument should be an <b>int</b> value</i>
+  m.invoke(myObj, "<b>abc</b>");
+</code></pre>
+
+<p><small>New in 2017.2</small></p>
+</body>
+</html>

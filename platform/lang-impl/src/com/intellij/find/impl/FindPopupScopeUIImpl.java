@@ -87,7 +87,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
-      final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+      //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
 
       {
@@ -99,7 +99,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
       @Override
       public boolean value(ScopeDescriptor descriptor) {
         final String display = descriptor.getDisplay();
-        return !projectFilesScopeName.equals(display) && !display.startsWith(moduleFilesScopeName);
+        return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
       }
     });
     myScopeCombo.setBrowseListener(new ScopeChooserCombo.BrowseListener() {

@@ -1,0 +1,7 @@
+      if (token.length() == 1 && DELIMITERS_SET.contains(token.charAt(0))) {
+        char delimiter = token.charAt(0);
+        if (delimiter == '\n') {
+          stringList.appendToLast(token);
+          stringList.flushLast();
+          continue;
+        }

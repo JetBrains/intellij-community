@@ -6,14 +6,14 @@ public class CastThatLosesPrecision
     {
     }
 
-    public void fooBar()
+    public void fooBar(long l, double d, float f)
     {
         byte b;
         int i;
         char ch;
-        long l = 0L;
-        double d = 0.0;
-        float f = 0.0f;
+
+
+
 
         i = (int) f;
         System.out.println("i = " + i);
@@ -38,11 +38,11 @@ public class CastThatLosesPrecision
         System.out.println("f = " + f);
     }
 
-    public void barFoo() {
+    public void barFoo(long l) {
         byte b;
         int i;
         char ch;
-        long l = 0L;
+
 
         i = (int) 0.0f;
         System.out.println("i = " + i);
@@ -77,5 +77,24 @@ public class CastThatLosesPrecision
     long temp = d != +0.0d ? (int) d : 0L;
     result = 31 * result + (int) (temp ^ temp >>> 32);
     return result;
+  }
+
+  void testNegativeOnly(long longNumberOfAgents) {
+    if (longNumberOfAgents > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Too many agents: " + longNumberOfAgents);
+    }
+    int intNumberOfAgents = (int)longNumberOfAgents;
+    System.out.println(intNumberOfAgents);
+  }
+
+  void testBoundsCheck(long longNumberOfAgents) {
+    if (longNumberOfAgents < 0) {
+      throw new IllegalArgumentException("Negative is not allowed");
+    }
+    if (longNumberOfAgents > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Too many agents: " + longNumberOfAgents);
+    }
+    int intNumberOfAgents = (int)longNumberOfAgents;
+    System.out.println(intNumberOfAgents);
   }
 }

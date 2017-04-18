@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -39,10 +38,10 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-19.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-19.0.jar");
-    moduleBuilder.addLibraryJars("guava-19.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-19.0.jar");
+    moduleBuilder.addLibraryJars("guava-21.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
+                                 "guava-21.0.jar");
+    moduleBuilder.addLibraryJars("guava-21.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
+                                 "guava-21.0.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
@@ -113,18 +112,9 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + "/test.java");
     myFixture.enableInspections(new StaticPseudoFunctionalStyleMethodInspection());
-    boolean isQuickFixFound = false;
-    for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof QuickFixWrapper) {
-        final LocalQuickFix fix = ((QuickFixWrapper)action).getFix();
-        if (fix instanceof StaticPseudoFunctionalStyleMethodInspection.ReplacePseudoLambdaWithLambda) {
-          myFixture.launchAction(action);
-          isQuickFixFound = true;
-          break;
-        }
-      }
-    }
-    assertTrue("Quick fix isn't found", isQuickFixFound);
+    IntentionAction action = myFixture.getAvailableIntention("Replace with Java Stream API pipeline");
+    assertNotNull("Quick fix isn't found", action);
+    myFixture.launchAction(action);
     myFixture.checkResultByFile(getTestName(true) + "/test_after.java");
   }
 }

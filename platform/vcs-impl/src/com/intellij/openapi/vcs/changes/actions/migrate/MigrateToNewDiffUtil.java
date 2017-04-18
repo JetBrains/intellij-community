@@ -1,9 +1,7 @@
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
-import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContentImpl;
 import com.intellij.diff.contents.EmptyContent;
@@ -13,7 +11,6 @@ import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.editor.Document;
@@ -34,16 +31,6 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public class MigrateToNewDiffUtil {
-  private static final Logger LOG = Logger.getInstance(MigrateToNewDiffUtil.class);
-
-  @NonNls public static final Object DO_NOT_TRY_MIGRATE = "doNotTryMigrate";
-
-  @NotNull
-  public static DiffRequestChain convertRequestChain(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
-    DiffRequest request = convertRequest(oldRequest);
-    return new SimpleDiffRequestChain(request);
-  }
-
   @NotNull
   public static DiffRequest convertRequest(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
     DiffRequest request = convertRequestFair(oldRequest);

@@ -335,9 +335,12 @@ def create_connection(address: Tuple[str, int],
                       source_address: Tuple[str, int] = ...) -> socket: ...
 
 # the 5th tuple item is an address
+# TODO the "Tuple[Any, ...]" should be "Union[Tuple[str, int], Tuple[str, int, int, int]]" but that triggers
+# https://github.com/python/mypy/issues/2509
 def getaddrinfo(
         host: Optional[str], port: Union[str, int, None], family: int = ...,
-        socktype: int = ..., proto: int = ..., flags: int = ...) -> List[Tuple[int, int, int, str, Union[Tuple[str, int], Tuple[str, int, int, int]]]]:
+        socktype: int = ..., proto: int = ...,
+        flags: int = ...) -> List[Tuple[int, int, int, str, Tuple[Any, ...]]]:
     ...
 
 def getfqdn(name: str = ...) -> str: ...

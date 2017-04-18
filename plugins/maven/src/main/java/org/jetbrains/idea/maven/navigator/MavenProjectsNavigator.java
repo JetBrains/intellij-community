@@ -20,12 +20,12 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -59,7 +59,8 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
+public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
+                                                                                   Disposable, ProjectComponent {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
@@ -191,7 +192,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myToolWindow = null;
     myProjectsManager = null;
   }
@@ -357,16 +358,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       r.run();
 
       if (shouldCreate) {
-        if (myState.treeState != null) {
-          TreeState treeState = new TreeState();
-          try {
-            treeState.readExternal(myState.treeState);
-            treeState.applyTo(myTree);
-          }
-          catch (InvalidDataException e) {
-            MavenLog.LOG.info(e);
-          }
-        }
+        TreeState.createFrom(myState.treeState).applyTo(myTree);
       }
     });
   }

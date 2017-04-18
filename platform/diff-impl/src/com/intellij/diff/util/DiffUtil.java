@@ -88,6 +88,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -109,8 +110,21 @@ import java.util.List;
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
+  public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUI.scale(2);
+
+  public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
+
+
+  @NotNull
+  private static List<Image> loadDiffFrameImages() {
+    return ContainerUtil.list(
+      ImageLoader.loadFromResource("/diff_frame32.png"),
+      ImageLoader.loadFromResource("/diff_frame64.png"),
+      ImageLoader.loadFromResource("/diff_frame128.png")
+    );
+  }
 
   //
   // Editor
@@ -235,6 +249,7 @@ public class DiffUtil {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
     if (DiffPsiFileSupport.isDiffFile(file)) return false;
+    if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
 
@@ -858,16 +873,7 @@ public class DiffUtil {
 
   @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
-    if (line1 == line2) {
-      int lineStartOffset = line1 < getLineCount(document) ? document.getLineStartOffset(line1) : document.getTextLength();
-      return new TextRange(lineStartOffset, lineStartOffset);
-    }
-    else {
-      int startOffset = document.getLineStartOffset(line1);
-      int endOffset = document.getLineEndOffset(line2 - 1);
-      if (includeNewline && endOffset < document.getTextLength()) endOffset++;
-      return new TextRange(startOffset, endOffset);
-    }
+    return getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
   }
 
   @NotNull
@@ -1205,6 +1211,7 @@ public class DiffUtil {
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && file.isValid() && file.isInLocalFileSystem()) {
+      if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
       // decompiled file can be writable, but Document with decompiled content is still read-only
       return !file.isWritable();
     }

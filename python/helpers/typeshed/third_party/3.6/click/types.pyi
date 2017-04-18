@@ -119,14 +119,14 @@ class File(ParamType):
         ...
 
 
-F = TypeVar('F')  # result of the function
-Func = Callable[[Optional[str]], F]
+_F = TypeVar('_F')  # result of the function
+_Func = Callable[[Optional[str]], _F]
 
 
 class FuncParamType(ParamType):
-    func: Func
+    func: _Func
 
-    def __init__(self, func: Func) -> None:
+    def __init__(self, func: _Func) -> None:
         ...
 
     def __call__(
@@ -134,7 +134,7 @@ class FuncParamType(ParamType):
         value: Optional[str],
         param: Parameter = None,
         ctx: Context = None,
-    ) -> F:
+    ) -> _F:
         ...
 
     def convert(
@@ -142,7 +142,7 @@ class FuncParamType(ParamType):
         value: str,
         param: Optional[Parameter],
         ctx: Optional[Context],
-    ) -> F:
+    ) -> _F:
         ...
 
 
@@ -171,7 +171,7 @@ class IntRange(IntParamType):
         ...
 
 
-PathType = TypeVar('PathType', str, bytes)
+_PathType = TypeVar('_PathType', str, bytes)
 
 
 class Path(ParamType):
@@ -184,11 +184,11 @@ class Path(ParamType):
         readable: bool = True,
         resolve_path: bool = False,
         allow_dash: bool = False,
-        path_type: PathType = None,
+        path_type: _PathType = None,
     ) -> None:
         ...
 
-    def coerce_path_result(self, rv: Union[str, bytes]) -> PathType:
+    def coerce_path_result(self, rv: Union[str, bytes]) -> _PathType:
         ...
 
     def __call__(
@@ -196,7 +196,7 @@ class Path(ParamType):
         value: Optional[str],
         param: Parameter = None,
         ctx: Context = None,
-    ) -> PathType:
+    ) -> _PathType:
         ...
 
     def convert(
@@ -204,7 +204,7 @@ class Path(ParamType):
         value: str,
         param: Optional[Parameter],
         ctx: Optional[Context],
-    ) -> PathType:
+    ) -> _PathType:
         ...
 
 class StringParamType(ParamType):

@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -136,13 +137,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     restoreEmptyStatus();
 
-    runOnPowerSaveChange(this::updateProgressIcon);
+    runOnPowerSaveChange(this::updateProgressIcon, this);
   }
 
-  private void runOnPowerSaveChange(@NotNull Runnable runnable) {
+  private void runOnPowerSaveChange(@NotNull Runnable runnable, Disposable parentDisposable) {
     synchronized (myOriginals) {
       if (!myDisposed) {
-        ApplicationManager.getApplication().getMessageBus().connect(this)
+        ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
           .subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
       }
     }
@@ -676,7 +677,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         }
       });
       Runnable updatePowerSaveStatus = () -> myProgress.setVisible(!PowerSaveMode.isEnabled());
-      runOnPowerSaveChange(updatePowerSaveStatus);
+      runOnPowerSaveChange(updatePowerSaveStatus, this);
       updatePowerSaveStatus.run();
     }
 

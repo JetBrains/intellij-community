@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.BatchSuppressManager;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -119,10 +116,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (tool.isTestEntryPoints()) return true;
     final PsiElement element = refElement.getElement();
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);
-    if (file != null) {
-      return !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
-    }
-    return false;
+    return file != null && !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
   }
 
   @Nullable
@@ -135,14 +129,13 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
     GlobalInspectionContextBase contextBase = (GlobalInspectionContextBase)myRefManager.getContext();
-    InspectionProfileImpl profile = contextBase.getCurrentProfile();
-    String singleTool = profile.getSingleTool();
     Tools tools = contextBase.getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
     InspectionToolWrapper toolWrapper;
     if (tools != null) {
       toolWrapper = tools.getEnabledTool(file);
     }
     else  {
+      String singleTool = contextBase.getCurrentProfile().getSingleTool();
       if (singleTool != null && !UnusedDeclarationInspectionBase.SHORT_NAME.equals(singleTool)) {
         InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myRefManager.getProject()).getCurrentProfile();
         tools = currentProfile.getTools(UnusedDeclarationInspectionBase.SHORT_NAME, myRefManager.getProject());
@@ -251,7 +244,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (elem instanceof PsiClass) {
       return new RefClassImpl((PsiClass)elem, myRefManager);
     }
-    else if (elem instanceof PsiMethod) {
+    if (elem instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)elem;
       final RefElement ref = myRefManager.getReference(method.getContainingClass(), true);
       if (ref instanceof RefClass) {
@@ -269,7 +262,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
       return new RefJavaFileImpl((PsiJavaFile)elem, myRefManager);
     }
     else if (elem instanceof PsiJavaModule) {
-      return new RefJavaModuleImpl(((PsiJavaModule)elem), myRefManager);
+      return new RefJavaModuleImpl((PsiJavaModule)elem, myRefManager);
     }
     return null;
   }
@@ -283,16 +276,16 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (METHOD.equals(type)) {
       return RefMethodImpl.methodFromExternalName(myRefManager, fqName);
     }
-    else if (CLASS.equals(type)) {
+    if (CLASS.equals(type)) {
       return RefClassImpl.classFromExternalName(myRefManager, fqName);
     }
-    else if (FIELD.equals(type)) {
+    if (FIELD.equals(type)) {
       return RefFieldImpl.fieldFromExternalName(myRefManager, fqName);
     }
-    else if (PARAMETER.equals(type)) {
+    if (PARAMETER.equals(type)) {
       return RefParameterImpl.parameterFromExternalName(myRefManager, fqName);
     }
-    else if (PACKAGE.equals(type)) {
+    if (PACKAGE.equals(type)) {
       return RefPackageImpl.packageFromFQName(myRefManager, fqName);
     }
     return null;
@@ -304,22 +297,22 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
-    else if (ref instanceof RefMethod) {
+    if (ref instanceof RefMethod) {
       return METHOD;
     }
-    else if (ref instanceof RefClass) {
+    if (ref instanceof RefClass) {
       return CLASS;
     }
-    else if (ref instanceof RefField) {
+    if (ref instanceof RefField) {
       return FIELD;
     }
-    else if (ref instanceof RefParameter) {
+    if (ref instanceof RefParameter) {
       return PARAMETER;
     }
-    else if (ref instanceof RefPackage) {
+    if (ref instanceof RefPackage) {
       return PACKAGE;
     }
-    else if (ref instanceof RefJavaModule) {
+    if (ref instanceof RefJavaModule) {
       return JAVA_MODULE;
     }
     return null;
@@ -373,21 +366,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
-
-    /*if (psiElement instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)psiElement;
-
-      EntryPointsManager entryPointsManager = getEntryPointsManager();
-      if (psiClass.isAnnotationType()){
-        entryPointsManager.addEntryPoint(refElement, false);
-        for (PsiMethod psiMethod : psiClass.getMethods()) {
-          entryPointsManager.addEntryPoint(myRefManager.getReference(psiMethod), false);
-        }
-      }
-      else if (psiClass.isEnum()) {
-        entryPointsManager.addEntryPoint(refElement, false);
-      }
-    }*/
   }
 
   private static void appendPackageElement(final Element element, final String packageName) {
@@ -421,7 +399,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private class MyJavaElementVisitor extends JavaElementVisitor {
     private final RefJavaUtil myRefUtil;
 
-    public MyJavaElementVisitor() {
+    MyJavaElementVisitor() {
       myRefUtil = RefJavaUtil.getInstance();
     }
 
@@ -489,9 +467,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
       super.visitDocComment(comment);
       final PsiDocTag[] tags = comment.getTags();
       for (PsiDocTag tag : tags) {
-        if (Comparing.strEqual(tag.getName(), SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+        if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
           final PsiElement[] dataElements = tag.getDataElements();
-          if (dataElements != null && dataElements.length > 0) {
+          if (dataElements.length > 0) {
             final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(comment, PsiModifierListOwner.class);
             if (listOwner != null) {
               final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);

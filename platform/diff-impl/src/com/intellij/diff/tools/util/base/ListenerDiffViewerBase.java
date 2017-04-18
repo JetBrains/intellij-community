@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
     if (files.isEmpty()) return null;
 
-    return new VirtualFileAdapter() {
+    return new VirtualFileListener() {
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         if (files.contains(event.getFile())) {

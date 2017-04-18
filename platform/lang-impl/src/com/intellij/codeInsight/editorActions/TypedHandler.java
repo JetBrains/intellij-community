@@ -293,7 +293,10 @@ public class TypedHandler extends TypedActionHandlerBase {
       if (element != null) {
         final List<CompletionContributor> list = CompletionContributor.forLanguage(element.getLanguage());
         for (CompletionContributor contributor : list) {
-          if (contributor.invokeAutoPopup(element, charTyped)) return true;
+          if (contributor.invokeAutoPopup(element, charTyped)) {
+            LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
+            return true;
+          }
         }
       }
     }

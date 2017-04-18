@@ -85,7 +85,6 @@ public class JsonFormattingTest extends JsonTestCase {
   }
 
   public void testRemoveTrailingCommas() {
-    getCustomCodeStyleSettings().REMOVE_TRAILING_COMMA = true;
     doTest();
   }
 

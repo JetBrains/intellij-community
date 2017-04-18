@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
@@ -46,7 +45,6 @@ class CreateModuleInfoActionTest : LightJava9ModulesCodeInsightFixtureTestCase()
   }
 
   private class TestIdeView(private val dir: PsiDirectory) : IdeView {
-    override fun selectElement(element: PsiElement?) = Unit
     override fun getDirectories() = arrayOf(dir)
     override fun getOrChooseDirectory() = throw UnsupportedOperationException()
   }

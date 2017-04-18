@@ -18,19 +18,22 @@ package com.intellij.codeInsight;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
+  private static final Set<String> INFERRED_ANNOTATIONS =
+    ContainerUtil.set(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
   private final Project myProject;
 
   public InferredAnnotationsManagerImpl(Project project) {
@@ -40,6 +43,10 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @Nullable
   @Override
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+    if (!INFERRED_ANNOTATIONS.contains(annotationFQN)) {
+      return null;
+    }
+
     listOwner = PsiUtil.preferCompiledElement(listOwner);
 
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && listOwner instanceof PsiMethod) {
@@ -155,8 +162,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   }
 
   @Nullable
-  private PsiAnnotation createContractAnnotation(List<MethodContract> contracts, boolean pure) {
-    return createContractAnnotation(myProject, pure, StringUtil.join(contracts, "; "));
+  private PsiAnnotation createContractAnnotation(List<? extends MethodContract> contracts, boolean pure) {
+    return createContractAnnotation(myProject, pure, StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "));
   }
 
   @Nullable

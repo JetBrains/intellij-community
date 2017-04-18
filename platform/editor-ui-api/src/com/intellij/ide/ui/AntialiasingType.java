@@ -16,8 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.GraphicsUtil;
 
 import java.awt.*;
 
@@ -54,8 +53,8 @@ public enum AntialiasingType {
     isEnabled = enabled;
   }
 
-  public SwingUtilities2.AATextInfo getTextInfo() {
-    return !isEnabled ? null : new SwingUtilities2.AATextInfo(myHint, UIUtil.getLcdContrastValue());
+  public Object getTextInfo() {
+    return isEnabled ? GraphicsUtil.createAATextInfo(myHint) : null;
   }
 
   @Override

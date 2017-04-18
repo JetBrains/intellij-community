@@ -30,4 +30,9 @@ public class HtmlIdIndexer extends LexerBasedIdIndexer {
   static XHtmlFilterLexer createIndexingLexer(OccurrenceConsumer consumer) {
     return new XHtmlFilterLexer(new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS")), consumer);
   }
+
+  @Override
+  public int getVersion() {
+    return 2;
+  }
 }

@@ -97,7 +97,7 @@ public class BinaryEncoder {
       }
       int count = output.size();
       if (count != size) {
-        throw new BinaryPatchException(String.format("Length of decoded binary patch mismatches: expected %d, received %d", size, count));
+        throw new BinaryPatchException(String.format("%s binary content was decoded than expected", size > count ? "Less" : "More"));
       }
     }
     catch (Base85x.Base85FormatException e) {

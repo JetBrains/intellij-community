@@ -34,7 +34,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -75,6 +74,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -111,7 +111,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
-  private final MutableAttributeSet myFontSizeStyle = new SimpleAttributeSet();
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private final MyShowSettingsButton myShowSettingsButton;
@@ -297,7 +296,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
 
         setQuickDocFontSize(newFontSize);
-        applyFontSize();
+        applyFontProps();
         setFontSizeSliderSize(newFontSize);
       }
     };
@@ -497,7 +496,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           return;
         }
         setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
-        applyFontSize();
+        applyFontProps();
       }
     });
 
@@ -659,7 +658,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     highlightLink(-1);
 
     myEditorPane.setText(text);
-    applyFontSize();
+    applyFontProps();
 
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       myManager.showHint(myHint);
@@ -678,23 +677,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }});
   }
 
-  private void applyFontSize() {
+  private void applyFontProps() {
     Document document = myEditorPane.getDocument();
     if (!(document instanceof StyledDocument)) {
       return;
     }
+    String fontName = Registry.is("documentation.component.editor.font") ?
+                      EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName() :
+                      myEditorPane.getFont().getFontName();
 
-    final StyledDocument styledDocument = (StyledDocument)document;
-
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(getQuickDocFontSize().getSize()));
-    if (Registry.is("documentation.component.editor.font")) {
-      StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
-    }
-
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false));
+    // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
+    myEditorPane.setFont(new FontUIResource(fontName, Font.PLAIN, JBUI.scale(getQuickDocFontSize().getSize())));
   }
 
   private void goBack() {

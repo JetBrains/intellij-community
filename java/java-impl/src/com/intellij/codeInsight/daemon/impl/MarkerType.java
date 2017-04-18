@@ -237,7 +237,7 @@ public class MarkerType {
     PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
     if (overridings.length == 0) {
       final PsiClass aClass = method.getContainingClass();
-      if (aClass != null && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
+      if (aClass != null && isAbstract && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
         return "Has functional implementations";
       }
       return null;
@@ -462,17 +462,19 @@ public class MarkerType {
             return super.process(psiMethod);
           }
         });
-      PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
-      FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(final PsiFunctionalExpression expr) {
-          if (!updateComponent(expr, myRenderer.getComparator())) {
-            indicator.cancel();
+      if (ReadAction.compute(() -> myMethod.hasModifierProperty(PsiModifier.ABSTRACT))) {
+        PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
+        FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
+          @Override
+          public boolean process(final PsiFunctionalExpression expr) {
+            if (!updateComponent(expr, myRenderer.getComparator())) {
+              indicator.cancel();
+            }
+            indicator.checkCanceled();
+            return super.process(expr);
           }
-          indicator.checkCanceled();
-          return super.process(expr);
-        }
-      });
+        });
+      }
     }
   }
 }

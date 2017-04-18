@@ -121,10 +121,10 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       myElementsToDelete = delete;
       myType = type;
       Map<PsiExpression, List<Object>> constants = StreamEx.of(myContent)
-        .cross(ExpressionUtils::possibleValues).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
+        .cross(ExpressionUtils::nonStructuralChildren).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
       myConstantContent = StreamEx.ofValues(constants).flatCollection(Function.identity()).allMatch(Objects::nonNull);
       myRepeatingKeys = keyExpressions().flatCollection(constants::get).nonNull().distinct(2).findAny().isPresent();
-      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::possibleValues).map(PsiExpression::getType).has(PsiType.NULL);
+      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::nonStructuralChildren).map(PsiExpression::getType).has(PsiType.NULL);
     }
 
     public boolean isValid() {

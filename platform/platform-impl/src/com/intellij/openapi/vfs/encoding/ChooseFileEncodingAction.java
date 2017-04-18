@@ -27,14 +27,20 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IconDeferrer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -42,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
@@ -68,7 +75,34 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         public void update(AnActionEvent e) {
           super.update(e);
           String description = charsetFilter.fun(charset);
-          e.getPresentation().setIcon(description == null ? AllIcons.General.Warning : null);
+          AtomicReference<CharSequence> myText = new AtomicReference<>();
+          AtomicReference<byte[]> myBytes = new AtomicReference<>();
+          Icon defer = virtualFile == null || virtualFile.isDirectory() ? null : IconDeferrer.getInstance().defer(null, Pair.create(virtualFile, charset), pair -> {
+            VirtualFile myFile = pair.getFirst();
+            Charset charset = pair.getSecond();
+            CharSequence text = myText.get();
+            if (text == null) {
+              myText.set(text = LoadTextUtil.loadText(myFile));
+            }
+            byte[] bytes = myBytes.get();
+            if (bytes == null) {
+              try {
+                myBytes.set(bytes = myFile.contentsToByteArray());
+              }
+              catch (IOException io) {
+                bytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+              }
+            }
+            EncodingUtil.Magic8 safeToReload = EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
+            EncodingUtil.Magic8 safeToConvert = EncodingUtil.Magic8.ABSOLUTELY;
+            if (safeToReload != EncodingUtil.Magic8.ABSOLUTELY) {
+              safeToConvert = EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
+            }
+            return safeToReload == EncodingUtil.Magic8.ABSOLUTELY || safeToConvert == EncodingUtil.Magic8.ABSOLUTELY ? null :
+                   safeToReload == EncodingUtil.Magic8.WELL_IF_YOU_INSIST || safeToConvert == EncodingUtil.Magic8.WELL_IF_YOU_INSIST ?
+                   AllIcons.General.Warning : AllIcons.General.Error;
+          });
+          e.getPresentation().setIcon(defer);
           e.getPresentation().setDescription(description);
         }
       };

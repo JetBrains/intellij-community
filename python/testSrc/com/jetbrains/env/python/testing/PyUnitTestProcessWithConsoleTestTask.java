@@ -15,6 +15,7 @@
  */
 package com.jetbrains.env.python.testing;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
@@ -30,7 +31,10 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+
+import java.util.Set;
 
 /**
  * {@link PyProcessWithConsoleTestTask} to be used with python unittest. It saves you from boilerplate
@@ -43,8 +47,14 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
   protected final String myScriptName;
 
   PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToTestData, @NotNull final String scriptName) {
-    super(relativePathToTestData, SdkCreationType.EMPTY_SDK);
+    super(relativePathToTestData, SdkCreationType.SDK_PACKAGES_ONLY);
     myScriptName = scriptName;
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getTagsToCover() {
+    return Sets.newHashSet("python2.6", "python2.7", "python3.5", "python3.6", "jython", "pypy", "IronPython");
   }
 
   @NotNull

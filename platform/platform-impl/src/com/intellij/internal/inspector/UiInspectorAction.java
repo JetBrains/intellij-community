@@ -24,6 +24,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -79,6 +80,12 @@ import static java.util.Locale.ENGLISH;
 public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private UiInspector myInspector;
+
+  public UiInspectorAction() {
+    if (Boolean.getBoolean("idea.ui.debug.mode")) {
+      ApplicationManager.getApplication().invokeLater(() -> setSelected(null, true));
+    }
+  }
 
   @Override
   public boolean isSelected(AnActionEvent e) {

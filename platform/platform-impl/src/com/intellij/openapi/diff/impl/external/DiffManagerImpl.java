@@ -129,7 +129,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
     if (!ENABLE_FILES.value(myProperties) || !ENABLE_FOLDERS.value(myProperties) || !ENABLE_MERGE.value(myProperties)) {
       DiffTool[] embeddableTools = {
         INTERNAL_DIFF,
-        new MergeTool(),
+        MergeTool.INSTANCE,
         BinaryDiffTool.INSTANCE
       };
       standardTools = new DiffTool[]{
@@ -138,7 +138,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
         ExtMergeFiles.INSTANCE,
         new MultiLevelDiffTool(Arrays.asList(embeddableTools)),
         INTERNAL_DIFF,
-        new MergeTool(),
+        MergeTool.INSTANCE,
         BinaryDiffTool.INSTANCE
       };
     }
@@ -148,7 +148,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
         ExtCompareFiles.INSTANCE,
         ExtMergeFiles.INSTANCE,
         INTERNAL_DIFF,
-        new MergeTool(),
+        MergeTool.INSTANCE,
         BinaryDiffTool.INSTANCE
       };
     }

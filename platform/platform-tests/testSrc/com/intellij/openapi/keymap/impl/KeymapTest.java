@@ -17,11 +17,13 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -164,16 +166,38 @@ public class KeymapTest extends PlatformTestCase {
     assertThat(myChild.getActionIds(mouseShortcut)).isEmpty();
   }
   
-  public void testChangeMouseShortcut() throws Exception {
-    myParent.clearOwnActionsIds();
-    myChild.clearOwnActionsIds();
+  // decided to not change order and keep old behavior
+  //public void testChangeMouseShortcut() throws Exception {
+  //  myParent.clearOwnActionsIds();
+  //  myChild.clearOwnActionsIds();
+  //
+  //  ActionManager actionManager = ActionManager.getInstance();
+  //  actionManager.registerAction(ACTION_2, new EmptyAction());
+  //  actionManager.registerAction(ACTION_1, new EmptyAction());
+  //  try {
+  //    MouseShortcut mouseShortcut = new MouseShortcut(1, InputEvent.BUTTON2_MASK, 1);
+  //    myParent.addShortcut(ACTION_2, mouseShortcut);
+  //    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2);
+  //
+  //    Keymap grandChild = myChild.deriveKeymap("GrandChild");
+  //    myChild.addShortcut(ACTION_2, mouseShortcut);
+  //
+  //    grandChild.addShortcut(ACTION_1, mouseShortcut);
+  //    assertThat(grandChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1, ACTION_2);
+  //  }
+  //  finally {
+  //    actionManager.unregisterAction(ACTION_2);
+  //    actionManager.unregisterAction(ACTION_1);
+  //  }
+  //}
 
-    MouseShortcut mouseShortcut = new MouseShortcut(1, InputEvent.BUTTON2_MASK, 1);
-    myParent.addShortcut(ACTION_1, mouseShortcut);
-    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1);
-
-    myChild.addShortcut(ACTION_2, mouseShortcut);
-    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2, ACTION_1);
+  public void testChangingMouseShortcutInGrandChild() throws Exception {
+    MouseShortcut mouseShortcut = new MouseShortcut(MouseEvent.BUTTON1, 0, 1);
+    myParent.addShortcut(ACTION_2, mouseShortcut);
+    Keymap grandChild = myChild.deriveKeymap("GrandChild");
+    grandChild.removeShortcut(ACTION_2, mouseShortcut);
+    grandChild.addShortcut(ACTION_1, mouseShortcut);
+    assertThat(grandChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1);
   }
 
   public void testRemovingShortcutLast() throws Exception {

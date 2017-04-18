@@ -26,29 +26,26 @@ import com.intellij.codeInsight.hints.settings.Diff;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ParameterHintsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
 
   public ParameterHintsPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
     super(project);
@@ -63,7 +60,8 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
   }
 
   private static class ParameterHintsPass extends EditorBoundHighlightingPass {
-    private final Map<Integer, String> myAnnotations = new HashMap<>();
+    private final Map<Integer, String> myHints = new HashMap<>();
+    private final Map<Integer, String> myShowOnlyIfExistedBeforeHints = new HashMap<>();
 
     private ParameterHintsPass(@NotNull PsiFile file, @NotNull Editor editor) {
       super(editor, file, true);
@@ -72,7 +70,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     @Override
     public void doCollectInformation(@NotNull ProgressIndicator progress) {
       assert myDocument != null;
-      myAnnotations.clear();
+      myHints.clear();
       if (!isEnabled()) return;
 
       Language language = myFile.getLanguage();
@@ -90,7 +88,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .filter((e) -> e != null)
         .collect(Collectors.toList());
-      
+
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
     }
 
@@ -123,61 +121,32 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       if (info == null || !isMatchedByAny(info, blackListMatchers)) {
         hints.forEach((hint) -> {
           String presentation = provider.getInlayPresentation(hint.getText());
-          myAnnotations.put(hint.getOffset(), presentation);
+          int offset = hint.getOffset();
+          if (hint.isShowOnlyIfExistedBefore()) {
+            myShowOnlyIfExistedBeforeHints.put(offset, presentation);
+          }
+          else {
+            myHints.put(offset, presentation);
+          }
         });
       }
     }
 
     @Override
     public void doApplyInformationToEditor() {
-      assert myDocument != null;
-      boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
-      ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
-      Set<String> removedHints = new HashSet<>();
-      TIntObjectHashMap<Caret> caretMap = new TIntObjectHashMap<>();
       CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
-      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        caretMap.put(caret.getOffset(), caret);
-      }
-      for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength())) {
-        if (!presentationManager.isParameterHint(inlay)) continue;
-        int offset = inlay.getOffset();
-        
-        String newText = myAnnotations.remove(offset);
-        String oldText = presentationManager.getHintText(inlay);
-        
-        if (delayRemoval(inlay, caretMap) || presentationManager.isPinned(inlay)) continue;
-        if (!Objects.equals(newText, oldText)) {
-          if (newText == null) {
-            removedHints.add(oldText);
-            presentationManager.deleteHint(myEditor, inlay);
-          }
-          else {
-            presentationManager.replaceHint(myEditor, inlay, newText);
-          }
-        }
-      }
-      for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
-        int offset = e.getKey();
-        String text = e.getValue();
-        presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text), false);
-      }
-      keeper.restoreOriginalLocation();
-      myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
+      ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
+      List<Inlay> hints = getParameterHints(manager);
+      ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints);
+      updater.update();
+      keeper.restoreOriginalLocation(false);
     }
 
-    private boolean delayRemoval(Inlay inlay, TIntObjectHashMap<Caret> caretMap) {
-      int offset = inlay.getOffset();
-      Caret caret = caretMap.get(offset);
-      if (caret == null) return false;
-      CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-      if (offset >= text.length()) return false;
-      char afterCaret = text.charAt(offset);
-      if (afterCaret != ',' && afterCaret != ')') return false;
-      VisualPosition afterInlayPosition = myEditor.offsetToVisualPosition(offset, true, false);
-      // check whether caret is to the right of inlay
-      if (!caret.getVisualPosition().equals(afterInlayPosition)) return false;
-      return true;
+    @NotNull
+    private List<Inlay> getParameterHints(ParameterHintsPresentationManager manager) {
+      assert myDocument != null;
+      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength());
+      return ContainerUtil.filter(inlays, (hint) -> manager.isParameterHint(hint));
     }
   }
 }

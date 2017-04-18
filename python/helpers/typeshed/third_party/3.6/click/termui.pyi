@@ -58,18 +58,18 @@ def echo_via_pager(text: str, color: bool = None) -> None:
     ...
 
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
 @contextmanager
 def progressbar(
-    iterable=Iterable[T],
+    iterable: Optional[Iterable[_T]] = None,
     length: int = None,
     label: str = None,
     show_eta: bool = True,
     show_percent: bool = None,
     show_pos: bool = False,
-    item_show_func: Callable[[T], str] = None,
+    item_show_func: Callable[[_T], str] = None,
     fill_char: str = '#',
     empty_char: str = '-',
     bar_template: str = '%(label)s  [%(bar)s]  %(info)s',
@@ -77,7 +77,7 @@ def progressbar(
     width: int = 36,
     file: IO = None,
     color: bool = None,
-) -> Generator[T, None, None]:
+) -> Generator[_T, None, None]:
     ...
 
 

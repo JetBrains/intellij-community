@@ -154,22 +154,7 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<>();
-    containingClass.accept(new JavaRecursiveElementVisitor() {
-      private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
-
-      @Override
-      public void visitCodeBlock(PsiCodeBlock block) {
-        PsiElement parent = block.getParent();
-        if (parent instanceof PsiClassInitializer || parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor()) {
-          currentInitializingBlock = block;
-          super.visitCodeBlock(block);
-          currentInitializingBlock = null;
-        }
-        else {
-          super.visitCodeBlock(block);
-        }
-      }
-
+    containingClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression reference) {
         if (!result.get().booleanValue()) return;
@@ -180,7 +165,8 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
         PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(reference, PsiAssignmentExpression.class);
         if (assignmentExpression == null) return;
         PsiExpression rValue = assignmentExpression.getRExpression();
-        if (currentInitializingBlock != null) {
+        PsiMember member = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMember.class);
+        if (member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
           // ignore usages other than initializing
           if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);

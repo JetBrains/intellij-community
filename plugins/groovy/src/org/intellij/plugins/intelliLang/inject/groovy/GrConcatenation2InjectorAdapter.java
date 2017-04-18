@@ -16,7 +16,6 @@
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.injection.MultiHostInjector;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
@@ -37,8 +36,8 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
-  public GrConcatenation2InjectorAdapter(Project project) {
-    super(project);
+  public GrConcatenation2InjectorAdapter(JavaConcatenationInjectorManager manager) {
+    super(manager);
   }
 
   @Override

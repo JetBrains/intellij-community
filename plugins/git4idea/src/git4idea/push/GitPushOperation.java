@@ -84,6 +84,7 @@ public class GitPushOperation {
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   @Nullable private final GitPushTagMode myTagMode;
   private final boolean myForce;
+  private final boolean mySkipHook;
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
   private final GitVcsSettings mySettings;
@@ -93,12 +94,14 @@ public class GitPushOperation {
                           @NotNull GitPushSupport pushSupport,
                           @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,
-                          boolean force) {
+                          boolean force,
+                          boolean skipHook) {
     myProject = project;
     myPushSupport = pushSupport;
     myPushSpecs = pushSpecs;
     myTagMode = tagMode;
     myForce = force;
+    mySkipHook = skipHook;
     myGit = Git.getInstance();
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
@@ -351,7 +354,8 @@ public class GitPushOperation {
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
 
     String spec = sourceBranch.getFullName() + ":" + targetBranch.getNameForRemoteOperations();
-    GitCommandResult res = myGit.push(repository, targetBranch.getRemote(), spec, myForce, setUpstream, tagMode, progressListener);
+    GitCommandResult res =
+      myGit.push(repository, targetBranch.getRemote(), spec, myForce, setUpstream, mySkipHook, tagMode, progressListener);
     return new ResultWithOutput(res);
   }
 
@@ -412,7 +416,7 @@ public class GitPushOperation {
                                    boolean checkForRebaseOverMergeProblem) {
     GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator,
                                                         new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
-                                                        checkForRebaseOverMergeProblem).update(updateMethod);
+                                                        checkForRebaseOverMergeProblem, false).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
       repository.update();

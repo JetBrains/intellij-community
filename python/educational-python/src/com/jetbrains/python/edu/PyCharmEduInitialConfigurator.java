@@ -25,6 +25,9 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.customize.AbstractCustomizeWizardStep;
+import com.intellij.ide.customize.CustomizeIDEWizardDialog;
+import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
@@ -87,6 +90,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -194,9 +198,9 @@ public class PyCharmEduInitialConfigurator {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
               GeneralSettings.getInstance().setShowTipsOnStartup(false);
-              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-
               patchKeymap();
+              showInitialConfigurationDialog();
+              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
             }
           });
         }
@@ -396,5 +400,12 @@ public class PyCharmEduInitialConfigurator {
       }
     }
   }
-
+  private static void showInitialConfigurationDialog() {
+    new CustomizeIDEWizardDialog(new CustomizeIDEWizardStepsProvider() {
+      @Override
+      public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<AbstractCustomizeWizardStep> steps) {
+        steps.add(new CustomizeEduStepPanel());
+      }
+    }).show();
+  }
 }

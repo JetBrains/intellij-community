@@ -24,6 +24,7 @@ import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineArgument;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineOption;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,18 @@ final class CommandLinePsiImplUtils {
   }
 
   /**
+   * For options with eq finds argument next to it.
+   * For options with out of eq just use next psi
+   * @return null if option does not have eq
+   */
+  @Nullable
+  static CommandLineArgument findArgument(@NotNull final CommandLineOption option) {
+    if (option.getText().endsWith("=")) {
+      return PyUtil.as(option.getNextSibling(), CommandLineArgument.class);
+    }
+    return null;
+  }
+  /**
    * Finds real option based on psi opton
    *
    * @param option psi option
@@ -65,7 +78,21 @@ final class CommandLinePsiImplUtils {
     return validationResult.getOption(option);
   }
 
-
+  /**
+   * @return for arg in quotes returns bare value, or simply value otherwise
+   */
+  @NotNull
+  static String getValueNoQuotes(@NotNull final CommandLineArgument argument) {
+    final char[] chars = argument.getText().toCharArray();
+    if (chars.length == 0) {
+      return "";
+    }
+    final char firstChar = chars[0];
+    if (firstChar == chars[chars.length - 1] && firstChar == '"' || firstChar == '\'') {
+      return argument.getText().substring(1, argument.getTextLength() - 1);
+    }
+    return argument.getText();
+  }
   /**
    * Tries to find appropriate help for argument. It can be argument help for positional argument or option help
    * for option argument.

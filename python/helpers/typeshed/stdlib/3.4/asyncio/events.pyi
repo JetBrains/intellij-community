@@ -1,14 +1,22 @@
+from socket import socket
+import ssl
 import sys
-from typing import Any, Awaitable, Callable, Dict, Generator, List, Optional, Tuple, TypeVar, Union, overload
+from typing import Any, Awaitable, Callable, Dict, Generator, List, Optional, Sequence, Tuple, TypeVar, Union, overload
 from abc import ABCMeta, abstractmethod
 from asyncio.futures import Future
 from asyncio.coroutines import coroutine
+from asyncio.protocols import BaseProtocol
 from asyncio.tasks import Task
+from asyncio.transports import BaseTransport
 
 __all__ = ...  # type: str
 
 _T = TypeVar('_T')
 _Context = Dict[str, Any]
+_ExceptionHandler = Callable[[AbstractEventLoop, _Context], Any]
+_ProtocolFactory = Callable[[], BaseProtocol]
+_SSLContext = Union[bool, None, ssl.SSLContext]
+_TransProtPair = Tuple[BaseTransport, BaseProtocol]
 
 PIPE = ...  # type: Any  # from subprocess.PIPE
 
@@ -27,7 +35,7 @@ class Handle:
 class AbstractServer:
     def close(self) -> None: ...
     @coroutine
-    def wait_closed(self) -> Generator[Any, Any, None]: ...
+    def wait_closed(self) -> Generator[Any, None, None]: ...
 
 class AbstractEventLoop(metaclass=ABCMeta):
     @abstractmethod
@@ -36,7 +44,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
     # Can't use a union, see mypy issue  # 1873.
     @overload
     @abstractmethod
-    def run_until_complete(self, future: Generator[Any, Any, _T]) -> _T: ...
+    def run_until_complete(self, future: Generator[Any, None, _T]) -> _T: ...
     @overload
     @abstractmethod
     def run_until_complete(self, future: Awaitable[_T]) -> _T: ...
@@ -46,7 +54,13 @@ class AbstractEventLoop(metaclass=ABCMeta):
     @abstractmethod
     def is_running(self) -> bool: ...
     @abstractmethod
+    def is_closed(self) -> bool: ...
+    @abstractmethod
     def close(self) -> None: ...
+    if sys.version_info >= (3, 6):
+        @abstractmethod
+        @coroutine
+        def shutdown_asyncgens(self) -> Generator[Any, None, None]: ...
     # Methods scheduling callbacks.  All these return Handles.
     @abstractmethod
     def call_soon(self, callback: Callable[..., Any], *args: Any) -> Handle: ...
@@ -71,48 +85,70 @@ class AbstractEventLoop(metaclass=ABCMeta):
     @abstractmethod
     def call_soon_threadsafe(self, callback: Callable[..., Any], *args: Any) -> Handle: ...
     @abstractmethod
+    @coroutine
     def run_in_executor(self, executor: Any,
-        callback: Callable[..., Any], *args: Any) -> Future[Any]: ...
+        callback: Callable[..., _T], *args: Any) -> Generator[Any, None, _T]: ...
     @abstractmethod
     def set_default_executor(self, executor: Any) -> None: ...
     # Network I/O methods returning Futures.
     @abstractmethod
+    @coroutine
+    # TODO the "Tuple[Any, ...]" should be "Union[Tuple[str, int], Tuple[str, int, int, int]]" but that triggers
+    # https://github.com/python/mypy/issues/2509
     def getaddrinfo(self, host: str, port: int, *,
-        family: int = ..., type: int = ..., proto: int = ..., flags: int = ...) -> Future[List[Tuple[int, int, int, str, tuple]]]: ...
+        family: int = ..., type: int = ..., proto: int = ..., flags: int = ...) -> Generator[Any, None, List[Tuple[int, int, int, str, Tuple[Any, ...]]]]: ...
     @abstractmethod
-    def getnameinfo(self, sockaddr: tuple, flags: int = ...) -> Future[Tuple[str, int]]: ...
+    @coroutine
+    def getnameinfo(self, sockaddr: tuple, flags: int = ...) -> Generator[Any, None, Tuple[str, int]]: ...
     @abstractmethod
-    def create_connection(self, protocol_factory: Any, host: str = ..., port: int = ..., *,
-                          ssl: Any = ..., family: int = ..., proto: int = ..., flags: int = ..., sock: Any = ...,
-                          local_addr: str = ..., server_hostname: str = ...) -> tuple: ...
+    @coroutine
+    def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
+                          ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ..., sock: Optional[socket] = ...,
+                          local_addr: str = ..., server_hostname: str = ...) -> Generator[Any, None, _TransProtPair]: ...
     @abstractmethod
-    def create_server(self, protocol_factory: Any, host: str = ..., port: int = ..., *,
+    @coroutine
+    def create_server(self, protocol_factory: _ProtocolFactory, host: Union[str, Sequence[str]] = ..., port: int = ..., *,
                       family: int = ..., flags: int = ...,
-                      sock: Any = ..., backlog: int = ..., ssl: Any = ..., reuse_address: Any = ...) -> Any: ...
+                      sock: Optional[socket] = ..., backlog: int = ..., ssl: _SSLContext = ...,
+                      reuse_address: Optional[bool] = ...,
+                      reuse_port: Optional[bool] = ...) -> Generator[Any, None, AbstractServer]: ...
     @abstractmethod
-    def create_unix_connection(self, protocol_factory: Any, path: str, *,
-                               ssl: Any = ..., sock: Any = ...,
-                               server_hostname: str = ...) -> tuple: ...
+    @coroutine
+    def create_unix_connection(self, protocol_factory: _ProtocolFactory, path: str, *,
+                               ssl: _SSLContext = ..., sock: Optional[socket] = ...,
+                               server_hostname: str = ...) -> Generator[Any, None, _TransProtPair]: ...
     @abstractmethod
-    def create_unix_server(self, protocol_factory: Any, path: str, *,
-                           sock: Any = ..., backlog: int = ..., ssl: Any = ...) -> Any: ...
+    @coroutine
+    def create_unix_server(self, protocol_factory: _ProtocolFactory, path: str, *,
+                           sock: Optional[socket] = ..., backlog: int = ..., ssl: _SSLContext = ...) -> Generator[Any, None, AbstractServer]: ...
     @abstractmethod
-    def create_datagram_endpoint(self, protocol_factory: Any,
+    @coroutine
+    def create_datagram_endpoint(self, protocol_factory: _ProtocolFactory,
                                  local_addr: str = ..., remote_addr: str = ..., *,
-                                 family: int = ..., proto: int = ..., flags: int = ...) -> tuple: ...
+                                 family: int = ..., proto: int = ..., flags: int = ...,
+                                 reuse_address: Optional[bool] = ..., reuse_port: Optional[bool] = ...,
+                                 allow_broadcast: Optional[bool] = ...,
+                                 sock: Optional[socket] = ...) -> Generator[Any, None, _TransProtPair]: ...
+    @abstractmethod
+    @coroutine
+    def connect_accepted_socket(self, protocol_factory: _ProtocolFactory, sock: socket, *, ssl: _SSLContext = ...) -> Generator[Any, None, _TransProtPair]: ...
     # Pipes and subprocesses.
     @abstractmethod
-    def connect_read_pipe(self, protocol_factory: Any, pipe: Any) -> tuple: ...
+    @coroutine
+    def connect_read_pipe(self, protocol_factory: _ProtocolFactory, pipe: Any) -> Generator[Any, None, _TransProtPair]: ...
     @abstractmethod
-    def connect_write_pipe(self, protocol_factory: Any, pipe: Any) -> tuple: ...
+    @coroutine
+    def connect_write_pipe(self, protocol_factory: _ProtocolFactory, pipe: Any) -> Generator[Any, None, _TransProtPair]: ...
     @abstractmethod
-    def subprocess_shell(self, protocol_factory: Any, cmd: Union[bytes, str], *, stdin: Any = ...,
+    @coroutine
+    def subprocess_shell(self, protocol_factory: _ProtocolFactory, cmd: Union[bytes, str], *, stdin: Any = ...,
                          stdout: Any = ..., stderr: Any = ...,
-                         **kwargs: Any) -> tuple: ...
+                         **kwargs: Any) -> Generator[Any, None, _TransProtPair]: ...
     @abstractmethod
-    def subprocess_exec(self, protocol_factory: Any, *args: List[Any], stdin: Any = ...,
+    @coroutine
+    def subprocess_exec(self, protocol_factory: _ProtocolFactory, *args: List[Any], stdin: Any = ...,
                         stdout: Any = ..., stderr: Any = ...,
-                        **kwargs: Any) -> tuple: ...
+                        **kwargs: Any) -> Generator[Any, None, _TransProtPair]: ...
     @abstractmethod
     def add_reader(self, fd: int, callback: Callable[..., Any], *args: List[Any]) -> None: ...
     @abstractmethod
@@ -123,13 +159,17 @@ class AbstractEventLoop(metaclass=ABCMeta):
     def remove_writer(self, fd: int) -> None: ...
     # Completion based I/O methods returning Futures.
     @abstractmethod
-    def sock_recv(self, sock: Any, nbytes: int) -> Any: ...  # TODO
+    @coroutine
+    def sock_recv(self, sock: socket, nbytes: int) -> Generator[Any, None, bytes]: ...
     @abstractmethod
-    def sock_sendall(self, sock: Any, data: bytes) -> None: ...  # TODO
+    @coroutine
+    def sock_sendall(self, sock: socket, data: bytes) -> Generator[Any, None, None]: ...
     @abstractmethod
-    def sock_connect(self, sock: Any, address: str) -> Any: ...  # TODO
+    @coroutine
+    def sock_connect(self, sock: socket, address: str) -> Generator[Any, None, None]: ...
     @abstractmethod
-    def sock_accept(self, sock: Any) -> Any: ...
+    @coroutine
+    def sock_accept(self, sock: socket) -> Generator[Any, None, Tuple[socket, Any]]: ...
     # Signal handling.
     @abstractmethod
     def add_signal_handler(self, sig: int, callback: Callable[..., Any], *args: List[Any]) -> None: ...
@@ -137,7 +177,9 @@ class AbstractEventLoop(metaclass=ABCMeta):
     def remove_signal_handler(self, sig: int) -> None: ...
     # Error handlers.
     @abstractmethod
-    def set_exception_handler(self, handler: Callable[[AbstractEventLoop, _Context], Any]) -> None: ...
+    def set_exception_handler(self, handler: _ExceptionHandler) -> None: ...
+    @abstractmethod
+    def get_exception_handler(self) -> _ExceptionHandler: ...
     @abstractmethod
     def default_exception_handler(self, context: _Context) -> None: ...
     @abstractmethod

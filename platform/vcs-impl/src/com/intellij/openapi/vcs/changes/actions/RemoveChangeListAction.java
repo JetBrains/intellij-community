@@ -54,6 +54,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     presentation.setDescription(ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ? presentation.getText() : getDescription(changeLists));
   }
 
+  @NotNull
   private static String getDescription(@Nullable ChangeList[] changeLists) {
     return ActionsBundle.message("action.ChangesView.RemoveChangeList.description",
                                  containsActiveChangelist(changeLists) ? "another changelist" : "active one");

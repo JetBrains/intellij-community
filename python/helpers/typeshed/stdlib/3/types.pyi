@@ -129,7 +129,7 @@ class FrameType:
     f_locals = ...  # type: Dict[str, Any]
     f_trace = ...  # type: Callable[[], None]
 
-    def clear(self) -> None: pass
+    def clear(self) -> None: ...
 
 class GetSetDescriptorType:
     __name__ = ...  # type: str

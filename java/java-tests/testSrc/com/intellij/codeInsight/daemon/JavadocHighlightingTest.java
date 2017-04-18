@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.openapi.paths.WebReference;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.pom.java.LanguageLevel;
@@ -38,7 +37,6 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
     myInspection = new JavaDocLocalInspection();
     myInspection.setIgnoreDuplicatedThrows(false);
     enableInspectionTools(myInspection, new JavaDocReferenceInspection());
@@ -76,12 +74,12 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testException3() { doTest(); }
   public void testException4() { myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package"; doTest(); }
   public void testMultipleThrows() { doTest(); }
-  public void testInheritJavaDoc() { doTestWithLangLevel(LanguageLevel.JDK_1_3); }
+  public void testInheritJavaDoc() { setLanguageLevel(LanguageLevel.JDK_1_3); doTest(); }
   public void testLink0() { doTest(); }
   public void testLinkFromInnerClassToSelfMethod() { doTest(); }
   public void testValueBadReference() { doTest(); }
   public void testValueGoodReference() { doTest(); }
-  public void testValueReference14() { doTestWithLangLevel(LanguageLevel.JDK_1_4); }
+  public void testValueReference14() { setLanguageLevel(LanguageLevel.JDK_1_4); doTest(); }
   public void testValueEmpty() { doTest(); }
   public void testValueNotOnField() { doTest(); }
   public void testValueNotOnStaticField() { doTest(); }
@@ -109,6 +107,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIgnoreDuplicateThrows() { myInspection.setIgnoreDuplicatedThrows(true); doTest(); }
   public void testIgnoreAccessors() { myInspection.setIgnoreSimpleAccessors(true); doTest(); }
   public void testAuthoredMethod() { doTest(); }
+  public void testModuleTags() { doTest("module-info.java", true, false); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
@@ -140,12 +139,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertEquals(expected, refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet()));
   }
 
-  private void doTestWithLangLevel(LanguageLevel level) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
-    doTest();
-  }
-
   protected void doTest() {
-    super.doTest(getTestName(false) + ".java", true, false);
+    doTest(getTestName(false) + ".java", true, false);
   }
 }

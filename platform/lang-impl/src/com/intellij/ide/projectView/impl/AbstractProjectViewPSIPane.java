@@ -178,9 +178,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
-
-          final DefaultMutableTreeNode selectedNode = ((ProjectViewTree)myTree).getSelectedNode();
-          if (selectedNode != null && !selectedNode.isLeaf()) {
+          TreePath path = getSelectedPath();
+          if (path != null && !myTree.getModel().isLeaf(path.getLastPathComponent())) {
             return;
           }
 

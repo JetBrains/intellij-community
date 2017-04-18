@@ -30,6 +30,7 @@ import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -236,16 +237,29 @@ public abstract class PyEnvTestCase {
     if (RUN_LOCAL) {
       PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
 
-      final EnvTestTagsRequired tagsRequiredAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-      final String[] requiredTags;
-      if (tagsRequiredAnnotation != null) {
-        requiredTags = tagsRequiredAnnotation.tags();
+      final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
+      EnvTestTagsRequired methodAnnotation = null;
+      try {
+        final Method method = getClass().getMethod(myTestName.getMethodName());
+        methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
       }
-      else {
-        requiredTags = ArrayUtil.EMPTY_STRING_ARRAY;
+      catch (final NoSuchMethodException e) {
+        throw new AssertionError("No such method", e);
       }
+      final String[] classTags = getTags(classAnnotation);
+      final String[] methodTags = getTags(methodAnnotation);
 
-      taskRunner.runTask(testTask, testName, requiredTags);
+      taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
+    }
+  }
+
+  @NotNull
+  private static String[] getTags(@Nullable final EnvTestTagsRequired tagsRequiredAnnotation) {
+    if (tagsRequiredAnnotation != null) {
+      return tagsRequiredAnnotation.tags();
+    }
+    else {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 

@@ -16,12 +16,14 @@
 
 package com.intellij.openapi.diff.impl.settings;
 
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
@@ -30,19 +32,33 @@ import org.jetbrains.annotations.NonNls;
 public abstract class DiffPreviewProvider {
   public static final ExtensionPointName<DiffPreviewProvider> EP_NAME = ExtensionPointName.create("com.intellij.diffPreviewProvider");
 
+  @NotNull
   public abstract DiffContent[] createContents();
 
+  @NotNull
   public static DiffContent[] getContents() {
     // Assuming that standalone IDE should provide one provider
     final DiffPreviewProvider[] providers = Extensions.getExtensions(EP_NAME);
-    if (providers.length != 0){
+    if (providers.length != 0) {
       return providers[0].createContents();
     }
-    return new DiffContent[]{createContent(LEFT_TEXT), createContent(CENTER_TEXT), createContent(RIGHT_TEXT)};
+    return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, StdFileTypes.JAVA);
   }
 
-  private static SimpleContent createContent(String text) {
-    return new SimpleContent(text, StdFileTypes.JAVA);
+  @NotNull
+  public static DiffContent[] createContent(@NotNull String left,
+                                            @NotNull String center,
+                                            @NotNull String right,
+                                            @NotNull FileType fileType) {
+    return new DiffContent[]{
+      createContent(left, fileType),
+      createContent(center, fileType),
+      createContent(right, fileType)};
+  }
+
+  @NotNull
+  private static DiffContent createContent(@NotNull String text, @NotNull FileType fileType) {
+    return DiffContentFactory.getInstance().create(text, fileType);
   }
 
   @NonNls private static final String LEFT_TEXT = "class MyClass {\n" +

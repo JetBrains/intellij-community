@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,8 +65,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Suggest to replace with forEach or forEachOrdered", "SUGGEST_FOREACH");
-    panel.addCheckbox("Replace trivial foreach statements", "REPLACE_TRIVIAL_FOREACH");
+    panel.addCheckbox("Warn if only 'forEach' replacement is available", "SUGGEST_FOREACH");
+    panel.addCheckbox("Warn if the loop is trivial", "REPLACE_TRIVIAL_FOREACH");
     return panel;
   }
 
@@ -407,13 +408,16 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       TerminalBlock tb = TerminalBlock.from(source, body);
 
       BaseStreamApiMigration migration = findMigration(statement, body, tb);
-      if(migration != null) {
+      if (migration != null && (myIsOnTheFly || migration.isShouldWarn())) {
         MigrateToStreamFix[] fixes = {new MigrateToStreamFix(migration)};
-        if (migration instanceof ForEachMigration && tb.hasOperations()) { //for .stream()
-          fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration("forEachOrdered")));
+        if (migration instanceof ForEachMigration && !(tb.getLastOperation() instanceof CollectionStream)) { //for .stream()
+          fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration(migration.isShouldWarn(), "forEachOrdered")));
         }
-        myHolder.registerProblem(statement, getRange(statement).shiftRight(-statement.getTextOffset()),
-                                 "Can be replaced with '" + migration.getReplacement() + "' call", fixes);
+        ProblemHighlightType highlightType =
+          migration.isShouldWarn() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
+        myHolder.registerProblem(statement, "Can be replaced with '" + migration.getReplacement() + "' call",
+                                 highlightType, getRange(migration.isShouldWarn(), statement).shiftRight(-statement.getTextOffset()),
+                                 fixes);
       }
     }
 
@@ -437,7 +441,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         .remove(variable -> isVariableSuitableForStream(variable, loop, tb)).toList();
 
       if (isCountOperation(nonFinalVariables, tb)) {
-        return new CountMigration();
+        return new CountMigration(true);
       }
       if (nonFinalVariables.isEmpty()) {
         CollectMigration.CollectTerminal terminal = CollectMigration.extractCollectTerminal(tb);
@@ -446,31 +450,30 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           // Don't suggest to convert the loop which can be trivially replaced via addAll:
           // this is covered by UseBulkOperationInspection and ManualArrayToCollectionCopyInspection
           if(addAll) return null;
-          if (!REPLACE_TRIVIAL_FOREACH &&
-              !tb.hasOperations() &&
-              !(tb.getLastOperation() instanceof BufferedReaderLines) &&
-              terminal.isTrivial()) {
-            return null;
-          }
-          return new CollectMigration(terminal.getMethodName());
+          boolean shouldWarn = REPLACE_TRIVIAL_FOREACH ||
+                               tb.hasOperations() ||
+                               tb.getLastOperation() instanceof BufferedReaderLines ||
+                               !terminal.isTrivial();
+          return new CollectMigration(shouldWarn, terminal.getMethodName());
         }
       }
       if (tb.getCountExpression() != null || tb.isEmpty()) return null;
       if (nonFinalVariables.isEmpty() && extractArray(tb) != null) {
-        return new ToArrayMigration();
+        return new ToArrayMigration(true);
       }
       if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
-        return new SumMigration();
+        return new SumMigration(true);
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
       if (exitPoints == null) return null;
-      if (SUGGEST_FOREACH && exitPoints.isEmpty() && nonFinalVariables.isEmpty()) {
-        boolean nonTrivial = tb.hasOperations() || ForEachMigration.tryExtractMapExpression(tb) != null || !isTrivial(tb);
-        // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if REPLACE_TRIVIAL_FOREACH is set
-        if (!nonTrivial && (!REPLACE_TRIVIAL_FOREACH || tb.getLastOperation() instanceof ArrayStream)) return null;
-        return new ForEachMigration("forEach");
+      if (exitPoints.isEmpty() && nonFinalVariables.isEmpty()) {
+        boolean shouldWarn = SUGGEST_FOREACH &&
+                             (REPLACE_TRIVIAL_FOREACH ||
+                              tb.hasOperations() ||
+                              ForEachMigration.tryExtractMapExpression(tb) != null ||
+                              !isTrivial(tb));
+        return new ForEachMigration(shouldWarn, "forEach");
       }
-      if (!tb.hasOperations() && !REPLACE_TRIVIAL_FOREACH) return null;
       if (nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
         return findMigrationForReturn(loop, tb);
       }
@@ -494,11 +497,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Nullable
     private BaseStreamApiMigration findMigrationForBreak(TerminalBlock tb, List<PsiVariable> nonFinalVariables, PsiStatement statement) {
+      boolean shouldWarn = REPLACE_TRIVIAL_FOREACH || tb.hasOperations();
       if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statement)).findFirst() == null) {
-        return new MatchMigration("anyMatch");
+        return new MatchMigration(shouldWarn, "anyMatch");
       }
       if (nonFinalVariables.isEmpty() && statement instanceof PsiExpressionStatement) {
-        return new FindFirstMigration();
+        return new FindFirstMigration(shouldWarn);
       }
       if (nonFinalVariables.size() == 1) {
         PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statement);
@@ -510,13 +514,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiExpression rValue = assignment.getRExpression();
         if(rValue == null || VariableAccessUtils.variableIsUsed(var, rValue)) return null;
         if(tb.getVariable().getType() instanceof PsiPrimitiveType && !ExpressionUtils.isReferenceTo(rValue, tb.getVariable())) return null;
-        return new FindFirstMigration();
+        return new FindFirstMigration(shouldWarn);
       }
       return null;
     }
 
     @Nullable
     private BaseStreamApiMigration findMigrationForReturn(PsiLoopStatement statement, TerminalBlock tb) {
+      boolean shouldWarn = REPLACE_TRIVIAL_FOREACH || tb.hasOperations();
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
@@ -536,7 +541,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
         if(nextReturnStatement.getParent() == statement.getParent() ||
            ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
-          return new MatchMigration(methodName);
+          return new MatchMigration(shouldWarn, methodName);
         }
       }
       if (!VariableAccessUtils.variableIsUsed(tb.getVariable(), value)) {
@@ -544,18 +549,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             (tb.getLastOperation() instanceof FilterOp && tb.operations().count() == 2)) {
           return null;
         }
-        return new MatchMigration("anyMatch");
+        return new MatchMigration(shouldWarn, "anyMatch");
       }
       if(nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())
          && (!(tb.getVariable().getType() instanceof PsiPrimitiveType) || ExpressionUtils.isReferenceTo(value, tb.getVariable()))) {
-        return new FindFirstMigration();
+        return new FindFirstMigration(shouldWarn);
       }
       return null;
     }
 
     @NotNull
-    private TextRange getRange(PsiLoopStatement statement) {
-      boolean wholeStatement = myIsOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), statement);
+    private TextRange getRange(boolean shouldWarn, PsiLoopStatement statement) {
+      boolean wholeStatement =
+        myIsOnTheFly && (!shouldWarn || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement));
       if(statement instanceof PsiForeachStatement) {
         PsiJavaToken rParenth = ((PsiForeachStatement)statement).getRParenth();
         if (wholeStatement && rParenth != null) {

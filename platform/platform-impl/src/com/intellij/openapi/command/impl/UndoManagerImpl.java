@@ -22,7 +22,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.*;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -122,7 +125,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   private void runStartupActivity() {
     myEditorProvider = new FocusBasedCurrentEditorProvider();
-    CommandListener commandListener = new CommandAdapter() {
+    myCommandProcessor.addCommandListener(new CommandListener() {
       private boolean myStarted;
 
       @Override
@@ -154,8 +157,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
           onCommandFinished(myProject, "", null);
         }
       }
-    };
-    myCommandProcessor.addCommandListener(commandListener, this);
+    }, this);
 
     Disposer.register(this, new DocumentUndoProvider(myProject));
 

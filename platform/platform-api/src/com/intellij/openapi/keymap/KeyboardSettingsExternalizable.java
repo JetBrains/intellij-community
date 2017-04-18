@@ -39,8 +39,6 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
-    if (Registry.is("ide.keyboard.dvorak")) return true;
-    if (SystemInfo.isMac) return false;
     String keyboardLayoutLanguage = getLanguageForComponent(component);
     for (String language : supportedNonEnglishLanguages) {
       if (language.equals(keyboardLayoutLanguage)) {

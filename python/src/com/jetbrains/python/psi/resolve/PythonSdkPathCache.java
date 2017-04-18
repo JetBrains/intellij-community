@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     });
     sdk.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
       @Override
-      public void rootSetChanged(RootProvider wrapper) {
+      public void rootSetChanged(@NotNull RootProvider wrapper) {
         clearCache();
         if (!project.isDisposed()) {
           final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -94,7 +94,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         myBuiltins.set(null);
       }
     }, this);
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
   }
 
   @Override

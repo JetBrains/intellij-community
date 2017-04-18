@@ -52,6 +52,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.plaf.TextUI;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
@@ -61,9 +62,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-import static java.awt.event.InputEvent.META_DOWN_MASK;
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
@@ -132,25 +131,30 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
-        d.height = Math.min(d.height, myTextArea.getUI().getPreferredSize(myTextArea).height);
+        TextUI ui = myTextArea.getUI();
+        if (ui != null) {
+          d.height = Math.min(d.height, ui.getPreferredSize(myTextArea).height);
+        }
         return d;
       }
     };
     myTextArea.setBorder(new Border() {
       @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-
-      }
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {}
 
       @Override
       public Insets getBorderInsets(Component c) {
-        int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : UIUtil.isUnderDarcula() ? 1 : 0;
-        int top = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() <= 16 ? 2 : 1;
-        if (JBUI.isUsrHiDPI()) {
-          bottom = 2;
-          top = 2;
+        if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
+          return new JBInsets(3, 0, 3, 0);
+        } else {
+          int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : UIUtil.isUnderDarcula() ? 2 : 1;
+          int top = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() <= 16 ? 2 : 1;
+          if (JBUI.isUsrHiDPI()) {
+            bottom = 2;
+            top = 2;
+          }
+          return new JBInsets(top, 0, bottom, 0);
         }
-        return new JBInsets(top, 0, bottom, 0);
       }
 
       @Override
@@ -405,7 +409,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private class MacLafHelper extends LafHelper {
     @Override
     Border getBorder() {
-      return new EmptyBorder(3 + Math.max(0, JBUI.scale(16) - UIUtil.getLineHeight(myTextArea)) / 2, 6, 3, 4);
+      return new EmptyBorder(3 + Math.max(0, JBUI.scale(16) - UIUtil.getLineHeight(myTextArea)) / 2, 6, 4, 4);
     }
 
     @Override
@@ -451,9 +455,13 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     void paint(Graphics2D g) {
       Rectangle r = new Rectangle(getSize());
       int h = myIconsPanel.getParent() != null ? Math.max(myIconsPanel.getHeight(), myScrollPane.getHeight()) : myScrollPane.getHeight();
-      r.height = Math.max(r.height, h + getInsets().top + getInsets().bottom);
-      if (r.height % 2 == 1) r.height--;
-      g.setColor(myTextArea.isEnabled() ? enabledBorderColor : disabledBorderColor);
+
+      Insets i = getInsets();
+      Insets ei = myTextArea.getInsets();
+
+      int deltaY = i.top - ei.top;
+      r.y += deltaY;
+      r.height = Math.max(r.height, h + i.top + i.bottom) - (i.bottom - ei.bottom) - deltaY;
       MacIntelliJTextFieldUI.paintAquaSearchFocusRing(g, r, myTextArea);
     }
   }

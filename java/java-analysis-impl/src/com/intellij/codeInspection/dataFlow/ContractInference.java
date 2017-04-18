@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ContractInference {
   public static final int MAX_CONTRACT_COUNT = 10;
 
   @NotNull
-  public static List<MethodContract> inferContracts(@NotNull PsiMethodImpl method) {
+  public static List<StandardMethodContract> inferContracts(@NotNull PsiMethodImpl method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Collections.emptyList();
     }
@@ -51,22 +51,22 @@ public class ContractInference {
     return CachedValuesManager.getCachedValue(method, () -> {
       MethodData data = ContractInferenceIndexKt.getIndexedData(method);
       List<PreContract> preContracts = data == null ? Collections.emptyList() : data.getContracts();
-      List<MethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, data, preContracts));
+      List<StandardMethodContract> result = RecursionManager.doPreventingRecursion(method, true, () -> postProcessContracts(method, data, preContracts));
       if (result == null) result = Collections.emptyList();
       return CachedValueProvider.Result.create(result, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
   @NotNull
-  private static List<MethodContract> postProcessContracts(@NotNull PsiMethodImpl method, MethodData data, List<PreContract> rawContracts) {
-    List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, data.methodBody(method)));
+  private static List<StandardMethodContract> postProcessContracts(@NotNull PsiMethodImpl method, MethodData data, List<PreContract> rawContracts) {
+    List<StandardMethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, data.methodBody(method)));
     if (contracts.isEmpty()) return Collections.emptyList();
     
     final PsiType returnType = method.getReturnType();
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
       contracts = boxReturnValues(contracts);
     }
-    List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, returnType, contract));
+    List<StandardMethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, returnType, contract));
     if (compatible.size() > MAX_CONTRACT_COUNT) {
       LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(method) + ", shrinking the list");
       return compatible.subList(0, MAX_CONTRACT_COUNT);
@@ -74,14 +74,14 @@ public class ContractInference {
     return compatible;
   }
 
-  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, PsiType returnType, MethodContract contract) {
+  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, PsiType returnType, StandardMethodContract contract) {
     if (hasContradictoryExplicitParameterNullity(method, contract)) return false;
     if (isReturnNullitySpecifiedExplicitly(method, contract)) return false;
     if (isContradictingExplicitNullableReturn(method, contract)) return false;
     return InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue);
   }
 
-  private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, MethodContract contract) {
+  private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, StandardMethodContract contract) {
     for (int i = 0; i < contract.arguments.length; i++) {
       if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
         return true;
@@ -90,13 +90,13 @@ public class ContractInference {
     return false;
   }
 
-  private static boolean isContradictingExplicitNullableReturn(@NotNull PsiMethod method, MethodContract contract) {
+  private static boolean isContradictingExplicitNullableReturn(@NotNull PsiMethod method, StandardMethodContract contract) {
     return contract.returnValue == NOT_NULL_VALUE &&
            Arrays.stream(contract.arguments).allMatch(c -> c == ANY_VALUE) &&
            NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false);
   }
 
-  private static boolean isReturnNullitySpecifiedExplicitly(@NotNull PsiMethod method, MethodContract contract) {
+  private static boolean isReturnNullitySpecifiedExplicitly(@NotNull PsiMethod method, StandardMethodContract contract) {
     if (contract.returnValue != NOT_NULL_VALUE && contract.returnValue != NULL_VALUE) {
       return false; // spare expensive nullity check
     }
@@ -104,10 +104,10 @@ public class ContractInference {
   }
 
   @NotNull
-  private static List<MethodContract> boxReturnValues(List<MethodContract> contracts) {
+  private static List<StandardMethodContract> boxReturnValues(List<StandardMethodContract> contracts) {
     return ContainerUtil.mapNotNull(contracts, contract -> {
       if (contract.returnValue == FALSE_VALUE || contract.returnValue == TRUE_VALUE) {
-        return new MethodContract(contract.arguments, NOT_NULL_VALUE);
+        return new StandardMethodContract(contract.arguments, NOT_NULL_VALUE);
       }
       return contract;
     });

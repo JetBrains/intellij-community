@@ -28,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 
 /**
  * @author Sergey.Malenkov
@@ -39,6 +40,7 @@ final class Banner extends JPanel {
   Banner(Action action) {
     super(new BorderLayout(10, 0));
     myLeftPanel.setLayout(new HorizontalLayout(5));
+    myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);

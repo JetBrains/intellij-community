@@ -184,10 +184,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     catch (FileNotFoundException e) {
       throw e;
     }
-    catch (IOException e) {
-      throw new InvalidDataException(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       throw new InvalidDataException(e);
     }
   }

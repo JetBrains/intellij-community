@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -29,7 +28,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.function.BiFunction
-
 /**
  * @author nik
  */
@@ -113,6 +111,11 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  GradleRunner getGradle() {
+    compilationContext.gradle
+  }
+
+  @Override
   BuildOptions getOptions() {
     compilationContext.options
   }
@@ -144,6 +147,11 @@ class BuildContextImpl extends BuildContext {
 
   JpsModule findModule(String name) {
     return compilationContext.findModule(name)
+  }
+
+  @Override
+  void notifyArtifactBuilt(String artifactPath) {
+    compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
   @Override
@@ -263,20 +271,5 @@ class BuildContextImpl extends BuildContext {
       jvmArgs += " -Didea.jre.check=true"
     }
     return jvmArgs.trim()
-  }
-
-  @Override
-  void notifyArtifactBuilt(String artifactPath) {
-    def file = new File(artifactPath)
-    def baseDir = new File(paths.projectHome)
-    if (!FileUtil.isAncestor(baseDir, file, true)) {
-      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
-      return
-    }
-    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
-    if (file.isDirectory()) {
-      relativePath += "=>" + file.name
-    }
-    messages.artifactBuild(relativePath)
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PsiVFSListener extends VirtualFileAdapter {
+public class PsiVFSListener implements VirtualFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.PsiVFSListener");
 
   private final FileTypeManager myFileTypeManager;
@@ -131,6 +131,11 @@ public class PsiVFSListener extends VirtualFileAdapter {
   @Nullable
   private PsiDirectory getCachedDirectory(VirtualFile parent) {
     return parent == null ? null : myFileManager.getCachedDirectory(parent);
+  }
+
+  @Override
+  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+    fileCreated(event);
   }
 
   @Override

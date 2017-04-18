@@ -23,11 +23,10 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.TextRange;
@@ -96,27 +95,20 @@ public class BraceHighlighter implements StartupActivity {
     };
     eventMulticaster.addDocumentListener(documentListener, project);
 
-    final FocusChangeListener myFocusChangeListener = new FocusChangeListener() {
-      @Override
-      public void focusLost(Editor editor) {
-        clearBraces(editor);
-      }
-
-      @Override
-      public void focusGained(Editor editor) {
-        updateBraces(editor, myAlarm);
-      }
-    };
-    ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener, project);
-
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-
-    fileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         myAlarm.cancelAllRequests();
+        FileEditor oldEditor = e.getOldEditor();
+        if (oldEditor instanceof TextEditor) {
+          clearBraces(((TextEditor)oldEditor).getEditor());
+        }
+        FileEditor newEditor = e.getNewEditor();
+        if (newEditor instanceof TextEditor) {
+          updateBraces(((TextEditor)newEditor).getEditor(), myAlarm);
+        }
       }
-    }, project);
+    });
   }
 
   static void updateBraces(@NotNull final Editor editor, @NotNull final Alarm alarm) {

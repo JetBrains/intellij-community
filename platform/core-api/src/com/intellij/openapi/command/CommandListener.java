@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,19 @@ package com.intellij.openapi.command;
 
 import java.util.EventListener;
 
-public interface CommandListener extends EventListener{
-  void commandStarted(CommandEvent event);
-  void beforeCommandFinished(CommandEvent event);
-  void commandFinished(CommandEvent event);
-  void undoTransparentActionStarted();
-  void undoTransparentActionFinished();
+public interface CommandListener extends EventListener {
+  default void commandStarted(CommandEvent event) {
+  }
+
+  default void beforeCommandFinished(CommandEvent event) {
+  }
+
+  default void commandFinished(CommandEvent event) {
+  }
+
+  default void undoTransparentActionStarted() {
+  }
+
+  default void undoTransparentActionFinished() {
+  }
 }

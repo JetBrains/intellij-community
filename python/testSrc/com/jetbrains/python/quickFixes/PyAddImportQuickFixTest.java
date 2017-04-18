@@ -16,18 +16,10 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyQuickFixTestCase;
-import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
-import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -40,22 +32,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testOsPathFunctions() throws Exception {
-    doMultiFileAutoImportTest("Import", fix -> {
-      final List<ImportCandidateHolder> candidates = fix.getCandidates();
-      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("join"));
-      assertSameElements(names, "os.path.join()");
-      return true;
-    });
+    doMultiFileAutoImportTest("Import 'os.path.join()'");
   }
 
   // PY-19975
   public void testCanonicalNamesFromHigherLevelPackage() {
-    doMultiFileAutoImportTest("Import", fix -> {
-      final List<ImportCandidateHolder> candidates = fix.getCandidates();
-      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("MyClass"));
-      assertOrderedEquals(names, "bar.MyClass", "foo.MyClass");
-      return true;
-    });
+    doMultiFileAutoImportTest("Import this name");
   }
   
   // PY-22422
@@ -65,37 +47,23 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
     getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE = true;
     getPythonCodeStyleSettings().FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE = true;
-    doMultiFileAutoImportTest("Import");
+    doMultiFileAutoImportTest("Import 'bar from module'");
   }
 
   // PY-21563
   public void testCombineFromImportsForReferencesInTypeComment() {
-    doMultiFileAutoImportTest("Import");
+    doMultiFileAutoImportTest("Import this name");
   }
 
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
-    doMultiFileAutoImportTest(hintPrefix, null);
-  }
-
-  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<AutoImportQuickFix> checkQuickfix) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     final String entryPoint = "main";
     myFixture.configureByFile(entryPoint + ".py");
     myFixture.checkHighlighting(true, false, false);
-    final List<IntentionAction> intentions = myFixture.filterAvailableIntentions(hintPrefix);
-    final IntentionAction intention = ContainerUtil.find(intentions, action -> {
-      return action instanceof QuickFixWrapper && ((QuickFixWrapper)action).getFix() instanceof AutoImportQuickFix;
-    });
-    assertNotNull("Auto import quick fix starting with '" + hintPrefix + "' wasn't found", intention);
-    final AutoImportQuickFix quickfix = (AutoImportQuickFix)((QuickFixWrapper)intention).getFix();
-    boolean applyFix = true;
-    if (checkQuickfix != null) {
-      applyFix = checkQuickfix.process(quickfix);
-    }
-    if (applyFix) {
-      myFixture.launchAction(intention);
-      myFixture.checkResultByFile(getTestName(true) + "/" + entryPoint + "_after.py", true);
-    }
+    IntentionAction intention = myFixture.findSingleIntention(hintPrefix);
+
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(true) + "/" + entryPoint + "_after.py", true);
   }
 }

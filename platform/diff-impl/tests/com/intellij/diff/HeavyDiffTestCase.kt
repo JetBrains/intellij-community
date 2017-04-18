@@ -27,23 +27,21 @@ abstract class HeavyDiffTestCase : DiffTestCase() {
   override fun setUp() {
     super.setUp()
 
-    runInEdtAndWait {
-      projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName()).fixture
-      projectFixture!!.setUp()
-      project = projectFixture!!.project
-    }
+    projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName()).fixture
+    projectFixture!!.setUp()
+    project = projectFixture!!.project
   }
 
   override fun tearDown() {
-    runInEdtAndWait {
-      projectFixture?.tearDown()
-      project = null
-    }
+    projectFixture?.tearDown()
+    project = null
 
     super.tearDown()
   }
 
-  override fun runTest() {
-    runInEdtAndWait { super.runTest() }
+  override fun runBare() {
+    runInEdtAndWait {
+      super.runBare()
+    }
   }
 }

@@ -1,0 +1,22 @@
+UFile (package = ) [public class While {...]
+    UClass (name = While) [public class While {...}]
+        UMethod (name = foo) [public static fun foo() : int {...}]
+            UBlockExpression [{...}] = Nothing
+                UDeclarationsExpression [var result: int = 0...var i: int = 0] = Undetermined
+                    ULocalVariable (name = result) [var result: int = 0]
+                        ULiteralExpression (value = 0) [0] = 0
+                    ULocalVariable (name = i) [var i: int = 0]
+                        ULiteralExpression (value = 0) [0] = 0
+                UWhileExpression [while (i < 10) {...}] = Undetermined
+                    UBinaryExpression (operator = <) [i < 10] = Undetermined
+                        USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                        ULiteralExpression (value = 10) [10] = 10
+                    UBlockExpression [{...}] = Undetermined
+                        UBinaryExpression (operator = =) [result = result + i++] = Undetermined
+                            USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0 (depending on: (var i = 0))), (var result = 0))
+                            UBinaryExpression (operator = +) [result + i++] = Undetermined
+                                USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0 (depending on: (var i = 0))), (var result = 0))
+                                UPostfixExpression (operator = ++) [i++] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                                    USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                UReturnExpression [return result] = Nothing
+                    USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0 (depending on: (var i = 0))), (var result = 0))

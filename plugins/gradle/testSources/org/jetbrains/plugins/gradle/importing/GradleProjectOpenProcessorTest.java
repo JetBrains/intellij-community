@@ -22,6 +22,8 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -31,12 +33,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -92,6 +99,81 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  @Test
+  public void testGradleSettingsFileModification() throws IOException {
+    VirtualFile foo = createProjectSubDir("foo");
+    createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
+    createProjectSubFile("foo/.idea/modules.xml",
+                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                         "<project version=\"4\">\n" +
+                         "  <component name=\"ProjectModuleManager\">\n" +
+                         "    <modules>\n" +
+                         "      <module fileurl=\"file://$PROJECT_DIR$/foo.iml\" filepath=\"$PROJECT_DIR$/foo.iml\" />\n" +
+                         "      <module fileurl=\"file://$PROJECT_DIR$/bar.iml\" filepath=\"$PROJECT_DIR$/bar.iml\" />\n" +
+                         "    </modules>\n" +
+                         "  </component>\n" +
+                         "</project>");
+    createProjectSubFile("foo/foo.iml",
+                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                         "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
+                         "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+                         "    <content url=\"file://$MODULE_DIR$\">\n" +
+                         "    </content>\n" +
+                         "  </component>\n" +
+                         "</module>");
+    createProjectSubFile("foo/bar.iml",
+                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                         "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
+                         "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+                         "  </component>\n" +
+                         "</module>");
+
+    Project fooProject = executeOnEdt(() -> ProjectUtil.openProject(foo.getPath(), null, true));
+
+    try {
+      assertTrue(fooProject.isOpen());
+      edt(() -> UIUtil.dispatchAllInvocationEvents());
+      assertModules(fooProject, "foo", "bar");
+
+      Semaphore semaphore = new Semaphore(1);
+      final MessageBusConnection myBusConnection = fooProject.getMessageBus().connect();
+      myBusConnection.subscribe(ProjectDataImportListener.TOPIC, path -> semaphore.up());
+      createProjectSubFile("foo/.idea/gradle.xml",
+                           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                           "<project version=\"4\">\n" +
+                           "  <component name=\"GradleSettings\">\n" +
+                           "    <option name=\"linkedExternalProjectsSettings\">\n" +
+                           "      <GradleProjectSettings>\n" +
+                           "        <option name=\"distributionType\" value=\"DEFAULT_WRAPPED\" />\n" +
+                           "        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\n" +
+                           "        <option name=\"gradleJvm\" value=\"" + GRADLE_JDK_NAME + "\" />\n" +
+                           "        <option name=\"modules\">\n" +
+                           "          <set>\n" +
+                           "            <option value=\"$PROJECT_DIR$\" />\n" +
+                           "          </set>\n" +
+                           "        </option>\n" +
+                           "        <option name=\"resolveModulePerSourceSet\" value=\"false\" />\n" +
+                           "      </GradleProjectSettings>\n" +
+                           "    </option>\n" +
+                           "  </component>\n" +
+                           "</project>");
+      edt(() -> UIUtil.dispatchAllInvocationEvents());
+      edt(() -> PlatformTestUtil.saveProject(fooProject));
+      assert semaphore.waitFor(100000);
+      assertTrue("The module has not been linked",
+                 ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, getModule(fooProject, "foo")));
+    }
+    finally {
+      edt(() -> closeProject(fooProject));
+    }
+    assertFalse(fooProject.isOpen());
+    assertTrue(fooProject.isDisposed());
+
+    //edt(() -> PlatformTestUtil.saveProject(myProject));
+    //importProject("apply plugin: 'java'");
+    //assertModules("project", "project_main", "project_test");
   }
 
   @Test

@@ -188,13 +188,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       return superGetDescriptionUrl();
     }
     String fileName = getDescriptionFileName();
-    return myEP.getLoaderForClass().getResource("/inspectionDescriptions/" + fileName);
+    return myEP.getLoaderForClass().getResource("inspectionDescriptions/" + fileName);
   }
 
   @Nullable
   protected URL superGetDescriptionUrl() {
     final String fileName = getDescriptionFileName();
-    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+    return ResourceUtil.getResource(getDescriptionContextClass(), "inspectionDescriptions", fileName);
   }
 
   @NotNull

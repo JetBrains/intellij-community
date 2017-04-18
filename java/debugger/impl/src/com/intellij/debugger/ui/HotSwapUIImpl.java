@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.impl.DebuggerManagerAdapter;
+import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
@@ -34,7 +34,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -58,12 +57,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * User: lex
- * Date: Oct 2, 2003
- * Time: 6:00:55 PM
- */
-public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
+public class HotSwapUIImpl extends HotSwapUI {
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
@@ -72,7 +66,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
   public HotSwapUIImpl(final Project project, final MessageBus bus, DebuggerManager debugManager) {
     myProject = project;
 
-    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerAdapter() {
+    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerListener() {
       private MessageBusConnection myConn = null;
 
       @Override
@@ -95,29 +89,13 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       }
     });
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "HotSwapUI";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-
-  }
-
+  
+  @Override
   public void addListener(HotSwapVetoableListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeListener(HotSwapVetoableListener listener) {
     myListeners.remove(listener);
   }
@@ -265,6 +243,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     }, progress.getProgressIndicator());
   }
 
+  @Override
   public void reloadChangedClasses(final DebuggerSession session, boolean compileBeforeHotswap) {
     dontAskHotswapAfterThisCompilation();
     if (compileBeforeHotswap) {
@@ -277,6 +256,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     }
   }
 
+  @Override
   public void dontPerformHotswapAfterThisCompilation() {
     myPerformHotswapAfterThisCompilation = false;
   }
@@ -297,6 +277,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       }
     }
 
+    @Override
     public void fileGenerated(String outputRoot, String relativePath) {
       if (StringUtil.endsWith(relativePath, ".class") && JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) {
         // collect only classes
@@ -304,6 +285,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       }
     }
 
+    @Override
     public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
       final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
       if (myProject.isDisposed()) {

@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
@@ -52,8 +54,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
   @NonNls private static final String SERVERS_TOOL_WINDOW_POPUP = "RemoteServersViewPopup";
 
-  @NonNls
-  private static final String HELP_ID = "Application_Servers_tool_window";
   private static final String MESSAGE_CARD = "message";
   private static final String EMPTY_SELECTION_MESSAGE = "Select a server or deployment in the tree to view details";
 
@@ -243,6 +243,18 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
         updateSelectedServerDetails();
       }
     });
+
+    project.getMessageBus().connect().subscribe(RemoteServerListener.TOPIC, new RemoteServerListener() {
+      @Override
+      public void serverAdded(@NotNull RemoteServer<?> server) {
+        getBuilder().queueUpdate();
+      }
+
+      @Override
+      public void serverRemoved(@NotNull RemoteServer<?> server) {
+        getBuilder().queueUpdate();
+      }
+    });
   }
 
   private void updateSelectedServerDetails() {
@@ -263,7 +275,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
     group.add(new Separator());
-    group.add(new ContextHelpAction(HELP_ID));
+    group.add(new ContextHelpAction(myContribution.getContextHelpId()));
 
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 
@@ -274,6 +286,9 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
       public Object getData(@NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
           return ServersToolWindowContent.this;
+        }
+        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return myContribution.getContextHelpId();
         }
         return myContribution.getData(dataId, ServersToolWindowContent.this);
       }
@@ -311,12 +326,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   public void select(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
-    myBuilder.getUi().queueUpdate(connection).doWhenDone(() -> myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
-      @Override
-      public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
-        return isDeploymentNodeMatch(node, connection, deploymentName);
-      }
-    }, null, false));
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(
+      () -> myBuilder.<ServersTreeStructure.DeploymentNodeImpl>select(ServersTreeStructure.DeploymentNodeImpl.class,
+                                                                      node -> isDeploymentNodeMatch(node, connection, deploymentName),
+                                                                      null, false));
   }
 
   public void select(@NotNull final ServerConnection<?> connection,

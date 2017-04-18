@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -385,7 +386,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     if (FileUtil.isAbsolute(normalizedId) || referent == null) return VfsUtil.findFileByIoFile(new File(normalizedId), false);
     VirtualFile dir = referent.isDirectory() ? referent : referent.getParent();
     if (dir != null && dir.isValid()) {
-      return VfsUtil.findRelativeFile(dir, normalizedId.replace("\\", "/").split("/"));
+      final List<String> parts = StringUtil.split(normalizedId.replace("\\", "/"), "/");
+      return VfsUtil.findRelativeFile(dir, ArrayUtil.toStringArray(parts));
     }
     return null;
   }

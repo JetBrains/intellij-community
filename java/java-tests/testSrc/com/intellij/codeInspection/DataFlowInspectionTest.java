@@ -190,6 +190,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testOtherCallMayChangeFields() { doTest(); }
 
   public void testMethodCallFlushesField() { doTest(); }
+  public void testDoubleNaN() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testBoxedNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }
@@ -247,6 +248,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testContractSeveralClauses() { doTest(); }
   public void testContractVarargs() { doTest(); }
   public void testContractConstructor() { doTest(); }
+  public void testFlushVariableOnStackToNotNullType() { doTest(); }
+
+  public void testCustomContracts() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
@@ -446,6 +450,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       @Override
       public boolean isImplicitWrite(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
     }, myFixture.getTestRootDisposable());

@@ -51,11 +51,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
-import git4idea.history.browser.SymbolicRefs;
-import git4idea.history.browser.SymbolicRefsI;
-import git4idea.history.wholeTree.AbstractHash;
 import git4idea.i18n.GitBundle;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
@@ -508,43 +504,6 @@ public class GitHistoryUtils {
                                                                     record.getAuthorTimeStamp()));
   }
 
-  private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
-                                                 @NotNull GitLogParser parser,
-                                                 @NotNull Consumer<GitLogRecord> recordConsumer) throws VcsException {
-    Ref<Throwable> parseError = new Ref<>();
-    processHandlerOutputByLine(handler, builder -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(builder.toString());
-        if (record != null) {
-          recordConsumer.consume(record);
-        }
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Throwable t) {
-        if (parseError.isNull()) {
-          parseError.set(t);
-          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(builder.toString()) + "\"\n" +
-                    "Command " + handler.printableCommandLine(), t);
-        }
-      }
-    }, 0);
-
-    if (!parseError.isNull()) {
-      throw new VcsException(parseError.get());
-    }
-  }
-
-  private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
-                                                 @NotNull Consumer<StringBuilder> recordConsumer,
-                                                 int bufferSize)
-    throws VcsException {
-    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, recordConsumer, bufferSize);
-    handler.runInCurrentThread(null);
-    handlerListener.reportErrors();
-  }
-
   public static void readCommits(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull List<String> parameters,
@@ -556,54 +515,33 @@ public class GitHistoryUtils {
       return;
     }
 
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
                                                  AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters("--decorate=full");
-    h.addParameters(parameters);
-    h.endOptions();
+    handler.setStdoutSuppressed(true);
+    handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    handler.addParameters("--decorate=full");
+    handler.addParameters(parameters);
+    handler.endOptions();
 
-    final int COMMIT_BUFFER = 1000;
-    processHandlerOutputByLine(h, buffer -> {
-      List<TimedVcsCommit> commits = parseCommit(parser, buffer, userConsumer, refConsumer, factory, root);
-      for (TimedVcsCommit commit : commits) {
-        commitConsumer.consume(commit);
-      }
-    }, COMMIT_BUFFER);
-  }
+    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
+      List<GitLogRecord> records = parser.parse(output);
+      for (GitLogRecord record : records) {
+        if (record == null) continue;
 
-  @NotNull
-  private static List<TimedVcsCommit> parseCommit(@NotNull GitLogParser parser,
-                                                  @NotNull StringBuilder record,
-                                                  @NotNull Consumer<VcsUser> userRegistry,
-                                                  @NotNull Consumer<VcsRef> refConsumer,
-                                                  @NotNull VcsLogObjectsFactory factory,
-                                                  @NotNull VirtualFile root) {
-    List<GitLogRecord> gitLogRecords = parser.parse(record.toString());
-    return ContainerUtil.mapNotNull(gitLogRecords, gitLogRecord -> {
-      if (gitLogRecord == null) {
-        return null;
+        Hash hash = HashImpl.build(record.getHash());
+        List<Hash> parents = getParentHashes(factory, record);
+        commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
+
+        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+          refConsumer.consume(ref);
+        }
+
+        userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
       }
-      Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(gitLogRecord, factory, root);
-      TimedVcsCommit commit = pair.first;
-      for (VcsRef ref : pair.second) {
-        refConsumer.consume(ref);
-      }
-      userRegistry.consume(factory.createUser(gitLogRecord.getAuthorName(), gitLogRecord.getAuthorEmail()));
-      return commit;
     });
-  }
-
-  @NotNull
-  private static Pair<TimedVcsCommit, Collection<VcsRef>> convert(@NotNull GitLogRecord rec,
-                                                                  @NotNull VcsLogObjectsFactory factory,
-                                                                  @NotNull VirtualFile root) {
-    Hash hash = HashImpl.build(rec.getHash());
-    List<Hash> parents = getParentHashes(factory, rec);
-    TimedVcsCommit commit = factory.createTimedCommit(hash, parents, rec.getCommitTime());
-    return Pair.create(commit, parseRefs(rec.getRefs(), hash, factory, root));
+    handler.runInCurrentThread(null);
+    handlerListener.reportErrors();
   }
 
   @NotNull
@@ -884,12 +822,36 @@ public class GitHistoryUtils {
 
     List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
                                     Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
-    GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    GitLogParser parser = createParserForDetails(handler, project, withRefs, withChanges, parameters);
 
-    StopWatch sw = StopWatch.start("loading details");
+    StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
-    processHandlerOutputByLine(h, parser, converter);
+    Ref<Throwable> parseError = new Ref<>();
+    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
+      try {
+        GitLogRecord record = parser.parseOneRecord(output);
+        if (record != null) {
+          converter.consume(record);
+        }
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
+      catch (Throwable t) {
+        if (parseError.isNull()) {
+          parseError.set(t);
+          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(output) + "\"\n" +
+                    "Command " + handler.printableCommandLine(), t);
+        }
+      }
+    });
+    handler.runInCurrentThread(null);
+    handlerListener.reportErrors();
+
+    if (!parseError.isNull()) {
+      throw new VcsException(parseError.get());
+    }
 
     sw.report();
   }
@@ -907,74 +869,6 @@ public class GitHistoryUtils {
   @NotNull
   private static List<Hash> getParentHashes(@NotNull VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
     return ContainerUtil.map(record.getParentsHashes(), factory::createHash);
-  }
-
-  @NotNull
-  private static GitHeavyCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
-                                             @NotNull GitLogRecord record) throws VcsException {
-    final Collection<String> currentRefs = record.getRefs();
-    List<String> locals = new ArrayList<>();
-    List<String> remotes = new ArrayList<>();
-    List<String> tags = new ArrayList<>();
-    final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
-
-    GitHeavyCommit
-      gitCommit = new GitHeavyCommit(root, AbstractHash.create(record.getHash()), new SHAHash(record.getHash()), record.getAuthorName(),
-                                     record.getCommitterName(),
-                                     record.getDate(), record.getSubject(), record.getFullMessage(),
-                                     new HashSet<>(Arrays.asList(record.getParentsHashes())), record.getFilePaths(root),
-                                     record.getAuthorEmail(),
-                                     record.getCommitterEmail(), tags, locals, remotes,
-                                     record.parseChanges(project, root), record.getAuthorTimeStamp());
-    gitCommit.setCurrentBranch(s);
-    return gitCommit;
-  }
-
-  @Nullable
-  private static String parseRefs(@Nullable SymbolicRefsI refs, @NotNull Collection<String> currentRefs, @NotNull List<String> locals,
-                                  @NotNull List<String> remotes, @NotNull List<String> tags) {
-    if (refs == null) {
-      return null;
-    }
-    for (String ref : currentRefs) {
-      final SymbolicRefs.Kind kind = refs.getKind(ref);
-      if (SymbolicRefs.Kind.LOCAL.equals(kind)) {
-        locals.add(ref);
-      }
-      else if (SymbolicRefs.Kind.REMOTE.equals(kind)) {
-        remotes.add(ref);
-      }
-      else {
-        tags.add(ref);
-      }
-    }
-    if (refs.getCurrent() != null && currentRefs.contains(refs.getCurrent().getName())) {
-      return refs.getCurrent().getName();
-    }
-    return null;
-  }
-
-  @Deprecated
-  @NotNull
-  public static List<GitHeavyCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
-                                                    @NotNull Collection<String> commitsIds) throws VcsException {
-    path = getLastCommitName(project, path);     // adjust path using change manager
-    VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
-                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setSilent(true);
-    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<>(commitsIds));
-
-    String output = h.run();
-    final List<GitHeavyCommit> rc = new ArrayList<>();
-    for (GitLogRecord record : parser.parse(output)) {
-      final GitHeavyCommit gitCommit = createCommit(project, refs, root, record);
-      rc.add(gitCommit);
-    }
-    return rc;
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {
@@ -1031,21 +925,17 @@ public class GitHistoryUtils {
   private static class MyGitLineHandlerListener implements GitLineHandlerListener {
     @NotNull private final GitLineHandler myHandler;
     @NotNull private final Consumer<StringBuilder> myRecordConsumer;
-    private final int myBufferSize;
 
     @NotNull private final StringBuilder myOutput = new StringBuilder();
     @NotNull private final StringBuilder myErrors = new StringBuilder();
     @Nullable private VcsException myException = null;
 
-    private int myRecords = 0;
     private boolean myIsInsideBody = true;
 
     public MyGitLineHandlerListener(@NotNull GitLineHandler handler,
-                                    @NotNull Consumer<StringBuilder> recordConsumer,
-                                    int bufferSize) {
+                                    @NotNull Consumer<StringBuilder> recordConsumer) {
       myHandler = handler;
       myRecordConsumer = recordConsumer;
-      myBufferSize = bufferSize;
 
       myHandler.addLineListener(this);
     }
@@ -1090,10 +980,8 @@ public class GitHistoryUtils {
         int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
         if (nextRecordStart >= 0) {
           myOutput.append(line.substring(0, nextRecordStart));
-          if (++myRecords > myBufferSize) {
-            myRecordConsumer.consume(myOutput);
-            myOutput.setLength(0);
-          }
+          myRecordConsumer.consume(myOutput);
+          myOutput.setLength(0);
           myIsInsideBody = true;
           processOutputLine(line.substring(nextRecordStart));
         }

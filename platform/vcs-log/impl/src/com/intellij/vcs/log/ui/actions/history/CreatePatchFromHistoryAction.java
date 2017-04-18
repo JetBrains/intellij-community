@@ -59,6 +59,6 @@ public class CreatePatchFromHistoryAction extends AnAction implements DumbAware 
     ui.getVcsLog().requestSelectedDetails(detailsList -> {
       List<Change> changes = ui.collectChanges(detailsList, false);
       CreatePatchFromChangesAction.createPatch(project, commitMessage, changes);
-    }, null);
+    });
   }
 }

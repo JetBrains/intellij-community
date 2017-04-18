@@ -57,7 +57,9 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     if (containingFile == null) return;
 
     updateStat();
-    new Worker(myRootSchema, mySchemaFile, position, parameters.getOriginalPosition(), result).work();
+    final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition():
+                                          parameters.getPosition();
+    new Worker(myRootSchema, mySchemaFile, position, completionPosition, result).work();
     result.stopHere();
   }
 
@@ -217,7 +219,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     }
 
 
-    private void addValueVariant(@NotNull String key, @Nullable final String description) {
+    private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") @Nullable final String description) {
       LookupElementBuilder builder = LookupElementBuilder.create(!myWrapInQuotes ? StringUtil.unquoteString(key) : key);
       if (description != null) {
         builder = builder.withTypeText(description);
@@ -241,13 +243,14 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
         builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
       } else if (!hasValue) {
-        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
+        builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
       }
 
       myVariants.add(builder);
     }
 
-    private InsertHandler<LookupElement> createDefaultPropertyInsertHandler(boolean hasValue, boolean insertComma) {
+    private InsertHandler<LookupElement> createDefaultPropertyInsertHandler(@SuppressWarnings("SameParameterValue") boolean hasValue,
+                                                                            boolean insertComma) {
       return new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
@@ -329,7 +332,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
             }
           }
           else {
-            insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma);
+            insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma);
           }
         }
       };

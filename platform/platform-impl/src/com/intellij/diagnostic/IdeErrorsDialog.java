@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,11 +101,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private JPanel myForeignPluginWarningPanel;
   private JPanel myAttachmentWarningPanel;
   private HyperlinkLabel myAttachmentWarningLabel;
+  private JPanel myAttachments;
 
   private int myIndex = 0;
   private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<>();
   private List<AbstractMessage> myRawMessages;
   private final MessagePool myMessagePool;
+  private final Set<AbstractMessage> myMessagesWithIncludedAttachments = new THashSet<>(1);
+
   private HeaderlessTabbedPane myTabs;
   @Nullable
   private CommentsTabForm myCommentsTabForm;
@@ -136,6 +140,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       } else {
         myDetailsTabForm.setDevelopers(ourDevelopersList);
       }
+    }
+    ensureAttachmentsAreVisible();
+  }
+
+  private void ensureAttachmentsAreVisible() {
+    if (myAttachmentsTabForm.getContentPane().isVisible()) {
+      pack();
     }
   }
 
@@ -296,7 +307,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     };
     if (!myInternalMode) {
-      myDetailsTabForm = new DetailsTabForm(null, false);
+      myDetailsTabForm = new DetailsTabForm(null);
       myCommentsTabForm = new CommentsTabForm();
       myCommentsTabForm.addCommentsListener(commentsListener);
       myTabs.addTab(DiagnosticBundle.message("error.comments.tab.title"), myCommentsTabForm.getContentPane());
@@ -307,7 +318,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (analyzePlatformAction != null) {
         myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
       }
-      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction, true);
+      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
     }
@@ -321,6 +332,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         updateAttachmentWarning(getSelectedMessage());
       }
     });
+    myAttachments.add(myAttachmentsTabForm.getContentPane(), BorderLayout.CENTER);
 
     int activeTabIndex = Integer.parseInt(PropertiesComponent.getInstance().getValue(ACTIVE_TAB_OPTION, "0"));
     if (activeTabIndex >= myTabs.getTabCount() || activeTabIndex < 0) {
@@ -366,7 +378,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          myTabs.setSelectedIndex(myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()));
           myAttachmentsTabForm.selectFirstIncludedAttachment();
         }
       }
@@ -433,13 +444,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (myAnalyzeAction != null) {
       myAnalyzeAction.update();
     }
+    ensureAttachmentsAreVisible();
   }
 
   private void updateAttachmentWarning(final AbstractMessage message) {
     if (message == null) return;
-    if (Registry.is("ide.diagnostics.suggest.sending.all.attachments")) {
+
+    if (!myMessagesWithIncludedAttachments.contains(message) &&
+        (Registry.is("ide.diagnostics.suggest.sending.all.attachments") || myInternalMode)) {
       for(Attachment attachment:message.getAllAttachments()) attachment.setIncluded(true);
+      myMessagesWithIncludedAttachments.add(message);
     }
+    
     final List<Attachment> includedAttachments = message.getIncludedAttachments();
     if (!includedAttachments.isEmpty()) {
       myAttachmentWarningPanel.setVisible(true);
@@ -663,18 +679,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myDetailsTabForm.setAssigneeId(message == null ? null : message.getAssigneeId());
 
       List<Attachment> attachments = message != null ? message.getAllAttachments() : Collections.emptyList();
-      if (!attachments.isEmpty()) {
-        if (myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()) == -1) {
-          myTabs.addTab(DiagnosticBundle.message("error.attachments.tab.title"), myAttachmentsTabForm.getContentPane());
-        }
-        myAttachmentsTabForm.setAttachments(attachments);
-      }
-      else {
-        int index = myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane());
-        if (index != -1) {
-          myTabs.removeTabAt(index);
-        }
-      }
+      myAttachmentsTabForm.getContentPane().setVisible(!attachments.isEmpty());
+      myAttachmentsTabForm.setAttachments(attachments);
     }
     finally {
       myMute = false;
@@ -711,16 +717,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   public JComponent getPreferredFocusedComponent() {
     final int selectedIndex = myTabs.getSelectedIndex();
-    JComponent result;
+    JComponent result = null;
     if (selectedIndex == 0) {
       result = myInternalMode ? myDetailsTabForm.getPreferredFocusedComponent() : myCommentsTabForm.getPreferredFocusedComponent();
     }
-    else if (selectedIndex == 1) {
-      result = myInternalMode ? myAttachmentsTabForm.getPreferredFocusedComponent() : myDetailsTabForm.getPreferredFocusedComponent();
+    else if (selectedIndex == 1 && !myInternalMode) {
+      result = myDetailsTabForm.getPreferredFocusedComponent();
     }
-    else {
-      result = myAttachmentsTabForm.getPreferredFocusedComponent();
-    }
+
     return result != null ? result : super.getPreferredFocusedComponent();
   }
 

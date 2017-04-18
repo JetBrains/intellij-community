@@ -214,7 +214,8 @@ public class IncProjectBuilder {
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
           cause instanceof IOException ||
-          cause instanceof BuildDataCorruptedException) {
+          cause instanceof BuildDataCorruptedException ||
+          (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
         requestRebuild(e, cause);
       }
       else {

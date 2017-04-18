@@ -153,7 +153,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
     boolean found = false;
     for (String tooltip : tooltips) {
-      if (tooltip.contains("reason: no instance(s) of type variable(s) K, U exist so that Map&lt;K, U&gt; conforms to Function&lt;U, V&gt;")) {
+      if (tooltip.contains("no instance(s) of type variable(s) K, U exist so that Map&lt;K, U&gt; conforms to Function&lt;U, V&gt;")) {
         found = true;
         break;
       }
@@ -173,6 +173,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() { doTest(); }
   //public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() { doTest(); }
   public void testRecursiveTypeWithCapture() { doTest(); }
+
+  public void testApplicabilityCheckFailsExpressionTypeCheckPasses() throws Exception {
+    doTest();
+  }
+
+  public void testTopLevelParentNoParameters() throws Exception {
+    doTest();
+  }
 
   private void doTest() {
     doTest(false);

@@ -128,5 +128,42 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testStaticallyImportedConstant() {
     assertIndexOnRebuild("pack/Foo.java", "pack/Bar.java")
   }
+
+  fun testOccurrences() {
+
+    assertIndexOnRebuild("Foo.java", "Bar.java")
+  }
+
+  fun testConstructors() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testAnnotation() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution2() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution3() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution4() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution5() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testQualifierResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 

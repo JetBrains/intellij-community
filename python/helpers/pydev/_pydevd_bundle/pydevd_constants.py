@@ -51,6 +51,7 @@ if IS_JYTHON:
     if sys.version_info[0] == 2 and sys.version_info[1] < 5:
         IS_JYTH_LESS25 = True
 
+IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
 
 try:
@@ -59,7 +60,7 @@ try:
 except:
     pass
 else:
-    if python_implementation == 'CPython':
+    if python_implementation == 'CPython' and not IS_PYTHON_STACKLESS:
         # Only available for CPython!
         if (
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
@@ -103,7 +104,7 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
                 (IS_PY3K and sys.version_info[1] >= 3))
 
 
-INTERACTIVE_MODE_AVAILABLE = os.getenv('DISPLAY') is not None
+INTERACTIVE_MODE_AVAILABLE = sys.platform in ('darwin', 'win32') or os.getenv('DISPLAY') is not None
 
 
 def protect_libraries_from_patching():

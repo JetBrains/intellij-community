@@ -57,16 +57,21 @@ fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultsSerializati
 
 inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
 
-fun <T> Element.deserialize(aClass: Class<T>): T {
+fun <T> Element.deserialize(clazz: Class<T>): T {
+  if (clazz == Element::class.java) {
+    @Suppress("UNCHECKED_CAST")
+    return this as T
+  }
+
   @Suppress("UNCHECKED_CAST")
   try {
-    return (serializer.getClassBinding(aClass) as NotNullDeserializeBinding).deserialize(null, this) as T
+    return (serializer.getClassBinding(clazz) as NotNullDeserializeBinding).deserialize(null, this) as T
   }
   catch (e: XmlSerializationException) {
     throw e
   }
   catch (e: Exception) {
-    throw XmlSerializationException("Cannot deserialize class ${aClass.name}", e)
+    throw XmlSerializationException("Cannot deserialize class ${clazz.name}", e)
   }
 }
 
@@ -103,17 +108,24 @@ fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
   (this as PersistentStateComponent<Any>).loadState(state)
 }
 
-fun <T : Any> T.serializeInto(element: Element) {
-  try {
-    val binding = serializer.getClassBinding(javaClass)
-    (binding as BeanBinding).serializeInto(this, element, null)
+fun <T : Any> T.serializeInto(target: Element) {
+  if (this is Element) {
+    val iterator = children.iterator()
+    for (child in iterator) {
+      iterator.remove()
+      target.addContent(child)
+    }
+
+    val attributeIterator = attributes.iterator()
+    for (attribute in attributeIterator) {
+      attributeIterator.remove()
+      target.setAttribute(attribute)
+    }
+    return
   }
-  catch (e: XmlSerializationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    throw XmlSerializationException(e)
-  }
+
+  val binding = serializer.getClassBinding(javaClass)
+  (binding as BeanBinding).serializeInto(this, target, null)
 }
 
 private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {

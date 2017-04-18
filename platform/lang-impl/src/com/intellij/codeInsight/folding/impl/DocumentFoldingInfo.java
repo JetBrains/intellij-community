@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,8 +89,8 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
       if (!region.isValid()) continue;
       PsiElement element = info.getPsiElement(region);
       boolean expanded = region.isExpanded();
-      boolean collapseByDefault = element != null &&
-                                  FoldingPolicy.isCollapseByDefault(element) &&
+      Boolean storedCollapseByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+      boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
                                   !FoldingUtil.caretInsideRange(editor, TextRange.create(region));
       if (collapseByDefault == expanded || element == null) {
         FoldingInfo fi = new FoldingInfo(region.getPlaceholderText(), expanded);

@@ -1,15 +1,15 @@
 from typing import Any, Callable, Iterator, IO, List, Optional, TypeVar, Union
 
 
-T = TypeVar('T')
-Decorator = Callable[[T], T]
+_T = TypeVar('_T')
+_Decorator = Callable[[_T], _T]
 
 
 def _posixify(name: str) -> str:
     ...
 
 
-def safecall(func: T) -> T:
+def safecall(func: _T) -> _T:
     ...
 
 
@@ -57,7 +57,7 @@ class LazyFile:
         ...
 
 
-class KeepOpenFile(object):
+class KeepOpenFile:
     _file: IO
 
     def __init__(self, file: IO) -> None:

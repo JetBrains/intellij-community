@@ -242,13 +242,16 @@ public class MoveClassesOrPackagesUtil {
 
       file = moveDestination.findFile(file.getName());
 
-      if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) && !PsiUtil.isModuleFile(file)) {
-        // Do not rely on class instance identity retention after setPackageName (Scala)
-        String aClassName = aClass.getName();
-        ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
-        newClass = findClassByName((PsiClassOwner)file, aClassName);
-        LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
-      }
+    }
+
+    if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
+        !PsiUtil.isModuleFile(file) &&
+        !Comparing.strEqual(newPackage.getQualifiedName(), ((PsiClassOwner)file).getPackageName())) {
+      // Do not rely on class instance identity retention after setPackageName (Scala)
+      String aClassName = aClass.getName();
+      ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
+      newClass = findClassByName((PsiClassOwner)file, aClassName);
+      LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
     }
     return newClass;
   }

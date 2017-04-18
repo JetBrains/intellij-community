@@ -479,7 +479,12 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
            !(method.getReturnType() instanceof PsiPrimitiveType) &&
            !method.isConstructor() &&
            !getNullityManager(method).hasNullability(method) &&
-           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL);
+           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) && 
+           !hasInheritableNotNull(superMethod);
+  }
+
+  private static boolean hasInheritableNotNull(PsiModifierListOwner owner) {
+    return AnnotationUtil.isAnnotated(owner, "javax.annotation.constraints.NotNull", true);
   }
 
   private void checkParameters(PsiMethod method,
@@ -515,7 +520,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       }
       if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
         for (PsiParameter superParameter : superParameters) {
-          if (!nullableManager.hasNullability(parameter) && isNotNullNotInferred(superParameter, false, IGNORE_EXTERNAL_SUPER_NOTNULL)) {
+          if (!nullableManager.hasNullability(parameter) && isNotNullNotInferred(superParameter, false, IGNORE_EXTERNAL_SUPER_NOTNULL) && !hasInheritableNotNull(superParameter)) {
             final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull())
                                       ? new AddNotNullAnnotationFix(parameter)
                                       : createChangeDefaultNotNullFix(nullableManager, superParameter);
@@ -576,10 +581,10 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       boolean hasAnnotatedParameter = false;
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        parameterAnnotated[i] = isNotNullNotInferred(parameter, false, false);
+        parameterAnnotated[i] = isNotNullNotInferred(parameter, false, false) && !hasInheritableNotNull(parameter);
         hasAnnotatedParameter |= parameterAnnotated[i];
       }
-      if (hasAnnotatedParameter || annotated.isDeclaredNotNull) {
+      if (hasAnnotatedParameter || annotated.isDeclaredNotNull && !hasInheritableNotNull(method)) {
         PsiManager manager = method.getManager();
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final boolean superMethodApplicable = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull);

@@ -80,7 +80,7 @@ public interface Document extends UserDataHolder {
   @NotNull
   @Contract(pure=true)
   default CharSequence getImmutableCharSequence() {
-    return getCharsSequence();
+    return getText();
   }
 
   /**
@@ -194,23 +194,27 @@ public interface Document extends UserDataHolder {
    * from the document (the read-only state can be removed by checking the file out
    * from the version control system, or by clearing the read-only attribute on the file).
    */
-  void fireReadOnlyModificationAttempt();
+  default void fireReadOnlyModificationAttempt() {
+  }
 
   /**
    * Adds a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void addDocumentListener(@NotNull DocumentListener listener);
+  default void addDocumentListener(@NotNull DocumentListener listener) {
+  }
 
-  void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable);
+  default void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
+  }
 
   /**
    * Removes a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  void removeDocumentListener(@NotNull DocumentListener listener);
+  default void removeDocumentListener(@NotNull DocumentListener listener) {
+  }
 
   /**
    * Creates a range marker which points to the specified range of text in the document and

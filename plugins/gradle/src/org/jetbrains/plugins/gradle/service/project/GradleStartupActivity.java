@@ -28,7 +28,8 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGe
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider;
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -59,6 +61,7 @@ public class GradleStartupActivity implements StartupActivity {
   public void runActivity(@NotNull final Project project) {
     configureBuildClasspath(project);
     showNotificationForUnlinkedGradleProject(project);
+    ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> GradleExtensionsSettings.load(project));
 
     final GradleResourceCompilerConfigurationGenerator buildConfigurationGenerator = new GradleResourceCompilerConfigurationGenerator(project);
     CompilerManager.getInstance(project).addBeforeTask(new CompileTask() {

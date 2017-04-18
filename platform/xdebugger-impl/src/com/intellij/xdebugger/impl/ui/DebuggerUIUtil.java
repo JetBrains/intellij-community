@@ -132,7 +132,7 @@ public class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
-    EditorTextField textArea = new TextViewer("Evaluating...", project);
+    EditorTextField textArea = new TextViewer(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE, project);
     textArea.setBackground(HintUtil.getInformationColor());
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);

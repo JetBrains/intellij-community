@@ -24,7 +24,7 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
@@ -35,11 +35,8 @@ import java.util.List;
 /**
  * @author lex
  */
-public interface DebugProcess {
+public interface DebugProcess extends UserDataHolder {
   @NonNls String JAVA_STRATUM = "Java";
-
-  <T> T    getUserData(Key<T> key);
-  <T> void putUserData(Key<T> key, T value);
 
   Project getProject();
 

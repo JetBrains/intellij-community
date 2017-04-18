@@ -52,6 +52,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -302,9 +303,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public abstract SelectInTarget createSelectInTarget();
 
   public final TreePath getSelectedPath() {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null && paths.length == 1) return paths[0];
-    return null;
+    return myTree == null ? null : TreeUtil.getSelectedPathIfOne(myTree);
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
@@ -319,14 +318,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
-    if (path == null) {
-      return null;
-    }
-    Object lastPathComponent = path.getLastPathComponent();
-    if (!(lastPathComponent instanceof DefaultMutableTreeNode)) {
-      return null;
-    }
-    return (DefaultMutableTreeNode)lastPathComponent;
+    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
   public final Object getSelectedElement() {
@@ -439,9 +431,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     List<Element> subPanes = element.getChildren(ELEMENT_SUBPANE);
     for (Element subPane : subPanes) {
       String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
-      TreeState treeState = new TreeState();
-      treeState.readExternal(subPane);
-      if (!treeState.isEmpty()) myReadTreeState.put(subId, treeState);
+      TreeState treeState = TreeState.createFrom(subPane);
+      if (!treeState.isEmpty()) {
+        myReadTreeState.put(subId, treeState);
+      }
     }
   }
 
@@ -461,13 +454,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected void saveExpandedPaths() {
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
-      if (!treeState.isEmpty()) myReadTreeState.put(getSubId(), treeState);
+      if (!treeState.isEmpty()) {
+        myReadTreeState.put(getSubId(), treeState);
+      }
     }
   }
 
   public final void restoreExpandedPaths(){
     TreeState treeState = myReadTreeState.get(getSubId());
-    if (treeState != null && !treeState.isEmpty()) treeState.applyTo(myTree);
+    if (treeState != null && !treeState.isEmpty()) {
+      treeState.applyTo(myTree);
+    }
   }
 
   public void installComparator() {

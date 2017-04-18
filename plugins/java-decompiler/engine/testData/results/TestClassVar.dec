@@ -9,7 +9,7 @@ public class TestClassVar {
          try {
             System.out.println();// 29
          } finally {
-            if(this.field_boolean) {// 32
+            if (this.field_boolean) {// 32
                System.out.println();// 33
             }
 
@@ -31,7 +31,7 @@ public class TestClassVar {
             ;
          }
 
-         if(var2 != var1) {// 54
+         if (var2 != var1) {// 54
             System.out.println();// 55
          }
       }

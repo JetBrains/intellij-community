@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class StartupActionScriptManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.StartupActionScriptManager");
   @NonNls public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
@@ -47,7 +47,7 @@ public class StartupActionScriptManager {
     for (ActionCommand actionCommand : commands) {
       actionCommand.execute();
     }
-    if (commands.size() > 0) {
+    if (!commands.isEmpty()) {
       commands.clear();
 
       saveActionScript(commands);
@@ -141,6 +141,7 @@ public class StartupActionScriptManager {
              (myDestination == null ? "" : ", " + myDestination.getAbsolutePath()) + "]";
     }
 
+    @Override
     public void execute() throws IOException {
       // create dirs for destination
       File parentFile = myDestination.getParentFile();
@@ -174,9 +175,9 @@ public class StartupActionScriptManager {
 
   public static class UnzipCommand implements Serializable, ActionCommand {
     @NonNls private static final String action = "unzip";
-    private File mySource;
-    private FilenameFilter myFilenameFilter;
-    private File myDestination;
+    private final File mySource;
+    private final FilenameFilter myFilenameFilter;
+    private final File myDestination;
 
     public UnzipCommand(File source, File destination) {
       this(source, destination, null);
@@ -193,6 +194,7 @@ public class StartupActionScriptManager {
              (myDestination == null ? "" : ", " + myDestination.getAbsolutePath()) + "]";
     }
 
+    @Override
     public void execute() throws IOException {
       if (!mySource.exists()) {
         // Note, that we can not use LOG at this moment because it throws AssertionError 
@@ -234,6 +236,7 @@ public class StartupActionScriptManager {
       return action + "[" + mySource.getAbsolutePath() + "]";
     }
 
+    @Override
     public void execute() throws IOException {
       if (mySource != null && mySource.exists() && !FileUtilRt.delete(mySource)) {
         //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr

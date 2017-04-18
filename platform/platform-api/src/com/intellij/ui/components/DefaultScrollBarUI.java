@@ -389,9 +389,19 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (parent instanceof JScrollPane) {
         JScrollPane pane = (JScrollPane)parent;
         Component view = pane.getViewport().getView();
-        if (view != null) view.dispatchEvent(MouseEventAdapter.convert(event, view));
+        if (view != null) {
+          Point point = event.getLocationOnScreen();
+          SwingUtilities.convertPointFromScreen(point, view);
+          Component target = SwingUtilities.getDeepestComponentAt(view, point.x, point.y);
+          if (target != null) target.dispatchEvent(MouseEventAdapter.convert(event, target));
+        }
       }
       return true;
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (myScrollBar != null && myScrollBar.isEnabled()) redispatchIfTrackNotClickable(e);
     }
 
     @Override

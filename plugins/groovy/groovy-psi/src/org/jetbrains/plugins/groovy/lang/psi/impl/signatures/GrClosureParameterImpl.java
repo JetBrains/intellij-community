@@ -15,15 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * Created by Max Medvedev on 14/03/14
@@ -47,7 +46,19 @@ class GrClosureParameterImpl implements GrClosureParameter {
   @Nullable
   @Override
   public PsiType getType() {
-    PsiType type = mySubstitutor.substitute(myParameter.getType());
+    PsiType typeParameter = myParameter.getType();
+    PsiType type = mySubstitutor.substitute(typeParameter);
+    if (typeParameter instanceof PsiClassType) {
+      final PsiClass parameterClass = ((PsiClassType)typeParameter).resolve();
+      if (parameterClass instanceof PsiTypeParameter && type != null) {
+
+        PsiClassType[] types = parameterClass.getExtendsListTypes();
+        if (types.length > 0 && !TypesUtil.isAssignableByMethodCallConversion(types[0], type, myParameter)) {
+          type = types[0];
+        }
+      }
+    }
+
     return myEraseType ? TypeConversionUtil.erasure(type) : type;
   }
 

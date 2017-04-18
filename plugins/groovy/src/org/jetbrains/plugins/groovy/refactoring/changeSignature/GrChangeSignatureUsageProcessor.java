@@ -423,8 +423,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     if (beforeMethodChange) {
       if (usageInfo instanceof OverriderUsageInfo) {
-        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)((OverriderUsageInfo)usageInfo).getOverridingMethod(),
-                                  ((OverriderUsageInfo)usageInfo).getBaseMethod());
+        PsiMethod method = ((OverriderUsageInfo)usageInfo).getOverridingMethod();
+        if (!(method instanceof GrMethod)) return true;
+        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)method, ((OverriderUsageInfo)usageInfo).getBaseMethod());
       }
     }
     else {

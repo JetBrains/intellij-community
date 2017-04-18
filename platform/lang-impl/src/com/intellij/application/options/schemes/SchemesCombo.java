@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,19 +117,6 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   }
 
   private class MyListCellRenderer extends ColoredListCellRenderer<MySchemeListItem<T>> {
-    private ListCellRendererWrapper<MySchemeListItem> myWrapper = new ListCellRendererWrapper<MySchemeListItem>() {
-      @Override
-      public void customize(JList list,
-                            MySchemeListItem value,
-                            int index,
-                            boolean selected,
-                            boolean hasFocus) {
-        if (value.isSeparator()) {
-          setText(" Stored in " + value.getPresentableText());
-          setSeparator();
-        }
-      }
-    };
 
     @Override
     public Component getListCellRendererComponent(JList<? extends MySchemeListItem<T>> list,
@@ -136,14 +124,15 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
+      Component c;
       if (value != null && value.isSeparator()) {
-        Component c = myWrapper.getListCellRendererComponent(list, value, index, selected, hasFocus);
-        if (c instanceof TitledSeparator) {
-          ((TitledSeparator)c).getLabel().setForeground(JBColor.GRAY);
-          return c;
-        }
+        c = new MyTitledSeparator("Stored in " + value.getPresentableText());
       }
-      return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+      else {
+        c = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+        if (!selected) c.setBackground(JBColor.WHITE);
+      }
+      return c;
     }
 
     @Override
@@ -193,6 +182,34 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     @Override
     public String getPresentableText() {
       return myTitle;
+    }
+  }
+
+  private static class MyTitledSeparator extends JPanel {
+
+    public MyTitledSeparator(@NotNull String titleText) {
+      super();
+      setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+      JLabel label = new JLabel(titleText);
+      int verticalSeparatorOffset = label.getPreferredSize().height / 2;
+      setBackground(JBColor.WHITE);
+      add(createSeparator(verticalSeparatorOffset));
+      label.setHorizontalAlignment(SwingConstants.CENTER);
+      add(label);
+      label.setBackground(JBColor.WHITE);
+      label.setForeground(JBColor.GRAY);
+      label.setFont(UIUtil.getTitledBorderFont());
+      add(createSeparator(verticalSeparatorOffset));
+    }
+
+    private static JComponent createSeparator(int verticalOffset) {
+      JPanel separatorPanel = new JPanel();
+      separatorPanel.setBackground(JBColor.WHITE);
+      separatorPanel.setLayout(new BoxLayout(separatorPanel, BoxLayout.Y_AXIS));
+      separatorPanel.add(Box.createVerticalStrut(verticalOffset));
+      JSeparator separator = new JSeparator();
+      separatorPanel.add(separator);
+      return separatorPanel;
     }
   }
 }

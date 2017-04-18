@@ -57,7 +57,7 @@ public class BasicsTest extends IntegrationTestCase {
     LocalHistory.getInstance().putUserLabel(myProject, "global");
 
     assertEquals(3, getRevisionsFor(f).size());
-    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertEquals(4, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putUserLabel(myProject, "file");
 
@@ -73,7 +73,7 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile f = createChildData(myRoot, "file.txt");
 
     assertEquals(2, getRevisionsFor(f).size());
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putSystemLabel(myProject, "label");
 
@@ -82,7 +82,7 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals("label", rr.get(1).getLabel());
 
     rr = getRevisionsFor(myRoot);
-    assertEquals(3, rr.size());
+    assertEquals(4, rr.size());
     assertEquals("label", rr.get(1).getLabel());
   }
 
@@ -157,7 +157,7 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(1, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(2, getRevisionsFor(myRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
 
     ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
       @Override
@@ -181,7 +181,7 @@ public class BasicsTest extends IntegrationTestCase {
     jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
     assertEquals(2, jarRoot.findChild("file.txt").contentsToByteArray()[0]);
 
-    assertEquals(2, getRevisionsFor(myRoot).size());
-    assertEquals(1, getRevisionsFor(jarRoot).size());
+    assertEquals(3, getRevisionsFor(myRoot).size());
+    assertEquals(2, getRevisionsFor(jarRoot).size());
   }
 }

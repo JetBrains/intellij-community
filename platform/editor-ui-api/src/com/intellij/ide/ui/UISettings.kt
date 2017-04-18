@@ -19,6 +19,7 @@ import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
@@ -49,7 +50,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   // should be stored or shouldn't by the provided filter only.
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_FACE")
-  var fontFace by storedProperty<String?>()
+  var fontFace by string()
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
@@ -113,7 +114,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
-  var smoothScrolling by storedProperty(SystemInfo.isMac && (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9")))
+  var smoothScrolling by storedProperty(SystemInfo.isMac && (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("9")))
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
@@ -264,6 +265,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   }
 
   companion object {
+    private val LOG = Logger.getInstance(UISettings::class.java)
+
     const val ANIMATION_DURATION = 300 // Milliseconds
 
     /** Not tabbed pane.  */
@@ -369,14 +372,16 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
     @JvmStatic
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+      var size = readSize
       if (readScale == null || readScale <= 0) {
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) return UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
       }
       else {
-        return ((readSize.toFloat() / readScale) * normalizingScale).toInt()
+        size = ((readSize.toFloat() / readScale) * normalizingScale).toInt()
       }
-      return readSize
+      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$normalizingScale")
+      return size
     }
   }
 

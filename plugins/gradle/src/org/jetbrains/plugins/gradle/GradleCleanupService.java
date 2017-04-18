@@ -25,7 +25,7 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
  * @author Vladislav.Soroka
  * @since 2/8/2017
  */
-public class GradleCleanupService extends ApplicationComponent.Adapter implements Disposable {
+public class GradleCleanupService implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(GradleCleanupService.class);
 
   @Override

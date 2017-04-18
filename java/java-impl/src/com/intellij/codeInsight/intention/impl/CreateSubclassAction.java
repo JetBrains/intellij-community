@@ -26,6 +26,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
@@ -123,6 +124,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
     }
 
+    if (shouldCreateInnerClass(psiClass) && !file.getManager().isInProject(file)) {
+      return false;
+    }
+
     myText = getTitle(psiClass);
     return true;
   }
@@ -145,11 +150,16 @@ public class CreateSubclassAction extends BaseIntentionAction {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
     LOG.assertTrue(psiClass != null);
-    if (psiClass.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.getContainingClass() != null) {
+    if (shouldCreateInnerClass(psiClass)) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       createInnerClass(psiClass);
       return;
     }
     createTopLevelClass(psiClass);
+  }
+
+  private boolean shouldCreateInnerClass(PsiClass psiClass) {
+    return psiClass.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.getContainingClass() != null;
   }
 
   public static void createInnerClass(final PsiClass aClass) {

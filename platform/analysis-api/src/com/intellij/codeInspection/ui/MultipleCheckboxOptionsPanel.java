@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -40,10 +42,25 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
     }
 
     public void addCheckbox(String label, @NonNls String property) {
+        addCheckboxEx(label, property);
+    }
+
+    public JCheckBox addCheckboxEx(String label, @NonNls String property) {
         final boolean selected = myOptionAccessor.getOption(property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
         configureCheckbox(myOptionAccessor, property, checkBox);
         addComponent(checkBox);
+        return checkBox;
+    }
+
+    public JCheckBox addDependentCheckBox(String label, @NonNls String property, JCheckBox controller) {
+        final JCheckBox checkBox = addCheckboxEx(label, property);
+        checkBox.setBorder(new EmptyBorder(new JBInsets(0, 30, 0, 0)));
+        controller.addChangeListener(e -> {
+            checkBox.setEnabled(controller.isEnabled() && controller.isSelected());
+        });
+        checkBox.setEnabled(controller.isEnabled() && controller.isSelected());
+        return checkBox;
     }
 
     public void addComponent(JComponent component) {
@@ -68,12 +85,6 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         model.addChangeListener(changeListener);
     }
 
-    public static void initAndConfigureCheckbox(InspectionProfileEntry owner, String property, JCheckBox checkBox) {
-        OptionAccessor optionAccessor = new OptionAccessor.Default(owner);
-        checkBox.setSelected(optionAccessor.getOption(property));
-        configureCheckbox(optionAccessor, property, checkBox);
-    }
-
     private static class CheckboxChangeListener implements ChangeListener {
         private final OptionAccessor myAccessor;
         private final String property;
@@ -89,6 +100,5 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         public void stateChanged(ChangeEvent e) {
             myAccessor.setOption(property, model.isSelected());
         }
-
     }
 }

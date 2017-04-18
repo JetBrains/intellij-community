@@ -376,4 +376,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testNullArgumentMappedToPositionalParameter() {
     doTest();
   }
+
+  // PY-23138
+  public void testHomogeneousTuplePlusHeterogeneousTupleWithTheSameElementsType() {
+    doTest();
+  }
 }

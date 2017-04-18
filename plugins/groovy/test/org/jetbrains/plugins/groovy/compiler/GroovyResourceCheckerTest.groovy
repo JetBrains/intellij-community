@@ -77,4 +77,18 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
     assertEmpty checkResources()
   }
 
+  void "test stop after errors in one module"() {
+    Module depModule = addModule("dependent", false)
+    ModuleRootModificationUtil.addDependency(depModule, myModule)
+    addGroovyLibrary(depModule)
+    PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), JavaResourceRootType.RESOURCE)
+
+    myFixture.addFileToProject('res/Util.groovy', '@groovy.transform.CompileStatic class C1 {{ println Xxx1.name }}')
+    myFixture.addFileToProject('dependent/res/Usage.groovy', '@groovy.transform.CompileStatic class C2 {{ println Xxx2.name }}')
+
+    def messages = checkResources()
+    assert messages.find { it.message.contains('Xxx1') }
+    assert !messages.find { it.message.contains('Xxx2') }
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,25 @@ public class UnnecessaryInitCauseInspectionTest extends LightInspectionTestCase 
                  "        throw exception;\n" +
                  "    }\n" +
                  "}");
+  }
+
+  public void testIncompatibleType() {
+    doTest("import java.io.*;" +
+           "class X {" +
+           "  void m() throws Exception {" +
+           "    try {" +
+           "    }catch (RuntimeException ex) {" +
+           "       YException wrapper = new YException(\"foo\");" +
+           "       wrapper.initCause(ex);" +
+           "       throw wrapper;" +
+           "    }" +
+           "  }" +
+           "" +
+           "  class YException extends Exception {" +
+           "    public YException(String msg) { super(msg); }" +
+           "    public YException(String msg, IOException cause) { super(msg, cause); }" +
+           "  }" +
+           "}");
   }
 
   @Nullable

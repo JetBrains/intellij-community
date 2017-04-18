@@ -98,6 +98,16 @@ class GitRepositoryReader {
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
   }
 
+  @NotNull
+  GitHooksInfo readHooksInfo() {
+    return new GitHooksInfo(isExistingExecutableFile(myGitFiles.getPreCommitHookFile()),
+                            isExistingExecutableFile(myGitFiles.getPrePushHookFile()));
+  }
+
+  private static boolean isExistingExecutableFile(@NotNull File file) {
+    return file.exists() && file.canExecute();
+  }
+
   @Nullable
   private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
     String currentRevision;

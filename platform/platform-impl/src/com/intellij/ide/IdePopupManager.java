@@ -79,9 +79,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
               && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
             shouldCloseAllPopup = true;
           }
-        }
-        if (!shouldCloseAllPopup && isPopupWindow(sourceWindow) && sourceWindow.getParent() == ((WindowEvent)e).getOppositeWindow()) {
-          shouldCloseAllPopup = true;
+          else if (focused instanceof Dialog && ((Dialog)focused).isModal()) {
+            // close all popups except one that is opening a modal dialog
+            closeAllPopups(true, focused.getOwner());
+            return;
+          }
         }
 
         if (shouldCloseAllPopup) {
@@ -111,10 +113,18 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   }
 
   public boolean closeAllPopups(boolean forceRestoreFocus) {
+    return closeAllPopups(forceRestoreFocus, null);
+  }
+
+  private boolean closeAllPopups(boolean forceRestoreFocus, Window window) {
     if (myDispatchStack.size() == 0) return false;
 
     boolean closed = true;
     for (IdePopupEventDispatcher each : myDispatchStack) {
+      if (window != null && !(window instanceof Frame) && window == UIUtil.getWindow(each.getComponent())) {
+        // do not close a heavyweight popup that is opened in the specified window
+        continue;
+      }
       if (forceRestoreFocus) {
         each.setRestoreFocusSilentely();
       }

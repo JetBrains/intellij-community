@@ -40,17 +40,6 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   public EditorColorsScheme getDelegate() {
     return myDelegate;
   }
-
-  @Nullable
-  @Override
-  public Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache() {
-    return myDelegate.getGeneratedTextAttributesCache();
-  }
-
-  @Override
-  public void dropGeneratedTextAttributesCache() {
-    myDelegate.dropGeneratedTextAttributesCache();
-  }
   
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;

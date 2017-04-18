@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports conditional expressions with <em>then</em> and <em>else</em> branches so similar that the conditional expression can be pushed inside, thereby shortening the code.
+<p>For example the following conditional expression:
+  <pre><code>condition ? message("value: " + 1) : message("value: " + 2)</code></pre>
+Can be pushed inside and transformed into:
+  <pre><code>message("value: " + (condition ? 1 : 2))</code></pre>
+<!-- tooltip end -->
+<p>
+  <small>New in 2017.2</small>
+</body>
+</html>

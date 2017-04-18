@@ -42,7 +42,12 @@ public abstract class ReadOnlyASTNode extends UserDataHolderBase implements ASTN
     myIndex = index;
   }
 
-  public abstract List<ASTNode> getChildList();
+  @NotNull
+  public List<ASTNode> getChildList() {
+    return ContainerUtil.immutableList(getChildArray());
+  }
+
+  protected abstract ASTNode[] getChildArray();
 
   @Override
   public ReadOnlyASTNode getTreeParent() {
@@ -56,45 +61,32 @@ public abstract class ReadOnlyASTNode extends UserDataHolderBase implements ASTN
 
   @Override
   public ASTNode getFirstChildNode() {
-    return ContainerUtil.getFirstItem(getChildList());
+    ASTNode[] kids = getChildArray();
+    return kids.length > 0 ? kids[0] : null;
   }
 
   @Override
   public ASTNode getLastChildNode() {
-    return ContainerUtil.getLastItem(getChildList());
+    ASTNode[] kids = getChildArray();
+    return kids.length > 0 ? kids[kids.length - 1] : null;
   }
 
   @Override
   public ASTNode getTreeNext() {
-    List<ASTNode> list = getTreeParent().getChildList();
-    return list.size() > myIndex + 1? list.get(myIndex + 1) : null;
+    ASTNode[] kids = getTreeParent().getChildArray();
+    return kids.length > myIndex + 1 ? kids[myIndex + 1] : null;
   }
 
   @Override
   public ASTNode getTreePrev() {
-    return myIndex > 0 ? getTreeParent().getChildList().get(myIndex - 1) : null;
+    return myIndex > 0 ? getTreeParent().getChildArray()[myIndex - 1] : null;
   }
 
   @NotNull
   @Override
   public ASTNode[] getChildren(@Nullable final TokenSet filter) {
-    List<ASTNode> list = getChildList();
-    if (list.isEmpty()) return EMPTY_ARRAY;
-    if (filter != null) {
-      int count = 0;
-      for (ASTNode node : list) {
-        if (filter.contains(node.getElementType())) count ++;
-      }
-      ASTNode[] result = new ASTNode[count];
-      count = 0;
-      for (ASTNode node : list) {
-        if (filter.contains(node.getElementType())) result[count ++] = node;
-      }
-      return result;
-    }
-    else {
-      return list.toArray(new ASTNode[list.size()]);
-    }
+    ASTNode[] kids = getChildArray();
+    return kids.length == 0 ? EMPTY_ARRAY : kids.clone();
   }
 
   @NotNull

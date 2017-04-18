@@ -93,13 +93,16 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
+        if (paths.isEmpty()) return;
         for (VFileEvent event : events) {
           if (!event.isFromRefresh() || !(event instanceof VFileContentChangeEvent)) {
             continue;
           }
 
+          String eventPath = event.getPath();
+
           for (String path : paths) {
-            if (path.equals(event.getPath())) {
+            if (path.equals(eventPath)) {
               module.getMessageBus().syncPublisher(StateStorageManagerKt.getSTORAGE_TOPIC()).storageFileChanged(event, ClasspathStorage.this, module);
               return;
             }

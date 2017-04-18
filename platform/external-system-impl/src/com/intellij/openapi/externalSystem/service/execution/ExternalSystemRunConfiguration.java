@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -23,7 +38,6 @@ import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
@@ -38,10 +52,11 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -49,15 +64,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
-
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemRunConfiguration.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
 
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
 
@@ -93,7 +106,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(mySettings));
+    element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
+      @Override
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
+        // only these fields due to backward compatibility
+        switch (accessor.getName()) {
+          case "passParentEnvs":
+            return !mySettings.isPassParentEnvs();
+          case "env":
+            return !mySettings.getEnv().isEmpty();
+          default:
+            return true;
+        }
+      }
+    }));
   }
 
   @NotNull
@@ -162,11 +188,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
-      for (String taskName : mySettings.getTaskNames()) {
-        tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
-      }
-      if (tasks.isEmpty()) {
+      if (mySettings.getTaskNames().isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
       String jvmAgentSetup = null;
@@ -188,12 +210,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       ApplicationManager.getApplication().assertIsDispatchThread();
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(mySettings.getExternalSystemId(),
-                                                                                   myProject,
-                                                                                   tasks,
-                                                                                   mySettings.getVmOptions(),
-                                                                                   mySettings.getScriptParameters(),
-                                                                                   jvmAgentSetup);
+      final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmAgentSetup);
       copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);

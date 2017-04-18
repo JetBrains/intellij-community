@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -30,14 +29,12 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffTypeFactory.TextDiffTypeImpl;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
@@ -51,6 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -108,14 +106,7 @@ class DiffPreviewPanel implements PreviewPanel {
     private final List<DiffContent> myContents;
 
     public SampleRequest() {
-      com.intellij.openapi.diff.DiffContent[] contents = DiffPreviewProvider.getContents();
-      myContents = ContainerUtil.list(convert(contents[0]), convert(contents[1]), convert(contents[2]));
-    }
-
-    private static DiffContent convert(@NotNull com.intellij.openapi.diff.DiffContent content) {
-      Document document = content.getDocument();
-      FileType fileType = content.getContentType();
-      return DiffContentFactory.getInstance().create(null, document, fileType);
+      myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
     @NotNull

@@ -20,9 +20,7 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import git4idea.config.UpdateMethod
 import git4idea.repo.GitRepository
-import git4idea.test.git
-import git4idea.test.last
-import git4idea.test.tacp
+import git4idea.test.*
 import java.io.File
 
 class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
@@ -66,8 +64,36 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     assertEquals("Couldn't find the hash from bro", hash, git("log -1 --no-merges --pretty=%H"))
   }
 
+  fun `test update fails if branch is deleted in one of repositories`() {
+    listOf(bro, bromunity).forEach {
+      cd(it)
+      git("checkout -b feature")
+      git("push -u origin feature")
+    }
+    listOf(repository, community).forEach {
+      cd(it)
+      git("pull")
+      git("checkout -b feature origin/feature")
+      it.update()
+    }
+
+    // commit in one repo to let update work
+    cd(bro)
+    tac("bro.txt")
+    git("push")
+    // remove branch in another repo
+    cd(bromunity)
+    git("push origin :feature")
+
+    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+    val result = updateProcess.update(UpdateMethod.MERGE)
+
+    assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
+    assertErrorNotification("Can't Update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
+  }
+
   private fun updateWithMerge(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false).update(UpdateMethod.MERGE)
+    return GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true).update(UpdateMethod.MERGE)
   }
 
   private fun repositories() = listOf(repository, community)

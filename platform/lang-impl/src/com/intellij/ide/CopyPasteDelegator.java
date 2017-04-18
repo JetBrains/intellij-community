@@ -26,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyHandler;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
+import java.util.List;
 
 public abstract class CopyPasteDelegator implements CopyPasteSupport {
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.filePasteProvider");
@@ -147,7 +150,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
         final Module module = LangDataKeys.MODULE.getData(dataContext);
         PsiElement target = getPasteTarget(dataContext, module);
         if (isCopied[0]) {
-          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCopy(elements, module, target));
+          TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCopy(elements, module, target, true));
         }
         else if (MoveHandler.canMove(elements, target)) {
           TransactionGuard.getInstance().submitTransactionAndWait(() -> pasteAfterCut(dataContext, elements, target));
@@ -194,11 +197,29 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       return targetDirectory;
     }
 
-    private void pasteAfterCopy(PsiElement[] elements, Module module, PsiElement target) {
+    private void pasteAfterCopy(PsiElement[] elements, Module module, PsiElement target, boolean tryFromFiles) {
       PsiDirectory targetDirectory = getTargetDirectory(module, target);
       try {
         if (CopyHandler.canCopy(elements)) {
           CopyHandler.doCopy(elements, targetDirectory);
+        }
+        else if (tryFromFiles) {
+          List<File> files = PsiCopyPasteManager.asFileList(elements);
+          if (files != null) {
+            PsiManager manager = elements[0].getManager();
+            PsiFileSystemItem[] items = files.stream()
+              .map(file -> LocalFileSystem.getInstance().findFileByIoFile(file))
+              .map(file -> {
+                if (file != null) {
+                  return file.isDirectory() ? manager.findDirectory(file)
+                                            : manager.findFile(file);
+                }
+                return null;
+              })
+              .filter(file -> file != null)
+              .toArray(PsiFileSystemItem[]::new);
+            pasteAfterCopy(items, module, target, false);
+          }
         }
       }
       finally {

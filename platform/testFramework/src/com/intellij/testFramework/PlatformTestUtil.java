@@ -80,8 +80,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -270,8 +268,8 @@ public class PlatformTestUtil {
     UIUtil.dispatchAllInvocationEvents();
 
     long start = System.currentTimeMillis();
-    boolean sleptAlready = false;
     try {
+      boolean sleptAlready = false;
       while (!alarmInvoked2.get()) {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         ApplicationManager.getApplication().invokeLater(() -> laterInvoked.set(true));
@@ -461,7 +459,7 @@ public class PlatformTestUtil {
   public static void assertTiming(final String message, final long expectedMs, final long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    final long expectedOnMyMachine = Math.max(1, expectedMs * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
+    long expectedOnMyMachine = Math.max(1, expectedMs * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
 
     // Allow 10% more in case of test machine is busy.
     String logMessage = message;
@@ -472,11 +470,8 @@ public class PlatformTestUtil {
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
                   " Expected on Standard machine: " + expectedMs + ";" +
-                  " Actual on Standard: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
-                  ", I/O=" + Timings.IO_TIMING + "." +
-                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the Standard)" +
-                  ".";
+                  ", I/O=" + Timings.IO_TIMING + ".";
     final double acceptableChangeFactor = 1.1;
     if (actual < expectedOnMyMachine) {
       System.out.println(logMessage);
@@ -496,7 +491,7 @@ public class PlatformTestUtil {
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expectedMs,message);
+    return new TestInfo(test, expectedMs, message);
   }
 
   public static boolean canRunTest(@NotNull Class testCaseClass) {
@@ -544,7 +539,7 @@ public class PlatformTestUtil {
     private final ThrowableRunnable test; // runnable to measure
     private final int expectedMs;           // millis the test is expected to run
     private ThrowableRunnable setup;      // to run before each test
-    private int usedEtalonCpuCores = 1;
+    private int usedReferenceCpuCores = 1;
     private int attempts = 4;             // number of retries if performance failed
     private final String message;         // to print on fail
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
@@ -563,7 +558,7 @@ public class PlatformTestUtil {
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores";usedEtalonCpuCores = maxCores; return this; }
+    public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedReferenceCpuCores = maxCores; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
@@ -583,11 +578,16 @@ public class PlatformTestUtil {
       if (COVERAGE_ENABLED_BUILD) return;
       Timings.getStatistics(); // warm-up, measure
 
+      if (attempts == 1) {
+        System.gc();
+      }
+
       while (true) {
         attempts--;
         CpuUsageData data;
         try {
           if (setup != null) setup.run();
+          waitForAllBackgroundActivityToCalmDown();
           data = CpuUsageData.measureCpuUsage(test);
         }
         catch (RuntimeException|Error throwable) {
@@ -600,36 +600,42 @@ public class PlatformTestUtil {
 
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
-          int coreCountUsedHere = usedEtalonCpuCores < 8 ? Math.min(JobSchedulerImpl.CORES_COUNT, usedEtalonCpuCores) : JobSchedulerImpl.CORES_COUNT;
-          expectedOnMyMachine *= usedEtalonCpuCores;
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING, useLegacyScaling);
+          int coreCountUsedHere = usedReferenceCpuCores < 8 ? Math.min(JobSchedulerImpl.CORES_COUNT, usedReferenceCpuCores) : JobSchedulerImpl.CORES_COUNT;
+          expectedOnMyMachine *= usedReferenceCpuCores;
+          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.REFERENCE_CPU_TIMING, useLegacyScaling);
           expectedOnMyMachine /= coreCountUsedHere;
         }
         if (adjustForIO) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING, useLegacyScaling);
+          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.REFERENCE_IO_TIMING, useLegacyScaling);
         }
 
         // Allow 10% more in case of test machine is busy.
-        String logMessage = message;
-        if (duration > expectedOnMyMachine) {
-          int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-          logMessage += ": " + "\u001B[31;1m " + percentage + "% longer" + "\u001B[0m";
-        }
-        logMessage +=
-          "\n  Expected: " + formatTime(expectedOnMyMachine) +
-          "\n  Actual: " + formatTime(duration) +
-          "\n " + Timings.getStatistics() + "\n  GC stats: " + data.getGcStats() + "\n  Most active threads: " + data.getThreadStats();
-        final double acceptableChangeFactor = 1.1;
-        if (duration < expectedOnMyMachine) {
-          int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
-          logMessage = percentage + "% faster. " + logMessage;
+        double acceptableChangeFactor = 1.1;
+        int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
+        String colorCode = duration < expectedOnMyMachine ? "32;1m" : // green
+                        duration < expectedOnMyMachine * acceptableChangeFactor ? "33;1m" : // yellow
+                        "31;1m"; // red
+        String logMessage = String.format(
+          "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
+          "\n  Expected: %sms (%s)" +
+          "\n  Actual:   %sms (%s)" +
+          "\n  Timings:  %s" +
+          "\n  Threads:  %s" +
+          "\n  GC stats: %s",
+          message, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
+          expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
+          duration, StringUtil.formatDuration(duration),
+          Timings.getStatistics(),
+          data.getThreadStats(),
+          data.getGcStats());
 
+        if (duration < expectedOnMyMachine) {
           TeamCityLogger.info(logMessage);
-          System.out.println("SUCCESS: " + logMessage);
+          System.out.println("\nSUCCESS: " + logMessage);
         }
         else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
           TeamCityLogger.warning(logMessage, null);
-          System.out.println("WARNING: " + logMessage);
+          System.out.println("\nWARNING: " + logMessage);
         }
         else {
           // try one more time
@@ -646,7 +652,7 @@ public class PlatformTestUtil {
           System.gc();
           System.gc();
           System.gc();
-          String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
+          String s = logMessage + "\n  " + attempts + " attempts remain";
           TeamCityLogger.warning(s, null);
           if (UsefulTestCase.IS_UNDER_TEAMCITY) {
             System.err.println(s);
@@ -664,21 +670,9 @@ public class PlatformTestUtil {
       }
     }
 
-    private static String formatTime(long millis) {
-      String hint = "";
-      DecimalFormat format = new DecimalFormat("#.0", DecimalFormatSymbols.getInstance(Locale.US));
-      if (millis >= 60 * 1000) hint = format.format(millis / 60 / 1000.f) + "m";
-      if (millis >= 1000) hint += (hint.isEmpty() ? "" : " ") + format.format(millis / 1000.f) + "s";
-      String result = millis + "ms";
-      if (!hint.isEmpty()) {
-        result = result + " (" + hint + ")";
-      }
-      return result;
-    }
-
-    private static int adjust(int expectedOnMyMachine, long thisTiming, long etalonTiming, boolean useLegacyScaling) {
+    private static int adjust(int expectedOnMyMachine, long thisTiming, long referenceTiming, boolean useLegacyScaling) {
       if (useLegacyScaling) {
-        double speed = 1.0 * thisTiming / etalonTiming;
+        double speed = 1.0 * thisTiming / referenceTiming;
         double delta = speed < 1
                        ? 0.9 + Math.pow(speed - 0.7, 2)
                        : 0.45 + Math.pow(speed - 0.25, 2);
@@ -686,7 +680,16 @@ public class PlatformTestUtil {
         return expectedOnMyMachine;
       }
       else {
-        return (int)(expectedOnMyMachine * thisTiming / etalonTiming);
+        return (int)(expectedOnMyMachine * thisTiming / referenceTiming);
+      }
+    }
+  }
+
+  static void waitForAllBackgroundActivityToCalmDown() {
+    for (int i = 0; i < 50; i++) {
+      CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
+      if (!data.hasAnyActivityBesides(Thread.currentThread())) {
+        break;
       }
     }
   }
@@ -696,7 +699,8 @@ public class PlatformTestUtil {
     assertTiming(message, expected, 4, actionToMeasure);
   }
 
-  public static long measure(@NotNull Runnable actionToMeasure) {
+  private static long measure(@NotNull Runnable actionToMeasure) {
+    waitForAllBackgroundActivityToCalmDown();
     long start = System.currentTimeMillis();
     actionToMeasure.run();
     long finish = System.currentTimeMillis();
@@ -716,7 +720,7 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        String s = "Another epic fail (remaining attempts: " + attempts + "): " + e.getMessage();
+        String s = e.getMessage() + "\n  " + attempts + " attempts remain";
         TeamCityLogger.warning(s, null);
         System.err.println(s);
       }

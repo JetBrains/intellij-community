@@ -33,10 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-
-import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
-
 
 public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings> {
   private static final Logger LOG = Logger.getInstance(PyCCProjectGenerator.class);
@@ -60,13 +56,10 @@ public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSet
                                @NotNull PyNewProjectSettings settings,
                                @NotNull Module module,
                                @Nullable final PyProjectSynchronizer synchronizer) {
-    generateProject(project, baseDir, mySettingsPanel);
-  }
-
-  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, CCNewProjectPanel settingsPanel) {
-    final Course course = getCourse(project, settingsPanel);
+    final Course course = getCourse(project, mySettingsPanel);
     EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
-
+    final CCProjectComponent component = project.getComponent(CCProjectComponent.class);
+    component.registerListener();
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;
     new WriteCommandAction.Simple(project) {
@@ -106,9 +99,6 @@ public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSet
     String language = PythonLanguage.getInstance().getID();
     course.setLanguage(language);
     course.setCourseMode(CCUtils.COURSE_MODE);
-
-    File courseDir = new File(OUR_COURSES_DIR, name + "-" + project.getName());
-    course.setCourseDirectory(courseDir.getPath());
 
     StudyTaskManager.getInstance(project).setCourse(course);
     StudyUtils.registerStudyToolWindow(course, project);

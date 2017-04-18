@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class ExecutionUtil {
   public static void handleExecutionError(@NotNull final Project project,
                                           @NotNull final String toolWindowId,
                                           @NotNull String taskName,
-                                          @NotNull ExecutionException e) {
+                                          @NotNull Throwable e) {
     if (e instanceof RunCanceledByUserException) {
       return;
     }

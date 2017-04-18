@@ -162,15 +162,7 @@ public class EnvironmentUtil {
   public static class ShellEnvReader {
 
     public Map<String, String> readShellEnv() throws Exception {
-      String os = SystemInfo.isLinux ? "linux" : "mac";
-      File reader = FileUtil.findFirstThatExist(
-        PathManager.getBinPath() + "/printenv.py",
-        PathManager.getHomePath() + "/ultimate/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
-      if (reader == null) {
-        throw new Exception("bin:" + PathManager.getBinPath());
-      }
+      File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
       try {
@@ -187,7 +179,7 @@ public class EnvironmentUtil {
 
         LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-        return runProcessAndReadEnvs(command, envFile, "\0");
+        return dumpProcessEnvToFile(command, envFile, "\0");
       }
       finally {
         FileUtil.delete(envFile);
@@ -195,17 +187,36 @@ public class EnvironmentUtil {
     }
 
     @NotNull
+    protected Map<String, String> dumpProcessEnvToFile(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
+      throws Exception {
+      return runProcessAndReadEnvs(command, envFile, lineSeparator);
+    }
+
+    @NotNull
     protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
       throws Exception {
       return runProcessAndReadEnvs(command, null, envFile, lineSeparator);
     }
-    
-    @NotNull                                                                                  
+
+    @NotNull
     protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
-                                                               @Nullable File workingDir, 
-                                                               @NotNull File envFile, 
+                                                               @Nullable File workingDir,
+                                                               @NotNull File envFile,
+                                                               String lineSeparator) throws Exception {
+      return runProcessAndReadEnvs(command, workingDir, null, envFile, lineSeparator);
+    }
+
+    @NotNull
+    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
+                                                               @Nullable File workingDir,
+                                                               @Nullable Map<String, String> envs,
+                                                               @NotNull File envFile,
                                                                String lineSeparator) throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      if (envs != null) {
+        // we might need default environment for the process to launch correctly
+        builder.environment().putAll(envs);
+      }
       if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       Process process = builder.start();

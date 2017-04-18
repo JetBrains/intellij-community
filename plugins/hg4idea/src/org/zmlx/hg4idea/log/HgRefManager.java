@@ -31,7 +31,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class HgRefManager implements VcsLogRefManager {
   private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0x823139), new Color(0xff5f6f));
@@ -62,7 +61,7 @@ public class HgRefManager implements VcsLogRefManager {
     }
   };
 
-  private static final String DEFAULT = "default";
+  public static final String DEFAULT = "default";
 
   // @NotNull private final RepositoryManager<HgRepository> myRepositoryManager;
 
@@ -115,19 +114,26 @@ public class HgRefManager implements VcsLogRefManager {
   @Override
   public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
-    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
+
+    List<VcsRef> headAndTip = ContainerUtil.newArrayList();
+    MultiMap<VcsRefType, VcsRef> groupedRefs = MultiMap.createLinked();
+    for (VcsRef ref : sortedReferences) {
+      if (ref.getType().equals(HEAD) || ref.getType().equals(TIP)) {
+        headAndTip.add(ref);
+      }
+      else {
+        groupedRefs.putValue(ref.getType(), ref);
+      }
+    }
 
     List<RefGroup> result = ContainerUtil.newArrayList();
-
-    List<Map.Entry<VcsRefType, Collection<VcsRef>>> headAndTip =
-      ContainerUtil.filter(groupedRefs.entrySet(), entry -> entry.getKey().equals(HEAD) || entry.getKey().equals(TIP));
-    headAndTip.forEach(entry -> groupedRefs.remove(entry.getKey()));
-
     SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
-
     RefGroup firstGroup = ContainerUtil.getFirstItem(result);
     if (firstGroup != null) {
-      firstGroup.getRefs().addAll(0, headAndTip.stream().flatMap(entry -> entry.getValue().stream()).collect(Collectors.toList()));
+      firstGroup.getRefs().addAll(0, headAndTip);
+    }
+    else {
+      result.add(new SimpleRefGroup("", headAndTip));
     }
 
     return result;

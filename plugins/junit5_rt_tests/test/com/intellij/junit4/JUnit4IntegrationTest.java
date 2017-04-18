@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.junit4;
+
 import com.intellij.execution.BaseConfigurationTestCase;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ProgramRunnerUtil;
@@ -30,7 +31,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
@@ -42,11 +42,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
+import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -99,14 +96,19 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
       String testDataPath = communityPath + File.separator + "plugins" + File.separator + "junit5_rt_tests" +
                             File.separator + "testData" + File.separator + "integration" + File.separator + methodName;
 
-      MavenId mavenId = new MavenId("junit", "junit", myJUnitVersion);
-      MavenRepositoryInfo repositoryInfo = new MavenRepositoryInfo("maven", "maven", "http://maven.labs.intellij.net/repo1");
-      RepositoryAttachHandler.doResolveInner(getProject(), mavenId, Collections.emptyList(), Collections.singleton(repositoryInfo), artifacts -> {
-        for (MavenArtifact artifact : artifacts) {
-          ModuleRootModificationUtil.addModuleLibrary(module, VfsUtilCore.pathToUrl(artifact.getPath()));
-        }
-        return true;
-      }, new DumbProgressIndicator());
+      final String userHome = System.getProperty("user.home", null);
+      final File localRepo = userHome != null ? new File(userHome, ".m2/repository") : new File(".m2/repository");
+
+      final ArtifactRepositoryManager repoManager = new ArtifactRepositoryManager(
+        localRepo,
+        Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "http://maven.labs.intellij.net/repo1")),
+        ProgressConsumer.DEAF
+      );
+
+      final Collection<File> files = repoManager.resolveDependency("junit", "junit", myJUnitVersion);
+      for (File artifact : files) {
+        ModuleRootModificationUtil.addModuleLibrary(module, VfsUtilCore.pathToUrl(artifact.getPath()));
+      }
 
       ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
       ModuleRootModificationUtil.updateModel(module, model -> {
@@ -122,7 +124,6 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
   @After
   public void after() throws Throwable {
     EdtTestUtil.runInEdtAndWait(() -> {
-      MavenServerManager.getInstance().shutdown(true);
       tearDown();
     });
   }

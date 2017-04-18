@@ -27,6 +27,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,7 @@ import java.util.*;
  * @author nik
  */
 public class FrameworkDetectionManager extends AbstractProjectComponent implements FrameworkDetectionIndexListener,
-                                                                                   TextEditorHighlightingPassFactory {
+                                                                                   TextEditorHighlightingPassFactory, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionManager");
   private static final NotificationGroup FRAMEWORK_DETECTION_NOTIFICATION = NotificationGroup.balloonGroup("Framework Detection");
   private final Update myDetectionUpdate = new Update("detection") {
@@ -121,7 +122,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     doDispose();
   }
 

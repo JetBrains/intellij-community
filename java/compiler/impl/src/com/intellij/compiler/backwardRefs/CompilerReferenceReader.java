@@ -24,15 +24,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.File;
@@ -54,12 +56,16 @@ class CompilerReferenceReader {
 
   @Nullable
   TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
-    LightRef.LightClassHierarchyElementDef hierarchyElement = ref instanceof LightRef.LightClassHierarchyElementDef ?
-                                                              (LightRef.LightClassHierarchyElementDef)ref :
-                                                              ((LightRef.LightMember)ref).getOwner();
-    TIntHashSet set = new TIntHashSet();
-    final LightRef.NamedLightRef[] hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+    LightRef.NamedLightRef[] hierarchy;
+    if (ref instanceof LightRef.LightClassHierarchyElementDef) {
+      hierarchy = new LightRef.NamedLightRef[]{(LightRef.NamedLightRef)ref};
+    }
+    else {
+      LightRef.LightClassHierarchyElementDef hierarchyElement = ((LightRef.LightMember)ref).getOwner();
+      hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+    }
     if (hierarchy == null) return null;
+    TIntHashSet set = new TIntHashSet();
     for (LightRef.NamedLightRef aClass : hierarchy) {
       final LightRef overriderUsage = ref.override(aClass.getName());
       addUsages(overriderUsage, set);
@@ -74,17 +80,17 @@ class CompilerReferenceReader {
    * 2nd map: candidates. One need to check that these classes are really direct inheritors
    */
   @NotNull
-  Map<VirtualFile, Object[]> getDirectInheritors(@NotNull LightRef searchElement,
+  Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull LightRef searchElement,
                                                  @NotNull GlobalSearchScope searchScope,
                                                  @NotNull GlobalSearchScope dirtyScope,
                                                  @NotNull FileType fileType,
                                                  @NotNull CompilerHierarchySearchType searchType) throws StorageException {
     GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
-    LanguageLightRefAdapter adapter = CompilerReferenceServiceImpl.findAdapterForFileType(fileType);
+    LanguageLightRefAdapter adapter = LanguageLightRefAdapter.findAdapter(fileType);
     LOG.assertTrue(adapter != null, "adapter is null for file type: " + fileType);
     Class<? extends LightRef> requiredLightRefClass = searchType.getRequiredClass(adapter);
 
-    Map<VirtualFile, Object[]> candidatesPerFile = new HashMap<>();
+    Map<VirtualFile, SearchId[]> candidatesPerFile = new HashMap<>();
     myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(searchElement).forEach((fileId, defs) -> {
         final List<LightRef> requiredCandidates = defs.stream().filter(requiredLightRefClass::isInstance).collect(toList());
         if (requiredCandidates.isEmpty()) return true;
@@ -97,6 +103,64 @@ class CompilerReferenceReader {
     return candidatesPerFile.isEmpty() ? Collections.emptyMap() : candidatesPerFile;
   }
 
+  @Nullable
+  Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) {
+    try {
+      if (checkDefinitions && hasMultipleDefinitions(classDef)) {
+        return null;
+      }
+      final int[] count = {0};
+      myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(classDef).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
+        @Override
+        public boolean perform(int id, Collection<LightRef> value) {
+          count[0] += value.size();
+          return true;
+        }
+      });
+      return count[0];
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  int getOccurrenceCount(@NotNull LightRef element) {
+    try {
+      int[] result = new int[]{0};
+      myIndex.get(CompilerIndices.BACK_USAGES).getData(element).forEach(
+        new ValueContainer.ContainerAction<Integer>() {
+          @Override
+          public boolean perform(int id, Integer value) {
+            result[0] += value;
+            return true;
+          }
+        });
+      return result[0];
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  List<LightRef> getMembersFor(@NotNull SignatureData data) {
+    try {
+      List<LightRef> result = new ArrayList<>();
+      myIndex.get(CompilerIndices.BACK_MEMBER_SIGN).getData(data).forEach((id, refs) -> {
+        result.addAll(refs);
+        return true;
+      });
+      return result;
+    } catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  TIntHashSet getAllContainingFileIds(@NotNull LightRef ref) throws StorageException {
+    return InvertedIndexUtil.collectInputIdsContainingAllKeys(myIndex.get(CompilerIndices.BACK_USAGES), Collections.singletonList(ref), null, null, null);
+  }
+
   @NotNull
   NameEnumerator getNameEnumerator() {
     return myIndex.getByteSeqEum();
@@ -107,6 +171,10 @@ class CompilerReferenceReader {
     if (removeIndex) {
       CompilerBackwardReferenceIndex.removeIndexFiles(myBuildDir);
     }
+  }
+
+  public CompilerBackwardReferenceIndex getIndex() {
+    return myIndex;
   }
 
   static boolean exists(Project project) {
@@ -130,9 +198,9 @@ class CompilerReferenceReader {
 
   private void addUsages(LightRef usage, TIntHashSet sink) throws StorageException {
     myIndex.get(CompilerIndices.BACK_USAGES).getData(usage).forEach(
-      new ValueContainer.ContainerAction<Void>() {
+      new ValueContainer.ContainerAction<Integer>() {
         @Override
-        public boolean perform(int id, Void value) {
+        public boolean perform(int id, Integer value) {
           final VirtualFile file = findFile(id);
           if (file != null) {
             sink.add(((VirtualFileWithId)file).getId());
@@ -163,20 +231,13 @@ class CompilerReferenceReader {
       LightRef.NamedLightRef curClass = q.pullFirst();
       if (result.add(curClass)) {
         if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
-          DefCount count = getDefinitionCount(curClass);
-          if (count == DefCount.NONE) {
-            //diagnostic
-            String baseHierarchyElement = getNameEnumerator().getName(hierarchyElement.getName());
-            String curHierarchyElement = getNameEnumerator().getName(curClass.getName());
-            LOG.error("Can't get definition files for: " + curHierarchyElement + " base class: " + baseHierarchyElement);
-          }
-          if (count != DefCount.ONE) {
+          if (hasMultipleDefinitions(curClass)) {
             return null;
           }
         }
         myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
           for (LightRef child : children) {
-            if (child instanceof LightRef.LightClassHierarchyElementDef) {
+            if (child instanceof LightRef.LightClassHierarchyElementDef && !(child instanceof LightRef.LightAnonymousClassDef)) {
               q.addLast((LightRef.LightClassHierarchyElementDef) child);
             }
           }
@@ -188,8 +249,7 @@ class CompilerReferenceReader {
   }
 
   private enum DefCount { NONE, ONE, MANY}
-  @NotNull
-  private DefCount getDefinitionCount(LightRef def) throws StorageException {
+  private boolean hasMultipleDefinitions(LightRef.NamedLightRef def) throws StorageException {
     DefCount[] result = new DefCount[]{DefCount.NONE};
     myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
       @Override
@@ -205,6 +265,11 @@ class CompilerReferenceReader {
         return false;
       }
     });
-    return result[0];
+    if (result[0] == DefCount.NONE) {
+      //diagnostic
+      String name = def instanceof LightRef.LightAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
+      LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
+    }
+    return result[0] == DefCount.MANY;
   }
 }

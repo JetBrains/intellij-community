@@ -28,7 +28,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -63,7 +63,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
     if (debuggerSession != null) {
-      final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, expr.getProject());
+      final ProgressWindow progressWindow = new ProgressWindow(true, expr.getProject());
       SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
       progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
       debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, progressWindow);

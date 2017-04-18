@@ -1,6 +1,0 @@
-<idea-plugin>
-  <depends>JUnit</depends>
-  <extensions defaultExtensionNs="Edu">
-    <eduIntelliJProjectTemplate implementation="com.jetbrains.edu.coursecreator.intellij.EduCCProjectTemplate"/>
-  </extensions>
-</idea-plugin>

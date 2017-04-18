@@ -70,19 +70,4 @@ public class DiffTest extends TestCase {
     change = Diff.buildChanges(empty, DATA_123);
     IntLCSTest.checkLastChange(change, 0, 0, 3, 0);
   }
-
-  public void testPerformance() throws FilesTooBigForDiffException {
-    ArrayList<String> first = new ArrayList<>();
-    ArrayList<String> second = new ArrayList<>();
-    int max = 1000;
-    for (int i = 0; i < max; i++) {
-      first.add(Integer.toString(i));
-      second.add(Integer.toString(max - i - 1));
-    }
-    Diff.buildChanges(first.toArray(), second.toArray());
-    long start = System.currentTimeMillis();
-    Diff.buildChanges(first.toArray(), second.toArray());
-    System.out.println("Duration: " +(System.currentTimeMillis() - start));
-  }
-
 }

@@ -581,8 +581,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void dispose() {
-      setVisible(false);
       remove(getContentPane());
+      setVisible(false);
       DialogWrapper.unregisterKeyboardActions(myWrapperPane);
       myRootPane = null;
     }

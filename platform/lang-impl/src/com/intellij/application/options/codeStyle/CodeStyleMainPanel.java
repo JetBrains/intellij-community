@@ -18,11 +18,14 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.ui.components.labels.SwingActionLink;
@@ -103,7 +106,12 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
       @Override
       public void afterCurrentSettingsChanged() {
-         mySchemesPanel.updateOnCurrentSettingsChange();
+        mySchemesPanel.updateOnCurrentSettingsChange();
+        DataContext context = DataManager.getInstance().getDataContext(mySettingsPanel);
+        Settings settings = Settings.KEY.getData(context);
+        if (settings != null) {
+          settings.revalidate();
+        }
       }
 
       @Override

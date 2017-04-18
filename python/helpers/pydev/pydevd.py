@@ -35,7 +35,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
-from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch
+from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
 from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, set_use_code_extra
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
@@ -76,6 +76,7 @@ connected = False
 bufferStdOutToServer = False
 bufferStdErrToServer = False
 remote = False
+forked = False
 
 file_system_encoding = getfilesystemencoding()
 
@@ -586,7 +587,6 @@ class PyDB:
 
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
-        from _pydevd_bundle.pydevd_trace_dispatch import global_cache_skips, global_cache_frame_skips
         break_dict = {}
         for breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
             break_dict[pybreakpoint.line] = pybreakpoint
@@ -1172,7 +1172,7 @@ def _locked_settrace(
     global bufferStdOutToServer
     global bufferStdErrToServer
 
-    if not connected :
+    if not connected:
         pydevd_vm_type.setup_type()
 
         if SetupHolder.setup is None:
@@ -1219,6 +1219,11 @@ def _locked_settrace(
 
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
+
+        global forked
+        if frame_eval_func is not None and not forked:
+            # Disable frame evaluation for Remote Debug Server
+            debugger.frame_eval_func = None
 
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
         # is not warned to the user!
@@ -1359,6 +1364,8 @@ def settrace_forked():
     if port is not None:
         global connected
         connected = False
+        global forked
+        forked = True
 
         custom_frames_container_init()
 

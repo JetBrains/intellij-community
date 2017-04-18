@@ -278,4 +278,33 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
       }
   '''
   }
+
+  void testBoundedGenericsCompileStatic() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class Foo {
+    static <T extends List<Integer>> void bar(T a) {
+    }
+
+    static void method() {
+        bar<error>([''])</error>
+    }
+}
+'''
+  }
+
+  void testBoundedGenerics() {
+    testHighlighting '''
+class Foo {
+    static <T extends List<Integer>> void bar(T a) {
+    }
+
+    static void method() {
+        bar([''])
+    }
+}
+'''
+  }
 }

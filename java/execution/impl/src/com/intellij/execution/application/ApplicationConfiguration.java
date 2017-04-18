@@ -246,12 +246,17 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void writeExternal(final Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
+
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
-    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
+
+    Map<String, String> envs = getEnvs();
+    //if (!envs.isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, envs);
+    //}
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
@@ -297,15 +302,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
       if (JavaSdkUtil.isJdkAtLeast(params.getJdk(), JavaSdkVersion.JDK_1_9)) {
-        PsiClass mainClass = module.findClass(params.getMainClass());
-        if (mainClass != null) {
-          PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
-          if (mainModule != null) {
-            params.setModuleName(mainModule.getName());
-            PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
-            modulePath.addAll(classPath.getPathList());
-            classPath.clear();
-          }
+        PsiJavaModule mainModule = DumbService.getInstance(module.getProject()).computeWithAlternativeResolveEnabled(
+          () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass())));
+        if (mainModule != null) {
+          params.setModuleName(mainModule.getName());
+          PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
+          modulePath.addAll(classPath.getPathList());
+          classPath.clear();
         }
       }
     }

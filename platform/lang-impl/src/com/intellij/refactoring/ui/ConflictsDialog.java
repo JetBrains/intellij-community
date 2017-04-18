@@ -133,7 +133,9 @@ public class ConflictsDialog extends DialogWrapper{
       buf.append(description);
       buf.append("<br><br>");
     }
-    JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, buf.toString());
+    JEditorPane messagePane = new JEditorPane();
+    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    messagePane.setText(buf.toString());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,

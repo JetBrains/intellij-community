@@ -75,11 +75,9 @@ public abstract class DiffActionExecutor {
 
     DiffContent diffContent;
     if (fileRevision instanceof BinaryContentRevision) {
-      FilePath filePath = fileRevision.getFile();
       final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
       if (content == null) return null;
-
-      diffContent = contentFactory.createBinary(myProject, content, filePath.getFileType(), filePath.getName());
+      diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();

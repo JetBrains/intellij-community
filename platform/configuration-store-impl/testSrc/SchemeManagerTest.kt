@@ -24,12 +24,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.SmartList
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
@@ -443,10 +441,4 @@ open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() 
     dataHolder.updateDigest(scheme)
     return scheme
   }
-}
-
-fun SchemeManagerImpl<*, *>.save() {
-  val errors = SmartList<Throwable>()
-  save(errors)
-  CompoundRuntimeException.throwIfNotEmpty(errors)
 }

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.TrivialIfInspection;
 
@@ -26,7 +25,7 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new TrivialIfInspection());
     myRelativePath = "controlflow/trivialIf";
-    myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    myDefaultHint = "Simplify 'if else'";
   }
 
   public void testComments() {

@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * @author lex
@@ -112,6 +114,12 @@ class ReloadClassesWorker {
     breakpointManager.disableBreakpoints(debugProcess);
 
     //virtualMachineProxy.suspend();
+
+    if (Registry.is("debugger.resume.yourkit.threads")) {
+      virtualMachineProxy.allThreads().stream()
+        .filter(t -> t.isSuspended() && t.name().startsWith("YJPAgent-"))
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+    }
 
     try {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);

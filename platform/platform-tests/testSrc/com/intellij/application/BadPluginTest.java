@@ -46,7 +46,7 @@ public class BadPluginTest extends PlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    String path = PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/badPlugins";
+    String path = PlatformTestUtil.getPlatformTestDataPath() + "badPlugins";
     File directory = createTempDirectory(false);
     FileUtil.copyDir(new File(path), directory);
 

@@ -107,17 +107,17 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val referencesText = mutableListOf<String>()
       storage(index, CompilerIndices.BACK_USAGES).processKeys { usage ->
         val referents = mutableListOf<String>()
-        val valueIt = index[CompilerIndices.BACK_USAGES].getData(usage).valueIterator
-        while (valueIt.hasNext()) {
-          valueIt.next()
-          val files = valueIt.inputIdsIterator
-          while (files.hasNext()) {
-            referents.add(files.next().asFileName(fileEnumerator))
-          }
-        }
+        val valueIt = index[CompilerIndices.BACK_USAGES].getData(usage)
+
+        var sumOccurrences = 0
+        valueIt.forEach({ fileId, occurrenceCount ->
+                          referents.add(fileId.asFileName(fileEnumerator))
+                          sumOccurrences += occurrenceCount
+                          true
+                        })
         if (!referents.isEmpty()) {
           referents.sort()
-          referencesText.add(usage.asText(nameEnumerator) + " in " + referents.joinToString(separator = " "))
+          referencesText.add(usage.asText(nameEnumerator) + " in " + referents.joinToString(separator = " ") + " occurrences = $sumOccurrences")
         }
         true
       }
@@ -165,6 +165,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
         is LightRef.JavaLightFieldRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}"
         is LightRef.JavaLightClassRef -> this.name.asName(nameEnumerator)
         is LightRef.JavaLightFunExprDef -> "fun_expr(id=${this.id})"
+        is LightRef.JavaLightAnonymousClassRef -> "anonymous(id=${this.name})"
         else -> throw UnsupportedOperationException()
       }
 

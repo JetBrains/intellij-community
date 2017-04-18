@@ -1022,7 +1022,7 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
   <action id="ShelveChanges.UnshelveWithDialog">
-    <keyboard-shortcut first-keystroke="ctrl shift U" />
+    <keyboard-shortcut first-keystroke="control shift U" />
   </action>
 
   <action id="Console.Open"><keyboard-shortcut first-keystroke="control shift F10"/></action>

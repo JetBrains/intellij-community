@@ -17,7 +17,6 @@ package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -30,9 +29,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.security.cert.X509Certificate;
-import java.util.concurrent.Callable;
 
 import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
 
@@ -196,6 +193,6 @@ public class CertificateTest extends LightPlatformTestCase {
   }
 
   private static String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+    return PlatformTestUtil.getPlatformTestDataPath();
   }
 }

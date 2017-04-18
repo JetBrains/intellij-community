@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -51,7 +50,6 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessorRemovePartner;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -99,12 +97,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myFileEditorManager = fileEditorManager;
 
     myLineStatusTrackers = new HashMap<>();
-    myPartner = new QueueProcessorRemovePartner<>(myProject, new Consumer<BaseRevisionLoader>() {
-      @Override
-      public void consume(BaseRevisionLoader baseRevisionLoader) {
-        baseRevisionLoader.run();
-      }
-    });
+    myPartner = new QueueProcessorRemovePartner<>(myProject, baseRevisionLoader -> baseRevisionLoader.run());
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
     busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
@@ -150,22 +143,19 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
   @Override
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
-        final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
-        final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
+    StartupManager.getInstance(myProject).registerPreStartupActivity(() -> {
+      final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
+      final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
+      final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
 
-        final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
-        fsManager.addFileStatusListener(fileStatusListener, myDisposable);
+      final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
+      fsManager.addFileStatusListener(fileStatusListener, myDisposable);
 
-        final EditorFactory editorFactory = EditorFactory.getInstance();
-        editorFactory.addEditorFactoryListener(editorFactoryListener, myDisposable);
+      final EditorFactory editorFactory = EditorFactory.getInstance();
+      editorFactory.addEditorFactoryListener(editorFactoryListener, myDisposable);
 
-        final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-        virtualFileManager.addVirtualFileListener(virtualFileListener, myDisposable);
-      }
+      final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+      virtualFileManager.addVirtualFileListener(virtualFileListener, myDisposable);
     });
   }
 
@@ -178,14 +168,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   @NotNull
   public String getComponentName() {
     return "LineStatusTrackerManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   public boolean isDisabled() {
@@ -374,36 +356,28 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       }
 
       final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          synchronized (myLock) {
-            final TrackerData data = myLineStatusTrackers.get(myDocument);
-            if (data == null) {
-              log("BaseRevisionLoader initializing: tracker already released", myVirtualFile);
-              return;
-            }
-            if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
-              log("BaseRevisionLoader initializing: canceled", myVirtualFile);
-              return;
-            }
-
-            log("BaseRevisionLoader initializing: success", myVirtualFile);
-            myLineStatusTrackers.put(myDocument, new TrackerData(data.tracker, revisionNumber, charset, loadCounter));
-            data.tracker.setBaseRevision(converted);
+      final Runnable runnable = () -> {
+        synchronized (myLock) {
+          final TrackerData data = myLineStatusTrackers.get(myDocument);
+          if (data == null) {
+            log("BaseRevisionLoader initializing: tracker already released", myVirtualFile);
+            return;
           }
+          if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
+            log("BaseRevisionLoader initializing: canceled", myVirtualFile);
+            return;
+          }
+
+          log("BaseRevisionLoader initializing: success", myVirtualFile);
+          myLineStatusTrackers.put(myDocument, new TrackerData(data.tracker, revisionNumber, charset, loadCounter));
+          data.tracker.setBaseRevision(converted);
         }
       };
       nonModalAliveInvokeLater(runnable);
     }
 
     private void nonModalAliveInvokeLater(@NotNull Runnable runnable) {
-      myApplication.invokeLater(runnable, ModalityState.NON_MODAL, new Condition() {
-        @Override
-        public boolean value(final Object ignore) {
-          return isDisabled();
-        }
-      });
+      myApplication.invokeLater(runnable, ModalityState.NON_MODAL, ignore -> isDisabled());
     }
 
     private void reportTrackerBaseLoadFailed() {
@@ -452,7 +426,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     }
   }
 
-  private class MyVirtualFileListener extends VirtualFileAdapter {
+  private class MyVirtualFileListener implements VirtualFileListener {
     @Override
     public void beforeContentsChange(@NotNull VirtualFileEvent event) {
       if (event.isFromRefresh()) {
@@ -474,7 +448,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
 
     public TrackerData(@NotNull LineStatusTracker tracker) {
       this.tracker = tracker;
-      this.currentContent = null;
+      currentContent = null;
     }
 
     public TrackerData(@NotNull LineStatusTracker tracker,
@@ -482,7 +456,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
                        @NotNull Charset charset,
                        long loadCounter) {
       this.tracker = tracker;
-      this.currentContent = new ContentInfo(revision, charset, loadCounter);
+      currentContent = new ContentInfo(revision, charset, loadCounter);
     }
 
     public boolean shouldBeUpdated(@NotNull VcsRevisionNumber revision, @NotNull Charset charset, long loadCounter) {

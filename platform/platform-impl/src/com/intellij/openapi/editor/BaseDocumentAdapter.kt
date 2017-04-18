@@ -15,52 +15,8 @@
  */
 package com.intellij.openapi.editor
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.DocumentEx
-import com.intellij.openapi.editor.ex.EditReadOnlyListener
-import com.intellij.openapi.editor.ex.LineIterator
-import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.Processor
-
-abstract class BaseDocumentAdapterEx : BaseDocumentAdapter(), DocumentEx {
-  override fun registerRangeMarker(rangeMarker: RangeMarkerEx,
-                                     start: Int,
-                                     end: Int,
-                                     greedyToLeft: Boolean,
-                                     greedyToRight: Boolean,
-                                     layer: Int) {}
-
-  override fun processRangeMarkers(processor: Processor<in RangeMarker>) = false
-
-  override fun processRangeMarkersOverlappingWith(start: Int, end: Int, processor: Processor<in RangeMarker>) = false
-
-  override fun removeRangeMarker(rangeMarker: RangeMarkerEx) = false
-
-  override fun setStripTrailingSpacesEnabled(isEnabled: Boolean) {}
-
-  override fun setModificationStamp(modificationStamp: Long) {}
-
-  override fun addEditReadOnlyListener(listener: EditReadOnlyListener) {}
-
-  override fun removeEditReadOnlyListener(listener: EditReadOnlyListener) {}
-
-  override fun replaceText(chars: CharSequence, newModificationStamp: Long) {
-    throw UnsupportedOperationException("Not implemented")
-  }
-
-  override fun moveText(srcStart: Int, srcEnd: Int, dstOffset: Int) {
-    throw UnsupportedOperationException("Not implemented")
-  }
-  
-  override fun isInBulkUpdate() = false
-
-  override fun setInBulkUpdate(value: Boolean) {}
-  
-  override fun createLineIterator(): LineIterator = throw UnsupportedOperationException()
-}
 
 abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
   override fun getLineSeparatorLength(line: Int) = 0
@@ -84,19 +40,7 @@ abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
   }
 
   override fun isWritable() = false
-
-  override fun fireReadOnlyModificationAttempt() {
-  }
-
-  override fun addDocumentListener(listener: DocumentListener) {
-  }
-
-  override fun addDocumentListener(listener: DocumentListener, parentDisposable: Disposable) {
-  }
-
-  override fun removeDocumentListener(listener: DocumentListener) {
-  }
-
+  
   override fun createRangeMarker(startOffset: Int, endOffset: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
 
   override fun createRangeMarker(startOffset: Int, endOffset: Int, surviveOnExternalChange: Boolean): RangeMarker {

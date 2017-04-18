@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
     myConfiguration = configuration;
     myMetaDataProvider = descriptorMetaDataProvider;
     myProject = project;
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
         if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
@@ -128,7 +128,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
   }
 
   public void updateDescriptors(@NotNull MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> descriptorsMap) {
-    Set<ConfigFile> toDelete = myConfigFiles.isEmpty() ? Collections.<ConfigFile>emptySet() : new HashSet<>(myConfigFiles.values());
+    Set<ConfigFile> toDelete = myConfigFiles.isEmpty() ? Collections.emptySet() : new HashSet<>(myConfigFiles.values());
     Set<ConfigFile> added = null;
 
     for (Map.Entry<ConfigFileMetaData, Collection<ConfigFileInfo>> entry : descriptorsMap.entrySet()) {

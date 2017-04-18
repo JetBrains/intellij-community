@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.util.io.IOUtil
 import org.jdom.*
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -32,7 +33,7 @@ fun serializeElementToBinary(element: Element, out: OutputStream) {
 fun readElement(input: InputStream) = readElement(DataInputStream(input))
 
 fun readElement(input: DataInputStream): Element {
-  val element = Element(input.readUTF())
+  val element = Element(IOUtil.readUTF(input))
   readAttributes(element, input)
   readContent(element, input)
   return element
@@ -42,15 +43,15 @@ private fun readContent(element: Element, input: DataInputStream) {
   while (true) {
     when (input.read()) {
       TypeMarker.ELEMENT.ordinal -> element.addContent(readElement(input))
-      TypeMarker.TEXT.ordinal -> element.addContent(Text(input.readUTF()))
-      TypeMarker.CDATA.ordinal -> element.addContent(CDATA(input.readUTF()))
+      TypeMarker.TEXT.ordinal -> element.addContent(Text(IOUtil.readUTF(input)))
+      TypeMarker.CDATA.ordinal -> element.addContent(CDATA(IOUtil.readUTF(input)))
       TypeMarker.ELEMENT_END.ordinal -> return
     }
   }
 }
 
 private fun writeElement(element: Element, out: DataOutputStream) {
-  out.writeUTF(element.name)
+  IOUtil.writeUTF(out, element.name)
 
   writeAttributes(out, element.attributes)
 
@@ -63,12 +64,12 @@ private fun writeElement(element: Element, out: DataOutputStream) {
     else if (item is Text) {
       if (!isAllWhitespace(item)) {
         out.writeByte(TypeMarker.TEXT.ordinal)
-        out.writeUTF(item.text)
+        IOUtil.writeUTF(out, item.text)
       }
     }
     else if (item is CDATA) {
       out.writeByte(TypeMarker.CDATA.ordinal)
-      out.writeUTF(item.text)
+      IOUtil.writeUTF(out, item.text)
     }
   }
   out.writeByte(TypeMarker.ELEMENT_END.ordinal)
@@ -86,8 +87,8 @@ private fun writeAttributes(out: DataOutputStream, attributes: List<Attribute>?)
   }
   else {
     for (attribute in attributes!!) {
-      out.writeUTF(attribute.name)
-      out.writeUTF(attribute.value)
+      IOUtil.writeUTF(out, attribute.name)
+      IOUtil.writeUTF(out, attribute.value)
     }
   }
 }
@@ -95,7 +96,7 @@ private fun writeAttributes(out: DataOutputStream, attributes: List<Attribute>?)
 private fun readAttributes(element: Element, input: DataInputStream) {
   val size = input.readUnsignedByte()
   for (i in 0..size - 1) {
-    element.setAttribute(Attribute(input.readUTF(), input.readUTF()))
+    element.setAttribute(Attribute(IOUtil.readUTF(input), IOUtil.readUTF(input)))
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -149,5 +150,28 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
 
   public void testAssignReturnValueToForeachParameter() throws Exception {
     doTest();
+  }
+
+  public void testRenameInInitializer() throws Exception {
+    doTestWithIdeaCodeStyleSettings();
+  }
+
+  public void testSameFieldsWithPrefix() throws Exception {
+    doTestWithIdeaCodeStyleSettings();
+  }
+
+  private void doTestWithIdeaCodeStyleSettings() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    String oldPrefix = settings.FIELD_NAME_PREFIX;
+    settings.FIELD_NAME_PREFIX = "my";
+    boolean oldPrefer = settings.PREFER_LONGER_NAMES;
+    settings.PREFER_LONGER_NAMES = false;
+    try {
+      doTest();
+    }
+    finally {
+      settings.FIELD_NAME_PREFIX = oldPrefix;
+      settings.PREFER_LONGER_NAMES = oldPrefer;
+    }
   }
 }

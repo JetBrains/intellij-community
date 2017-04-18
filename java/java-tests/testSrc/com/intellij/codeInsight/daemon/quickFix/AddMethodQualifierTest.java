@@ -18,13 +18,16 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodQualifierFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Dmitry Batkovich
@@ -93,9 +96,10 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
   private AddMethodQualifierFix getQuickFix() {
     final List<IntentionAction> availableIntentions = myFixture.getAvailableIntentions();
     AddMethodQualifierFix addMethodQualifierFix = null;
-    for (final IntentionAction availableIntention : availableIntentions) {
-      if (availableIntention instanceof AddMethodQualifierFix) {
-        addMethodQualifierFix = (AddMethodQualifierFix)availableIntention;
+    for (IntentionAction action : availableIntentions) {
+      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      if (action instanceof AddMethodQualifierFix) {
+        addMethodQualifierFix = (AddMethodQualifierFix)action;
         break;
       }
     }

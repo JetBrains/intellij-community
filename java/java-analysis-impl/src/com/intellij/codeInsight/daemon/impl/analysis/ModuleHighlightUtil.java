@@ -79,21 +79,24 @@ public class ModuleHighlightUtil {
           return LightJavaModule.getModule(PsiManager.getInstance(project), classRoot);
         }
       }
-
-      return null;
     }
     else {
-      return getModuleDescriptor(index.getModuleForFile(file));
+      Module module = index.getModuleForFile(file);
+      if (module != null) {
+        boolean isTest = index.isInTestSourceContent(file);
+        List<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope()).stream()
+          .filter(f -> index.isInTestSourceContent(f) == isTest)
+          .collect(Collectors.toList());
+        if (files.size() == 1) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+      }
     }
-  }
 
-  static PsiJavaModule getModuleDescriptor(Module module) {
-    return Optional.ofNullable(module)
-      .map(m -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, m.getModuleScope(false)))
-      .map(c -> c.size() == 1 ? c.iterator().next() : null)
-      .map(f -> PsiManager.getInstance(module.getProject()).findFile(f))
-      .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-      .orElse(null);
+    return null;
   }
 
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
@@ -135,7 +138,7 @@ public class ModuleHighlightUtil {
     Module module = findModule(file);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
       if (others.size() > 1) {
         String message = JavaErrorMessages.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();
@@ -197,6 +200,7 @@ public class ModuleHighlightUtil {
         String message = JavaErrorMessages.message(key, refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
+        QuickFixAction.registerQuickFixAction(info, MergeModuleStatementsFix.createFix(statement));
         results.add(info);
       }
     }

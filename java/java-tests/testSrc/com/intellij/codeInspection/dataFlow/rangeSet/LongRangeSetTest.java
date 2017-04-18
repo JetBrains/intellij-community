@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
-import com.intellij.psi.JavaTokenType;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import org.junit.Test;
@@ -241,14 +241,14 @@ public class LongRangeSetTest {
 
   @Test
   public void testFromRelation() {
-    assertEquals(range(101, Long.MAX_VALUE), range(100, 200).fromRelation(JavaTokenType.GT));
-    assertEquals(range(100, Long.MAX_VALUE), range(100, 200).fromRelation(JavaTokenType.GE));
-    assertEquals(range(Long.MIN_VALUE, 199), range(100, 200).fromRelation(JavaTokenType.LT));
-    assertEquals(range(Long.MIN_VALUE, 200), range(100, 200).fromRelation(JavaTokenType.LE));
-    assertEquals(range(100, 200), range(100, 200).fromRelation(JavaTokenType.EQEQ));
-    assertNull(range(100, 200).fromRelation(JavaTokenType.EQ));
-    assertEquals(fromType(PsiType.LONG), range(100, 200).fromRelation(JavaTokenType.NE));
-    assertEquals("{-9223372036854775808..99, 101..9223372036854775807}", point(100).fromRelation(JavaTokenType.NE).toString());
+    assertEquals(range(101, Long.MAX_VALUE), range(100, 200).fromRelation(RelationType.GT));
+    assertEquals(range(100, Long.MAX_VALUE), range(100, 200).fromRelation(RelationType.GE));
+    assertEquals(range(Long.MIN_VALUE, 199), range(100, 200).fromRelation(RelationType.LT));
+    assertEquals(range(Long.MIN_VALUE, 200), range(100, 200).fromRelation(RelationType.LE));
+    assertEquals(range(100, 200), range(100, 200).fromRelation(RelationType.EQ));
+    assertNull(range(100, 200).fromRelation(RelationType.IS));
+    assertEquals(fromType(PsiType.LONG), range(100, 200).fromRelation(RelationType.NE));
+    assertEquals("{-9223372036854775808..99, 101..9223372036854775807}", point(100).fromRelation(RelationType.NE).toString());
   }
 
   @Test

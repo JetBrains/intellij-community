@@ -19,14 +19,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ClipboardAnalyzeListener;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
-public class PatchClipboardTracker implements ApplicationComponentAdapter, Disposable {
+public class PatchClipboardTracker implements Disposable, ApplicationComponent {
   private static final PatchClipboardListener LISTENER = new PatchClipboardListener();
 
   @Override
