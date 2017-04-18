@@ -90,8 +90,9 @@ public class StackFrameItem {
   public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
     ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
-      List<StackFrameItem> res = new ArrayList<>();
-      for (StackFrameProxyImpl frame : threadReferenceProxy.forceFrames()) {
+      List<StackFrameProxyImpl> frameProxies = threadReferenceProxy.forceFrames();
+      List<StackFrameItem> res = new ArrayList<>(frameProxies.size());
+      for (StackFrameProxyImpl frame : frameProxies) {
         try {
           List<XNamedValue> vars = null;
           Location location = frame.location();
