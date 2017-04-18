@@ -5,18 +5,13 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.Weigher
 import com.intellij.psi.WeigherExtensionPoint
-import com.intellij.sorting.Ranker
 import com.jetbrains.completion.ranker.features.CompletionState
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import junit.framework.TestCase
@@ -87,25 +82,15 @@ class X {
     }
 
 
-    fun `test do not rerank if encountered unknown features`() { 
-        val classText = """
+    fun `test do not rerank if encountered unknown features`() {
+        myFixture.addClass("""
 public class Test {
     public void test(int a, int b) {}
     public void runq(int c) {}
     public void qqqq() {}
     public void qwrt(int a, int b, int c) {}
 }
-"""
-        myFixture.addClass(classText)
-
-        val text = """
-class X {
-    public void t() {
-        Test test = new Test();
-        test.<caret>
-    }
-}
-"""
+""")
 
         val fakeWeigherExt = WeigherExtensionPoint().apply { 
             id = "fake"
@@ -118,26 +103,34 @@ class X {
         point.registerExtension(fakeWeigherExt, LoadingOrder.before("templates"))
         
         try {
-            myFixture.configureByText(JavaFileType.INSTANCE, text)
-            myFixture.completeBasic()
-
-            val lookup = myFixture.lookup as LookupImpl
-
-            val objects = lookup.getRelevanceObjects(lookup.items, false)
-            val ranks = objects.map { it.value.find { it.first == FeatureUtils.ML_RANK }!!.second }.toSet()
-
-            assert(ranks.size == 1)
-            assert(ranks.first() == FeatureUtils.UNDEFINED)
-            
-            val items = lookup.items.map { it.lookupString }
-            assertThat(items).isEqualTo(listOf("qqqq", "runq", "test", "qwrt"))
+            myFixture.configureByText(JavaFileType.INSTANCE, """
+class X {
+    public void t() {
+        Test test = new Test();
+        test.<caret>
+    }
+}
+""")
+            checkNormalCompletionOrder()
         }
         finally {
             point.unregisterExtension(fakeWeigherExt)
         }
     }
 
-    
+    private fun checkNormalCompletionOrder() {
+        myFixture.completeBasic()
+        val lookup = myFixture.lookup as LookupImpl
+        val objects = lookup.getRelevanceObjects(lookup.items, false)
+        val ranks = objects.map { it.value.find { it.first == FeatureUtils.ML_RANK }!!.second }.toSet()
+
+        assert(ranks.size == 1)
+        assert(ranks.first() == FeatureUtils.UNDEFINED)
+
+        val items = lookup.items.map { it.lookupString }
+        assertThat(items).isEqualTo(listOf("qqqq", "runq", "test", "qwrt"))
+    }
+
 
     private fun checkMlRanking(prefixLength: Int) {
         val lookup = myFixture.lookup as LookupImpl
@@ -166,6 +159,7 @@ class X {
 }
 
 
+@Suppress("unused")
 class FakeWeighter : CompletionWeigher() {
 
     override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing> {

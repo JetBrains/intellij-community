@@ -2,14 +2,12 @@ package com.intellij.sorting
 
 import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.lookup.Classifier
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.Pair
-import com.intellij.util.ProcessingContext
 import com.jetbrains.completion.ranker.features.CompletionState
+import com.jetbrains.completion.ranker.features.FeatureUtils
 
 class MLSorterFactory : CompletionFinalSorter.Factory {
     override fun newSorter() = MLSorter()
@@ -25,15 +23,15 @@ class MLSorter : CompletionFinalSorter() {
         
         val isUnknownFeaturesPresent = items.find { cachedScore[it] == null } != null
         if (isUnknownFeaturesPresent) {
-            return items.associate { it to listOf(Pair.create("ml_rank", "UNDEFINED" as Any)) }
+            return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
         }
         
         return items.associate {
             val result = mutableListOf<Pair<String, Any>>()
             val cached = cachedScore[it]
             if (cached != null) {
-                result.add(Pair.create("ml_rank", cached.mlRank))
-                result.add(Pair.create("before_rerank_order", cached.positionBefore))
+                result.add(Pair.create(FeatureUtils.ML_RANK, cached.mlRank))
+                result.add(Pair.create(FeatureUtils.BEFORE_ORDER, cached.positionBefore))
             }
             it to result
         }
