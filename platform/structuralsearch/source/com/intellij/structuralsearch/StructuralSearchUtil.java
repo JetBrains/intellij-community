@@ -27,6 +27,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -100,6 +101,11 @@ public class StructuralSearchUtil {
     }
     assert ourDefaultFileType instanceof LanguageFileType : "file type not valid for structural search: " + ourDefaultFileType.getName();
     return ourDefaultFileType;
+  }
+
+  @TestOnly
+  public static void clearProfileCache(@NotNull Language language) {
+    language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, null);
   }
 
   @Nullable
