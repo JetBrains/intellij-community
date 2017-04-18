@@ -55,8 +55,9 @@ private val SELECTED_ATTR = "selected"
 internal val METHOD = "method"
 private val OPTION = "option"
 
+// open for Upsource
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
-class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, NamedComponent, Disposable {
+open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, NamedComponent, Disposable {
   companion object {
     @JvmField
     val CONFIGURATION = "configuration"
