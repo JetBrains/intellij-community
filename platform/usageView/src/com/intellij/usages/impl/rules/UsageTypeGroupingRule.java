@@ -23,23 +23,28 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRuleEx;
+import com.intellij.usages.rules.UsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 /**
  * @author max
  */
-public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
+public class UsageTypeGroupingRule implements UsageGroupingRule {
   @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
-    return groupUsage(usage, UsageTarget.EMPTY_ARRAY);
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
@@ -50,19 +55,19 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
         usageType = ((UsageInfo2UsageAdapter)elementUsage).getUsageType();
       }
 
-      if (usageType != null) return new UsageTypeGroup(usageType);
+      if (usageType != null) return singletonList(new UsageTypeGroup(usageType));
 
       if (usage instanceof ReadWriteAccessUsage) {
         ReadWriteAccessUsage u = (ReadWriteAccessUsage)usage;
-        if (u.isAccessedForWriting()) return new UsageTypeGroup(UsageType.WRITE);
-        if (u.isAccessedForReading()) return new UsageTypeGroup(UsageType.READ);
+        if (u.isAccessedForWriting()) return singletonList(new UsageTypeGroup(UsageType.WRITE));
+        if (u.isAccessedForReading()) return singletonList(new UsageTypeGroup(UsageType.READ));
       }
 
-      return new UsageTypeGroup(UsageType.UNCLASSIFIED);
+      return singletonList(new UsageTypeGroup(UsageType.UNCLASSIFIED));
     }
 
 
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @author yole
+ * @deprecated override {@link UsageGroupingRule#getParentGroupsFor(Usage, UsageTarget[])} instead.
  */
 public interface UsageGroupingRuleEx extends UsageGroupingRule {
   @Nullable
