@@ -139,7 +139,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       List<Inlay> hints = getParameterHints(manager);
       ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints);
       updater.update();
-      keeper.restoreOriginalLocation();
+      keeper.restoreOriginalLocation(false);
     }
 
     @NotNull
