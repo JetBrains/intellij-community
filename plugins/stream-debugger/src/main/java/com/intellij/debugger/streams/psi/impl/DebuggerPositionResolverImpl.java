@@ -52,7 +52,7 @@ public class DebuggerPositionResolverImpl implements DebuggerPositionResolver {
 
     if (line >= 0 && file != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
+      if (document != null && line < document.getLineCount()) {
         final int offset = document.getLineStartOffset(line);
         return DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
       }
