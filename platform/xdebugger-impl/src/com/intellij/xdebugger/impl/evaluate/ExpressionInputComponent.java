@@ -56,7 +56,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   private final JPanel myMainPanel;
 
   public ExpressionInputComponent(final @NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition,
-                                  @Nullable XExpression expression, Disposable parentDisposable) {
+                                  @Nullable XExpression expression, Disposable parentDisposable, boolean showHelp) {
     super(XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"));
     myMainPanel = new JPanel(new BorderLayout());
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
@@ -80,6 +80,8 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     help.setFontColor(UIUtil.FontColor.BRIGHTER);
     myMainPanel.add(help, BorderLayout.SOUTH);
+    help.setVisible(showHelp);
+
     if (expression != null) {
       myExpressionEditor.setExpression(expression);
     }
