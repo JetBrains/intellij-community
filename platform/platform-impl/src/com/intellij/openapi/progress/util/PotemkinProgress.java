@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author peter
  */
-public class PotemkinProgress extends ProgressWindow {
+public class PotemkinProgress extends ProgressWindow implements PingProgress {
   private long myLastUiUpdate = System.currentTimeMillis();
   private final LinkedBlockingQueue<InputEvent> myEventQueue = new LinkedBlockingQueue<>();
 
