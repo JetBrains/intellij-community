@@ -59,7 +59,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
                Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
-    assertEquals(expectedName, myScheme.getConsoleFontName());
+    assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getConsoleFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
   }
 
