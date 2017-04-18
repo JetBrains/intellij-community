@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -51,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-// TODO: remove duplication with ChangeDiffRequestPresentable
+// TODO: remove duplication with ChangeDiffRequestProducer
 public abstract class DiffActionExecutor {
   protected final DiffProvider myDiffProvider;
   protected final VirtualFile mySelectedFile;
@@ -74,12 +73,7 @@ public abstract class DiffActionExecutor {
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
     DiffContent diffContent;
-    if (fileRevision instanceof BinaryContentRevision) {
-      final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
-      if (content == null) return null;
-      diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
-    }
-    else if (fileRevision instanceof ByteBackedContentRevision) {
+    if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
       if (content == null) throw new VcsException("Failed to load content");
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());

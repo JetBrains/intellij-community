@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class VcsCurrentRevisionProxy implements ContentRevision {
+public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
   @NotNull private final DiffProvider myDiffProvider;
   @NotNull private final VirtualFile myFile;
   @NotNull private final Project myProject;
@@ -59,7 +59,13 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    return ContentRevisionCache.getAsString(getVcsRevision().second, getFile(), null);
+    return ContentRevisionCache.getAsString(getContentAsBytes(), getFile(), myFile.getCharset());
+  }
+
+  @Nullable
+  @Override
+  public byte[] getContentAsBytes() throws VcsException {
+    return getVcsRevision().second;
   }
 
   @NotNull
@@ -118,6 +124,15 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
       throw new VcsException("Failed to create content for current revision");
     }
 
-    return Pair.create(currentRevision, contentRevision.getContent().getBytes(myFile.getCharset()));
+    byte[] bytes;
+    if (contentRevision instanceof ByteBackedContentRevision) {
+      bytes = ((ByteBackedContentRevision)contentRevision).getContentAsBytes();
+    }
+    else {
+      String content = contentRevision.getContent();
+      if (content == null) throw new VcsException("Can't get revision content");
+      bytes = content.getBytes(myFile.getCharset());
+    }
+    return Pair.create(currentRevision, bytes);
   }
 }

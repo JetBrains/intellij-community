@@ -372,14 +372,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         return contentFactory.create(project, vFile);
       }
 
-      if (revision instanceof BinaryContentRevision) {
-        byte[] content = ((BinaryContentRevision)revision).getBinaryContent();
-        if (content == null) {
-          throw new DiffRequestProducerException("Can't get binary revision content");
-        }
-        return contentFactory.createFromBytes(project, content, filePath);
-      }
-
       if (revision instanceof ByteBackedContentRevision) {
         byte[] revisionContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
