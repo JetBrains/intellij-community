@@ -38,14 +38,15 @@ fun UFile.analyzeAll(context: UastContext = getUastContext(), extensions: List<U
         MapBasedEvaluationContext(context, extensions).analyzeAll(this)
 
 @JvmOverloads
-fun UExpression.uValueOf(extensions: List<UEvaluatorExtension> = emptyList()): UValue? {
+fun UExpression?.uValueOf(extensions: List<UEvaluatorExtension> = emptyList()): UValue? {
+    if (this == null) return null
     val declaration = getContainingDeclaration() ?: return null
     val context = declaration.getEvaluationContextWithCaching(extensions)
     context.analyze(declaration)
     return context.valueOf(this)
 }
 
-fun UExpression.uValueOf(vararg extensions: UEvaluatorExtension): UValue? = uValueOf(extensions.asList())
+fun UExpression?.uValueOf(vararg extensions: UEvaluatorExtension): UValue? = uValueOf(extensions.asList())
 
 fun UDeclaration.getEvaluationContextWithCaching(extensions: List<UEvaluatorExtension> = emptyList()): UEvaluationContext {
     return containingFile?.let { file ->
