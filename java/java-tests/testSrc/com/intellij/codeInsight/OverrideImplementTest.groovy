@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ class Main2 {
    }
 }
 """
-    
+
     def file = myFixture.addClass("""\
 class B implements Main1.I, Main2.I {
     <caret>
@@ -171,9 +171,9 @@ class Test implements A {
 }
 """).containingFile.virtualFile
     myFixture.configureFromExistingVirtualFile(file)
-    
+
     invokeAction(true)
-    
+
     myFixture.checkResult """\
 package bar;
 class Test implements A {
@@ -188,6 +188,9 @@ class Test implements A {
   }
 
   void testTypeAnnotationsInImplementedMethod() {
+    def handler = new OverrideImplementsAnnotationsHandler() { @Override String[] getAnnotations(Project project) { return ["TA"] } }
+    PlatformTestUtil.registerExtension(OverrideImplementsAnnotationsHandler.EP_NAME, handler, testRootDisposable)
+
     myFixture.addClass """\
       import java.lang.annotation.*;
       @Target(ElementType.TYPE_USE)
