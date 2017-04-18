@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         return;
       }
       final String name = method.getName();
-      for (PsiMethod sameNameMethod : containingClass.findMethodsByName(name, !method.hasModifierProperty(PsiModifier.STATIC))) {
+      for (PsiMethod sameNameMethod : containingClass.findMethodsByName(name, true)) {
         if (method.equals(sameNameMethod) || PsiSuperMethodUtil.isSuperMethod(method, sameNameMethod)) {
           continue;
         }

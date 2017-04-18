@@ -61,5 +61,5 @@ class A {
 }
 
 class B extends A {
-  static void foo(IntFunction f) {}
+  static void <warning descr="Lambda unfriendly overload of method 'foo()'">foo</warning>(IntFunction f) {}
 }
