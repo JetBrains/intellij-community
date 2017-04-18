@@ -18,7 +18,6 @@ package com.intellij.index;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.BasicIndexId;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapReduceIndex;
@@ -48,7 +47,7 @@ public class StringIndex {
                      final PersistentHashMap<Integer, Collection<String>> inputIndex,
                      boolean failOnRebuildRequest)
     throws IOException {
-    BasicIndexId<String, String> id = BasicIndexId.create(testName + "string_index");
+    IndexId<String, String> id = IndexId.create(testName + "string_index");
     IndexExtension<String, String, PathContentPair> extension = new IndexExtension<String, String, PathContentPair>() {
       @NotNull
       @Override

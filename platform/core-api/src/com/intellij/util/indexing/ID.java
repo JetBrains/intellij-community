@@ -31,12 +31,11 @@ import java.io.*;
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2008
  */
-public class ID<K, V> implements IndexId<K,V> {
+public class ID<K, V> extends IndexId<K,V> {
   private static final ConcurrentIntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
-  private final String myName;
   private final short myUniqueId;
 
   static {
@@ -77,19 +76,13 @@ public class ID<K, V> implements IndexId<K,V> {
     }
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return myName;
-  }
-
   private static File getEnumFile() {
     final File indexFolder = PathManager.getIndexRoot();
     return new File(indexFolder, "indices.enum");
   }
 
   protected ID(String name) {
-    myName = name;
+    super(name);
     myUniqueId = stringToId(name);
 
     final ID old = ourRegistry.put(myUniqueId, this);

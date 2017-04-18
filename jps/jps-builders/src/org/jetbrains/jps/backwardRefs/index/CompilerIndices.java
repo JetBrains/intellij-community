@@ -17,7 +17,6 @@ package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.BasicIndexId;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -38,10 +37,10 @@ public class CompilerIndices {
   //TODO manage version separately
   public final static int VERSION = 4;
 
-  public final static IndexId<LightRef, Integer> BACK_USAGES = BasicIndexId.create("back.refs");
-  public final static IndexId<LightRef, Collection<LightRef>> BACK_HIERARCHY = BasicIndexId.create("back.hierarchy");
-  public final static IndexId<LightRef, Void> BACK_CLASS_DEF = BasicIndexId.create("back.class.def");
-  public final static IndexId<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = BasicIndexId.create("back.member.sign");
+  public final static IndexId<LightRef, Integer> BACK_USAGES = IndexId.create("back.refs");
+  public final static IndexId<LightRef, Collection<LightRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
+  public final static IndexId<LightRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
+  public final static IndexId<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
 
   public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
     return Arrays.asList(createBackwardClassDefinitionExtension(),

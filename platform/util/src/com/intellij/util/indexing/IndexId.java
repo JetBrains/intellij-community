@@ -18,10 +18,36 @@ package com.intellij.util.indexing;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
 @ApiStatus.Experimental
-public interface IndexId<K, V> {
+public class IndexId<K, V> {
+  @NotNull
+  private final String myName;
+
+  protected IndexId(@NotNull String name) {myName = name;}
 
   @NotNull
-  String getName();
+  public final String getName() {
+    return myName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IndexId<?, ?> id = (IndexId<?, ?>)o;
+
+    if (!myName.equals(id.myName)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myName.hashCode();
+  }
+
+  public static <K, V> IndexId<K, V> create(String name) {
+    return new IndexId<K, V>(name);
+  }
 }

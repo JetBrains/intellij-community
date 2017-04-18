@@ -59,7 +59,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
-    myID = BasicIndexId.create(name);
+    myID = IndexId.create(name);
     myName = name;
     myLogId = logId;
     myIndexer = indexer;
