@@ -102,15 +102,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
-  private var loadedSelectedConfigurationUniqueName: String? = null
-
   private var selectedConfigurationId: String? = null
-    set(value) {
-      field = value
-      if (value != null) {
-        loadedSelectedConfigurationUniqueName = null
-      }
-    }
 
   private val iconCache = TimedIconCache()
   private val _config by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
@@ -369,13 +361,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
-    get() {
-      if (selectedConfigurationId == null && loadedSelectedConfigurationUniqueName != null) {
-        selectedConfigurationId = loadedSelectedConfigurationUniqueName
-      }
-      return selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
-    }
+    get() = selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
     set(value) {
+      if (value?.uniqueID == selectedConfigurationId) {
+        return
+      }
+
       selectedConfigurationId = value?.uniqueID
       fireRunConfigurationSelected()
     }
@@ -643,25 +634,25 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
       immutableSortedSettingsList = null
 
-      loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
-      selectedConfigurationId = loadedSelectedConfigurationUniqueName
+      selectedConfigurationId = parentNode.getAttributeValue(SELECTED_ATTR)
     }
 
     fireBeforeRunTasksUpdated()
+    // todo is it required
     fireRunConfigurationSelected()
   }
 
   fun readContext(parentNode: Element) {
-    loadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR)
+    var selectedConfigurationId = parentNode.getAttributeValue(SELECTED_ATTR)
 
     for (element in parentNode.children) {
       val config = loadConfiguration(element, false)
-      if (loadedSelectedConfigurationUniqueName == null && element.getAttributeValue(SELECTED_ATTR).toBoolean()) {
-        loadedSelectedConfigurationUniqueName = config.uniqueID
+      if (selectedConfigurationId == null && element.getAttributeValue(SELECTED_ATTR).toBoolean()) {
+        selectedConfigurationId = config.uniqueID
       }
     }
 
-    selectedConfigurationId = loadedSelectedConfigurationUniqueName
+    this.selectedConfigurationId = selectedConfigurationId
 
     fireRunConfigurationSelected()
   }
@@ -699,8 +690,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       else {
         val configurations = SmartList<RunnerAndConfigurationSettings>()
         val iterator = idToSettings.values.iterator()
-        while (iterator.hasNext()) {
-          val configuration = iterator.next()
+        for (configuration in iterator) {
           if (configuration.isTemporary || !configuration.isShared) {
             iterator.remove()
 
@@ -708,15 +698,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           }
         }
 
-        if (selectedConfigurationId != null && idToSettings.containsKey(selectedConfigurationId!!)) {
-          selectedConfigurationId = null
+        selectedConfigurationId?.let {
+          if (idToSettings.containsKey(it)) {
+            selectedConfigurationId = null
+          }
         }
 
         configurations
       }
 
       templateIdToConfiguration.clear()
-      loadedSelectedConfigurationUniqueName = null
       recentlyUsedTemporaries.clear()
       configurations
     }
@@ -1103,6 +1094,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
     val removed = SmartList<RunnerAndConfigurationSettings>()
+    var selectedConfigurationWasRemoved = false
     lock.write {
       immutableSortedSettingsList = null
 
@@ -1110,7 +1102,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       for (settings in iterator) {
         if (toRemove.contains(settings)) {
           if (selectedConfigurationId == settings.uniqueID) {
-            selectedConfiguration = null
+            selectedConfigurationWasRemoved = true
           }
 
           iterator.remove()
@@ -1135,6 +1127,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           }
         }
       }
+    }
+
+    if (selectedConfigurationWasRemoved) {
+      selectedConfiguration = null
     }
 
     removed.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
