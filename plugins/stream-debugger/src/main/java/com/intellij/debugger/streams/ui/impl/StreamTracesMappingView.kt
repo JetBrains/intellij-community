@@ -24,5 +24,4 @@ import com.intellij.debugger.streams.ui.TraceController
 class StreamTracesMappingView(
   evaluationContext: EvaluationContextImpl,
   prevController: TraceController,
-  nextController: TraceController) : FlatView(listOf(prevController, nextController), evaluationContext) {
-}
+  nextController: TraceController) : FlatView(listOf(prevController, nextController), evaluationContext)

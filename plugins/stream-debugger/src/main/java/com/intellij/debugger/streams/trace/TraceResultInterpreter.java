@@ -17,7 +17,6 @@ package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.sun.jdi.ArrayReference;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -191,6 +191,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
                                       int row,
                                       boolean hasFocus) {}
 
+    @SuppressWarnings("EmptyMethod")
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
     }

@@ -35,9 +35,8 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
   init {
     var prevMappingPane: MappingPane? = null
     var lastValues: List<ValueWithPositionImpl>? = null
-    for (indexedController in controllers.subList(0, controllers.size - 1).withIndex()) {
-      val controller = indexedController.value
-      val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[indexedController.index + 1])
+    for ((index, controller) in controllers.subList(0, controllers.size - 1).withIndex()) {
+      val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[index + 1])
       val mappingPane = MappingPane(controller.call.name, valuesBefore, mapping)
 
       val view = PositionsAwareCollectionView(" ", evaluationContext, valuesBefore)
