@@ -280,7 +280,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject()) && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {
