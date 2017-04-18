@@ -159,7 +159,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.universalTests.PyUniversalTestsConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.newTestRunners.PyTestsConfigurationProducer"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
@@ -868,7 +868,7 @@
       <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
     </component>
     <component>
-      <implementation-class>com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropInitializer</implementation-class>
+      <implementation-class>com.jetbrains.python.testing.newTestRunners.PyTestLegacyInteropInitializer</implementation-class>
     </component>
   </application-components>
 </idea-plugin>

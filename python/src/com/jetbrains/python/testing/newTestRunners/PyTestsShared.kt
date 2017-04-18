@@ -15,7 +15,7 @@
  */
 
 
-package com.jetbrains.python.testing.universalTests
+package com.jetbrains.python.testing.newTestRunners
 
 import com.google.gson.Gson
 import com.intellij.execution.ExecutionException
@@ -75,11 +75,11 @@ import javax.swing.JComponent
 /**
  * New configuration factories
  */
-val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUniversalUnitTestFactory,
-                                                               PyUniversalPyTestFactory,
-                                                               PyUniversalNoseTestFactory)
+val factories: Array<PythonConfigurationFactoryBase> = arrayOf(PyUnitTestFactory,
+                                                               PyPyTestFactory,
+                                                               PyNoseTestFactory)
 
-internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
+internal fun getAdditionalArgumentsPropertyName() = PyAbstractTestConfiguration::additionalArguments.name
 
 
 /**
@@ -115,7 +115,7 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 // folder provided by python side. Resolve test names versus it
 private val PATH_URL = Pattern.compile("^python<([^<>]+)>$")
 
-private object PyUniversalTestsLocator : SMTestLocator {
+private object PyTestsLocator : SMTestLocator {
   override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     if (scope !is ModuleWithDependenciesScope) {
       return listOf()
@@ -151,10 +151,10 @@ private object PyUniversalTestsLocator : SMTestLocator {
   }
 }
 
-abstract class PyUniversalTestExecutionEnvironment<T : PyUniversalTestConfiguration>(configuration: T, environment: ExecutionEnvironment)
+abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(configuration: T, environment: ExecutionEnvironment)
   : PythonTestCommandLineStateBase<T>(configuration, environment) {
 
-  override fun getTestLocator(): SMTestLocator = PyUniversalTestsLocator
+  override fun getTestLocator(): SMTestLocator = PyTestsLocator
 
   override fun getTestSpecs(): MutableList<String> = ArrayList(configuration.getTestSpec())
 
@@ -166,22 +166,22 @@ abstract class PyUniversalTestExecutionEnvironment<T : PyUniversalTestConfigurat
 }
 
 
-abstract class PyUniversalTestSettingsEditor(private val form: PyUniversalTestForm)
-  : SettingsEditor<PyUniversalTestConfiguration>() {
+abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestSharedForm)
+  : SettingsEditor<PyAbstractTestConfiguration>() {
 
 
-  override fun resetEditorFrom(s: PyUniversalTestConfiguration) {
+  override fun resetEditorFrom(s: PyAbstractTestConfiguration) {
     // usePojoProperties is true because we know that Form is java-based
-    AbstractPythonRunConfiguration.copyParams(s, form.optionsForm)
-    s.copyTo(getProperties(form, usePojoProperties = true))
+    AbstractPythonRunConfiguration.copyParams(s, sharedForm.optionsForm)
+    s.copyTo(getProperties(sharedForm, usePojoProperties = true))
   }
 
-  override fun applyEditorTo(s: PyUniversalTestConfiguration) {
-    AbstractPythonRunConfiguration.copyParams(form.optionsForm, s)
-    s.copyFrom(getProperties(form, usePojoProperties = true))
+  override fun applyEditorTo(s: PyAbstractTestConfiguration) {
+    AbstractPythonRunConfiguration.copyParams(sharedForm.optionsForm, s)
+    s.copyFrom(getProperties(sharedForm, usePojoProperties = true))
   }
 
-  override fun createEditor(): JComponent = form.panel
+  override fun createEditor(): JComponent = sharedForm.panel
 }
 
 enum class TestTargetType {
@@ -214,7 +214,7 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
   /**
    * Converts target to PSI element if possible resolving it against roots and working directory
    */
-  fun asPsiElement(configuration: PyUniversalTestConfiguration): PsiElement? {
+  fun asPsiElement(configuration: PyAbstractTestConfiguration): PsiElement? {
     if (targetType == TestTargetType.PYTHON) {
       val module = configuration.module?:return null
       val context = TypeEvalContext.userInitiated(configuration.project, null)
@@ -235,14 +235,14 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
     return null
   }
 
-  fun generateArgumentsLine(configuration: PyUniversalTestConfiguration): List<String> =
+  fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
     when (targetType) {
       TestTargetType.CUSTOM -> emptyList()
       TestTargetType.PYTHON -> getArgumentsForPythonTarget(configuration)
       TestTargetType.PATH -> listOf("--path", target)
     }
 
-  private fun getArgumentsForPythonTarget(configuration: PyUniversalTestConfiguration): List<String> {
+  private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> {
     val element = asPsiElement(configuration) ?:
                   throw ExecutionException("Can't resolve $target. Try to remove configuration and generate is again")
 
@@ -304,7 +304,7 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
   /**
    * @return directory which target is situated
    */
-  fun getElementDirectory(configuration: PyUniversalTestConfiguration): VirtualFile? {
+  fun getElementDirectory(configuration: PyAbstractTestConfiguration): VirtualFile? {
     if (target == DEFAULT_PATH) {
       //This means "current directory", so we do not know where is it
       // getting vitualfile for it may return PyCharm working directory which is not what we want
@@ -329,10 +329,10 @@ private val Property.prefixedName: String
  *
  * @param runBareFunctions if config supports running functions directly in modules or only class methods
  */
-abstract class PyUniversalTestConfiguration(project: Project,
-                                            configurationFactory: ConfigurationFactory,
-                                            private val runBareFunctions: Boolean = true)
-  : AbstractPythonTestRunConfiguration<PyUniversalTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
+abstract class PyAbstractTestConfiguration(project: Project,
+                                           configurationFactory: ConfigurationFactory,
+                                           private val runBareFunctions: Boolean = true)
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
     RefactoringListenerProvider {
   @DelegationProperty
   val target = ConfigurationTarget(DEFAULT_PATH, TestTargetType.PATH)
@@ -343,7 +343,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
 
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
-  val legacyConfigurationAdapter = PyUniversalTestLegacyConfigurationAdapter(this)
+  val legacyConfigurationAdapter = PyTestLegacyConfigurationAdapter(this)
 
   /**
    * Renames working directory if folder physically renamed
@@ -588,18 +588,18 @@ private fun isTestFile(file: PyFile): Boolean {
          PythonUnitTestUtil.getTestCaseClassesFromFile(file, TypeEvalContext.userInitiated(file.project, file)).isNotEmpty()
 }
 
-abstract class PyUniversalTestFactory<out CONF_T : PyUniversalTestConfiguration> : PythonConfigurationFactoryBase(
+abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
   override abstract fun createTemplateConfiguration(project: Project): CONF_T
 }
 
 /**
- * Only one producer is registered with EP, but it uses factory configured by user to prdouce different configs
+ * Only one producer is registered with EP, but it uses factory configured by user to produce different configs
  */
-object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyUniversalTestConfiguration>(
+object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<PyAbstractTestConfiguration>(
   PythonTestConfigurationType.getInstance()) {
 
-  override val configurationClass = PyUniversalTestConfiguration::class.java
+  override val configurationClass = PyAbstractTestConfiguration::class.java
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
@@ -618,7 +618,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
     return super.findOrCreateConfigurationFromContext(context)
   }
 
-  override fun setupConfigurationFromContext(configuration: PyUniversalTestConfiguration?,
+  override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration?,
                                              context: ConfigurationContext?,
                                              sourceElement: Ref<PsiElement>?): Boolean {
 
@@ -645,7 +645,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
    * Also reports working dir what should be set to configuration to work correctly
    * @return [target, workingDirectory]
    */
-  private fun getTargetForConfig(configuration: PyUniversalTestConfiguration,
+  private fun getTargetForConfig(configuration: PyAbstractTestConfiguration,
                                  baseElement: PsiElement): Pair<ConfigurationTarget, String?>? {
 
 
@@ -685,7 +685,7 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
   }
 
 
-  override fun isConfigurationFromContext(configuration: PyUniversalTestConfiguration, context: ConfigurationContext?): Boolean {
+  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration, context: ConfigurationContext?): Boolean {
 
     val location = context?.location
     if (location is PyTargetBasedPsiLocation) {

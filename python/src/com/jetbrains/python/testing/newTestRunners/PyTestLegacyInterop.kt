@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.testing.universalTests
+package com.jetbrains.python.testing.newTestRunners
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.RunConfigurationProducer
@@ -63,7 +63,7 @@ fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUnivers
 /**
  * Should be installed as application component
  */
-class PyUniversalTestLegacyInteropInitializer {
+class PyTestLegacyInteropInitializer {
   init {
     disableUnneededConfigurationProducer()
 
@@ -87,7 +87,7 @@ class PyUniversalTestLegacyInteropInitializer {
  */
 private fun projectInitialized(project: Project) {
   assert(project.isInitialized, { "Project is not initialized yet" })
-  RunManager.getInstance(project).allConfigurationsList.filterIsInstance(PyUniversalTestConfiguration::class.java).forEach {
+  RunManager.getInstance(project).allConfigurationsList.filterIsInstance(PyAbstractTestConfiguration::class.java).forEach {
     it.legacyConfigurationAdapter.copyFromLegacyIfNeeded()
   }
 }
@@ -100,7 +100,7 @@ private fun disableUnneededConfigurationProducer() {
 
   val newMode = isNewTestsModeEnabled()
   extensionPoint.extensions.filter { it !is PythonDocTestConfigurationProducer }.forEach {
-    if ((it is PyUniversalTestsConfigurationProducer && !newMode) ||
+    if ((it is PyTestsConfigurationProducer && !newMode) ||
         (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
       extensionPoint.unregisterExtension(it)
     }
@@ -132,7 +132,7 @@ private fun VirtualFile.asPyFile(project: Project): PyFile? {
  * Manages legacy-to-new configuration binding
  * Attach it to new configuration and mark with [com.jetbrains.reflection.DelegationProperty]
  */
-class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfiguration>(newConfig: T)
+class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newConfig: T)
   : JDOMExternalizable {
 
   private val configManager: LegacyConfigurationManager<*, *>
@@ -155,13 +155,13 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
 
   init {
     when (newConfig) {
-      is PyUniversalPyTestConfiguration -> {
+      is PyPyTestConfiguration -> {
         configManager = LegacyConfigurationManagerPyTest(newConfig)
       }
-      is PyUniversalNoseTestConfiguration -> {
+      is PyNoseTestConfiguration -> {
         configManager = LegacyConfigurationManagerNose(newConfig)
       }
-      is PyUniversalUnitTestConfiguration -> {
+      is PyUnitTestConfiguration -> {
         configManager = LegacyConfigurationManagerUnit(newConfig)
       }
       else -> {
@@ -211,7 +211,7 @@ class PyUniversalTestLegacyConfigurationAdapter<in T : PyUniversalTestConfigurat
  */
 private abstract class LegacyConfigurationManager<
   LEGACY_CONF_T : AbstractPythonLegacyTestRunConfiguration<LEGACY_CONF_T>,
-  out NEW_CONF_T : PyUniversalTestConfiguration
+  out NEW_CONF_T : PyAbstractTestConfiguration
   >(legacyConfFactory: PythonConfigurationFactoryBase, val newConfig: NEW_CONF_T) {
 
   @Suppress("UNCHECKED_CAST") // Factory-to-config mapping should be checked by developer: createTemplateConfiguration is not generic
@@ -270,8 +270,8 @@ private abstract class LegacyConfigurationManager<
 }
 
 
-private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfiguration) :
-  LegacyConfigurationManager<PyTestRunConfiguration, PyUniversalPyTestConfiguration>(
+private class LegacyConfigurationManagerPyTest(newConfig: PyPyTestConfiguration) :
+  LegacyConfigurationManager<PyTestRunConfiguration, PyPyTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY, newConfig) {
   /**
    * In Py.test target is provided as keywords, joined with "and".
@@ -331,8 +331,8 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyUniversalPyTestConfi
   }
 }
 
-private class LegacyConfigurationManagerUnit(newConfig: PyUniversalUnitTestConfiguration) :
-  LegacyConfigurationManager<PythonUnitTestRunConfiguration, PyUniversalUnitTestConfiguration>(
+private class LegacyConfigurationManagerUnit(newConfig: PyUnitTestConfiguration) :
+  LegacyConfigurationManager<PythonUnitTestRunConfiguration, PyUnitTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY, newConfig) {
   override fun copyFromLegacy() {
     super.copyFromLegacy()
@@ -342,8 +342,8 @@ private class LegacyConfigurationManagerUnit(newConfig: PyUniversalUnitTestConfi
 }
 
 
-private class LegacyConfigurationManagerNose(newConfig: PyUniversalNoseTestConfiguration) :
-  LegacyConfigurationManager<PythonNoseTestRunConfiguration, PyUniversalNoseTestConfiguration>(
+private class LegacyConfigurationManagerNose(newConfig: PyNoseTestConfiguration) :
+  LegacyConfigurationManager<PythonNoseTestRunConfiguration, PyNoseTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_NOSETEST_FACTORY, newConfig) {
   override fun copyFromLegacy() {
     super.copyFromLegacy()

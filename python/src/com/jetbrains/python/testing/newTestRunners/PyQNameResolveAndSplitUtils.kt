@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.testing.universalTests
+package com.jetbrains.python.testing.newTestRunners
 
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getQName

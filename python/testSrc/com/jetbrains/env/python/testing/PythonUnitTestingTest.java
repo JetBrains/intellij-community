@@ -28,9 +28,9 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.newTestRunners.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.newTestRunners.PyUnitTestFactory;
+import com.jetbrains.python.testing.newTestRunners.TestTargetType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -107,7 +107,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(myScriptName), 2) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalUnitTestConfiguration configuration)
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration)
             throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setPattern("test*");
@@ -152,7 +152,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
         return new PyUnitTestProcessRunner(".", 1) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             // Unittest can't find tests in folders with out of init.py, even in py2k, so we set working dir explicitly
             configuration.setWorkingDirectory(toFullPath("tests"));
@@ -175,7 +175,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(myScriptName), 2) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setWorkingDirectory(null); //Unset working dir: should be set to tests automatically
           }
@@ -245,12 +245,12 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testMultipleCases() throws Exception {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                 PyUniversalUnitTestConfiguration.class));
+                                                 PyUnitTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducer() throws Exception {
-    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class);
   }
 
   /**
@@ -265,7 +265,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
           return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }
@@ -286,7 +286,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
           return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }
@@ -299,16 +299,16 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 
-    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration> task =
-      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration>() {
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration>() {
         @NotNull
         @Override
-        protected PyUniversalUnitTestFactory createFactory() {
-          return PyUniversalUnitTestFactory.INSTANCE;
+        protected PyUnitTestFactory createFactory() {
+          return PyUnitTestFactory.INSTANCE;
         }
       };
     runPythonTest(task);
-    final PyUniversalUnitTestConfiguration configuration = task.getConfiguration();
+    final PyUnitTestConfiguration configuration = task.getConfiguration();
     configuration.setPattern("foo");
     configuration.getTarget().setTargetType(TestTargetType.PATH);
     configuration.getTarget().setTarget("foo.py");
@@ -320,7 +320,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                                     PyUniversalUnitTestConfiguration.class));
+                                                                                     PyUnitTestConfiguration.class));
   }
 
   @Test
@@ -328,7 +328,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-        PyUniversalUnitTestConfiguration.class));
+        PyUnitTestConfiguration.class));
   }
 
   @Test

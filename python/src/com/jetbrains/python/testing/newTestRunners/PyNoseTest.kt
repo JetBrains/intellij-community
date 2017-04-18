@@ -15,7 +15,7 @@
  */
 
 
-package com.jetbrains.python.testing.universalTests
+package com.jetbrains.python.testing.newTestRunners
 
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
@@ -30,26 +30,26 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener
  * Nose runner
  */
 
-class PyUniversalNoseTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
-  PyUniversalTestSettingsEditor(
-    PyUniversalTestForm.create(configuration, PyUniversalTestForm.CustomOption(
-      PyUniversalNoseTestConfiguration::regexPattern.name, TestTargetType.PATH)))
+class PyNoseTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
+  PyAbstractTestSettingsEditor(
+    PyTestSharedForm.create(configuration, PyTestSharedForm.CustomOption(
+      PyNoseTestConfiguration::regexPattern.name, TestTargetType.PATH)))
 
-class PyUniversalNoseTestExecutionEnvironment(configuration: PyUniversalNoseTestConfiguration, environment: ExecutionEnvironment) :
-  PyUniversalTestExecutionEnvironment<PyUniversalNoseTestConfiguration>(configuration, environment) {
+class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, environment: ExecutionEnvironment) :
+  PyTestExecutionEnvironment<PyNoseTestConfiguration>(configuration, environment) {
   override fun getRunner() = PythonHelper.NOSE
 }
 
 
-class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNoseTestFactory) : PyUniversalTestConfiguration(project, factory) {
+class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) : PyAbstractTestConfiguration(project, factory) {
   @ConfigField
   var regexPattern = ""
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-    PyUniversalNoseTestExecutionEnvironment(this, environment)
+    PyNoseTestExecutionEnvironment(this, environment)
 
-  override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
-    PyUniversalNoseTestSettingsEditor(this)
+  override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
+    PyNoseTestSettingsEditor(this)
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String =
     when {
@@ -61,8 +61,8 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNos
 
 }
 
-object PyUniversalNoseTestFactory : PyUniversalTestFactory<PyUniversalNoseTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyUniversalNoseTestConfiguration(project, this)
+object PyNoseTestFactory : PyAbstractTestFactory<PyNoseTestConfiguration>() {
+  override fun createTemplateConfiguration(project: Project) = PyNoseTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME
 }

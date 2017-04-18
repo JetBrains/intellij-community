@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
+import com.jetbrains.python.testing.newTestRunners.PyAbstractTestConfiguration;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +88,7 @@ class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration
 
 
 
-  static class CreateConfigurationTestAndRenameClassTask<T extends PyUniversalTestConfiguration> extends CreateConfigurationByFileTask<T> {
+  static class CreateConfigurationTestAndRenameClassTask<T extends PyAbstractTestConfiguration> extends CreateConfigurationByFileTask<T> {
     CreateConfigurationTestAndRenameClassTask(@NotNull final String testRunnerName,
                                               @NotNull final Class<T> expectedConfigurationType) {
       super(testRunnerName, expectedConfigurationType, "test_class.py");
@@ -104,7 +104,7 @@ class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration
     }
   }
 
-  static class CreateConfigurationTestAndRenameFolderTask<T extends PyUniversalTestConfiguration>
+  static class CreateConfigurationTestAndRenameFolderTask<T extends PyAbstractTestConfiguration>
     extends CreateConfigurationByFileTask<T> {
     CreateConfigurationTestAndRenameFolderTask(@Nullable final String testRunnerName,
                                                @NotNull final Class<T> expectedConfigurationType) {

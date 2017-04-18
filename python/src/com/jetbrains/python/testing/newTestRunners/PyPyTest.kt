@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.testing.universalTests
+package com.jetbrains.python.testing.newTestRunners
 
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
@@ -28,26 +28,26 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener
  * Py.test runner
  */
 
-class PyUniversalPyTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
-  PyUniversalTestSettingsEditor(
-    PyUniversalTestForm.create(configuration, PyUniversalTestForm.CustomOption(
-      PyUniversalPyTestConfiguration::keywords.name, TestTargetType.PATH, TestTargetType.PYTHON)))
+class PyPyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
+  PyAbstractTestSettingsEditor(
+    PyTestSharedForm.create(configuration, PyTestSharedForm.CustomOption(
+      PyPyTestConfiguration::keywords.name, TestTargetType.PATH, TestTargetType.PYTHON)))
 
-class PyUniversalPyTestExecutionEnvironment(configuration: PyUniversalPyTestConfiguration, environment: ExecutionEnvironment) :
-  PyUniversalTestExecutionEnvironment<PyUniversalPyTestConfiguration>(configuration, environment) {
+class PyPyTestExecutionEnvironment(configuration: PyPyTestConfiguration, environment: ExecutionEnvironment) :
+  PyTestExecutionEnvironment<PyPyTestConfiguration>(configuration, environment) {
   override fun getRunner() = PythonHelper.PYTEST
 }
 
 
-class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalPyTestFactory) : PyUniversalTestConfiguration(project, factory) {
+class PyPyTestConfiguration(project: Project, factory: PyPyTestFactory) : PyAbstractTestConfiguration(project, factory) {
   @ConfigField
   var keywords = ""
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-    PyUniversalPyTestExecutionEnvironment(this, environment)
+    PyPyTestExecutionEnvironment(this, environment)
 
-  override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
-    PyUniversalPyTestSettingsEditor(this)
+  override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
+    PyPyTestSettingsEditor(this)
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String =
     when {
@@ -59,8 +59,8 @@ class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalPyTes
 
 }
 
-object PyUniversalPyTestFactory : PyUniversalTestFactory<PyUniversalPyTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyUniversalPyTestConfiguration(project, this)
+object PyPyTestFactory : PyAbstractTestFactory<PyPyTestConfiguration>() {
+  override fun createTemplateConfiguration(project: Project) = PyPyTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PY_TEST_NAME
 }

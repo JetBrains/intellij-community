@@ -15,7 +15,7 @@
  */
 
 /**
- * New (universal) test runners for Python based on this
+ * New (Leonid Shalupov's) test runners for Python based on this
  * <a href="https://confluence.jetbrains.com/display/~link/PyCharm+test+runners+protocol">Protocol</a>.
  */
-package com.jetbrains.python.testing.universalTests;
+package com.jetbrains.python.testing.newTestRunners;

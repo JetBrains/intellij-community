@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.testing.universalTests;
+package com.jetbrains.python.testing.newTestRunners;
 
 import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -41,11 +41,11 @@ import java.util.regex.Pattern;
 /**
  * Form to display run configuration.
  * It displays target type, target, additional arguments, custom options (if provided) and environment options
- * Create with {@link #create(PyUniversalTestConfiguration, String...)}
+ * Create with {@link #create(PyAbstractTestConfiguration, String...)}
  *
  * @author Ilya.Kazakevich
  */
-public final class PyUniversalTestForm implements SimplePropertiesProvider {
+public final class PyTestSharedForm implements SimplePropertiesProvider {
 
   /**
    * Regex to convert additionalArgumentNames to "Additional Argument Names"
@@ -99,7 +99,7 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
     return myCustomOptions.get(propertyName).myOptionValue.getText();
   }
 
-  private PyUniversalTestForm() {
+  private PyTestSharedForm() {
   }
 
   /**
@@ -107,13 +107,13 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
    * @param customOptions additional option names this form shall support. Make sure your configuration has appropriate properties.
    */
   @NotNull
-  public static PyUniversalTestForm create(@NotNull
-                                           final PyUniversalTestConfiguration configuration,
-                                           @NotNull
+  public static PyTestSharedForm create(@NotNull
+                                           final PyAbstractTestConfiguration configuration,
+                                        @NotNull
                                            final CustomOption... customOptions) { // TODO: DOC
 
 
-    final PyUniversalTestForm form = new PyUniversalTestForm();
+    final PyTestSharedForm form = new PyTestSharedForm();
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(PythonFileType.INSTANCE);
     form.myTargetText.addBrowseFolderListener("Choose File or Folder", null, configuration.getProject(),
                                               descriptor);
@@ -137,7 +137,7 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
 
 
     form.addCustomOptions(
-      ObjectArrays.concat(customOptions, new CustomOption(PyUniversalTestsKt.getAdditionalArgumentsPropertyName(), TestTargetType.values()))
+      ObjectArrays.concat(customOptions, new CustomOption(PyTestsSharedKt.getAdditionalArgumentsPropertyName(), TestTargetType.values()))
     );
     configuration.copyTo(ReflectionUtilsKt.getProperties(form, null, true));
     return form;

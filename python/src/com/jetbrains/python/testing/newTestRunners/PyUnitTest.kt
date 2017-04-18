@@ -15,7 +15,7 @@
  */
 
 
-package com.jetbrains.python.testing.universalTests
+package com.jetbrains.python.testing.newTestRunners
 
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
@@ -31,28 +31,28 @@ import com.jetbrains.python.testing.PythonTestConfigurationsModel
  * unittest
  */
 
-class PyUniversalUnitTestSettingsEditor(configuration: PyUniversalTestConfiguration) :
-  PyUniversalTestSettingsEditor(
-    PyUniversalTestForm.create(configuration,
-                               PyUniversalTestForm.CustomOption(PyUniversalUnitTestConfiguration::pattern.name, TestTargetType.PATH)
+class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
+  PyAbstractTestSettingsEditor(
+    PyTestSharedForm.create(configuration,
+                            PyTestSharedForm.CustomOption(PyUnitTestConfiguration::pattern.name, TestTargetType.PATH)
     ))
 
-class PyUniversalUnitTestExecutionEnvironment(configuration: PyUniversalUnitTestConfiguration, environment: ExecutionEnvironment) :
-  PyUniversalTestExecutionEnvironment<PyUniversalUnitTestConfiguration>(configuration, environment) {
+class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
+  PyTestExecutionEnvironment<PyUnitTestConfiguration>(configuration, environment) {
   override fun getRunner() = PythonHelper.UNITTEST
 }
 
 
-class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUnitTestFactory) :
-  PyUniversalTestConfiguration(project, factory, runBareFunctions = false) { // Bare functions not supported in unittest: classes only
+class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
+  PyAbstractTestConfiguration(project, factory, runBareFunctions = false) { // Bare functions not supported in unittest: classes only
   @ConfigField
   var pattern: String? = null
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-    PyUniversalUnitTestExecutionEnvironment(this, environment)
+    PyUnitTestExecutionEnvironment(this, environment)
 
-  override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
-    PyUniversalUnitTestSettingsEditor(this)
+  override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
+    PyUnitTestSettingsEditor(this)
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String {
     // Pattern can only be used with folders ("all in folder" in legacy terms)
@@ -80,8 +80,8 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUni
   override fun shouldSeparateTargetPath() = false
 }
 
-object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyUniversalUnitTestConfiguration(project, this)
+object PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
+  override fun createTemplateConfiguration(project: Project) = PyUnitTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME
 }
