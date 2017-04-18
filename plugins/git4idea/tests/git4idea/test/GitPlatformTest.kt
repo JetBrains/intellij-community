@@ -171,6 +171,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assertTrue("Merge dialog was not shown", vcsHelper.mergeDialogWasShown())
   }
 
+  protected fun `assert commit dialog was shown`() {
+    assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+  }
+
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
 
 }

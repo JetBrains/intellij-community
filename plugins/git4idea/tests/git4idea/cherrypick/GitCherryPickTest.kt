@@ -76,7 +76,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     cherryPick(commit)
 
-    assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
+    `assert commit dialog was shown`()
     assertLastMessage("""
       on_master
 
