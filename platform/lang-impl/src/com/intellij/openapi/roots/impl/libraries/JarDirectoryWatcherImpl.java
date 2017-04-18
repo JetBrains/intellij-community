@@ -72,7 +72,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
               if (event instanceof VFileCopyEvent) {
                 final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
                 final VirtualFile file = copyEvent.getFile();
-                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
+                if (isUnderJarDirectory(copyEvent.getNewParent().getUrl() + "/" + copyEvent.getNewChildName()) ||
                     isUnderJarDirectory(file.getUrl())) {
                   changesDetected = true;
                   break;
