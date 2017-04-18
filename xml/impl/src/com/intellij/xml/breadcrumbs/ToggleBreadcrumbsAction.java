@@ -16,6 +16,7 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -68,6 +69,7 @@ final class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   }
 
   private static String findLanguageID(AnActionEvent event) {
+    if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) return null;
     FileViewProvider provider = BreadcrumbsXmlWrapper.findViewProvider(findEditor(event));
     return provider == null ? null : provider.getBaseLanguage().getID();
   }
