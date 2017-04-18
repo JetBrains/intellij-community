@@ -73,7 +73,11 @@ class MLSorter : CompletionFinalSorter() {
     }
 
 
-    private fun calculateElementRank(lookup: LookupImpl, element: LookupElement, position: Int, relevance: LookupElementRelevance): Double? {
+    private fun calculateElementRank(lookup: LookupImpl, 
+                                     element: LookupElement, 
+                                     position: Int, 
+                                     relevance: LookupElementRelevance): Double? 
+    {
         val cachedWeight = getCachedRankInfo(lookup, element)
         if (cachedWeight != null) {
             return cachedWeight.mlRank
