@@ -129,7 +129,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
     manager.waitForReadingCompletion();
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();
       return promise.blockingGet(0);
