@@ -15,11 +15,16 @@
  */
 package com.intellij.util.indexing;
 
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 @ApiStatus.Experimental
 public class IndexId<K, V> {
+  private static final Map<String, IndexId<?, ?>> ourInstances = new THashMap<String, IndexId<?, ?>>();
+
   @NotNull
   private final String myName;
 
@@ -31,6 +36,11 @@ public class IndexId<K, V> {
   }
 
   public static <K, V> IndexId<K, V> create(String name) {
-    return new IndexId<K, V>(name);
+    @SuppressWarnings("unchecked")
+    IndexId<K, V> id = (IndexId<K, V>)ourInstances.get(name);
+    if (id == null) {
+      ourInstances.put(name, id = new IndexId<K, V>(name));
+    }
+    return id;
   }
 }
