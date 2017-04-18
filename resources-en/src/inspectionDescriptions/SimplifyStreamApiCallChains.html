@@ -15,12 +15,13 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>Collections.singleton().stream()</code> &rarr; <code>Stream.of()</code></li>
   <li><code>Collections.emptyList().stream()</code> &rarr; <code>Stream.empty()</code></li>
   <li><code>stream.filter().findFirst().isPresent()</code> &rarr; <code>stream.anyMatch()</code></li>
-  <li><code>stream.collect(Collectors.counting())</code> &rarr; <code>stream.count()</code></li>
-  <li><code>stream.collect(Collectors.maxBy())</code> &rarr; <code>stream.max()</code></li>
-  <li><code>stream.collect(Collectors.mapping())</code> &rarr; <code>stream.map().collect()</code></li>
-  <li><code>stream.collect(Collectors.reducing())</code> &rarr; <code>stream.reduce()</code></li>
-  <li><code>stream.collect(Collectors.summingInt())</code> &rarr; <code>stream.mapToInt().sum()</code></li>
+  <li><code>stream.collect(counting())</code> &rarr; <code>stream.count()</code></li>
+  <li><code>stream.collect(maxBy())</code> &rarr; <code>stream.max()</code></li>
+  <li><code>stream.collect(mapping())</code> &rarr; <code>stream.map().collect()</code></li>
+  <li><code>stream.collect(reducing())</code> &rarr; <code>stream.reduce()</code></li>
+  <li><code>stream.collect(summingInt())</code> &rarr; <code>stream.mapToInt().sum()</code></li>
   <li><code>stream.mapToObj(x -> x)</code> &rarr; <code>stream.boxed()</code></li>
+  <li><code>stream.map(x -> {...; return x;})</code> &rarr; <code>stream.peek(x -> ...)</code></li>
   <li><code>!stream.anyMatch()</code> &rarr; <code>stream.noneMatch()</code></li>
   <li><code>!stream.anyMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
   <li><code>stream.map().anyMatch(Boolean::booleanValue)</code> -> <code>stream.anyMatch()</code></li>

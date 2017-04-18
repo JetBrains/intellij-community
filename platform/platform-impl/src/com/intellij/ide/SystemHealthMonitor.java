@@ -72,17 +72,18 @@ public class SystemHealthMonitor implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    checkJvm();
+    checkRuntime();
     checkIBus();
     checkSignalBlocking();
     checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
-  private void checkJvm() {
+  private void checkRuntime() {
     if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
       showNotification(new KeyHyperlinkAdapter("unsupported.jvm.ea.message"));
     }
+
     JdkBundle bundle = JdkBundle.createBoot();
     if (bundle != null && !bundle.isBundled()) {
       Version version = bundle.getVersion();
@@ -104,27 +105,17 @@ public class SystemHealthMonitor implements ApplicationComponent {
           }
         }
 
-        if (showSwitchOption) {
-          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message1") {
-                           @Override
-                           protected void hyperlinkActivated(HyperlinkEvent e) {
-                             String url = e.getDescription();
-                             if ("ack".equals(url)) {
-                               myProperties.setValue(getIgnoreKey(), "true");
-                             }
-                             else if ("switch".equals(url)) {
-                               ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
-                             }
-                             else {
-                               BrowserUtil.browse(url);
-                             }
-                           }
-                         }, bundleVersion, LATEST_JDK_RELEASE);
-        }
-        else {
-          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message2"),
-                           bundleVersion, LATEST_JDK_RELEASE);
-        }
+        showNotification(new KeyHyperlinkAdapter(showSwitchOption ? "outdated.jvm.version.message1" : "outdated.jvm.version.message2") {
+          @Override
+          protected void hyperlinkActivated(HyperlinkEvent e) {
+            if ("switch".equals(e.getDescription())) {
+              ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
+            }
+            else {
+              super.hyperlinkActivated(e);
+            }
+          }
+        }, bundleVersion, LATEST_JDK_RELEASE);
       }
     }
   }
@@ -171,16 +162,15 @@ public class SystemHealthMonitor implements ApplicationComponent {
     }
   }
 
-  private void showNotification(final KeyHyperlinkAdapter keyHyperlinkAdapter, Object... params) {
-    @PropertyKey(resourceBundle = "messages.IdeBundle") String key = keyHyperlinkAdapter.getKey();
-    final String ignoreKey = keyHyperlinkAdapter.getIgnoreKey();
-    boolean ignored = myProperties.isValueSet(ignoreKey);
+  private void showNotification(KeyHyperlinkAdapter adapter, Object... params) {
+    @PropertyKey(resourceBundle = "messages.IdeBundle") String key = adapter.key;
+    boolean ignored = adapter.isIgnored();
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
-    final String message = IdeBundle.message(key, params) + IdeBundle.message("sys.health.acknowledge.link");
+    String message = IdeBundle.message(key, params) + IdeBundle.message("sys.health.acknowledge.link");
 
-    final Application app = ApplicationManager.getApplication();
+    Application app = ApplicationManager.getApplication();
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
@@ -189,7 +179,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           if (component != null) {
             Rectangle rect = component.getVisibleRect();
             JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, keyHyperlinkAdapter)
+              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, adapter)
               .setFadeoutTime(-1)
               .setHideOnFrameResize(false)
               .setHideOnLinkClick(true)
@@ -237,7 +227,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
             }));
           }
           if (!future.isDone() || future.isCancelled()) {
-            JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+            restart(1);
             return;
           }
 
@@ -249,7 +239,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
             if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {
               if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
-                JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+                restart(1);
                 return;
               }
               reported.compareAndSet(false, true);
@@ -295,26 +285,22 @@ public class SystemHealthMonitor implements ApplicationComponent {
     int sigaction(int signum, Pointer act, Pointer oldact);
   }
 
-  class KeyHyperlinkAdapter extends HyperlinkAdapter {
+  private class KeyHyperlinkAdapter extends HyperlinkAdapter {
     private final String key;
 
-    KeyHyperlinkAdapter(String key) {
+    private KeyHyperlinkAdapter(@PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
       this.key = key;
     }
 
-    public String getKey() {
-      return key;
-    }
-
-    public String getIgnoreKey() {
-      return "ignore." + key;
+    private boolean isIgnored() {
+      return myProperties.isValueSet("ignore." + key);
     }
 
     @Override
     protected void hyperlinkActivated(HyperlinkEvent e) {
       String url = e.getDescription();
       if ("ack".equals(url)) {
-        myProperties.setValue(getIgnoreKey(), "true");
+        myProperties.setValue("ignore." + key, "true");
       }
       else {
         BrowserUtil.browse(url);

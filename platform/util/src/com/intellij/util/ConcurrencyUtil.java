@@ -186,4 +186,15 @@ public class ConcurrencyUtil {
   public static void joinAll(@NotNull Thread... threads) throws RuntimeException {
     joinAll(Arrays.asList(threads));
   }
+
+  public static void runUnderThreadName(@NotNull String name, @NotNull Runnable runnable) {
+    String oldThreadName = Thread.currentThread().getName();
+    Thread.currentThread().setName(name);
+    try {
+      runnable.run();
+    }
+    finally {
+      Thread.currentThread().setName(oldThreadName);
+    }
+  }
 }

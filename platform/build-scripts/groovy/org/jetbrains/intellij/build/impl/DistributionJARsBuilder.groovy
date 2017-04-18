@@ -179,8 +179,6 @@ class DistributionJARsBuilder {
   }
 
   void buildAdditionalArtifacts() {
-    copyDependenciesFile()
-
     def productProperties = buildContext.productProperties
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
@@ -512,13 +510,5 @@ class DistributionJARsBuilder {
     FileUtil.createParentDirs(targetFile)
     targetFile.text = defaultKeymapContent
     return patchedKeyMapDir
-  }
-
-  private def copyDependenciesFile() {
-    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
-      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
-      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
-      buildContext.notifyArtifactBuilt(outputFile)
-    }
   }
 }
