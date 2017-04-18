@@ -43,9 +43,13 @@ class CompletionTypingTest : LightFixtureCompletionTestCase() {
         
         myFixture.addClass(runnableInterface)
         myFixture.configureByText(JavaFileType.INSTANCE, testText)
+
+        CompletionTrackerInitializer.isEnabledInTests = true
     }
 
     override fun tearDown() {
+        CompletionTrackerInitializer.isEnabledInTests = false
+
         val name = CompletionLoggerProvider::class.java.name
         container.unregisterComponent(name)
         container.registerComponentInstance(name, realLoggerProvider)

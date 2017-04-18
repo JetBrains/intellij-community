@@ -29,9 +29,11 @@ class Test {
         super.setUp()
         val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         pathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
+        CompletionTrackerInitializer.isEnabledInTests = true
     }
 
     override fun tearDown() {
+        CompletionTrackerInitializer.isEnabledInTests = false
         try {
             super.tearDown()
         } finally {

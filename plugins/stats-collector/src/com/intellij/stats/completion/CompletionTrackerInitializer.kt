@@ -20,6 +20,10 @@ import java.beans.PropertyChangeListener
 
 
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): ApplicationComponent {
+    companion object {
+        var isEnabledInTests = false
+    }
+
     private val actionListener = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
@@ -28,6 +32,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
             actionListener.listener = CompletionPopupListener.Adapter()
         }
         else if (lookup is LookupImpl) {
+            if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return@PropertyChangeListener
+
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
             val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
             actionListener.listener = tracker

@@ -26,9 +26,12 @@ class FileLoggerTest : PlatformTestCase() {
             `when`(getStatsDataDirectory()).thenReturn(dir)
             `when`(getUniqueFile()).thenReturn(logFile)
         }
+
+        CompletionTrackerInitializer.isEnabledInTests = true
     }
 
     override fun tearDown() {
+        CompletionTrackerInitializer.isEnabledInTests = false
         try {
             dir.deleteRecursively()
         }
