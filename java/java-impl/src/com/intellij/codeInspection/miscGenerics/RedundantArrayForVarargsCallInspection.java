@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (callExpression instanceof PsiEnumConstant) {
             final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
             final PsiClass containingClass = enumConstant.getContainingClass();
+            if (containingClass == null) return false;
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
             final PsiClassType classType = facade.getElementFactory().createType(containingClass);
             resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
@@ -160,13 +161,15 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
               return false;
             }
             final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression)callExpression, false);
+            if (expectedTypes.length == 0) return true;
             final PsiType expressionType = ((PsiCallExpression)copy).getType();
+            if (expressionType == null) return false;
             for (ExpectedTypeInfo expectedType : expectedTypes) {
-              if (!expectedType.getType().isAssignableFrom(expressionType)) {
-                return false;
+              if (expectedType.getType().isAssignableFrom(expressionType)) {
+                return true;
               }
             }
-            return true;
+            return false;
           }
         }
         catch (IncorrectOperationException e) {
