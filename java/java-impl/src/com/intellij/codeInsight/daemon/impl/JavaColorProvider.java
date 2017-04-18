@@ -32,7 +32,7 @@ import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.UConstant;
 import org.jetbrains.uast.values.UValue;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -67,7 +67,7 @@ public class JavaColorProvider implements ElementColorProvider {
     } else if (isIntLiteralInsideNewJBColorExpression(element)) {
       final String text = element.getText();
       boolean hasAlpha = text != null && StringUtil.startsWithIgnoreCase(text, "0x") && text.length() > 8;
-      return new Color(getInt(newExpression), hasAlpha);
+      return new Color(getInt(UastContextKt.toUElement(element, ULiteralExpression.class)), hasAlpha);
     }
     return null;
   }
