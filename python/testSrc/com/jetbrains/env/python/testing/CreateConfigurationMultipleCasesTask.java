@@ -20,8 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.testing.universalTests.ConfigurationTarget;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
+import com.jetbrains.python.testing.ConfigurationTarget;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -34,7 +34,7 @@ import java.util.List;
  * Creates configurations for many different cases: packages, classes, files and folders. It checks then that configuration is ok.
  * @author Ilya.Kazakevich
  */
-final class CreateConfigurationMultipleCasesTask<T extends PyUniversalTestConfiguration> extends CreateConfigurationTestTask<T> {
+final class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration> extends CreateConfigurationTestTask<T> {
 
   CreateConfigurationMultipleCasesTask(@NotNull final String testRunnerName,
                                        @NotNull final Class<T> expectedConfigurationType) {

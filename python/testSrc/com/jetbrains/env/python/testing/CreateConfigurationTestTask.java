@@ -31,9 +31,9 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.PyAbstractTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +148,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
   /**
    * Task to create configuration
    */
-  abstract static class PyConfigurationCreationTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+  abstract static class PyConfigurationCreationTask<T extends PyAbstractTestConfiguration> extends PyExecutionFixtureTestTask {
     private volatile T myConfiguration;
 
 
@@ -166,7 +166,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }
 
     @NotNull
-    protected abstract PyUniversalTestFactory<T> createFactory();
+    protected abstract PyAbstractTestFactory<T> createFactory();
 
     @NotNull
     T getConfiguration() {

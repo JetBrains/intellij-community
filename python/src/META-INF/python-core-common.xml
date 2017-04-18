@@ -154,12 +154,12 @@
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
 
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.unittestLegacy.PythonUnitTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.pytestLegacy.PyTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.universalTests.PyUniversalTestsConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
@@ -868,7 +868,7 @@
       <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
     </component>
     <component>
-      <implementation-class>com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropInitializer</implementation-class>
+      <implementation-class>com.jetbrains.python.testing.PyTestLegacyInteropInitializer</implementation-class>
     </component>
   </application-components>
 </idea-plugin>
