@@ -53,8 +53,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.QNameResolveContext
-import com.jetbrains.extenstions.splitNameParts
-import com.jetbrains.extenstions.toElement
+import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -133,10 +132,11 @@ private object PyUniversalTestsLocator : SMTestLocator {
     //TODO: Doc we will not bae able to resolve if different SDK
     val qualifiedName = QualifiedName.fromDottedString(path)
     // Assume qname id good and resolve it directly
-    val element = qualifiedName.toElement(QNameResolveContext(scope.module,
-                                                              evalContext = TypeEvalContext.codeAnalysis(project, null),
-                                                              folderToStart = folder,
-                                                              allowInaccurateResult = true))
+    val element = qualifiedName.resolveToElement(QNameResolveContext(scope.module,
+                                                                     evalContext = TypeEvalContext.codeAnalysis(project,
+                                                                                                                                   null),
+                                                                     folderToStart = folder,
+                                                                     allowInaccurateResult = true))
     if (element != null) {
       // Path is qualified name of python test according to runners protocol
       // Parentheses are part of generators / parametrized tests
@@ -216,10 +216,11 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
    */
   fun asPsiElement(configuration: PyUniversalTestConfiguration): PsiElement? {
     if (targetType == TestTargetType.PYTHON) {
+      val module = configuration.module?:return null
       val context = TypeEvalContext.userInitiated(configuration.project, null)
       val workDir = configuration.getWorkingDirectoryAsVirtual()
       val name = QualifiedName.fromDottedString(target)
-      return name.toElement(QNameResolveContext(configuration.moduleNotNull, configuration.sdk, context, workDir, true))
+      return name.resolveToElement(QNameResolveContext(module, configuration.sdk, context, workDir, true))
     }
     return null
   }
@@ -257,20 +258,20 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
       folderToStart = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe),
       allowInaccurateResult = true
     )
-    val qualifiedNameParts = QualifiedName.fromDottedString(target).splitNameParts(qNameResolveContext)  ?:
-                                                    throw ExecutionException("Can't find file where $target declared. " +
+    val qualifiedNameParts = QualifiedName.fromDottedString(target).tryResolveAndSplit(qNameResolveContext) ?:
+                             throw ExecutionException("Can't find file where $target declared. " +
                                                                              "Make sure it is in project root")
 
     // We can't provide element qname here: it may point to parent class in case of inherited functions,
     // so we make fix file part, but obey element(symbol) part of qname
 
-    if (!configuration.isFSPartOfTargetShouldBeSeparated()) {
+    if (!configuration.shouldSeparateTargetPath()) {
       // Here generate qname instead of file/path::element_name
 
       // Try to set path relative to work dir (better than path from closest root)
       // If we can resolve element by this path relative to working directory then use it
       val qNameInsideOfDirectory = qualifiedNameParts.getElementNamePrependingFile()
-      if (qNameInsideOfDirectory.toElement(qNameResolveContext.copy(allowInaccurateResult = false)) != null) {
+      if (qNameInsideOfDirectory.resolveToElement(qNameResolveContext.copy(allowInaccurateResult = false)) != null) {
         return listOf("--target", qNameInsideOfDirectory.toString())
       }
       // Use "full" (path from closest root) otherwise
@@ -402,17 +403,8 @@ abstract class PyUniversalTestConfiguration(project: Project,
   }
 
   override fun getRefactoringElementListener(element: PsiElement?): RefactoringElementListener? {
-    val myModule = module
-    val targetElement: PsiElement?
-
+    val targetElement = target.asPsiElement(this)
     val workingDirectoryFile = getWorkingDirectoryAsVirtual()
-
-    if (myModule != null) {
-      targetElement = target.asPsiElement(this)
-    }
-    else {
-      targetElement = null
-    }
     val targetFile = target.asVirtualFile()
 
 
@@ -441,7 +433,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
 
   override fun isTestBased() = true
 
-  private fun getTestSpecForPythonTarget(location: Location<*>): List<String> {
+  private fun getPythonTestSpecByLocation(location: Location<*>): List<String> {
 
     if (location is PyTargetBasedPsiLocation) {
       return location.target.generateArgumentsLine(this)
@@ -460,7 +452,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   }
 
   override fun getTestSpec(location: Location<*>, failedTest: AbstractTestProxy): String? {
-    val list = getTestSpecForPythonTarget(location)
+    val list = getPythonTestSpecByLocation(location)
     if (list.isEmpty()) {
       return null
     }
@@ -473,7 +465,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
                                     locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
     val result = ArrayList<String>()
     // Set used to remove duplicate targets
-    locations.map { it.first }.distinctBy { it.psiElement }.map { getTestSpecForPythonTarget(it) }.filterNotNull().forEach {
+    locations.map { it.first }.distinctBy { it.psiElement }.map { getPythonTestSpecByLocation(it) }.filterNotNull().forEach {
       result.addAll(it)
     }
     return result + generateRawArguments(true)
@@ -588,7 +580,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
    *
    *  Second approach is prefered if this flag is set. It is generally better because filesystem path does not need __init__.py
    */
-  internal open fun isFSPartOfTargetShouldBeSeparated(): Boolean = true
+  internal open fun shouldSeparateTargetPath(): Boolean = true
 }
 
 private fun isTestFile(file: PyFile): Boolean {
@@ -673,9 +665,10 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
             val elementFolder = element.containingFile.virtualFile.parent?: return null
 
             val context = QNameResolveContext(module,
-                                              evalContext = TypeEvalContext.userInitiated(configuration.project, null),
-                                              folderToStart = elementFolder)
-            val parts = element.splitNameParts(context) ?: return null
+                                                                        evalContext = TypeEvalContext.userInitiated(configuration.project,
+                                                                                                                    null),
+                                                                        folderToStart = elementFolder)
+            val parts = element.tryResolveAndSplit(context) ?: return null
             val qualifiedName = parts.getElementNamePrependingFile()
             return Pair(ConfigurationTarget(qualifiedName.toString(), TestTargetType.PYTHON),
                         elementFolder.path)
