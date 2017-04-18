@@ -18,12 +18,11 @@ package org.jetbrains.yaml.breadcrumbs;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
 import com.intellij.xml.breadcrumbs.BreadcrumbsItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +99,8 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
     }
     final Language language = element.getContainingFile().getLanguage();
 
-    final BreadcrumbsInfoProvider provider = BreadcrumbsInfoProvider.find(language::equals);
+    final BreadcrumbsProvider provider = ContainerUtil.find(BreadcrumbsProvider.EP_NAME.getExtensions(),
+                                                            (p) -> Arrays.asList(p.getLanguages()).contains(language));
     if (provider == null) {
       return Collections.emptyList();
     }

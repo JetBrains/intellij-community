@@ -47,6 +47,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -85,7 +86,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private final VirtualFile myFile;
   private boolean myUserCaretChange = true;
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, breadcrumbs);
-  private final BreadcrumbsInfoProvider myInfoProvider;
+  private final BreadcrumbsProvider myInfoProvider;
   private final Update myUpdate = new MyUpdate(this);
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
@@ -235,9 +236,8 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  private static BreadcrumbsInfoProvider findProviderForElement(@NotNull final PsiElement element,
-                                                                final BreadcrumbsInfoProvider defaultProvider) {
-    final BreadcrumbsInfoProvider provider = getInfoProvider(element.getLanguage());
+  private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider) {
+    final BreadcrumbsProvider provider = getInfoProvider(element.getLanguage());
     return provider == null ? defaultProvider : provider;
   }
 
@@ -270,7 +270,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
                                                                final VirtualFile file,
                                                                final Editor editor,
                                                                final Project project,
-                                                               final BreadcrumbsInfoProvider defaultInfoProvider) {
+                                                               final BreadcrumbsProvider defaultInfoProvider) {
     final LinkedList<PsiCrumb> result =
       getLineElements(editor.logicalPositionToOffset(position), file, project, defaultInfoProvider);
 
@@ -289,7 +289,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsInfoProvider infoProvider) {
+  public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsProvider infoProvider) {
     final LinkedList<PsiCrumb> lineElements = getLineElements(offset, file, project, infoProvider);
     return lineElements != null ? toPsiElementArray(lineElements) : null;
   }
@@ -298,13 +298,13 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private static LinkedList<PsiCrumb> getLineElements(final int offset,
                                                       VirtualFile file,
                                                       Project project,
-                                                      BreadcrumbsInfoProvider defaultInfoProvider) {
+                                                      BreadcrumbsProvider defaultInfoProvider) {
     PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider);
     if (element == null) return null;
 
     final LinkedList<PsiCrumb> result = new LinkedList<>();
     while (element != null) {
-      BreadcrumbsInfoProvider provider = findProviderForElement(element, defaultInfoProvider);
+      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider);
 
       if (provider != null && provider.acceptElement(element)) {
         result.addFirst(new PsiCrumb(element, provider));
@@ -319,7 +319,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private static PsiElement findFirstBreadcrumbedElement(final int offset,
                                                          final VirtualFile file,
                                                          final Project project,
-                                                         final BreadcrumbsInfoProvider defaultInfoProvider) {
+                                                         final BreadcrumbsProvider defaultInfoProvider) {
     if (file == null || !file.isValid()) return null;
 
     PriorityQueue<PsiElement> leafs =
@@ -346,7 +346,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       final PsiElement element = leafs.remove();
       if (!element.isValid()) continue;
 
-      BreadcrumbsInfoProvider provider = findProviderForElement(element, defaultInfoProvider);
+      BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider);
       if (provider != null && provider.acceptElement(element)) {
         return element;
       }
@@ -358,7 +358,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  private static PsiElement getParent(@NotNull PsiElement element, @Nullable BreadcrumbsInfoProvider provider) {
+  private static PsiElement getParent(@NotNull PsiElement element, @Nullable BreadcrumbsProvider provider) {
     return provider != null ? provider.getParent(element) : element.getParent();
   }
 
@@ -380,7 +380,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  static BreadcrumbsInfoProvider findInfoProvider(VirtualFile file, Project project) {
+  static BreadcrumbsProvider findInfoProvider(VirtualFile file, Project project) {
     return project == null ? null : findInfoProvider(findViewProvider(file, project));
   }
 
@@ -398,7 +398,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
     if (viewProvider == null) return null;
 
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
@@ -407,7 +407,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     Language baseLang = viewProvider.getBaseLanguage();
     if (!settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
 
-    BreadcrumbsInfoProvider provider = getInfoProvider(baseLang);
+    BreadcrumbsProvider provider = getInfoProvider(baseLang);
     if (provider == null) {
       for (Language language : viewProvider.getLanguages()) {
         if (settings.isBreadcrumbsShownFor(language.getID())) {
@@ -481,9 +481,16 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  private static BreadcrumbsInfoProvider getInfoProvider(@NotNull final Language language) {
+  private static BreadcrumbsProvider getInfoProvider(@NotNull Language language) {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    return BreadcrumbsInfoProvider.find(supported -> settings.isBreadcrumbsShownFor(language.getID()) && supported.isKindOf(language));
+    for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
+      for (Language supported : provider.getLanguages()) {
+        if (settings.isBreadcrumbsShownFor(language.getID()) && supported.isKindOf(language)) {
+          return provider;
+        }
+      }
+    }
+    return null;
   }
 
   private static class MyUpdate extends Update {

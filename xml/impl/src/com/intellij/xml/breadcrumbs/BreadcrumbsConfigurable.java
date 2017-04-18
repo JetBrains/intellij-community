@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
@@ -68,7 +69,7 @@ final class BreadcrumbsConfigurable implements Configurable {
 
       JPanel boxes = new JPanel(new VerticalLayout(0));
       boxes.setBorder(JBUI.Borders.emptyLeft(20));
-      for (BreadcrumbsInfoProvider provider : BreadcrumbsInfoProvider.EP_NAME.getExtensions()) {
+      for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
         for (Language language : provider.getLanguages()) {
           String id = language.getID();
           if (!map.containsKey(id)) {
