@@ -73,7 +73,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
                 final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
                 final VirtualFile file = copyEvent.getFile();
                 if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
-                    file != null && isUnderJarDirectory(file.getUrl())) {
+                    isUnderJarDirectory(file.getUrl())) {
                   changesDetected = true;
                   break;
                 }
@@ -81,8 +81,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
               else if (event instanceof VFileMoveEvent) {
                 final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
                 final VirtualFile file = moveEvent.getFile();
-                if (file != null &&
-                    (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName()))) {
+                if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName())) {
                   changesDetected = true;
                   break;
                 }
