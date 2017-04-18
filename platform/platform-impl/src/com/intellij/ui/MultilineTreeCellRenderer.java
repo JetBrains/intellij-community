@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
     if (myIcon != null) {
       int verticalIconPosition = (height - myIcon.getIconHeight())/2;
-      myIcon.paintIcon(this, g, 0, verticalIconPosition);
+      myIcon.paintIcon(this, g, 0, isIconVerticallyCentered() ? verticalIconPosition : myTextInsets.top);
       borderX += myIcon.getIconWidth();
       borderW -= myIcon.getIconWidth();
     }
@@ -389,6 +389,14 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     recalculateWraps();
 
     return this;
+  }
+
+  /**
+   * Returns <code>true</code> if icon should be vertically centered. Otherwise, icon will be placed on top
+   * @return
+   */
+  protected boolean isIconVerticallyCentered() {
+    return false;
   }
 
   public static JScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
