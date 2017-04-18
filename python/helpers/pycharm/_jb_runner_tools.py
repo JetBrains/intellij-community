@@ -362,8 +362,10 @@ def jb_start_tests():
     del sys.argv[1:]  # Remove all args
     NewTeamcityServiceMessages().message('enteredTheMatrix')
 
-    # Working dir should be on path, that is how runners work when launched from command line
-    sys.path.insert(1, os.getcwd())
+    # PyCharm helpers dir is first dir in sys.path because helper is launched.
+    # But sys.path should be same as when launched with test runner directly
+    if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
+        sys.path.pop(0)
     return namespace.path, namespace.target, additional_args
 
 
