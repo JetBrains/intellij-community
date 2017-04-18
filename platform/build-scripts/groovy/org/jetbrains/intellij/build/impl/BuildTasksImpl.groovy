@@ -254,6 +254,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildDistributions() {
     checkProductProperties()
+    copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
@@ -302,6 +303,14 @@ idea.fatal.error.notification=disabled
           buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
         }
       }
+    }
+  }
+
+  private def copyDependenciesFile() {
+    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
+      buildContext.notifyArtifactBuilt(outputFile)
     }
   }
 
