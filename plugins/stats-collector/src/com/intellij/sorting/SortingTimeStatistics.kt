@@ -70,4 +70,4 @@ class TimingStatState {
     
 }
 
-fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
+fun Double.format(digits: Int): String = java.lang.String.format("%.${digits}f", this)
