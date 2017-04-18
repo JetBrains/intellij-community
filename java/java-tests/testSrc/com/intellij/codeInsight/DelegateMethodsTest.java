@@ -100,6 +100,10 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testPreserveEllipsisType() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(false));
   }
