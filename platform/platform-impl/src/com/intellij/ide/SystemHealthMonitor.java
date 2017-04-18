@@ -88,7 +88,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
     if (bundle != null && !bundle.isBundled()) {
       Version version = bundle.getVersion();
       Integer updateNumber = bundle.getUpdateNumber();
-      if (version != null && updateNumber != null && updateNumber < 112) {
+      if (version != null && updateNumber != null && version.major == 1 && version.minor == 8 && updateNumber < 112) {
         final String bundleVersion = version.toCompactString() + "u" + updateNumber;
         boolean showSwitchOption = false;
 
