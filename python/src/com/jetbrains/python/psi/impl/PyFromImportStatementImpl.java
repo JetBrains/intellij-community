@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -229,7 +229,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Nullable
   public PsiFileSystemItem resolveImportSource() {
-    return as(ContainerUtil.getFirstItem(resolveImportSourceCandidates()), PsiFileSystemItem.class);
+    return FluentIterable.from(resolveImportSourceCandidates()).filter(PsiFileSystemItem.class).first().orNull();
   }
 
   @NotNull
