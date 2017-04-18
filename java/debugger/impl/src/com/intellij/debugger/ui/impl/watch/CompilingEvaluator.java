@@ -31,7 +31,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
@@ -80,7 +79,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     autoLoadContext.setClassLoader(classLoader);
 
     String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
-    Collection<ClassObject> classes = compile(JdkVersionUtil.getVersion(version));
+    Collection<ClassObject> classes = compile(JavaSdkVersion.fromVersionString(version));
 
     defineClasses(classes, autoLoadContext, process, classLoader);
 
