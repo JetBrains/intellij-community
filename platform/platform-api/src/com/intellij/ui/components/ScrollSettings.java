@@ -24,8 +24,8 @@ import com.intellij.openapi.util.registry.RegistryValue;
 
 import javax.swing.JDialog;
 import javax.swing.JScrollBar;
+import javax.swing.JTable;
 import javax.swing.JViewport;
-import javax.swing.table.JTableHeader;
 import javax.swing.RootPaneContainer;
 import java.awt.Component;
 import java.awt.Container;
@@ -75,8 +75,12 @@ final class ScrollSettings {
   }
 
   static boolean isHeaderOverCorner(JViewport viewport) {
-    if (viewport.getView() instanceof JTableHeader) return false;
-    return HEADER_OVER_CORNER.asBoolean();
+    Component view = viewport == null ? null : viewport.getView();
+    return !isNotSupportedYet(view) && HEADER_OVER_CORNER.asBoolean();
+  }
+
+  static boolean isNotSupportedYet(Component view) {
+    return view instanceof JTable;
   }
 
   static boolean isGapNeededForAnyComponent() {
