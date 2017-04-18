@@ -37,7 +37,8 @@ public enum JavaSdkVersion {
   JDK_1_6(LanguageLevel.JDK_1_6, new String[]{"1.6", "6.0"}),
   JDK_1_7(LanguageLevel.JDK_1_7, new String[]{"1.7", "7.0"}),
   JDK_1_8(LanguageLevel.JDK_1_8, new String[]{"1.8", "8.0"}),
-  JDK_1_9(LanguageLevel.JDK_1_9, new String[]{"1.9", "9.0", "9-ea"});
+  JDK_1_9(LanguageLevel.JDK_1_9, new String[]{"1.9", "9.0", "9-ea"}),
+  JDK_10(LanguageLevel.JDK_1_9, new String[]{"10.0", "10-ea"});
 
   private static final JavaSdkVersion MAX_JDK = JDK_1_9;
 
