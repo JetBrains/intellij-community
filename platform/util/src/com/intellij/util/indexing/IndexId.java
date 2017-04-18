@@ -30,23 +30,6 @@ public class IndexId<K, V> {
     return myName;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    IndexId<?, ?> id = (IndexId<?, ?>)o;
-
-    if (!myName.equals(id.myName)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myName.hashCode();
-  }
-
   public static <K, V> IndexId<K, V> create(String name) {
     return new IndexId<K, V>(name);
   }
