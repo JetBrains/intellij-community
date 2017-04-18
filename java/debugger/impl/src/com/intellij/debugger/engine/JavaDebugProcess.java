@@ -46,7 +46,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
@@ -337,7 +336,6 @@ public class JavaDebugProcess extends XDebugProcess {
         final Content threadsContent = ui.createContent(
           DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
           AllIcons.Debugger.Threads, null);
-        Disposer.register(threadsContent, panel);
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
         ui.addListener(new ContentManagerAdapter() {
