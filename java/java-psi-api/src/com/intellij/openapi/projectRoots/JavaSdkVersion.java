@@ -81,9 +81,7 @@ public enum JavaSdkVersion {
         return version;
       }
     }
-    throw new IllegalArgumentException(
-      "Can't map Java SDK by language level " + languageLevel + ". Available values: " + Arrays.toString(values())
-    );
+    throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values()));
   }
 
   @Nullable
