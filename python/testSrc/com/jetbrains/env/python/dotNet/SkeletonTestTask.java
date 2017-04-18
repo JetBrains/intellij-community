@@ -2,7 +2,6 @@ package com.jetbrains.env.python.dotNet;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,12 +119,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
       public void run() {
         PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
         final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
-        IntentionAction intention = myFixture.findSingleIntention(intentionName);
-
-        if (intention instanceof IntentionActionDelegate) {
-          intention = ((IntentionActionDelegate)intention).getDelegate();
-        }
-
+        final IntentionAction intention = myFixture.findSingleIntention(intentionName);
         Assert.assertNotNull("No intention found to generate skeletons!", intention);
         Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));
         final LocalQuickFix quickFix = ((QuickFixWrapper)intention).getFix();
