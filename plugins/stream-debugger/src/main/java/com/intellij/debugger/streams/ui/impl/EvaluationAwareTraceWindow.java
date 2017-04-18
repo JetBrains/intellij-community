@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
+import com.intellij.debugger.streams.resolve.ResolvedTraceImpl;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -49,6 +50,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   private final JPanel myCenterPane;
   private final List<MyPlaceholder> myTabContents;
   private final MyPlaceholder myFlatContent;
+  private final StreamChain myStreamChain;
 
   private MyMode myMode = MyMode.SPLIT;
 
@@ -57,6 +59,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final JBTabsPaneImpl tabs = new JBTabsPaneImpl(project, SwingConstants.TOP, getDisposable());
     setModal(false);
     setTitle("Stream Trace");
+    myStreamChain = chain;
     final JBCardLayout layout = new JBCardLayout();
     myCenterPane = new JPanel(layout);
     myCenterPane.add(tabs.getComponent());
@@ -114,6 +117,11 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
       final CollectionView view = new CollectionView("Result", context, Collections.singletonList(resultTraceElement));
       resultTab.setContent(view, BorderLayout.CENTER);
+      final ResolvedTraceImpl terminationTrace = new ResolvedTraceImpl(myStreamChain.getTerminationCall(),
+                                                                       Collections.singletonList(resultTraceElement),
+                                                                       Collections.emptyMap(),
+                                                                       Collections.emptyMap());
+      controllers.add(new TraceControllerImpl(terminationTrace));
     }
     else {
       resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
