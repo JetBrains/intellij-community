@@ -37,7 +37,6 @@ class MappingPane(name: String,
     val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
     val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
 
-    val MAX_ANGLE_TO_DRAW_LINK = 4 * Math.PI / 10
     val STROKE = BasicStroke(JBUI.scale(1.toFloat()))
   }
 
@@ -62,25 +61,18 @@ class MappingPane(name: String,
         val position: Int = value.position
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         for (nextValue in linkedValues) {
-          if (needToDraw(x1, x2, value, nextValue)) {
+          if (needToDraw(value, nextValue)) {
             g.color = getLineColor(value, nextValue)
-            g.drawLine(x1, position, x2, nextValue.position)
+            val y1 = position
+            val y2 = nextValue.position
+
+            g.drawLine(x1, y1, x2, y2)
           }
         }
       }
     }
 
-    private fun needToDraw(x1: Int, x2: Int, left: ValueWithPosition, right: ValueWithPosition): Boolean {
-      if (left.isVisible && right.isVisible) {
-        return true
-      }
-
-      return angleToNormal(x1, left.position, x2, right.position) < MAX_ANGLE_TO_DRAW_LINK
-    }
-
-    private fun angleToNormal(x1: Int, y1: Int, x2: Int, y2: Int): Double {
-      return Math.atan(Math.abs((y2 - y1).toDouble()) / (x2 - x1).toDouble())
-    }
+    private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isVisible || right.isVisible
 
     private fun getLineColor(left: ValueWithPosition, right: ValueWithPosition): JBColor {
       if (left.isHighlighted && right.isHighlighted) {
