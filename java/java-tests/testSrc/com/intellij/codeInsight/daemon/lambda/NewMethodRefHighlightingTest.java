@@ -156,6 +156,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testGetClassReturnTypeInMethodReference() { doTest(); }
   public void testCaptureTypeOfNewArrayExpression() { doTest(); }
   public void testIDEA152659() { doTest(); }
+  public void testRegistryOptionToSkipUnsoundCaptureConversionInMethodReferenceReturnType() { doTest(); }
   public void testFreshVariableLowerBoundsDuringSuperTypeChecks() { doTest(); }
   public void testTypeParameterInstantiation() { doTest(); }
   public void testIgnoreForeignVariables() { doTest(); }

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -125,8 +126,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
 
         if (applicableMethodReturnType != null) {
-          final PsiType capturedReturnType = PsiUtil.captureToplevelWildcards(psiSubstitutor.substitute(applicableMethodReturnType), myExpression);
-          constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
+          applicableMethodReturnType = psiSubstitutor.substitute(applicableMethodReturnType);
+          applicableMethodReturnType = Registry.is("unsound.capture.conversion.java.spec.change") ? applicableMethodReturnType
+                                                                                                  : PsiUtil.captureToplevelWildcards(applicableMethodReturnType, myExpression);
+          constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(applicableMethodReturnType)));
         }
       }
       return true;
@@ -164,7 +167,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      final PsiType referencedMethodReturnType;
+      PsiType referencedMethodReturnType;
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null, method);
       PsiSubstitutor psiSubstitutor = getSubstitutor(signature, qualifierResolveResult, method, containingClass, myExpression);
@@ -211,8 +214,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         session.initBounds(myExpression, containingClass.getTypeParameters());
       }
 
-      final PsiType capturedReturnType = PsiUtil.captureToplevelWildcards(psiSubstitutor.substitute(referencedMethodReturnType), myExpression);
-      constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
+      referencedMethodReturnType = psiSubstitutor.substitute(referencedMethodReturnType);
+      referencedMethodReturnType = Registry.is("unsound.capture.conversion.java.spec.change") ? referencedMethodReturnType
+                                                                                              : PsiUtil.captureToplevelWildcards(referencedMethodReturnType, myExpression);
+      constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(referencedMethodReturnType)));
     }
     
     return true;
