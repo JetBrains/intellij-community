@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -44,6 +45,7 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
@@ -183,25 +185,23 @@ public class SystemHealthMonitor implements ApplicationComponent {
     final Application app = ApplicationManager.getApplication();
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        app.invokeLater(() -> {
-          JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
-          if (component != null) {
-            Rectangle rect = component.getVisibleRect();
-            JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, keyHyperlinkAdapter)
-              .setFadeoutTime(-1)
-              .setHideOnFrameResize(false)
-              .setHideOnLinkClick(true)
-              .setDisposable(app)
-              .createBalloon()
-              .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
-          }
+      public void appStarting(@Nullable Project projectFromCommandLine) {
+        JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
+        if (component != null) {
+          Rectangle rect = component.getVisibleRect();
+          JBPopupFactory.getInstance()
+            .createHtmlTextBalloonBuilder(message, MessageType.WARNING, keyHyperlinkAdapter)
+            .setFadeoutTime(-1)
+            .setHideOnFrameResize(false)
+            .setHideOnLinkClick(true)
+            .setDisposable(app)
+            .createBalloon()
+            .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
+        }
 
-          Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
-          notification.setImportant(true);
-          Notifications.Bus.notify(notification);
-        });
+        Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
+        notification.setImportant(true);
+        Notifications.Bus.notify(notification);
       }
     });
   }
