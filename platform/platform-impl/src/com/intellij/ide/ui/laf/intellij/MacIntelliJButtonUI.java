@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +84,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         if (isDefaultButton(c)) {
           p = IntelliJLaf.isGraphite() ?
               new GradientPaint(w/2, i.top, new Color(0xb2b2b7), w/2, h - (i.top + i.bottom), new Color(0x929297)) :
-              new GradientPaint(w/2, i.top, new Color(0x84b0f7), w/2, h - (i.top + i.bottom), new Color(0x4b80fb));
+              new GradientPaint(w/2, i.top, new Color(0x68b2fa), w/2, h - (i.top + i.bottom), new Color(0x0e80ff));
         } else if (b.isEnabled()) {
           p = Gray.xFF;
         } else {
@@ -104,7 +105,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         if (isDefaultButton(c)) {
           p = IntelliJLaf.isGraphite() ?
               new GradientPaint(w/2, i.top, new Color(0xa5a5ab), w/2, h - (i.top + i.bottom), new Color(0x7d7d83)) :
-              new GradientPaint(w/2, i.top, new Color(0x6d9ff6), w/2, h - (i.top + i.bottom), new Color(0x3861fa));
+              new GradientPaint(w/2, i.top, new Color(0x4ba0f8), w/2, h - (i.top + i.bottom), new Color(0x095eff));
         } else if (b.isEnabled()) {
           p = new GradientPaint(w/2, i.top, Gray.xC9, w/2, h - (i.top + i.bottom), Gray.xAC);
         } else {
@@ -155,6 +156,8 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
     if (isComboButton(b)) {
       viewRect.x += 6;
+    } else if (b instanceof JBOptionButton) {
+      viewRect.x -= 4;
     }
 
     // layout the text and icon

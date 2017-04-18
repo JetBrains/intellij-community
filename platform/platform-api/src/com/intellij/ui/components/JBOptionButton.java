@@ -374,8 +374,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     }
 
     if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      int x = getWidth() - getInsets().right - 10;
       Icon icon = AllIcons.Mac.YosemiteOptionButtonSelector;
+      int x = getWidth() - getInsets().right - icon.getIconWidth() - 6;
       int y = (getHeight() - icon.getIconHeight()) / 2;
       GraphicsConfig config = isEnabled() ? new GraphicsConfig(g) : GraphicsUtil.paintWithAlpha(g, 0.6f);
       icon.paintIcon(this, g, x, y);

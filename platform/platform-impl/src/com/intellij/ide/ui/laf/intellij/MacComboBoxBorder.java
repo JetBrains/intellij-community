@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -111,7 +113,16 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
     if (c instanceof JComboBox) {
       JComboBox comboBox = (JComboBox)c;
-      return comboBox.getEditor() != null && comboBox.getEditor().getEditorComponent().hasFocus();
+      if(comboBox.getEditor() != null) {
+        Component editor = comboBox.getEditor().getEditorComponent();
+        if (editor.hasFocus()) {
+          return true;
+        } else if (editor instanceof EditorTextField) {
+          Editor tfe = ((EditorTextField)editor).getEditor();
+          JComponent ec = (tfe != null) ? tfe.getContentComponent() : null;
+          return ec != null && ec.hasFocus();
+        }
+      }
     }
     return false;
   }
