@@ -63,7 +63,7 @@ public class TraceStreamAction extends AnAction {
     final StreamChain chain = element == null ? null : myChainBuilder.build(element);
 
     if (chain != null) {
-      final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session.getProject(), chain);
+      final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
       ApplicationManager.getApplication().invokeLater(window::show);
       final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(session.getProject());
       final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, myResultInterpreter);

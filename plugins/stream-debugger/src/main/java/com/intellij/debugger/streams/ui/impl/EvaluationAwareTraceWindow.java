@@ -23,11 +23,13 @@ import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +56,15 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   private MyMode myMode = MyMode.SPLIT;
 
-  public EvaluationAwareTraceWindow(@Nullable Project project, @NotNull StreamChain chain) {
-    super(project, true);
-    final JBTabsPaneImpl tabs = new JBTabsPaneImpl(project, SwingConstants.TOP, getDisposable());
+  public EvaluationAwareTraceWindow(@NotNull XDebugSession session, @NotNull StreamChain chain) {
+    super(session.getProject(), true);
+    final JBTabsPaneImpl tabs = new JBTabsPaneImpl(session.getProject(), SwingConstants.TOP, getDisposable());
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionStopped() {
+        ApplicationManager.getApplication().invokeLater(() -> close(CLOSE_EXIT_CODE));
+      }
+    }, myDisposable);
     setModal(false);
     setTitle("Stream Trace");
     myStreamChain = chain;
