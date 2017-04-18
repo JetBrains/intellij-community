@@ -43,7 +43,14 @@ class MLSorter : CompletionFinalSorter() {
         val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
         val relevanceObjects = lookup.getRelevanceObjects(items, false)
 
-        return sortInner(items, lookup, relevanceObjects)
+        val startTime = System.currentTimeMillis()
+        val sorted = sortInner(items, lookup, relevanceObjects)
+        val timeSpent = System.currentTimeMillis() - startTime
+        
+        val elementsSorted = items.count()
+        SortingTimeStatistics.registerSortTiming(elementsSorted, timeSpent)
+        
+        return sorted
     }
 
     private fun sortInner(items: MutableIterable<LookupElement>, 

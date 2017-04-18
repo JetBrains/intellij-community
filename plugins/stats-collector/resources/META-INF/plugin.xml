@@ -57,6 +57,7 @@
                         serviceImplementation="com.intellij.sorting.MLSorterFactory">
     </applicationService>
     
+    <applicationService serviceImplementation="com.intellij.sorting.SortingTimeStatistics"/>
     
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
     <applicationConfigurable instance="com.intellij.plugin.PluginSettingsConfigurable"/>
