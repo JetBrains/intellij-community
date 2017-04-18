@@ -31,10 +31,12 @@ import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
 import com.jetbrains.python.testing.universalTests.TestTargetType;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -55,6 +57,36 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
         return new PyUnitTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
+
+  /**
+   * Ensure that sys.path[0] is script folder, not helpers folder
+   */
+  @Test
+  public void testSysPath() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/sysPath", "test_sample.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
+        myFixture.getTempDirFixture().getFile("sysPath");
+
+        final VirtualFile folderWithScript = myFixture.getTempDirFixture().getFile(".");
+        assert folderWithScript != null : "No folder for script " + myScriptName;
+        Assert.assertThat("sys.path[0] should point to folder with test, while it does not", stdout,
+                          Matchers.containsString(String.format("path[0]=%s", new File(folderWithScript.getPath()).getAbsolutePath())));
       }
     });
   }
