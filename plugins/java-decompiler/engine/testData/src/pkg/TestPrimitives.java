@@ -63,4 +63,9 @@ public class TestPrimitives {
   public int getInt() {
     return 42;
   }
+
+  public void printNarrowed() {
+    printByte((byte)getInt());
+    printShort((short)getInt());
+  }
 }

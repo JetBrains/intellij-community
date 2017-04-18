@@ -33,11 +33,11 @@ public @interface MoreAnnotations {
    String annotatedWithEmptyArrays = "";
    @MoreAnnotations(
       intArray = {1, 0, 2147483647, -2147483648},
-      byteArray = {(byte)1, (byte)0, (byte)127, (byte)-128, (byte)-1},
+      byteArray = {1, 0, 127, -128, -1},
       floatArray = {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0, 1.0F / 0.0, -1.0F / 0.0},
       doubleArray = {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0, 1.0D / 0.0, -1.0D / 0.0},
       booleanArray = {true, false},
-      shortArray = {(short)1, (short)0, (short)32767, (short)-32768, (short)-1},
+      shortArray = {1, 0, 32767, -32768, -1},
       longArray = {1L, 0L, 9223372036854775807L, -9223372036854775808L},
       charArray = {'a', '\n', '\u0001', '\u0000', '\uffff', '\u0000'},
       enumArray = {MoreAnnotations.TestEnum.FirstValue, MoreAnnotations.TestEnum.SecondValue},
@@ -73,7 +73,7 @@ public @interface MoreAnnotations {
 
    int[] intArray() default {1, 0, 2147483647, -2147483648};
 
-   byte[] byteArray() default {(byte)1, (byte)0, (byte)127, (byte)-128, (byte)-1};
+   byte[] byteArray() default {1, 0, 127, -128, -1};
 
    float[] floatArray() default {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0, 1.0F / 0.0, -1.0F / 0.0};
 
@@ -81,7 +81,7 @@ public @interface MoreAnnotations {
 
    boolean[] booleanArray() default {true, false};
 
-   short[] shortArray() default {(short)1, (short)0, (short)32767, (short)-32768, (short)-1};
+   short[] shortArray() default {1, 0, 32767, -32768, -1};
 
    long[] longArray() default {1L, 0L, 9223372036854775807L, -9223372036854775808L};
 
