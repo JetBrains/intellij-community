@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 /**
- * Represents version of Java SDK. Use {@link JavaSdk#getVersion(Sdk)} method to obtain version of an {@link Sdk}
+ * Represents version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain version of an {@code Sdk}.
  *
  * @author nik
+ * @see LanguageLevel
  */
 public enum JavaSdkVersion {
   JDK_1_0(LanguageLevel.JDK_1_3, "1.0"),
@@ -64,18 +65,6 @@ public enum JavaSdkVersion {
   @Override
   public String toString() {
     return super.toString() + ", description: " + myDescription;
-  }
-
-  @NotNull
-  public static JavaSdkVersion byDescription(@NotNull String description) throws IllegalArgumentException {
-    for (JavaSdkVersion version : values()) {
-      if (version.getDescription().equals(description)) {
-        return version;
-      }
-    }
-    throw new IllegalArgumentException(
-      String.format("Can't map Java SDK by description (%s). Available values: %s", description, Arrays.toString(values()))
-    );
   }
 
   @NotNull
