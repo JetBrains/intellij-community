@@ -237,7 +237,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           psiSubstitutor = getParameterizedTypeSubstitutor(qContainingClass, pType);
         }
         else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor() || member instanceof PsiClass) {
-          //15.13.1 
+          //15.13.1
           //If ClassType is a raw type, but is not a non-static member type of a raw type, 
           //the candidate notional member methods are those specified in §15.9.3 for a class instance creation expression that uses <> 
           //to elide the type arguments to a class.
@@ -247,7 +247,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length, "expr: " + methodReferenceExpression + "; " +
                                                                                     paramTypes.length + "; " +
                                                                                     Arrays.toString(signature.getParameterTypes()));
-          psiSubstitutor = helper.inferTypeArguments(qContainingClass.getTypeParameters(),
+          psiSubstitutor = helper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(qContainingClass.getTypeParameters(), paramTypes),
                                                      paramTypes,
                                                      signature.getParameterTypes(),
                                                      PsiUtil.getLanguageLevel(methodReferenceExpression));
