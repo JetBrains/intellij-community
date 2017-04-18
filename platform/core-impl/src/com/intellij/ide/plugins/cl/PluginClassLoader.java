@@ -100,7 +100,7 @@ public class PluginClassLoader extends UrlClassLoader {
   @Nullable
   private Class loadClassFromParents(final String name, Set<ClassLoader> visited) {
     for (ClassLoader parent : myParents) {
-      if (visited == null) visited = ContainerUtilRt.<ClassLoader>newHashSet(this);
+      if (visited == null) visited = ContainerUtilRt.newHashSet(this);
       if (!visited.add(parent)) {
         continue;
       }
@@ -134,10 +134,7 @@ public class PluginClassLoader extends UrlClassLoader {
     try {
       c = _findClass(name);
     }
-    catch (IncompatibleClassChangeError e) {
-      throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
-    }
-    catch (UnsupportedClassVersionError e) {
+    catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
       throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
     }
     if (c != null) {
@@ -249,14 +246,14 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public String toString() {
-    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
+    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "] "+super.toString();
   }
 
   private static class DeepEnumeration implements Enumeration<URL> {
     private final Enumeration<URL>[] myEnumerations;
-    private int myIndex = 0;
+    private int myIndex;
 
-    public DeepEnumeration(Enumeration<URL>[] enumerations) {
+    DeepEnumeration(@NotNull Enumeration<URL>[] enumerations) {
       myEnumerations = enumerations;
     }
 
