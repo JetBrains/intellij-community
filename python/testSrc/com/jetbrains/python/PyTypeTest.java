@@ -1677,6 +1677,32 @@ public class PyTypeTest extends PyTestCase {
                     "        return get_class()");
   }
 
+  // PY-22919
+  public void testMaxListKnownElements() {
+    doTest("int",
+           "expr = max([1, 2, 3])");
+  }
+
+  // PY-22919
+  public void testMaxListUnknownElements() {
+    doTest("Any",
+           "l = []\n" +
+           "expr = max(l)");
+  }
+
+  // PY-23634
+  public void testMinListKnownElements() {
+    doTest("int",
+           "expr = min([1, 2, 3])");
+  }
+
+  // PY-23634
+  public void testMinListUnknownElements() {
+    doTest("Any",
+           "l = []\n" +
+           "expr = min(l)");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
