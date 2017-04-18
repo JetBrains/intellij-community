@@ -41,4 +41,9 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
   public ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state) {
     return new OutputEditor(state);
   }
+
+  @Override
+  public String getOutputEditorDisplayName() {
+    return OutputEditor.NAME;
+  }
 }
