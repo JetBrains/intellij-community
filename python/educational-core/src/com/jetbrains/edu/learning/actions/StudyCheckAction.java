@@ -81,58 +81,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
     for (StudyCheckListener listener : Extensions.getExtensions(StudyCheckListener.EP_NAME)) {
       listener.beforeCheck(project, task);
     }
-    StudyTaskChecker checker = task.getChecker(project);
-    boolean isRemote = task.getLesson().getCourse() instanceof RemoteCourse;
-    ProgressManager.getInstance()
-      .run(new com.intellij.openapi.progress.Task.Backgroundable(project, "Checking Task", true, PerformInBackgroundOption.DEAF) {
-        private StudyCheckResult myResult;
-
-        @Override
-        public void onSuccess() {
-          String message = myResult.getMessage();
-          StudyStatus status = myResult.getStatus();
-          task.setStatus(status);
-          switch (status) {
-            case Failed:
-              checker.onTaskFailed(message);
-              break;
-            case Solved:
-              checker.onTaskSolved(message);
-              break;
-            default:
-              StudyCheckUtils.showTestResultPopUp(message, MessageType.WARNING.getPopupBackground(), project);
-          }
-          StudyUtils.updateToolWindows(myProject);
-          ProjectView.getInstance(myProject).refresh();
-
-          for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
-            listener.afterCheck(project, task);
-          }
-          checker.clearState();
-          myCheckInProgress.set(false);
-        }
-
-        @Override
-        public void onCancel() {
-          checker.clearState();
-          myCheckInProgress.set(false);
-        }
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          myCheckInProgress.set(true);
-          myResult = isRemote ? checkOnRemote() : checker.check();
-        }
-
-        private StudyCheckResult checkOnRemote() {
-          final StepicUser user = StudySettings.getInstance().getUser();
-          if (user == null) {
-            return new StudyCheckResult(StudyStatus.Unchecked, "Failed to launch checking: you're not authorized");
-          }
-          return checker.checkOnRemote(user);
-        }
-      });
+    ProgressManager.getInstance().run(new StudyCheckTask(project, task));
   }
 
   @Override
@@ -171,5 +120,66 @@ public class StudyCheckAction extends StudyActionWithShortcut {
   @Override
   public String[] getShortcuts() {
     return new String[]{SHORTCUT};
+  }
+
+  private class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
+    private final Project myProject;
+    private final Task myTask;
+    private final StudyTaskChecker myChecker;
+    private StudyCheckResult myResult;
+
+    public StudyCheckTask(@NotNull Project project, @NotNull Task task) {
+      super(project, "Checking Task", true, PerformInBackgroundOption.DEAF);
+      myProject = project;
+      myTask = task;
+      myChecker = task.getChecker(myProject);
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      myCheckInProgress.set(true);
+      boolean isRemote = myTask.getLesson().getCourse() instanceof RemoteCourse;
+      myResult = isRemote ? checkOnRemote() : myChecker.check();
+    }
+
+    @Override
+    public void onSuccess() {
+      String message = myResult.getMessage();
+      StudyStatus status = myResult.getStatus();
+      myTask.setStatus(status);
+      switch (status) {
+        case Failed:
+          myChecker.onTaskFailed(message);
+          break;
+        case Solved:
+          myChecker.onTaskSolved(message);
+          break;
+        default:
+          StudyCheckUtils.showTestResultPopUp(message, MessageType.WARNING.getPopupBackground(), myProject);
+      }
+      StudyUtils.updateToolWindows(myProject);
+      ProjectView.getInstance(myProject).refresh();
+
+      for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
+        listener.afterCheck(myProject, myTask);
+      }
+      myChecker.clearState();
+      myCheckInProgress.set(false);
+    }
+
+    @Override
+    public void onCancel() {
+      myChecker.clearState();
+      myCheckInProgress.set(false);
+    }
+
+    private StudyCheckResult checkOnRemote() {
+      final StepicUser user = StudySettings.getInstance().getUser();
+      if (user == null) {
+        return new StudyCheckResult(StudyStatus.Unchecked, "Failed to launch checking: you're not authorized");
+      }
+      return myChecker.checkOnRemote(user);
+    }
   }
 }
