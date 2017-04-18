@@ -49,6 +49,8 @@ class MLSorter : CompletionFinalSorter() {
         
         val elementsSorted = items.count()
         SortingTimeStatistics.registerSortTiming(elementsSorted, timeSpent)
+
+        println("Time spent: $timeSpent")
         
         return sorted
     }

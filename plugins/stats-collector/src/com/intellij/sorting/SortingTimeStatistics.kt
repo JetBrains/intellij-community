@@ -2,8 +2,9 @@ package com.intellij.sorting
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.util.containers.ContainerUtil
 
 
 @State(name = "SortingTimeStatistics", storages=arrayOf(Storage("ml.sorting.time.stats.xml")))
@@ -32,11 +33,14 @@ class SortingTimeStatistics: PersistentStateComponent<TimingStatState> {
 
 
 class TimingStatState {
-    val size = 10
-            
-    val totalSortsByTime = MutableList(size, { 0 })
-    val avgSortingTimeByN = MutableList(size, { 0.0 })
-    val totalSortsByN = MutableList(size, { 0 })
+    companion object {
+        private val size = 10
+    }
+    
+    
+    @JvmField val totalSortsByTime = MutableList(size, { 0 })
+    @JvmField val avgSortingTimeByN = MutableList(size, { 0.0 })
+    @JvmField val totalSortsByN = MutableList(size, { 0 })
     
 
     fun registerSortTiming(elementsSorted: Int, timeSpentMillis: Long) {
@@ -52,6 +56,7 @@ class TimingStatState {
         totalSortsByTime[timeIndex] += 1
     }
     
+    
     fun getTimeDistribution(): List<String> {
         return totalSortsByTime.mapIndexedNotNull({ index, total ->
             if (total == 0) return@mapIndexedNotNull null 
@@ -60,6 +65,7 @@ class TimingStatState {
         })
     }
 
+    
     fun getAvgTimeByElementsSortedDistribution(): List<String> {
         return avgSortingTimeByN.mapIndexedNotNull { index, avg -> 
             if (avg < 0.01) return@mapIndexedNotNull null
@@ -67,6 +73,7 @@ class TimingStatState {
             "[$start, ${start + 100}) elements sorted on average in ${avg.format(1)} ms"
         }
     }
+
     
 }
 
