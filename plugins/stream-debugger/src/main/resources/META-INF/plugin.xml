@@ -1,11 +1,11 @@
 <idea-plugin>
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Streams Debugger</name>
-  <version>0.0.7</version>
+  <version>0.0.8</version>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      <p>TBD</p>
+      <p>TBDs</p>
     ]]></description>
 
   <change-notes><![CDATA[
