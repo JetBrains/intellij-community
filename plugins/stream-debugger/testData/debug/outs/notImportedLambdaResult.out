@@ -1,0 +1,29 @@
+LineBreakpoint created at NotImportedLambdaResult.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! NotImportedLambdaResult
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+NotImportedLambdaResult.java:6
+Stream.of(1)
+.flatMapToInt(x -> Arrays.stream(new int[] {1}))
+.limit(1)
+.toArray()
+Stream.of
+    before: nothing
+    after: 1
+flatMapToInt
+    before: 1
+    after: 2
+limit
+    before: 2
+    after: 3
+toArray
+    before: 3
+    after: nothing
+mappings for flatMapToInt
+    nothing -> 1 -> 2
+mappings for limit
+    1 -> 2 -> 3
+mappings for toArray
+    2 -> 3 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo
 import com.intellij.debugger.streams.psi.PsiElementTransformer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.*
 import com.intellij.refactoring.util.RefactoringChangeUtil
 import java.util.*
@@ -80,6 +81,8 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
             LOG.assertTrue(operand != null)
             parent.replace(operand!!)
           }
+
+          JavaCodeStyleManager.getInstance(project).qualifyClassReferences(anonymousClass);
         }
       }
     }
