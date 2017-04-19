@@ -404,36 +404,42 @@ public class PathManager {
     }
 
     for (String path : propFiles) {
-      if (path != null) {
-        File propFile = new File(path);
-        if (propFile.exists()) {
-          try {
-            Reader fis = new BufferedReader(new FileReader(propFile));
-            try {
-              Map<String, String> properties = FileUtil.loadProperties(fis);
+      if (path == null) {
+        continue;
+      }
+      File propFile = new File(path);
+      if (!propFile.exists()) {
+        continue;
+      }
+      try {
+        Reader fis = new BufferedReader(new FileReader(propFile));
+        try {
+          Map<String, String> properties = FileUtil.loadProperties(fis);
+          Properties sysProperties = System.getProperties();
 
-              Properties sysProperties = System.getProperties();
-              for (String key : properties.keySet()) {
-                if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-                  log(propFile.getPath() + ": '" + PROPERTY_HOME_PATH + "' and '" + PROPERTY_HOME + "' properties cannot be redefined");
-                }
-                else if (sysProperties.getProperty(key, null) != null) {
-                  log(propFile.getPath() + ": '" + key + "' already defined");
-                }
-                else {
-                  String value = substituteVars(properties.get(key));
-                  sysProperties.setProperty(key, value);
-                }
+          for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+              log(propFile.getPath() + ": '" + PROPERTY_HOME_PATH + "' and '" + PROPERTY_HOME + "' properties cannot be redefined");
+            }
+            else {
+              String value = entry.getValue();
+              if (sysProperties.get(key) != null) {
+                log(propFile.getPath() + ": '" + key + " = " + value + "' already defined in system properties: " + sysProperties.get(key));
+              }
+              else {
+                value = substituteVars(value);
+                sysProperties.setProperty(key, value);
               }
             }
-            finally {
-              fis.close();
-            }
-          }
-          catch (IOException e) {
-            log("Problem reading from property file: " + propFile.getPath());
           }
         }
+        finally {
+          fis.close();
+        }
+      }
+      catch (IOException e) {
+        log("Problem reading from property file: " + propFile);
       }
     }
   }
