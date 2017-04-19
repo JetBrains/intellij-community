@@ -46,7 +46,7 @@ class MLSorter : CompletionFinalSorter() {
         val relevanceObjects = lookup.getRelevanceObjects(items, false)
 
         val startTime = System.currentTimeMillis()
-        val sorted = sortInner(items, lookup, relevanceObjects)
+        val sorted = sortInner(items, lookup, relevanceObjects) ?: return items
         val timeSpent = System.currentTimeMillis() - startTime
         
         val elementsSorted = items.count()
@@ -57,12 +57,12 @@ class MLSorter : CompletionFinalSorter() {
 
     private fun sortInner(items: MutableIterable<LookupElement>, 
                           lookup: LookupImpl, 
-                          relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): Iterable<LookupElement> 
+                          relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): Iterable<LookupElement>?
     {
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
-                    val rank = calculateElementRank(lookup, lookupElement, index, relevance) ?: return items
+                    val rank = calculateElementRank(lookup, lookupElement, index, relevance) ?: return null
                     lookupElement to rank
                 }
                 .sortedByDescending { it.second }
