@@ -21,11 +21,11 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
-import com.intellij.usages.rules.UsageFilteringRuleEx;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -59,15 +59,7 @@ class UsageNodeTreeBuilder {
   }
 
   public boolean isVisible(@NotNull Usage usage) {
-    for (final UsageFilteringRule rule : myFilteringRules) {
-      boolean visible = rule instanceof UsageFilteringRuleEx ?
-                        ((UsageFilteringRuleEx)rule).isVisible(usage, myTargets) :
-                        rule.isVisible(usage);
-      if (!visible) {
-        return false;
-      }
-    }
-    return true;
+    return Arrays.stream(myFilteringRules).allMatch(rule -> rule.isVisible(usage, myTargets));
   }
 
   UsageNode appendUsage(@NotNull Usage usage, @NotNull Consumer<Node> edtInsertedUnderQueue, boolean filterDuplicateLines) {
