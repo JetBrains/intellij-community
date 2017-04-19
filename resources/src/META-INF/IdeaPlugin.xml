@@ -84,6 +84,8 @@
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
     <extensionPoint name="codeInsight.implicitSubclassProvider"
                     interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
+    <extensionPoint name="codeInsight.implementedAtRuntime"
+                    interface="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition"/>
     <extensionPoint name="conversion.rule"
                     interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"/>
 
@@ -429,6 +431,8 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.javadoc.PsiDocTag"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
+
+    <codeInsight.implementedAtRuntime implementation="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeConditionImpl"/>
 
     <classTypePointerFactory implementation="com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory"/>
 
