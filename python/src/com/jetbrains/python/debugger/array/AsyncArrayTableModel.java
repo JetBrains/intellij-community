@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.ArrayChunkBuilder;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -48,6 +50,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Python async table queue", 100, true, null);
 
   private PyDebugValue myDebugValue;
   private final DataViewStrategy myStrategy;
@@ -56,17 +59,13 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       @Override
       public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {
 
-        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> {
+        return ListenableFutureTask.create(() -> {
           ArrayChunk chunk = myDebugValue.getFrameAccessor()
             .getArrayItems(myDebugValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
                            Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second), myDataProvider.getFormat());
           handleChunkAdded(key.first, key.second, chunk);
           return chunk;
         });
-
-        myExecutorService.execute(task);
-
-        return task;
       }
     });
 
@@ -105,7 +104,13 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         }
       }
       else {
-        chunk.addListener(() -> UIUtil.invokeLaterIfNeeded(() -> fireTableCellUpdated(row, col)), myExecutorService);
+        myQueue.queue(new Update("get chunk from debugger") {
+          @Override
+          public void run() {
+            chunk.addListener(() -> UIUtil.invokeLaterIfNeeded(() -> fireTableDataChanged()), myExecutorService);
+            myExecutorService.execute(((ListenableFutureTask<ArrayChunk>)chunk));
+          }
+        });
       }
       return EMPTY_CELL_VALUE;
     }
