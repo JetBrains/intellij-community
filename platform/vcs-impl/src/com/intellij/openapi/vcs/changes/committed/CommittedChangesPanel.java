@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
@@ -108,8 +109,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myRegexCheckbox.getModel().addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        // TODO: no need to re-filter if the text field is empty anyway
-        myFilterComponent.filter();
+        if (!isEmpty(myFilterComponent.getFilter())) {
+          myFilterComponent.filter();
+        }
       }
     });
     toolbarPanel.add(myFilterComponent);
