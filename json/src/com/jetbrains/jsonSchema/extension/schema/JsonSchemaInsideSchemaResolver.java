@@ -84,7 +84,7 @@ public class JsonSchemaInsideSchemaResolver {
         list.stream().findFirst().ifPresent(object -> consume(isName, object, schemaFile, steps));
       }
     };
-    JsonSchemaService.Impl.getEx(myProject).visitSchemaObject(mySchemaFile,
+    JsonSchemaService.Impl.get(myProject).visitSchemaObject(mySchemaFile,
                                                               object -> {
                                                                 JsonSchemaWalker.extractSchemaVariants(
                                                                   myProject, consumer, mySchemaFile, object, true, mySteps, false);

@@ -10,10 +10,14 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -32,6 +36,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderMarker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +44,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
+public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static final Logger LOGGER = Logger.getInstance(JsonSchemaServiceImpl.class);
   private static final Logger RARE_LOGGER = RareLogger.wrap(LOGGER, false);
   public static final Comparator<JsonSchemaFileProvider> FILE_PROVIDER_COMPARATOR = Comparator.comparingInt(JsonSchemaFileProvider::getOrder);
@@ -171,6 +176,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       mySchemaFiles.clear();
     }
     JsonSchemaFileTypeManager.getInstance().reset();
+    ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged()),
+                                                    ModalityState.any(), myProject.getDisposed());
   }
 
   @Nullable
@@ -382,6 +389,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     if (!initialized) {
       ensureSchemaFiles();
     }
+    // todo consider to keep immutable
     return Collections.unmodifiableSet(mySchemaFiles.keySet());
   }
 

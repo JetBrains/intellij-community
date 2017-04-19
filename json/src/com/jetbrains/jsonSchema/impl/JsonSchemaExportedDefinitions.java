@@ -17,6 +17,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BidirectionalMap;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.Set;
 import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
 
 /**
+ * todo to be removed
  * @author Irina.Chernushina on 3/28/2016.
  */
 public class JsonSchemaExportedDefinitions {
@@ -64,13 +66,14 @@ public class JsonSchemaExportedDefinitions {
   }
 
   @Nullable
-  public VirtualFile getSchemaFileById(@NotNull final String id, JsonSchemaServiceEx jsonSchemaService) {
+  public VirtualFile getSchemaFileById(@NotNull final String id, JsonSchemaService service) {
     for (int i = 0; i < 100; i++) {
       final Set<VirtualFile> toRefresh = new HashSet<>();
       synchronized (myLock) {
         toRefresh.addAll(myFilesToRefresh);
+        myFilesToRefresh.clear();
       }
-      if (!toRefresh.isEmpty()) jsonSchemaService.refreshSchemaIds(toRefresh);
+      if (!toRefresh.isEmpty()) service.refreshSchemaIds(toRefresh);
       synchronized (myLock) {
         if (myFilesToRefresh.isEmpty()) break;
       }

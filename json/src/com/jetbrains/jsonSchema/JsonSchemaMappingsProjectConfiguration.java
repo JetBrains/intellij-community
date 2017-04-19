@@ -1,19 +1,19 @@
 package com.jetbrains.jsonSchema;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -24,70 +24,57 @@ import java.util.Map;
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/jsonSchemas.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class JsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsConfigurationBase {
-  private Project myProject;
-  @Transient
-  private final Map<VirtualFile, SchemaInfo> mySchemaFiles = new HashMap<>();
+public class JsonSchemaMappingsProjectConfiguration implements PersistentStateComponent<JsonSchemaMappingsProjectConfiguration> {
+  @Tag("state") @AbstractCollection(surroundWithTag = false)
+  protected final Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();
+
+  private final Object myLock = new Object();
 
   public static JsonSchemaMappingsProjectConfiguration getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, JsonSchemaMappingsProjectConfiguration.class);
   }
 
-  public JsonSchemaMappingsProjectConfiguration(Project project) {
-    myProject = project;
-  }
-
   public JsonSchemaMappingsProjectConfiguration() {
   }
 
+  @Nullable
   @Override
-  public File convertToAbsoluteFile(@NotNull String path) {
-    return myProject.getBasePath() == null ? new File(path) : new File(myProject.getBasePath(), path);
+  public JsonSchemaMappingsProjectConfiguration getState() {
+    return this;
   }
 
-  public boolean isRegisteredSchemaFile(@NotNull VirtualFile file) {
-    return mySchemaFiles.containsKey(file);
-  }
 
-  @Override
-  public void setState(@NotNull Map<String, SchemaInfo> state) {
-    super.setState(state);
-    recalculateSchemaFiles();
-  }
-
-  @Override
-  public void addSchema(@NotNull SchemaInfo info) {
-    super.addSchema(info);
-    recalculateSchemaFiles();
-  }
-
-  @Override
-  public void removeSchema(@NotNull SchemaInfo info) {
-    super.removeSchema(info);
-    recalculateSchemaFiles();
-  }
-
-  @Override
-  public void loadState(JsonSchemaMappingsConfigurationBase state) {
-    super.loadState(state);
-    recalculateSchemaFiles();
-  }
-
-  private void recalculateSchemaFiles() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged());
-    }, ModalityState.NON_MODAL, myProject == null ? Condition.FALSE : myProject.getDisposed());
-    mySchemaFiles.clear();
-    if (myProject == null || myProject.getBaseDir() == null) return;
-
-    for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : myState.values()) {
-      final VirtualFile schemaFile = info.getSchemaFile(myProject);
-      if (schemaFile != null) mySchemaFiles.put(schemaFile, info);
+  public void schemaFileMoved(@NotNull final Project project,
+                              @NotNull final String oldRelativePath,
+                              @NotNull final String newRelativePath) {
+    synchronized (myLock) {
+      final Optional<UserDefinedJsonSchemaConfiguration> old = myState.values().stream()
+        .filter(schema -> FileUtil.pathsEqual(schema.getRelativePathToSchema(), oldRelativePath))
+        .findFirst();
+      if (old.isPresent()) {
+        old.get().setRelativePathToSchema(newRelativePath);
+        JsonSchemaService.Impl.get(project).reset();
+      }
     }
   }
 
-  @Nullable
-  public SchemaInfo getSchemaBySchemaFile(@NotNull final VirtualFile file) {
-    return mySchemaFiles.get(file);
+  public Map<String, UserDefinedJsonSchemaConfiguration> getStateMap() {
+    synchronized (myLock) {
+      return Collections.unmodifiableMap(myState);
+    }
+  }
+
+  @Override
+  public void loadState(JsonSchemaMappingsProjectConfiguration state) {
+    synchronized (myLock) {
+      XmlSerializerUtil.copyBean(state, this);
+    }
+  }
+
+  public void setState(@NotNull final Project project, @NotNull Map<String, UserDefinedJsonSchemaConfiguration> state) {
+    synchronized (myLock) {
+      myState.clear();
+      myState.putAll(state);
+    }
   }
 }

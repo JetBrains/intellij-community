@@ -83,7 +83,7 @@
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
-    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
   </extensions>
 

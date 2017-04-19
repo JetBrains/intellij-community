@@ -18,7 +18,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
+import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -120,10 +120,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
 
-        final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-          new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/Schema.json", false,
-                                                             Collections
-                                                               .singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+        final UserDefinedJsonSchemaConfiguration base =
+          new UserDefinedJsonSchemaConfiguration("base", moduleDir + "/Schema.json", false,
+                                                 Collections
+                                                               .singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false)));
         addSchema(base);
       }
 

@@ -58,10 +58,10 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
     public PsiElement resolveInner() {
       final String reference = getReference();
       if (reference == null) return null;
-      final JsonSchemaServiceEx schemaServiceEx = JsonSchemaService.Impl.getEx(myElement.getProject());
+      final JsonSchemaService service = JsonSchemaService.Impl.get(myElement.getProject());
       final VirtualFile file = myElement.getContainingFile().getVirtualFile();
       if (file == null) return null;
-      final Collection<VirtualFile> schemaFiles = schemaServiceEx.getSchemaFilesForFile(file);
+      final Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
       for (VirtualFile schemaFile : schemaFiles) {
         final List<JsonSchemaWalker.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(getElement(), true, true);
         if (steps == null) continue;

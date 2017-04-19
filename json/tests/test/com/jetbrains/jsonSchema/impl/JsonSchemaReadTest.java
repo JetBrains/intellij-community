@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.junit.Assert;
 
 import java.io.File;
@@ -73,7 +74,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
   }
 
   public void testMainSchemaHighlighting() throws Exception {
-    final Set<VirtualFile> files = JsonSchemaServiceEx.Impl.getEx(myProject).getSchemaFiles();
+    final Set<VirtualFile> files = JsonSchemaService.Impl.get(myProject).getSchemaFiles();
     VirtualFile mainSchema = null;
     for (VirtualFile file : files) {
       if ("schema.json".equals(file.getName())) {

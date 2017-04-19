@@ -34,8 +34,8 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
 
-        final JsonSchemaMappingsConfigurationBase.SchemaInfo pattern =
-          new JsonSchemaMappingsConfigurationBase.SchemaInfo("pattern", moduleDir + "/patternSchema.json", false, Collections.emptyList());
+        final UserDefinedJsonSchemaConfiguration pattern =
+          new UserDefinedJsonSchemaConfiguration("pattern", moduleDir + "/patternSchema.json", false, Collections.emptyList());
         addSchema(pattern);
         myDoCompletion = false;
       }

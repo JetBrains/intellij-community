@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -388,7 +389,7 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
                                                  schemaFile, schemaObject, false, steps, true);
           return true;
         };
-        JsonSchemaServiceEx.Impl.getEx(object.getProject()).visitSchemaObject(object.getContainingFile().getVirtualFile(), processor);
+        JsonSchemaService.Impl.get(object.getProject()).visitSchemaObject(object.getContainingFile().getVirtualFile(), processor);
       }
     }
 

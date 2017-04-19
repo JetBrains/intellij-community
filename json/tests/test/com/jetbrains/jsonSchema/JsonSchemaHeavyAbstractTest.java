@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,7 +35,7 @@ import java.util.List;
  */
 public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   private FileTypeManager myFileTypeManager;
-  private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> mySchemas;
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private List<UserDefinedJsonSchemaConfiguration> mySchemas;
   protected boolean myDoCompletion = true;
 
   @Override
@@ -51,9 +52,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     try {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-      for (JsonSchemaMappingsConfigurationBase.SchemaInfo schema : mySchemas) {
-        instance.removeSchema(schema);
-      }
+      instance.setState(myProject, Collections.emptyMap());
     } finally {
       super.tearDown();
     }
@@ -98,8 +97,8 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     void doCheck();
   }
 
-  protected void addSchema(@NotNull final JsonSchemaMappingsConfigurationBase.SchemaInfo schema) {
-    JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).addSchema(schema);
+  protected void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {
+    JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(myProject, Collections.singletonMap(schema.getName(), schema));
     mySchemas.add(schema);
   }
 }

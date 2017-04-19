@@ -52,7 +52,7 @@ public class JsonSchemaFileTypeManager implements ProjectManagerListener {
       myFileSets.clear();
       final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       for (Project openProject : openProjects) {
-        myFileSets.addAll(JsonSchemaService.Impl.getEx(openProject).getSchemaFiles());
+        myFileSets.addAll(JsonSchemaService.Impl.get(openProject).getSchemaFiles());
       }
       mySetsInitialized = true;
     }

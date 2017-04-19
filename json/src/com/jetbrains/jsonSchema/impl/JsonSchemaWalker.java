@@ -14,6 +14,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,7 +172,7 @@ public class JsonSchemaWalker {
                                            List<Step> position,
                                            boolean acceptAdditionalPropertiesSchemas) {
     final Set<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> control = new HashSet<>();
-    final JsonSchemaServiceEx serviceEx = JsonSchemaServiceEx.Impl.getEx(project);
+    final JsonSchemaService service = JsonSchemaService.Impl.get(project);
     final ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue = new ArrayDeque<>();
     queue.add(Trinity.create(rootSchema, rootSchemaFile, position));
     while (!queue.isEmpty()) {
@@ -197,7 +198,7 @@ public class JsonSchemaWalker {
               final List<Step> steps = new ArrayList<>();
               // add value step if needed
               if (!isName) steps.add(new Step(StateType._value, null));
-              visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, schemaObject.getDefinitionAddress(), steps);
+              visitSchemaByDefinitionAddress(service, queue, schemaFile, schemaObject.getDefinitionAddress(), steps);
             }
           }
         });
@@ -213,22 +214,22 @@ public class JsonSchemaWalker {
         final List<Pair<JsonSchemaObject, List<Step>>> variants = definitionsResolver.getVariants();
         for (Pair<JsonSchemaObject, List<Step>> variant : variants) {
           if (variant.getFirst().getDefinitionAddress() == null) continue;
-          visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, variant.getFirst().getDefinitionAddress(), variant.getSecond());
+          visitSchemaByDefinitionAddress(service, queue, schemaFile, variant.getFirst().getDefinitionAddress(), variant.getSecond());
         }
       }
     }
   }
 
-  private static void visitSchemaByDefinitionAddress(JsonSchemaServiceEx serviceEx,
+  private static void visitSchemaByDefinitionAddress(JsonSchemaService service,
                                                      ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue,
                                                      VirtualFile schemaFile, @NotNull final String definitionAddress, final List<Step> steps) {
     // we can have also non-absolute transfers here, because allOf and others can not be put in-place into schema
     final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(definitionAddress);
     //noinspection ConstantConditions
-    final VirtualFile variantSchemaFile = splitter.isAbsolute() ? serviceEx.getSchemaFileById(splitter.getSchemaId(), schemaFile) :
+    final VirtualFile variantSchemaFile = splitter.isAbsolute() ? service.getSchemaFileById(splitter.getSchemaId(), schemaFile) :
       schemaFile;
     if (variantSchemaFile == null) return;
-    serviceEx.visitSchemaObject(variantSchemaFile,
+    service.visitSchemaObject(variantSchemaFile,
                                 variantObject -> {
                                   List<Step> variantSteps = buildSteps(splitter.getRelativePath()).getFirst();
                                   // empty list might be not modifiable

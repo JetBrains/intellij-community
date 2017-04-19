@@ -38,11 +38,11 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
         @Override
         public void registerSchemes() {
           final String moduleDir = getModuleDir(getProject());
-          final ArrayList<JsonSchemaMappingsConfigurationBase.Item> patterns = new ArrayList<>();
-          patterns.add(new JsonSchemaMappingsConfigurationBase.Item(getTestName(true) + "*", true, false));
+          final ArrayList<UserDefinedJsonSchemaConfiguration.Item> patterns = new ArrayList<>();
+          patterns.add(new UserDefinedJsonSchemaConfiguration.Item(getTestName(true) + "*", true, false));
           addSchema(
-            new JsonSchemaMappingsConfigurationBase.SchemaInfo("testDoc", moduleDir + "/" + getTestName(true) + "Schema.json", false,
-                                                               patterns));
+            new UserDefinedJsonSchemaConfiguration("testDoc", moduleDir + "/" + getTestName(true) + "Schema.json", false,
+                                                   patterns));
         }
 
         @Override

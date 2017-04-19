@@ -22,17 +22,17 @@ import java.io.File;
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
-public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappingsConfigurationBase.SchemaInfo> {
+public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
-  @NotNull private final JsonSchemaMappingsConfigurationBase.SchemaInfo mySchema;
+  @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final Runnable myTreeUpdater;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
 
   public JsonSchemaConfigurable(Project project,
-                                @NotNull String schemaFilePath, @NotNull JsonSchemaMappingsConfigurationBase.SchemaInfo schema,
+                                @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
                                 @Nullable Runnable updateTree) {
     super(true, updateTree);
     myProject = project;
@@ -43,7 +43,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   }
 
   @NotNull
-  public JsonSchemaMappingsConfigurationBase.SchemaInfo getSchema() {
+  public UserDefinedJsonSchemaConfiguration getSchema() {
     return mySchema;
   }
 
@@ -53,7 +53,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   }
 
   @Override
-  public JsonSchemaMappingsConfigurationBase.SchemaInfo getEditableObject() {
+  public UserDefinedJsonSchemaConfiguration getEditableObject() {
     return mySchema;
   }
 
@@ -128,8 +128,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     setDisplayName(mySchema.getName());
   }
 
-  public JsonSchemaMappingsConfigurationBase.SchemaInfo getUiSchema() {
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo info = new JsonSchemaMappingsConfigurationBase.SchemaInfo();
+  public UserDefinedJsonSchemaConfiguration getUiSchema() {
+    final UserDefinedJsonSchemaConfiguration info = new UserDefinedJsonSchemaConfiguration();
     info.setApplicationLevel(mySchema.isApplicationLevel());
     if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
