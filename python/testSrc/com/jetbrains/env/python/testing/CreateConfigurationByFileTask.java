@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  *
  * @author Ilya.Kazakevich
  */
-class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration> extends CreateConfigurationTestTask<T> {
+class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration<?>> extends CreateConfigurationTestTask<T> {
   @NotNull
   private final String[] myFileNames;
 

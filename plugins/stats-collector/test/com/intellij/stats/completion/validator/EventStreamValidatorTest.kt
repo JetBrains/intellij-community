@@ -85,7 +85,5 @@ class EventStreamValidatorTest {
 }
 
 private fun List<LogEvent>.join(): String {
-    return this.map {
-        LogEventSerializer.toString(it)
-    }.joinToString("\n")
+    return this.map { LogEventSerializer.toString(it) }.joinToString(System.lineSeparator())
 }

@@ -629,9 +629,7 @@ public class ResolveMethod15Test extends Resolve15TestCase {
   public void testStaticMethodInSubclass() throws Exception {
     PsiJavaReference ref = (PsiJavaReference)configureByFile();
     final JavaResolveResult result = ref.advancedResolve(true);
-    assertTrue(result.isValidResult());
-
-    assertResolvesToMethodInClass(result, "SomeSubClass");
+    assertNull(result.getElement());
   }
 
   private static void assertResolvesToMethodInClass(JavaResolveResult result, @NonNls String name) {

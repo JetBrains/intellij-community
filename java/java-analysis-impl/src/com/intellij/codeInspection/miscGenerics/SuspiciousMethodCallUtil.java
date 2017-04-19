@@ -73,11 +73,14 @@ public class SuspiciousMethodCallUtil {
       PsiMethod get = MethodSignatureUtil.findMethodBySignature(mapClass, getSignature, false);
       addMethod(get, 0, patternMethods, indices);
 
-      MethodSignature getOrDefaultSignature = MethodSignatureUtil.createMethodSignature("getOrDefault",
-                                                                                        new PsiType[] {PsiType.getJavaLangObject(manager, searchScope),
-                                                                                          PsiSubstitutor.EMPTY.substitute(mapClass.getTypeParameters()[1])}, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
-      PsiMethod getOrDefault = MethodSignatureUtil.findMethodBySignature(mapClass, getOrDefaultSignature, false);
-      addMethod(getOrDefault, 0, patternMethods, indices);
+      PsiTypeParameter[] typeParameters = mapClass.getTypeParameters();
+      if (typeParameters.length > 0) {
+        MethodSignature getOrDefaultSignature = MethodSignatureUtil.createMethodSignature("getOrDefault",
+                                                                                          new PsiType[] {PsiType.getJavaLangObject(manager, searchScope),
+                                                                                            PsiSubstitutor.EMPTY.substitute(typeParameters[1])}, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+        PsiMethod getOrDefault = MethodSignatureUtil.findMethodBySignature(mapClass, getOrDefaultSignature, false);
+        addMethod(getOrDefault, 0, patternMethods, indices);
+      }
 
       MethodSignature removeWithDefaultSignature = MethodSignatureUtil.createMethodSignature("remove",
                                                                                              new PsiType[] {PsiType.getJavaLangObject(manager, searchScope), PsiType.getJavaLangObject(manager, searchScope)},

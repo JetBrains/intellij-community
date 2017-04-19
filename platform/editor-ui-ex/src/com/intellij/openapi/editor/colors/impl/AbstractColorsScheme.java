@@ -550,7 +550,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
      * FONT_SCALE value should also be written by that reason.
      */
     if (!(myFontPreferences instanceof DelegatingFontPreferences) || !(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
-      JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
+      JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getNormalizingScale())); // must precede font options
     }
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
