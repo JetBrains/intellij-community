@@ -82,8 +82,8 @@
   <extensionPoints>
     <extensionPoint name="codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
-    <extensionPoint name="codeInsight.implementedAtRuntime"
-                    interface="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition"/>
+    <extensionPoint name="codeInsight.implicitSubclassProvider"
+                    interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
     <extensionPoint name="conversion.rule"
                     interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"/>
 

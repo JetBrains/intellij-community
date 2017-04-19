@@ -15,18 +15,37 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition;
+import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author nik
  */
-public class DevKitImplementedAtRuntimeCondition extends ImplementedAtRuntimeCondition {
+public class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
+
   @Override
-  public boolean isImplementedAtRuntime(@NotNull PsiClass psiClass) {
+  public boolean isApplicableTo(@NotNull PsiClass psiClass) {
     return DevKitImplicitUsageProvider.isDomElementClass(psiClass) ||
            InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement");
+  }
+
+  @Override
+  @Nls
+  @Nullable
+  public String findSubclassingReason(@NotNull PsiClass psiClass) {
+    if (DevKitImplicitUsageProvider.isDomElementClass(psiClass)) {
+      return DevKitBundle.message("implemented.at.runtime.dom");
+    }
+
+    if (InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement")) {
+      return DevKitBundle.message("implemented.at.runtime.jamelement");
+    }
+
+    return null;
   }
 }
