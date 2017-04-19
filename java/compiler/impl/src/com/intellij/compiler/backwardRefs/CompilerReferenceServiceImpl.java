@@ -57,6 +57,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import org.iq80.snappy.CorruptionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -663,9 +664,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       throw (ProcessCanceledException)e;
     }
 
-    Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
     LOG.error("an exception during " + actionName + " calculation", e);
-    if (unwrapped instanceof PersistentEnumeratorBase.CorruptedException || unwrapped instanceof StorageException) {
+    Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
+    if (requireIndexRebuild(unwrapped)) {
       closeReaderIfNeed(true);
     }
     return null;
@@ -676,5 +677,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     TIntHashSet result = (TIntHashSet)set1.clone();
     result.retainAll(set2.toArray());
     return result;
+  }
+
+  private static boolean requireIndexRebuild(@Nullable Throwable exception) {
+    if (exception instanceof PersistentEnumeratorBase.CorruptedException || exception instanceof StorageException) {
+      return true;
+    }
+    if (exception instanceof IOException && exception.getCause() instanceof CorruptionException) {
+      return true;
+    }
+    return false;
   }
 }
