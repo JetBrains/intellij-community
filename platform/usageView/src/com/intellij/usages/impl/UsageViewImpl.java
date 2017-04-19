@@ -1072,10 +1072,8 @@ public class UsageViewImpl implements UsageView {
     UsageNode child = myBuilder.appendUsage(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
-    if (child != null) {
-      for (Node node = child; node != myRoot; node = (Node)node.getParent()) {
-        node.update(this, edtNodeChangedQueue);
-      }
+    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
+      node.update(this, edtNodeChangedQueue);
     }
 
     return child;
