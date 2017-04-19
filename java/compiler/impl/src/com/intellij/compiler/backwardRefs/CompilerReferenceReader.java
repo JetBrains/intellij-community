@@ -222,30 +222,34 @@ class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  private LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity)
-    throws StorageException {
-    Set<LightRef.NamedLightRef> result = new THashSet<>();
-    Queue<LightRef.NamedLightRef> q = new Queue<>(10);
-    q.addLast(hierarchyElement);
-    while (!q.isEmpty()) {
-      LightRef.NamedLightRef curClass = q.pullFirst();
-      if (result.add(curClass)) {
-        if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
-          if (hasMultipleDefinitions(curClass)) {
-            return null;
-          }
-        }
-        myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
-          for (LightRef child : children) {
-            if (child instanceof LightRef.LightClassHierarchyElementDef && !(child instanceof LightRef.LightAnonymousClassDef)) {
-              q.addLast((LightRef.LightClassHierarchyElementDef) child);
+  LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity) {
+    try {
+      Set<LightRef.NamedLightRef> result = new THashSet<>();
+      Queue<LightRef.NamedLightRef> q = new Queue<>(10);
+      q.addLast(hierarchyElement);
+      while (!q.isEmpty()) {
+        LightRef.NamedLightRef curClass = q.pullFirst();
+        if (result.add(curClass)) {
+          if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
+            if (hasMultipleDefinitions(curClass)) {
+              return null;
             }
           }
-          return true;
-        });
+          myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
+            for (LightRef child : children) {
+              if (child instanceof LightRef.LightClassHierarchyElementDef && !(child instanceof LightRef.LightAnonymousClassDef)) {
+                q.addLast((LightRef.LightClassHierarchyElementDef)child);
+              }
+            }
+            return true;
+          });
+        }
       }
+      return result.toArray(new LightRef.NamedLightRef[result.size()]);
     }
-    return result.toArray(new LightRef.NamedLightRef[result.size()]);
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private enum DefCount { NONE, ONE, MANY}
