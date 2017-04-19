@@ -59,7 +59,7 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    return getVcsRevision().getContent();
+    return ContentRevisionCache.getAsString(getVcsRevision().second, getFile(), null);
   }
 
   @NotNull
@@ -70,7 +70,7 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     try {
-      return getVcsRevision().getRevisionNumber();
+      return getVcsRevision().first;
     }
     catch(VcsException ex) {
       return VcsRevisionNumber.NULL;
@@ -78,51 +78,24 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
   }
 
   @NotNull
-  private ContentRevision getVcsRevision() throws VcsException {
-    final FilePath file = getFile();
-    final Pair<VcsRevisionNumber, byte[]> pair;
+  private Pair<VcsRevisionNumber, byte[]> getVcsRevision() throws VcsException {
     try {
-      pair = ContentRevisionCache.getOrLoadCurrentAsBytes(myProject, file, myVcsKey,
+      return ContentRevisionCache.getOrLoadCurrentAsBytes(myProject, getFile(), myVcsKey,
                                                           new CurrentRevisionProvider() {
-                                                             @Override
-                                                             public VcsRevisionNumber getCurrentRevision() throws VcsException {
-                                                               return getCurrentRevisionNumber();
-                                                             }
+                                                            @Override
+                                                            public VcsRevisionNumber getCurrentRevision() throws VcsException {
+                                                              return getCurrentRevisionNumber();
+                                                            }
 
-                                                             @Override
-                                                             public Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException {
-                                                               return loadContent();
-                                                             }
-                                                           });
+                                                            @Override
+                                                            public Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException {
+                                                              return loadContent();
+                                                            }
+                                                          });
     }
     catch (IOException e) {
       throw new VcsException(e);
     }
-
-    return new ByteBackedContentRevision() {
-      @Override
-      public String getContent() throws VcsException {
-        return ContentRevisionCache.getAsString(getContentAsBytes(), file, null);
-      }
-
-      @Nullable
-      @Override
-      public byte[] getContentAsBytes() throws VcsException {
-        return pair.getSecond();
-      }
-
-      @NotNull
-      @Override
-      public FilePath getFile() {
-        return file;
-      }
-
-      @NotNull
-      @Override
-      public VcsRevisionNumber getRevisionNumber() {
-        return pair.getFirst();
-      }
-    };
   }
 
   @NotNull
