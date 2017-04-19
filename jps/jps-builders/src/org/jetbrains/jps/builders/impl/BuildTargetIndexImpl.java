@@ -85,12 +85,13 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     Graph<BuildTarget<?>> graph = GraphGenerator.generate(new InboundSemiGraph<BuildTarget<?>>() {
       @Override
       public Collection<BuildTarget<?>> getNodes() {
-        return realTargets;
+        return allTargets;
       }
 
       @Override
       public Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
-        return myDependencies.get(n).iterator();
+        Collection<BuildTarget<?>> deps = myDependencies.get(n);
+        return deps != null ? deps.iterator() : Collections.emptyIterator();
       }
     });
 
@@ -117,9 +118,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
           }
         }
       }
-      else {
-        realDependencies.add(dep);
-      }
+      realDependencies.add(dep);
     }
     realDependencies.trimToSize();
     return realDependencies;
@@ -135,16 +134,16 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   public Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
     LinkedHashSet<BuildTarget<?>> result = new LinkedHashSet<>();
-    for (BuildTarget<?> dep : myDependencies.get(target)) {
-      collectDependenciesRecursively(dep, result);
+    for (BuildTarget<?> dep : getDependencies(target, context)) {
+      collectDependenciesRecursively(dep, result, context);
     }
     return result;
   }
 
-  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<BuildTarget<?>> result) {
+  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<BuildTarget<?>> result, CompileContext context) {
     if (result.add(target)) {
-      for (BuildTarget<?> dep : myDependencies.get(target)) {
-        collectDependenciesRecursively(dep, result);
+      for (BuildTarget<?> dep : getDependencies(target,context)) {
+        collectDependenciesRecursively(dep, result, context);
       }
     }
   }
@@ -153,7 +152,8 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   @Override
   public Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
-    return myDependencies.get(target);
+    Collection<BuildTarget<?>> deps = myDependencies.get(target);
+    return deps != null ? deps : Collections.emptyList();
   }
 
   @NotNull
