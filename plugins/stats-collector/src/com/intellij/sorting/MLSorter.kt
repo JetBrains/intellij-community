@@ -19,7 +19,9 @@ class MLSorter : CompletionFinalSorter() {
     private val cachedScore = mutableMapOf<LookupElement, ItemRankInfo>()
 
     override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
-        if (!isMlSortingEnabled()) return emptyMap()
+        if (!isMlSortingEnabled()) {
+            return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.NONE as Any)) }
+        }
         
         val isUnknownFeaturesPresent = items.find { cachedScore[it] == null } != null
         if (isUnknownFeaturesPresent) {
