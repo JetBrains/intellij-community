@@ -124,11 +124,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
     if (expressionList == null) return null;
     Object[] candidates = context.getObjectsToView();
-    if (candidates == null || candidates.length == 0) return null;
-    String originalMethodName = ((PsiMethod)((CandidateInfo)candidates[0]).getElement()).getName();
+    if (candidates == null || candidates.length == 0 || !(candidates[0] instanceof CandidateInfo)) return null;
+    PsiElement element = ((CandidateInfo)candidates[0]).getElement();
+    if (!(element instanceof PsiMethod)) return null;
+    PsiMethod method = (PsiMethod)element;
+    String originalMethodName = method.getName();
     PsiQualifiedReference currentMethodReference = null;
     PsiElement parent = expressionList.getParent();
-    if (parent instanceof PsiMethodCallExpression) {
+    if (parent instanceof PsiMethodCallExpression && !method.isConstructor()) {
       currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
     }
     else if (parent instanceof PsiNewExpression) {
