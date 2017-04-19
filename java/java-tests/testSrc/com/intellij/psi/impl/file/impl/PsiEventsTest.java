@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -813,5 +814,19 @@ public class PsiEventsTest extends PsiTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
+  }
+
+  public void testCopyFile() throws Exception {
+    VirtualFile original = createFile(myModule, mySrcDir1, "a.xml", "<tag/>").getVirtualFile();
+
+    EventsTestListener listener = new EventsTestListener();
+    myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
+
+    PsiDirectory psiDir2 = PsiManager.getInstance(myProject).findDirectory(mySrcDir2);
+    assertNotNull(psiDir2);
+    WriteAction.run(() -> original.copy(this, mySrcDir2, "b.xml"));
+    
+    assertEquals("beforeChildAddition\n" +
+                 "childAdded\n", listener.getEventsString());
   }
 }

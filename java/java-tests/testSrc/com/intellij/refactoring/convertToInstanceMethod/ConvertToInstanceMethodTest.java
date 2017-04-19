@@ -51,7 +51,7 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
     }
   }
 
-  private void doTest(final int targetParameter) throws Exception {
+  protected void doTest(final int targetParameter) throws Exception {
     doTest(targetParameter, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
@@ -62,7 +62,7 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
     new ConvertToInstanceMethodProcessor(getProject(),
-                                         method, method.getParameterList().getParameters()[targetParameter],
+                                         method, targetParameter < 0 ? null : method.getParameterList().getParameters()[targetParameter],
                                          visibility).run();
     checkResultByFile(filePath + ".after");
 

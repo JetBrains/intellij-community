@@ -22,14 +22,12 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toList;
 
 /**
  * This class is intended to refresh virtual files periodically.
@@ -40,11 +38,13 @@ public class FileRefresher implements Disposable {
   private final ScheduledExecutorService executor = createBoundedScheduledExecutorService("FileRefresher", 1);
   private final boolean recursive;
   private final long delay;
-  private final AtomicReference<RefreshSession> session = new AtomicReference<>();
-  private final AtomicReference<List<Object>> watchers = new AtomicReference<>();
-  private volatile List<VirtualFile> files;
-  private volatile boolean disposed;
-  private volatile boolean paused;
+  private final ArrayList<Object> watchers = new ArrayList<>();
+  private final ArrayList<VirtualFile> files = new ArrayList<>();
+  private final AtomicBoolean scheduled = new AtomicBoolean();
+  private final AtomicBoolean launched = new AtomicBoolean();
+  private final AtomicBoolean paused = new AtomicBoolean();
+  private final AtomicBoolean disposed = new AtomicBoolean();
+  private RefreshSession session; // synchronized by files
 
   /**
    * @param recursive {@code true} if files should be considered as roots
@@ -57,6 +57,9 @@ public class FileRefresher implements Disposable {
     this.delay = delay;
   }
 
+  /**
+   * @return {@code true} if files should be considered as roots
+   */
   public boolean isRecursive() {
     return recursive;
   }
@@ -88,24 +91,22 @@ public class FileRefresher implements Disposable {
   }
 
   /**
-   * Replaces current list of files to watch.
-   * It stops watching files, which were added before.
-   * Then it starts watching new files and schedules refreshing.
+   * Registers the specified file to watch and to refresh.
    *
-   * @param files a list of files to watch
+   * @param file a file to watch and to refresh
    */
-  public final void setFiles(List<VirtualFile> files) {
-    if (!disposed) {
-      unwatch();
-      if (files != null) {
-        files = files.stream().filter(Objects::nonNull).collect(toList()); // create a copy of the specified list
-        if (files.isEmpty()) files = null;
+  public final void register(VirtualFile file) {
+    if (file != null && !disposed.get()) {
+      Object watcher = watch(file, recursive);
+      if (watcher != null) {
+        synchronized (watchers) {
+          watchers.add(watcher);
+        }
       }
-      this.files = files;
-      if (files != null) {
-        this.watchers.set(files.stream().map(file -> watch(file, recursive)).filter(Objects::nonNull).collect(toList()));
-        start();
+      synchronized (files) {
+        files.add(file);
       }
+      if (!paused.get()) schedule();
     }
   }
 
@@ -113,43 +114,66 @@ public class FileRefresher implements Disposable {
    * Pauses files refreshing.
    */
   public final void pause() {
-    paused = true;
+    paused.set(true);
   }
 
   /**
-   * Schedules files refreshing.
+   * Starts files refreshing immediately.
+   * If files are refreshing now, it will be restarted when finished.
    */
   public final void start() {
-    paused = false;
-    if (!disposed) executor.schedule(this::launch, delay, SECONDS);
+    paused.set(false);
+    launch();
+  }
+
+  private void schedule() {
+    if (disposed.get() || scheduled.getAndSet(true)) return;
+    synchronized (files) {
+      if (session != null || files.isEmpty()) return;
+    }
+    executor.schedule(this::launch, delay, SECONDS);
   }
 
   private void launch() {
-    List<VirtualFile> files = this.files;
-    if (!disposed && !paused && files != null) {
-      RefreshSession session = RefreshQueue.getInstance().createSession(true, recursive, this::finish);
-      if (this.session.compareAndSet(null, session)) {
-        session.addAllFiles(files);
-        session.launch();
-      }
+    if (disposed.get() || launched.getAndSet(true)) return;
+    RefreshSession session;
+    synchronized (files) {
+      if (this.session != null || files.isEmpty()) return;
+      session = RefreshQueue.getInstance().createSession(true, recursive, this::finish);
+      session.addAllFiles(files);
+      this.session = session;
     }
+    scheduled.set(false);
+    launched.set(false);
+    session.launch();
   }
 
   private void finish() {
-    session.set(null);
-    if (!disposed && !paused) start();
-  }
-
-  private void unwatch() {
-    List<Object> watchers = this.watchers.getAndSet(null);
-    if (watchers != null) watchers.forEach(this::unwatch);
+    synchronized (files) {
+      session = null;
+    }
+    if (launched.getAndSet(false)) {
+      launch();
+    }
+    else if (scheduled.getAndSet(false) || !paused.get()) {
+      schedule();
+    }
   }
 
   @Override
   public void dispose() {
-    disposed = true;
-    unwatch();
-    RefreshSession session = this.session.getAndSet(null);
-    if (session != null) RefreshQueue.getInstance().cancelSession(session.getId());
+    if (!disposed.getAndSet(true)) {
+      synchronized (watchers) {
+        watchers.forEach(this::unwatch);
+        watchers.clear();
+      }
+      RefreshSession session;
+      synchronized (files) {
+        files.clear();
+        session = this.session;
+        this.session = null;
+      }
+      if (session != null) RefreshQueue.getInstance().cancelSession(session.getId());
+    }
   }
 }

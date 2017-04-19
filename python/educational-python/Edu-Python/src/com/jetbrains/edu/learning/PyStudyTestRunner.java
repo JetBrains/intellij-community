@@ -20,6 +20,7 @@ import java.util.Map;
 
 public class PyStudyTestRunner extends StudyTestRunner {
   private static final String PYTHONPATH = "PYTHONPATH";
+  private GeneralCommandLine myCommandLine;
 
   PyStudyTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     super(task, taskDir);
@@ -35,9 +36,9 @@ public class PyStudyTestRunner extends StudyTestRunner {
       testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(configurator.getTestFileName());
     }
     final File testRunner = new File(myTaskDir.getPath(), testsFileName);
-    final GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.withWorkDirectory(myTaskDir.getPath());
-    final Map<String, String> env = commandLine.getEnvironment();
+    myCommandLine = new GeneralCommandLine();
+    myCommandLine.withWorkDirectory(myTaskDir.getPath());
+    final Map<String, String> env = myCommandLine.getEnvironment();
 
     final VirtualFile courseDir = project.getBaseDir();
     if (courseDir != null) {
@@ -46,12 +47,17 @@ public class PyStudyTestRunner extends StudyTestRunner {
     if (sdk != null) {
       String pythonPath = sdk.getHomePath();
       if (pythonPath != null) {
-        commandLine.setExePath(pythonPath);
-        commandLine.addParameter(testRunner.getPath());
-        commandLine.addParameter(FileUtil.toSystemDependentName(executablePath));
-        return commandLine.createProcess();
+        myCommandLine.setExePath(pythonPath);
+        myCommandLine.addParameter(testRunner.getPath());
+        myCommandLine.addParameter(FileUtil.toSystemDependentName(executablePath));
+        return myCommandLine.createProcess();
       }
     }
     return null;
+  }
+
+  @Override
+  public GeneralCommandLine getCommandLine() {
+    return myCommandLine;
   }
 }

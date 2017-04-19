@@ -10,7 +10,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
-public class TaskWithSubtasks extends Task {
+public class TaskWithSubtasks extends PyCharmTask {
   private int myActiveSubtaskIndex = 0;
   @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;

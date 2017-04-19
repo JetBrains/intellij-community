@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -40,6 +55,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +70,7 @@ import java.io.OutputStream;
  * @since 23.05.13 18:30
  */
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
-
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemRunConfiguration.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
 
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
 
@@ -90,7 +106,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(mySettings));
+    element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
+      @Override
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
+        // only these fields due to backward compatibility
+        switch (accessor.getName()) {
+          case "passParentEnvs":
+            return !mySettings.isPassParentEnvs();
+          case "env":
+            return !mySettings.getEnv().isEmpty();
+          default:
+            return true;
+        }
+      }
+    }));
   }
 
   @NotNull

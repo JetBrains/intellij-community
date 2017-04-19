@@ -335,39 +335,47 @@ public class PsiTypesUtil {
   }
 
   @NotNull
-  public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
-                                                              @NotNull PsiTypeParameter[] typeParameters) {
-    if (typeParameters.length == 0) return typeParameters;
+  public static PsiTypeParameter[] filterUnusedTypeParameters(@NotNull PsiTypeParameter[] typeParameters,
+                                                              final PsiType... types) {
+    if (typeParameters.length == 0) return PsiTypeParameter.EMPTY_ARRAY;
 
     final Set<PsiTypeParameter> usedParameters = new HashSet<>();
-    superReturnTypeInBaseClassType.accept(new PsiTypeVisitor<Object>(){
-      @Nullable
-      @Override
-      public Object visitClassType(PsiClassType classType) {
-        final PsiClass aClass = classType.resolve();
-        if (aClass instanceof PsiTypeParameter && ArrayUtil.find(typeParameters, aClass) > -1) {
-          usedParameters.add((PsiTypeParameter)aClass);
+    for (PsiType type : types) {
+      type.accept(new PsiTypeVisitor<Object>() {
+        @Nullable
+        @Override
+        public Object visitClassType(PsiClassType classType) {
+          final PsiClass aClass = classType.resolve();
+          if (aClass instanceof PsiTypeParameter && ArrayUtil.find(typeParameters, aClass) > -1) {
+            usedParameters.add((PsiTypeParameter)aClass);
+            return null;
+          }
+          for (PsiType type : classType.getParameters()) {
+            type.accept(this);
+          }
           return null;
         }
-        for (PsiType type : classType.getParameters()) {
-          type.accept(this);
+
+        @Nullable
+        @Override
+        public Object visitWildcardType(PsiWildcardType wildcardType) {
+          final PsiType bound = wildcardType.getBound();
+          return bound != null ? bound.accept(this) : null;
         }
-        return null;
-      }
 
-      @Nullable
-      @Override
-      public Object visitWildcardType(PsiWildcardType wildcardType) {
-        final PsiType bound = wildcardType.getBound();
-        return bound != null ? bound.accept(this) : null;
-      }
-
-      @Nullable
-      @Override
-      public Object visitArrayType(PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this);
-      }
-    });
+        @Nullable
+        @Override
+        public Object visitArrayType(PsiArrayType arrayType) {
+          return arrayType.getComponentType().accept(this);
+        }
+      });
+    }
     return usedParameters.toArray(new PsiTypeParameter[usedParameters.size()]);
+  }
+
+  @NotNull
+  public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
+                                                              @NotNull PsiTypeParameter[] typeParameters) {
+    return filterUnusedTypeParameters(typeParameters, superReturnTypeInBaseClassType);
   }
 }

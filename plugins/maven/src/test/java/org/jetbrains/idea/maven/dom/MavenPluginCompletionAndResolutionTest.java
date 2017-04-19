@@ -208,11 +208,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
   }
 
-  public void testDoesNotIncludeNonEditableConfigurationParameters() throws Exception {
-    putCaretInConfigurationSection();
-    assertCompletionVariantsDoNotInclude(myProjectPom, "basedir", "buildDirectory");
-  }
-
   private void putCaretInConfigurationSection() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

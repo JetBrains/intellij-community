@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Base panel for schemes combo box and related actions. When settings change, {@link #updateOnCurrentSettingsChange()} method must be
@@ -123,11 +125,27 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   public void disposeUIResources() {
     removeAll();
   }
-  
-  public final void startEdit() {
-    mySchemesCombo.startEdit();
+
+  public final void editCurrentSchemeName(@NotNull BiConsumer<T,String> newSchemeNameConsumer) {
+    T currentScheme = getSelectedScheme();
+    if (currentScheme != null) {
+      String currentName = currentScheme.getName();
+      mySchemesCombo.startEdit(
+        currentName,
+        getModel().isProjectScheme(currentScheme),
+        newName -> {
+          if (!newName.equals(currentName)) {
+            newSchemeNameConsumer.accept(currentScheme, newName);
+          }
+        });
+    }
   }
-  
+
+  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+    String name =
+      SchemeNameGenerator.getUniqueName(preferredName, schemeName -> getModel().containsScheme(schemeName, isProjectScheme));
+    mySchemesCombo.startEdit(name, isProjectScheme, nameConsumer);
+  }
 
   public final void cancelEdit() {
     mySchemesCombo.cancelEdit();

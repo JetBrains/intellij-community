@@ -17,8 +17,12 @@ package com.intellij.usages.rules;
 
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * A rule specifying how specific Usage View elements should be grouped. 
@@ -29,8 +33,21 @@ public interface UsageGroupingRule {
   UsageGroupingRule[] EMPTY_ARRAY = new UsageGroupingRule[0];
 
   /**
-   * @return a group a specific usage should be placed into, or null, if this rule doesn't apply to this kind of usages.
+   * Return list of nested parent groups for a usage. The specified usage will be placed into the last group from the list, that group
+   * will be placed under the next to last group, etc.
+   * <p>If the rule returns at most one parent group extend {@link SingleParentUsageGroupingRule} and override
+   * {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead.</p>
+   */
+  @NotNull
+  default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    return ContainerUtil.createMaybeSingletonList(groupUsage(usage));
+  }
+
+  /**
+   * @deprecated extend {@link SingleParentUsageGroupingRule} and override {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead
    */
   @Nullable
-  UsageGroup groupUsage(@NotNull Usage usage);
+  default UsageGroup groupUsage(@NotNull Usage usage) {
+    throw new UnsupportedOperationException();
+  }
 }

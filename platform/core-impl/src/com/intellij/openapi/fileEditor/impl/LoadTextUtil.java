@@ -248,9 +248,9 @@ public final class LoadTextUtil {
 
   @NotNull
   private static Pair.NonNull<Charset, byte[]> charsetForWriting(@Nullable Project project,
-                                                         @NotNull VirtualFile virtualFile,
-                                                         @NotNull String text,
-                                                         @NotNull Charset existing) {
+                                                                 @NotNull VirtualFile virtualFile,
+                                                                 @NotNull String text,
+                                                                 @NotNull Charset existing) {
     Charset specified = extractCharsetFromFileContent(project, virtualFile, text);
     Pair.NonNull<Charset, byte[]> chosen = chooseMostlyHarmlessCharset(existing, specified, text);
     Charset charset = chosen.first;

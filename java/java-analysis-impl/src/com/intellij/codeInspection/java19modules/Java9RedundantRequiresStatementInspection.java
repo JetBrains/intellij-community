@@ -239,7 +239,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
         if (importList != null) {
           RefModule refModule = refFile.getModule();
           if (refModule != null) {
-            Set<String> packageNames = getImportedPackages(refModule);
+            Set<String> packageNames = getImportedPackages(refModule, refFile);
             if (packageNames != DONT_COLLECT_PACKAGES) {
               PsiImportStatementBase[] statements = importList.getAllImportStatements();
               for (PsiImportStatementBase statement : statements) {
@@ -270,10 +270,10 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     }
 
     @NotNull
-    private static Set<String> getImportedPackages(@NotNull RefModule refModule) {
+    private static Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
       Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
       if (importedPackages == null) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule());
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getElement());
         importedPackages = javaModule != null ? new THashSet<>() : DONT_COLLECT_PACKAGES;
         refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
       }

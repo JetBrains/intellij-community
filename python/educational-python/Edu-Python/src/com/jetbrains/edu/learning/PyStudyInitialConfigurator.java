@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
-public class PyStudyInitialConfigurator {
+public class PyStudyInitialConfigurator implements ApplicationComponent {
   @NonNls private static final String CONFIGURED_V40 = "StudyPyCharm.InitialConfiguration40";
 
   /**

@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
@@ -32,9 +33,9 @@ class ConstructorParamTypes {
     c2.newInstance(new Object[] {"abc", Integer.valueOf(42)});
     c3.newInstance(new Object[] {new int[]{42, 23}, Arrays.asList("x", "y")});
 
-    c1.newInstance(<warning descr="Array item 0 is not assignable to 'int'"><warning descr="Array item 1 is not assignable to 'java.lang.String'">a2</warning></warning>);
-    c2.newInstance(<warning descr="Array item 0 is not assignable to 'java.lang.String'"><warning descr="Array item 1 is not assignable to 'java.lang.Integer'">a3</warning></warning>);
-    c3.newInstance(<warning descr="Array item 0 is not assignable to 'int[]'"><warning descr="Array item 1 is not assignable to 'java.util.List'">a1</warning></warning>);
+    c1.newInstance(<warning descr="Array items have incompatible types">a2</warning>);
+    c2.newInstance(<warning descr="Array items have incompatible types">a3</warning>);
+    c3.newInstance(<warning descr="Array items have incompatible types">a1</warning>);
 
     c1.newInstance(new Object[]{<warning descr="Array item is not assignable to 'int'">"42"</warning>, "abc"});
     c2.newInstance(new Object[]{<warning descr="Array item is not assignable to 'java.lang.String'">42</warning>, 23});
@@ -46,9 +47,18 @@ class ConstructorParamTypes {
 
     cls.getConstructor(String[].class).newInstance((Object)new String[] {"abc"});
     cls.getConstructor(String[].class).newInstance(new String[] {<warning descr="Array item is not assignable to 'java.lang.String[]'">"abc"</warning>});
+
+    Constructor<?> c4 = cls.getConstructor(Cloneable.class);
+    Constructor<?> c5 = cls.getConstructor(Serializable.class);
+
+    c4.newInstance(new C());
+    c5.newInstance(new S());
+
+    c4.newInstance(<warning descr="Argument is not assignable to 'java.lang.Cloneable'">new S()</warning>);
+    c5.newInstance(<warning descr="Argument is not assignable to 'java.io.Serializable'">new C()</warning>);
   }
 
-  void arraySignatutre() throws Exception {
+  void arraySignature() throws Exception {
     Class<?> cls = Test.class;
 
     Constructor c1 = cls.getConstructor(new Class[]{int.class, String.class});
@@ -73,9 +83,9 @@ class ConstructorParamTypes {
     c2.newInstance(new Object[] {"abc", Integer.valueOf(42)});
     c3.newInstance(new Object[] {new int[]{42, 23}, Arrays.asList("x", "y")});
 
-    c1.newInstance(<warning descr="Array item 0 is not assignable to 'int'"><warning descr="Array item 1 is not assignable to 'java.lang.String'">a2</warning></warning>);
-    c2.newInstance(<warning descr="Array item 0 is not assignable to 'java.lang.String'"><warning descr="Array item 1 is not assignable to 'java.lang.Integer'">a3</warning></warning>);
-    c3.newInstance(<warning descr="Array item 0 is not assignable to 'int[]'"><warning descr="Array item 1 is not assignable to 'java.util.List'">a1</warning></warning>);
+    c1.newInstance(<warning descr="Array items have incompatible types">a2</warning>);
+    c2.newInstance(<warning descr="Array items have incompatible types">a3</warning>);
+    c3.newInstance(<warning descr="Array items have incompatible types">a1</warning>);
 
     c1.newInstance(new Object[]{<warning descr="Array item is not assignable to 'int'">"42"</warning>, "abc"});
     c2.newInstance(new Object[]{<warning descr="Array item is not assignable to 'java.lang.String'">42</warning>, 23});
@@ -87,6 +97,15 @@ class ConstructorParamTypes {
 
     cls.getConstructor(new Class[]{String[].class}).newInstance((Object)new String[] {"abc"});
     cls.getConstructor(new Class[]{String[].class}).newInstance(new String[] {<warning descr="Array item is not assignable to 'java.lang.String[]'">"abc"</warning>});
+
+    Constructor<?> c4 = cls.getConstructor(new Class[]{Cloneable.class});
+    Constructor<?> c5 = cls.getConstructor(new Class[]{Serializable.class});
+
+    c4.newInstance(new C());
+    c5.newInstance(new S());
+
+    c4.newInstance(<warning descr="Argument is not assignable to 'java.lang.Cloneable'">new S()</warning>);
+    c5.newInstance(<warning descr="Argument is not assignable to 'java.io.Serializable'">new C()</warning>);
   }
 
   void manyArguments() throws Exception {
@@ -107,11 +126,38 @@ class ConstructorParamTypes {
     Object[] a5 = {0, (short)0, 0, 0.0f, "abc"};
 
     m0.newInstance(a0);
-    m1.newInstance(<warning descr="Array item 0 is not assignable to 'int'">a1</warning>);
-    m2.newInstance(<warning descr="Array item 1 is not assignable to 'short'">a2</warning>);
-    m3.newInstance(<warning descr="Array item 2 is not assignable to 'long'">a3</warning>);
-    m4.newInstance(<warning descr="Array item 3 is not assignable to 'float'">a4</warning>);
-    m5.newInstance(<warning descr="Array item 4 is not assignable to 'double'">a5</warning>);
+    m1.newInstance(<warning descr="Array item has incompatible type">a1</warning>);
+    m2.newInstance(<warning descr="Array items have incompatible types">a2</warning>);
+    m3.newInstance(<warning descr="Array items have incompatible types">a3</warning>);
+    m4.newInstance(<warning descr="Array items have incompatible types">a4</warning>);
+    m5.newInstance(<warning descr="Array items have incompatible types">a5</warning>);
+  }
+
+  void arrayArguments() throws Exception {
+    Class<?> cls = Test.class;
+
+    Constructor c1 = cls.getConstructor(Object.class);
+    Constructor c2 = cls.getConstructor(Cloneable.class);
+    Constructor c3 = cls.getConstructor(Serializable.class);
+
+    c1.newInstance((Object) new String[0]);
+    c2.newInstance((Object) new String[0]);
+    c3.newInstance((Object) new String[0]);
+
+    c1.newInstance((Object) new String[][]{ new String[0] });
+    c2.newInstance((Object) new String[][]{ new String[0] });
+    c3.newInstance((Object) new String[][]{ new String[0] });
+
+    Constructor c4 = cls.getConstructor(Object[].class);
+    Constructor c5 = cls.getConstructor(String[].class);
+
+    c4.newInstance((Object) new String[0]);
+    c4.newInstance((Object) new String[][]{ new String[0] });
+
+    c5.newInstance((Object) new String[0]);
+    c5.newInstance((Object) <warning descr="Argument is not assignable to 'java.lang.String[]'">new String[][]{ new String[0] }</warning>);
+    c5.newInstance(<warning descr="Argument is not assignable to 'java.lang.String[]'">"abc"</warning>);
+    c5.newInstance(<warning descr="Argument is not assignable to 'java.lang.String[]'">new Test(1, null)</warning>);
   }
 
   class Test {
@@ -119,6 +165,11 @@ class ConstructorParamTypes {
     public Test(String s, Integer n) {}
     public Test(int[] n, List<String> s) {}
     public Test(String[] s) {}
+    public Test(Object[] s) {}
+
+    public Test(Object o) {}
+    public Test(Cloneable c) {}
+    public Test(Serializable s) {}
   }
 
   class M {
@@ -127,5 +178,11 @@ class ConstructorParamTypes {
     public String m3(int a1, short a2, long a3) {return "";}
     public String m4(int a1, short a2, long a3, float a4) {return "";}
     public String m5(int a1, short a2, long a3, float a4, double a5) {return "";}
+  }
+
+  static class S implements Serializable {
+  }
+
+  static class C implements Cloneable {
   }
 }

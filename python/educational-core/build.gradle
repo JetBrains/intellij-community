@@ -39,12 +39,12 @@ buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 
 intellij {
   pluginName 'educational-core'
-  String ideaPath = getIdeaPath()
-  if (ideaPath == null) {
-    version ideaVersion
-  }
-  else {
+  if (project.hasProperty('ideaPath')) {
     localPath ideaPath
+  } else {
+    if (project.hasProperty('ideaVersion')) {
+      version ideaVersion
+    }
   }
   updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
   downloadSources Boolean.valueOf(downloadIdeaSources)
@@ -67,15 +67,5 @@ processResources {
 afterEvaluate {
   tasks.getByName('buildPlugin') {
     archiveName = "$intellij.pluginName-$version-${buildNumber}.zip"
-  }
-}
-private static String getIdeaPath() {
-  Properties properties = new Properties()
-  try {
-    properties.load(new FileInputStream("local.properties"))
-    return properties.getProperty('ideaPath')
-  }
-  catch (ignored) {
-    return null
   }
 }

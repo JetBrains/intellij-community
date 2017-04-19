@@ -37,7 +37,10 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     final String name = node.getName();
     if (name == null) return;
     final boolean highlightedAsAttribute = highlightAsAttribute(node, name);
-    if (!highlightedAsAttribute && PyBuiltinCache.isInBuiltins(node)) {
+    if (highlightedAsAttribute) {
+      return;
+    }
+    if (PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) {
       final Annotation ann;
       final PsiElement parent = node.getParent();
       if (parent instanceof PyDecorator) {

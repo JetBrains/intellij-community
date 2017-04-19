@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author peter
  */
-public class PotemkinProgress extends ProgressWindow {
+public class PotemkinProgress extends ProgressWindow implements PingProgress {
   private long myLastUiUpdate = System.currentTimeMillis();
   private final LinkedBlockingQueue<InputEvent> myEventQueue = new LinkedBlockingQueue<>();
 
@@ -127,13 +127,17 @@ public class PotemkinProgress extends ProgressWindow {
   }
 
   @Nullable
-  private JRootPane considerShowingDialog(long now) {
-    if (now - myLastUiUpdate > DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+  protected JRootPane considerShowingDialog(long now) {
+    if (isReadyShowing(now)) {
       getDialog().myRepaintRunnable.run();
       showDialog();
       return getDialog().getPanel().getRootPane();
     }
     return null;
+  }
+
+  protected boolean isReadyShowing(long now) {
+    return now - myLastUiUpdate > myDelayInMillis;
   }
 
   private boolean timeToPaint(long now) {

@@ -88,6 +88,12 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.Session"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").withParameters("java.lang.String").definedInClass("org.hibernate.SharedSessionContract"))]]></place>
   </injection>
+  <injection language="SQL" injector-id="java">
+    <display-name>QueryProducer.createNativeQuery (org.hibernate.query)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createNativeQuery").withParameters("java.lang.String").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createNativeQuery").withParameters("java.lang.String", "java.lang.Class").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createNativeQuery").withParameters("java.lang.String", "java.lang.String").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
+  </injection>
 
   <injection language="SQL" injector-id="java">
     <display-name>Statement (java.sql)</display-name>

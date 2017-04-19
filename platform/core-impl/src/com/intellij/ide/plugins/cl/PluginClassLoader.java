@@ -71,7 +71,10 @@ public class PluginClassLoader extends UrlClassLoader {
   // a different version of which is used in IDEA.
   @Nullable
   private Class tryLoadingClass(@NotNull String name, final boolean resolve, @Nullable Set<ClassLoader> visited) {
-    Class c = loadClassInsideSelf(name);
+    Class c = null;
+    if (!mustBeLoadedByPlatform(name)) {
+      c = loadClassInsideSelf(name);
+    }
 
     if (c == null) {
       c = loadClassFromParents(name, visited);
@@ -85,6 +88,13 @@ public class PluginClassLoader extends UrlClassLoader {
     }
 
     return null;
+  }
+
+  private static boolean mustBeLoadedByPlatform(String className) {
+    //FunctionX interfaces from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // of kotlin-runtime.jar it won't be possible to call platform's methods with Kotlin functional types in signatures from such a plugin.
+    //We assume that FunctionX interfaces don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    return className.startsWith("kotlin.jvm.functions.");
   }
 
   @Nullable

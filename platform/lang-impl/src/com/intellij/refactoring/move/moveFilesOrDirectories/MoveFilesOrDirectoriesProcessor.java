@@ -160,10 +160,11 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
 
         if (element instanceof PsiDirectory) {
+          if (mySearchForReferences) encodeDirectoryFiles(element);
+          MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
           for (PsiElement psiElement : element.getChildren()) {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
           }
-          MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
         }
         else if (element instanceof PsiFile) {
           final PsiFile movedFile = (PsiFile)element;
@@ -239,10 +240,20 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
-  private void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
+  private static void encodeDirectoryFiles(PsiElement psiElement) {
+    if (psiElement instanceof PsiFile) {
+      FileReferenceContextUtil.encodeFileReferences(psiElement);
+    }
+    else if (psiElement instanceof PsiDirectory) {
+      for (PsiElement element : psiElement.getChildren()) {
+        encodeDirectoryFiles(element);
+      }
+    }
+  }
+
+  private static void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
       final PsiFile movedFile = (PsiFile)psiElement;
-      if (mySearchForReferences) FileReferenceContextUtil.encodeFileReferences(psiElement);
       MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, movedFile.getParent(), oldToNewMap);
       movedFiles.add(movedFile);
     }

@@ -410,9 +410,8 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
 
     private List<Root> getRoots() {
       List<VirtualFile> files = roots;
-      if (roots == null) files = getSystemRoots();
-      if (refresher != null && refresher.isRecursive()) refresher.setFiles(files);
-      if (files.isEmpty()) return emptyList();
+      if (files == null) files = getSystemRoots();
+      if (files == null || files.isEmpty()) return emptyList();
       return files.stream().map(file -> new Root(this, file)).collect(toList());
     }
 
@@ -443,6 +442,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
 
     private Node(State state, VirtualFile file) {
       super(file);
+      if (state.refresher != null && !state.refresher.isRecursive()) state.refresher.register(file);
       updateContent(state);
     }
 
@@ -478,6 +478,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
 
     private Root(State state, VirtualFile file) {
       super(state, file);
+      if (state.refresher != null && state.refresher.isRecursive()) state.refresher.register(file);
       tree = new MapBasedTree<>(false, node -> node.getFile(), state.path);
       tree.updateRoot(Pair.create(this, state.isLeaf(file)));
     }

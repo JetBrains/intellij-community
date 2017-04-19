@@ -1,6 +1,8 @@
 package com.jetbrains.edu.learning.checker;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,17 +11,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -39,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 public class StudyCheckUtils {
@@ -178,17 +179,6 @@ public class StudyCheckUtils {
   }
 
 
-  public static boolean hasBackgroundProcesses(@NotNull Project project) {
-    final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
-    final StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
-    if (statusBar != null) {
-      final List<Pair<TaskInfo, ProgressIndicator>> processes = statusBar.getBackgroundProcesses();
-      if (!processes.isEmpty()) return true;
-    }
-    return false;
-  }
-
-
   public static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
@@ -222,5 +212,21 @@ public class StudyCheckUtils {
         }
       }
     });
+  }
+
+  public static StudyTestsOutputParser.TestsOutput getTestOutput(@NotNull Process testProcess,
+                                                                 @NotNull String commandLine,
+                                                                 boolean isAdaptive) {
+    final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess, null, commandLine);
+    final ProcessOutput output = ProgressManager.getInstance().hasProgressIndicator() ? handler
+      .runProcessWithProgressIndicator(ProgressManager.getInstance().getProgressIndicator()) :
+                                 handler.runProcess();
+    final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, isAdaptive);
+    String stderr = output.getStderr();
+    if (!stderr.isEmpty() && output.getStdout().isEmpty()) {
+      LOG.info("#educational " + stderr);
+      return new StudyTestsOutputParser.TestsOutput(false, stderr);
+    }
+    return testsOutput;
   }
 }

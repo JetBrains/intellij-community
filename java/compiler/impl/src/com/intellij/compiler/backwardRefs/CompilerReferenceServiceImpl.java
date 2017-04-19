@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -156,12 +157,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           });
         });
       }
-    }
-  }
 
-  @Override
-  public void projectClosed() {
-    closeReaderIfNeed(false);
+      Disposer.register(myProject, () -> closeReaderIfNeed(false));
+    }
   }
 
   @Nullable
@@ -494,6 +492,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     try {
       if (myProject.isOpen()) {
         myReader = CompilerReferenceReader.create(myProject);
+        LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
     } finally {
       myOpenCloseLock.unlock();
@@ -665,10 +664,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
 
     Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
+    LOG.error("an exception during " + actionName + " calculation", e);
     if (unwrapped instanceof PersistentEnumeratorBase.CorruptedException || unwrapped instanceof StorageException) {
       closeReaderIfNeed(true);
     }
-    LOG.error("an exception during " + actionName + " calculation", e);
     return null;
   }
 

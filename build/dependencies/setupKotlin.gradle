@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 repositories {
-  maven {
-    url 'http://repo.labs.intellij.net/plugins.jetbrains.com'
-  }
-  maven {
-    url 'http://plugins.jetbrains.com/maven/'
-  }
+  maven { url 'http://repo.labs.intellij.net/plugins.jetbrains.com' }
+  maven { url 'http://plugins.jetbrains.com/maven/' }
 }
 
 configurations {
@@ -30,18 +26,7 @@ dependencies {
   kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
 }
 
-task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin) {
-  def kotlinPluginArchive = { configurations.kotlinPlugin.singleFile }
-  inputs.file(kotlinPluginArchive)
-  def outputDir = project.buildDir
-  outputs.dir("$outputDir/Kotlin")
-
-  doFirst { logger.info("Setting up Kotlin") }
-  doLast {
-    logger.info("Unpack ${kotlinPluginArchive.call()} to $outputDir")
-    copy {
-      from zipTree(kotlinPluginArchive.call())
-      into outputDir
-    }
-  }
+task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
+  from zipTree(configurations.kotlinPlugin.singleFile)
+  into "${project.buildDir}/kotlin"
 }

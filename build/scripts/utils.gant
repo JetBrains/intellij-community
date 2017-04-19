@@ -105,9 +105,9 @@ binding.setVariable("loadProject", {
   defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
   
   setupKotlin()
-  def bundledKotlinPath = "$home/build/dependencies/build/Kotlin/kotlinc"
+  def bundledKotlinPath = "$home/build/dependencies/build/kotlin/Kotlin/kotlinc"
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
-    bundledKotlinPath = "$home/community/build/dependencies/build/Kotlin/kotlinc"
+    bundledKotlinPath = "$home/community/build/dependencies/build/kotlin/Kotlin/kotlinc"
   }
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
     projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
@@ -150,16 +150,13 @@ private void setupKotlin() {
 }
 
 private boolean ensureKotlinCompilerAddedToClassPath() {
-  try {
-    Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
+  if (getClass().getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
     return true
   }
-  catch (ClassNotFoundException ignored) {
-  }
 
-  def kotlinPluginLibPath = "$home/build/dependencies/build/Kotlin/lib"
+  def kotlinPluginLibPath = "$home/build/dependencies/build/kotlin/Kotlin/lib"
   if (!new File(kotlinPluginLibPath).exists()) {
-    kotlinPluginLibPath = "$home/community/build/dependencies/build/Kotlin/lib"
+    kotlinPluginLibPath = "$home/community/build/dependencies/build/kotlin/Kotlin/lib"
   }
   if (!new File(kotlinPluginLibPath, "kotlin-runtime.jar").exists()) {
     projectBuilder.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module " +

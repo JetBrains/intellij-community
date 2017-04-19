@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +30,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 public class EditableSchemesCombo<T extends Scheme> {
   
@@ -46,6 +46,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   private AbstractSchemesPanel<T, ?> mySchemesPanel;
   private final CardLayout myLayout;
   private final JTextField myNameEditorField;
+  private @Nullable NameEditData myNameEditData;
 
   private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
   private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
@@ -93,10 +94,10 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void validateOnTyping() {
+    if (myNameEditData == null) return;
     String currName = myNameEditorField.getText();
-    SchemesCombo.MySchemeListItem<T> selectedItem = myComboBox.getSelectedItem();
-    if (selectedItem != null && !currName.equals(selectedItem.getSchemeName())) {
-      String validationMessage = validateSchemeName(currName, mySchemesPanel.getModel().isProjectScheme(ObjectUtils.notNull(selectedItem.getScheme())));
+    if (!currName.equals(myNameEditData.initialName)) {
+      String validationMessage = validateSchemeName(currName, myNameEditData.isProjectScheme);
       if (validationMessage != null) {
         mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
         return;
@@ -110,9 +111,8 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void revertSchemeName() {
-    SchemesCombo.MySchemeListItem<T> selectedItem = myComboBox.getSelectedItem();
-    if (selectedItem != null) {
-      myNameEditorField.setText(selectedItem.getSchemeName());
+    if (myNameEditData != null) {
+      myNameEditorField.setText(myNameEditData.initialName);
     }
   }
 
@@ -121,30 +121,25 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void stopEdit() {
+    if (myNameEditData == null) {
+      cancelEdit();
+      return;
+    }
     String newName = myNameEditorField.getText();
-    SchemesCombo.MySchemeListItem<T> selectedItem = myComboBox.getSelectedItem();
-    if (selectedItem != null) {
-      if (newName.equals(selectedItem.getSchemeName())) {
-        cancelEdit();
-        return;
-      }
-      boolean isProjectScheme = mySchemesPanel.getModel().isProjectScheme(ObjectUtils.notNull(selectedItem.getScheme()));
-      String validationMessage = validateSchemeName(newName, isProjectScheme);
-      if (validationMessage != null) {
-        mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
-      }
-      else {
-        cancelEdit();
-        if (selectedItem.getScheme() != null) {
-          mySchemesPanel.getActions().renameScheme(selectedItem.getScheme(), newName);
-        }
-      }
+    String validationMessage = validateSchemeName(newName, myNameEditData.isProjectScheme);
+    if (validationMessage != null) {
+      mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
+    }
+    else {
+      myNameEditData.nameConsumer.accept(newName);
+      cancelEdit();
     }
   }
   
   public void cancelEdit() {
     mySchemesPanel.clearInfo();
     myLayout.first(myRootPanel);
+    myNameEditData = null;
     final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
     focusManager.doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myRootPanel, true));
   }
@@ -182,15 +177,13 @@ public class EditableSchemesCombo<T extends Scheme> {
     });
   }
 
-  public void startEdit() {
-    T scheme = getSelectedScheme();
-    if (scheme != null) {
-      showHint();
-      myNameEditorField.setText(scheme.getName());
-      myLayout.last(myRootPanel);
-      final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
-      focusManager.doWhenFocusSettlesDown(() -> focusManager.requestFocus(myNameEditorField, true));
-    }
+  public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+    showHint();
+    myNameEditData = new NameEditData(initialName, nameConsumer, isProjectScheme);
+    myNameEditorField.setText(initialName);
+    myLayout.last(myRootPanel);
+    final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+    focusManager.doWhenFocusSettlesDown(() -> focusManager.requestFocus(myNameEditorField, true));
   }
 
   public void resetSchemes(@NotNull Collection<T> schemes) {
@@ -216,6 +209,7 @@ public class EditableSchemesCombo<T extends Scheme> {
 
   @Nullable
   private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
+    if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
     if (name.isEmpty()) {
       return EMPTY_NAME_MESSAGE;
     }
@@ -224,6 +218,16 @@ public class EditableSchemesCombo<T extends Scheme> {
     }
     return null;
   }
-  
 
+  private static class NameEditData {
+    private @NotNull String initialName;
+    private @NotNull Consumer<String> nameConsumer;
+    private boolean isProjectScheme;
+
+    private NameEditData(@NotNull String name, @NotNull Consumer<String> nameConsumer, boolean isProjectScheme) {
+      initialName = name;
+      this.nameConsumer = nameConsumer;
+      this.isProjectScheme = isProjectScheme;
+    }
+  }
 }

@@ -46,6 +46,7 @@ public class UsageViewSettings implements PersistentStateComponent<UsageViewSett
 
   public boolean GROUP_BY_USAGE_TYPE = true;
   public boolean GROUP_BY_MODULE = true;
+  public boolean FLATTEN_MODULES = true;
   public boolean GROUP_BY_PACKAGE = true;
   public boolean GROUP_BY_FILE_STRUCTURE = true;
   public boolean GROUP_BY_SCOPE;

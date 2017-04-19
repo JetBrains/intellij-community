@@ -802,9 +802,7 @@ class RunConfigurable extends BaseConfigurable {
       toDeleteSettings.remove(each.getSettings());
     }
 
-    for (RunnerAndConfigurationSettings each : toDeleteSettings) {
-      manager.removeConfiguration(each);
-    }
+    manager.removeConfigurations(toDeleteSettings);
   }
 
   static void collectNodesRecursively(DefaultMutableTreeNode parentNode, List<DefaultMutableTreeNode> nodes, NodeKind... allowed) {

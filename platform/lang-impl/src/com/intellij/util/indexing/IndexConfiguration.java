@@ -39,10 +39,8 @@ class IndexConfiguration {
     assert myFreezed;
     final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId);
 
-    assert pair != null : "Index data is absent for index " + indexId;
-
     //noinspection unchecked
-    return (UpdatableIndex<K, V, FileContent>)pair.getFirst();
+    return pair != null ? (UpdatableIndex<K, V, FileContent>)pair.getFirst() : null;
   }
 
   FileBasedIndex.InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {

@@ -54,6 +54,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -527,7 +529,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
                    relativePath
                      .replace(file.getName(), "<b>" + file.getName() + "</b>") + "</body></html>";
           }
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, -14, 0)).setShowLine(false));
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, 0, 0)).setShowLine(false));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -788,7 +790,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       return;
     }
 
-    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false));
+    GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
+      FindInProjectUtil.getScopeFromModel(myProject, myHelper.myPreviousModel), myProject);
+    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(
+      new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false, scope));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
 
     final AtomicInteger resultsCount = new AtomicInteger();

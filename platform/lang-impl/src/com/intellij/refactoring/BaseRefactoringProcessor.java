@@ -584,6 +584,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return myTestIgnore;
     }
 
+    @TestOnly
+    public static <T extends Throwable> void withIgnoredConflicts(ThrowableRunnable<T> r) throws T {
+      try {
+        myTestIgnore = true;
+        r.run();
+      }
+      finally {
+        myTestIgnore = false;
+      }
+    }
+
     @NotNull
     public Collection<String> getMessages() {
         List<String> result = new ArrayList<>(messages);

@@ -42,6 +42,7 @@ public class StudySerializationUtils {
   public static final String TEXT = "text";
   public static final String LESSONS = "lessons";
   public static final String COURSE = "course";
+  public static final String ID = "id";
   public static final String COURSE_TITLED = "Course";
   public static final String STATUS = "status";
   public static final String AUTHOR = "author";
@@ -256,6 +257,10 @@ public class StudySerializationUtils {
     public static Element convertToFifthVersion(Element state) throws StudyUnrecognizedFormatException {
       Element taskManagerElement = state.getChild(MAIN_ELEMENT);
       Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
+      final int courseId = getAsInt(courseElement, ID);
+      if (courseElement != null && courseId > 0) {
+        courseElement.setName(REMOTE_COURSE);
+      }
       final Element adaptive = getChildWithName(courseElement, ADAPTIVE);
       for (Element lesson : getChildList(courseElement, LESSONS)) {
         for (Element task : getChildList(lesson, TASK_LIST)) {

@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -226,6 +227,11 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitVariable(@NotNull GrVariable variable) {
     myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
+    Indent.getNoneIndent();
   }
 
   @Override

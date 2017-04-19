@@ -2520,21 +2520,27 @@ public class UIUtil {
   }
 
   public static class JBHtmlEditorKit extends HTMLEditorKit {
-    private StyleSheet style = new StyleSheet();
+    private StyleSheet style;
 
     public JBHtmlEditorKit() {
       this(true);
     }
 
     public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
-      style.addRule("code { font-size: 100%; }"); // small by Swing's default
-      style.addRule("small { font-size: small; }"); // x-small by Swing's default
+      style = createStyleSheet();
       if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
     }
 
     @Override
     public StyleSheet getStyleSheet() {
+      return style;
+    }
+
+    public static StyleSheet createStyleSheet() {
+      StyleSheet style = new StyleSheet();
+      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+      style.addRule("code { font-size: 100%; }"); // small by Swing's default
+      style.addRule("small { font-size: small; }"); // x-small by Swing's default
       return style;
     }
 

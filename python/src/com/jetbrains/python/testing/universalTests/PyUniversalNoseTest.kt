@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
 import com.jetbrains.python.testing.VFSTestFrameworkListener
@@ -52,7 +51,7 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNos
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalNoseTestSettingsEditor(this)
 
-  override fun getCustomRawArgumentsString(): String =
+  override fun getCustomRawArgumentsString(forRerun: Boolean): String =
     when {
       regexPattern.isEmpty() -> ""
       else -> "-m $regexPattern"
@@ -60,8 +59,6 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNos
 
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk)
 
-  //https://github.com/nose-devs/nose/issues/1042
-  override fun packageOnlyIfInitPy(anchor: PsiElement) = true
 }
 
 object PyUniversalNoseTestFactory : PyUniversalTestFactory<PyUniversalNoseTestConfiguration>() {

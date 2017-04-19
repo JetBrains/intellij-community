@@ -34,6 +34,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class OutputEditor extends ModuleElementsEditor {
+  public static final String NAME = ProjectBundle.message("project.roots.path.tab.title");
   private final BuildElementsEditor myCompilerOutputEditor;
   private final JavadocEditor myJavadocEditor;
   private final AnnotationsEditor myAnnotationsEditor;
@@ -71,9 +72,8 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("project.roots.path.tab.title");
+    return NAME;
   }
-
 
   @Override
   public void moduleStateChanged() {

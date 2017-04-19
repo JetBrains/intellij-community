@@ -512,7 +512,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public ConfigurationFactory getFactory() {
-      return null;
+      return UnknownConfigurationType.FACTORY;
     }
 
     @Override
@@ -530,19 +530,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    @NotNull
-    public ConfigurationType getType() {
-      return UnknownConfigurationType.INSTANCE;
-    }
-
-    @Override
     public RunConfiguration clone() {
       return null;
-    }
-
-    @Override
-    public int getUniqueID() {
-      return 0;
     }
 
     @Override

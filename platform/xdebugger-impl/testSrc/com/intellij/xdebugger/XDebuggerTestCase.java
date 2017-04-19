@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -34,31 +34,20 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();
 
   @NotNull
-  static XBreakpoint<MyBreakpointProperties> addBreakpoint(final XBreakpointManagerImpl breakpointManager,
-                                                           final MyBreakpointProperties abc) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<MyBreakpointProperties>>() {
-      @Override
-      public XBreakpoint<MyBreakpointProperties> compute() {
-        return breakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, abc);
-      }
-    });
+  static XBreakpoint<MyBreakpointProperties> addBreakpoint(XBreakpointManagerImpl breakpointManager, MyBreakpointProperties abc) {
+    return WriteAction.compute(() -> breakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, abc));
   }
 
   @NotNull
-  static XLineBreakpoint<MyBreakpointProperties> addLineBreakpoint(final XBreakpointManagerImpl breakpointManager, final String url,
-                                                                   final int line,
-                                                                   final MyBreakpointProperties properties) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<XLineBreakpoint<MyBreakpointProperties>>() {
-      @Override
-      public XLineBreakpoint<MyBreakpointProperties> compute() {
-        return breakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, url, line, properties);
-      }
-    });
+  static XLineBreakpoint<MyBreakpointProperties> addLineBreakpoint(XBreakpointManagerImpl breakpointManager,
+                                                                   String url,
+                                                                   int line,
+                                                                   MyBreakpointProperties properties) {
+    return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, url, line, properties));
   }
 
-  static void removeBreakPoint(final XBreakpointManagerImpl breakpointManager,
-                               final XBreakpoint<?> breakpoint) {
-    ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(breakpoint));
+  static void removeBreakPoint(XBreakpointManagerImpl breakpointManager, XBreakpoint<?> breakpoint) {
+    WriteAction.run(() -> breakpointManager.removeBreakpoint(breakpoint));
   }
 
   @Override

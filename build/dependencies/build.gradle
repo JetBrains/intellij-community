@@ -58,6 +58,18 @@ apply from: 'setupJetSign.gradle'
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign')
 
+task dependenciesFile() {
+  description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'
+  def outputFile = "$project.buildDir/dependencies.properties"
+  outputs.upToDateWhen { false }
+  outputs.file(outputFile)
+  doFirst {
+    def properties = new Properties()
+    file('gradle.properties').withInputStream { properties.load(it) }
+    file(outputFile).text = properties.stringPropertyNames().collect { "$it=${project.ext[it]}" }.join('\n')
+  }
+}
+
 task wrapper(type: Wrapper) {
   // 2.14 is the latest version supports Java 6 (which is still present on TeamCity build agents)
   gradleVersion = '2.14'

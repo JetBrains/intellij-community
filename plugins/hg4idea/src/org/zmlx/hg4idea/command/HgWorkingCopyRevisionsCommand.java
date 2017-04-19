@@ -144,11 +144,11 @@ public class HgWorkingCopyRevisionsCommand {
     }
 
     final List<String> lines = result.getOutputLines();
-    if (lines != null && !lines.isEmpty()) {
+    if (!lines.isEmpty()) {
       List<String> parts = StringUtil.split(lines.get(0), " ");
-      String changesets = parts.get(0);
-      String revisions = parts.get(1);
       if (parts.size() >= 2) {
+        String changesets = parts.get(0);
+        String revisions = parts.get(1);
         if (changesets.indexOf('+') != changesets.lastIndexOf('+')) {
           // in the case of unresolved merge we have 2 revisions at once, both current, so with "+"
           // 9f2e6c02913c+b311eb4eb004+ 186+183+

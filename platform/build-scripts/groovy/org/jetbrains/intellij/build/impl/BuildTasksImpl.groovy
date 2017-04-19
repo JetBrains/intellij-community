@@ -17,11 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -258,6 +254,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildDistributions() {
     checkProductProperties()
+    copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
@@ -277,7 +274,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-
+      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre')
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -306,6 +303,14 @@ idea.fatal.error.notification=disabled
           buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
         }
       }
+    }
+  }
+
+  private def copyDependenciesFile() {
+    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
+      buildContext.notifyArtifactBuilt(outputFile)
     }
   }
 

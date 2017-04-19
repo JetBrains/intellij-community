@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember, GrNamedElement, GrTopStatement {
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
-  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = GrTypeDefinition[]::new;
+  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrTypeDefinition[count];
 
   @NotNull
   @Override

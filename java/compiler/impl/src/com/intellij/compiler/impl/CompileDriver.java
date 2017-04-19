@@ -36,8 +36,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -620,6 +621,8 @@ public class CompileDriver {
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
       final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      boolean projectSdkNotSpecified = false;
+      boolean projectOutputNotSpecified = false;
       for (final Module module : scopeModules) {
         if (!compilerManager.isValidationEnabled(module)) {
           continue;
@@ -633,11 +636,14 @@ public class CompileDriver {
         }
         final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
         if (jdk == null) {
+          projectSdkNotSpecified |= ModuleRootManager.getInstance(module).isSdkInherited();
           modulesWithoutJdkAssigned.add(module.getName());
         }
         final String outputPath = getModuleOutputPath(module, false);
         final String testsOutputPath = getModuleOutputPath(module, true);
         if (outputPath == null && testsOutputPath == null) {
+          CompilerModuleExtension compilerExtension = CompilerModuleExtension.getInstance(module);
+          projectOutputNotSpecified |= compilerExtension != null && compilerExtension.isCompilerOutputPathInherited();
           modulesWithoutOutputPathSpecified.add(module.getName());
         }
         else {
@@ -654,12 +660,12 @@ public class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
         return false;
       }
 
       if (!modulesWithoutOutputPathSpecified.isEmpty()) {
-        showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, CommonContentEntriesEditor.NAME);
+        showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
         return false;
       }
 
@@ -744,14 +750,15 @@ public class CompileDriver {
     return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
-  private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String editorNameToSelect) {
+  private void showNotSpecifiedError(@NonNls final String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
+                                     String editorNameToSelect) {
     String nameToSelect = null;
     final StringBuilder names = StringBuilderSpinAllocator.alloc();
     final String message;
     try {
       final int maxModulesToShow = 10;
       for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
-        if (nameToSelect == null) {
+        if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
           nameToSelect = name;
         }
         if (names.length() > 0) {
@@ -778,8 +785,14 @@ public class CompileDriver {
     showConfigurationDialog(nameToSelect, editorNameToSelect);
   }
 
-  private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
-    ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
+  private void showConfigurationDialog(@Nullable String moduleNameToSelect, @Nullable String tabNameToSelect) {
+    ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
+    if (moduleNameToSelect != null) {
+      service.showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
+    }
+    else {
+      service.openProjectSettings();
+    }
   }
 
   private static class MessagesActivationListener extends NotificationListener.Adapter {

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,7 @@ class WindowsJavaFinder extends JavaHomeFinder {
         scanFolder(new File(anotherJavasFolder, javasFolder.getName()), result);
       }
     }
-    result.sort((o1, o2) -> Comparing.compare(JdkVersionUtil.getVersion(o2), JdkVersionUtil.getVersion(o1)));
+    result.sort((o1, o2) -> Comparing.compare(JavaSdkVersion.fromVersionString(o2), JavaSdkVersion.fromVersionString(o1)));
     return result;
   }
 }

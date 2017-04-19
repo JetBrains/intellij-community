@@ -34,9 +34,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -174,7 +175,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       settings.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
-          c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+          GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
         }
       }
       shouldUpdateUI = true;
@@ -198,9 +199,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setAllowMergeButtons(myComponent.myAllowMergeButtons.isSelected());
     update |= settings.getCycleScrolling() != myComponent.myCycleScrollingCheckBox.isSelected();
     settings.setCycleScrolling(myComponent.myCycleScrollingCheckBox.isSelected());
+    boolean shouldResetLafFonts = false;
     if (settings.getOverrideLafFonts() != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
       update = true;
+      shouldResetLafFonts = !myComponent.myOverrideLAFFonts.isSelected();
     }
     settings.setOverrideLafFonts(myComponent.myOverrideLAFFonts.isSelected());
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
@@ -253,6 +256,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     if (shouldUpdateUI) {
       lafManager.updateUI();
+      if (shouldResetLafFonts) {
+        int defSize = JBUI.Fonts.label().getSize();
+        settings.setFontSize(defSize);
+        myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
+        String defName = JBUI.Fonts.label().getFontName();
+        settings.setFontFace(defName);
+        myComponent.myFontCombo.setFontName(defName);
+      }
     }
 
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -522,10 +533,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   private static class AAListCellRenderer extends ListCellRendererWrapper<AntialiasingType> {
-    private static final SwingUtilities2.AATextInfo SUBPIXEL_HINT = new SwingUtilities2.AATextInfo(
-      RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
-    private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
-      RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+    private static final Object SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+    private static final Object GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
     private final boolean useEditorAASettings;
 
@@ -537,13 +546,13 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     @Override
     public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
-        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, SUBPIXEL_HINT);
+        GraphicsUtil.generatePropertiesForAntialiasing(SUBPIXEL_HINT, this::setClientProperty);
       }
       else if (value == AntialiasingType.GREYSCALE) {
-        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, GREYSCALE_HINT);
+        GraphicsUtil.generatePropertiesForAntialiasing(GREYSCALE_HINT, this::setClientProperty);
       }
       else if (value == AntialiasingType.OFF) {
-        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
+        GraphicsUtil.generatePropertiesForAntialiasing(null, this::setClientProperty);
       }
 
       if (useEditorAASettings) {

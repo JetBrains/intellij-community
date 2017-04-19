@@ -30,10 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class LocalFsFinder implements FileLookup.Finder, FileLookup {
@@ -68,15 +66,17 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     path = FileUtil.expandUserHome(path);
     final File file = new File(path);
     if (file.isAbsolute()) return file.getAbsolutePath();
-
-    return new File(myBaseDir, path).getAbsolutePath();
+    if (myBaseDir != null) {
+      return new File(myBaseDir, path).getAbsolutePath();
+    }
+    return path;
   }
 
   public String getSeparator() {
     return File.separator;
   }
 
-  public void setBaseDir(@NotNull File baseDir) {
+  public void setBaseDir(@Nullable File baseDir) {
     myBaseDir = baseDir;
   }
 

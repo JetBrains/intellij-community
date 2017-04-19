@@ -23,8 +23,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +74,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     };
     myControl = createRulesControl(language, settingsManager, colorsProvider, callback);
     scrollPane.setViewportView(myControl);
+    scrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, scrollPane.getVerticalScrollBar().getPreferredSize().width));
     CustomizationUtil.installPopupHandler(
       myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
     );

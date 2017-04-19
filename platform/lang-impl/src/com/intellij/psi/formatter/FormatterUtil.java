@@ -217,6 +217,19 @@ public class FormatterUtil {
     return nextNode.getElementType() == expectedType;
   }
 
+  public static boolean isFollowedBy(@Nullable ASTNode node, @NotNull TokenSet expectedTypes, TokenSet skipTypes) {
+    return isFollowedBy(node, expectedTypes, skipTypes.getTypes());
+  }
+
+  public static boolean isFollowedBy(@Nullable ASTNode node, @NotNull TokenSet expectedTypes, IElementType... skipTypes) {
+    ASTNode nextNode = node == null ? null : node.getTreeNext();
+    while (nextNode != null && (isWhitespaceOrEmpty(nextNode) || isOneOf(nextNode, skipTypes))) {
+      nextNode = nextNode.getTreeNext();
+    }
+    if (nextNode == null) return false;
+    return expectedTypes.contains(nextNode.getElementType());
+  }
+
   public static boolean isIncomplete(@Nullable ASTNode node) {
     ASTNode lastChild = node == null ? null : node.getLastChildNode();
     while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {

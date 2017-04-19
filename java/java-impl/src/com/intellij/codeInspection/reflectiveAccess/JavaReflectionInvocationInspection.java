@@ -20,7 +20,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +114,8 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
                 final PsiExpression[] expressions = argumentList.getExpressions();
                 final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
                 holder.registerProblem(element, InspectionsBundle.message(
-                  "inspection.reflection.invocation.item.number.not.assignable", i, requiredType.getQualifiedName()));
+                  "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
+                break;
               }
             }
           }
@@ -210,10 +210,6 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
       }
     }
     return null;
-  }
-
-  private static boolean isCallToMethod(PsiMethodCallExpression methodCall, String className, String methodName) {
-    return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
   }
 
   private static class Arguments {

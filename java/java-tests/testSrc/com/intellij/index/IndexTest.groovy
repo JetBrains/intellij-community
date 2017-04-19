@@ -698,6 +698,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaFileElementType.isInSourceContent(myFixture.tempDirFixture.getFile('another/doo/A.java'))
   }
 
+  void "test requesting nonexisted index fails as expected"() {
+    ID<?, ?> myId = ID.create("my.id")
+    FileBasedIndex.instance.getContainingFiles(myId, "null", GlobalSearchScope.allScope(project))
+    FileBasedIndex.instance.processAllKeys(myId, Processor.TRUE, project)
+  }
+
   void "test read-only index access"() {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
 

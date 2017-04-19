@@ -15,16 +15,19 @@
  */
 package com.intellij.debugger.memory.utils;
 
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-public class SingleAlarmWithMutableDelay extends Alarm {
-  private final Runnable myTask;
+public class SingleAlarmWithMutableDelay {
+  private final Alarm myAlarm;
+  private final Task myTask;
+
   private volatile int myDelayMillis;
 
-  public SingleAlarmWithMutableDelay(@NotNull Runnable task, @NotNull Disposable parentDisposable) {
-    super(ThreadToUse.POOLED_THREAD, parentDisposable);
+  public SingleAlarmWithMutableDelay(@NotNull Task task, @NotNull Disposable parentDisposable) {
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     myTask = task;
   }
 
@@ -32,10 +35,23 @@ public class SingleAlarmWithMutableDelay extends Alarm {
     myDelayMillis = millis;
   }
 
-  public void cancelAndRequest() {
-    if (!isDisposed()) {
+  public void cancelAndRequest(@NotNull SuspendContextImpl suspendContext) {
+    if (!myAlarm.isDisposed()) {
       cancelAllRequests();
-      addRequest(myTask, myDelayMillis);
+      addRequest(() -> myTask.run(suspendContext));
     }
+  }
+
+  public void cancelAllRequests() {
+    myAlarm.cancelAllRequests();
+  }
+
+  private void addRequest(@NotNull Runnable runnable) {
+    myAlarm.addRequest(runnable, myDelayMillis);
+  }
+
+  @FunctionalInterface
+  public interface Task {
+    void run(@NotNull SuspendContextImpl suspendContext);
   }
 }

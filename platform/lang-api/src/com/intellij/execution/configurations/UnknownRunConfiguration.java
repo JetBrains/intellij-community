@@ -84,12 +84,6 @@ public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBefo
   }
 
   @Override
-  @NotNull
-  public ConfigurationType getType() {
-    return UnknownConfigurationType.INSTANCE;
-  }
-
-  @Override
   public RunConfiguration clone() {
     try {
       return (UnknownRunConfiguration)super.clone();

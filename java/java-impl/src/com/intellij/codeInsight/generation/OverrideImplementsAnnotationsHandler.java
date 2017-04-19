@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 19-Aug-2008
  */
 package com.intellij.codeInsight.generation;
 
@@ -33,6 +28,10 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author anna
+ * @since 19-Aug-2008
+ */
 public interface OverrideImplementsAnnotationsHandler {
   ExtensionPointName<OverrideImplementsAnnotationsHandler> EP_NAME = ExtensionPointName.create("com.intellij.overrideImplementsAnnotationsHandler");
 
@@ -45,6 +44,7 @@ public interface OverrideImplementsAnnotationsHandler {
 
   @Deprecated
   @NotNull
+  @SuppressWarnings("unused")
   default String [] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
@@ -57,9 +57,9 @@ public interface OverrideImplementsAnnotationsHandler {
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(EP_NAME)) {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
+
         if (AnnotationUtil.isAnnotated(source, annotation, false, false) &&
             !AnnotationUtil.isAnnotated(target, annotation, false, false)) {
-
           PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(source, annotation);
           if (psiAnnotation != null && AnnotationUtil.isInferredAnnotation(psiAnnotation)) {
             continue;

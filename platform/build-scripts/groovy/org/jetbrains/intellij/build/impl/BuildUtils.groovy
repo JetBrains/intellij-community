@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
@@ -82,16 +81,5 @@ class BuildUtils {
     catch (Throwable ignored) {
       return System.out
     }
-  }
-
-  static boolean gradle(File projectDir, String... tasks) {
-    def gradleScript = SystemInfo.isWindows ? "gradlew.bat" : "gradlew"
-    List<String> command = new ArrayList()
-    command.add("${projectDir.absolutePath}/$gradleScript".toString())
-    command.addAll(tasks)
-    def process = new ProcessBuilder(command).directory(projectDir).start()
-    process.consumeProcessOutputStream((OutputStream)System.out)
-    process.consumeProcessErrorStream((OutputStream)System.err)
-    return process.waitFor() == 0
   }
 }

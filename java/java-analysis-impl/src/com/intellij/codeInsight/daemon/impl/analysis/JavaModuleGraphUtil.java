@@ -46,14 +46,15 @@ public class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
 
   @Nullable
-  public static PsiJavaModule findDescriptorByElement(@NotNull PsiElement element) {
-    PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
-    return fsItem != null ? ModuleHighlightUtil.getModuleDescriptor(fsItem) : null;
-  }
+  public static PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
+    if (element != null) {
+      PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+      if (fsItem != null) {
+        return ModuleHighlightUtil.getModuleDescriptor(fsItem);
+      }
+    }
 
-  @Nullable
-  public static PsiJavaModule findDescriptorByModule(@Nullable Module module) {
-    return ModuleHighlightUtil.getModuleDescriptor(module);
+    return null;
   }
 
   @Nullable
@@ -91,7 +92,7 @@ public class JavaModuleGraphUtil {
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
       if (files.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
       Optional.ofNullable(ContainerUtil.getFirstItem(files))
         .map(PsiManager.getInstance(project)::findFile)
@@ -145,7 +146,7 @@ public class JavaModuleGraphUtil {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope(false));
+      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
       Optional.ofNullable(ContainerUtil.getFirstItem(files))
         .map(PsiManager.getInstance(project)::findFile)
         .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)

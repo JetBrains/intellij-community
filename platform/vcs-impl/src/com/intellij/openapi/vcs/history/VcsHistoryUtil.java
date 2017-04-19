@@ -96,13 +96,7 @@ public class VcsHistoryUtil {
     FilePath path1 = getRevisionPath(revision1);
     FilePath path2 = getRevisionPath(revision2);
 
-    String title;
-    if (path1 != null && path2 != null) {
-      title = DiffRequestFactoryImpl.getTitle(path1, path2, " -> ");
-    }
-    else {
-      title = DiffRequestFactoryImpl.getContentTitle(path);
-    }
+    String title = DiffRequestFactoryImpl.getTitle(path1, path2, " -> ");
 
     DiffContent diffContent1 = createContent(project, content1, revision1, path);
     DiffContent diffContent2 = createContent(project, content2, revision2, path);

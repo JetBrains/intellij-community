@@ -28,6 +28,8 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.stream.Stream;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -60,15 +62,17 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       if (branches.length < 2) {
         return;
       }
-      for (RegExpBranch branch : branches) {
-        final RegExpAtom[] atoms = branch.getAtoms();
-        if (atoms.length != 1 || !(atoms[0] instanceof RegExpChar)) {
-          return;
-        }
+      if (!Stream.of(branches).allMatch(SingleCharAlternationVisitor::isSingleChar)) {
+        return;
       }
       final String text = buildReplacementText(pattern);
       //noinspection DialogTitleCapitalization
       myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
+    }
+
+    private static boolean isSingleChar(RegExpBranch branch) {
+      final RegExpAtom[] atoms = branch.getAtoms();
+      return atoms.length == 1 && atoms[0] instanceof RegExpChar;
     }
 
     private static class SingleCharAlternationFix implements LocalQuickFix {

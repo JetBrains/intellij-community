@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -46,8 +47,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsoleViewType;
 
 /**
  * @author peter
@@ -92,9 +91,24 @@ public class ConsoleViewUtil {
         scheme.setEditorFontSize(UISettings.getInstance().getPresentationModeFontSize());
       }
       editor.setColorsScheme(scheme);
+      editor.setHighlighter(new NullEditorHighlighter());
     });
   }
 
+  private static class NullEditorHighlighter extends EmptyEditorHighlighter {
+    private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
+
+    NullEditorHighlighter() {
+      super(NULL_ATTRIBUTES);
+    }
+
+    @Override
+    public void setAttributes(TextAttributes attributes) {}
+
+    @Override
+    public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
+  }
+  
   @NotNull
   public static DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
@@ -193,7 +207,7 @@ public class ConsoleViewUtil {
           }
         };
 
-        registerNewConsoleViewType(newKey, contentType);
+        ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
         return newKey;
       }
     };

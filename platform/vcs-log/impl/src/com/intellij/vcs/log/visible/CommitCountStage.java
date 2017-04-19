@@ -17,7 +17,7 @@ package com.intellij.vcs.log.visible;
 
 import org.jetbrains.annotations.NotNull;
 
-enum CommitCountStage {
+public enum CommitCountStage {
 
   INITIAL(5),
   FIRST_STEP(2000),

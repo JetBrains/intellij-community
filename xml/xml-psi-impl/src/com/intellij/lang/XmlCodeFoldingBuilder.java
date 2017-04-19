@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
-import com.intellij.util.BooleanTrackableProperty;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.xml.util.HtmlUtil;
@@ -213,14 +212,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       final boolean entity = isEntity(elementToFold);
       if (startLine < endLine || elementToFold instanceof XmlAttribute || entity) {
         if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset() || entity) {
-          XmlCodeFoldingSettings settings = getFoldingSettings();
-          BooleanTrackableProperty dependency =
-            elementToFold instanceof XmlTag ? settings.getCollapseXmlTagsProperty() :
-            elementToFold instanceof XmlAttribute ? 
-                (isSrcAttribute((XmlAttribute)elementToFold) ? settings.getCollapseDataUriProperty() 
-               : isStyleAttribute((XmlAttribute)elementToFold) ? settings.getCollapseHtmlStyleAttributeProperty() : null) :
-            isEntity(elementToFold) ? settings.getCollapseEntitiesProperty() : null;
-          foldings.add(new FoldingDescriptor(elementToFold.getNode(), range, dependency));
+          foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
           return true;
         }
       }
@@ -277,17 +269,16 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     final PsiElement psi = node.getPsi();
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
-           || (psi instanceof XmlAttribute && (foldingSettings.isCollapseHtmlStyleAttribute() && isStyleAttribute((XmlAttribute)psi) ||
-                                               foldingSettings.isCollapseDataUri() && isSrcAttribute((XmlAttribute)psi)))
+           || (psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)))
            || isEntity(psi) && foldingSettings.isCollapseEntities() && getEntityPlaceholder(psi) != null;
   }
 
-  private static boolean isSrcAttribute(XmlAttribute psi) {
-    return "src".equals(psi.getName());
+  private static boolean foldSrc(XmlAttribute psi, XmlCodeFoldingSettings settings) {
+    return settings.isCollapseDataUri() && "src".equals(psi.getName());
   }
 
-  private static boolean isStyleAttribute(XmlAttribute psi) {
-    return HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(psi.getName());
+  private static boolean foldStyle(XmlAttribute psi, XmlCodeFoldingSettings settings) {
+    return settings.isCollapseHtmlStyleAttribute() && HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(psi.getName());
   }
 
   protected boolean isEntity(PsiElement psi) {
@@ -297,7 +288,8 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
     return HtmlUtil.isHtmlFile(child.getContainingFile()) &&
-           (isStyleAttribute(child) || isSrcAttribute(child) && child.getValue() != null && URLUtil.isDataUri(child.getValue()));
+           (HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName()) ||
+            "src".equals(child.getName()) && child.getValue() != null && URLUtil.isDataUri(child.getValue()));
   }
 
   protected abstract XmlCodeFoldingSettings getFoldingSettings();

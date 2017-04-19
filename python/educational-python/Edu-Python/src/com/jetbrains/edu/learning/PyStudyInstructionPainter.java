@@ -20,7 +20,7 @@ public class PyStudyInstructionPainter extends EditorEmptyTextPainter {
     appendAction(painter, "Navigate between tasks", getActionShortcutText(StudyPreviousTaskAction.ACTION_ID) + separator +
                                                     getActionShortcutText(StudyNextTaskAction.ACTION_ID));
     appendAction(painter, "Reset current task file", getActionShortcutText(StudyRefreshTaskFileAction.ACTION_ID));
-    appendAction(painter, "Check task", getActionShortcutText(PyStudyCheckAction.ACTION_ID));
+    appendAction(painter, "Check task", getActionShortcutText(StudyCheckAction.ACTION_ID));
     appendAction(painter, "Get hint for the answer placeholder", getActionShortcutText(StudyShowHintAction.ACTION_ID));
   }
 }

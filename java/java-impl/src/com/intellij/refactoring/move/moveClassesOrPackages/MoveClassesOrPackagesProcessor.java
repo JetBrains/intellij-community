@@ -511,13 +511,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         myElementsToMove[idx] = element;
       }
 
+      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
+
       for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
           MoveClassesOrPackagesUtil.finishMoveClass((PsiClass)element);
         }
       }
-
-      myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
 
       if (myOpenInEditor) {
         EditorHelper.openFilesInEditor(myElementsToMove);

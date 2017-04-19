@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,18 @@ import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+
 /**
  * @author peter
  */
+@SkipSlowTestLocally
 class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
 
   void "test modifying file with stubs via VFS"() {
@@ -108,7 +111,7 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     PsiFile file = myFixture.addFileToProject("A.java", "class A {}")
     def oldClass = JavaPsiFacade.getInstance(project).findClass("A", GlobalSearchScope.allScope(project))
     def pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(oldClass)
-    
+
     def document = FileDocumentManager.instance.getDocument(file.virtualFile)
     assert document
     assert file == PsiDocumentManager.getInstance(project).getCachedPsiFile(document)

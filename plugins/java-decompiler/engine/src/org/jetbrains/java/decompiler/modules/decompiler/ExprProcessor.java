@@ -860,7 +860,7 @@ public class ExprProcessor implements CodeConstants {
                                          int indent,
                                          boolean castNull,
                                          BytecodeMappingTracer tracer) {
-    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, tracer);
+    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, false, tracer);
   }
 
   public static boolean getCastedExprent(Exprent exprent,
@@ -869,6 +869,7 @@ public class ExprProcessor implements CodeConstants {
                                          int indent,
                                          boolean castNull,
                                          boolean castAlways,
+                                         boolean castNarrowing,
                                          BytecodeMappingTracer tracer) {
     VarType rightType = exprent.getExprType();
 
@@ -876,7 +877,7 @@ public class ExprProcessor implements CodeConstants {
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
-      (isIntConstant(exprent) && rightType.isStrictSuperset(leftType));
+      (castNarrowing && isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 

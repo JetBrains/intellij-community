@@ -48,7 +48,6 @@ class BuildContextImpl extends BuildContext {
     def context = new BuildContextImpl(compilationContext, productProperties,
                                        windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                        proprietaryBuildTools)
-    setupDependencies(context.messages, communityHome)
     return context
   }
 
@@ -74,13 +73,6 @@ class BuildContextImpl extends BuildContext {
     systemSelector = productProperties.getSystemSelector(applicationInfo)
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
-  }
-
-  private static void setupDependencies(BuildMessages messages, String communityHome) {
-    messages.info("Setting up installer dependencies")    
-    if (!BuildUtils.gradle(new File(communityHome, 'build/dependencies/'), 'setupDependencies')) {
-      messages.error("Cannot setup installer dependencies")
-    }
   }
 
   private String readSnapshotBuildNumber() {
@@ -116,6 +108,11 @@ class BuildContextImpl extends BuildContext {
   @Override
   AntBuilder getAnt() {
     compilationContext.ant
+  }
+
+  @Override
+  GradleRunner getGradle() {
+    compilationContext.gradle
   }
 
   @Override

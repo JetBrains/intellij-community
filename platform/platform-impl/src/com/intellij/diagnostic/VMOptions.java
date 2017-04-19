@@ -97,6 +97,16 @@ public class VMOptions {
   }
 
   public static void writeOption(@NotNull MemoryKind option, int value) {
+    String optionValue = option.option + value + "m";
+    writeGeneralOption(option.pattern, optionValue);
+  }
+
+  public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
+    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z]*)"), "-D" + option + separator + value);
+  }
+
+
+  private static void writeGeneralOption(@NotNull Pattern pattern, @NotNull String value) {
     File file = getWriteFile();
     if (file == null) {
       LOG.warn("VM options file not configured");
@@ -106,22 +116,20 @@ public class VMOptions {
     try {
       String content = file.exists() ? FileUtil.loadFile(file) : read();
 
-      String optionValue = option.option + value + "m";
-
       if (!StringUtil.isEmptyOrSpaces(content)) {
-        Matcher m = option.pattern.matcher(content);
+        Matcher m = pattern.matcher(content);
         if (m.find()) {
           StringBuffer b = new StringBuffer();
-          m.appendReplacement(b, Matcher.quoteReplacement(optionValue));
+          m.appendReplacement(b, Matcher.quoteReplacement(value));
           m.appendTail(b);
           content = b.toString();
         }
         else {
-          content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + optionValue;
+          content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + value;
         }
       }
       else {
-        content = optionValue;
+        content = value;
       }
 
       if (file.exists()) {
