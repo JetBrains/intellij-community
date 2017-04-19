@@ -26,8 +26,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
@@ -48,7 +50,7 @@ import java.util.Optional;
  *
  * @author Ilya.Kazakevich
  */
-public abstract class CreateConfigurationTestTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRunConfiguration<?>> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
@@ -90,7 +92,7 @@ public abstract class CreateConfigurationTestTask<T extends PyUniversalTestConfi
    * @return default (template) configuration
    */
   @NotNull
-  protected T getTemplateConfiguration(@NotNull final PyUniversalTestFactory<T> factory) {
+  protected T getTemplateConfiguration(@NotNull final PythonConfigurationFactoryBase factory) {
     final RunnerAndConfigurationSettingsImpl settings =
       RunManagerImpl.getInstanceImpl(myFixture.getProject()).getConfigurationTemplate(factory);
     final RunConfiguration configuration = settings.getConfiguration();
