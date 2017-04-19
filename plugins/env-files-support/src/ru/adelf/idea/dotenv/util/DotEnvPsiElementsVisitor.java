@@ -23,7 +23,7 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
 
     private void visitProperty(DotEnvProperty property) {
         String text = property.getText();
-        String[] splitParts = text.split("=");
+        String[] splitParts = text.split("=", -1);
 
         if(splitParts.length < 2) return;
 
@@ -37,7 +37,7 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     @NotNull
     public Set<String> getKeys() {
         return this.collectedProperties.stream()
-                .map(property -> property.getText().split("=")[0].trim())
+                .map(property -> property.getText().split("=", -1)[0].trim())
                 .collect(Collectors.toSet());
     }
 
@@ -49,7 +49,7 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     @NotNull
     public DotEnvProperty[] getElementsByKey(String key) {
         Set<DotEnvProperty> targets = this.collectedProperties.stream().filter(property -> {
-            String[] splitParts = property.getText().split("=");
+            String[] splitParts = property.getText().split("=", -1);
 
             return splitParts[0].trim().equals(key);
         }).collect(Collectors.toSet());

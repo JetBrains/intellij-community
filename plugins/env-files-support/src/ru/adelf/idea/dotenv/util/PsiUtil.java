@@ -8,11 +8,29 @@ import java.util.Arrays;
 
 public class PsiUtil {
 
-    public static boolean isEnvFunctionCall(PsiElement psiElement) {
-        return isFunctionReference(psiElement, 0, "getenv", "env");
+    /**
+     * Checks that this element is first parameter of needed functions, like env('element')
+     *
+     * @param psiElement Checking psi element
+     * @return true if it's needed parameter in needed function
+     */
+    public static boolean isEnvFunctionParameter(PsiElement psiElement) {
+        return isFunctionParameter(psiElement, 0, "getenv", "env");
     }
 
-    public static boolean isFunctionReference(PsiElement psiElement, int parameterIndex, String... funcName) {
+    /**
+     * Checks whether this function reference is reference for env functions, like env or getenv
+     * @param functionReference Checking reference
+     * @return true if condition filled
+     */
+    public static boolean isEnvFunction(FunctionReference functionReference) {
+
+        String name = functionReference.getName();
+
+        return (name != null && Arrays.asList("getenv", "env").contains(name));
+    }
+
+    private static boolean isFunctionParameter(PsiElement psiElement, int parameterIndex, String... funcName) {
         PsiElement variableContext = psiElement.getContext();
         if(!(variableContext instanceof ParameterList)) {
             return false;

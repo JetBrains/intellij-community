@@ -96,7 +96,7 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
             return null;
         }
 
-        if(!PsiUtil.isEnvFunctionCall(parent)) {
+        if(!PsiUtil.isEnvFunctionParameter(parent)) {
             return null;
         }
 

@@ -2,6 +2,7 @@ package ru.adelf.idea.dotenv.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.jetbrains.php.lang.psi.elements.FunctionReference;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,18 +13,24 @@ public class DotEnvCallsVisitor extends PsiRecursiveElementVisitor {
 
     @Override
     public void visitElement(PsiElement element) {
-        if(element instanceof StringLiteralExpression) {
-            this.visitString((StringLiteralExpression) element);
+        if(element instanceof FunctionReference) {
+            this.visitFunction((FunctionReference) element);
         }
 
         super.visitElement(element);
     }
 
-    private void visitString(StringLiteralExpression expression) {
+    private void visitFunction(FunctionReference expression) {
 
-        if(!PsiUtil.isEnvFunctionCall(expression)) return;
+        if(!PsiUtil.isEnvFunction(expression)) return;
 
-        String key = expression.getContents();
+        PsiElement[] parameters = expression.getParameters();
+
+        if(parameters.length == 0) return;
+
+        if(!(parameters[0] instanceof StringLiteralExpression)) return;
+
+        String key = ((StringLiteralExpression)parameters[0]).getContents();
 
         if(collectedKeys.containsKey(key)) {
             collectedKeys.get(key).add(expression);
