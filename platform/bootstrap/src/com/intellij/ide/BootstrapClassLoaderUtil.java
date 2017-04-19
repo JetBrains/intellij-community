@@ -19,6 +19,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
@@ -64,6 +65,21 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       .useCache();
     if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
+    }
+
+    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+      // since we can't access rt.jar under jdk9, we need a parent class loader to load standard jdk classes
+      ClassLoader appLoader = BootstrapClassLoaderUtil.class.getClassLoader();
+      ClassLoader parent;
+      try {
+        appLoader.loadClass("org.picocontainer.PicoInitializationException");
+        // the minor WTF is that we use different class loaders when starting IDEA from IDEA
+        parent = appLoader;
+      }
+      catch (ClassNotFoundException e) {
+        parent = appLoader.getParent(); // use platform class loader for main IDEA start to load only JDK classes with it
+      }
+      builder.parent(parent);
     }
 
     UrlClassLoader newClassLoader = builder.get();
