@@ -39,11 +39,10 @@ public abstract class ImplicitSubclassProvider {
    * <b>Note:<b/> this check is expected to be cheap. If it requires long computations then it is better just to return true.
    *
    * @param psiClass a class to check for possible subclass
-   * @return {@code false} if this ImplicitSubclassProvider implementation have no possibility
-   * to create an subclass for the psiClass and all further checks could be skipped;
-   * {@code true} if this ImplicitSubclassProvider implementation could provide a subclass,
+   * @return {@code false} if definitely no subclass will be created for the psiClass and all further checks could be skipped;
+   * {@code true} if a subclass for the psiClass will probably be created,
    * and then you should check {@link #findOverridingReason(PsiMethod)} and {@link #findOverridingReason(PsiMethod)}
-   * methods to find out are there concrete reasons for this class to be subclassed.
+   * methods to find out if there are concrete reasons for the class to be subclassed.
    */
   public abstract boolean isApplicableTo(@NotNull PsiClass psiClass);
 
@@ -52,7 +51,7 @@ public abstract class ImplicitSubclassProvider {
    * <b>Note:<b/> this method could be computationally costly because in some cases it could require deep annotations checks
    * not only for class but also for all it's methods.
    * default implementations doesn't check methods, so implementors should override this methods if target framework
-   * makes decision about overriding basing methods annotations
+   * makes decision about overriding basing on methods annotations
    *
    * @param psiClass a class to check for possible subclass
    * @return true if class will be subclassed, false - otherwise

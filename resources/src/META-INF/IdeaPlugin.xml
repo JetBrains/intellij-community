@@ -812,6 +812,12 @@
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
                      displayName="Class may extend a commonly used base class instead of implementing interface"/>
+    <localInspection language="UAST" shortName="ImplicitSubclassInspection"
+                     bundle="messages.InspectionsBundle" key="inspection.implicitsubclass.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
+                     groupPath="Uast"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.inheritance.ImplicitSubclassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BlockMarkerComments"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"

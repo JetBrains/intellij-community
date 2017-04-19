@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
- * @deprecated use {@link ImplicitSubclassProvider}
+ * @deprecated use {@link ImplicitSubclassProvider} (to remove in 2018.1)
  */
 @Deprecated
 public abstract class ImplementedAtRuntimeCondition {
