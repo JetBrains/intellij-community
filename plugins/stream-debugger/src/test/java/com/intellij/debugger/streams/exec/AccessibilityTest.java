@@ -42,4 +42,8 @@ public class AccessibilityTest extends TraceExecutionTestCase {
   public void testAccessToPrivateClassWithMethodReference() throws InterruptedException, ExecutionException, InvocationTargetException {
     doTest(false);
   }
+
+  public void testNotImportedLambdaResult() throws InterruptedException, ExecutionException, InvocationTargetException {
+    doTest(false);
+  }
 }
