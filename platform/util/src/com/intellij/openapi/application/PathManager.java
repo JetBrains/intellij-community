@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
@@ -41,8 +42,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
   public static final String PROPERTIES_FILE = "idea.properties.file";
@@ -270,7 +269,7 @@ public class PathManager {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourPluginsPath = getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
+      ourPluginsPath = SystemProperties.getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
     }
     else {
       ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_FOLDER;
@@ -330,7 +329,7 @@ public class PathManager {
       ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourLogPath = getUserHome() + File.separator + "Library/Logs" + File.separator + PATHS_SELECTOR;
+      ourLogPath = SystemProperties.getUserHome() + File.separator + "Library/Logs" + File.separator + PATHS_SELECTOR;
     }
     else {
       ourLogPath = getSystemPath() + File.separatorChar + LOG_DIRECTORY;
@@ -395,10 +394,10 @@ public class PathManager {
 
   public static void loadProperties() {
     getHomePath();
-    List<String> propFiles = ContainerUtil.newArrayList(
-      System.getProperty(PROPERTIES_FILE),
-      getCustomPropertiesFile(),
-      getUserHome() + '/' + PROPERTIES_FILE_NAME);
+    Set<String> propFiles = new LinkedHashSet<String>();
+    propFiles.add(System.getProperty(PROPERTIES_FILE));
+    propFiles.add(getCustomPropertiesFile());
+    propFiles.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
     for (String binDir : ourBinDirectories) {
       propFiles.add(binDir + '/' + PROPERTIES_FILE_NAME);
     }
@@ -578,7 +577,7 @@ public class PathManager {
                                      @Nullable String xdgDir,
                                      @NotNull String fallback) {
     if (macPart != null && SystemInfo.isMac) {
-      return getUserHome() + File.separator + macPart + File.separator + selector;
+      return SystemProperties.getUserHome() + File.separator + macPart + File.separator + selector;
     }
 
     if (winVar != null && SystemInfo.isWindows) {
@@ -590,11 +589,11 @@ public class PathManager {
 
     if (xdgVar != null && xdgDir != null && SystemInfo.hasXdgOpen()) {
       String dir = System.getenv(xdgVar);
-      if (dir == null) dir = getUserHome() + File.separator + xdgDir;
+      if (dir == null) dir = SystemProperties.getUserHome() + File.separator + xdgDir;
       return dir + File.separator + selector;
     }
 
-    return getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
+    return SystemProperties.getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
   //<editor-fold desc="Deprecated stuff.">
