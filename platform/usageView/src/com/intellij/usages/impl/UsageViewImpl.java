@@ -583,21 +583,7 @@ public class UsageViewImpl implements UsageView {
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
 
-    Collections.sort(list, new Comparator<UsageGroupingRule>() {
-      @Override
-      public int compare(final UsageGroupingRule o1, final UsageGroupingRule o2) {
-        return getRank(o1) - getRank(o2);
-      }
-
-      private int getRank(final UsageGroupingRule rule) {
-        if (rule instanceof OrderableUsageGroupingRule) {
-          return ((OrderableUsageGroupingRule)rule).getRank();
-        }
-
-        return Integer.MAX_VALUE;
-      }
-    });
-
+    Collections.sort(list, Comparator.comparingInt(UsageGroupingRule::getRank));
     return list.toArray(new UsageGroupingRule[list.size()]);
   }
 

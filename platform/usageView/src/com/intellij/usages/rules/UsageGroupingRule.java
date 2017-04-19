@@ -44,6 +44,14 @@ public interface UsageGroupingRule {
   }
 
   /**
+   * Override this method to change order in which rules are applied. Rules with smaller ranks are applied earlier, i.e. parent groups
+   * returned by them will be placed closer to the tree root.
+   */
+  default int getRank() {
+    return Integer.MAX_VALUE;
+  }
+
+  /**
    * @deprecated extend {@link SingleParentUsageGroupingRule} and override {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead
    */
   @Nullable
