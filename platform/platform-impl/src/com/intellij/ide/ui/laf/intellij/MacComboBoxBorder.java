@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -58,7 +56,11 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
       if (c instanceof JComboBox) {
         JComboBox comboBox = (JComboBox)c;
-        g2.setColor(UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground"));
+        ComboBoxEditor cbe = comboBox.getEditor();
+        Color background = comboBox.isEditable() ? cbe.getEditorComponent().getBackground() :
+                           UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
+
+        g2.setColor(background);
         if (comboBox.isEditable()) {
             Shape shape = new Rectangle2D.Double(i.left, i.top,
                                    width - (i.left + i.right),
@@ -109,19 +111,21 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
   }
 
   boolean isFocused(Component c) {
-    if (c.hasFocus()) return true;
-
     if (c instanceof JComboBox) {
       JComboBox comboBox = (JComboBox)c;
-      if(comboBox.getEditor() != null) {
-        Component editor = comboBox.getEditor().getEditorComponent();
-        if (editor.hasFocus()) {
-          return true;
-        } else if (editor instanceof EditorTextField) {
-          Editor tfe = ((EditorTextField)editor).getEditor();
-          JComponent ec = (tfe != null) ? tfe.getContentComponent() : null;
-          return ec != null && ec.hasFocus();
-        }
+
+      if (!comboBox.isEnabled()) {
+        return false;
+      }
+
+      if (comboBox.isEditable()) {
+        ComboBoxEditor ed = comboBox.getEditor();
+        Component editorComponent = ed.getEditorComponent();
+        Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
+        return focused != null && editorComponent != null && SwingUtilities.isDescendingFrom(focused, editorComponent);
+      } else {
+        return comboBox.hasFocus();
       }
     }
     return false;

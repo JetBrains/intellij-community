@@ -17,17 +17,18 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -194,7 +195,7 @@ public class DarculaUIUtil {
     return -1;
   }
 
-  public static class EditorTextFieldBorder implements Border {
+  public static class EditorTextFieldBorder extends DarculaEditorTextFieldBorder {
     private final JComponent myEnabledComponent;
 
     public EditorTextFieldBorder(JComponent enabledComponent) {
@@ -203,6 +204,16 @@ public class DarculaUIUtil {
 
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (isComboBoxEditor(c)) {
+        g.setColor(c.getBackground());
+        g.fillRect(x, y, width, height);
+        return;
+      }
+
+      if (UIUtil.getParentOfType(EditorTextField.class, c) == null) {
+        return;
+      }
+
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
@@ -239,12 +250,7 @@ public class DarculaUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return new JBInsets(6, 7, 6, 7);
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
+      return isComboBoxEditor(c) ? new InsetsUIResource(1, 3, 2, 3) : new InsetsUIResource(6, 7, 6, 7);
     }
   }
 
