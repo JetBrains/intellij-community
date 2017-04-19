@@ -143,7 +143,7 @@ public class JavaReflectionReferenceUtil {
         if (typeArgument instanceof PsiCapturedWildcardType) {
           typeArgument = ((PsiCapturedWildcardType)typeArgument).getUpperBound();
         }
-        final PsiClass argumentClass = PsiTypesUtil.getPsiClass(typeArgument);
+        final PsiClass argumentClass = unwrapTypeParameter(PsiTypesUtil.getPsiClass(typeArgument));
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass);
         }
@@ -159,6 +159,17 @@ public class JavaReflectionReferenceUtil {
       }
     }
     return null;
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiClass unwrapTypeParameter(@Nullable PsiClass psiClass) {
+    int preventEndlessLoop = 5;
+    while (psiClass instanceof PsiTypeParameter && --preventEndlessLoop > 0) {
+      final PsiClassType[] extendsList = psiClass.getExtendsListTypes();
+      psiClass = extendsList.length != 0 ? extendsList[0].resolve() : null;
+    }
+    return psiClass;
   }
 
   @Contract("null,_->null")

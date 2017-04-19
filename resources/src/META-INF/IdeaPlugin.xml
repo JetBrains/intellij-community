@@ -942,6 +942,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
                      bundle="messages.InspectionsBundle" key="inspection.reflection.invocation.name"
                      implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection"/>
+    <localInspection language="JAVA" shortName="JavaReflectionMemberAccess" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.reflection.member.access.name"
+                     implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Move field assignment to initializer"
