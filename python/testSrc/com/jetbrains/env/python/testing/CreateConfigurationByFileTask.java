@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
  *
  * @author Ilya.Kazakevich
  */
-class CreateConfigurationByFileTask<T extends PyUniversalTestConfiguration> extends CreateConfigurationTestTask<T> {
+class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration<?>> extends CreateConfigurationTestTask<T> {
   @NotNull
   private final String[] myFileNames;
 
