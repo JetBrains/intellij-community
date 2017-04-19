@@ -48,6 +48,12 @@ public class JsonSchemaWalker {
 
   public static final JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
 
+  @NotNull
+  public static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
+  }
+
   public interface CompletionSchemesConsumer {
     void consume(boolean isName,
                  @NotNull JsonSchemaObject schema,
@@ -112,7 +118,7 @@ public class JsonSchemaWalker {
   }
 
   public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
-    final List<String> chain = StringUtil.split(JsonSchemaExportedDefinitions.normalizeId(nameInSchema).replace("\\", "/"), "/");
+    final List<String> chain = StringUtil.split(normalizeId(nameInSchema).replace("\\", "/"), "/");
     final List<Step> steps = chain.stream().filter(s -> !s.isEmpty()).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
       .collect(Collectors.toList());
     if (steps.isEmpty()) return Pair.create(Collections.emptyList(), nameInSchema);

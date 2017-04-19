@@ -28,8 +28,6 @@ public interface JsonSchemaService {
 
   Set<VirtualFile> getSchemaFiles();
 
-  void refreshSchemaIds(Set<VirtualFile> toRefresh);
-
   class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
       return ServiceManager.getService(project, JsonSchemaService.class);

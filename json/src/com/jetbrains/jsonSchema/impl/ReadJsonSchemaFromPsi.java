@@ -16,8 +16,15 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +47,28 @@ public class ReadJsonSchemaFromPsi {
     myMap = new HashMap<>();
     fillMap();
     myQueue = new ArrayDeque<>();
+  }
+
+  @Nullable
+  private static String readId(@NotNull final JsonObject object) {
+    final JsonProperty property = object.findProperty("id");
+    if (property != null && property.getValue() instanceof JsonStringLiteral) {
+      return JsonSchemaWalker.normalizeId(StringUtil.unquoteString(property.getValue().getText()));
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String readSchemaId(@NotNull final Project project, @NotNull final VirtualFile schemaFile) {
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
+    if (psiFile == null || !(psiFile instanceof JsonFile)) return null;
+
+    final CachedValueProvider<String> provider = () -> {
+      final List<JsonValue> values = ((JsonFile)psiFile).getAllTopLevelValues();
+      if (values.size() != 1 || !(values.get(0) instanceof JsonObject)) return null;
+      return CachedValueProvider.Result.create(readId((JsonObject)values.get(0)), psiFile);
+    };
+    return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
   }
 
   public JsonSchemaObject read(@NotNull final JsonObject object) {

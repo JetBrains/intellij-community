@@ -24,7 +24,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaExportedDefinitions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +66,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         if (schemaFile == null) return null;
       }
 
-      final String normalized = JsonSchemaExportedDefinitions.normalizeId(splitter.getRelativePath());
+      final String normalized = JsonSchemaWalker.normalizeId(splitter.getRelativePath());
       if (StringUtil.isEmptyOrSpaces(normalized) || StringUtil.split(normalized.replace("\\", "/"), "/").size() == 0) {
         return myElement.getManager().findFile(schemaFile);
       }
