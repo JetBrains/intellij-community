@@ -180,6 +180,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testArrayInitializerSeveralLines() { doTest(); }
   public void testReturnInLambda() { doTest(); }
   public void testSemicolonAfterLambda() { doTest(); }
+  public void testModuleInfo() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

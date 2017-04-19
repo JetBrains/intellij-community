@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @since 2016.3
  */
-public interface PsiUsesStatement extends PsiElement {
+public interface PsiUsesStatement extends PsiStatement {
   PsiUsesStatement[] EMPTY_ARRAY = new PsiUsesStatement[0];
 
   @Nullable PsiJavaCodeReferenceElement getClassReference();

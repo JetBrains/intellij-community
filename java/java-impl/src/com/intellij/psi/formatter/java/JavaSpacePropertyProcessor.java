@@ -1333,7 +1333,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitModuleStatement(PsiElement statement) {
+  public void visitModuleStatement(PsiStatement statement) {
     if (myType1 == JavaElementType.MODULE_REFERENCE) {
       createSpaceInCode(myType2 != JavaTokenType.SEMICOLON && myType2 != JavaTokenType.COMMA);
     }

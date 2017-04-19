@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @since 2016.3
  */
-public interface PsiRequiresStatement extends PsiModifierListOwner {
+public interface PsiRequiresStatement extends PsiModifierListOwner, PsiStatement {
   PsiRequiresStatement[] EMPTY_ARRAY = new PsiRequiresStatement[0];
 
   @Nullable PsiJavaModuleReferenceElement getReferenceElement();
