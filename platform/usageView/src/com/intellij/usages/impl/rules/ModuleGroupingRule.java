@@ -54,12 +54,6 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     myFlattenModules = flattenModules;
   }
 
-  @Nullable
-  @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
   public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {

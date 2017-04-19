@@ -33,17 +33,21 @@ public interface UsageGroupingRule {
   UsageGroupingRule[] EMPTY_ARRAY = new UsageGroupingRule[0];
 
   /**
-   * @return a group a specific usage should be placed into, or null, if this rule doesn't apply to this kind of usages.
-   */
-  @Nullable
-  UsageGroup groupUsage(@NotNull Usage usage);
-
-  /**
-   * @return list of nested parent groups for a usage. The specified usage will be placed into the last group from the list, that group
+   * Return list of nested parent groups for a usage. The specified usage will be placed into the last group from the list, that group
    * will be placed under the next to last group, etc.
+   * <p>If the rule returns at most one parent group extend {@link SingleParentUsageGroupingRule} and override
+   * {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead.</p>
    */
   @NotNull
   default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     return ContainerUtil.createMaybeSingletonList(groupUsage(usage));
+  }
+
+  /**
+   * @deprecated extend {@link SingleParentUsageGroupingRule} and override {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead
+   */
+  @Nullable
+  default UsageGroup groupUsage(@NotNull Usage usage) {
+    throw new UnsupportedOperationException();
   }
 }
