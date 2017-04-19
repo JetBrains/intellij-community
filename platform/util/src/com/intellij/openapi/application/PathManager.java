@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
@@ -69,6 +70,7 @@ public class PathManager {
   private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
 
   private static String ourHomePath;
+  private static String[] ourBinDirectories;
   private static String ourConfigPath;
   private static String ourSystemPath;
   private static String ourScratchPath;
@@ -104,6 +106,8 @@ public class PathManager {
       catch (IOException ignored) { }
     }
 
+    ourBinDirectories = getBinDirectories(new File(ourHomePath));
+
     return ourHomePath;
   }
 
@@ -122,108 +126,72 @@ public class PathManager {
     return root.getAbsolutePath();
   }
 
-  private static boolean isIdeaHome(final File root) {
-    for (final File file : getBinFileLocations(root, PROPERTIES_FILE_NAME)) {
-      if (file.exists()) {
+  private static boolean isIdeaHome(File root) {
+    for (String binDir : getBinDirectories(root)) {
+      if (new File(binDir, PROPERTIES_FILE_NAME).isFile()) {
         return true;
       }
     }
     return false;
   }
 
+  private static String[] getBinDirectories(File root) {
+    List<String> binDirs = ContainerUtil.newSmartList();
 
-  /**
-   * Get all possible locations of some binary file relative to root <strong>not</strong> including
-   * {@link #getBinPath()}
-   */
-  @NotNull
-  private static File[] getBinFileLocations(@NotNull final File root, @NotNull final String fileName) {
-    final File[] binFolders = {
-      new File(root, FileUtil.toSystemDependentName(BIN_FOLDER)),
-      new File(root, FileUtil.toSystemDependentName("community/bin/")),
-      new File(root, FileUtil.toSystemDependentName("ultimate/community/bin/"))
-    };
-    final List<File> result = new ArrayList<File>(binFolders.length * 2);
-    for (final File binFolder : binFolders) {
-      result.add(new File(binFolder, fileName));
-      result.add(new File(new File(binFolder, getOSSpecificBinSubdir()), fileName));
+    String[] subDirs = {BIN_FOLDER, "community/bin", "ultimate/community/bin"};
+    String osSuffix = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux";
+
+    for (String subDir : subDirs) {
+      File dir = new File(root, subDir);
+      if (dir.isDirectory()) {
+        binDirs.add(dir.getPath());
+        dir = new File(dir, osSuffix);
+        if (dir.isDirectory()) {
+          binDirs.add(dir.getPath());
+        }
+      }
     }
 
-    return result.toArray(new File[result.size()]);
-  }
-
-
-  /**
-   * Get all possible locations of some binary file relative to home <strong>including</strong> {@link #getBinPath()}
-   * @see #getBinFileLocationsString(String)
-   */
-  @NotNull
-  private static File[] getBinFileLocations(@NotNull final String fileName) {
-    return ArrayUtil.mergeArrays(getBinFileLocations(new File(getHomePath()), fileName), new File[]{new File(getBinPath(), fileName)});
+    return ArrayUtil.toStringArray(binDirs);
   }
 
   /**
-   * Same as {@link #getBinFileLocations(String)}
-   */
-  @NotNull
-  private static String[] getBinFileLocationsString(@NotNull final String fileName) {
-    final Collection<String> pathsList = new ArrayList<String>();
-    for (final File possibleFileLocation : getBinFileLocations(fileName)) {
-      pathsList.add(possibleFileLocation.getAbsolutePath());
-    }
-
-    return ArrayUtil.toStringArray(pathsList);
-  }
-
-  /**
-   * Looks for file in all possible bin locations
-   * @return first that exists or null if not found
-   * @see #findBinFileWithException(String)
-   */
-  @Nullable
-  public static File findBinFile(@NotNull final String fileName) {
-    return findBinFileInternal(fileName).first;
-  }
-
-  /**
-   * Looks for file in all possible bin locations
-   * @return first that exists
-   * @see #findBinFile(String)
-   * @throws FileNotFoundException if no file found
-   */
-  @NotNull
-  public static File findBinFileWithException(@NotNull final String fileName) throws FileNotFoundException {
-    final Pair<File, String[]> pair = findBinFileInternal(fileName);
-    if (pair.first != null) {
-      return pair.first;
-    }
-    final String joinedPaths = StringUtil.join(pair.second, "\n");
-    throw new FileNotFoundException(String.format("'%s' not found in directories:\n%s", fileName, joinedPaths));
-  }
-
-  /**
-   * @see  #findBinFile(String)
-   * @return [file (may be null), paths where file was searched]
-   */
-  @NotNull
-  private static Pair<File, String[]>  findBinFileInternal(@NotNull final String fileName) {
-    final String[] paths = getBinFileLocationsString(fileName);
-    final File result = FileUtil.findFirstThatExist(paths);
-    return Pair.create(result, paths);
-  }
-
-  /**
-   * Bin path may be incorrect when launched locally, use {@link #findBinFileWithException(String)} if possible
+   * Bin path may be not what you want when developing an IDE. Consider using {@link #findBinFile(String)} if applicable.
    */
   @NotNull
   public static String getBinPath() {
     return getHomePath() + File.separator + BIN_FOLDER;
   }
 
-  private static String getOSSpecificBinSubdir() {
-    if (SystemInfo.isWindows) return "win";
-    if (SystemInfo.isMac) return "mac";
-    return "linux";
+  /**
+   * Looks for a file in all possible bin directories.
+   *
+   * @return first that exists, or {@code null} if nothing found.
+   * @see #findBinFileWithException(String)
+   */
+  @Nullable
+  public static File findBinFile(@NotNull String fileName) {
+    getHomePath();
+    for (String binDir : ourBinDirectories) {
+      File file = new File(binDir, fileName);
+      if (file.isFile()) return file;
+    }
+    return null;
+  }
+
+  /**
+   * Looks for a file in all possible bin directories.
+   *
+   * @return first that exists.
+   * @throws FileNotFoundException if nothing found.
+   * @see #findBinFile(String)
+   */
+  @NotNull
+  public static File findBinFileWithException(@NotNull String fileName) throws FileNotFoundException {
+    File file = findBinFile(fileName);
+    if (file != null) return file;
+    String paths = StringUtil.join(ourBinDirectories, "\n");
+    throw new FileNotFoundException(String.format("'%s' not found in directories:\n%s", fileName, paths));
   }
 
   @NotNull
@@ -425,14 +393,15 @@ public class PathManager {
     return StringUtil.trimEnd(resultPath, File.separator);
   }
 
-
   public static void loadProperties() {
-    String[] propFiles = ArrayUtil.mergeArrays(
-      new String[]{System.getProperty(PROPERTIES_FILE),
-        getCustomPropertiesFile(),
-        getUserHome() + "/" + PROPERTIES_FILE_NAME},
-      getBinFileLocationsString(PROPERTIES_FILE_NAME));
-
+    getHomePath();
+    List<String> propFiles = ContainerUtil.newArrayList(
+      System.getProperty(PROPERTIES_FILE),
+      getCustomPropertiesFile(),
+      getUserHome() + '/' + PROPERTIES_FILE_NAME);
+    for (String binDir : ourBinDirectories) {
+      propFiles.add(binDir + '/' + PROPERTIES_FILE_NAME);
+    }
 
     for (String path : propFiles) {
       if (path != null) {
