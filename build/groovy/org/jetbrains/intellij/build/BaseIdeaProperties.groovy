@@ -169,11 +169,13 @@ abstract class BaseIdeaProperties extends ProductProperties {
       }
     }
 
-    /* Disabled in Android Studio:
-    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-      fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
+    if ("true".equalsIgnoreCase(System.getProperty("bundle.kotlin.plugin"))) {
+      context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
+        fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
+      }
     }
 
+    /* Disabled in Android Studio:
     context.ant.move(file: "$targetDirectory/lib/annotations-java8.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
     */
   }
