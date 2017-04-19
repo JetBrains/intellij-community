@@ -1,5 +1,8 @@
 IntelliJ IDEA / PhpStorm .env files support plugin
 -------------
+
+Release 0.2 is blocked by PhpStorm bug: https://youtrack.jetbrains.com/issue/WI-36033
+
 [![Version](http://phpstorm.espend.de/badge/9525/version)](https://plugins.jetbrains.com/plugin/9525)
 [![Downloads](http://phpstorm.espend.de/badge/9525/downloads)](https://plugins.jetbrains.com/plugin/9525)
 
