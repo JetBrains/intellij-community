@@ -218,7 +218,12 @@ public class InvocationExprent extends Exprent {
     if (isStatic) {
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
-        buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        if(node == null) { // XXX only to avoid NPE
+          buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        }
+        else {
+          buf.append(node.classStruct.getShortNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
+        }
       }
     }
     else {
