@@ -17,6 +17,7 @@ package org.jetbrains.jps.javac.ast.api;
 
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
@@ -27,6 +28,9 @@ public class JavacNameTable {
   private final SLRUCache<Name, String> myParsedNameCache;
   private final Elements myElements;
   private Name myAsterisk;
+  private TypeElement myStreamElement;
+  private TypeElement myIteratorElement;
+  private TypeElement myIterableElement;
 
   public JavacNameTable(Elements elements) {
     myParsedNameCache = new SLRUCache<Name, String>(1000, 1000) {
@@ -55,5 +59,29 @@ public class JavacNameTable {
       myAsterisk = myElements.getName("*");
     }
     return myAsterisk;
+  }
+
+  @Nullable("if the type is not loaded to javac name table")
+  public TypeElement getStreamElement() {
+    if (myStreamElement == null) {
+      myStreamElement = myElements.getTypeElement("java.util.stream.Stream");
+    }
+    return myStreamElement;
+  }
+
+  @Nullable("if the type is not loaded to javac name table")
+  public TypeElement getIteratorElement() {
+    if (myIteratorElement == null) {
+      myIteratorElement = myElements.getTypeElement("java.util.Iterator");
+    }
+    return myIteratorElement;
+  }
+
+  @Nullable("if the type is not loaded to javac name table")
+  public TypeElement getIterableElement() {
+    if (myIterableElement == null) {
+      myIterableElement = myElements.getTypeElement("java.lang.Iterable");
+    }
+    return myIterableElement;
   }
 }

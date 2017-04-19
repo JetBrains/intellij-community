@@ -37,7 +37,7 @@ import java.util.List;
 
 public class CompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 4;
+  public final static int VERSION = 5;
 
   public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
   public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
@@ -217,12 +217,13 @@ public class CompilerIndices {
       @Override
       public void save(@NotNull DataOutput out, SignatureData value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.getRawReturnType());
+        out.writeByte(value.getIteratorKind());
         out.writeBoolean(value.isStatic());
       }
 
       @Override
       public SignatureData read(@NotNull DataInput in) throws IOException {
-        return new SignatureData(DataInputOutputUtil.readINT(in), in.readBoolean());
+        return new SignatureData(DataInputOutputUtil.readINT(in), in.readByte(), in.readBoolean());
       }
     };
   }

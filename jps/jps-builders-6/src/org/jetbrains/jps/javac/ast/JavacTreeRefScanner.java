@@ -19,9 +19,11 @@ import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
+import org.jetbrains.jps.javac.ast.api.JavacNameTable;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.*;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -75,11 +77,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (element != null && element.getKind() == ElementKind.FIELD) {
       final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
       if (ref != null) {
-        refCollector.sinkReference(ref);
-        final JavacRef.JavacElementRefBase returnType = refCollector.asJavacRef(element.asType());
-        if (returnType != null) {
-           refCollector.sinkDeclaration(new JavacDef.JavacMemberDef(ref, returnType, isStatic(element)));
-        }
+        processMemberDefinition(refCollector, ref, element, element.asType());
       }
     }
     return super.visitVariable(node, refCollector);
@@ -106,14 +104,33 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     if (element != null) {
       final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
       if (ref != null) {
-        refCollector.sinkReference(ref);
-        final JavacRef.JavacElementRefBase returnType = refCollector.asJavacRef(((ExecutableElement)element).getReturnType());
-        if (returnType != null) {
-          refCollector.sinkDeclaration(new JavacDef.JavacMemberDef(ref, returnType, isStatic(element)));
-        }
+        processMemberDefinition(refCollector, ref, element, ((ExecutableElement)element).getReturnType());
       }
     }
     return super.visitMethod(node, refCollector);
+  }
+
+  private void processMemberDefinition(JavacReferenceCollectorListener.ReferenceCollector refCollector,
+                                       JavacRef.JavacElementRefBase ref,
+                                       Element element,
+                                       TypeMirror retType) {
+    refCollector.sinkReference(ref);
+    byte dimension = 0;
+    if (retType.getKind() == TypeKind.ARRAY) {
+      retType = ((ArrayType)retType).getComponentType();
+      dimension = 1;
+    }
+    else if (retType.getKind() == TypeKind.DECLARED) {
+      List<? extends TypeMirror> typeArguments = ((DeclaredType)retType).getTypeArguments();
+      if (typeArguments.size() == 1 && isIterator((TypeElement)((DeclaredType)retType).asElement(), refCollector)) {
+        dimension = -1;
+        retType = typeArguments.get(0);
+      }
+    }
+    final JavacRef.JavacElementRefBase returnType = refCollector.asJavacRef(retType);
+    if (returnType != null) {
+      refCollector.sinkDeclaration(new JavacDef.JavacMemberDef(ref, returnType, dimension, isStatic(element)));
+    }
   }
 
   @Override
@@ -206,6 +223,23 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     }
 
     return null;
+  }
+
+  private static boolean isIterator(TypeElement aClass, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    JavacNameTable table = collector.getNameTable();
+    TypeElement iterable = table.getIterableElement();
+    if (iterable != null && isInheritorOrSelf(aClass, iterable)) {
+      return true;
+    }
+    TypeElement stream = table.getStreamElement();
+    if (stream != null && isInheritorOrSelf(aClass, stream)) {
+      return true;
+    }
+    TypeElement iterator = table.getIteratorElement();
+    if (iterator != null && isInheritorOrSelf(aClass, iterator)) {
+      return true;
+    }
+    return false;
   }
 
   private static Element getClassOrPackageParent(Element element) {

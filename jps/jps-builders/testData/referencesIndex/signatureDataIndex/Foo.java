@@ -14,4 +14,15 @@ public class Foo {
     return null;
   }
 
+  public String[] m4() {
+    return null;
+  }
+
+  public String f1;
+
+  public static List<String> f2;
+
+  public List f3;
+
+  public String[] f4;
 }

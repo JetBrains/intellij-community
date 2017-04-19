@@ -269,6 +269,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
       return myTypeUtility;
     }
 
+    JavacNameTable getNameTable() {
+      return myNameTableCache;
+    }
+
     private int decrementRemainDeclarationsAndGet(Tree declarationToProcess) {
       return declarationToProcess == null ? myRemainDeclarations : --myRemainDeclarations;
     }

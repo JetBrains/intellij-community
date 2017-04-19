@@ -16,16 +16,27 @@
 package org.jetbrains.jps.backwardRefs;
 
 public class SignatureData {
+  public static final byte ZERO_DIM = 0;
+  public static final byte ARRAY_ONE_DIM = 1;
+  // represents java's Iterator, Iterable and BaseStream
+  public static final byte ITERATOR_ONE_DIM = 2;
+
   private final int myRawReturnType;
+  private final byte myArrayDimension;
   private final boolean myStatic;
 
-  public SignatureData(int rawReturnType, boolean isStatic) {
+  public SignatureData(int rawReturnType, byte arrayDimension, boolean isStatic) {
     myRawReturnType = rawReturnType;
+    myArrayDimension = arrayDimension;
     myStatic = isStatic;
   }
 
   public int getRawReturnType() {
     return myRawReturnType;
+  }
+
+  public byte getIteratorKind() {
+    return myArrayDimension;
   }
 
   public boolean isStatic() {
@@ -38,12 +49,18 @@ public class SignatureData {
     if (o == null || getClass() != o.getClass()) return false;
 
     SignatureData data = (SignatureData)o;
-    return myRawReturnType == data.myRawReturnType && myStatic == data.myStatic;
+
+    if (myRawReturnType != data.myRawReturnType) return false;
+    if (myArrayDimension != data.myArrayDimension) return false;
+    if (myStatic != data.myStatic) return false;
+
+    return true;
   }
 
   @Override
   public int hashCode() {
     int result = myRawReturnType;
+    result = 31 * result + myArrayDimension;
     result = 31 * result + (myStatic ? 1 : 0);
     return result;
   }

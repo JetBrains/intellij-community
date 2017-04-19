@@ -185,7 +185,16 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       }
 
   private fun SignatureData.asText(nameEnumerator: NameEnumerator): String {
-    return (if (this.isStatic) "static " else "") + this.rawReturnType.asName(nameEnumerator)
+    return (if (this.isStatic) "static " else "") + this.rawReturnType.asName(nameEnumerator) + decodeVectorKind(this.iteratorKind)
+  }
+
+  private fun decodeVectorKind(kind: Byte): String {
+    when (kind) {
+      0.toByte() -> return ""
+      1.toByte() -> return "[]"
+      (-1).toByte() -> return " iterator"
+    }
+    throw IllegalArgumentException()
   }
 
   private fun Int.asFileName(fileNameEnumerator: PersistentStringEnumerator) = FileUtil.getNameWithoutExtension(File(fileNameEnumerator.valueOf(this)).canonicalFile)

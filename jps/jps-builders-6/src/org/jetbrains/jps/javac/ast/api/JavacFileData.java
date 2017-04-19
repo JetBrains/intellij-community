@@ -85,6 +85,7 @@ public class JavacFileData {
 
   @NotNull
   public static JavacFileData fromBytes(byte[] bytes) {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
     try {
       return new JavacFileData(in.readUTF(),
@@ -160,8 +161,9 @@ public class JavacFileData {
         return new JavacDef.JavacFunExprDef(readJavacRef(in));
       case METHOD_MARKER:
         JavacRef retType = readJavacRef(in);
+        byte dimension = in.readByte();
         boolean isStatic = in.readBoolean();
-        return new JavacDef.JavacMemberDef(readJavacRef(in), retType, isStatic);
+        return new JavacDef.JavacMemberDef(readJavacRef(in), retType, dimension, isStatic);
       default:
         throw new IllegalStateException("unknown marker " + marker);
     }
@@ -182,6 +184,7 @@ public class JavacFileData {
     else if (def instanceof JavacDef.JavacMemberDef) {
       out.writeByte(METHOD_MARKER);
       writeJavacRef(out, ((JavacDef.JavacMemberDef)def).getReturnType());
+      out.writeByte(((JavacDef.JavacMemberDef)def).getIteratorKind());
       out.writeBoolean(((JavacDef.JavacMemberDef)def).isStatic());
     }
     else {
