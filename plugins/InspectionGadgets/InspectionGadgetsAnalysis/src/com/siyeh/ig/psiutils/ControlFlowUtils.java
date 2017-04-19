@@ -832,6 +832,33 @@ public class ControlFlowUtils {
     return false;
   }
 
+  /**
+   * Returns true if statement essentially contains no executable code
+   *
+   * @param statement statement to test
+   * @return true if statement essentially contains no executable code
+   */
+  public static boolean statementIsEmpty(PsiStatement statement) {
+    if (statement == null) {
+      return false;
+    }
+    if (statement instanceof PsiEmptyStatement) {
+      return true;
+    }
+    if (statement instanceof PsiBlockStatement) {
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)statement;
+      final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+      final PsiStatement[] codeBlockStatements = codeBlock.getStatements();
+      for (PsiStatement codeBlockStatement : codeBlockStatements) {
+        if (!statementIsEmpty(codeBlockStatement)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
   public enum InitializerUsageStatus {
     // Variable is declared just before the wanted place
     DECLARED_JUST_BEFORE,

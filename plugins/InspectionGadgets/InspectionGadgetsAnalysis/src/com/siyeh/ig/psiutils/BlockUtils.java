@@ -50,9 +50,13 @@ public class BlockUtils {
       for (PsiStatement newStatement : newStatements) {
         codeBlock.add(newStatement);
       }
-      codeBlock.add(oldStatement);
+      int oldCount = 0;
+      if(!(oldStatement instanceof PsiEmptyStatement)) {
+        oldCount = 1;
+        codeBlock.add(oldStatement);
+      }
       final PsiStatement[] statements = ((PsiBlockStatement)oldStatement.replace(newBlockStatement)).getCodeBlock().getStatements();
-      result = statements[statements.length - 2];
+      result = statements[statements.length - 1 - oldCount];
     }
     return (PsiStatement)result;
   }
