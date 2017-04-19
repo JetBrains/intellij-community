@@ -16,3 +16,5 @@ java.util.ArrayList.<init>(0) in Foo occurrences = 1
 Class Definitions:
 ArrayListImpl in Foo
 Foo in Foo
+
+Members Signatures:

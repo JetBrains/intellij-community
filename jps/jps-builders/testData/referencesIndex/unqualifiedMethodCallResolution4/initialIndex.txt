@@ -14,3 +14,5 @@ java.lang.Runnable.run(0) in Foo occurrences = 2
 Class Definitions:
 A in Foo
 anonymous(id=0) in Foo
+
+Members Signatures:

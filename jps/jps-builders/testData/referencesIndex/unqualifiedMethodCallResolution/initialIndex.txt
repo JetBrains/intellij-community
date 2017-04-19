@@ -13,3 +13,5 @@ java.lang.Object.<init>(0) in Foo occurrences = 2
 Class Definitions:
 A in Foo
 A$B in Foo
+
+Members Signatures:

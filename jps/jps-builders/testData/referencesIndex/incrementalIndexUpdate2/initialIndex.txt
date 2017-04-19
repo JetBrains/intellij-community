@@ -13,3 +13,5 @@ java.util.List in Foo occurrences = 2
 
 Class Definitions:
 Foo in Foo
+
+Members Signatures:

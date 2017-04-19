@@ -15,3 +15,5 @@ Class Definitions:
 Array in Array
 Bar in Bar
 Foo in Foo
+
+Members Signatures:

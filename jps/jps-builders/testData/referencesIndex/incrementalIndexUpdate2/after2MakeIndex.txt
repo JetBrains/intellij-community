@@ -11,3 +11,5 @@ java.util.Collections.emptySet(0) in Bar occurrences = 1
 
 Class Definitions:
 Foo in Bar
+
+Members Signatures:

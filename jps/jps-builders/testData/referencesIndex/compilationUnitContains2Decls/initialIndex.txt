@@ -16,3 +16,5 @@ java.util.Collections.emptySet(0) in Foo occurrences = 1
 Class Definitions:
 Boo in Foo
 Foo in Foo
+
+Members Signatures:

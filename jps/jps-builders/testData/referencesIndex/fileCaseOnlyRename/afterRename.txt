@@ -12,3 +12,5 @@ java.lang.System.out in bar occurrences = 1
 
 Class Definitions:
 Inner in bar
+
+Members Signatures:

@@ -165,5 +165,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testQualifierResolution() {
     assertIndexOnRebuild("Foo.java")
   }
+
+  fun testSignatureDataIndex() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 

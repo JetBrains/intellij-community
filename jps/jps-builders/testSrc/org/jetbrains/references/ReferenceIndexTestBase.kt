@@ -22,10 +22,7 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.PersistentStringEnumerator
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
-import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
-import org.jetbrains.jps.backwardRefs.LightRef
-import org.jetbrains.jps.backwardRefs.NameEnumerator
+import org.jetbrains.jps.backwardRefs.*
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices
 import org.jetbrains.jps.builders.JpsBuildTestCase
@@ -145,6 +142,24 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       classDefs.sort()
       result.append(classDefs.joinToString(separator = "\n"))
 
+      result.append("\n\nMembers Signatures:\n")
+      val signs = mutableListOf<String>()
+      storage(index, CompilerIndices.BACK_MEMBER_SIGN).processKeys { sign ->
+        val definedMembers = mutableListOf<String>()
+        val valueIt = index[CompilerIndices.BACK_MEMBER_SIGN].getData(sign).valueIterator
+        while (valueIt.hasNext()) {
+          val nextRefs = valueIt.next()
+          nextRefs.mapTo(definedMembers) { it.asText(nameEnumerator) }
+        }
+        if (!definedMembers.isEmpty()) {
+          definedMembers.sort()
+          signs.add(sign.asText(nameEnumerator) + " <- " + definedMembers.joinToString(separator = " "))
+        }
+        true
+      }
+      signs.sort()
+      result.append(signs.joinToString(separator = "\n"))
+
       return result.toString()
     }
     finally {
@@ -168,6 +183,10 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
         is LightRef.JavaLightAnonymousClassRef -> "anonymous(id=${this.name})"
         else -> throw UnsupportedOperationException()
       }
+
+  private fun SignatureData.asText(nameEnumerator: NameEnumerator): String {
+    return (if (this.isStatic) "static " else "") + this.rawReturnType.asName(nameEnumerator)
+  }
 
   private fun Int.asFileName(fileNameEnumerator: PersistentStringEnumerator) = FileUtil.getNameWithoutExtension(File(fileNameEnumerator.valueOf(this)).canonicalFile)
 }
