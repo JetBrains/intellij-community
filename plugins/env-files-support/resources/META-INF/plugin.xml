@@ -11,7 +11,7 @@
       <br/>
       <h4>Features</h4>
       <ul>
-        <li>getenv() and env() parameters completion, based on .env file keys</li>
+        <li>getenv() and env() parameters completion, based on .env file keys(with values hinting)</li>
         <li>Go to declaration(in .env file) and usages(in php files), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
       </ul>
     ]]></description>
@@ -19,6 +19,7 @@
   <change-notes><![CDATA[
       <h4>0.2</h4>
       <ul>
+        <li>Values hinting in completion choice window(example: DB_HOST = 127.0.0.1)</li>
         <li>Go to declaration(in .env file) and usages(in php files), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
       </ul>
   ]]></change-notes>
