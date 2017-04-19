@@ -29,10 +29,8 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.*;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
-import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -41,10 +39,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -75,9 +70,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
-  private static final Condition<Keymap> KEYMAP_FILTER =
-    keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
-
   // Name editor calls "setName" to apply new name. It is scheme name, not presentable name —
   // but only bundled scheme name could be different from presentable and bundled scheme is not editable (could not be renamed). So, it is ok.
   private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<>(new ListItemEditor<Keymap>() {
@@ -677,21 +669,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
     }
 
-    Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
-    Keymap selectedKeymap = null;
-    List<Keymap> list = getManagerKeymaps();
-    for (Keymap keymap : list) {
-      if (activeKeymap == keymap) {
-        // select active keymap if it is present
-        selectedKeymap = keymap;
-        break;
-      }
-      if (selectedKeymap == null || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(keymap.getName())) {
-        // select MacOS X keymap if default keymap is filtered out
-        // select first keymap if MacOS X keymap is not present
-        selectedKeymap = keymap;
-      }
-    }
+    List<Keymap> list = Keymaps.getAll();
+    Keymap selectedKeymap = Keymaps.getActiveFrom(list);
     myEditor.reset(list);
 
     if (myEditor.getModel().isEmpty()) {
@@ -711,9 +690,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myEditor.ensureNonEmptyNames(KeyMapBundle.message("configuration.all.keymaps.should.have.non.empty.names.error.message"));
 
     ensureUniqueKeymapNames();
-    KeymapManagerImpl keymapManager = (KeymapManagerImpl)KeymapManager.getInstance();
-    // we must specify the same filter, which was used to get original items
-    keymapManager.setKeymaps(myEditor.apply(), myEditor.getModel().getSelected(), KEYMAP_FILTER);
+    Keymaps.apply(myEditor.apply(), myEditor.getModel().getSelected());
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
@@ -728,12 +705,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(myEditor.getModel().getSelected(), KeymapManager.getInstance().getActiveKeymap()) || myEditor.isModified();
-  }
-
-  @NotNull
-  private static List<Keymap> getManagerKeymaps() {
-    return ((KeymapManagerImpl)KeymapManagerEx.getInstanceEx()).getKeymaps(KEYMAP_FILTER);
+    return !Keymaps.isActive(myEditor.getModel().getSelected()) || myEditor.isModified();
   }
 
   public void selectAction(String actionId) {
