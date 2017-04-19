@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return emptyList()
   }
 
-  private fun getMethodInfo(method: PsiMethod): MethodInfo? {
+  fun getMethodInfo(method: PsiMethod): MethodInfo? {
     val containingClass = method.containingClass ?: return null
     val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)
 

@@ -152,6 +152,12 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), )<caret> } }");
   }
 
+  public void testNoHintsForMethodWithOneParameterFromBlackList() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    myFixture.checkResultWithInlays("class C { void m() { System.getProperty() } }");
+  }
+
   private void showParameterInfo() {
     myFixture.performEditorAction("ParameterInfo");
     UIUtil.dispatchAllInvocationEvents();
