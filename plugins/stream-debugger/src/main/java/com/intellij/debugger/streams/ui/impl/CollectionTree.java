@@ -26,7 +26,6 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -34,6 +33,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import icons.StreamDebuggerIcons;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +87,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
           final XValueNodeImpl node = (XValueNodeImpl)value;
           final TreePath path = node.getPath();
           if (myHighlighted.contains(path)) {
-            setIcon(AllIcons.Debugger.ThreadStates.Idle);
+            setIcon(StreamDebuggerIcons.VALUE_HIGHLIGHTED_ICON);
           }
         }
       }

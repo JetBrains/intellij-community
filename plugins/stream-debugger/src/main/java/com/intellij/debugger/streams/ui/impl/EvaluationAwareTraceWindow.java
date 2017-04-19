@@ -22,7 +22,6 @@ import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBCardLayout;
@@ -31,6 +30,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.Value;
+import icons.StreamDebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +75,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
       final MyPlaceholder tab = new MyPlaceholder();
-      tabs.insertTab(call.getName(), AllIcons.Debugger.Console, tab, call.getName() + call.getArguments(), i);
+      tabs.insertTab(call.getName(), StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab, call.getName() + call.getArguments(), i);
       myTabContents.add(tab);
     }
 
