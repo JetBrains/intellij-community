@@ -641,7 +641,10 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
     else {
       val targetForConfig = getTargetForConfig(configuration, sourceElement.get()) ?: return false
       targetForConfig.first.copyTo(configuration.target)
-      configuration.workingDirectory = targetForConfig.second
+      // Directory may be set in Default configuration. In that case no need to rewrite it.
+      if (configuration.workingDirectory.isNullOrEmpty()) {
+        configuration.workingDirectory = targetForConfig.second
+      }
     }
     configuration.setGeneratedName()
     return true

@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
@@ -27,6 +28,7 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
@@ -247,6 +249,36 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                  PyUniversalUnitTestConfiguration.class));
+  }
+
+  /**
+   * Ensures newly created configuration inherits working dir from default if set
+   */
+  @Test
+  public void testConfigurationProducerObeysDefaultDir() throws Exception {
+    runPythonTest(
+      new CreateConfigurationByFileTask<PyUniversalUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                          PyUniversalUnitTestConfiguration.class) {
+        private static final String SOME_RANDOM_DIR = "//some/random/ddir";
+
+        @Override
+        public void runTestOn(final String sdkHome) throws InvalidSdkException, IOException {
+          // Set default working directory to some random location before actual exection
+          final PyUniversalUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUniversalUnitTestFactory.INSTANCE);
+          templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
+          super.runTestOn(sdkHome);
+          templateConfiguration.setWorkingDirectory("");
+        }
+
+        @Override
+        protected void checkConfiguration(@NotNull final PyUniversalUnitTestConfiguration configuration,
+                                          @NotNull final PsiElement elementToRightClickOn) {
+          super.checkConfiguration(configuration, elementToRightClickOn);
+          Assert.assertEquals("UnitTest does not obey default working directory", SOME_RANDOM_DIR,
+                              configuration.getWorkingDirectorySafe());
+        }
+      }
+    );
   }
 
   @Test
