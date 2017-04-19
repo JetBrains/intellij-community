@@ -26,16 +26,16 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Irina.Chernushina on 12/5/2016.
  */
 public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   private FileTypeManager myFileTypeManager;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private List<UserDefinedJsonSchemaConfiguration> mySchemas;
+  private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
   protected boolean myDoCompletion = true;
 
   @Override
@@ -43,7 +43,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     super.setUp();
     myFileTypeManager = FileTypeManager.getInstance();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    mySchemas = new ArrayList<>();
+    mySchemas = new HashMap<>();
     myDoCompletion = true;
   }
 
@@ -71,6 +71,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   protected void skeleton(@NotNull final Callback callback)  throws Exception {
     callback.configureFiles();
     callback.registerSchemes();
+    JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(myProject, mySchemas);
     JsonSchemaService.Impl.get(getProject()).reset();
     doHighlighting();
     if (myDoCompletion) complete();
@@ -98,7 +99,6 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   }
 
   protected void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {
-    JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(myProject, Collections.singletonMap(schema.getName(), schema));
-    mySchemas.add(schema);
+    mySchemas.put(schema.getName(), schema);
   }
 }
