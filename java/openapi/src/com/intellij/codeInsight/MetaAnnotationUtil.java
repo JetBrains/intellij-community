@@ -26,7 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @since 2016.3
@@ -196,20 +196,19 @@ public class MetaAnnotationUtil {
 
 
   @NotNull
-  public static PsiAnnotation[] findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
-                                                    @NotNull final Collection<String> annotations) {
+  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull final Collection<String> annotations) {
 
-    List<PsiAnnotation> result = new SmartList<>(AnnotationUtil.findAnnotations(listOwner, annotations));
-    final List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
-    for (String annotationFQN : annotations) {
-      for (PsiClass psiClass : resolvedAnnotations) {
-        PsiAnnotation annotation = metaAnnotationCached(annotationFQN, psiClass);
-        if (annotation != null)
-          result.add(annotation);
-      }
-    }
+    Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
 
-    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+    Stream<PsiAnnotation> metannotations =
+      Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
+        .flatMap(e -> e.stream())
+        .flatMap(psiClass -> annotations.stream()
+          .map(annotationFQN -> metaAnnotationCached(annotationFQN, psiClass)))
+        .filter(Objects::nonNull);
+
+    return Stream.concat(directAnnotations, metannotations);
   }
 
 
