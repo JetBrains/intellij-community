@@ -28,14 +28,19 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LiteLinearGraph;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import com.intellij.vcs.log.graph.utils.BfsUtil;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.visible.CommitCountStage;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -73,21 +78,29 @@ class FileHistoryFilterer extends VcsLogFilterer {
     VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits);
 
     IndexDataGetter.FileNamesData namesData = ((FilteredByFileResult)filterResult).fileNamesData;
+    Map<Integer, FilePath> pathsMap = null;
     if (namesData.hasRenames() && visibleGraph.getVisibleCommitCount() > 0) {
       if (visibleGraph instanceof VisibleGraphImpl) {
 
         int row = getCurrentRow(dataPack, visibleGraph, namesData);
         if (row >= 0) {
-          FileHistoryRefiner refiner = new FileHistoryRefiner(visibleGraph, namesData);
-          if (refiner.refine(((VisibleGraphImpl)visibleGraph).getLinearGraph(), row, myFilePath)) {
+          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl)visibleGraph,
+                                                              ((PermanentGraphInfo<Integer>)dataPack.getPermanentGraph()).getLinearGraph(),
+                                                              namesData);
+          if (refiner.refine(row, myFilePath)) {
             // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-            visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getMatchingCommits());
+            visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
+            pathsMap = refiner.getPathsForCommits();
           }
         }
       }
     }
 
-    return new FileHistoryVisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters, namesData);
+    if (pathsMap == null) {
+      pathsMap = namesData.buildPathsMap();
+    }
+
+    return new FileHistoryVisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters, pathsMap);
   }
 
   @NotNull
@@ -159,55 +172,85 @@ class FileHistoryFilterer extends VcsLogFilterer {
   }
 
   private static class FileHistoryRefiner implements DfsUtil.NodeVisitor {
-    @NotNull private final VisibleGraph<Integer> myVisibleGraph;
+    @NotNull private final VisibleGraphImpl<Integer> myVisibleGraph;
+    @NotNull private final LiteLinearGraph myPermanentGraph;
+    @NotNull private final LiteLinearGraph myLinearVisibleGraph;
     @NotNull private final IndexDataGetter.FileNamesData myNamesData;
-    @NotNull private final Stack<FilePath> myPaths;
-    @NotNull private final Set<Integer> myMatchingCommits;
 
-    private boolean myWasChanged;
+    @NotNull private final Stack<FilePath> myPaths = new Stack<>();
+    @NotNull private final BitSetFlags myVisibilityBuffer; // a reusable buffer for bfs
+    @NotNull private final Map<Integer, FilePath> myPathsForCommits = ContainerUtil.newHashMap();
+    @NotNull private final Set<Integer> myExcluded = ContainerUtil.newHashSet();
 
-    public FileHistoryRefiner(@NotNull VisibleGraph<Integer> visibleGraph,
+    public FileHistoryRefiner(@NotNull VisibleGraphImpl<Integer> visibleGraph,
+                              @NotNull LinearGraph permanentGraph,
                               @NotNull IndexDataGetter.FileNamesData namesData) {
       myVisibleGraph = visibleGraph;
+      myPermanentGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraph);
+      myLinearVisibleGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getLinearGraph());
       myNamesData = namesData;
 
-      myPaths = new Stack<>();
-      myMatchingCommits = ContainerUtil.newHashSet();
-      myWasChanged = false;
+      myVisibilityBuffer = new BitSetFlags(myPermanentGraph.nodesCount());
     }
 
-    public boolean refine(@NotNull LinearGraph graph, int row, @NotNull FilePath startPath) {
+    public boolean refine(int row, @NotNull FilePath startPath) {
       myPaths.push(startPath);
-      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(graph), row, this);
-      return myWasChanged;
+      DfsUtil.walk(myLinearVisibleGraph, row, this);
+
+      for (int commit : myPathsForCommits.keySet()) {
+        FilePath path = myPathsForCommits.get(commit);
+        if (path != null) {
+          if (!myNamesData.affects(commit, path)) myExcluded.add(commit);
+          if (myNamesData.isTrivialMerge(commit, path)) myExcluded.add(commit);
+        }
+      }
+
+      myExcluded.forEach(myPathsForCommits::remove);
+      return !myExcluded.isEmpty();
     }
 
     @NotNull
-    public Set<Integer> getMatchingCommits() {
-      return myMatchingCommits;
+    public Map<Integer, FilePath> getPathsForCommits() {
+      return myPathsForCommits;
     }
 
     @Override
-    public void enterNode(int node) {
-      FilePath currentPath = myPaths.peek();
-      Integer commit = myVisibleGraph.getRowInfo(node).getCommit();
+    public void enterNode(int node, int previousNode) {
+      FilePath previousPath = myPaths.peek();
+      RowInfo<Integer> currentRowInfo = myVisibleGraph.getRowInfo(node);
+      int currentCommit = currentRowInfo.getCommit();
+      int currentNodeId = ((VisibleGraphImpl.RowInfoImpl)currentRowInfo).getNodeId();
 
-      FilePath previousPath = myNamesData.getPreviousPath(commit, currentPath);
-      if (previousPath != null) {
-        myMatchingCommits.add(commit);
+      if (previousNode == DfsUtil.NextNode.NODE_NOT_FOUND) {
+        myPathsForCommits.put(currentCommit, previousPath);
         myPaths.push(previousPath);
-        myNamesData.retain(commit, currentPath, previousPath);
       }
       else {
-        myNamesData.remove(commit);
-        myWasChanged = true;
+        FilePath currentPath;
+        RowInfo<Integer> previousRowInfo = myVisibleGraph.getRowInfo(previousNode);
+        int previousCommit = previousRowInfo.getCommit();
+        int previousNodeId = ((VisibleGraphImpl.RowInfoImpl)previousRowInfo).getNodeId();
+
+        // checking which node is the parent and which is the child
+        if (myLinearVisibleGraph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).contains(previousNode)) {
+          // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
+          int parentIndex = BfsUtil.getCorrespondingParentIndex(myPermanentGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
+          currentPath = myNamesData.getPathInChildRevision(currentCommit, parentIndex, previousPath);
+        }
+        else {
+          int parentIndex = BfsUtil.getCorrespondingParentIndex(myPermanentGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
+          currentPath = myNamesData.getPathInParentRevision(previousCommit, parentIndex, previousPath);
+        }
+
+        myPathsForCommits.put(currentCommit, currentPath);
+        if (currentPath != null) myPaths.push(currentPath);
       }
     }
 
     @Override
     public void exitNode(int node) {
       Integer commit = myVisibleGraph.getRowInfo(node).getCommit();
-      if (myMatchingCommits.contains(commit)) {
+      if (myPathsForCommits.containsKey(commit) && myPathsForCommits.get(commit) != null) {
         myPaths.pop();
       }
     }

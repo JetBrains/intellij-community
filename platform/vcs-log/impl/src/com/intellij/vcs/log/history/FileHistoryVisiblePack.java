@@ -15,27 +15,29 @@
  */
 package com.intellij.vcs.log.history;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPackBase;
-import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 public class FileHistoryVisiblePack extends VisiblePack {
-  @NotNull private final IndexDataGetter.FileNamesData myNamesData;
+  @NotNull private final Map<Integer, FilePath> myNamesData;
 
   public FileHistoryVisiblePack(@NotNull DataPackBase dataPack,
                                 @NotNull VisibleGraph<Integer> graph,
                                 boolean canRequestMore,
                                 @NotNull VcsLogFilterCollection filters,
-                                @NotNull IndexDataGetter.FileNamesData namesData) {
+                                @NotNull Map<Integer, FilePath> namesData) {
     super(dataPack, graph, canRequestMore, filters);
     myNamesData = namesData;
   }
 
   @NotNull
-  public IndexDataGetter.FileNamesData getNamesData() {
+  public Map<Integer, FilePath> getNamesData() {
     return myNamesData;
   }
 }

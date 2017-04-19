@@ -65,7 +65,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   public RowInfo<CommitId> getRowInfo(final int visibleRow) {
     final int nodeId = myGraphController.getCompiledGraph().getNodeId(visibleRow);
     assert nodeId >= 0; // todo remake for all id
-    return new MyRowInfo(nodeId, visibleRow);
+    return new RowInfoImpl(nodeId, visibleRow);
   }
 
   @Override
@@ -254,13 +254,17 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     }
   }
 
-  private class MyRowInfo implements RowInfo<CommitId> {
+  public class RowInfoImpl implements RowInfo<CommitId> {
     private final int myNodeId;
     private final int myVisibleRow;
 
-    public MyRowInfo(int nodeId, int visibleRow) {
+    public RowInfoImpl(int nodeId, int visibleRow) {
       myNodeId = nodeId;
       myVisibleRow = visibleRow;
+    }
+
+    public int getNodeId() {
+      return myNodeId;
     }
 
     @NotNull

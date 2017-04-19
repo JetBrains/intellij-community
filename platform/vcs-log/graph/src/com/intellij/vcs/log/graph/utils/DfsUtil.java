@@ -32,7 +32,7 @@ public class DfsUtil {
   }
 
   public interface NodeVisitor {
-    void enterNode(int node);
+    void enterNode(int node, int previousNode);
 
     void exitNode(int node);
   }
@@ -44,12 +44,10 @@ public class DfsUtil {
    * And when a node is entered from down-sibling, goes to the up-siblings first.
    * Then goes to the other down-siblings.
    * When a node is entered the first time, enterNode is called.
-   * When a node is passes in the same direction, exitNode is called.
-   * Nothing is called when a all the siblings of the node are visited.
+   * When a all the siblings of the node are visited, exitNode is called.
    */
   public static void walk(@NotNull LiteLinearGraph graph, int start, @NotNull NodeVisitor visitor) {
     BitSetFlags visited = new BitSetFlags(graph.nodesCount(), false);
-    BitSetFlags visitedInSameDirection = new BitSetFlags(graph.nodesCount(), false);
 
     Stack<Pair<Integer, Boolean>> stack = new Stack<>();
     stack.push(new Pair<>(start, true)); // commit + direction of travel
@@ -60,7 +58,7 @@ public class DfsUtil {
       boolean down = stack.peek().second;
       if (!visited.get(currentNode)) {
         visited.set(currentNode, true);
-        visitor.enterNode(currentNode);
+        visitor.enterNode(currentNode, getPreviousNode(stack));
       }
 
       for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
@@ -70,11 +68,6 @@ public class DfsUtil {
         }
       }
 
-      if (!visitedInSameDirection.get(currentNode)) {
-        visitedInSameDirection.set(currentNode, true);
-        visitor.exitNode(currentNode);
-      }
-
       for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.UP : LiteLinearGraph.NodeFilter.DOWN)) {
         if (!visited.get(nextNode)) {
           stack.push(new Pair<>(nextNode, !down));
@@ -82,8 +75,16 @@ public class DfsUtil {
         }
       }
 
+      visitor.exitNode(currentNode);
       stack.pop();
     }
+  }
+
+  private static int getPreviousNode(@NotNull Stack<Pair<Integer, Boolean>> stack) {
+    if (stack.size() < 2) {
+      return NextNode.NODE_NOT_FOUND;
+    }
+    return stack.get(stack.size() - 2).first;
   }
 
   public static void walk(int startRowIndex, @NotNull NextNode nextNodeFun) {

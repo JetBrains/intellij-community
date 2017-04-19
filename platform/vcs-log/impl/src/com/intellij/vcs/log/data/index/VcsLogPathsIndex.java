@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -74,6 +75,17 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return new PersistentBTreeEnumerator<>(storageFile, SystemInfo.isFileSystemCaseSensitive ? EnumeratorStringDescriptor.INSTANCE
                                                                                              : new ToLowerCaseStringDescriptor(),
                                            Page.PAGE_SIZE, null, getVersion());
+  }
+
+  @Nullable
+  public String getPath(int pathId) {
+    try {
+      return myPathsIndexer.getPathsEnumerator().valueOf(pathId);
+    }
+    catch (IOException e) {
+      myPathsIndexer.myFatalErrorConsumer.consume(e);
+    }
+    return null;
   }
 
   @Override
@@ -147,10 +159,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return result;
   }
 
-  public void iterateCommits(@NotNull Collection<FilePath> paths, @NotNull ObjIntConsumer<Couple<FilePath>> consumer)
+  public void iterateCommits(@NotNull FilePath path, @NotNull ObjIntConsumer<Pair<FilePath, List<ChangeData>>> consumer)
     throws IOException, StorageException {
 
-    Set<Integer> startIds = getPathIds(paths);
+    Set<Integer> startIds = getPathIds(Collections.singleton(path));
     Set<Integer> allIds = ContainerUtil.newHashSet(startIds);
     Set<Integer> newIds = ContainerUtil.newHashSet();
     while (!startIds.isEmpty()) {
@@ -162,17 +174,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
             if (!allIds.contains(renamed)) {
               newIds.add(renamed);
             }
-            try {
-              FilePath renamedPath = VcsUtil.getFilePath(myPathsIndexer.myPathsEnumerator.valueOf(renamed));
-              consumer.accept(Couple.of(currentPath, renamedPath), commitId);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
           }
-          if (otherNames.isEmpty()) {
-            consumer.accept(Couple.of(currentPath, null), commitId);
-          }
+
+          consumer.accept(Pair.create(currentPath, changesList), commitId);
         });
       }
       startIds = ContainerUtil.newHashSet(newIds);
@@ -240,7 +244,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     public Map<Integer, List<ChangeData>> map(@NotNull VcsFullCommitDetails inputData) {
       Map<Integer, List<ChangeData>> result = new THashMap<>();
 
-      for (int parent = 0; parent < inputData.getParents().size(); parent++) {
+      int size = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
+      for (int parent = 0; parent < size; parent++) {
         Collection<Couple<String>> moves;
         Collection<String> changedPaths;
         if (inputData instanceof VcsIndexableDetails) {
@@ -285,7 +290,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       }
 
       for (int pathId : result.keySet()) {
-        fillDataWithNulls(result, inputData.getParents().size(), pathId);
+        fillDataWithNulls(result, size, pathId);
       }
 
       return result;
@@ -296,7 +301,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       int afterId = myPathsEnumerator.enumerate(afterPath);
       List<ChangeData> data = fillDataWithNulls(result, parent, afterId);
       if (beforePath == null) {
-        data.add(null);
+        data.add(new ChangeData(ChangeKind.MODIFIED, -1));
       }
       else {
         int beforeId = myPathsEnumerator.enumerate(beforePath);
