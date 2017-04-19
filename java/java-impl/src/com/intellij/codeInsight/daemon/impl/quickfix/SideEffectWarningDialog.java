@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiVariable;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +119,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final String text = sideEffectsDescription();
-    final JLabel label = new JLabel(text);
+    final JLabel label = new JBLabel(text);
     label.setIcon(Messages.getWarningIcon());
     panel.add(label, BorderLayout.NORTH);
     return panel;
