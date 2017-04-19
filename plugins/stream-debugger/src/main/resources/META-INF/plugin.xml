@@ -16,7 +16,7 @@
   <idea-version since-build="171"/>
 
   <actions>
-    <action id="AdvancedStreamTracerAction"
+    <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"
             icon="StreamDebuggerIcons.RUN_STREAM_DEBUG_ACTION"
             text="Trace Current Stream Chain">
