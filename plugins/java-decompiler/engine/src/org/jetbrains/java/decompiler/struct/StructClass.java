@@ -166,6 +166,9 @@ public class StructClass extends StructMember {
 
   // XXX slow, but no lookup table available
   private boolean containsFieldWithShortName(String shortName){
+    if(shortName == null) // the shortName parameter may be null for generated anonymous class
+      return false;
+
     for(StructField f: fields) {
       if(shortName.equals(f.getName())) {
         return true;
