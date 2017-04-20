@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TerminatorStreamCallImpl extends StreamCallImpl implements TerminatorStreamCall {
   private final GenericType myTypeBefore;
-  private final boolean myIsVoid;
+  private final GenericType myReturnType;
 
-  TerminatorStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeBefore, boolean isVoid) {
+  TerminatorStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeBefore, GenericType resultType) {
     super(name, args, StreamCallType.TERMINATOR);
     myTypeBefore = typeBefore;
-    myIsVoid = isVoid;
+    myReturnType = resultType;
   }
 
   @NotNull
@@ -39,8 +39,9 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
     return myTypeBefore;
   }
 
+  @NotNull
   @Override
-  public boolean isVoid() {
-    return myIsVoid;
+  public GenericType getResultType() {
+    return myReturnType;
   }
 }

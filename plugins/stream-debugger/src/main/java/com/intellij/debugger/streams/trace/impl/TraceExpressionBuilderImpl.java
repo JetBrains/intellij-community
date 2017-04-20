@@ -150,12 +150,13 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
   @NotNull
   private static String buildStreamExpression(@NotNull StreamChain chain) {
-    if (chain.getTerminationCall().isVoid()) {
+    final GenericType resultType = chain.getTerminationCall().getResultType();
+    if (resultType.equals(GenericType.VOID)) {
       final String resultInitialization = "final Object streamResult = null;" + LINE_SEPARATOR;
       return resultInitialization + chain.getText() + ";" + LINE_SEPARATOR;
     }
     else {
-      return "final Object streamResult = " + chain.getText() + ";" + LINE_SEPARATOR;
+      return "final " + resultType.getVariableTypeName() + " streamResult = " + chain.getText() + ";" + LINE_SEPARATOR;
     }
   }
 

@@ -15,22 +15,20 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.type;
 
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface GenericType {
-  @NotNull
-  String getVariableTypeName();
+public class GenericTypeUtil {
 
-  @NotNull
-  String getGenericTypeName();
-
-  GenericType BOOLEAN = new GenericTypeImpl("boolean", "java.lang.Boolean");
-  GenericType INT = new GenericTypeImpl("int", "java.lang.Integer");
-  GenericType DOUBLE = new GenericTypeImpl("double", "java.lang.Double");
-  GenericType LONG = new GenericTypeImpl("long", "java.lang.Long");
-  GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
-  GenericType VOID = new GenericTypeImpl("void", "java.lang.Void");
+  public static GenericType fromPsiType(@NotNull PsiType type) {
+    if (PsiType.VOID.equals(type)) return GenericType.VOID;
+    if (PsiType.INT.equals(type)) return GenericType.INT;
+    if (PsiType.DOUBLE.equals(type)) return GenericType.DOUBLE;
+    if (PsiType.LONG.equals(type)) return GenericType.LONG;
+    if (PsiType.BOOLEAN.equals(type)) return GenericType.BOOLEAN;
+    return GenericType.OBJECT;
+  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
@@ -106,8 +107,8 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
             prevCallType = currentType;
           }
           else if (StreamCallType.TERMINATOR.equals(type)) {
-            final TerminatorStreamCallImpl terminator =
-              new TerminatorStreamCallImpl(callName, callArgs, prevCallType, currentType.equals(GenericType.VOID));
+            final GenericType genericType = resolveTerminationCallType(methodCall);
+            final TerminatorStreamCallImpl terminator = new TerminatorStreamCallImpl(callName, callArgs, prevCallType, genericType);
             return new StreamChainImpl(producer, intermediateStreamCalls, terminator, startElement);
           }
           else {
@@ -147,6 +148,16 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
         }
       }
       return null;
+    });
+  }
+
+  private static GenericType resolveTerminationCallType(@NotNull PsiMethodCallExpression call) {
+    return ApplicationManager.getApplication().runReadAction((Computable<GenericType>)() -> {
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) return null;
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null) return null;
+      return GenericTypeUtil.fromPsiType(returnType);
     });
   }
 
