@@ -19,6 +19,7 @@ public class IDEATestNGRemoteListener {
   private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
   private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
   private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
+  private int mySkipped = 0;
 
   public IDEATestNGRemoteListener() {
     this(System.out);
@@ -48,7 +49,7 @@ public class IDEATestNGRemoteListener {
 
   public synchronized void onFinish(ISuite suite) {
     try {
-      if (suite != null && suite.getAllInvokedMethods().size() < suite.getAllMethods().size()) {
+      if (suite != null && suite.getAllInvokedMethods().size() + mySkipped < suite.getAllMethods().size()) {
         for (ITestNGMethod method : suite.getAllMethods()) {
           if (method.isTest()) {
             boolean found = false;
@@ -231,6 +232,7 @@ public class IDEATestNGRemoteListener {
   public void onTestSkipped(ExposedTestResult result) {
     if (!myParamsMap.containsKey(result)) {
       onTestStart(result);
+      mySkipped++;
     }
     myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
     onTestFinished(result);
