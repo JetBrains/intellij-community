@@ -293,6 +293,37 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testFinished name='ATest.testMe|[null, null|]']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
+  @Test
+  public void testIncludedMethods() throws Exception {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null}) {
+      @Override
+      public List<Integer> getIncludeMethods() {
+        return Arrays.asList(1, 3, 5);
+      }
+    };
+    for (int i = 0; i < 3; i++) {
+      listener.onTestStart(result);
+      listener.onTestFinished(result);
+    }
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='ATest.testMe|[null, null|] (1)' locationHint='java:test://ATest.testMe|[1|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='ATest.testMe|[null, null|] (1)']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='ATest.testMe|[null, null|] (3)' locationHint='java:test://ATest.testMe|[3|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='ATest.testMe|[null, null|] (3)']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='ATest.testMe|[null, null|] (5)' locationHint='java:test://ATest.testMe|[5|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='ATest.testMe|[null, null|] (5)']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
   private static void doTest(XmlSuite suite, String expected) {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
@@ -399,6 +430,11 @@ public class TestNGTreeHierarchyTest {
     @Override
     public Throwable getThrowable() {
       return myThrowable;
+    }
+
+    @Override
+    public List<Integer> getIncludeMethods() {
+      return null;
     }
 
     @Override

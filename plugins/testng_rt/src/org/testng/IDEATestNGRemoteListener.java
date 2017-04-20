@@ -1,6 +1,8 @@
 package org.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlTest;
 
 import java.io.PrintStream;
@@ -130,10 +132,18 @@ public class IDEATestNGRemoteListener {
     if (invocationCount == null) {
       invocationCount = 0;
     }
-    
-    final String paramString = getParamsString(parameters, invocationCount);
-    onTestStart(result, paramString, invocationCount, false);
+    Integer normalizedIndex = normalizeInvocationCountInsideIncludedMethods(invocationCount, result);
+    final String paramString = getParamsString(parameters, normalizedIndex);
+    onTestStart(result, paramString, normalizedIndex, false);
     myInvocationCounts.put(qualifiedName, invocationCount + 1);
+  }
+
+  private static Integer normalizeInvocationCountInsideIncludedMethods(Integer invocationCount, ExposedTestResult result) {
+    List<Integer> includeMethods = result.getIncludeMethods();
+    if (includeMethods == null || invocationCount >= includeMethods.size()) {
+      return invocationCount;
+    }
+    return includeMethods.get(invocationCount);
   }
 
   public void onConfigurationStart(ExposedTestResult result) {
@@ -296,6 +306,7 @@ public class IDEATestNGRemoteListener {
     String getFileName();
     String getXmlTestName();
     Throwable getThrowable();
+    List<Integer> getIncludeMethods();
   }
 
   protected DelegatedResult createDelegated(ITestResult result) {
@@ -361,6 +372,16 @@ public class IDEATestNGRemoteListener {
 
     public Throwable getThrowable() {
       return myResult.getThrowable();
+    }
+
+    public List<Integer> getIncludeMethods() {
+      IClass testClass = myResult.getTestClass();
+      if (testClass == null) return null;
+      XmlClass xmlClass = testClass.getXmlClass();
+      if (xmlClass == null) return null;
+      List<XmlInclude> includedMethods = xmlClass.getIncludedMethods();
+      if (includedMethods.isEmpty()) return null;
+      return includedMethods.get(0).getInvocationNumbers();
     }
 
     @Override
