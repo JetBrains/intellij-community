@@ -144,7 +144,6 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     handleTrace(trace);
 
     final ResolvedTracingResult resolvedTrace = result.resolve();
-    handleResultValue(resolvedTrace.getResult(), resultMustBeNull);
     handleResolvedTrace(resolvedTrace);
   }
 
