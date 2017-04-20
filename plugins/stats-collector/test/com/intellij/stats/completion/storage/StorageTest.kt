@@ -1,5 +1,6 @@
 package com.intellij.stats.completion.storage
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.stats.completion.LineStorage
 import com.intellij.stats.completion.LogFileManager
 import com.intellij.stats.completion.UniqueFilesProvider
@@ -57,15 +58,17 @@ class AsciiMessageStorageTest {
 
     @Test
     fun test_size_with_new_lines() {
-        storage.appendLine("text")
-        assertThat(storage.sizeWithNewLine("")).isEqualTo(6)
+        val line = "text"
+        storage.appendLine(line)
+        assertThat(storage.sizeWithNewLine("")).isEqualTo(line.length + 2 * System.lineSeparator().length)
     }
     
     @Test
     fun test_size_is_same_as_file_size() {
-        storage.appendLine("text")
-        storage.appendLine("text")
-        assertThat(storage.size).isEqualTo(10)
+        val line = "text"
+        storage.appendLine(line)
+        storage.appendLine(line)
+        assertThat(storage.size).isEqualTo(2 * (line.length + System.lineSeparator().length))
 
         storage.dump(tmpFile)
         assertThat(tmpFile.length()).isEqualTo(10)
@@ -84,6 +87,8 @@ class FileLoggerTest {
     @Before
     fun setUp() {
         filesProvider = UniqueFilesProvider("chunk", ".")
+        val dir = filesProvider.getStatsDataDirectory()
+        dir.deleteRecursively()
         fileLogger = LogFileManager(filesProvider)
     }
 
@@ -95,10 +100,10 @@ class FileLoggerTest {
 
     @Test
     fun test_chunk_is_around_256Kb() {
-        val bytesToWrite = 1024 * 256
-        (0..bytesToWrite).forEach {
-            fileLogger.println("")
-        }
+        val bytesToWrite = 1024 * 200
+        val text = StringUtil.repeat("c", bytesToWrite)
+        fileLogger.println(text)
+        fileLogger.dispose()
 
         val chunks = filesProvider.getDataFiles()
         assertThat(chunks).hasSize(1)
@@ -110,12 +115,12 @@ class FileLoggerTest {
     
     @Test
     fun test_multiple_chunks() {
-        writeKb(256)
-        writeKb(256)
+        writeKb(1024)
 
         val files = filesProvider.getDataFiles()
-        assertThat(files).hasSize(2)
-        assertThat(files[0].name.substringAfter('_').toInt()).isLessThan(files[1].name.substringAfter('_').toInt())
+        val fileIndexes = files.map { it.name.substringAfter('_').toInt() }
+        assertThat(files.isNotEmpty())
+        assertThat(fileIndexes).isEqualTo((0..files.size - 1).toList())
     }
 
 
@@ -124,30 +129,37 @@ class FileLoggerTest {
         writeKb(4096)
 
         var files = filesProvider.getDataFiles()
-        assertThat(files).hasSize(4096 / 250)
-        
-        val firstBefore = files.map { it.name.substringAfter('_').toInt() }
-                .sorted()
-                .first()
+
+        val totalSize = files.fold(0L, { total, file -> total + file.length() })
+        assertThat(totalSize > 2 * 1024 * 1024)
+
+        val firstBefore = files
+          .map { it.name.substringAfter('_').toInt() }
+          .sorted()
+          .first()
         
         assertThat(firstBefore).isEqualTo(0)
         
         filesProvider.cleanupOldFiles()
         files = filesProvider.getDataFiles()
-        assertThat(files).hasSize(2048 / 250)
+
+        val totalSizeAfterCleanup = files.fold(0L, { total, file -> total + file.length() })
+        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024)
+
+        val firstAfter = files
+          .map { it.name.substringAfter('_').toInt() }
+          .sorted()
+          .first()
         
-        val firstAfter = files.map { it.name.substringAfter('_').toInt() }
-                .sorted()
-                .first()
-        
-        assertThat(firstAfter).isEqualTo(8)
+        assertThat(firstAfter).isGreaterThan(0)
     }
 
     private fun writeKb(kb: Int) {
-        val bytesToWrite = 1024 * kb
-        (0..bytesToWrite).forEach {
+        val lineLength = System.lineSeparator().length
+        (0..kb * 1024 / lineLength).forEach {
             fileLogger.println("")
         }
+        fileLogger.dispose()
     }
 
 }

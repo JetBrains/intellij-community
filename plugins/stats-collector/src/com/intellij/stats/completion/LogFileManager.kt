@@ -10,11 +10,11 @@ class LineStorage {
         private set
     
     fun appendLine(line: String) {
-        size += line.length + 1
+        size += line.length + System.lineSeparator().length
         lines.add(line)
     }
 
-    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + 1
+    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + System.lineSeparator().length
     
     fun clear() {
         size = 0
@@ -35,7 +35,7 @@ class LogFileManager(private val filePathProvider: FilePathProvider) {
     private val storage = LineStorage()
 
     fun println(message: String) {
-        if (storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
+        if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
             saveDataChunk(storage)
             storage.clear()
         }
