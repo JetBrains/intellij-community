@@ -48,9 +48,9 @@ public class StructMember {
   }
 
   protected VBStyleCollection<StructGeneralAttribute, String> readAttributes(DataInputFullStream in, ConstantPool pool) throws IOException {
-    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<>();
-
     int length = in.readUnsignedShort();
+
+    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<>(length);
     for (int i = 0; i < length; i++) {
       int nameIndex = in.readUnsignedShort();
       String name = pool.getPrimitiveConstant(nameIndex).getString();
