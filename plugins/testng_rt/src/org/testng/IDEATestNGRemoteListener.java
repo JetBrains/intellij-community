@@ -258,14 +258,7 @@ public class IDEATestNGRemoteListener {
   private static String getParamsString(Object[] parameters, int invocationCount) {
     String paramString = "";
     if (parameters.length > 0) {
-      StringBuilder buf = new StringBuilder();
-      for (int i = 0; i < parameters.length; i++) {
-        if (i > 0) {
-          buf.append(", ");
-        }
-        buf.append(parameters[i]);
-      }
-      paramString = "[" + buf.toString() + "]";
+      paramString = Arrays.deepToString(parameters);
     }
     if (invocationCount > 0) {
       paramString += " (" + invocationCount + ")";
