@@ -24,7 +24,7 @@ import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
@@ -40,17 +40,18 @@ class GradleProjectContributor : GradleMethodContextContributor {
     val fileTreeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "fileTree"))
     val filesClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "files"))
     val taskClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "task"))
+    val execClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "exec"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     if (copySpecClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_COPY_SPEC, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(createType(GRADLE_API_FILE_COPY_SPEC, closure), Closure.DELEGATE_FIRST)
     }
     if (fileTreeClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_CONFIGURABLE_FILE_TREE, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(createType(GRADLE_API_FILE_CONFIGURABLE_FILE_TREE, closure), Closure.DELEGATE_FIRST)
     }
     if (filesClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(createType(GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION, closure), Closure.DELEGATE_FIRST)
     }
     if (taskClosure.accepts(closure)) {
       var taskType: PsiType? = null
@@ -62,9 +63,12 @@ class GradleProjectContributor : GradleMethodContextContributor {
         }
       }
       if (taskType == null) {
-        taskType = TypesUtil.createType(GRADLE_API_TASK, closure)
+        taskType = createType(GRADLE_API_TASK, closure)
       }
       return DelegatesToInfo(taskType, Closure.DELEGATE_FIRST)
+    }
+    if (execClosure.accepts(closure)) {
+      return DelegatesToInfo(createType(GRADLE_PROCESS_EXEC_SPEC, closure), Closure.DELEGATE_FIRST)
     }
     return null
   }
