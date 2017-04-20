@@ -1,7 +1,7 @@
 public class ReturnValue {
   public int getX() {
     int y=0;
-    return y;
+    return <warning descr="'y' should probably not be returned from method 'getX'">y</warning>;
   }
 
   interface I {
@@ -12,7 +12,7 @@ public class ReturnValue {
     I i = () -> {
       int x = 0;
       return x;
-    }
+    };
     return i.m();
   }
 }
