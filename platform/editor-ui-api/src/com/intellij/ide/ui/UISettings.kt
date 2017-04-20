@@ -26,6 +26,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.isValidFont
@@ -35,7 +36,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Transient
-import sun.swing.SwingUtilities2
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -358,12 +358,12 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent())
+      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
     fun setupEditorAntialiasing(component: JComponent) {
-      instance.editorAAType?.let { component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, it.textInfo) }
+      instance.editorAAType?.let { GraphicsUtil.setAntialiasingType(component, it.textInfo) }
     }
 
     @JvmStatic
