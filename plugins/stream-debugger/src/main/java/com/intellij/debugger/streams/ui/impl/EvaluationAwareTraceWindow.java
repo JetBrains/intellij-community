@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.Value;
@@ -47,6 +48,8 @@ import java.util.stream.Stream;
  * @author Vitaliy.Bibaev
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
+  private static final int DEFAULT_WIDTH = 870;
+  private static final int DEFAULT_HEIGHT = 400;
   private static final String FLAT_MODE_NAME = "Flat Mode";
   private static final String TABBED_MODE_NAME = "Split Mode";
   private final JPanel myCenterPane;
@@ -81,6 +84,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     myFlatContent = new MyPlaceholder();
     myCenterPane.add(myFlatContent);
+    myCenterPane.setPreferredSize(new JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
 
     init();
   }
