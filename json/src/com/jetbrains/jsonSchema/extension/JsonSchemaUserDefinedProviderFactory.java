@@ -8,7 +8,6 @@ import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
@@ -20,10 +19,9 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 2/13/2016.
  */
 public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory {
+  @NotNull
   @Override
-  public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
-    if (project == null) return Collections.emptyList();
-
+  public List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
     final JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();

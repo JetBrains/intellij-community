@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,8 +35,9 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     myProviders = Collections.singletonList(new MyJsonSchemaFileProvider());
   }
 
+  @NotNull
   @Override
-  public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
+  public List<JsonSchemaFileProvider> getProviders() {
     return myProviders;
   }
 

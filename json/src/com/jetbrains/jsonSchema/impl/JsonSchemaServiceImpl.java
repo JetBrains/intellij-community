@@ -49,10 +49,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
-    myState = new MyState(() -> Arrays.stream(getProviderFactories())
-      .map(factory -> factory.getProviders(myProject))
-      .flatMap(List::stream)
-      .collect(Collectors.toList()));
+    myState = new MyState(Arrays.stream(getProviderFactories())
+                            .map(JsonSchemaProviderFactory::getProviders)
+                            .flatMap(List::stream)
+                            .collect(Collectors.toList()),
+                          () -> Arrays.stream(getProviderFactories())
+                            .map(factory -> factory.getProviders(myProject))
+                            .flatMap(List::stream)
+                            .collect(Collectors.toList()));
     myModificationTracker = () -> myModificationCount.get();
     JsonSchemaVfsListener.startListening(project, this);
   }
@@ -162,22 +166,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     private Collection<JsonSchemaFileProvider> myUnmodifiableProviders = Collections.emptyList();
     private Set<VirtualFile> myUnmodifiableFiles = Collections.emptySet();
     private boolean initialized;
+    @NotNull private final Map<VirtualFile, JsonSchemaFileProvider> myApplicationProviders;
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
 
-    private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory) {myFactory = factory;}
-
-    private void ensure() {
-      synchronized (myLock) {
-        if (!initialized) {
-          mySchemaProviderMap.clear();
-          mySchemaProviderMap.putAll(myFactory.create().stream()
-                                 .filter(provider -> provider.getSchemaFile() != null)
-                                 .collect(Collectors.toMap(JsonSchemaFileProvider::getSchemaFile, Function.identity())));
-          myUnmodifiableFiles = Collections.unmodifiableSet(mySchemaProviderMap.keySet());
-          myUnmodifiableProviders = Collections.unmodifiableCollection(mySchemaProviderMap.values());
-          initialized = true;
-        }
-      }
+    private MyState(@NotNull final List<JsonSchemaFileProvider> applicationProviders,
+                    @NotNull final Factory<List<JsonSchemaFileProvider>> factory) {
+      myApplicationProviders = Collections.unmodifiableMap(createFileProviderMap(applicationProviders));
+      myFactory = factory;
     }
 
     public void reset() {
@@ -211,6 +206,25 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         ensure();
         return mySchemaProviderMap.get(file);
       }
+    }
+
+    private void ensure() {
+      synchronized (myLock) {
+        if (!initialized) {
+          mySchemaProviderMap.clear();
+          mySchemaProviderMap.putAll(myApplicationProviders);
+          mySchemaProviderMap.putAll(createFileProviderMap(myFactory.create()));
+          myUnmodifiableFiles = Collections.unmodifiableSet(mySchemaProviderMap.keySet());
+          myUnmodifiableProviders = Collections.unmodifiableCollection(mySchemaProviderMap.values());
+          initialized = true;
+        }
+      }
+    }
+
+    private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list) {
+      return list.stream()
+        .filter(provider -> provider.getSchemaFile() != null)
+        .collect(Collectors.toMap(JsonSchemaFileProvider::getSchemaFile, Function.identity()));
     }
   }
 }

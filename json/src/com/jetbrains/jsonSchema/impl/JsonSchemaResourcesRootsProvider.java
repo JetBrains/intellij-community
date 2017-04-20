@@ -26,12 +26,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
-import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 4/14/2016.
@@ -43,19 +43,18 @@ public class JsonSchemaResourcesRootsProvider extends IndexableSetContributor {
     @NotNull
     @Override
     protected Set<VirtualFile> compute() {
-      final Set<VirtualFile> set = new HashSet<>();
       final JsonSchemaProviderFactory[] extensions = Extensions.getExtensions(JsonSchemaProviderFactory.EP_NAME);
-      for (JsonSchemaProviderFactory extension : extensions) {
-        final List<JsonSchemaFileProvider> providers = extension.getProviders(null);
-        for (JsonSchemaFileProvider provider : providers) {
-          if (!SchemaType.userSchema.equals(provider.getSchemaType())) {
-            final VirtualFile schemaFile = provider.getSchemaFile();
-            if (schemaFile == null) LOG.info("Can not find resource file for json schema provider: " + provider.getName());
-            else set.add(schemaFile);
-          }
-        }
-      }
-      return set;
+
+      return Arrays.stream(extensions)
+        .map(JsonSchemaProviderFactory::getProviders)
+        .flatMap(List::stream)
+        .filter(provider -> {
+          boolean noFile = provider.getSchemaFile() == null;
+          if (noFile) LOG.info("Can not find resource file for json schema provider: " + provider.getName());
+          return !noFile;
+        })
+        .map(JsonSchemaFileProvider::getSchemaFile)
+        .collect(Collectors.toSet());
     }
   };
 
