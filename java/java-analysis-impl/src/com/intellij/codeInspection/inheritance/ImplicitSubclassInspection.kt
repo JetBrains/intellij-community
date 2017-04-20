@@ -56,7 +56,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
           problemTargets(aClass).forEach {
             problems.add(manager.createProblemDescriptor(
-              it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicitsubclass.display.forClass", aClass.name), isOnTheFly,
+              it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name), isOnTheFly,
               classFixes,
               ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
             )
@@ -114,9 +114,9 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     override fun getFamilyName(): String = QuickFixBundle.message("fix.modifiers.family")
 
     override fun getText() = if (uDeclaration is UClass)
-      InspectionsBundle.message("inspection.implicitsubclass.make.class.extendable")
+      InspectionsBundle.message("inspection.implicit.subclass.make.class.extendable")
     else
-      InspectionsBundle.message("inspection.implicitsubclass.extendable", hintName)
+      InspectionsBundle.message("inspection.implicit.subclass.extendable", hintName)
 
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {

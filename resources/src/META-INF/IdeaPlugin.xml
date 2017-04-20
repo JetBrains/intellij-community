@@ -813,7 +813,7 @@
                      implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
                      displayName="Class may extend a commonly used base class instead of implementing interface"/>
     <localInspection language="UAST" shortName="ImplicitSubclassInspection"
-                     bundle="messages.InspectionsBundle" key="inspection.implicitsubclass.display.name"
+                     bundle="messages.InspectionsBundle" key="inspection.implicit.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
                      groupPath="Uast"
                      enabledByDefault="true" level="WARNING"

@@ -43,7 +43,7 @@ public class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
     }
 
     if (InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement")) {
-      return DevKitBundle.message("implemented.at.runtime.jamelement");
+      return DevKitBundle.message("implemented.at.runtime.jamElement");
     }
 
     return null;

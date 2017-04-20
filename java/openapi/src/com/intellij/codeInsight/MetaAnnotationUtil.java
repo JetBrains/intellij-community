@@ -159,8 +159,8 @@ public class MetaAnnotationUtil {
 
     final List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
     for (String annotationFQN : annotations) {
-      for (PsiClass psiClass : resolvedAnnotations) {
-        if (metaAnnotationCached(annotationFQN, psiClass) != null) return true;
+      for (PsiClass resolvedAnnotation : resolvedAnnotations) {
+        if (metaAnnotationCached(resolvedAnnotation, annotationFQN) != null) return true;
       }
     }
 
@@ -168,11 +168,12 @@ public class MetaAnnotationUtil {
   }
 
   @Nullable
-  private static PsiAnnotation metaAnnotationCached(String annotationFQN, PsiClass psiClass) {
-    ConcurrentFactoryMap<String, PsiAnnotation> cachedValue = CachedValuesManager.getCachedValue(psiClass, () ->
-      new CachedValueProvider.Result<>(ConcurrentFactoryMap.createConcurrentMap(anno -> findMetaAnnotation(psiClass, anno, new HashSet<>())),
-                                       PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
-    return cachedValue.get(annotationFQN);
+  private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
+    ConcurrentFactoryMap<String, PsiAnnotation> cachedValue = CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
+      ConcurrentFactoryMap<String, PsiAnnotation> metaAnnotationsMap = ConcurrentFactoryMap.createConcurrentMap(anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
+      return new CachedValueProvider.Result<>(metaAnnotationsMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+    return cachedValue.get(annotationToFind);
   }
 
   @Nullable
@@ -201,14 +202,17 @@ public class MetaAnnotationUtil {
 
     Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
 
-    Stream<PsiAnnotation> metannotations =
+    Stream<PsiClass> lazyResolvedAnnotations =
       Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
-        .flatMap(e -> e.stream())
+        .flatMap(e -> e.stream());
+
+    Stream<PsiAnnotation> metaAnnotations =
+      lazyResolvedAnnotations
         .flatMap(psiClass -> annotations.stream()
-          .map(annotationFQN -> metaAnnotationCached(annotationFQN, psiClass)))
+          .map(annotationFQN -> metaAnnotationCached(psiClass, annotationFQN)))
         .filter(Objects::nonNull);
 
-    return Stream.concat(directAnnotations, metannotations);
+    return Stream.concat(directAnnotations, metaAnnotations);
   }
 
 
