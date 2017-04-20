@@ -36,7 +36,7 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
   private boolean myTests;
 
   private ResourcesTargetType(String typeId, boolean tests) {
-    super(typeId);
+    super(typeId, true);
     myTests = tests;
   }
 

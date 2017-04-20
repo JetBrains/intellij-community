@@ -24,8 +24,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
@@ -126,8 +124,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
 
   @Override
   public boolean isDummy(@NotNull BuildTarget<?> target) {
-    return (target instanceof ModuleBuildTarget || target instanceof ResourcesTarget) //todo[nik] introduce method in BuildTarget instead
-         && myBuildRootIndex.getTargetRoots(target, null).isEmpty();
+    return target.getTargetType().isFileBased() && myBuildRootIndex.getTargetRoots(target, null).isEmpty();
   }
 
   @Override

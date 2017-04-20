@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,7 +139,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
     private final boolean myTests;
 
     protected Type(boolean tests) {
-      super("groovy-check-resources" + (tests ? "_tests" : ""));
+      super("groovy-check-resources" + (tests ? "_tests" : ""), true);
       myTests = tests;
     }
 

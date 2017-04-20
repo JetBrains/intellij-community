@@ -94,7 +94,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     CompileContext context = CompileContextImpl.createContextForTests(scope, descriptor);
     List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(context);
     for (BuildTargetChunk chunk : chunks) {
-      assertOneElement(chunk.getTargets());
+      assertTrue("Circular dependency between build targets " + chunk.getTargets(), chunk.getTargets().size() == 1);
     }
     assertEmpty(targetIndex.getDependencies(new ModuleBuildTarget(t, JavaModuleBuildTargetType.TEST), context));
   }
