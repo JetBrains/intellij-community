@@ -95,7 +95,11 @@ public class SemicolonFixer implements Fixer {
         psiElement instanceof PsiAssertStatement ||
         psiElement instanceof PsiPackageStatement ||
         psiElement instanceof PsiField && !(psiElement instanceof PsiEnumConstant) ||
-        psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getBody() == null && !MissingMethodBodyFixer.shouldHaveBody((PsiMethod)psiElement))
+        psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getBody() == null && !MissingMethodBodyFixer.shouldHaveBody((PsiMethod)psiElement) ||
+        psiElement instanceof PsiRequiresStatement ||
+        psiElement instanceof PsiPackageAccessibilityStatement ||
+        psiElement instanceof PsiUsesStatement ||
+        psiElement instanceof PsiProvidesStatement)
     {
       String text = psiElement.getText();
 
