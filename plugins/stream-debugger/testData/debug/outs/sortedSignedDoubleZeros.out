@@ -1,0 +1,25 @@
+LineBreakpoint created at SortedSignedDoubleZeros.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! SortedSignedDoubleZeros
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+SortedSignedDoubleZeros.java:5
+DoubleStream.of(0., -0.)
+.sorted()
+.sum()
+DoubleStream.of
+    before: nothing
+    after: 1,2
+sorted
+    before: 1,2
+    after: 3,4
+sum
+    before: 3,4
+    after: nothing
+mappings for sorted
+    nothing -> 1 -> 4
+    nothing -> 2 -> 3
+mappings for sum
+    1 -> 3 -> nothing
+    2 -> 4 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
