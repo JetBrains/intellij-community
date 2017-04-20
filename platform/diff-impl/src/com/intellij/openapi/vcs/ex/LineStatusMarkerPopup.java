@@ -253,13 +253,15 @@ public abstract class LineStatusMarkerPopup {
 
   private static class PopupPanel extends JPanel {
     @Nullable private final JComponent myEditorComponent;
+    @NotNull private final Editor myEditor;
 
-    public PopupPanel(@NotNull final Editor editor,
+    public PopupPanel(@NotNull Editor editor,
                       @NotNull ActionToolbar toolbar,
                       @Nullable JComponent editorComponent) {
       super(new BorderLayout());
       setOpaque(false);
 
+      myEditor = editor;
       myEditorComponent = editorComponent;
       boolean isEditorVisible = myEditorComponent != null;
 
@@ -320,7 +322,7 @@ public abstract class LineStatusMarkerPopup {
     }
 
     public int getEditorTextOffset() {
-      return 3; // myEditorComponent.getInsets().left
+      return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
     }
   }
 
