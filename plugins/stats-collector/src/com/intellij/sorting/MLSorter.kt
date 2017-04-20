@@ -46,7 +46,7 @@ class MLSorter : CompletionFinalSorter() {
         val relevanceObjects = lookup.getRelevanceObjects(items, false)
 
         val startTime = System.currentTimeMillis()
-        val sorted = sortInner(items, lookup, relevanceObjects) ?: return items
+        val sorted = sortByMLRanking(items, lookup, relevanceObjects) ?: return items
         val timeSpent = System.currentTimeMillis() - startTime
         
         val elementsSorted = items.count()
@@ -55,9 +55,12 @@ class MLSorter : CompletionFinalSorter() {
         return sorted
     }
 
-    private fun sortInner(items: MutableIterable<LookupElement>, 
-                          lookup: LookupImpl, 
-                          relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): Iterable<LookupElement>?
+    /**
+     * Null means we encountered unknown features and are unable to sort them
+     */
+    private fun sortByMLRanking(items: MutableIterable<LookupElement>,
+                                lookup: LookupImpl,
+                                relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): Iterable<LookupElement>?
     {
         return items
                 .mapIndexed { index, lookupElement ->
