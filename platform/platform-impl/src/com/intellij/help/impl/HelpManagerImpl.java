@@ -73,8 +73,8 @@ public class HelpManagerImpl extends HelpManager {
       }
       String productVersion = info.getMajorVersion() + "." + minorVersion;
 
-      String url = info.getWebHelpUrl() + "/" + productVersion + "/?" + id;
-      
+      String url = (info.getWebHelpUrl() + "/" + productVersion + "/?" + id).replaceAll("//", "/");
+
       if (PlatformUtils.isJetBrainsProduct()) {
         String productCode = info.getBuild().getProductCode();
         if(!StringUtil.isEmpty(productCode)) {
