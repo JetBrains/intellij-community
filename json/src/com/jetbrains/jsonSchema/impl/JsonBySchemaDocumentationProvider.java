@@ -9,9 +9,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,16 +21,6 @@ import java.util.List;
 
 
 public class JsonBySchemaDocumentationProvider implements DocumentationProvider {
-
-  @NotNull private final VirtualFile mySchemaFile;
-  @NotNull
-  private final JsonSchemaObject myRootSchema;
-
-  public JsonBySchemaDocumentationProvider(@NotNull VirtualFile schemaFile, @NotNull JsonSchemaObject schema) {
-    mySchemaFile = schemaFile;
-    myRootSchema = schema;
-  }
-
   @Nullable
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
@@ -44,23 +36,26 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, myRootSchema);
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+    final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
+    final JsonSchemaObject rootSchema = service.getSchemaForCodeAssistance(containingFile.getViewProvider().getVirtualFile());
+    final VirtualFile schemaFile;
+    if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return null;
+
+    if (JsonSchemaFileType.INSTANCE.equals(containingFile.getFileType())) {
+      return generateForJsonSchemaFileType(element);
+    }
+    return generateDoc(element, rootSchema, schemaFile);
+  }
+
+  @Nullable
+  public static String generateDoc(@NotNull final PsiElement element,
+                                   @NotNull final JsonSchemaObject rootSchema,
+                                   @NotNull final VirtualFile schemaFile) {
+    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
-    if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) {
-      final JsonProperty jsonProperty =
-        element instanceof JsonProperty ? (JsonProperty)element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
-      if (jsonProperty != null) {
-        final JsonValue value = jsonProperty.getValue();
-        if (value instanceof JsonObject) {
-          final JsonProperty description = ((JsonObject)value).findProperty("description");
-          if (description != null && description.getValue() instanceof JsonStringLiteral) {
-            return StringUtil.escapeXml(StringUtil.unquoteString(description.getValue().getText()));
-          }
-        }
-        return null;
-      }
-    }
 
     final Ref<String> result = Ref.create();
     JsonSchemaWalker.findSchemasForDocumentation(element, walker, new JsonSchemaWalker.CompletionSchemesConsumer() {
@@ -87,9 +82,25 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
                         @NotNull List<JsonSchemaWalker.Step> steps) {
         //todo?
       }
-    }, myRootSchema, mySchemaFile);
+    }, rootSchema, schemaFile);
 
     return result.get();
+  }
+
+  @Nullable
+  private static String generateForJsonSchemaFileType(@NotNull PsiElement element) {
+    final JsonProperty jsonProperty =
+      element instanceof JsonProperty ? (JsonProperty)element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
+    if (jsonProperty != null) {
+      final JsonValue value = jsonProperty.getValue();
+      if (value instanceof JsonObject) {
+        final JsonProperty description = ((JsonObject)value).findProperty("description");
+        if (description != null && description.getValue() instanceof JsonStringLiteral) {
+          return StringUtil.escapeXml(StringUtil.unquoteString(description.getValue().getText()));
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

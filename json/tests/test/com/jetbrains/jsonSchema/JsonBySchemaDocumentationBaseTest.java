@@ -20,7 +20,7 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.jsonSchema.ide.JsonSchemaDocumentationProvider;
+import com.jetbrains.jsonSchema.impl.JsonBySchemaDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
  */
 public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyAbstractTest {
   protected void doTest(boolean hasDoc, String extension) throws Exception {
-    final JsonSchemaDocumentationProvider provider = new JsonSchemaDocumentationProvider();
+    final JsonBySchemaDocumentationProvider provider = new JsonBySchemaDocumentationProvider();
     LanguageDocumentation.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, provider);
 
     try {

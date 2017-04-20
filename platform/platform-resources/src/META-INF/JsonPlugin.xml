@@ -34,7 +34,7 @@
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
     <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
-    <completion.contributor language="JSON" id="JsonSchemaCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
+    <completion.contributor language="JSON" id="JsonCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
     <lang.psiStructureViewFactory language="JSON" implementationClass="com.intellij.json.structureView.JsonStructureViewBuilderFactory"/>
     <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
     <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.editor.smartEnter.JsonSmartEnterProcessor"/>
@@ -69,11 +69,11 @@
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
     <applicationService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaFileTypeManager"/>
-    <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator"/>
-    <completion.contributor order="last, before JsonSchemaCompletionContributor" language="JSON"
-                            implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaCompletionContributor"/>
+    <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectAnnotator"/>
+    <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
+                            implementationClass="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectCompletionContributor"/>
     <lang.documentationProvider language="JSON"
-                                implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaDocumentationProvider"/>
+                                implementationClass="com.jetbrains.jsonSchema.impl.JsonBySchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>

@@ -23,7 +23,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,21 +36,10 @@ import java.util.List;
 /**
  * @author Irina.Chernushina on 10/1/2015.
  */
-class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
+public class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
   private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
   private static final String USER_USAGE_KEY = "json.schema.user.completion";
-  @NotNull private final SchemaType myType;
-  @NotNull private final VirtualFile mySchemaFile;
-  @NotNull private final JsonSchemaObject myRootSchema;
-
-  public JsonBySchemaObjectCompletionContributor(@NotNull SchemaType type,
-                                                 @NotNull VirtualFile schemaFile,
-                                                 final @NotNull JsonSchemaObject rootSchema) {
-    myType = type;
-    mySchemaFile = schemaFile;
-    myRootSchema = rootSchema;
-  }
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -56,10 +47,22 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     final PsiFile containingFile = position.getContainingFile();
     if (containingFile == null) return;
 
-    updateStat();
-    final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition():
+    final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
+    final JsonSchemaObject rootSchema = service.getSchemaForCodeAssistance(containingFile.getViewProvider().getVirtualFile());
+    final VirtualFile schemaFile;
+    if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return;
+
+    updateStat(service.getSchemaProvider(schemaFile));
+    doCompletion(parameters, result, rootSchema, schemaFile);
+  }
+
+  public static void doCompletion(@NotNull final CompletionParameters parameters,
+                                  @NotNull final CompletionResultSet result,
+                                  @NotNull final JsonSchemaObject rootSchema,
+                                  @NotNull final VirtualFile schemaFile) {
+    final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
-    new Worker(myRootSchema, mySchemaFile, position, completionPosition, result).work();
+    new Worker(rootSchema, schemaFile, parameters.getPosition(), completionPosition, result).work();
     result.stopHere();
   }
 
@@ -71,12 +74,14 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     return result;
   }
 
-  private void updateStat() {
-    if (SchemaType.schema.equals(myType)) {
+  private static void updateStat(@Nullable JsonSchemaFileProvider provider) {
+    if (provider == null) return;
+    final SchemaType schemaType = provider.getSchemaType();
+    if (SchemaType.schema.equals(schemaType)) {
       UsageTrigger.trigger(SCHEMA_USAGE_KEY);
-    } else if (SchemaType.embeddedSchema.equals(myType)) {
+    } else if (SchemaType.embeddedSchema.equals(schemaType)) {
       UsageTrigger.trigger(BUILTIN_USAGE_KEY);
-    } else if (SchemaType.userSchema.equals(myType)) {
+    } else if (SchemaType.userSchema.equals(schemaType)) {
       UsageTrigger.trigger(USER_USAGE_KEY);
     }
   }

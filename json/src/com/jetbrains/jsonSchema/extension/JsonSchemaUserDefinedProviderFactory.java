@@ -77,7 +77,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
-      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() ||
+      if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null ||
           JsonSchemaFileType.INSTANCE.equals(file.getFileType())) return false;
       return myPatterns.stream().anyMatch(processor -> processor.process(file));
     }

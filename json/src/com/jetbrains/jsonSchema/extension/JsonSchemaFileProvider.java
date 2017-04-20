@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.jsonSchema.CodeInsightProviders;
 import org.jetbrains.annotations.NotNull;
 
 public interface JsonSchemaFileProvider {
@@ -17,10 +16,6 @@ public interface JsonSchemaFileProvider {
   SchemaType getSchemaType();
 
   int getOrder();
-
-  default CodeInsightProviders proxyCodeInsightProviders(@NotNull final CodeInsightProviders providers) {
-    return providers;
-  }
 
   interface Orders {
     int CORE = -1000;

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
@@ -208,6 +209,11 @@ public class JsonSchemaObject {
     if (target == null) target = new HashMap<>();
     target.putAll(source);
     return target;
+  }
+
+  @Nullable
+  public VirtualFile getSchemaFile() {
+    return myPeerPointer == null ? null : myPeerPointer.getVirtualFile();
   }
 
   public SmartPsiElementPointer<JsonObject> getPeerPointer() {

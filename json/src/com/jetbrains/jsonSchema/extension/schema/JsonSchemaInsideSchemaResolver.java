@@ -37,15 +37,13 @@ public class JsonSchemaInsideSchemaResolver {
   public static final String PROPERTIES = "/properties/";
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile mySchemaFile;
-  @NotNull private final String myReference;
   @NotNull private final List<JsonSchemaWalker.Step> mySteps;
 
   public JsonSchemaInsideSchemaResolver(@NotNull Project project,
                                         @NotNull VirtualFile schemaFile,
-                                        @NotNull String reference, @NotNull List<JsonSchemaWalker.Step> steps) {
+                                        @NotNull List<JsonSchemaWalker.Step> steps) {
     myProject = project;
     mySchemaFile = schemaFile;
-    myReference = reference;
     mySteps = steps;
   }
 
@@ -84,12 +82,9 @@ public class JsonSchemaInsideSchemaResolver {
         list.stream().findFirst().ifPresent(object -> consume(isName, object, schemaFile, steps));
       }
     };
-    JsonSchemaService.Impl.get(myProject).visitSchemaObject(mySchemaFile,
-                                                              object -> {
-                                                                JsonSchemaWalker.extractSchemaVariants(
-                                                                  myProject, consumer, mySchemaFile, object, true, mySteps, false);
-                                                                return true;
-                                                              });
+    final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(myProject).getSchemaObjectForSchemaFile(mySchemaFile);
+    if (schemaObject == null) return null;
+    JsonSchemaWalker.extractSchemaVariants(myProject, consumer, mySchemaFile, schemaObject, true, mySteps, false);
     return ref.get();
   }
 }

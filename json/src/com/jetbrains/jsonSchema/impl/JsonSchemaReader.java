@@ -17,7 +17,6 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonValue;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,10 +25,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -50,13 +49,13 @@ public class JsonSchemaReader {
   public static JsonSchemaReader create(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
     if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load PSI for JSON Schema file '%s'", key.getName()));
-    final List<JsonValue> values = ((JsonFile)psiFile).getAllTopLevelValues();
-    if (values.size() != 1 || !(values.get(0) instanceof JsonObject))
+    final JsonObject value = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
+    if (value == null)
       throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", key.getName()));
-    return new JsonSchemaReader((JsonObject)values.get(0));
+    return new JsonSchemaReader(value);
   }
 
-  public JsonSchemaObject read() throws IOException {
+  public JsonSchemaObject read() {
     final ReadJsonSchemaFromPsi reader = new ReadJsonSchemaFromPsi();
     final JsonSchemaObject object = reader.read(myRoot);
     processReferences(object, reader.getAllObjects());

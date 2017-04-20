@@ -235,15 +235,14 @@ public class JsonSchemaWalker {
     final VirtualFile variantSchemaFile = splitter.isAbsolute() ? service.getSchemaFileById(splitter.getSchemaId(), schemaFile) :
       schemaFile;
     if (variantSchemaFile == null) return;
-    service.visitSchemaObject(variantSchemaFile,
-                                variantObject -> {
-                                  List<Step> variantSteps = buildSteps(splitter.getRelativePath()).getFirst();
-                                  // empty list might be not modifiable
-                                  if (variantSteps.isEmpty()) variantSteps = steps;
-                                  else variantSteps.addAll(steps);
-                                  queue.add(Trinity.create(variantObject, variantSchemaFile, variantSteps));
-                                  return true;
-                                });
+    final JsonSchemaObject variantObject = service.getSchemaObjectForSchemaFile(variantSchemaFile);
+    if (variantObject != null) {
+      List<Step> variantSteps = buildSteps(splitter.getRelativePath()).getFirst();
+      // empty list might be not modifiable
+      if (variantSteps.isEmpty()) variantSteps = steps;
+      else variantSteps.addAll(steps);
+      queue.add(Trinity.create(variantObject, variantSchemaFile, variantSteps));
+    }
   }
 
   private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer,

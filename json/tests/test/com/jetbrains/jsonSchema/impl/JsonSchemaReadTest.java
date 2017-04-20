@@ -15,7 +15,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
-import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.junit.Assert;
 
@@ -85,7 +84,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     assertNotNull(mainSchema);
     assertTrue(JsonSchemaFileType.INSTANCE.equals(mainSchema.getFileType()));
 
-    final Annotator annotator = new JsonSchemaAnnotator();
+    final Annotator annotator = new JsonBySchemaObjectAnnotator();
     LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override

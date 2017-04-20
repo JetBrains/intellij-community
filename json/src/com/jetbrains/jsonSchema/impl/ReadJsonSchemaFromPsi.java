@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,9 +65,9 @@ public class ReadJsonSchemaFromPsi {
     if (psiFile == null || !(psiFile instanceof JsonFile)) return null;
 
     final CachedValueProvider<String> provider = () -> {
-      final List<JsonValue> values = ((JsonFile)psiFile).getAllTopLevelValues();
-      if (values.size() != 1 || !(values.get(0) instanceof JsonObject)) return null;
-      return CachedValueProvider.Result.create(readId((JsonObject)values.get(0)), psiFile);
+      final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
+      if (topLevelValue == null) return null;
+      return CachedValueProvider.Result.create(readId(topLevelValue), psiFile);
     };
     return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
   }
