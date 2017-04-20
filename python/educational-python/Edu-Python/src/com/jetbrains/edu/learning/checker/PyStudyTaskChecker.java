@@ -46,7 +46,7 @@ public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
         StudyCheckUtils.flushWindows(myTask, taskDir);
         latch.countDown();
       }));
-    final StudyTestRunner testRunner = new PyStudyTestRunner(myTask, taskDir);
+    final PyStudyTestRunner testRunner = new PyStudyTestRunner(myTask, taskDir);
     try {
       final VirtualFile fileToCheck = getTaskVirtualFile(myTask, taskDir);
       if (fileToCheck != null) {

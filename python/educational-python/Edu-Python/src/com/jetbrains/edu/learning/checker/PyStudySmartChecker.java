@@ -36,7 +36,7 @@ public class PyStudySmartChecker {
                                 @NotNull final VirtualFile answerFile,
                                 @NotNull final TaskFile answerTaskFile,
                                 @NotNull final TaskFile usersTaskFile,
-                                @NotNull final StudyTestRunner testRunner,
+                                @NotNull final PyStudyTestRunner testRunner,
                                 @NotNull final VirtualFile virtualFile,
                                 @NotNull final Document usersDocument) {
     VirtualFile fileWindows = null;
@@ -83,7 +83,7 @@ public class PyStudySmartChecker {
   }
 
   public static void runSmartTestProcess(@NotNull final VirtualFile taskDir,
-                                         @NotNull final StudyTestRunner testRunner,
+                                         @NotNull final PyStudyTestRunner testRunner,
                                          @NotNull final String taskFileName,
                                          @NotNull final TaskFile taskFile,
                                          @NotNull final Project project) {

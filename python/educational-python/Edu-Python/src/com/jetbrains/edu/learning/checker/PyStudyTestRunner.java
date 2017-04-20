@@ -18,12 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Map;
 
-public class PyStudyTestRunner extends StudyTestRunner {
+public class PyStudyTestRunner {
   private static final String PYTHONPATH = "PYTHONPATH";
+  @NotNull private final Task myTask;
+  @NotNull private final VirtualFile myTaskDir;
   private GeneralCommandLine myCommandLine;
 
   PyStudyTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    super(task, taskDir);
+    myTask = task;
+    myTaskDir = taskDir;
   }
 
   public Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
@@ -56,7 +59,6 @@ public class PyStudyTestRunner extends StudyTestRunner {
     return null;
   }
 
-  @Override
   public GeneralCommandLine getCommandLine() {
     return myCommandLine;
   }
