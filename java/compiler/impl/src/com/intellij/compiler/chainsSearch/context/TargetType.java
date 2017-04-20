@@ -77,27 +77,23 @@ public class TargetType {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
     byte iteratorKind = SignatureData.ZERO_DIM;
     if (resolvedClass == null) return null;
-    String iteratorClass = isIterator(resolvedClass);
+    String iteratorClass = getIteratorKind(resolvedClass);
     if (iteratorClass != null) {
-      PsiClassType streamType = (PsiClassType)PsiUtil.substituteTypeParameter(classType, iteratorClass, 0, false);
-      if (streamType == null) return null;
-      PsiType[] parameters = streamType.getParameters();
-      if (parameters.length != 1 || !(parameters[0] instanceof PsiClassType)) return null;
-      resolvedClass = PsiUtil.resolveClassInClassTypeOnly(parameters[0]);
+      resolvedClass = PsiUtil.resolveClassInClassTypeOnly(PsiUtil.substituteTypeParameter(classType, iteratorClass, 0, false));
       if (resolvedClass == null) return null;
       iteratorKind = SignatureData.ITERATOR_ONE_DIM;
+    }
+    if (resolvedClass.hasTypeParameters()) {
+      return null;
     }
     String classQName = resolvedClass.getQualifiedName();
     if (classQName == null) {
       return null;
     }
-    if (resolvedClass.hasTypeParameters()) {
-      return null;
-    }
     return new TargetType(classQName, iteratorKind, classType);
   }
 
-  private static String isIterator(PsiClass resolvedClass) {
+  public static String getIteratorKind(PsiClass resolvedClass) {
     if (InheritanceUtil.isInheritor(resolvedClass, CommonClassNames.JAVA_LANG_ITERABLE)) {
       return CommonClassNames.JAVA_LANG_ITERABLE;
     }

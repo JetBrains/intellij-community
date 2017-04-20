@@ -215,6 +215,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals("c.getMethods", element.getLookupString());
   }
 
+  public void testCollection() {
+    WeightableChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("c.getMethods", element.getLookupString());
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int lastMethodWeight,

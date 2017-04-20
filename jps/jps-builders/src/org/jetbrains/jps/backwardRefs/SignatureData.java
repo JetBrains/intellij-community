@@ -21,7 +21,7 @@ public class SignatureData {
   public static final byte ZERO_DIM = 0;
   public static final byte ARRAY_ONE_DIM = 1;
   // represents java's Iterator, Iterable and BaseStream
-  public static final byte ITERATOR_ONE_DIM = 2;
+  public static final byte ITERATOR_ONE_DIM = -1;
   @MagicConstant(intValues = {ZERO_DIM, ARRAY_ONE_DIM, ITERATOR_ONE_DIM})
   public @interface IteratorKind {}
 

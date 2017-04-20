@@ -15,9 +15,11 @@
  */
 package com.intellij.compiler.backwardRefs
 
+import com.intellij.compiler.chainsSearch.context.TargetType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.jps.backwardRefs.LightRef
 import org.jetbrains.jps.backwardRefs.SignatureData
 
@@ -67,7 +69,13 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
               else -> false
             }
           }
-          SignatureData.ITERATOR_ONE_DIM -> false
+          SignatureData.ITERATOR_ONE_DIM -> {
+            val iteratorKind = TargetType.getIteratorKind(PsiUtil.resolveClassInClassTypeOnly(returnType))
+            when {
+              iteratorKind != null -> PsiUtil.resolveClassInClassTypeOnly(PsiUtil.substituteTypeParameter(returnType, iteratorKind, 0, false))?.qualifiedName == rawReturnType
+              else -> false
+            }
+          }
           SignatureData.ZERO_DIM -> returnType is PsiClassType && returnType.resolve()?.qualifiedName == rawReturnType
           else -> throw IllegalStateException("kind is unsupported ${signatureData.iteratorKind}")
         }
