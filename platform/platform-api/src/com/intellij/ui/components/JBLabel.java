@@ -43,11 +43,6 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   private JLabel myIconLabel = null;
   private boolean myMultiline = false;
 
-  {
-    // supported in JBSDK
-    putClientProperty("javax.swing.BasicHTML.userCSS", UIUtil.JBHtmlEditorKit.createStyleSheet());
-  }
-
   public JBLabel() {
     super();
   }
