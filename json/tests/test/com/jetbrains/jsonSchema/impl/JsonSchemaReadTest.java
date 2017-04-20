@@ -74,13 +74,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
 
   public void testMainSchemaHighlighting() throws Exception {
     final Set<VirtualFile> files = JsonSchemaService.Impl.get(myProject).getSchemaFiles();
-    VirtualFile mainSchema = null;
-    for (VirtualFile file : files) {
-      if ("schema.json".equals(file.getName())) {
-        mainSchema = file;
-        break;
-      }
-    }
+    final VirtualFile mainSchema = files.stream().filter(file -> file.getName().equals("schema.json")).findFirst().orElse(null);
     assertNotNull(mainSchema);
     assertTrue(JsonSchemaFileType.INSTANCE.equals(mainSchema.getFileType()));
 

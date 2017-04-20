@@ -65,10 +65,5 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     public SchemaType getSchemaType() {
       return SchemaType.schema;
     }
-
-    @Override
-    public int getOrder() {
-      return Orders.CORE;
-    }
   }
 }

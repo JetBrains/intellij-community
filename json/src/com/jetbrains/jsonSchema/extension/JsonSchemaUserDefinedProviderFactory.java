@@ -64,11 +64,6 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       return SchemaType.userSchema;
     }
 
-    @Override
-    public int getOrder() {
-      return Orders.USER;
-    }
-
     @NotNull
     @Override
     public String getName() {
