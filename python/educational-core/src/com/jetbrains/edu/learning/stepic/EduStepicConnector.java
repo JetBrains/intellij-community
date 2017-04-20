@@ -127,6 +127,17 @@ public class EduStepicConnector {
     return null;
   }
 
+  private static StepicWrappers.CoursesContainer getCoursesFromStepik(@Nullable StepicUser user, URI url) throws IOException {
+    final StepicWrappers.CoursesContainer coursesContainer;
+    if (user != null) {
+      coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
+    }
+    else {
+      coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
+    }
+    return coursesContainer;
+  }
+
   private static boolean addCoursesFromStepic(@Nullable StepicUser user, List<Course> result, int pageNumber) throws IOException {
     final URI url;
     try {
@@ -137,15 +148,29 @@ public class EduStepicConnector {
       LOG.error(e.getMessage());
       return false;
     }
-    final StepicWrappers.CoursesContainer coursesContainer;
-    if (user != null) {
-      coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
-    }
-    else {
-      coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
-    }
+    final StepicWrappers.CoursesContainer coursesContainer = getCoursesFromStepik(user, url);
     addAvailableCourses(result, coursesContainer);
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
+  }
+
+  @Nullable
+  public static Course getCourseFromStepik(@Nullable StepicUser user, int courseId) throws IOException {
+    final URI url;
+    try {
+      url = new URIBuilder(EduStepicNames.COURSES + "/" + courseId).addParameter("is_idea_compatible", "true")
+        .build();
+    }
+    catch (URISyntaxException e) {
+      LOG.error(e.getMessage());
+      return null;
+    }
+    final StepicWrappers.CoursesContainer coursesContainer = getCoursesFromStepik(user, url);
+
+    if (coursesContainer!= null && !coursesContainer.courses.isEmpty()) {
+      return coursesContainer.courses.get(0);
+    } else {
+      return null;
+    }
   }
 
   static void addAvailableCourses(List<Course> result, StepicWrappers.CoursesContainer coursesContainer) throws IOException {

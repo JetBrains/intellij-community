@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,13 +57,14 @@ import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
+import static com.jetbrains.edu.learning.StudyUtils.navigateToStep;
 
 
 public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
-  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<>();
+  private final Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<>();
   private MessageBusConnection myBusConnection;
 
   private StudyProjectComponent(@NotNull final Project project) {
@@ -103,6 +105,29 @@ public class StudyProjectComponent implements ProjectComponent {
         }
       }
     });
+
+    selectStep();
+  }
+
+  private void selectStep() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      if (myProject == defaultProject) {
+        return;
+      }
+      StudyTaskManager defaultTaskManager = StudyTaskManager.getInstance(defaultProject);
+      int stepId = defaultTaskManager.getStepId();
+
+      if (stepId != 0) {
+        StudyTaskManager taskManager = StudyTaskManager.getInstance(myProject);
+        Course course = taskManager.getCourse();
+        if (course != null) {
+
+          navigateToStep(myProject, course, stepId);
+          defaultTaskManager.setStepId(0);
+        }
+      }
+    });
   }
 
   private void updateAvailable(Course course) {
@@ -122,7 +147,6 @@ public class StudyProjectComponent implements ProjectComponent {
                            }, "Updating Course", true, myProject);
                            EduUtils.synchronize();
                            course.setUpdated();
-
                          }
                        });
     notification.notify(myProject);
@@ -272,7 +296,7 @@ public class StudyProjectComponent implements ProjectComponent {
         AnAction[] newGroupActions = ((ActionGroup)ActionManager.getInstance().getAction("NewGroup")).getChildren(null);
         for (AnAction newAction : newGroupActions) {
           if (newAction == action) {
-            myListener =  new FileCreatedByUserListener();
+            myListener = new FileCreatedByUserListener();
             VirtualFileManager.getInstance().addVirtualFileListener(myListener);
             break;
           }

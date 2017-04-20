@@ -18,8 +18,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
@@ -27,6 +29,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
@@ -38,6 +41,7 @@ import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -51,13 +55,13 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-
-public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
+public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>
+  implements EduCourseProjectGenerator {
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
+  private final boolean isLocal;
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
-  private StudyNewProjectPanel mySettingsPanel;
 
   @SuppressWarnings("unused") // used on startup
   public PyStudyDirectoryProjectGenerator() {
@@ -65,48 +69,12 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   }
 
   public PyStudyDirectoryProjectGenerator(boolean isLocal) {
+    this.isLocal = isLocal;
     myGenerator = new StudyProjectGenerator();
     myGenerator.addSettingsStateListener(new StudyProjectGenerator.SettingsListener() {
       @Override
       public void stateChanged(ValidationResult result) {
         setValidationResult(result);
-      }
-    });
-
-    mySettingsPanel = new StudyNewProjectPanel(myGenerator, isLocal);
-    mySettingsPanel.registerValidators(new FacetValidatorsManager() {
-      public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
-        throw new UnsupportedOperationException();
-      }
-
-      public void validate() {
-        ApplicationManager.getApplication().invokeLater(() -> fireStateChanged());
-      }
-    });
-
-    addErrorLabelMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && ((Course)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
-          mySettingsPanel.showLoginDialog(false, "Signing In");
-        }
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && ((Course)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
-          e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        final Course selectedItem = (Course)mySettingsPanel.getCoursesComboBox().getSelectedItem();
-        if (selectedItem != null && selectedItem.isAdaptive() && !myGenerator.isLoggedIn()) {
-          e.getComponent().setCursor(Cursor.getDefaultCursor());
-        }
       }
     });
   }
@@ -131,6 +99,10 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
                                @NotNull Module module,
                                @Nullable PyProjectSynchronizer synchronizer) {
     myGenerator.generateProject(project, baseDir);
+    createTestHelper(project, baseDir);
+  }
+
+  private static void createTestHelper(@NotNull Project project, @NotNull VirtualFile baseDir) {
     final String testHelper = EduNames.TEST_HELPER;
     if (baseDir.findChild(testHelper) != null) return;
     final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
@@ -146,14 +118,59 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
 
   @NotNull
   @Override
-  public ValidationResult validate(@NotNull String s) {
+  public DirectoryProjectGenerator getDirectoryProjectGenerator() {
+    return this;
+  }
+
+  public ValidationResult validate() {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+
+    ValidationResult validationResult;
     if (sdks.isEmpty()) {
-      myValidationResult = new ValidationResult(NO_PYTHON_INTERPRETER);
+      validationResult = new ValidationResult(NO_PYTHON_INTERPRETER);
+    } else {
+      validationResult = ValidationResult.OK;
+    }
+
+    return validationResult;
+  }
+
+  @NotNull
+  @Override
+  public ValidationResult validate(@NotNull String s) {
+    ValidationResult validationResult = validate();
+    if (!validationResult.isOk()) {
+      myValidationResult = validationResult;
     }
 
     return myValidationResult;
+  }
+
+  @Override
+  public boolean beforeProjectGenerated() {
+    BooleanFunction<PythonProjectGenerator> function = beforeProjectGenerated(null);
+    return function != null && function.fun(this);
+  }
+
+  @Override
+  public void afterProjectGenerated(@NotNull Project project) {
+    PyNewProjectSettings settings = (PyNewProjectSettings)getProjectSettings();
+    Sdk sdk = settings.getSdk();
+
+    if (sdk == null) {
+      createAndAddVirtualEnv(project, settings);
+      sdk = settings.getSdk();
+    }
+
+    SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
+    final List<Sdk> sdks = PythonSdkType.getAllSdks();
+    for (Sdk s : sdks) {
+      final SdkAdditionalData additionalData = s.getSdkAdditionalData();
+      if (additionalData instanceof PythonSdkAdditionalData) {
+        ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(project);
+      }
+    }
   }
 
   public void setValidationResult(ValidationResult validationResult) {
@@ -163,10 +180,49 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   @Nullable
   @Override
   public JPanel extendBasePanel() throws ProcessCanceledException {
+    StudyNewProjectPanel mySettingsPanel = new StudyNewProjectPanel(myGenerator, isLocal);
+    mySettingsPanel.registerValidators(new FacetValidatorsManager() {
+      public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
+        throw new UnsupportedOperationException();
+      }
+
+      public void validate() {
+        ApplicationManager.getApplication().invokeLater(() -> fireStateChanged());
+      }
+    });
+
+    addErrorLabelMouseListener(new MouseAdapter() {
+      private boolean isCourseAdaptiveAndNotLogged() {
+        Course course = myGenerator.getSelectedCourse();
+        return course != null && course.isAdaptive() && !myGenerator.isLoggedIn();
+      }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (isCourseAdaptiveAndNotLogged()) {
+          mySettingsPanel.showLoginDialog(false, "Signing In");
+        }
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        if (isCourseAdaptiveAndNotLogged()) {
+          e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        if (isCourseAdaptiveAndNotLogged()) {
+          e.getComponent().setCursor(Cursor.getDefaultCursor());
+        }
+      }
+    });
+
     return mySettingsPanel;
   }
 
-  public void setSelectedCourse(Course course) {
+  public void setCourse(@NotNull Course course) {
     myGenerator.setSelectedCourse(course);
   }
 
@@ -184,7 +240,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
     return generator -> {
       final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
-      final Course course = (Course)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+      final Course course = myGenerator.getSelectedCourse();
       if (course == null || !(course instanceof RemoteCourse)) return true;
       if (((RemoteCourse)course).getId() > 0 && !enrolledCoursesIds.contains(((RemoteCourse)course).getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -192,7 +248,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
           return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(((RemoteCourse)course).getId(),
                                                                                    StudySettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
-
       }
       return true;
     };

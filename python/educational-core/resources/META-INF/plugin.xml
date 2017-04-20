@@ -173,6 +173,7 @@
     <applicationService serviceImplementation="com.jetbrains.edu.learning.StudySettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>
+    <httpRequestHandler implementation="com.jetbrains.edu.learning.builtInServer.EduStepikRestService"/>
 
     <!--course creator-->
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>

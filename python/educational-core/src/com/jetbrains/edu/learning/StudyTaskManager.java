@@ -46,15 +46,16 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
   public static final int CURRENT_VERSION = 5;
   private Course myCourse;
-  public int VERSION = 5;
+  public int VERSION = CURRENT_VERSION;
 
-  public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
+  public final Map<Task, List<UserTest>> myUserTests = new HashMap<>();
 
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
 
   @Transient private final Project myProject;
+  @Transient private int myStepId;
 
   public StudyTaskManager(Project project) {
     myProject = project;
@@ -191,14 +192,18 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   private void updateTestHelper() {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final VirtualFile testHelper = myProject.getBaseDir().findChild(EduNames.TEST_HELPER);
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir == null) {
+        return;
+      }
+      final VirtualFile testHelper = baseDir.findChild(EduNames.TEST_HELPER);
       if (testHelper != null) {
         StudyUtils.deleteFile(testHelper);
       }
       final FileTemplate template =
         FileTemplateManager.getInstance(myProject).getInternalTemplate(FileUtil.getNameWithoutExtension(EduNames.TEST_HELPER));
       try {
-        final PsiDirectory projectDir = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
+        final PsiDirectory projectDir = PsiManager.getInstance(myProject).findDirectory(baseDir);
         if (projectDir != null) {
           FileTemplateUtil.createFromTemplate(template, EduNames.TEST_HELPER, null, projectDir);
         }
@@ -211,8 +216,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   private void deserialize(Element state) throws StudySerializationUtils.StudyUnrecognizedFormatException {
     final Element taskManagerElement = state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT);
-    if (taskManagerElement == null)
+    if (taskManagerElement == null) {
       throw new StudySerializationUtils.StudyUnrecognizedFormatException();
+    }
     XmlSerializer.deserializeInto(this, taskManagerElement);
     final Element xmlCourse = StudySerializationUtils.Xml.getChildWithName(taskManagerElement, StudySerializationUtils.COURSE);
     final Element remoteCourseElement = xmlCourse.getChild(REMOTE_COURSE);
@@ -251,4 +257,11 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     myTurnEditingMode = turnEditingMode;
   }
 
+  public void setStepId(int stepId) {
+    myStepId = stepId;
+  }
+
+  public int getStepId() {
+    return myStepId;
+  }
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -137,6 +138,8 @@ public interface EduPluginConfigurator {
   default List<String> getBundledCoursePaths() {
     return Collections.emptyList();
   }
+
+  EduCourseProjectGenerator getEduCourseProjectGenerator();
 
   default ModuleType getModuleType() {return StdModuleTypes.JAVA;}
 }
