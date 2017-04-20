@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -23,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class StudySmartChecker {
-  private StudySmartChecker() {
+public class PyStudySmartChecker {
+  private PyStudySmartChecker() {
 
   }
 
-  private static final Logger LOG = Logger.getInstance(StudySmartChecker.class);
+  private static final Logger LOG = Logger.getInstance(PyStudySmartChecker.class);
 
   public static void smartCheck(@NotNull final AnswerPlaceholder placeholder,
                                 @NotNull final Project project,
@@ -79,5 +80,65 @@ public class StudySmartChecker {
       StudyUtils.deleteFile(windowCopy);
       StudyUtils.deleteFile(fileWindows);
     }
+  }
+
+  public static void runSmartTestProcess(@NotNull final VirtualFile taskDir,
+                                         @NotNull final StudyTestRunner testRunner,
+                                         @NotNull final String taskFileName,
+                                         @NotNull final TaskFile taskFile,
+                                         @NotNull final Project project) {
+    final VirtualFile virtualFile = taskDir.findFileByRelativePath(taskFileName);
+    if (virtualFile == null) {
+      return;
+    }
+    Pair<VirtualFile, TaskFile> pair = getCopyWithAnswers(taskDir, virtualFile, taskFile);
+    if (pair == null) {
+      return;
+    }
+    VirtualFile answerFile = pair.getFirst();
+    TaskFile answerTaskFile = pair.getSecond();
+    try {
+      for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
+        final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        if (document == null) {
+          continue;
+        }
+        smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
+                   virtualFile, document);
+      }
+    }
+    finally {
+      StudyUtils.deleteFile(answerFile);
+    }
+  }
+
+  private static Pair<VirtualFile, TaskFile> getCopyWithAnswers(@NotNull final VirtualFile taskDir,
+                                                                @NotNull final VirtualFile file,
+                                                                @NotNull final TaskFile source) {
+    try {
+      VirtualFile answerFile = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + EduNames.ANSWERS_POSTFIX + "." + file.getExtension());
+      final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+      final Document document = documentManager.getDocument(answerFile);
+      if (document != null) {
+        TaskFile answerTaskFile = source.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(file));
+        if (answerTaskFile == null) {
+          return null;
+        }
+        EduDocumentListener listener = new EduDocumentListener(answerTaskFile);
+        document.addDocumentListener(listener);
+        for (AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
+          final int start = answerPlaceholder.getOffset();
+          final int end = start + answerPlaceholder.getRealLength();
+          final String text = answerPlaceholder.getPossibleAnswer();
+          document.replaceString(start, end, text);
+        }
+        ApplicationManager.getApplication().runWriteAction(() -> documentManager.saveDocument(document));
+        return Pair.create(answerFile, answerTaskFile);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 }
