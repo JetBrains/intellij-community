@@ -113,9 +113,9 @@ class TextPainter extends BasePainter {
     myDocument = editorDocument;
     myPrintSettings = PrintSettings.getInstance();
     String fontName = myPrintSettings.FONT_NAME;
-    /**
-     * Printing Graphics is constructed with scale corresponding to the printer DPI settings (~600dpi),
-     * the font size is expected to be in 96 dpi, so we should normalize it.
+    /*
+      Printing Graphics is constructed with scale corresponding to the printer DPI settings (~600dpi),
+      the font size is expected to be in 96 dpi, so we should normalize it.
      */
     int fontSize = Math.round(myPrintSettings.FONT_SIZE / UISettings.getNormalizingScale());
     myPlainFont = new Font(fontName, Font.PLAIN, fontSize);
