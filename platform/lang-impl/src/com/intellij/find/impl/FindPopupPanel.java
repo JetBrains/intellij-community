@@ -896,7 +896,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     }
 
     if (!myHelper.canSearchThisString()) {
-      return new ValidationInfo("String to find is empty", mySearchComponent);
+      return new ValidationInfo(FindBundle.message("find.empty.search.text.error"), mySearchComponent);
     }
 
     if (myCbRegularExpressions != null && myCbRegularExpressions.isSelected() && myCbRegularExpressions.isEnabled()) {
