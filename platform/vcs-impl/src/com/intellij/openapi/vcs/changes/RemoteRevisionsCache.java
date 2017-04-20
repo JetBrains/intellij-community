@@ -129,6 +129,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
+  @Override
   public void directoryMappingChanged() {
     if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
       manageAlarm();
@@ -145,6 +146,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
+  @Override
   public void plus(final Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
@@ -180,6 +182,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myRemoteRevisionsNumbersCache.invalidate(newForUsual);
   }
 
+  @Override
   public void minus(Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {

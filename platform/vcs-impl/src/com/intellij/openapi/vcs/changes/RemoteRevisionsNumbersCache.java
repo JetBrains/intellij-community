@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,19 +56,23 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private final Object myLock;
 
   public static final VcsRevisionNumber NOT_LOADED = new VcsRevisionNumber() {
+    @Override
     public String asString() {
       return "NOT_LOADED";
     }
 
+    @Override
     public int compareTo(@NotNull VcsRevisionNumber o) {
       return o == this ? 0 : -1;
     }
   };
   public static final VcsRevisionNumber UNKNOWN = new VcsRevisionNumber() {
+    @Override
     public String asString() {
       return "UNKNOWN";
     }
 
+    @Override
     public int compareTo(@NotNull VcsRevisionNumber o) {
       return o == this ? 0 : -1;
     }
@@ -87,6 +91,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
+  @Override
   public boolean updateStep() {
     mySomethingChanged = false;
     // copy under lock
@@ -114,6 +119,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     return mySomethingChanged;
   }
 
+  @Override
   public void directoryMappingChanged() {
     // copy myData under lock
     HashSet<String> keys;
@@ -163,6 +169,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public void plus(final Pair<String, AbstractVcs> pair) {
     // does not support
     if (pair.getSecond().getDiffProvider() == null) return;
@@ -187,6 +194,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public void invalidate(final Collection<String> paths) {
     synchronized (myLock) {
       for (String path : paths) {
@@ -208,6 +216,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
   }
 
+  @Override
   public void minus(Pair<String, AbstractVcs> pair) {
     // does not support
     if (pair.getSecond().getDiffProvider() == null) return;
@@ -310,6 +319,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public boolean isUpToDate(final Change change) {
     if (change.getBeforeRevision() != null && change.getAfterRevision() != null && (! change.isMoved()) && (! change.isRenamed())) {
       return getRevisionState(change.getBeforeRevision());

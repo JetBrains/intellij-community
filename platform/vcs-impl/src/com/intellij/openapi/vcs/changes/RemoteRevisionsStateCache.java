@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
+  @Override
   public void invalidate(final Collection<String> paths) {
     synchronized (myLock) {
       for (String path : paths) {
@@ -62,7 +63,8 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   private VirtualFile getRootForPath(final String s) {
     return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
   }
-  
+
+  @Override
   public boolean isUpToDate(final Change change) {
     final List<File> files = ChangesUtil.getIoFilesFromChanges(Collections.singletonList(change));
     synchronized (myLock) {
@@ -75,6 +77,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     return true;
   }
 
+  @Override
   public void plus(final Pair<String, AbstractVcs> pair) {
     final VirtualFile root = getRootForPath(pair.getFirst());
     if (root == null) return;
@@ -83,6 +86,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public void minus(Pair<String, AbstractVcs> pair) {
     final VirtualFile root = getRootForPath(pair.getFirst());
     if (root == null) return;
@@ -95,6 +99,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public void directoryMappingChanged() {
     // todo will work?
     synchronized (myLock) {
@@ -103,6 +108,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
   }
 
+  @Override
   public boolean updateStep() {
     final MultiMap<VcsRoot, String> dirty = new MultiMap<>();
     final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
