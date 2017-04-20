@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LazyInstance;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +33,12 @@ import javax.swing.*;
 
 public class AppEditorFontConfigurable implements SearchableConfigurable {
 
-  private AppEditorFontPanel myFontPanel;
+  private LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
+    @Override
+    protected Class<AppEditorFontPanel> getInstanceClass() throws ClassNotFoundException {
+      return AppEditorFontPanel.class;
+    }
+  };
 
   @NotNull
   @Override
@@ -42,8 +49,7 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
   @Nullable
   @Override
   public JComponent createComponent() {
-    myFontPanel = new AppEditorFontPanel();
-    return myFontPanel;
+    return getFontPanel().getComponent();
   }
 
   @Override
@@ -62,13 +68,13 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
 
   @NotNull
   private FontPreferences getUIFontPreferences() {
-    return myFontPanel.getOptionsPanel().getFontPreferences();
+    return getFontPanel().getOptionsPanel().getFontPreferences();
   }
 
   @Override
   public void reset() {
     getStoredPreferences().copyTo(getUIFontPreferences());
-    myFontPanel.getOptionsPanel().updateOptionsList();
+    getFontPanel().getOptionsPanel().updateOptionsList();
   }
 
   @NotNull
@@ -76,9 +82,21 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
     return AppEditorFontOptions.getInstance().getFontPreferences();
   }
 
+  @NotNull
+  private AppEditorFontPanel getFontPanel() {
+    return myFontPanelInstance.getValue();
+  }
+
   @Nls
   @Override
   public String getDisplayName() {
     return "Default Font";
+  }
+
+  @Override
+  public void disposeUIResources() {
+    if (myFontPanelInstance.isComputed()) {
+      Disposer.dispose(getFontPanel());
+    }
   }
 }
