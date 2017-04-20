@@ -26,14 +26,14 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
  */
 public class TargetType {
   private final String myClassQName;
-  private final byte myArrayKind;
+  private final byte[] myAcceptedArrayKinds;
   private final PsiType myPsiType;
 
   public TargetType(String classQName,
-                    byte arrayKind,
+                    byte[] arrayKinds,
                     PsiType targetType) {
     myClassQName = classQName;
-    myArrayKind = arrayKind;
+    myAcceptedArrayKinds = arrayKinds;
     myPsiType = targetType;
   }
 
@@ -41,13 +41,19 @@ public class TargetType {
     return myClassQName;
   }
 
-  @SignatureData.IteratorKind
-  public byte getArrayKind() {
-    return myArrayKind;
+  //@SignatureData.IteratorKind
+  public byte[] getArrayKind() {
+    return myAcceptedArrayKinds;
   }
 
   public PsiClass getTargetClass() {
     return PsiUtil.resolveClassInType(myPsiType);
+  }
+
+  public TargetType toIterators() {
+    return myAcceptedArrayKinds.length == 1 && myAcceptedArrayKinds[0] == SignatureData.ZERO_DIM ?
+           new TargetType(myClassQName, new byte[]{SignatureData.ARRAY_ONE_DIM, SignatureData.ITERATOR_ONE_DIM}, myPsiType) :
+           this;
   }
 
   @Nullable
@@ -69,7 +75,7 @@ public class TargetType {
     if (aClass == null) return null;
     String targetQName = aClass.getQualifiedName();
     if (targetQName == null) return null;
-    return new TargetType(targetQName, SignatureData.ARRAY_ONE_DIM, arrayType);
+    return new TargetType(targetQName, new byte[] {SignatureData.ARRAY_ONE_DIM}, arrayType);
   }
 
   @Nullable
@@ -90,7 +96,7 @@ public class TargetType {
     if (classQName == null) {
       return null;
     }
-    return new TargetType(classQName, iteratorKind, classType);
+    return new TargetType(classQName, new byte[] {iteratorKind}, classType);
   }
 
   public static String getIteratorKind(PsiClass resolvedClass) {

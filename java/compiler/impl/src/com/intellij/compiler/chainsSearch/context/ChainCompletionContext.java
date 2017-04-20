@@ -161,10 +161,13 @@ public class ChainCompletionContext {
 
   @Nullable
   public static ChainCompletionContext createContext(@Nullable PsiType targetType,
-                                                     @Nullable PsiElement containingElement) {
+                                                     @Nullable PsiElement containingElement, boolean suggestIterators) {
     if (containingElement == null) return null;
     TargetType target = TargetType.create(targetType);
     if (target == null) return null;
+    if (suggestIterators) {
+      target = target.toIterators();
+    }
 
     ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement);
     PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());

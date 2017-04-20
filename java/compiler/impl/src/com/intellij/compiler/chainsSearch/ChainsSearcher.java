@@ -57,7 +57,16 @@ public class ChainsSearcher {
   private static SearchInitializer createInitializer(TargetType target,
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), target.getArrayKind());
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = null;
+    for (byte kind : target.getArrayKind()) {
+      SortedSet<OccurrencesAware<MethodIncompleteSignature>> currentMethods =
+        compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind);
+      if (methods == null) {
+        methods = currentMethods;
+      } else {
+        methods.addAll(currentMethods);
+      }
+    }
     return new SearchInitializer(methods, context);
   }
 
