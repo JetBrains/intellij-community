@@ -36,6 +36,8 @@ public class WhileLoopSpinsOnFieldInspectionTest extends LightInspectionTestCase
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new WhileLoopSpinsOnFieldInspection();
+    WhileLoopSpinsOnFieldInspection inspection = new WhileLoopSpinsOnFieldInspection();
+    inspection.ignoreNonEmtpyLoops = false;
+    return inspection;
   }
 }

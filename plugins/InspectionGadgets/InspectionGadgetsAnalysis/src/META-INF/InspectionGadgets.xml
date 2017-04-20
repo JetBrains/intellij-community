@@ -2744,7 +2744,7 @@
                      implementationClass="com.siyeh.ig.threading.WaitWithoutCorrespondingNotifyInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WhileLoopSpinsOnField" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="while.loop.spins.on.field.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.WhileLoopSpinsOnFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="StaticInitializerReferencesSubClass" shortName="StaticInitializerReferencesSubClass"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="static.initializer.references.subclass.display.name"

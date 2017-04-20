@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -43,7 +44,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
   @SuppressWarnings({"PublicField"})
-  public boolean ignoreNonEmtpyLoops = false;
+  public boolean ignoreNonEmtpyLoops = true;
 
   @Override
   @NotNull
@@ -92,13 +93,15 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       final PsiExpression condition = statement.getCondition();
       final PsiField field = getFieldIfSimpleFieldComparison(condition);
       if (field == null) return;
-      boolean hasOnSpinWait = containsCall(body, THREAD_ON_SPIN_WAIT);
-      boolean java9 = PsiUtil.isLanguageLevel9OrHigher(field);
-      if (java9 && hasOnSpinWait && field.hasModifierProperty(PsiModifier.VOLATILE)) return;
       if (body != null && (VariableAccessUtils.variableIsAssigned(field, body) || containsCall(body, ThreadingUtils::isWaitCall))) {
         return;
       }
-      registerStatementError(statement, field, java9 && !hasOnSpinWait);
+      boolean java9 = PsiUtil.isLanguageLevel9OrHigher(field);
+      boolean shouldAddSpinWait = java9 && empty && !containsCall(body, THREAD_ON_SPIN_WAIT);
+      if(field.hasModifierProperty(PsiModifier.VOLATILE) && !shouldAddSpinWait) {
+        return;
+      }
+      registerStatementError(statement, field, shouldAddSpinWait);
     }
 
     private boolean containsCall(@Nullable PsiElement element, Predicate<PsiMethodCallExpression> predicate) {
@@ -129,13 +132,11 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       }
       if (condition instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
-        final PsiExpression operand = prefixExpression.getOperand();
-        return getFieldIfSimpleFieldComparison(operand);
-      }
-      if (condition instanceof PsiPostfixExpression) {
-        final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)condition;
-        final PsiExpression operand = postfixExpression.getOperand();
-        return getFieldIfSimpleFieldComparison(operand);
+        IElementType type = prefixExpression.getOperationTokenType();
+        if(!type.equals(JavaTokenType.PLUSPLUS) && !type.equals(JavaTokenType.MINUSMINUS)) {
+          final PsiExpression operand = prefixExpression.getOperand();
+          return getFieldIfSimpleFieldComparison(operand);
+        }
       }
       if (condition instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
