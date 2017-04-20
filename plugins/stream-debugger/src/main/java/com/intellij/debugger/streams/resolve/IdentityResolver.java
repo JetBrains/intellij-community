@@ -17,7 +17,8 @@ package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
-import com.sun.jdi.Value;
+import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,8 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class IdentityResolver implements ValuesOrderResolver {
+  private static final Logger LOG = Logger.getInstance(IdentityResolver.class);
+
   @NotNull
   @Override
   public Result resolve(@NotNull TraceInfo info) {
@@ -39,15 +42,14 @@ public class IdentityResolver implements ValuesOrderResolver {
     final Map<TraceElement, List<TraceElement>> direct = new HashMap<>();
     final Map<TraceElement, List<TraceElement>> reverse = new HashMap<>();
 
-    final Map<Value, List<TraceElement>> grouped = new HashMap<>(
-      StreamEx.of(after.keySet())
-        .sorted()
-        .map(after::get)
-        .groupingBy(TraceElement::getValue)
-    );
+    final Map<Object, List<TraceElement>> grouped = StreamEx
+      .of(after.keySet())
+      .sorted()
+      .map(after::get)
+      .groupingBy(IdentityResolver::extractKey);
 
     for (final TraceElement element : before.values()) {
-      final Value value = element.getValue();
+      final Object value = extractKey(element);
 
       final List<TraceElement> elements = grouped.get(value);
       final TraceElement afterItem = elements.get(0);
@@ -59,5 +61,20 @@ public class IdentityResolver implements ValuesOrderResolver {
     }
 
     return Result.of(direct, reverse);
+  }
+
+  private static Object extractKey(@NotNull TraceElement element) {
+    final Value value = element.getValue();
+    if (!(value instanceof PrimitiveValue)) return value;
+    if (value instanceof IntegerValue) return ((IntegerValue)value).value();
+    if (value instanceof DoubleValue) return ((DoubleValue)value).value();
+    if (value instanceof LongValue) return ((LongValue)value).value();
+    if (value instanceof BooleanValue) return ((BooleanValue)value).value();
+    if (value instanceof ByteValue) return ((ByteValue)value).value();
+    if (value instanceof CharValue) return ((CharValue)value).value();
+    if (value instanceof FloatValue) return ((FloatValue)value).value();
+    
+    LOG.error("unknown primitive value: " + value.type().name());
+    return null;
   }
 }
