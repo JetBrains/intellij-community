@@ -68,10 +68,12 @@ class AsciiMessageStorageTest {
         val line = "text"
         storage.appendLine(line)
         storage.appendLine(line)
-        assertThat(storage.size).isEqualTo(2 * (line.length + System.lineSeparator().length))
+
+        val expectedSize = 2 * (line.length + System.lineSeparator().length)
+        assertThat(storage.size).isEqualTo(expectedSize)
 
         storage.dump(tmpFile)
-        assertThat(tmpFile.length()).isEqualTo(10)
+        assertThat(tmpFile.length()).isEqualTo(expectedSize.toLong())
     }
     
     
