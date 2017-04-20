@@ -115,7 +115,7 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 // folder provided by python side. Resolve test names versus it
 private val PATH_URL = Pattern.compile("^python<([^<>]+)>$")
 
-private object PyUniversalTestsLocator : SMTestLocator {
+object PyUniversalTestsLocator : SMTestLocator {
   override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     if (scope !is ModuleWithDependenciesScope) {
       return listOf()
