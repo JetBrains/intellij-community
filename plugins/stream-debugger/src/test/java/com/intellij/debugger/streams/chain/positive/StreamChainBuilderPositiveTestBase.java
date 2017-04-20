@@ -40,8 +40,6 @@ public abstract class StreamChainBuilderPositiveTestBase extends StreamChainBuil
     checkResultChain(chain);
   }
 
-
-
   @NotNull
   protected abstract String getDirectoryName();
 
