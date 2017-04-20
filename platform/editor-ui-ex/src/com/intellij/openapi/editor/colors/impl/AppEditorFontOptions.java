@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -29,7 +30,15 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
 
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
+  public AppEditorFontOptions() {
+    myFontPreferences.setTemplateFontSize(UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+  }
+
   public static class PersistentFontPreferences {
+    public int FONT_SIZE;
+    public String FONT_FAMILY;
+    public float FONT_SCALE = 1.0f;
+
     /**
      * Serialization constructor.
      */
@@ -40,10 +49,8 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     public PersistentFontPreferences(FontPreferences fontPreferences) {
       FONT_FAMILY = fontPreferences.getFontFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
+      FONT_SCALE = UISettings.getNormalizingScale();
     }
-
-    public int FONT_SIZE;
-    public String FONT_FAMILY;
   }
 
 
@@ -60,7 +67,8 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
   @Override
   public void loadState(PersistentFontPreferences state) {
     myFontPreferences.clear();
-    myFontPreferences.register(state.FONT_FAMILY, state.FONT_SIZE);
+    int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
+    myFontPreferences.register(state.FONT_FAMILY, fontSize);
     myFontPreferences.setChangeListener(() -> EditorFontCache.getInstance().reset());
   }
 
