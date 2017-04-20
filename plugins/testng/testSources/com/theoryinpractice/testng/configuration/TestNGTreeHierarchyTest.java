@@ -226,32 +226,32 @@ public class TestNGTreeHierarchyTest {
 
     Assert.assertEquals("output: " + buf,"##teamcity[enteredTheMatrix]\n" +
                                          "\n" +
-                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
-                                          "\n" +
-                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
-                                          "\n" +
-                                          "##teamcity[testFinished name='ATest.setUp']\n" +
-                                          "\n" +
-                                          "##teamcity[testStarted name='ATest.test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
-                                          "\n" +
-                                          "##teamcity[testFinished name='ATest.test1']\n" +
-                                          "\n" +
-                                          "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown' config='true']\n" +
-                                          "\n" +
-                                          "##teamcity[testFinished name='ATest.tearDown']\n" +
-                                          "\n" +
-                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
-                                          "\n" +
-                                          "##teamcity[testFinished name='ATest.setUp']\n" +
-                                          "\n" +
-                                          "##teamcity[testStarted name='ATest.test2' locationHint='java:test://a.ATest.test2|[0|]']\n" +
-                                          "\n" +
-                                          "##teamcity[testFinished name='ATest.test2']\n" +
-                                          "\n" +
-                                          "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown' config='true']\n" +
-                                          "\n" +
-                                          "##teamcity[testFinished name='ATest.tearDown']\n" +
-                                          "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+                                         "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                                         "\n" +
+                                         "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp|[0|]' config='true']\n" +
+                                         "\n" +
+                                         "##teamcity[testFinished name='ATest.setUp']\n" +
+                                         "\n" +
+                                         "##teamcity[testStarted name='ATest.test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
+                                         "\n" +
+                                         "##teamcity[testFinished name='ATest.test1']\n" +
+                                         "\n" +
+                                         "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown|[0|]' config='true']\n" +
+                                         "\n" +
+                                         "##teamcity[testFinished name='ATest.tearDown']\n" +
+                                         "\n" +
+                                         "##teamcity[testStarted name='ATest.setUp (1)' locationHint='java:test://a.ATest.setUp|[1|]' config='true']\n" +
+                                         "\n" +
+                                         "##teamcity[testFinished name='ATest.setUp (1)']\n" +
+                                         "\n" +
+                                         "##teamcity[testStarted name='ATest.test2' locationHint='java:test://a.ATest.test2|[0|]']\n" +
+                                         "\n" +
+                                         "##teamcity[testFinished name='ATest.test2']\n" +
+                                         "\n" +
+                                         "##teamcity[testStarted name='ATest.tearDown (1)' locationHint='java:test://a.ATest.tearDown|[1|]' config='true']\n" +
+                                         "\n" +
+                                         "##teamcity[testFinished name='ATest.tearDown (1)']\n" +
+                                         "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -269,7 +269,7 @@ public class TestNGTreeHierarchyTest {
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                                           "\n" +
-                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
+                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp|[0|]' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFailed name='ATest.setUp' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +

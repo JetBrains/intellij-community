@@ -126,6 +126,10 @@ public class IDEATestNGRemoteListener {
   public synchronized void onFinish(ITestContext context) {}
 
   public void onTestStart(ExposedTestResult result) {
+   onStartWithParameters(result, false);
+  }
+
+  public void onStartWithParameters(ExposedTestResult result, boolean config) {
     final Object[] parameters = result.getParameters();
     final String qualifiedName = result.getClassName() + result.getDisplayMethodName();
     Integer invocationCount = myInvocationCounts.get(qualifiedName);
@@ -134,7 +138,7 @@ public class IDEATestNGRemoteListener {
     }
     Integer normalizedIndex = normalizeInvocationCountInsideIncludedMethods(invocationCount, result);
     final String paramString = getParamsString(parameters, normalizedIndex);
-    onTestStart(result, paramString, normalizedIndex, false);
+    onTestStart(result, paramString, normalizedIndex, config);
     myInvocationCounts.put(qualifiedName, invocationCount + 1);
   }
 
@@ -147,7 +151,7 @@ public class IDEATestNGRemoteListener {
   }
 
   public void onConfigurationStart(ExposedTestResult result) {
-    onTestStart(result, null, -1, true);
+    onStartWithParameters(result, true);
   }
 
   public void onConfigurationSuccess(ExposedTestResult result) {
