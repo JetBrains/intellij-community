@@ -7,6 +7,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
@@ -14,7 +15,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -108,7 +108,7 @@ public class AttachmentsTabForm {
         myTable.repaint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
-    myContentPane.setPreferredSize(new Dimension(200, 210)); // limit growth due to large attachment
+    myContentPane.setPreferredSize(JBUI.size(200, 210)); // limit growth due to large attachment
   }
 
   public JComponent getPreferredFocusedComponent() {

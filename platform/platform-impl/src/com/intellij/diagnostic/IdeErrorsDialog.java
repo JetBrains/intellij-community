@@ -141,13 +141,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myDetailsTabForm.setDevelopers(ourDevelopersList);
       }
     }
-    ensureAttachmentsAreVisible();
-  }
-
-  private void ensureAttachmentsAreVisible() {
-    if (myAttachmentsTabForm.getContentPane().isVisible()) {
-      pack();
-    }
   }
 
   private void loadDevelopersAsynchronously() {
@@ -444,7 +437,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (myAnalyzeAction != null) {
       myAnalyzeAction.update();
     }
-    ensureAttachmentsAreVisible();
   }
 
   private void updateAttachmentWarning(final AbstractMessage message) {
