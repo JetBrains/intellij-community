@@ -43,7 +43,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
   @Override
   public TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray) {
     final ArrayReference info = (ArrayReference)resultArray.getValue(0);
-    final Value streamResult = resultArray.getValue(1);
+    final Value streamResult = ((ArrayReference)resultArray.getValue(1)).getValue(0);
     final Value time = resultArray.getValue(2);
     logTime(time);
     final List<TraceInfo> trace = getTrace(chain, info);
