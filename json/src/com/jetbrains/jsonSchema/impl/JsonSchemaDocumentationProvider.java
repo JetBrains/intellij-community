@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class JsonBySchemaDocumentationProvider implements DocumentationProvider {
+public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {

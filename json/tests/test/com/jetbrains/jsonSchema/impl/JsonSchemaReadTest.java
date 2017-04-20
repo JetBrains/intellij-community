@@ -84,7 +84,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     assertNotNull(mainSchema);
     assertTrue(JsonSchemaFileType.INSTANCE.equals(mainSchema.getFileType()));
 
-    final Annotator annotator = new JsonBySchemaObjectAnnotator();
+    final Annotator annotator = new JsonSchemaAnnotator();
     LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override

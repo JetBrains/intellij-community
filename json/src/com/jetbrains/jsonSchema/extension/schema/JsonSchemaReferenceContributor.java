@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.extension.schema;
 
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.impl.JsonPropertyName2SchemaDefinitionReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +35,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
   private static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref");
+  public static final PsiElementPattern.Capture<JsonStringLiteral> PROPERTY_NAME_PATTERN = createPropertyNamePattern();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(REF_PATTERN, new JsonSchemaRefReferenceProvider());
+    registrar.registerReferenceProvider(PROPERTY_NAME_PATTERN, new JsonPropertyName2SchemaDefinitionReferenceProvider());
   }
 
-  private static PsiElementPattern.Capture<JsonValue> createPropertyValuePattern(@NotNull final String propertyName) {
+  private static PsiElementPattern.Capture<JsonValue> createPropertyValuePattern(
+    @SuppressWarnings("SameParameterValue") @NotNull final String propertyName) {
+
     return PlatformPatterns.psiElement(JsonValue.class).and(new FilterPattern(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
@@ -49,6 +55,24 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
               ((JsonProperty)((JsonValue)element).getParent()).getValue() == element) {
             return propertyName.equals(((JsonProperty)((JsonValue)element).getParent()).getName());
           }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean isClassAcceptable(Class hintClass) {
+        return true;
+      }
+    }));
+  }
+
+  private static PsiElementPattern.Capture<JsonStringLiteral> createPropertyNamePattern() {
+    return PlatformPatterns.psiElement(JsonStringLiteral.class).and(new FilterPattern(new ElementFilter() {
+      @Override
+      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+        if (element instanceof JsonStringLiteral) {
+          final PsiElement parent = ((JsonStringLiteral)element).getParent();
+          return parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == element;
         }
         return false;
       }

@@ -38,7 +38,7 @@ import java.util.*;
 /**
  * @author Irina.Chernushina on 8/31/2015.
  */
-public class JsonBySchemaObjectAnnotator implements Annotator {
+public class JsonSchemaAnnotator implements Annotator {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
 
   @Override

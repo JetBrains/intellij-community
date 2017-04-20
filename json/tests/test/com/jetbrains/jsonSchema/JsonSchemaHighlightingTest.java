@@ -31,7 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonBySchemaObjectAnnotator;
+import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -529,7 +529,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   private void testImpl(@NotNull final String schema, @NotNull final String text) throws Exception {
     final PsiFile file = createFile(myModule, "config.json", text);
 
-    final Annotator annotator = new JsonBySchemaObjectAnnotator();
+    final Annotator annotator = new JsonSchemaAnnotator();
 
     registerProvider(getProject(), schema);
     LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);

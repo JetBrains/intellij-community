@@ -27,8 +27,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.junit.Assert;
 
@@ -273,7 +273,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         PsiElement element = myFile.findElementAt(offset);
         boolean found = false;
         while (element.getTextRange().contains(offset)) {
-          if (JsonBySchemaObjectReferenceContributor.REF_PATTERN.accepts(element)) {
+          if (JsonSchemaReferenceContributor.PROPERTY_NAME_PATTERN.accepts(element)) {
             found = true;
             break;
           }

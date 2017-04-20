@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Irina.Chernushina on 10/1/2015.
  */
-public class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
+public class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
   private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
   private static final String USER_USAGE_KEY = "json.schema.user.completion";
