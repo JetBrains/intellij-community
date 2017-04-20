@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class IndexExtension<K, V, I> {
   @NotNull
-  public abstract ID<K, V> getName();
+  public abstract IndexId<K, V> getName();
 
   @NotNull
   public abstract DataIndexer<K, V, I> getIndexer();

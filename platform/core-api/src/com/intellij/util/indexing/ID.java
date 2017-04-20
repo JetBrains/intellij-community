@@ -31,12 +31,11 @@ import java.io.*;
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2008
  */
-public class ID<K, V> {
+public class ID<K, V> extends IndexId<K,V> {
   private static final ConcurrentIntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
-  private final String myName;
   private final short myUniqueId;
 
   static {
@@ -83,7 +82,7 @@ public class ID<K, V> {
   }
 
   protected ID(String name) {
-    myName = name;
+    super(name);
     myUniqueId = stringToId(name);
 
     final ID old = ourRegistry.put(myUniqueId, this);
@@ -155,8 +154,11 @@ public class ID<K, V> {
     return (int)myUniqueId;
   }
 
+  /**
+   * Consider to use {@link ID#getName()} instead of this method
+   */
   public String toString() {
-    return myName;
+    return getName();
   }
 
   public int getUniqueId() {

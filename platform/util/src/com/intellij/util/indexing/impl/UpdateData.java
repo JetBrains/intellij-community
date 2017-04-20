@@ -17,7 +17,7 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +30,12 @@ import java.util.Map;
 public class UpdateData<Key, Value> {
   protected final Map<Key, Value> myNewData;
   protected final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
-  private final ID<Key, Value> myIndexId;
+  private final IndexId<Key, Value> myIndexId;
   private final ThrowableRunnable<IOException> myForwardIndexUpdate;
 
   public UpdateData(@NotNull Map<Key, Value> newData,
                     @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
-                    @NotNull ID<Key, Value> indexId,
+                    @NotNull IndexId<Key, Value> indexId,
                     @Nullable ThrowableRunnable<IOException> forwardIndexUpdate) {
     myNewData = newData;
     myCurrentDataEvaluator = currentDataEvaluator;
@@ -64,7 +64,7 @@ public class UpdateData<Key, Value> {
     return myNewData;
   }
 
-  public ID<Key, Value> getIndexId() {
+  public IndexId<Key, Value> getIndexId() {
     return myIndexId;
   }
 

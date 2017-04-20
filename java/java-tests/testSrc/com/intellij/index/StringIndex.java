@@ -15,6 +15,7 @@
  */
 package com.intellij.index;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -46,11 +47,11 @@ public class StringIndex {
                      final PersistentHashMap<Integer, Collection<String>> inputIndex,
                      boolean failOnRebuildRequest)
     throws IOException {
-    ID<String, String> id = ID.create(testName + "string_index");
+    IndexId<String, String> id = IndexId.create(testName + "string_index");
     IndexExtension<String, String, PathContentPair> extension = new IndexExtension<String, String, PathContentPair>() {
       @NotNull
       @Override
-      public ID<String, String> getName() {
+      public IndexId<String, String> getName() {
         return id;
       }
 
@@ -77,13 +78,18 @@ public class StringIndex {
         return 0;
       }
     };
-    myIndex = new VfsAwareMapReduceIndex<String, String, PathContentPair>(extension, storage, new MapBasedForwardIndex<String, String>(extension) {
+    myIndex = new MapReduceIndex<String, String, PathContentPair>(extension, storage, new MapBasedForwardIndex<String, String>(extension) {
       @NotNull
       @Override
       public PersistentHashMap<Integer, Collection<String>> createMap() throws IOException {
         return inputIndex;
       }
     }) {
+      @Override
+      public void checkCanceled() {
+        ProgressManager.checkCanceled();
+      }
+
       @Override
       public void requestRebuild(@NotNull Exception ex) {
         if (failOnRebuildRequest) {

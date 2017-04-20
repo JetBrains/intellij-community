@@ -40,14 +40,14 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
   @Override
   public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-      Collection<Key> keys = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
+      Collection<Key> keys = SharedIndicesData.recallFileData(inputId, (ID<Key, ?>)myIndexId, mySnapshotIndexExternalizer);
       if (myUnderlying != null) {
         Collection<Key> keysFromInputsIndex = myUnderlying.getInputsIndex().get(inputId);
 
         if (keys == null && keysFromInputsIndex != null ||
             !DebugAssertions.equals(keysFromInputsIndex, keys, myKeyDescriptor)
           ) {
-          SharedIndicesData.associateFileData(inputId, myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
+          SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
           if (keys != null) {
             DebugAssertions.error(
               "Unexpected indexing diff " + myIndexId + ", file:" + IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
@@ -68,7 +68,7 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
     if (myUnderlying != null) myUnderlying.putData(inputId, keySeq);
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       if (keySeq.isEmpty()) keySeq = null;
-      SharedIndicesData.associateFileData(inputId, myIndexId, keySeq, mySnapshotIndexExternalizer);
+      SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keySeq, mySnapshotIndexExternalizer);
     }
   }
 
