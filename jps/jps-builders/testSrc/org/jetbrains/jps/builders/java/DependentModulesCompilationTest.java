@@ -90,13 +90,18 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
 
     CompileScope scope = CompileScopeTestBuilder.rebuild().allModules().build();
     ProjectDescriptor descriptor = createProjectDescriptor(BuildLoggingManager.DEFAULT);
-    BuildTargetIndex targetIndex = descriptor.getBuildTargetIndex();
-    CompileContext context = CompileContextImpl.createContextForTests(scope, descriptor);
-    List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(context);
-    for (BuildTargetChunk chunk : chunks) {
-      assertTrue("Circular dependency between build targets " + chunk.getTargets(), chunk.getTargets().size() == 1);
+    try {
+      BuildTargetIndex targetIndex = descriptor.getBuildTargetIndex();
+      CompileContext context = CompileContextImpl.createContextForTests(scope, descriptor);
+      List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(context);
+      for (BuildTargetChunk chunk : chunks) {
+        assertTrue("Circular dependency between build targets " + chunk.getTargets(), chunk.getTargets().size() == 1);
+      }
+      assertEmpty(targetIndex.getDependencies(new ModuleBuildTarget(t, JavaModuleBuildTargetType.TEST), context));
     }
-    assertEmpty(targetIndex.getDependencies(new ModuleBuildTarget(t, JavaModuleBuildTargetType.TEST), context));
+    finally {
+      descriptor.release();
+    }
   }
 
   public void testCleanOutputForDeletedModuleTarget() {
