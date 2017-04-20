@@ -101,8 +101,9 @@ public class SingleClassesTest {
   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
-  @Test public void testClashName() { doTest("pkg/TestClashName","pkg/SharedName1",
-          "pkg/SharedName2", "pkg/SharedName3", "pkg/NonSharedName", "pkg/TestClashNameParent"); }
+  @Test public void testClashName() { doTest("pkg/TestClashName", "pkg/SharedName1",
+          "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
+          "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
   @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum","pkg/TestSwitchOnEnum$1");}
 
 
