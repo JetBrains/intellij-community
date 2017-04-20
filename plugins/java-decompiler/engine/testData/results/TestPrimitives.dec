@@ -10,55 +10,56 @@ public class TestPrimitives {
       this.printFloat(1.23F);// 11
       this.printDouble(1.23D);// 12
       this.printChar('Z');// 13
-      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 15
-   }// 16
+      String.format("%b, %d, %d, %d, %c", new Object[]{true, 1, 213, 40000, 'c', 42L});// 15
+      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 16
+   }// 17
 
    public void printBoolean(boolean b) {
-      System.out.println(String.format("%b", b));// 19
-   }// 20
+      System.out.println(String.format("%b", b));// 20
+   }// 21
 
    public void printByte(byte b) {
-      System.out.println(String.format("%d", b));// 23
-   }// 24
+      System.out.println(String.format("%d", b));// 24
+   }// 25
 
    public void printShort(short s) {
-      System.out.println(String.format("%d", s));// 27
-   }// 28
+      System.out.println(String.format("%d", s));// 28
+   }// 29
 
    public void printInt(int i) {
-      System.out.println(String.format("%d", i));// 31
-   }// 32
+      System.out.println(String.format("%d", i));// 32
+   }// 33
 
    public void printLong(long l) {
-      System.out.println(String.format("%d", l));// 35
-   }// 36
+      System.out.println(String.format("%d", l));// 36
+   }// 37
 
    public void printFloat(float f) {
-      System.out.println(String.format("%f", f));// 39
-   }// 40
+      System.out.println(String.format("%f", f));// 40
+   }// 41
 
    public void printDouble(double d) {
-      System.out.println(String.format("%f", d));// 43
-   }// 44
+      System.out.println(String.format("%f", d));// 44
+   }// 45
 
    public void printChar(char c) {
-      System.out.println(String.format("%c", c));// 47
-   }// 48
+      System.out.println(String.format("%c", c));// 48
+   }// 49
 
    public boolean getBoolean() {
-      return false;// 52
+      return false;// 53
    }
 
    public byte getByte() {
-      return -128;// 56
+      return -128;// 57
    }
 
    public short getShort() {
-      return -32768;// 60
+      return -32768;// 61
    }
 
    public int getInt() {
-      return 42;// 64
+      return 42;// 65
    }
 
    public void printNarrowed() {
@@ -107,120 +108,134 @@ class 'pkg/TestPrimitives' {
       2d      11
       2f      11
       32      12
-      35      12
-      3e      12
-      41      12
-      48      12
-      4b      12
+      3b      12
+      3c      12
+      42      12
+      43      12
+      49      12
+      4c      12
       52      12
-      55      12
+      54      12
+      5a      12
       5c      12
-      5f      12
-      63      12
-      66      12
-      69      13
+      62      12
+      65      12
+      69      12
+      6d      13
+      70      13
+      79      13
+      7c      13
+      83      13
+      86      13
+      8d      13
+      90      13
+      97      13
+      9a      13
+      9e      13
+      a1      13
+      a4      14
    }
 
    method 'printBoolean (Z)V' {
-      0      16
-      3      16
-      c      16
-      10      16
-      13      16
-      16      17
+      0      17
+      3      17
+      c      17
+      10      17
+      13      17
+      16      18
    }
 
    method 'printByte (B)V' {
-      0      20
-      3      20
-      c      20
-      10      20
-      13      20
-      16      21
+      0      21
+      3      21
+      c      21
+      10      21
+      13      21
+      16      22
    }
 
    method 'printShort (S)V' {
-      0      24
-      3      24
-      c      24
-      10      24
-      13      24
-      16      25
+      0      25
+      3      25
+      c      25
+      10      25
+      13      25
+      16      26
    }
 
    method 'printInt (I)V' {
-      0      28
-      3      28
-      c      28
-      10      28
-      13      28
-      16      29
+      0      29
+      3      29
+      c      29
+      10      29
+      13      29
+      16      30
    }
 
    method 'printLong (J)V' {
-      0      32
-      3      32
-      c      32
-      10      32
-      13      32
-      16      33
+      0      33
+      3      33
+      c      33
+      10      33
+      13      33
+      16      34
    }
 
    method 'printFloat (F)V' {
-      0      36
-      3      36
-      c      36
-      10      36
-      13      36
-      16      37
+      0      37
+      3      37
+      c      37
+      10      37
+      13      37
+      16      38
    }
 
    method 'printDouble (D)V' {
-      0      40
-      3      40
-      c      40
-      10      40
-      13      40
-      16      41
+      0      41
+      3      41
+      c      41
+      10      41
+      13      41
+      16      42
    }
 
    method 'printChar (C)V' {
-      0      44
-      3      44
-      c      44
-      10      44
-      13      44
-      16      45
+      0      45
+      3      45
+      c      45
+      10      45
+      13      45
+      16      46
    }
 
    method 'getBoolean ()Z' {
-      0      48
-      1      48
+      0      49
+      1      49
    }
 
    method 'getByte ()B' {
-      0      52
-      2      52
+      0      53
+      2      53
    }
 
    method 'getShort ()S' {
-      0      56
-      3      56
+      0      57
+      3      57
    }
 
    method 'getInt ()I' {
-      0      60
-      2      60
+      0      61
+      2      61
    }
 
    method 'printNarrowed ()V' {
-      2      64
-      5      64
-      6      64
-      b      65
-      e      65
-      f      65
-      12      66
+      2      65
+      5      65
+      6      65
+      b      66
+      e      66
+      f      66
+      12      67
    }
 
    method 'constructor ()V' {
@@ -282,27 +297,27 @@ Lines mapping:
 13 <-> 12
 15 <-> 13
 16 <-> 14
-19 <-> 17
+17 <-> 15
 20 <-> 18
-23 <-> 21
+21 <-> 19
 24 <-> 22
-27 <-> 25
+25 <-> 23
 28 <-> 26
-31 <-> 29
+29 <-> 27
 32 <-> 30
-35 <-> 33
+33 <-> 31
 36 <-> 34
-39 <-> 37
+37 <-> 35
 40 <-> 38
-43 <-> 41
+41 <-> 39
 44 <-> 42
-47 <-> 45
+45 <-> 43
 48 <-> 46
-52 <-> 49
-56 <-> 53
-60 <-> 57
-64 <-> 61
-68 <-> 65
+49 <-> 47
+53 <-> 50
+57 <-> 54
+61 <-> 58
+65 <-> 62
 69 <-> 66
 70 <-> 67
 73 <-> 70

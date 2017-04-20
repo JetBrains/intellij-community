@@ -12,6 +12,7 @@ public class TestPrimitives {
     printDouble(1.23);
     printChar('Z');
 
+    String.format("%b, %d, %d, %d, %c", true, 1, 213, 40_000, 'c', 42L);
     System.out.println(String.format("%b, %d, %d, %d", getBoolean(), getByte(), getShort(), getInt()));
   }
 

@@ -409,6 +409,15 @@ public class InvocationExprent extends Exprent {
 
       // special handling for ambiguous types
       if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+        // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
+        if (lstParameters.get(0).getExprType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+          if (classname.equals("java/lang/Integer")) {
+            // 'Integer.valueOf(40_000)' will change to '40_000' and that will be interpreted as 'char' type
+            ((ConstExprent) lstParameters.get(0)).setConstType(VarType.VARTYPE_INT);
+            return true;
+          }
+        }
+
         if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
           if (classname.equals("java/lang/Character")) {
             return true;
