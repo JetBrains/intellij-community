@@ -2116,10 +2116,6 @@
                      level="WARNING" implementationClass="com.siyeh.ig.portability.UseOfSunClassesInspection"/>
 
     <!--group.names.declaration.redundancy-->
-    <globalInspection groupPath="Java" language="JAVA" shortName="ElementOnlyUsedFromTestCode" bundle="com.siyeh.InspectionGadgetsBundle"
-                      key="element.only.used.from.test.code.display.name" groupBundle="messages.InspectionsBundle"
-                      groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
-                      implementationClass="com.siyeh.ig.redundancy.ElementOnlyUsedFromTestCodeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedLabel" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.label.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.redundancy.UnusedLabelInspection"/>
