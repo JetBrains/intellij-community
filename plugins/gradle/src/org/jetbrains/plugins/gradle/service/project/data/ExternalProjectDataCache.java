@@ -102,7 +102,7 @@ public class ExternalProjectDataCache {
   public Map<String, ExternalSourceSet> findExternalProject(@NotNull ExternalProject parentProject, @NotNull Module module) {
     String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
     return externalProjectId != null ? findExternalProject(parentProject, externalProjectId)
-                                     : Collections.<String, ExternalSourceSet>emptyMap();
+                                     : Collections.emptyMap();
   }
 
   @NotNull
@@ -113,7 +113,7 @@ public class ExternalProjectDataCache {
 
     while (!queue.isEmpty()) {
       final ExternalProject externalProject = queue.remove();
-      final String projectId = externalProject.getQName();
+      final String projectId = externalProject.getId();
       boolean isRelatedProject = projectId.equals(externalProjectId);
       final Map<String, ExternalSourceSet> result = ContainerUtil.newHashMap();
       for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : externalProject.getSourceSets().entrySet()) {
