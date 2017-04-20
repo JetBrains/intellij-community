@@ -347,6 +347,11 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
 
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+                         id="delete.for.selection"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+                         id="backspace.for.selection" order="after backspace.lookup"/>
+
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
       <configurable instance="com.intellij.javaee.DefaultSchemasConfigurable" displayName="Default XML Schemas" id="xml.defaultSchemas"/>
