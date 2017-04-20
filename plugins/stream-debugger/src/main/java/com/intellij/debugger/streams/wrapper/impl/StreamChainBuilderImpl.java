@@ -127,27 +127,10 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
   private static GenericType resolveType(@NotNull PsiMethodCallExpression call) {
     return ApplicationManager.getApplication().runReadAction((Computable<GenericType>)() -> {
       final PsiMethod method = call.resolveMethod();
-      if (method != null) {
-        final PsiType returnType = method.getReturnType();
-        if (returnType != null) {
-          if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) {
-            return GenericType.INT;
-          }
-          if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) {
-            return GenericType.LONG;
-          }
-          if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) {
-            return GenericType.DOUBLE;
-          }
-
-          if (returnType.equals(PsiType.VOID)) {
-            return GenericType.VOID;
-          }
-
-          return GenericType.OBJECT;
-        }
-      }
-      return null;
+      if (method == null) return null;
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null) return null;
+      return GenericTypeUtil.fromStreamPsiType(returnType);
     });
   }
 

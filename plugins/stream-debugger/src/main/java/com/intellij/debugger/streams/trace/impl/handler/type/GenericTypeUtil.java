@@ -15,13 +15,24 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.type;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class GenericTypeUtil {
+
+  public static GenericType fromStreamPsiType(@NotNull PsiType streamPsiType) {
+    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return GenericType.INT;
+    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return GenericType.LONG;
+    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return GenericType.DOUBLE;
+    if (PsiType.VOID.equals(streamPsiType)) return GenericType.VOID;
+
+    return GenericType.OBJECT;
+  }
 
   public static GenericType fromPsiType(@NotNull PsiType type) {
     if (PsiType.VOID.equals(type)) return GenericType.VOID;
