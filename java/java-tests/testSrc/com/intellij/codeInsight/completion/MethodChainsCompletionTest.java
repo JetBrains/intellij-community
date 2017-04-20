@@ -99,7 +99,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 0, 5, 3, 0, assertOneElement(doCompletion()));
   }
 
-  public void _testChainsWithIndependentCallings() {
+  public void testChainsWithIndependentCallings() {
     assertOneElement(doCompletion());
   }
 
@@ -208,6 +208,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
 
   public void testMethodQualifierClass() {
     doTestRendering();
+  }
+
+  public void testArray() {
+    WeightableChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("c.getMethods", element.getLookupString());
   }
 
   public void assertAdvisorLookupElementEquals(String lookupText,

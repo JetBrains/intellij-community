@@ -16,23 +16,24 @@
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 /**
  * @author Dmitry Batkovich
  */
 public class TargetType {
-
   private final String myClassQName;
-  private final boolean myArray;
+  private final byte myArrayKind;
   private final PsiType myPsiType;
 
   public TargetType(String classQName,
-                    boolean isArray,
+                    byte arrayKind,
                     PsiType targetType) {
     myClassQName = classQName;
-    myArray = isArray;
+    myArrayKind = arrayKind;
     myPsiType = targetType;
   }
 
@@ -40,20 +41,13 @@ public class TargetType {
     return myClassQName;
   }
 
-  public boolean isArray() {
-    return myArray;
-  }
-
-  public PsiType getPsiType() {
-    return myPsiType;
+  @SignatureData.IteratorKind
+  public byte getArrayKind() {
+    return myArrayKind;
   }
 
   public PsiClass getTargetClass() {
     return PsiUtil.resolveClassInType(myPsiType);
-  }
-
-  public boolean isAssignableFrom(PsiClass psiClass) {
-    return myPsiType.isAssignableFrom(JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass));
   }
 
   @Nullable
@@ -69,23 +63,29 @@ public class TargetType {
 
   @Nullable
   private static TargetType create(PsiArrayType arrayType) {
-    PsiType currentComponentType = arrayType.getComponentType();
-    while (currentComponentType instanceof PsiArrayType) {
-      currentComponentType = ((PsiArrayType)currentComponentType).getComponentType();
-    }
-    if (!(currentComponentType instanceof PsiClassType)) {
-      return null;
-    }
-    String targetQName = arrayType.getCanonicalText();
-    return new TargetType(targetQName, true, arrayType);
+    // only 1-dim arrays accepted
+    PsiType componentType = arrayType.getComponentType();
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
+    if (aClass == null) return null;
+    String targetQName = aClass.getQualifiedName();
+    if (targetQName == null) return null;
+    return new TargetType(targetQName, SignatureData.ARRAY_ONE_DIM, arrayType);
   }
 
   @Nullable
   private static TargetType create(PsiClassType classType) {
-    PsiClassType.ClassResolveResult resolvedGenerics = classType.resolveGenerics();
-    PsiClass resolvedClass = resolvedGenerics.getElement();
-    if (resolvedClass == null) {
-      return null;
+    PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
+    byte iteratorKind = SignatureData.ZERO_DIM;
+    if (resolvedClass == null) return null;
+    String iteratorClass = isIterator(resolvedClass);
+    if (iteratorClass != null) {
+      PsiClassType streamType = (PsiClassType)PsiUtil.substituteTypeParameter(classType, iteratorClass, 0, false);
+      if (streamType == null) return null;
+      PsiType[] parameters = streamType.getParameters();
+      if (parameters.length != 1 || !(parameters[0] instanceof PsiClassType)) return null;
+      resolvedClass = PsiUtil.resolveClassInClassTypeOnly(parameters[0]);
+      if (resolvedClass == null) return null;
+      iteratorKind = SignatureData.ITERATOR_ONE_DIM;
     }
     String classQName = resolvedClass.getQualifiedName();
     if (classQName == null) {
@@ -94,6 +94,19 @@ public class TargetType {
     if (resolvedClass.hasTypeParameters()) {
       return null;
     }
-    return new TargetType(classQName, false, classType);
+    return new TargetType(classQName, iteratorKind, classType);
+  }
+
+  private static String isIterator(PsiClass resolvedClass) {
+    if (InheritanceUtil.isInheritor(resolvedClass, CommonClassNames.JAVA_LANG_ITERABLE)) {
+      return CommonClassNames.JAVA_LANG_ITERABLE;
+    }
+    if (InheritanceUtil.isInheritor(resolvedClass, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+      return CommonClassNames.JAVA_UTIL_ITERATOR;
+    }
+    if (InheritanceUtil.isInheritor(resolvedClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
+      return CommonClassNames.JAVA_UTIL_STREAM_STREAM;
+    }
+    return null;
   }
 }

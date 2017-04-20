@@ -165,4 +165,8 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   private static ElementPattern<PsiElement> patternForMethodCallParameter() {
     return psiElement().withSuperParent(3, PsiMethodCallExpressionImpl.class);
   }
+
+  private static boolean suggestIterators(@NotNull CompletionParameters parameters) {
+    return parameters.getInvocationCount() > 1;
+  }
 }

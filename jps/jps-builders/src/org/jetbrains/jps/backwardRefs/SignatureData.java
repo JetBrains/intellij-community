@@ -15,19 +15,23 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import org.intellij.lang.annotations.MagicConstant;
+
 public class SignatureData {
   public static final byte ZERO_DIM = 0;
   public static final byte ARRAY_ONE_DIM = 1;
   // represents java's Iterator, Iterable and BaseStream
   public static final byte ITERATOR_ONE_DIM = 2;
+  @MagicConstant(intValues = {ZERO_DIM, ARRAY_ONE_DIM, ITERATOR_ONE_DIM})
+  public @interface IteratorKind {}
 
   private final int myRawReturnType;
-  private final byte myArrayDimension;
+  private final byte myArrayKind;
   private final boolean myStatic;
 
-  public SignatureData(int rawReturnType, byte arrayDimension, boolean isStatic) {
+  public SignatureData(int rawReturnType, byte arrayKind, boolean isStatic) {
     myRawReturnType = rawReturnType;
-    myArrayDimension = arrayDimension;
+    myArrayKind = arrayKind;
     myStatic = isStatic;
   }
 
@@ -36,7 +40,7 @@ public class SignatureData {
   }
 
   public byte getIteratorKind() {
-    return myArrayDimension;
+    return myArrayKind;
   }
 
   public boolean isStatic() {
@@ -51,7 +55,7 @@ public class SignatureData {
     SignatureData data = (SignatureData)o;
 
     if (myRawReturnType != data.myRawReturnType) return false;
-    if (myArrayDimension != data.myArrayDimension) return false;
+    if (myArrayKind != data.myArrayKind) return false;
     if (myStatic != data.myStatic) return false;
 
     return true;
@@ -60,7 +64,7 @@ public class SignatureData {
   @Override
   public int hashCode() {
     int result = myRawReturnType;
-    result = 31 * result + myArrayDimension;
+    result = 31 * result + myArrayKind;
     result = 31 * result + (myStatic ? 1 : 0);
     return result;
   }

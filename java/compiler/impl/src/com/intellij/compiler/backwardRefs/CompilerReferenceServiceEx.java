@@ -20,6 +20,7 @@ import com.intellij.compiler.chainsSearch.OccurrencesAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.SortedSet;
 
@@ -33,7 +34,7 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
 
   @NotNull
   public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                                        boolean allowIterators)
+                                                                                                        @SignatureData.IteratorKind byte iteratorKind)
     throws ReferenceIndexUnavailableException;
 
   public abstract boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold)
