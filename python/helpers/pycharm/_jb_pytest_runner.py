@@ -5,7 +5,7 @@ import sys
 import pytest
 from _pytest.config import get_plugin_manager
 
-from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args
+from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING
 from teamcity import pytest_plugin
 
 
@@ -24,4 +24,8 @@ if __name__ == '__main__':
     plugins_to_load = []
     if not get_plugin_manager().hasplugin("pytest-teamcity"):
         plugins_to_load.append(pytest_plugin)
-    pytest.main(sys.argv[1:], plugins_to_load)
+
+    args = sys.argv[1:]
+    if JB_DISABLE_BUFFERING and "-s" not in args:
+        args += ["-s"]
+    pytest.main(args, plugins_to_load)

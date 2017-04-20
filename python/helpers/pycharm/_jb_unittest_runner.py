@@ -3,7 +3,7 @@ import os
 import sys
 from unittest import main
 
-from _jb_runner_tools import jb_start_tests, jb_doc_args
+from _jb_runner_tools import jb_start_tests, jb_doc_args, JB_DISABLE_BUFFERING
 from teamcity import unittestpy
 
 if __name__ == '__main__':
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     args += additional_args
     jb_doc_args("unittests", args)
     test_runner = unittestpy.TeamcityTestRunner()
-    test_runner.buffer = True
+    test_runner.buffer = not JB_DISABLE_BUFFERING
     # Working dir should be on path, that is how unittest work when launched from command line
     sys.path.append(os.getcwd())
     main(argv=args, module=None, testRunner=test_runner)

@@ -14,6 +14,9 @@ from teamcity import teamcity_presence_env_var, messages
 if teamcity_presence_env_var not in os.environ:
     os.environ[teamcity_presence_env_var] = "LOCAL"
 
+# TODO: DOC
+JB_DISABLE_BUFFERING = "_DISABLE_BUFFERING" in os.environ
+
 
 def _parse_parametrized(part):
     """
