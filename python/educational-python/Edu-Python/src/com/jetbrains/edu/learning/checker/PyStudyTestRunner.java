@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Map;
 
-public class PyStudyTestRunner {
+class PyStudyTestRunner {
   private static final String PYTHONPATH = "PYTHONPATH";
   @NotNull private final Task myTask;
   @NotNull private final VirtualFile myTaskDir;
@@ -29,7 +29,7 @@ public class PyStudyTestRunner {
     myTaskDir = taskDir;
   }
 
-  public Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
+  Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
     final Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
     PyEduPluginConfigurator configurator = new PyEduPluginConfigurator();
     String testsFileName = configurator.getTestFileName();
@@ -59,7 +59,7 @@ public class PyStudyTestRunner {
     return null;
   }
 
-  public GeneralCommandLine getCommandLine() {
+  GeneralCommandLine getCommandLine() {
     return myCommandLine;
   }
 }
