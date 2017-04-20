@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,14 +128,14 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     final PsiMethod method = getElement();
-    
+
     if (isToInferApplicability()) {
       if (!isOverloadCheck()) {
         //ensure applicability check is performed
         getSubstitutor(false);
       }
 
-      //already performed checks, so if inference failed, error message should be saved  
+      //already performed checks, so if inference failed, error message should be saved
       if (myInferenceError != null || isPotentiallyCompatible() != ThreeState.YES) {
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
@@ -288,7 +288,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
-  
+
   @NotNull
   @Override
   public PsiSubstitutor getSubstitutor() {
@@ -387,14 +387,14 @@ public class MethodCandidateInfo extends CandidateInfo{
                                            @NotNull final PsiExpression[] arguments,
                                            boolean includeReturnConstraint) {
     return computeForOverloadedCandidate(() -> {
-      final PsiMethod method = MethodCandidateInfo.this.getElement();
+      final PsiMethod method = this.getElement();
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-      if (MethodCandidateInfo.this.isRawSubstitution()) {
+      if (this.isRawSubstitution()) {
         return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
       }
 
-      final PsiElement parent = MethodCandidateInfo.this.getParent();
+      final PsiElement parent = this.getParent();
       if (parent == null) return PsiSubstitutor.EMPTY;
       Project project = method.getProject();
       JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
@@ -414,7 +414,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return false;
   }
-  
+
   protected PsiElement getMarkerList() {
     return myArgumentList;
   }
@@ -523,7 +523,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return null;
   }
-  
+
   public CurrentCandidateProperties createProperties() {
     return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
   }
@@ -573,7 +573,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       myApplicabilityCheck = applicabilityCheck;
     }
   }
-  
+
   public static class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;

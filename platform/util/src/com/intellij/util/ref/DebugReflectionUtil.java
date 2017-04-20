@@ -138,7 +138,7 @@ public class DebugReflectionUtil {
       }
     }
   }
-  
+
   private static void queueStronglyReferencedValues(Queue<BackLink> queue,
                                                     @NotNull Object root,
                                                     @NotNull Condition<Object> shouldExamineValue,
@@ -213,7 +213,7 @@ public class DebugReflectionUtil {
     @Override
     public String toString() {
       String result = "";
-      BackLink backLink = BackLink.this;
+      BackLink backLink = this;
       while (backLink != null) {
         String valueStr;
         Object value = backLink.value;

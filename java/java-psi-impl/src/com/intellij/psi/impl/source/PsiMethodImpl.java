@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,7 +304,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     if (substitutor == PsiSubstitutor.EMPTY) {
       return CachedValuesManager.getCachedValue(this, () -> {
-        MethodSignature signature = MethodSignatureBackedByPsiMethod.create(PsiMethodImpl.this, PsiSubstitutor.EMPTY);
+        MethodSignature signature = MethodSignatureBackedByPsiMethod.create(this, PsiSubstitutor.EMPTY);
         return CachedValueProvider.Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
     }
@@ -347,7 +347,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @NotNull
   public SearchScope getUseScope() {
     return ApplicationManager.getApplication().runReadAction(
-      (Computable<SearchScope>)() -> PsiImplUtil.getMemberUseScope(PsiMethodImpl.this));
+      (Computable<SearchScope>)() -> PsiImplUtil.getMemberUseScope(this));
   }
 
   @Override

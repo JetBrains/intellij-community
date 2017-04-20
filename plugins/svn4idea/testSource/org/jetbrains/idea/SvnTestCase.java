@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
         verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
 
-        initProject(myWcRoot, SvnTestCase.this.getTestName());
+        initProject(myWcRoot, this.getTestName());
         activateVCS(SvnVcs.VCS_NAME);
 
         myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));

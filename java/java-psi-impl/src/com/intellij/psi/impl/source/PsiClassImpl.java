@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   public PsiElement getOriginalElement() {
     return CachedValuesManager.getCachedValue(this, () -> {
       final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
-      final PsiClass result = helper != null ? helper.getOriginalClass(PsiClassImpl.this) : PsiClassImpl.this;
+      final PsiClass result = helper != null ? helper.getOriginalClass(this) : this;
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }

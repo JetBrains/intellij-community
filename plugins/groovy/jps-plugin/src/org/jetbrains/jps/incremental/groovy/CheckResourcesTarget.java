@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
                                                              BuildDataPaths dataPaths) {
     ResourcesTarget target = new ResourcesTarget(myModule, ResourcesTargetType.getInstance(isTests()));
     List<ResourceRootDescriptor> resources = target.computeRootDescriptors(model, index, ignoredFileIndex, dataPaths);
-    return ContainerUtil.map(resources, descriptor -> new GroovyResourceRootDescriptor(descriptor, CheckResourcesTarget.this));
+    return ContainerUtil.map(resources, descriptor -> new GroovyResourceRootDescriptor(descriptor, this));
   }
 
   @NotNull
@@ -146,7 +146,7 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
     @NotNull
     @Override
     public List<CheckResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
-      return ContainerUtil.map(model.getProject().getModules(), module -> new CheckResourcesTarget(module, Type.this));
+      return ContainerUtil.map(model.getProject().getModules(), module -> new CheckResourcesTarget(module, this));
     }
 
     @NotNull
