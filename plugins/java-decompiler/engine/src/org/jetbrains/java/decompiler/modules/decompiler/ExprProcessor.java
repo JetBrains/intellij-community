@@ -288,7 +288,7 @@ public class ExprProcessor implements CodeConstants {
 
     ConstantPool pool = cl.getPool();
     StructBootstrapMethodsAttribute bootstrap =
-      (StructBootstrapMethodsAttribute)cl.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
+      (StructBootstrapMethodsAttribute)cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
 
     BasicBlock block = stat.getBlock();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.java.decompiler.code.CodeConstants.*;
 
@@ -53,7 +54,7 @@ public class StructMethod extends StructMember {
   private int codeFullLength = 0;
   private InstructionSequence seq;
   private boolean expanded = false;
-  private VBStyleCollection<StructGeneralAttribute, String> codeAttributes;
+  private Map<String, StructGeneralAttribute> codeAttributes;
 
   public StructMethod(DataInputFullStream in, StructClass clStruct) throws IOException {
     classStruct = clStruct;
@@ -69,7 +70,7 @@ public class StructMethod extends StructMember {
 
     attributes = readAttributes(in, pool);
     if (codeAttributes != null) {
-      attributes.addAllWithKey(codeAttributes);
+      attributes.putAll(codeAttributes);
       codeAttributes = null;
     }
   }
@@ -391,7 +392,7 @@ public class StructMethod extends StructMember {
   }
 
   public StructLocalVariableTableAttribute getLocalVariableAttr() {
-    return (StructLocalVariableTableAttribute)getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+    return (StructLocalVariableTableAttribute)getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
   }
 
   @Override

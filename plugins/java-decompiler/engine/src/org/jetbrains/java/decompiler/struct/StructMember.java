@@ -21,22 +21,27 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class StructMember {
 
   protected int accessFlags;
-  protected VBStyleCollection<StructGeneralAttribute, String> attributes;
+  protected Map<String, StructGeneralAttribute> attributes;
 
 
   public int getAccessFlags() {
     return accessFlags;
   }
 
-  public VBStyleCollection<StructGeneralAttribute, String> getAttributes() {
-    return attributes;
+  public StructGeneralAttribute getAttribute(String name) {
+    return attributes.get(name);
+  }
+
+  public boolean hasAttribute(String name) {
+    return attributes.containsKey(name);
   }
 
   public boolean hasModifier(int modifier) {
@@ -44,13 +49,13 @@ public class StructMember {
   }
 
   public boolean isSynthetic() {
-    return hasModifier(CodeConstants.ACC_SYNTHETIC) || attributes.containsKey(StructGeneralAttribute.ATTRIBUTE_SYNTHETIC);
+    return hasModifier(CodeConstants.ACC_SYNTHETIC) || hasAttribute(StructGeneralAttribute.ATTRIBUTE_SYNTHETIC);
   }
 
-  protected VBStyleCollection<StructGeneralAttribute, String> readAttributes(DataInputFullStream in, ConstantPool pool) throws IOException {
+  protected Map<String, StructGeneralAttribute> readAttributes(DataInputFullStream in, ConstantPool pool) throws IOException {
     int length = in.readUnsignedShort();
 
-    VBStyleCollection<StructGeneralAttribute, String> attributes = new VBStyleCollection<>(length);
+    Map<String, StructGeneralAttribute> attributes = new HashMap<>(length);
     for (int i = 0; i < length; i++) {
       int nameIndex = in.readUnsignedShort();
       String name = pool.getPrimitiveConstant(nameIndex).getString();
@@ -60,16 +65,16 @@ public class StructMember {
       if (attribute != null) {
         if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
-          StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.getWithKey(name);
+          StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.get(name);
           table.add((StructLocalVariableTableAttribute)attribute);
         }
         else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
-          StructLocalVariableTypeTableAttribute table = (StructLocalVariableTypeTableAttribute)attributes.getWithKey(name);
+          StructLocalVariableTypeTableAttribute table = (StructLocalVariableTypeTableAttribute)attributes.get(name);
           table.add((StructLocalVariableTypeTableAttribute)attribute);
         }
         else {
-          attributes.addWithKey(attribute, attribute.getName());
+          attributes.put(attribute.getName(), attribute);
         }
       }
     }
