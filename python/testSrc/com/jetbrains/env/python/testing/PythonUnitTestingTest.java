@@ -52,6 +52,82 @@ import static org.junit.Assert.assertEquals;
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
+
+  /**
+   * subtest names may have dots and shall not break test tree
+   */
+  @EnvTestTagsRequired(tags = "python3")
+  @Test
+  public void testDotsInSubtest() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        runner.getFormattedTestTree();
+        assertEquals("dots in subtest names broke output", "Test tree:\n" +
+                                                      "[root]\n" +
+                                                      ".test_test\n" +
+                                                      "..SampleTest\n" +
+                                                      "...test_sample\n" +
+                                                      "....(i='0_0')(-)\n" +
+                                                      "....(i='1_1')(-)\n" +
+                                                      "....(i='2_2')(+)\n" +
+                                                      "....(i='3_3')(+)\n" +
+                                                      "....(i='4_4')(+)\n" +
+                                                      "....(i='5_5')(+)\n" +
+                                                      "....(i='6_6')(+)\n" +
+                                                      "....(i='7_7')(+)\n" +
+                                                      "....(i='8_8')(+)\n" +
+                                                      "....(i='9_9')(+)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+  @EnvTestTagsRequired(tags = "unittest2")
+  @Test
+  public void testUnitTest2() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/unittest2", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        runner.getFormattedTestTree();
+        assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
+                                "[root]\n" +
+                                ".test_test\n" +
+                                "..SampleTest\n" +
+                                "...test_sample\n" +
+                                "....(i=0)(-)\n" +
+                                "....(i=1)(-)\n" +
+                                "....(i=2)(-)\n" +
+                                "....(i=3)(-)\n" +
+                                "....(i=4)(+)\n" +
+                                "....(i=5)(+)\n" +
+                                "....(i=6)(+)\n" +
+                                "....(i=7)(+)\n" +
+                                "....(i=8)(+)\n" +
+                                "....(i=9)(+)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
   // Ensures setup/teardown does not break anything
   @Test
   public void testSetupTearDown() throws Exception {
