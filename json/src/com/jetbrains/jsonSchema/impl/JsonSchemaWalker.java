@@ -232,7 +232,7 @@ public class JsonSchemaWalker {
     // we can have also non-absolute transfers here, because allOf and others can not be put in-place into schema
     final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(definitionAddress);
     //noinspection ConstantConditions
-    final VirtualFile variantSchemaFile = splitter.isAbsolute() ? service.getSchemaFileById(splitter.getSchemaId(), schemaFile) :
+    final VirtualFile variantSchemaFile = splitter.isAbsolute() ? service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile) :
       schemaFile;
     if (variantSchemaFile == null) return;
     final JsonSchemaObject variantObject = service.getSchemaObjectForSchemaFile(variantSchemaFile);

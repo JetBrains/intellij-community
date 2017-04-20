@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -78,7 +79,7 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
   public String createMessage(@NotNull final Collection<VirtualFile> schemaFiles) {
     final List<Pair<Boolean, String>> pairList = schemaFiles.stream()
       .map(file -> myJsonSchemaService.getSchemaProvider(file))
-      .filter(provider -> provider != null)
+      .filter(Objects::nonNull)
       .map(provider -> Pair.create(SchemaType.userSchema.equals(provider.getSchemaType()), provider.getName()))
       .collect(Collectors.toList());
 

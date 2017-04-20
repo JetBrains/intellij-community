@@ -62,7 +62,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       VirtualFile schemaFile = getElement().getContainingFile().getVirtualFile();
       if (splitter.isAbsolute()) {
         assert splitter.getSchemaId() != null;
-        schemaFile = JsonSchemaService.Impl.get(getElement().getProject()).getSchemaFileById(splitter.getSchemaId(), schemaFile);
+        schemaFile = JsonSchemaService.Impl.get(getElement().getProject()).findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
         if (schemaFile == null) return null;
       }
 

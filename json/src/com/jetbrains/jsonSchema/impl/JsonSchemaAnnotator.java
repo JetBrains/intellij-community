@@ -46,7 +46,7 @@ public class JsonSchemaAnnotator implements Annotator {
     if (element.getContainingFile() == null) return;
 
     final JsonSchemaObject rootSchema =
-      JsonSchemaService.Impl.get(element.getProject()).getSchemaForCodeAssistance(element.getContainingFile().getViewProvider().getVirtualFile());
+      JsonSchemaService.Impl.get(element.getProject()).getSchemaObject(element.getContainingFile().getViewProvider().getVirtualFile());
     final VirtualFile schemaFile;
     if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return;
 

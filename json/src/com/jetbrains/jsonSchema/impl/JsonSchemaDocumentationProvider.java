@@ -39,7 +39,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
-    final JsonSchemaObject rootSchema = service.getSchemaForCodeAssistance(containingFile.getViewProvider().getVirtualFile());
+    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
     final VirtualFile schemaFile;
     if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return null;
 

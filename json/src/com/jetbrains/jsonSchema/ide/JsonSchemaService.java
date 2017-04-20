@@ -23,14 +23,15 @@ public interface JsonSchemaService {
   Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
 
   @Nullable
-  JsonSchemaObject getSchemaForCodeAssistance(@NotNull VirtualFile file);
+  JsonSchemaObject getSchemaObject(@NotNull VirtualFile file);
 
   @Nullable
   JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile);
 
   @Nullable
-  VirtualFile getSchemaFileById(@NotNull String id, VirtualFile referent);
+  VirtualFile findSchemaFileByReference(@NotNull String reference, VirtualFile referent);
 
+  @NotNull
   Set<VirtualFile> getSchemaFiles();
 
   @Nullable

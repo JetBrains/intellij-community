@@ -48,7 +48,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     if (containingFile == null) return;
 
     final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
-    final JsonSchemaObject rootSchema = service.getSchemaForCodeAssistance(containingFile.getViewProvider().getVirtualFile());
+    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
     final VirtualFile schemaFile;
     if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return;
 

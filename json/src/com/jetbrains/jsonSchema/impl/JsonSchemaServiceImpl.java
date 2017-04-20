@@ -83,11 +83,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   @Nullable
-  public VirtualFile getSchemaFileById(@NotNull String id, @Nullable VirtualFile referent) {
+  public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = myState.getFiles().stream()
-      .filter(file -> id.equals(ReadJsonSchemaFromPsi.readSchemaId(myProject, file)))
+      .filter(file -> reference.equals(ReadJsonSchemaFromPsi.readSchemaId(myProject, file)))
       .findFirst();
-    return optional.orElseGet(() -> getSchemaFileByRefAsLocalFile(id, referent));
+    return optional.orElseGet(() -> getSchemaFileByRefAsLocalFile(reference, referent));
   }
 
   @Override
@@ -99,7 +99,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Nullable
   @Override
-  public JsonSchemaObject getSchemaForCodeAssistance(@NotNull final VirtualFile file) {
+  public JsonSchemaObject getSchemaObject(@NotNull final VirtualFile file) {
     final List<JsonSchemaFileProvider> providers =
       myState.getProviders().stream().filter(provider -> isProviderAvailable(file, provider)).collect(Collectors.toList());
     if (providers.isEmpty() || providers.size() > 2) return null;
@@ -122,6 +122,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return readCachedObject(schemaFile);
   }
 
+  @NotNull
   @Override
   public Set<VirtualFile> getSchemaFiles() {
     return myState.getFiles();
