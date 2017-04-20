@@ -443,22 +443,26 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   void subscribeToRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
-    Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
-    if (owners == null) {
-      owners = new HashSet<>();
-      myRegisteredRootProviders.put(provider, owners);
-      provider.addRootSetChangedListener(myRootProviderChangeListener);
+    synchronized (myRegisteredRootProviders) {
+      Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
+      if (owners == null) {
+        owners = new HashSet<>();
+        myRegisteredRootProviders.put(provider, owners);
+        provider.addRootSetChangedListener(myRootProviderChangeListener);
+      }
+      owners.add(owner);
     }
-    owners.add(owner);
   }
 
   void unsubscribeFromRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
-    Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
-    if (owners != null) {
-      owners.remove(owner);
-      if (owners.isEmpty()) {
-        provider.removeRootSetChangedListener(myRootProviderChangeListener);
-        myRegisteredRootProviders.remove(provider);
+    synchronized (myRegisteredRootProviders) {
+      Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
+      if (owners != null) {
+        owners.remove(owner);
+        if (owners.isEmpty()) {
+          provider.removeRootSetChangedListener(myRootProviderChangeListener);
+          myRegisteredRootProviders.remove(provider);
+        }
       }
     }
   }
@@ -628,17 +632,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   void assertListenersAreDisposed() {
-    if (!myRegisteredRootProviders.isEmpty()) {
-      StringBuilder details = new StringBuilder();
-      for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
-        details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
-        for (OrderEntry orderEntry : entry.getValue()) {
-          details.append("   ").append(orderEntry).append("\n");
+    synchronized (myRegisteredRootProviders) {
+      if (!myRegisteredRootProviders.isEmpty()) {
+        StringBuilder details = new StringBuilder();
+        for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
+          details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
+          for (OrderEntry orderEntry : entry.getValue()) {
+            details.append("   ").append(orderEntry).append("\n");
+          }
         }
-      }
-      LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers aren't disposed:" + details);
-      for (RootProvider provider : myRegisteredRootProviders.keySet()) {
-        provider.removeRootSetChangedListener(myRootProviderChangeListener);
+        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers aren't disposed:" + details);
+        for (RootProvider provider : myRegisteredRootProviders.keySet()) {
+          provider.removeRootSetChangedListener(myRootProviderChangeListener);
+        }
       }
     }
   }
