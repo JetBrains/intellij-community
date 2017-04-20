@@ -13,13 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 31.07.2006
- * Time: 13:24:17
- */
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
@@ -65,20 +58,19 @@ import java.util.Map;
 public class LineStatusTrackerManager implements ProjectComponent, LineStatusTrackerManagerI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.LineStatusTrackerManager");
 
-  @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
-
-  @NotNull public final Object myLock = new Object();
+  @NotNull private final Object myLock = new Object();
 
   @NotNull private final Project myProject;
   @NotNull private final VcsBaseContentProvider myStatusProvider;
   @NotNull private final Application myApplication;
   @NotNull private final FileEditorManager myFileEditorManager;
+
   @NotNull private final Disposable myDisposable;
 
-  @NotNull private final Map<Document, TrackerData> myLineStatusTrackers;
+  @NotNull private final Map<Document, TrackerData> myLineStatusTrackers = new HashMap<>();
 
   @NotNull private final QueueProcessorRemovePartner<Document, BaseRevisionLoader> myPartner;
-  private long myLoadCounter;
+  private long myLoadCounter = 0;
 
   public static LineStatusTrackerManagerI getInstance(final Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, LineStatusTrackerManagerI.class);
@@ -89,14 +81,11 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
                                   @NotNull final Application application,
                                   @NotNull final FileEditorManager fileEditorManager,
                                   @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
-    myLoadCounter = 0;
     myProject = project;
     myStatusProvider = statusProvider;
-
     myApplication = application;
     myFileEditorManager = fileEditorManager;
 
-    myLineStatusTrackers = new HashMap<>();
     myPartner = new QueueProcessorRemovePartner<>(myProject, baseRevisionLoader -> baseRevisionLoader.run());
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
