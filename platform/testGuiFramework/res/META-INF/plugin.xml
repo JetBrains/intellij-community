@@ -4,6 +4,8 @@
   <name>TestGuiFramework</name>
   <vendor>JetBrains</vendor>
 
+  <depends>com.intellij.modules.lang</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
   </extensions>

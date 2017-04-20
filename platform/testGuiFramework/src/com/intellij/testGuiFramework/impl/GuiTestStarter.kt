@@ -19,11 +19,12 @@ import com.intellij.idea.IdeaApplication
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.JUnitClient
+import org.junit.runner.JUnitCore
 
 /**
  * @author Sergey Karashevich
  */
-class GuiTestStarter(): IdeaApplication.IdeStarter(), ApplicationStarter {
+class GuiTestStarter: IdeaApplication.IdeStarter(), ApplicationStarter {
 
   private val LOG = Logger.getInstance(this.javaClass)
 
@@ -35,8 +36,10 @@ class GuiTestStarter(): IdeaApplication.IdeStarter(), ApplicationStarter {
     System.getProperty(GUI_TEST_HOST)
   }
 
-  val port: Int by lazy {
-    System.getProperty(GUI_TEST_PORT)!!.toInt()
+  val port: Int? by lazy {
+    val guiTestPort = System.getProperty(GUI_TEST_PORT)
+    if (guiTestPort == null || guiTestPort == PORT_UNDEFINED) null
+    else guiTestPort.toInt()
   }
 
   val guiTestList: List<Class<*>> by lazy {
@@ -56,6 +59,10 @@ class GuiTestStarter(): IdeaApplication.IdeStarter(), ApplicationStarter {
 
   override fun getCommandName() = "guitest"
 
+  private val PORT_UNDEFINED = "undefined"
+
+  private val HOST_LOCALHOST = "localhost"
+
   override fun premain(args: Array<String>) {
     processArgs(args)
     runActivity(args)
@@ -73,16 +80,21 @@ class GuiTestStarter(): IdeaApplication.IdeStarter(), ApplicationStarter {
     guiTestThread.join()
     if (myClient != null) myClient!!.stopClient()
   }
-
   fun runActivity(args: Array<String>) {
     LOG.info("Starting GuiTest activity")
     guiTestThread.start()
   }
 
+
   fun run() {
     assert(myClient == null)
-    myClient = JUnitClient(host, port)
-    myClient!!.runTests(*guiTestList.toTypedArray())
+    if (port != null) {
+      myClient = JUnitClient(host, port!!)
+      myClient!!.runTests(*guiTestList.toTypedArray())
+    } else {
+      val core = JUnitCore()
+      core.run(*guiTestList.toTypedArray())
+    }
   }
 
   /**
@@ -91,10 +103,14 @@ class GuiTestStarter(): IdeaApplication.IdeStarter(), ApplicationStarter {
   private fun processArgs(args: Array<String>) {
     val guiTestList = args[1].removeSurrounding("\"")
     System.setProperty(GUI_TEST_LIST, guiTestList)
-    val hostArg = args.find { arg -> arg.toLowerCase().startsWith("host") }?.substringAfter("host=") ?: "localhost"
-    System.setProperty(GUI_TEST_HOST, hostArg.removeSurrounding("\""))
-    val portArg = args.find { arg -> arg.toLowerCase().startsWith("port") }?.substringAfter("port=") ?: throw Exception("Unable to read port value from args: $args")
-    System.setProperty(GUI_TEST_PORT, portArg.removeSurrounding("\""))
+    val hostArg : String?  = args.find { arg -> arg.toLowerCase().startsWith("host") }?.substringAfter("host=") ?: HOST_LOCALHOST
+    System.setProperty(GUI_TEST_HOST, hostArg!!.removeSurrounding("\""))
+    val portArg : String?  = args.find { arg -> arg.toLowerCase().startsWith("port") }?.substringAfter("port=") ?: PORT_UNDEFINED
+    if (portArg != null)
+      System.setProperty(GUI_TEST_PORT, portArg.removeSurrounding("\""))
+    else
+      System.setProperty(GUI_TEST_PORT, PORT_UNDEFINED)
+
     LOG.info("Set GUI tests list: $guiTestList")
     LOG.info("Set GUI tests host: $hostArg")
     LOG.info("Set GUI tests port: $portArg")
