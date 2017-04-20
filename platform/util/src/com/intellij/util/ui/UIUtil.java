@@ -104,6 +104,9 @@ public class UIUtil {
     DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
     // .. erase global ref to this CSS so no one can alter it
     kit.setStyleSheet(null);
+
+    // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
+    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
   private static void blockATKWrapper() {
