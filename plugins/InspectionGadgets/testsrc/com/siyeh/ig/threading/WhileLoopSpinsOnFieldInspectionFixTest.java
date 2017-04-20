@@ -31,7 +31,9 @@ public class WhileLoopSpinsOnFieldInspectionFixTest extends LightQuickFixParamet
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new WhileLoopSpinsOnFieldInspection()};
+    WhileLoopSpinsOnFieldInspection inspection = new WhileLoopSpinsOnFieldInspection();
+    inspection.ignoreNonEmtpyLoops = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override

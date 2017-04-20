@@ -37,6 +37,9 @@ public class BlockUtils {
       oldStatement = parent;
       parent = oldStatement.getParent();
     }
+    if (newStatements.length == 1 && oldStatement instanceof PsiEmptyStatement) {
+      return (PsiStatement)oldStatement.replace(newStatements[0]);
+    }
     PsiElement result = null;
     if (parent instanceof PsiCodeBlock) {
       for (PsiStatement statement : newStatements) {
@@ -50,13 +53,9 @@ public class BlockUtils {
       for (PsiStatement newStatement : newStatements) {
         codeBlock.add(newStatement);
       }
-      int oldCount = 0;
-      if(!(oldStatement instanceof PsiEmptyStatement)) {
-        oldCount = 1;
-        codeBlock.add(oldStatement);
-      }
+      codeBlock.add(oldStatement);
       final PsiStatement[] statements = ((PsiBlockStatement)oldStatement.replace(newBlockStatement)).getCodeBlock().getStatements();
-      result = statements[statements.length - 1 - oldCount];
+      result = statements[statements.length - 2];
     }
     return (PsiStatement)result;
   }

@@ -19,8 +19,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,6 +40,7 @@ import javax.swing.*;
 import java.util.function.Predicate;
 
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
+  private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreNonEmtpyLoops = false;
@@ -83,25 +86,23 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       final PsiStatement body = statement.getBody();
       boolean empty = ControlFlowUtils.statementIsEmpty(body);
       if (ignoreNonEmtpyLoops && !empty) {
-        return;
+        PsiExpressionStatement onlyExpr = ObjectUtils.tryCast(ControlFlowUtils.stripBraces(body), PsiExpressionStatement.class);
+        if(onlyExpr == null || !THREAD_ON_SPIN_WAIT.matches(onlyExpr.getExpression())) return;
       }
       final PsiExpression condition = statement.getCondition();
       final PsiField field = getFieldIfSimpleFieldComparison(condition);
-      if (field == null) {
-        return;
-      }
-      boolean hasOnSpinWait = containsCall(body, CallMatcher.staticCall("java.lang.Thread", "onSpinWait"));
+      if (field == null) return;
+      boolean hasOnSpinWait = containsCall(body, THREAD_ON_SPIN_WAIT);
       boolean java9 = PsiUtil.isLanguageLevel9OrHigher(field);
-      if (java9 && hasOnSpinWait && field.hasModifierProperty(PsiModifier.VOLATILE)) {
-        return;
-      }
+      if (java9 && hasOnSpinWait && field.hasModifierProperty(PsiModifier.VOLATILE)) return;
       if (body != null && (VariableAccessUtils.variableIsAssigned(field, body) || containsCall(body, ThreadingUtils::isWaitCall))) {
         return;
       }
       registerStatementError(statement, field, java9 && !hasOnSpinWait);
     }
 
-    private boolean containsCall(PsiElement element, Predicate<PsiMethodCallExpression> predicate) {
+    private boolean containsCall(@Nullable PsiElement element, Predicate<PsiMethodCallExpression> predicate) {
+      if(element == null) return false;
       final boolean[] result = new boolean[1];
       element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -199,19 +200,19 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     @Override
     public String getName() {
       if(myAddOnSpinWait && myAddVolatile) {
-        return "Declare field '" + myFieldName + "' as 'volatile' and add Thread.onSpinWait()";
+        return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.volatile.spinwait", myFieldName);
       }
       if(myAddOnSpinWait) {
-        return "Add Thread.onSpinWait()";
+        return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.spinwait");
       }
-      return "Declare field '" + myFieldName + "' as 'volatile'";
+      return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.volatile", myFieldName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Declare field as 'volatile'";
+      return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.family.name");
     }
 
     @Override
@@ -237,6 +238,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       } else {
         BlockUtils.addBefore(body, spinCall);
       }
+      CodeStyleManager.getInstance(element.getProject()).reformat(loop);
     }
 
     private static void addVolatile(PsiField field) {

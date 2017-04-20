@@ -838,6 +838,7 @@ public class ControlFlowUtils {
    * @param statement statement to test
    * @return true if statement essentially contains no executable code
    */
+  @Contract("null -> false")
   public static boolean statementIsEmpty(PsiStatement statement) {
     if (statement == null) {
       return false;
