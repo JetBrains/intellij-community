@@ -514,13 +514,21 @@ public class LambdaUtil {
   @Nullable
   private static PsiType extractFunctionalConjunct(PsiIntersectionType type) {
     PsiType conjunct = null;
-    for (PsiType conjunctType : type.getConjuncts()) {
-      final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(conjunctType);
-      if (interfaceMethod != null) {
-        if (conjunct != null && !conjunct.equals(conjunctType)) return null;
-        conjunct = conjunctType;
+    MethodSignature commonSignature = null;
+    for (PsiType psiType : type.getConjuncts()) {
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
+      if (aClass instanceof PsiTypeParameter) continue;
+      MethodSignature signature = getFunction(aClass);
+      if (signature == null) continue;
+      if (commonSignature == null) {
+        commonSignature = signature;
       }
+      else if (!MethodSignatureUtil.areSignaturesEqual(commonSignature, signature)) {
+        return null;
+      }
+      conjunct = psiType;
     }
+
     return conjunct;
   }
   

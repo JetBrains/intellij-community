@@ -53,7 +53,15 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   
   public void testMultipleMethodsInOne() throws Exception {
     doTestFunctionalInterface(null);
-  } 
+  }
+
+  public void testIntersectionOf2FunctionalTypesWithEqualSignatures() throws Exception {
+    doTestIntersection(null);
+  }
+
+  public void testIntersectionOf2FunctionalTypesWithEqualAfterSubstitutionSignatures() throws Exception {
+    doTestIntersection("Multiple non-overriding abstract methods found in X & Y<Integer>");
+  }
 
   public void testClone() throws Exception {
     doTestFunctionalInterface("Multiple non-overriding abstract methods found in interface Foo");
@@ -92,6 +100,10 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIntersectionTypeWithSameBaseInterfaceInConjuncts() throws Exception {
+    doTestIntersection(null);
+  }
+
+  private void doTestIntersection(final String expectedMessage) {
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiTypeCastExpression castExpression =
@@ -101,6 +113,6 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
     assertNotNull(castTypeElement);
     final PsiType type = castTypeElement.getType();
     final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(type);
-    assertEquals(null, errorMessage);
+    assertEquals(expectedMessage, errorMessage);
   }
 }
