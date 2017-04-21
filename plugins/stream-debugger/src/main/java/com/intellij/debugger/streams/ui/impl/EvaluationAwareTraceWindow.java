@@ -145,7 +145,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   public void setFailMessage(@NotNull String reason) {
     Stream.concat(Stream.of(myFlatContent), myTabContents.stream())
-      .forEach(x -> x.setContent(new JBLabel("Evaluation failed. Reason: " + reason, SwingConstants.CENTER), BorderLayout.CENTER));
+      .forEach(x -> x.setContent(new JBLabel(reason, SwingConstants.CENTER), BorderLayout.CENTER));
   }
 
   @NotNull
