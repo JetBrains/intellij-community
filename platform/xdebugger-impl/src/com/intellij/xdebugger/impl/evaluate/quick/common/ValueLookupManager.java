@@ -20,6 +20,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -91,6 +92,10 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
         DISABLE_VALUE_LOOKUP.get(editor) == Boolean.TRUE ||
         type == null) {
       myAlarm.cancelAllRequests();
+      return;
+    }
+
+    if (type == ValueHintType.MOUSE_OVER_HINT && !ApplicationManager.getApplication().isActive()) {
       return;
     }
 
