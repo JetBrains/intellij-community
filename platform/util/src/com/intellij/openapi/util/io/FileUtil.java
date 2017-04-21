@@ -1467,12 +1467,16 @@ public class FileUtil extends FileUtilRt {
     if (firstCharsIfText == null) {
       return false;
     }
+    if (!StringUtil.startsWith(firstCharsIfText, "#!")) {
+      return false;
+    }
+
     final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n');
     if (lineBreak < 0) {
       return false;
     }
     String firstLine = firstCharsIfText.subSequence(0, lineBreak).toString();
-    return firstLine.startsWith("#!") && firstLine.contains(marker);
+    return firstLine.contains(marker);
   }
 
   @NotNull
