@@ -199,11 +199,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setAllowMergeButtons(myComponent.myAllowMergeButtons.isSelected());
     update |= settings.getCycleScrolling() != myComponent.myCycleScrollingCheckBox.isSelected();
     settings.setCycleScrolling(myComponent.myCycleScrollingCheckBox.isSelected());
-    boolean shouldResetLafFonts = false;
     if (settings.getOverrideLafFonts() != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
       update = true;
-      shouldResetLafFonts = !myComponent.myOverrideLAFFonts.isSelected();
     }
     settings.setOverrideLafFonts(myComponent.myOverrideLAFFonts.isSelected());
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
@@ -256,14 +254,17 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     if (shouldUpdateUI) {
       lafManager.updateUI();
-      if (shouldResetLafFonts) {
-        int defSize = JBUI.Fonts.label().getSize();
-        settings.setFontSize(defSize);
-        myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
-        String defName = JBUI.Fonts.label().getFontName();
-        settings.setFontFace(defName);
-        myComponent.myFontCombo.setFontName(defName);
-      }
+      shouldUpdateUI = false;
+    }
+    // reset to default when unchecked
+    if (!myComponent.myOverrideLAFFonts.isSelected()) {
+      assert !shouldUpdateUI;
+      int defSize = JBUI.Fonts.label().getSize();
+      settings.setFontSize(defSize);
+      myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
+      String defName = JBUI.Fonts.label().getFontName();
+      settings.setFontFace(defName);
+      myComponent.myFontCombo.setFontName(defName);
     }
 
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
