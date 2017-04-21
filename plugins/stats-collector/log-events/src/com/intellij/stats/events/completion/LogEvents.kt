@@ -1,7 +1,4 @@
-package com.intellij.stats.completion.events
-
-
-import com.intellij.stats.completion.Action
+package com.intellij.stats.events.completion
 
 
 abstract class LogEvent(@Transient var userUid: String, sessionId: String, type: Action) {
@@ -172,4 +169,17 @@ abstract class LogEventVisitor {
     open fun visit(custom: CustomMessageEvent) {
     }
     
-}    
+}
+
+
+enum class Action {
+    COMPLETION_STARTED,
+    TYPE,
+    BACKSPACE,
+    UP,
+    DOWN,
+    COMPLETION_CANCELED,
+    EXPLICIT_SELECT,
+    TYPED_SELECT,
+    CUSTOM
+}

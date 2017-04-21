@@ -1,6 +1,6 @@
-package com.intellij.stats.completion.events
+package com.intellij.stats.events.completion
 
-import com.intellij.testFramework.UsefulTestCase
+import junit.framework.Assert.assertEquals
 import org.junit.Test
 import java.util.*
 
@@ -12,9 +12,9 @@ object Fixtures {
     val relevance = mapOf(Pair("sort", 1.0.toString()), Pair("proximity", 2.0.toString()))
     
     val lookupList = listOf(
-            LookupEntryInfo(0, 5, relevance), 
-            LookupEntryInfo(1, 9, relevance),
-            LookupEntryInfo(2, 7, relevance)
+      LookupEntryInfo(0, 5, relevance),
+      LookupEntryInfo(1, 9, relevance),
+      LookupEntryInfo(2, 7, relevance)
     )
     
 }
@@ -24,7 +24,7 @@ class EventSerializeDeserializeTest {
     private fun serializeDeserializeAndCheck(event: LogEvent) {
         val logLine = LogEventSerializer.toString(event)
         val eventFromString = LogEventSerializer.fromString(logLine)
-        UsefulTestCase.assertEquals(logLine, LogEventSerializer.toString(eventFromString!!))
+        assertEquals(logLine, LogEventSerializer.toString(eventFromString!!))
     }
 
     @Test
@@ -65,7 +65,7 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `explicit select event`() {
-        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 2, 2)
+        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2, 2)
         serializeDeserializeAndCheck(event)
         
         event = ExplicitSelectEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2, 2)

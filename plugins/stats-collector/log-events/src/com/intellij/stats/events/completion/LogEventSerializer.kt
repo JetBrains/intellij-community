@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.stats.completion.events
+package com.intellij.stats.events.completion
 
 import com.google.gson.Gson
-import com.intellij.stats.completion.Action
-
 
 object JsonSerializer {
     private val gson = Gson()
-    fun toJson(obj: Any) = gson.toJson(obj)
-    fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
+    fun toJson(obj: Any) = com.intellij.stats.events.completion.JsonSerializer.gson.toJson(obj)
+    fun <T> fromJson(json: String, clazz: Class<T>) = com.intellij.stats.events.completion.JsonSerializer.gson.fromJson(json, clazz)
 }
 
 
@@ -41,7 +39,8 @@ object LogEventSerializer {
     )
 
     fun toString(event: LogEvent): String {
-        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
+        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${com.intellij.stats.events.completion.JsonSerializer.toJson(
+          event)}"
     }
 
     fun fromString(line: String): LogEvent? {
@@ -61,10 +60,10 @@ object LogEventSerializer {
         val sessionUid = items[3]
         val actionType = Action.valueOf(items[4])
 
-        val clazz = actionClassMap[actionType] ?: return null
+        val clazz = com.intellij.stats.events.completion.LogEventSerializer.actionClassMap[actionType] ?: return null
 
         val json = line.substring(start + 1)
-        val obj = JsonSerializer.fromJson(json, clazz)
+        val obj = com.intellij.stats.events.completion.JsonSerializer.fromJson(json, clazz)
 
         obj.userUid = userUid
         obj.timestamp = timestamp

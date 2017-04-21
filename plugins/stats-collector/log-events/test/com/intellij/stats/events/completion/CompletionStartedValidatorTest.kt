@@ -1,6 +1,5 @@
-package com.intellij.stats.completion.validator
+package com.intellij.stats.events.completion
 
-import com.intellij.stats.completion.events.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test

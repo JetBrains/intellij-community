@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.stats.completion.events
+package com.intellij.stats.events.completion
 
-import java.io.*
+import java.io.InputStream
+import java.io.OutputStream
 
 data class EventLine(val event: LogEvent, val line: String)
 
@@ -23,11 +24,11 @@ open class SessionsInputSeparator(input: InputStream,
                                   output: OutputStream,
                                   error: OutputStream) {
     
-    private val inputReader = BufferedReader(InputStreamReader(input))
-    private val outputWriter = BufferedWriter(OutputStreamWriter(output))
-    private val errorWriter = BufferedWriter(OutputStreamWriter(error))
+    private val inputReader = java.io.BufferedReader(java.io.InputStreamReader(input))
+    private val outputWriter = java.io.BufferedWriter(java.io.OutputStreamWriter(output))
+    private val errorWriter = java.io.BufferedWriter(java.io.OutputStreamWriter(error))
 
-    var session = mutableListOf<EventLine>()
+    var session = mutableListOf<com.intellij.stats.events.completion.EventLine>()
     var currentSessionUid = ""
 
     fun processInput() {
@@ -46,7 +47,7 @@ open class SessionsInputSeparator(input: InputStream,
                 currentSessionUid = event.sessionUid
             }
             
-            session.add(EventLine(event, line))
+            session.add(com.intellij.stats.events.completion.EventLine(event, line))
             line = inputReader.readLine()
         }
         
@@ -56,14 +57,14 @@ open class SessionsInputSeparator(input: InputStream,
         errorWriter.flush()
     }
 
-    private fun processCompletionSession(session: List<EventLine>) {
+    private fun processCompletionSession(session: List<com.intellij.stats.events.completion.EventLine>) {
         if (session.isEmpty()) return
 
         var isValidSession = false
         
         val initial = session.first()
         if (initial.event is CompletionStartedEvent) {
-            val state = CompletionValidationState(initial.event)
+            val state = com.intellij.stats.events.completion.CompletionValidationState(initial.event)
             session.drop(1).forEach { state.accept(it.event) }
             isValidSession = state.isFinished && state.isValid
         }
@@ -71,7 +72,7 @@ open class SessionsInputSeparator(input: InputStream,
         onSessionProcessingFinished(session, isValidSession)
     }
 
-    open protected fun onSessionProcessingFinished(session: List<EventLine>, isValidSession: Boolean) {
+    open protected fun onSessionProcessingFinished(session: List<com.intellij.stats.events.completion.EventLine>, isValidSession: Boolean) {
         val writer = if (isValidSession) outputWriter else errorWriter
         session.forEach {
             writer.write(it.line)
