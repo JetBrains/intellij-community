@@ -20,9 +20,13 @@ def _parse_parametrized(part):
 
     Support nose generators / py.test parameters and other functions that provides names like foo(1,2)
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
-    with parentheses
+    with parentheses.
+    
+    Tests with docstring are reported in similar way but they have space before parenthesis and should be ignored
+    by this function
+    
     """
-    match = re.match("^(.+)(\\(.+\\))$", part)
+    match = re.match("^([^\s)(]+)(\\(.+\\))$", part)
     if not match:
         return [part]
     else:
@@ -164,7 +168,14 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         try:
             # Report directory so Java site knows which folder to resolve names against
-            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), properties["name"])
+
+            # tests with docstrings are reported in format "test.name (some test here)".
+            # text should be part of name, but not location.
+            possible_location = str(properties["name"])
+            loc = possible_location.find("(")
+            if loc > 0:
+                possible_location = possible_location[:loc].strip()
+            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), possible_location)
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
