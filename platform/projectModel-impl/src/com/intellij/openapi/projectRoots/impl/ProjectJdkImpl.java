@@ -41,7 +41,7 @@ import java.util.List;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
-  final ProjectRootContainerImpl myRootContainer;
+  private final ProjectRootContainerImpl myRootContainer;
   private String myName;
   private String myVersionString;
   private boolean myVersionDefined;
@@ -229,6 +229,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     }
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   @NotNull
   public ProjectJdkImpl clone() {
@@ -318,7 +319,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @Override
   @NotNull
   public SdkModificator getSdkModificator() {
-    ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
+    ProjectJdkImpl sdk = clone();
     sdk.myOrigin = this;
     sdk.myRootContainer.startChange();
     sdk.update();

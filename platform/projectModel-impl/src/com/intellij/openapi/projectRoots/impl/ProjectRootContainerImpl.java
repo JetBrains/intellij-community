@@ -44,12 +44,12 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<>();
 
-  private boolean myInsideChange = false;
+  private boolean myInsideChange;
   private final List<ProjectRootListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myNoCopyJars = false;
+  private final boolean myNoCopyJars;
 
-  public ProjectRootContainerImpl(boolean noCopyJars) {
+  ProjectRootContainerImpl(boolean noCopyJars) {
     myNoCopyJars = noCopyJars;
 
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
@@ -95,11 +95,11 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     myInsideChange = false;
   }
 
-  public void addProjectRootContainerListener(ProjectRootListener listener) {
+  void addProjectRootContainerListener(@NotNull ProjectRootListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeProjectRootContainerListener(ProjectRootListener listener) {
+  public void removeProjectRootContainerListener(@NotNull ProjectRootListener listener) {
     myListeners.remove(listener);
   }
 
@@ -165,12 +165,12 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
     ApplicationManager.getApplication().runReadAction(() -> {
       myFiles = new HashMap<>();
-      for (OrderRootType rootType : myRoots.keySet()) {
-        CompositeProjectRoot root = myRoots.get(rootType);
+      for (Map.Entry<OrderRootType, CompositeProjectRoot> entry : myRoots.entrySet()) {
+        CompositeProjectRoot root = entry.getValue();
         if (myNoCopyJars) {
           setNoCopyJars(root);
         }
-        myFiles.put(rootType, root.getVirtualFiles());
+        myFiles.put(entry.getKey(), root.getVirtualFiles());
       }
     });
 
@@ -237,7 +237,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   void readOldVersion(Element child) {
     for (Element root : child.getChildren("root")) {
       String url = root.getAttributeValue("file");
@@ -253,8 +253,8 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
 
     myFiles = new HashMap<>();
-    for (OrderRootType rootType : myRoots.keySet()) {
-      myFiles.put(rootType, myRoots.get(rootType).getVirtualFiles());
+    for (Map.Entry<OrderRootType, CompositeProjectRoot> entry : myRoots.entrySet()) {
+      myFiles.put(entry.getKey(), entry.getValue().getVirtualFiles());
     }
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       final VirtualFile[] oldRoots = VirtualFile.EMPTY_ARRAY;
