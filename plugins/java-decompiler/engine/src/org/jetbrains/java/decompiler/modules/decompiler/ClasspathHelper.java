@@ -30,7 +30,8 @@ public class ClasspathHelper {
 
   private static Method findMethodOnClasspath(String targetClass, String methodSignature) {
     try {
-      Class cls = Class.forName(targetClass);
+      // use bootstrap classloader to only provide access to JRE classes
+      Class cls = new ClassLoader(null) {}.loadClass(targetClass);
       for (Method mtd : cls.getMethods()) {
         // use contains() to ignore access modifiers and thrown exceptions
         if (mtd.toString().contains(methodSignature)) {
