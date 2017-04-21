@@ -18,14 +18,15 @@ task setupAndroidSdk {
     return
   }
 
-  def archivePath = "$project.buildDir/android-sdk/linux.zip"
+  def zipFile = org.gradle.internal.os.OperatingSystem.current().familyName + ".zip"
+  def archivePath = "$project.buildDir/android-sdk/" + zipFile
   def outputDir ="$project.buildDir/android-sdk/prebuilts/studio/sdk"
   outputs.dir(outputDir)
   outputs.file(archivePath)
 
   doFirst {
     download {
-      src "http://repo.labs.intellij.net/thirdparty/android-sdk/linux.zip"
+      src "http://repo.labs.intellij.net/thirdparty/android-sdk/" + zipFile
       dest archivePath
       onlyIfNewer true
     }
