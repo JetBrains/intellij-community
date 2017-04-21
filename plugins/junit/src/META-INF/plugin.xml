@@ -76,6 +76,7 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
+    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
   </extensions>
 
   <extensionPoints>
