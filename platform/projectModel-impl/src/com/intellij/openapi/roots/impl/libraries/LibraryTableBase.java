@@ -69,23 +69,18 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
   @Override
   public void loadState(final Element element) {
-    try {
-      if (myFirstLoad) {
-        myModel.readExternal(element);
-      }
-      else {
-        LibraryModel model = new LibraryModel(myModel);
-        WriteAction.run(() -> {
-          model.readExternal(element);
-          commit(model);
-        });
-      }
+    if (myFirstLoad) {
+      myModel.readExternal(element);
+    }
+    else {
+      LibraryModel model = new LibraryModel(myModel);
+      WriteAction.run(() -> {
+        model.readExternal(element);
+        commit(model);
+      });
+    }
 
-      myFirstLoad = false;
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    myFirstLoad = false;
   }
 
   public long getStateModificationCount() {
