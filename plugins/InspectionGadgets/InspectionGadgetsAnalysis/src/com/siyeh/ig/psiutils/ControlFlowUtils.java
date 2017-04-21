@@ -605,7 +605,10 @@ public class ControlFlowUtils {
         return EquivalenceChecker.getCanonicalPsiEquivalence()
           .expressionsAreEquivalent(returnValue, ((PsiReturnStatement)nextElement).getReturnValue());
       }
-      if(nextElement == null && returnValue == null && cur.getParent() instanceof PsiMethod) {
+      if(returnValue == null &&
+         cur.getParent() instanceof PsiCodeBlock &&
+         cur.getParent().getParent() instanceof PsiMethod &&
+         nextElement instanceof PsiJavaToken && ((PsiJavaToken)nextElement).getTokenType().equals(JavaTokenType.RBRACE)) {
         return true;
       }
     }
