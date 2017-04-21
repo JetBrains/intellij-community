@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
@@ -154,18 +153,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Nullable
   @Override
   public PsiType getLeftType() {
-    final GrExpression lValue = getLValue();
-    if (lValue instanceof GrIndexProperty) {
-      // now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
-      // by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
-      return ((GrIndexProperty)lValue).getGetterType();
-    }
-    else if (lValue instanceof GrReferenceExpression) {
-      return ((GrReferenceExpression)lValue).getRValueType();
-    }
-    else {
-      return lValue.getType();
-    }
+    return getLValue().getType();
   }
 
   @Nullable
