@@ -41,7 +41,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
   }
 
   public OpenUrlHyperlinkInfo(@NotNull String url, @Nullable WebBrowser browser) {
-    this(url, browser == null ? Conditions.alwaysTrue() : Conditions.is(browser), browser);
+    this(url, Conditions.alwaysTrue(), browser);
   }
 
   public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition) {
