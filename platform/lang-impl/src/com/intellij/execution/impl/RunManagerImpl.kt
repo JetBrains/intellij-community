@@ -258,9 +258,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       existingId = findExistingConfigurationId(settings)
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
-      if (existingId != null) {
+      existingId?.let {
         // idToSettings is a LinkedHashMap - we must remove even if existingId equals to newId and in any case we will replace it on put
-        idToSettings.remove(existingId!!)
+        idToSettings.remove(it)
       }
 
       if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
@@ -278,9 +278,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       else {
         (if (settings.isShared) workspaceSchemeManager else projectSchemeManager)?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
-
-      checkRecentsLimit()
     }
+
+    checkRecentsLimit()
 
     if (existingId == null) {
       myDispatcher.multicaster.runConfigurationAdded(settings)
@@ -325,23 +325,25 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     lock.write {
       trimUsagesListToLimit()
 
-      while (idToSettings.values.count { it.isTemporary } > config.recentsLimit) {
-        val it = idToSettings.values.iterator()
-        while (it.hasNext()) {
-          val settings = it.next()
-          if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings)) {
-            if (removed == null) {
-              immutableSortedSettingsList = null
-              removed = SmartList<RunnerAndConfigurationSettings>()
-            }
-            removed!!.add(settings)
-            it.remove()
+      var excess = idToSettings.values.count { it.isTemporary } - config.recentsLimit
+      if (excess <= 0) {
+        return
+      }
+
+      for (settings in idToSettings.values) {
+        if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings)) {
+          if (removed == null) {
+            removed = SmartList<RunnerAndConfigurationSettings>()
+          }
+          removed!!.add(settings)
+          if (--excess <= 0) {
             break
           }
         }
       }
     }
-    removed?.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
+
+    removed?.let { removeConfigurations(it) }
   }
 
   // comparator is null if want just to save current order (e.g. if want to keep order even after reload)
