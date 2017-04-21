@@ -31,6 +31,8 @@ public class ImportCollector {
 
   private final Map<String, String> mapSimpleNames = new HashMap<>();
   private final Set<String> setNotImportedNames = new HashSet<>();
+  // set of field names in this class and all its predecessors.
+  private final Set<String> setFieldNames = new HashSet<>();
   private final String currentPackageSlash;
   private final String currentPackagePoint;
 
@@ -46,27 +48,22 @@ public class ImportCollector {
       currentPackageSlash = "";
       currentPackagePoint = "";
     }
-  }
 
-  // XXX slow, but no lookup table available
-  private static boolean classContainsFieldWithShortName(StructClass sClass, String shortName){
-    if(shortName == null) // the shortName parameter may be null for generated anonymous class
-      return false;
-
-    for(StructField f: sClass.getFields()) {
-      if(shortName.equals(f.getName())) {
-        return true;
+    Map<String, ClassNode> mapRootCases =  DecompilerContext.getClassProcessor().getMapRootClasses();
+    for(StructClass sClass = root.classStruct;
+        sClass!=null;
+        ){
+      // all field names for current class ..
+      for(StructField f: sClass.getFields()) {
+        setFieldNames.add(f.getName());
       }
-    }
-    // look into parent class, recursively
-    if(sClass.superClass!=null){
-      ClassesProcessor classesProcessor = DecompilerContext.getClassProcessor();
-      ClassesProcessor.ClassNode classNode = classesProcessor.getMapRootClasses().get(sClass.superClass.getString());
-      if(classNode!=null)
-        return classContainsFieldWithShortName(classNode.classStruct, shortName);
-    }
 
-    return false;
+      // .. and traverse through parent.
+      ClassNode classNode;
+      if(sClass.superClass==null || (classNode = (mapRootCases.get(sClass.superClass.getString())))==null)
+            break;
+      sClass = classNode.classStruct;
+    }
   }
 
   /**
@@ -76,9 +73,9 @@ public class ImportCollector {
    * @param classToName - pkg.name.ClassName - class to find shortname for
    * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
    */
-  public String getShortNameInClassContext(ClassNode classNode, String classToName) {
+  public String getShortNameInClassContext(String classToName) {
     String shortName = getShortName(classToName);
-    if(classNode != null && classContainsFieldWithShortName(classNode.classStruct, shortName)) {
+    if(setFieldNames.contains(shortName)) {
       return classToName;
     } else {
       return shortName;
