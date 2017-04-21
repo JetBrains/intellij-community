@@ -21,6 +21,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrImmediateTupleType
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
 fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
@@ -92,4 +94,14 @@ fun GrIndexProperty.getArgumentTypes(rhs: Boolean): Array<PsiType>? {
     val rType = (parent as? GrAssignmentExpression)?.type ?: return null
     return arrayOf(argumentListType, rType)
   }
+}
+
+@JvmOverloads
+fun GrIndexProperty.multiResolve(rhs: Boolean = true): Array<GroovyResolveResult> {
+  return (if (rhs) rValueReference else lValueReference)?.multiResolve(false) ?: GroovyResolveResult.EMPTY_ARRAY
+}
+
+@JvmOverloads
+fun GrIndexProperty.advancedResolve(rhs: Boolean = true): GroovyResolveResult {
+  return PsiImplUtil.extractUniqueResult(multiResolve(rhs))
 }

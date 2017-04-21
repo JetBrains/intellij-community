@@ -64,6 +64,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.advancedResolve;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -608,7 +610,7 @@ public class GenerationUtil {
       return getDeclaredType(invokedExpression, context);
     }
     else if (expression instanceof GrIndexProperty) {
-      final GroovyResolveResult result = ((GrIndexProperty)expression).advancedResolve();
+      final GroovyResolveResult result = advancedResolve((GrIndexProperty)expression);
       if (result.getElement() instanceof PsiMethod) {
         return getDeclaredType((PsiMethod)result.getElement(), result.getSubstitutor(), context);
       }

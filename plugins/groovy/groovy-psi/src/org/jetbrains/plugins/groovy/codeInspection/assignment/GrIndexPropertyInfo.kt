@@ -20,8 +20,9 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.advancedResolve
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentTypes
+import org.jetbrains.plugins.groovy.lang.psi.util.multiResolve
 
 class GrIndexPropertyInfo(private val myCall: GrIndexProperty, private val rhs: Boolean) : CallInfo<GrIndexProperty> {
 
@@ -37,12 +38,9 @@ class GrIndexPropertyInfo(private val myCall: GrIndexProperty, private val rhs: 
 
   override fun getQualifierInstanceType(): PsiType? = myCall.invokedExpression.type
 
-  override fun advancedResolve(): GroovyResolveResult = PsiImplUtil.extractUniqueResult(multiResolve())
+  override fun advancedResolve(): GroovyResolveResult = myCall.advancedResolve(rhs)
 
-  override fun multiResolve(): Array<GroovyResolveResult> {
-    val reference = if (rhs) myCall.rValueReference else myCall.lValueReference
-    return reference?.multiResolve(false) ?: GroovyResolveResult.EMPTY_ARRAY
-  }
+  override fun multiResolve(): Array<GroovyResolveResult> = myCall.multiResolve(rhs)
 
   override fun getHighlightElementForCategoryQualifier(): PsiElement = TODO("not supported")
   override fun getExpressionArguments() = TODO("not supported")
