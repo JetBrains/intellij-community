@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +132,7 @@ public interface JavaStubElementTypes {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new CompositeElement(this);
+      return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, PsiKeyword.WITH);
     }
   };
 

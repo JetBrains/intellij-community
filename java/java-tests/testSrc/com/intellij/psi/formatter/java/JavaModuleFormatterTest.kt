@@ -40,4 +40,8 @@ class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
   fun testQualifiedExports() {
     doTextTest("module m { exports a.b to m1,m2,m3; }", "module m {\n    exports a.b to m1, m2, m3;\n}")
   }
+
+  fun testProvidesWith() {
+    doTextTest("module m { provides I with C1,C2,C3; }", "module m {\n    provides I with C1, C2, C3;\n}")
+  }
 }
