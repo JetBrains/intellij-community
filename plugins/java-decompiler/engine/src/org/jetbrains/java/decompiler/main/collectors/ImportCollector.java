@@ -67,9 +67,8 @@ public class ImportCollector {
   }
 
   /**
-   * Check whether the package-less name ClassName is shaded by variable or method of classNode
-   * or its parent(s).
-   * @param classNode - Class to look context for
+   * Check whether the package-less name ClassName is shaded by variable in a context of
+   * the decompiled class
    * @param classToName - pkg.name.ClassName - class to find shortname for
    * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
    */
