@@ -394,6 +394,8 @@ public class InvocationExprent extends Exprent {
       }
     }
     else {
+      // TODO: tap into IDEA indices to access libraries methods details
+
       // try to check the class on the classpath
       Method mtd = ClasspathHelper.findMethod(classname, name, descriptor);
       return mtd != null && mtd.isVarArgs();
