@@ -55,7 +55,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   private boolean myTurnEditingMode = false;
 
   @Transient private final Project myProject;
-  @Transient private int myStepId;
 
   public StudyTaskManager(Project project) {
     myProject = project;
@@ -257,11 +256,4 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     myTurnEditingMode = turnEditingMode;
   }
 
-  public void setStepId(int stepId) {
-    myStepId = stepId;
-  }
-
-  public int getStepId() {
-    return myStepId;
-  }
 }

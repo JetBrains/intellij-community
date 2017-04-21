@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -21,7 +22,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -58,6 +58,7 @@ import java.util.Map;
 
 import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 import static com.jetbrains.edu.learning.StudyUtils.navigateToStep;
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.STEP_ID;
 
 
 public class StudyProjectComponent implements ProjectComponent {
@@ -111,12 +112,7 @@ public class StudyProjectComponent implements ProjectComponent {
 
   private void selectStep() {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      if (myProject == defaultProject) {
-        return;
-      }
-      StudyTaskManager defaultTaskManager = StudyTaskManager.getInstance(defaultProject);
-      int stepId = defaultTaskManager.getStepId();
+      int stepId = PropertiesComponent.getInstance().getInt(STEP_ID, 0);
 
       if (stepId != 0) {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(myProject);
@@ -124,7 +120,6 @@ public class StudyProjectComponent implements ProjectComponent {
         if (course != null) {
 
           navigateToStep(myProject, course, stepId);
-          defaultTaskManager.setStepId(0);
         }
       }
     });

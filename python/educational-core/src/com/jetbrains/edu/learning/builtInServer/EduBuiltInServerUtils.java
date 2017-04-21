@@ -17,6 +17,7 @@ package com.jetbrains.edu.learning.builtInServer;
 
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ import java.util.List;
 
 import static com.jetbrains.edu.learning.StudyUtils.navigateToStep;
 import static com.jetbrains.edu.learning.core.EduNames.STUDY_PROJECT_XML_PATH;
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.STEP_ID;
 
 public class EduBuiltInServerUtils {
   public static boolean focusOpenProject(int courseId, int stepId) {
@@ -104,7 +106,7 @@ public class EduBuiltInServerUtils {
       int courseId = getCourseId(taskManager, component);
 
       if (courseId == targetCourseId) {
-        taskManager.setStepId(stepId);
+        PropertiesComponent.getInstance().setValue(STEP_ID, stepId, 0);
         Project project = openProject(projectPath);
         if (project != null) {
           return true;
@@ -146,7 +148,7 @@ public class EduBuiltInServerUtils {
 
   public static boolean createProject(int courseId, int stepId) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      getDefaultTaskManager().setStepId(stepId);
+      PropertiesComponent.getInstance().setValue(STEP_ID, stepId, 0);
       EduCreateNewProjectDialog createNewProjectDlg = new EduCreateNewStepikProjectDialog(courseId);
       createNewProjectDlg.show();
     });
