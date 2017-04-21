@@ -56,7 +56,7 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseReturnTypeAnnotation() {
-    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.RARROW) {
+    if (myContext.getCustomLanguageSupport().supportsFunctionAnnotations && myBuilder.getTokenType() == PyTokenTypes.RARROW) {
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
       if (!myContext.getExpressionParser().parseSingleExpression(false)) {
@@ -231,7 +231,7 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseParameterAnnotation() {
-    if (myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
+    if (myContext.getCustomLanguageSupport().supportsFunctionAnnotations && atToken(PyTokenTypes.COLON)) {
       PsiBuilder.Marker annotationMarker = myBuilder.mark();
       nextToken();
       if (!getExpressionParser().parseSingleExpression(false)) {

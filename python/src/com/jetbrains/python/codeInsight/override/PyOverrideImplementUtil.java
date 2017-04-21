@@ -204,9 +204,10 @@ public class PyOverrideImplementUtil {
         pyFunctionBuilder.decorate(PyNames.PROPERTY);
       }
     }
-    final LanguageLevel level = LanguageLevel.forElement(pyClass);
+    final PyCustomLanguageSupportProvider.CustomLanguageSupport
+      customLanguageSupport = PyCustomLanguageSupportProvider.customLanguageSupport(pyClass);
     PyAnnotation anno = baseFunction.getAnnotation();
-    if (anno != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
+    if (anno != null && customLanguageSupport.supportsFunctionAnnotations) {
       pyFunctionBuilder.annotation(anno.getText());
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
@@ -223,7 +224,7 @@ public class PyOverrideImplementUtil {
         }
         parameterBuilder.append(namedParameter.getName());
         final PyAnnotation annotation = namedParameter.getAnnotation();
-        if (annotation != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
+        if (annotation != null && customLanguageSupport.supportsFunctionAnnotations) {
           parameterBuilder.append(annotation.getText());
         }
         final PyExpression defaultValue = namedParameter.getDefaultValue();

@@ -61,7 +61,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!LanguageLevel.forElement(file).isPy3K()) return false;
+    if (!PyCustomLanguageSupportProvider.customLanguageSupport(file).supportsFunctionAnnotations) return false;
     return super.isAvailable(project, editor, file);
   }
 
@@ -211,7 +211,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   private static boolean isDefinedInAnnotation(PyParameter parameter) {
-    if (LanguageLevel.forElement(parameter).isOlderThan(LanguageLevel.PYTHON30)) {
+    if (!PyCustomLanguageSupportProvider.customLanguageSupport(parameter).supportsFunctionAnnotations) {
       return false;
     }
     if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;

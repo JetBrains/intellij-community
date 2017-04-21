@@ -658,6 +658,7 @@
     <extensionPoint qualifiedName="Pythonid.pythonFlavorProvider" interface="com.jetbrains.python.sdk.flavors.PythonFlavorProvider"/>
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
     <extensionPoint qualifiedName="Pythonid.customPackageIdentifier" interface="com.jetbrains.python.psi.PyCustomPackageIdentifier"/>
+    <extensionPoint qualifiedName="Pythonid.customLanguageSupportProvider" interface="com.jetbrains.python.psi.PyCustomLanguageSupportProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

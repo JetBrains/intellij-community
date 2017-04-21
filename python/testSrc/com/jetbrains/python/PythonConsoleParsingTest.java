@@ -23,6 +23,7 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCustomLanguageSupportProvider;
 
 /**
  * @author traff
@@ -40,6 +41,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    registerExtensionPoint(PyCustomLanguageSupportProvider.EP_NAME, PyCustomLanguageSupportProvider.class);
   }
 
   @Override

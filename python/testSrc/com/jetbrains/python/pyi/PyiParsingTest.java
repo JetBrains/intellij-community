@@ -21,6 +21,7 @@ import com.jetbrains.python.PythonDialectsTokenSetContributor;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.PythonTokenSetContributor;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCustomLanguageSupportProvider;
 
 /**
  * @author vlan
@@ -36,6 +37,7 @@ public class PyiParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    registerExtensionPoint(PyCustomLanguageSupportProvider.EP_NAME, PyCustomLanguageSupportProvider.class);
   }
 
   @Override
