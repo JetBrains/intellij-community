@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -112,33 +110,27 @@ class GitPushResultNotification extends Notification {
 
   private static String formDescription(@NotNull Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
     List<Map.Entry<GitRepository, GitPushRepoResult>> entries = ContainerUtil.sorted(results.entrySet(),
-      new Comparator<Map.Entry<GitRepository, GitPushRepoResult>>() {
-        @Override
-        public int compare(Map.Entry<GitRepository, GitPushRepoResult> o1, Map.Entry<GitRepository, GitPushRepoResult> o2) {
-          // successful first
-          int compareResultTypes = GitPushRepoResult.TYPE_COMPARATOR.compare(o1.getValue().getType(), o2.getValue().getType());
-          if (compareResultTypes != 0) {
-            return compareResultTypes;
-          }
-          return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
-        }
+      (o1, o2) -> {
+       // successful first
+       int compareResultTypes = GitPushRepoResult.TYPE_COMPARATOR.compare(o1.getValue().getType(), o2.getValue().getType());
+       if (compareResultTypes != 0) {
+         return compareResultTypes;
+       }
+       return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
       });
 
-    return StringUtil.join(entries, new Function<Map.Entry<GitRepository, GitPushRepoResult>, String>() {
-      @Override
-      public String fun(Map.Entry<GitRepository, GitPushRepoResult> entry) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult result = entry.getValue();
+    return StringUtil.join(entries, entry -> {
+      GitRepository repository = entry.getKey();
+      GitPushRepoResult result = entry.getValue();
 
-        String description = formRepoDescription(result);
-        if (!multiRepoProject) {
-          description = StringUtil.capitalize(description);
-        }
-        else {
-          description = DvcsUtil.getShortRepositoryName(repository) + ": " + description;
-        }
-        return description;
+      String description = formRepoDescription(result);
+      if (!multiRepoProject) {
+        description = StringUtil.capitalize(description);
       }
+      else {
+        description = DvcsUtil.getShortRepositoryName(repository) + ": " + description;
+      }
+      return description;
     }, "<br/>");
   }
 
