@@ -184,6 +184,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testTryWithResourcesWithMultipleCloseInterfaces() { doTest(false, false);}
   public void testIDEA138978() { doTest(false, false); }
   public void testIntersectionTypeCast() { doTest(false, false); }
+  public void testUsedMethodCalledViaReflectionInTheSameFile() { doTest(true, false); }
 
   public void testArrayInitializerTypeCheckVariableType() { doTest(false, false);}
 
