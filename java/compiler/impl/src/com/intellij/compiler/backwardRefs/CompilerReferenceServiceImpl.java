@@ -57,7 +57,6 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
-import org.iq80.snappy.CorruptionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -686,12 +685,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   private static boolean requireIndexRebuild(@Nullable Throwable exception) {
-    if (exception instanceof PersistentEnumeratorBase.CorruptedException || exception instanceof StorageException) {
-      return true;
-    }
-    if (exception instanceof IOException && exception.getCause() instanceof CorruptionException) {
-      return true;
-    }
-    return false;
+    return exception instanceof PersistentEnumeratorBase.CorruptedException ||
+           exception instanceof StorageException ||
+           exception instanceof IOException;
   }
 }

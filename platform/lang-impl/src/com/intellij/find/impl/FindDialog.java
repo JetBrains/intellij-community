@@ -820,7 +820,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
 
     if (!myHelper.canSearchThisString()) {
-      return new ValidationInfo("String to find is empty", myInputComboBox);
+      return new ValidationInfo(FindBundle.message("find.empty.search.text.error"), myInputComboBox);
     }
 
     if (myCbRegularExpressions != null && myCbRegularExpressions.isSelected() && myCbRegularExpressions.isEnabled()) {

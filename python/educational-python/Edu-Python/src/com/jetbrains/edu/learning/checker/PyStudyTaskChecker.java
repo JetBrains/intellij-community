@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.learning.checker;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,8 +6,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
-import com.jetbrains.edu.learning.checker.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -44,7 +46,7 @@ public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
         StudyCheckUtils.flushWindows(myTask, taskDir);
         latch.countDown();
       }));
-    final StudyTestRunner testRunner = new PyStudyTestRunner(myTask, taskDir);
+    final PyStudyTestRunner testRunner = new PyStudyTestRunner(myTask, taskDir);
     try {
       final VirtualFile fileToCheck = getTaskVirtualFile(myTask, taskDir);
       if (fileToCheck != null) {
@@ -90,7 +92,7 @@ public class PyStudyTaskChecker extends StudyTaskChecker<PyCharmTask> {
         if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
           CommandProcessor.getInstance().runUndoTransparentAction(
             () -> ApplicationManager.getApplication().runWriteAction(
-              () -> StudyCheckUtils.runSmartTestProcess(taskDir, new PyStudyTestRunner(myTask, taskDir), name, taskFile, myProject)));
+              () -> PyStudySmartChecker.runSmartTestProcess(taskDir, new PyStudyTestRunner(myTask, taskDir), name, taskFile, myProject)));
         }
       }
       StudyCheckUtils.navigateToFailedPlaceholder(new StudyState(StudyUtils.getSelectedStudyEditor(myProject)), myTask, taskDir, myProject);

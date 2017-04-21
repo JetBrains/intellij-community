@@ -205,7 +205,7 @@ open class GuiTestCase : GuiTestBase() {
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET; KOTLIN ONLY
-  fun IdeFrameFixture.editor(func: EditorFixture.() -> Unit, /*timeout in seconds*/ timeout: Long = defaultTimeout) {
+  fun IdeFrameFixture.editor(/*timeout in seconds*/ timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
     func.invoke(this.editor)
   }
 

@@ -116,10 +116,10 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     LOG.assertTrue(parent != null, "A completion position should match to a pattern");
 
     if (parent instanceof PsiAssignmentExpression) {
-      return extractContextFromAssignment((PsiAssignmentExpression)parent);
+      return extractContextFromAssignment((PsiAssignmentExpression)parent, parameters);
     }
     if (parent instanceof PsiLocalVariable) {
-      return extractContextFromVariable((PsiLocalVariable)parent);
+      return extractContextFromVariable((PsiLocalVariable)parent, parameters);
     }
     PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
     if (method == null) return null;
@@ -130,23 +130,25 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     PsiParameter[] methodParameters = method.getParameterList().getParameters();
     if (exprPosition < methodParameters.length) {
       PsiParameter methodParameter = methodParameters[exprPosition];
-      return ChainCompletionContext.createContext(methodParameter.getType(), PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
+      return ChainCompletionContext.createContext(methodParameter.getType(), PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class), suggestIterators(parameters));
     }
     return null;
   }
 
   @Nullable
-  private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable) {
+  private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable,
+                                                                   CompletionParameters parameters) {
     PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
-    return ChainCompletionContext.createContext(localVariable.getType(), declaration);
+    return ChainCompletionContext.createContext(localVariable.getType(), declaration, suggestIterators(parameters));
   }
 
   @Nullable
-  private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression) {
+  private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression,
+                                                                     CompletionParameters parameters) {
     if (!(assignmentExpression instanceof PsiReferenceExpression)) return null;
     PsiElement resolved = ((PsiReferenceExpression)assignmentExpression).resolve();
     return resolved instanceof PsiVariable
-           ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression)
+           ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression, suggestIterators(parameters))
            : null;
   }
 

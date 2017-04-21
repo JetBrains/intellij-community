@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,4 +198,11 @@ public abstract class FileEditorManager {
    * {@link FileEditorProvider#getEditorTypeId()}
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
+
+  /**
+   * {@link FileEditorManager} supports asynchronous opening of text editors, i.e. when one of 'openFile' methods returns, returned
+   * editor might not be fully initialized yet. This method allows to delay (if needed) execution of given runnable until editor is
+   * fully loaded.
+   */
+  public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
 }

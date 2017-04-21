@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.edu.learning.checker;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.checker.StudyTestRunner;
+import com.jetbrains.edu.learning.PyEduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
@@ -18,15 +18,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Map;
 
-public class PyStudyTestRunner extends StudyTestRunner {
+class PyStudyTestRunner {
   private static final String PYTHONPATH = "PYTHONPATH";
+  @NotNull private final Task myTask;
+  @NotNull private final VirtualFile myTaskDir;
   private GeneralCommandLine myCommandLine;
 
   PyStudyTestRunner(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    super(task, taskDir);
+    myTask = task;
+    myTaskDir = taskDir;
   }
 
-  public Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
+  Process createCheckProcess(@NotNull final Project project, @NotNull final String executablePath) throws ExecutionException {
     final Sdk sdk = PythonSdkType.findPythonSdk(ModuleManager.getInstance(project).getModules()[0]);
     PyEduPluginConfigurator configurator = new PyEduPluginConfigurator();
     String testsFileName = configurator.getTestFileName();
@@ -56,8 +59,7 @@ public class PyStudyTestRunner extends StudyTestRunner {
     return null;
   }
 
-  @Override
-  public GeneralCommandLine getCommandLine() {
+  GeneralCommandLine getCommandLine() {
     return myCommandLine;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.java.decompiler.struct.attr.StructAnnotationAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructAnnotationParameterAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.List;
 
@@ -85,11 +84,10 @@ public class IdeaNotNullHelper {
             boolean thisvar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
             MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-            VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
 
             // parameter annotations
-            StructAnnotationParameterAttribute param_annotations = (StructAnnotationParameterAttribute)attributes
-              .getWithKey(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS);
+            StructAnnotationParameterAttribute param_annotations =
+              (StructAnnotationParameterAttribute)mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS);
             if (param_annotations != null) {
 
               List<List<AnnotationExprent>> param_annotations_lists = param_annotations.getParamAnnotations();
@@ -172,13 +170,11 @@ public class IdeaNotNullHelper {
 
   private static boolean findAndRemoveReturnCheck(Statement stat, StructMethod mt) {
 
-    VBStyleCollection<StructGeneralAttribute, String> attributes = mt.getAttributes();
-
     boolean is_notnull_check = false;
 
     // method annotation, refers to the return value
     StructAnnotationAttribute attr =
-      (StructAnnotationAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
+      (StructAnnotationAttribute)mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
     if (attr != null) {
       List<AnnotationExprent> annotations = attr.getAnnotations();
 

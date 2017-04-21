@@ -33,7 +33,7 @@ public class PropertyValueImpl extends LeafPsiElement {
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PropertyValueImpl.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
   @Override

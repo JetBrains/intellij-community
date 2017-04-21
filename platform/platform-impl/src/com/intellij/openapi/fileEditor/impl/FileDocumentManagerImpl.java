@@ -113,6 +113,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       }
       final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+      if (project == null)
+        project = ProjectUtil.guessProjectForFile(getFile(document));
       String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 

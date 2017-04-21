@@ -22,7 +22,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.properties.PropertiesLanguage;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;

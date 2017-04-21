@@ -302,6 +302,29 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     assertCopiedResources();
   }
 
+  @Test
+  public void testModuleWithNameTestResourceCopying() throws Exception {
+    createProjectSubFile("bar/foo/src/main/resources/dir/file.properties");
+    createProjectSubFile("bar/foo/src/test/resources/dir/file-test.properties");
+    createProjectSubFile("bar/test/src/main/resources/dir/file.properties");
+    createProjectSubFile("bar/test/src/test/resources/dir/file-test.properties");
+    createSettingsFile("include ':bar:foo'\n" +
+                       "include ':bar:test'");
+
+    importProjectUsingSingeModulePerGradleProject(
+      "subprojects {\n" +
+      "  apply plugin: 'java'\n" +
+      "}\n"
+    );
+    assertModules("project", "bar", "foo", "test");
+    compileModules("project", "bar", "foo", "test");
+
+    assertCopied("bar/foo/build/resources/main/dir/file.properties");
+    assertCopied("bar/foo/build/resources/test/dir/file-test.properties");
+    assertCopied("bar/test/build/resources/main/dir/file.properties");
+    assertCopied("bar/test/build/resources/test/dir/file-test.properties");
+  }
+
   private void createFilesForIncludesAndExcludesTest() throws IOException {
     createProjectSubFile("src/main/resources/dir/file.xxx");
     createProjectSubFile("src/main/resources/dir/file.yyy");

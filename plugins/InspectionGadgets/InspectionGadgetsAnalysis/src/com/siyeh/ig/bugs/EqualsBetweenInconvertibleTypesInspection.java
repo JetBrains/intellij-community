@@ -16,16 +16,22 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class EqualsBetweenInconvertibleTypesInspection
-  extends BaseInspection {
+public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
+  private static final CallMatcher OBJECT_EQUALS =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final CallMatcher STATIC_EQUALS =
+    CallMatcher.anyOf(
+      CallMatcher.staticCall("java.util.Objects", "equals").parameterCount(2),
+      CallMatcher.staticCall("com.google.common.base.Objects", "equal").parameterCount(2));
 
   @Override
   @NotNull
@@ -59,72 +65,56 @@ public class EqualsBetweenInconvertibleTypesInspection
     extends BaseInspectionVisitor {
 
     @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      if (!OBJECT_EQUALS.methodReferenceMatches(expression) && !STATIC_EQUALS.methodReferenceMatches(expression)) return;
+      PsiMethod method = ObjectUtils.tryCast(expression.resolve(), PsiMethod.class);
+      if (method == null) return;
+      PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+      if (functionalInterfaceType == null) return;
+      PsiType type1, type2;
+      PsiExpression qualifier = expression.getQualifierExpression();
+      type1 = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, 0);
+      if (qualifier == null ||
+          qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(method.getContainingClass())) {
+        type2 = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, 1);
+      } else {
+        type2 = qualifier.getType();
+      }
+      checkTypes(expression, type1, type2);
+    }
+
+    @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final boolean staticEqualsCall;
-      if (MethodCallUtils.isEqualsCall(expression)) {
+      boolean staticEqualsCall;
+      if (OBJECT_EQUALS.test(expression)) {
         staticEqualsCall = false;
       }
-      else {
-        final String name = methodExpression.getReferenceName();
-        if (!"equals".equals(name) && !"equal".equals(name)) {
-          return;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-          return;
-        }
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass == null) {
-          return;
-        }
-        final String qualifiedName = aClass.getQualifiedName();
-        if (!"java.util.Objects".equals(qualifiedName) && !"com.google.common.base.Objects".equals(qualifiedName)) {
-          return;
-        }
+      else if (STATIC_EQUALS.test(expression)) {
         staticEqualsCall = true;
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression expression1;
+      else {
+        return;
+      }
+      final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+      final PsiExpression expression1 = arguments[0];
       final PsiExpression expression2;
       if (staticEqualsCall) {
-        if (arguments.length != 2) {
-          return;
-        }
-        expression1 = arguments[0];
         expression2 = arguments[1];
       }
       else {
-        if (arguments.length != 1) {
-          return;
-        }
-        expression1 = arguments[0];
-        expression2 = methodExpression.getQualifierExpression();
+        expression2 = ExpressionUtils.getQualifierOrThis(expression.getMethodExpression());
       }
 
-      final PsiType comparisonType;
-      if (expression2 == null) {
-        final PsiClass aClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-        if (aClass == null) {
-          return;
-        }
-        comparisonType = TypeUtils.getType(aClass);
-      } else {
-        comparisonType = expression2.getType();
+      checkTypes(expression.getMethodExpression(), expression1.getType(), expression2.getType());
+    }
+
+    void checkTypes(PsiReferenceExpression expression, PsiType type1, PsiType type2) {
+      if (type1 != null && type2 != null && !TypeUtils.areConvertible(type1, type2)) {
+        PsiElement name = expression.getReferenceNameElement();
+        registerError(name == null ? expression : name, type1, type2);
       }
-      if (comparisonType == null) {
-        return;
-      }
-      final PsiType comparedType = expression1.getType();
-      if (comparedType == null) {
-        return;
-      }
-      if (TypeUtils.areConvertible(comparedType, comparisonType)) {
-        return;
-      }
-      registerMethodCallError(expression, comparedType, comparisonType);
     }
   }
 }

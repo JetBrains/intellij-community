@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class StructClass extends StructMember {
 
     // fields
     length = in.readUnsignedShort();
-    fields = new VBStyleCollection<>();
+    fields = new VBStyleCollection<>(length);
     for (int i = 0; i < length; i++) {
       StructField field = new StructField(in, this);
       fields.addWithKey(field, InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor()));
@@ -101,7 +101,7 @@ public class StructClass extends StructMember {
 
     // methods
     length = in.readUnsignedShort();
-    methods = new VBStyleCollection<>();
+    methods = new VBStyleCollection<>(length);
     for (int i = 0; i < length; i++) {
       StructMethod method = new StructMethod(in, this);
       methods.addWithKey(method, InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()));

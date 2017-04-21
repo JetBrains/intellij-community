@@ -8,7 +8,7 @@ adjust_django_sys_path()
 
 from django.conf import settings
 
-def _is_nosetest(settings):
+def is_nosetest(settings):
   """
   Checks if Django configured to work with nosetest
 
@@ -28,7 +28,7 @@ def _is_nosetest(settings):
 from django.test.testcases import TestCase
 from django import VERSION
 
-if _is_nosetest(settings):
+if is_nosetest(settings):
   from nose_utils import TeamcityNoseRunner
 
 # See: https://docs.djangoproject.com/en/1.8/releases/1.7/#django-utils-unittest
@@ -128,7 +128,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
     return suite
 
   def run_suite(self, suite, **kwargs):
-    if _is_nosetest(settings):
+    if is_nosetest(settings):
       from django_nose.plugin import DjangoSetUpPlugin, ResultPlugin
       from django_nose.runner import _get_plugins_from_settings
       from nose.config import Config
@@ -151,7 +151,7 @@ class DjangoTeamcityTestRunner(BaseRunner):
       return TeamcityTestRunner.run(self, suite, **self.options)
 
   def run_tests(self, test_labels, extra_tests=None, **kwargs):
-    if _is_nosetest(settings):
+    if is_nosetest(settings):
       return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests)
     return super(DjangoTeamcityTestRunner, self).run_tests(test_labels, extra_tests, **kwargs)
 

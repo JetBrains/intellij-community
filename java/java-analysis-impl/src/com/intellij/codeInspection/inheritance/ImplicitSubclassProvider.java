@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 /**
- * Provides information about classes/interfaces that will be implicitly subclassed/implemented by runtime,
+ * Provides information about classes/interfaces that will be implicitly subclassed/implemented at runtime,
  * e.g. by some framework (CGLIB Proxy in Spring).
  *
  * @author Nicolay Mitropolsky
@@ -38,7 +38,7 @@ public abstract class ImplicitSubclassProvider {
    * Checks if this provider could probably provide a subclass for passed psiClass.
    * <b>Note:<b/> this check is expected to be cheap. If it requires long computations then it is better just to return true.
    *
-   * @param psiClass a class to check for possible subclass
+   * @param psiClass a class to check for possible subclass.
    * @return {@code false} if definitely no subclass will be created for the psiClass and all further checks could be skipped;
    * {@code true} if a subclass for the psiClass will probably be created,
    * and then you should check {@link #findOverridingReason(PsiMethod)} and {@link #findOverridingReason(PsiMethod)}
@@ -47,14 +47,14 @@ public abstract class ImplicitSubclassProvider {
   public abstract boolean isApplicableTo(@NotNull PsiClass psiClass);
 
   /**
-   * Checks if this provider will implicitly subclass passed class
+   * Checks if this provider will implicitly subclass passed class.
    * <b>Note:<b/> this method could be computationally costly because in some cases it could require deep annotations checks
    * not only for class but also for all it's methods.
-   * default implementations doesn't check methods, so implementors should override this methods if target framework
-   * makes decision about overriding basing on methods annotations
+   * Default implementations don't check methods, so implementors should override this methods if target framework
+   * makes decision about overriding basing on methods annotations.
    *
-   * @param psiClass a class to check for possible subclass
-   * @return true if class will be subclassed, false - otherwise
+   * @param psiClass a class to check for possible subclass.
+   * @return true if class will be subclassed, false - otherwise.
    */
   public boolean providesSubclassFor(@NotNull PsiClass psiClass) {
     return isApplicableTo(psiClass) && findSubclassingReason(psiClass) != null;
@@ -64,8 +64,8 @@ public abstract class ImplicitSubclassProvider {
    * <b>Note:</b> assumes that you have called {@link #isApplicableTo(PsiClass)} and will not check it again.
    * So you can get wrong results if you haven't check.
    *
-   * @param psiClass a class to check for possible subclass
-   * @return explanation why this class will be implicitly subclassed, or {@code null} if it will not be subclassed
+   * @param psiClass a class to check for possible subclass.
+   * @return explanation why this class will be implicitly subclassed, or {@code null} if it will not be subclassed.
    */
   @Nls
   @Nullable
@@ -75,8 +75,8 @@ public abstract class ImplicitSubclassProvider {
    * <b>Note:</b> assumes that you have called {@link #isApplicableTo(PsiClass)} and will not check it again.
    * So you can get wrong results if you haven't check.
    *
-   * @param psiMethod a method to check for implicit override
-   * @return explanation why this method will be implicitly overridden, or {@code null} if it will not be overridden
+   * @param psiMethod a method to check for implicit override.
+   * @return explanation why this method will be implicitly overridden, or {@code null} if it will not be overridden.
    */
   @Nls
   @Nullable

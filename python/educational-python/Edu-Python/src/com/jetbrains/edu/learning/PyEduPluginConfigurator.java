@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
+import com.jetbrains.edu.learning.checker.PyStudyTaskChecker;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
