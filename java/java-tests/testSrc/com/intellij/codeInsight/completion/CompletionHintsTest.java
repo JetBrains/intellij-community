@@ -170,6 +170,17 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResultWithInlays("class C { void m() { System.getProperty( ) } }");
   }
 
+  public void testCaretIsToTheRightOfHintAfterSmartInnerCompletion() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    type("new String().trim");
+    myFixture.complete(CompletionType.SMART);
+    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>new String().trim(), <hint text=\"value:\"/>) } }");
+    myFixture.checkResult("class C { void m() { System.setProperty(new String().trim(), <caret>) } }");
+    assertEquals(getEditor().offsetToVisualPosition(getEditor().getCaretModel().getOffset(), true, false), 
+                 getEditor().getCaretModel().getVisualPosition());
+  }
+
   private void showParameterInfo() {
     myFixture.performEditorAction("ParameterInfo");
     UIUtil.dispatchAllInvocationEvents();
