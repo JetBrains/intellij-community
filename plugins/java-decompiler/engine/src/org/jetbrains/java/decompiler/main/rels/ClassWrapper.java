@@ -158,31 +158,33 @@ public class ClassWrapper {
 
       methods.addWithKey(methodWrapper, InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()));
 
-      // rename vars so that no one has the same name as a field
-      varProc.refreshVarNames(new VarNamesCollector(setFieldNames));
+      if (!isError) {
+        // rename vars so that no one has the same name as a field
+        varProc.refreshVarNames(new VarNamesCollector(setFieldNames));
 
-      // if debug information present and should be used
-      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-        StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
-        if (attr != null) {
-          // only param names here
-          varProc.setDebugVarNames(attr.getMapParamNames());
+        // if debug information present and should be used
+        if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+          StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
+          if (attr != null) {
+            // only param names here
+            varProc.setDebugVarNames(attr.getMapParamNames());
 
-          // the rest is here
-          methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
-            List<Exprent> lst = exprent.getAllExprents(true);
-            lst.add(exprent);
-            lst.stream()
-              .filter(e -> e.type == Exprent.EXPRENT_VAR)
-              .forEach(e -> {
-                VarExprent varExprent = (VarExprent)e;
-                String name = varExprent.getDebugName(mt);
-                if (name != null) {
-                  varProc.setVarName(varExprent.getVarVersionPair(), name);
-                }
-              });
-            return 0;
-          });
+            // the rest is here
+            methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
+              List<Exprent> lst = exprent.getAllExprents(true);
+              lst.add(exprent);
+              lst.stream()
+                .filter(e -> e.type == Exprent.EXPRENT_VAR)
+                .forEach(e -> {
+                  VarExprent varExprent = (VarExprent)e;
+                  String name = varExprent.getDebugName(mt);
+                  if (name != null) {
+                    varProc.setVarName(varExprent.getVarVersionPair(), name);
+                  }
+                });
+              return 0;
+            });
+          }
         }
       }
 
