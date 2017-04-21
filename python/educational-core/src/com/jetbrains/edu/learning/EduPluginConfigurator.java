@@ -139,7 +139,9 @@ public interface EduPluginConfigurator {
     return Collections.emptyList();
   }
 
-  EduCourseProjectGenerator getEduCourseProjectGenerator();
+  default EduCourseProjectGenerator getEduCourseProjectGenerator() {
+    return null;
+  }
 
   default ModuleType getModuleType() {return StdModuleTypes.JAVA;}
 }

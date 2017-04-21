@@ -58,7 +58,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   public IProperty getProperty() {
-    return myProperty;
+    return myProperty.getPsiElement().isValid() ? myProperty : null;
   }
 
   @NotNull
