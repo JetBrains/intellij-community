@@ -201,8 +201,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void checkCanceled() throws ProcessCanceledException {
-    if (ourInstance != null) {
-      ourInstance.doCheckCanceled();
+    ProgressManager instance = ourInstance;
+    if (instance != null) {
+      instance.doCheckCanceled();
     }
   }
 
