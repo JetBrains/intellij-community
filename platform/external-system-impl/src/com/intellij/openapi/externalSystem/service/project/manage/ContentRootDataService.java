@@ -69,7 +69,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   public static final com.intellij.openapi.util.Key<Boolean> CREATE_EMPTY_DIRECTORIES =
     com.intellij.openapi.util.Key.create("createEmptyDirectories");
 
-  private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(ContentRootDataService.class);
 
   @NotNull
   @Override

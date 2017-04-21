@@ -56,7 +56,7 @@ import java.util.Map;
  */
 public class PackageAnnotator {
 
-  private static final Logger LOG = Logger.getInstance("#" + PackageAnnotator.class.getName());
+  private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
   private static final String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
 
   private final PsiPackage myPackage;

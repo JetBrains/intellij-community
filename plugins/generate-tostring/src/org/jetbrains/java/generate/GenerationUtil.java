@@ -43,7 +43,7 @@ import java.io.StringWriter;
 import java.util.*;
 
 public class GenerationUtil {
-  private static final Logger logger = Logger.getInstance("#" + GenerationUtil.class.getName());
+  private static final Logger logger = Logger.getInstance(GenerationUtil.class);
 
   /**
      * Handles any exception during the executing on this plugin.

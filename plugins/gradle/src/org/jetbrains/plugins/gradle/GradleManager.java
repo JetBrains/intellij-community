@@ -90,7 +90,7 @@ public class GradleManager
   GradleLocalSettings,
   GradleExecutionSettings> {
 
-  private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(GradleManager.class);
 
   @NotNull private final ExternalSystemAutoImportAware myAutoImportDelegate =
     new CachingExternalSystemAutoImportAware(new GradleAutoImportAware());

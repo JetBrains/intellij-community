@@ -59,7 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
-  private static final Logger LOG = Logger.getInstance("#" + GlobalJavaInspectionContextImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
 
   private Map<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
   private Map<SmartPsiElementPointer, List<DerivedClassesProcessor>> myDerivedClassesRequests;

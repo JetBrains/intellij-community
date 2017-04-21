@@ -64,7 +64,7 @@ import java.util.Set;
  * @author nik
  */
 public class JavadocGeneratorRunProfile implements ModuleRunProfile {
-  private static final Logger LOGGER = Logger.getInstance("#" + JavadocConfiguration.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(JavadocConfiguration.class);
   private final Project myProject;
   private final AnalysisScope myGenerationScope;
   private final JavadocConfiguration myConfiguration;

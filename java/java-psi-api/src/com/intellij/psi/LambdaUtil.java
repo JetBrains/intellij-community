@@ -40,7 +40,7 @@ import java.util.*;
 public class LambdaUtil {
   public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
   public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<>();
-  private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(LambdaUtil.class);
 
   @Nullable
   public static PsiType getFunctionalInterfaceReturnType(PsiFunctionalExpression expr) {

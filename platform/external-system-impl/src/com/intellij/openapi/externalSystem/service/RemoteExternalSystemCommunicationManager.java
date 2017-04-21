@@ -79,7 +79,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
 
-  private static final Logger LOG = Logger.getInstance("#" + RemoteExternalSystemCommunicationManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(RemoteExternalSystemCommunicationManager.class);
 
   private static final String MAIN_CLASS_NAME = RemoteExternalSystemFacadeImpl.class.getName();
 

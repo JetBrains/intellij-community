@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 
 public class FunctionalInterfaceParameterizationUtil {
-  private static final Logger LOG = Logger.getInstance("#" + FunctionalInterfaceParameterizationUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(FunctionalInterfaceParameterizationUtil.class);
 
   public static boolean isWildcardParameterized(@Nullable PsiType classType) {
     if (classType == null) return false;

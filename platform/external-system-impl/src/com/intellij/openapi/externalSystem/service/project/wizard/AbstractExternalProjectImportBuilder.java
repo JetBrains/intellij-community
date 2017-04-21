@@ -59,7 +59,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   extends ProjectImportBuilder<DataNode<ProjectData>>
 {
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractExternalProjectImportBuilder.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractExternalProjectImportBuilder.class);
 
   @NotNull private final ProjectDataManager            myProjectDataManager;
   @NotNull private final C                             myControl;

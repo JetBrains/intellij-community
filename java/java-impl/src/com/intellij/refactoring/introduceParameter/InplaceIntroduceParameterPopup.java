@@ -54,7 +54,7 @@ import java.util.List;
  * Date: 2/25/11
  */
 public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
-  private static final Logger LOG = Logger.getInstance("#" + InplaceIntroduceParameterPopup.class.getName());
+  private static final Logger LOG = Logger.getInstance(InplaceIntroduceParameterPopup.class);
 
   private final PsiMethod myMethod;
   private final PsiMethod myMethodToSearchFor;

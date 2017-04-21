@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.*;
 
 public class AtomicConversionRule extends TypeConversionRule {
-  private static final Logger LOG = Logger.getInstance("#" + AtomicConversionRule.class.getName());
+  private static final Logger LOG = Logger.getInstance(AtomicConversionRule.class);
 
 
   @Override

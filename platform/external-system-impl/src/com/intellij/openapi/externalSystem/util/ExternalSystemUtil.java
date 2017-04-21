@@ -106,7 +106,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doW
  */
 public class ExternalSystemUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
   @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
 

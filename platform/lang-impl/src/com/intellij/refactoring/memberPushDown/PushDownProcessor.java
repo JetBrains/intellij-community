@@ -41,7 +41,7 @@ import java.util.List;
 public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
                                Member extends PsiElement,
                                Klass extends PsiElement> extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + PushDownProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(PushDownProcessor.class);
 
   private NewSubClassData mySubClassData;
   private PushDownDelegate<MemberInfo, Member> myDelegate;

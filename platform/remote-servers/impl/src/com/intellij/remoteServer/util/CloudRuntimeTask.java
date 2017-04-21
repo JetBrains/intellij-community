@@ -36,7 +36,7 @@ public abstract class CloudRuntimeTask<
   DC extends DeploymentConfiguration,
   SR extends CloudServerRuntimeInstance<DC, ?, ?>> {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudRuntimeTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(CloudRuntimeTask.class);
 
   private final Project myProject;
   private final String myTitle;

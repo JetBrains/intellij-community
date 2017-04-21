@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
-  private static final Logger LOG = Logger.getInstance("#" + JavaIntroduceParameterObjectClassDescriptor.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaIntroduceParameterObjectClassDescriptor.class);
   private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;

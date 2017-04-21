@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class InferenceSessionContainer {
-  private static final Logger LOG = Logger.getInstance("#" + InferenceSessionContainer.class.getName());
+  private static final Logger LOG = Logger.getInstance(InferenceSessionContainer.class);
   private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<>();
 
   public InferenceSessionContainer() {

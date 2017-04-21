@@ -962,7 +962,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   
   private static class TemporaryParent extends EditorColorsSchemeImpl {
 
-    private static Logger LOG = Logger.getInstance("#" + TemporaryParent.class.getName());
+    private static Logger LOG = Logger.getInstance(TemporaryParent.class);
     
     private String myParentName;
     private boolean isErrorReported;

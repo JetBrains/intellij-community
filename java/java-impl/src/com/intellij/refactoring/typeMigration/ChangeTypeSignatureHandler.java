@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#" + ChangeTypeSignatureHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(ChangeTypeSignatureHandler.class);
 
   public static final String REFACTORING_NAME = "Type Migration";
 

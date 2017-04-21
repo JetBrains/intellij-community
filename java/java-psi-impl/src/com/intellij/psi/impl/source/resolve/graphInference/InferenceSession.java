@@ -42,7 +42,7 @@ import java.util.*;
  * User: anna
  */
 public class InferenceSession {
-  private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
+  private static final Logger LOG = Logger.getInstance(InferenceSession.class);
   private static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
   private static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");

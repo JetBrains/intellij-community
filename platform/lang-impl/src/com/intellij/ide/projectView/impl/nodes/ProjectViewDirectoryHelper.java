@@ -52,7 +52,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import java.util.*;
 
 public class ProjectViewDirectoryHelper {
-  protected static final Logger LOG = Logger.getInstance("#" + ProjectViewDirectoryHelper.class.getName());
+  protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
 
   private final Project myProject;
   private final DirectoryIndex myIndex;

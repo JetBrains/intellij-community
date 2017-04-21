@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#" + IncreaseLanguageLevelFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(IncreaseLanguageLevelFix.class);
 
   private final LanguageLevel myLevel;
 

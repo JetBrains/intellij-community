@@ -87,7 +87,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     ReplaceWithPeekFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
-  private static final Logger LOG = Logger.getInstance("#" + SimplifyStreamApiCallChainsInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
 
   private static final String FOR_EACH_METHOD = "forEach";
   private static final String STREAM_METHOD = "stream";

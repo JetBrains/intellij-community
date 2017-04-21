@@ -80,7 +80,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
  */
 public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
 
-  private static final Logger LOG = Logger.getInstance("#" + GradleProjectResolver.class.getName());
+  private static final Logger LOG = Logger.getInstance(GradleProjectResolver.class);
 
   @NotNull private final GradleExecutionHelper myHelper;
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();

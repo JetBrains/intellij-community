@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class GenericsUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + GenericsUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
 
   private GenericsUtil() {}
 

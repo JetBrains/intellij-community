@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
-  private static final Logger LOG = Logger.getInstance("#" + DefaultImplementationTextSelectioner.class.getName());
+  private static final Logger LOG = Logger.getInstance(DefaultImplementationTextSelectioner.class);
 
   @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {

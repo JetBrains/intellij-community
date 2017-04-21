@@ -48,7 +48,7 @@ import java.util.Set;
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
 
-  private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(ModuleDependencyDataService.class);
 
   @NotNull
   @Override

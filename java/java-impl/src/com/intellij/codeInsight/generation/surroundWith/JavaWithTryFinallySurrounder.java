@@ -27,7 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
-  private static final Logger LOG = Logger.getInstance("#" + JavaWithTryFinallySurrounder.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaWithTryFinallySurrounder.class);
 
   @Override
   public String getTemplateDescription() {

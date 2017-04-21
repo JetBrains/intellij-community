@@ -153,7 +153,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int DEFAULT_MORE_STEP_COUNT = 15;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   public static final int MAX_TOP_HIT = 15;
-  private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
 

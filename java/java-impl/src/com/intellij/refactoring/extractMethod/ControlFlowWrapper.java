@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ControlFlowWrapper {
-  private static final Logger LOG = Logger.getInstance("#" + ControlFlowWrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(ControlFlowWrapper.class);
 
   private final ControlFlow myControlFlow;
   private final int myFlowStart;

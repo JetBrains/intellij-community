@@ -52,7 +52,7 @@ import java.util.*;
 * Date: 4/8/13
 */
 public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
-  public static final Logger LOG = Logger.getInstance("#" + JavaFxInjectPageLanguageIntention.class.getName());
+  public static final Logger LOG = Logger.getInstance(JavaFxInjectPageLanguageIntention.class);
 
   public static Set<String> getAvailableLanguages(Project project) {
     final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager(composeUserClassLoader(project)).getEngineFactories();

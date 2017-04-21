@@ -44,7 +44,7 @@ import java.util.*;
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
-  private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
   @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
 
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;

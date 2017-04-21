@@ -45,7 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObjectHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#" + ExtractMethodObjectHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExtractMethodObjectHandler.class);
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {

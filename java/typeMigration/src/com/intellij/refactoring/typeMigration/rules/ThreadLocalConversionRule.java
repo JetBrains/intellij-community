@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ThreadLocalConversionRule extends TypeConversionRule {
-  private static final Logger LOG = Logger.getInstance("#" + ThreadLocalConversionRule.class.getName());
+  private static final Logger LOG = Logger.getInstance(ThreadLocalConversionRule.class);
 
 
   @Override

@@ -40,7 +40,7 @@ import java.util.Set;
  * @since 7/18/12 10:37 AM
  */
 public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
-  private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementSettingsSerializer.class.getName());
+  private static final Logger LOG = Logger.getInstance(DefaultArrangementSettingsSerializer.class);
 
   @NotNull @NonNls private static final String GROUPS_ELEMENT_NAME     = "groups";
   @NotNull @NonNls private static final String GROUP_ELEMENT_NAME      = "group";

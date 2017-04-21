@@ -41,8 +41,8 @@ import java.util.*;
 public abstract class TestNGTestObject {
 
   public static final String[] GROUPS_CONFIGURATION = {BeforeGroups.class.getName(), AfterGroups.class.getName()};
-  
-  private static final Logger LOG = Logger.getInstance("#" + TestNGTestObject.class.getName());
+
+  private static final Logger LOG = Logger.getInstance(TestNGTestObject.class);
   protected final TestNGConfiguration myConfig;
 
   public TestNGTestObject(TestNGConfiguration config) {

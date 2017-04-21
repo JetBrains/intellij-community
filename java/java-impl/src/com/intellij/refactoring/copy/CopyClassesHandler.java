@@ -48,7 +48,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class CopyClassesHandler extends CopyHandlerDelegateBase {
-  private static final Logger LOG = Logger.getInstance("#" + CopyClassesHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(CopyClassesHandler.class);
 
   @Override
   public boolean forbidToClone(PsiElement[] elements, boolean fromUpdate) {

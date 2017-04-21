@@ -43,7 +43,7 @@ import java.util.*;
  * @author Rustam Vishnyakov
  */
 public class FileTemplatesLoader {
-  private static final Logger LOG = Logger.getInstance("#" + FileTemplatesLoader.class.getName());
+  private static final Logger LOG = Logger.getInstance(FileTemplatesLoader.class);
 
   static final String TEMPLATES_DIR = "fileTemplates";
   private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
