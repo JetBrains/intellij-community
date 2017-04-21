@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,14 @@ public final class BrowserLauncherImpl extends BrowserLauncherAppless {
       }
 
       url = serverManager.addAuthToken(parsedUrl).toExternalForm();
+    }
+
+    if (browser == null) {
+      // https://youtrack.jetbrains.com/issue/WEB-26547
+      WebBrowserManager browserManager = WebBrowserManager.getInstance();
+      if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
+        browser = browserManager.getFirstActiveBrowser();
+      }
     }
 
     super.browse(url, browser, project);
