@@ -168,30 +168,30 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   }
 
   public void navigateIn(@NotNull Editor e) {
-    FileEditorManager.getInstance(myProject).runWhenLoaded(e, () -> {
-      final int offset = getOffset();
-      CaretModel caretModel = e.getCaretModel();
-      boolean caretMoved = false;
-      if (myLogicalLine >= 0) {
-        LogicalPosition pos = new LogicalPosition(myLogicalLine, Math.max(myLogicalColumn, 0));
-        if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
-          caretModel.removeSecondaryCarets();
-          caretModel.moveToLogicalPosition(pos);
-          caretMoved = true;
-        }
-      }
-      if (!caretMoved && offset >= 0) {
+    final int offset = getOffset();
+    CaretModel caretModel = e.getCaretModel();
+    boolean caretMoved = false;
+    if (myLogicalLine >= 0) {
+      LogicalPosition pos = new LogicalPosition(myLogicalLine, Math.max(myLogicalColumn, 0));
+      if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
         caretModel.removeSecondaryCarets();
-        caretModel.moveToOffset(Math.min(offset, e.getDocument().getTextLength()));
+        caretModel.moveToLogicalPosition(pos);
         caretMoved = true;
       }
+    }
+    if (!caretMoved && offset >= 0) {
+      caretModel.removeSecondaryCarets();
+      caretModel.moveToOffset(Math.min(offset, e.getDocument().getTextLength()));
+      caretMoved = true;
+    }
 
-      if (caretMoved) {
-        e.getSelectionModel().removeSelection();
+    if (caretMoved) {
+      e.getSelectionModel().removeSelection();
+      FileEditorManager.getInstance(myProject).runWhenLoaded(e, () -> {
         scrollToCaret(e);
         unfoldCurrentLine(e);
-      }
-    });
+      });
+    }
   }
 
   protected static void unfoldCurrentLine(@NotNull final Editor editor) {
