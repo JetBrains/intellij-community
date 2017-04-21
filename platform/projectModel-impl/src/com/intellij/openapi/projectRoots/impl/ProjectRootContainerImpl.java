@@ -80,7 +80,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   @Override
   public void finishChange() {
     LOG.assertTrue(myInsideChange);
-    HashMap<OrderRootType, VirtualFile[]> oldRoots = new HashMap<>(myFiles);
+    Map<OrderRootType, VirtualFile[]> oldRoots = new HashMap<>(myFiles);
 
     boolean changes = false;
     for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
@@ -231,9 +231,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       Element e = new Element(sdkRootName);
       roots.addContent(e);
       final Element root = ProjectRootUtil.write(myRoots.get(type));
-      if (root != null) {
-        e.addContent(root);
-      }
+      e.addContent(root);
     }
   }
 

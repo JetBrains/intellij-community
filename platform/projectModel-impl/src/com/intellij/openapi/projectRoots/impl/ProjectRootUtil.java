@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author mike
@@ -71,9 +72,7 @@ public class ProjectRootUtil {
     final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
 
     if (type.equals(SIMPLE_ROOT)) {
-      final SimpleProjectRoot root = new SimpleProjectRoot();
-      root.readExternal(element);
-      return root;
+      return new SimpleProjectRoot(element);
     }
     if (type.equals(COMPOSITE_ROOT)) {
       CompositeProjectRoot root = new CompositeProjectRoot();
@@ -108,7 +107,7 @@ public class ProjectRootUtil {
 
   @NotNull
   private static PsiDirectory[] convertRoots(final FileManager fileManager, VirtualFile[] roots) {
-    ArrayList<PsiDirectory> dirs = new ArrayList<>();
+    List<PsiDirectory> dirs = new ArrayList<>();
 
     for (VirtualFile root : roots) {
       if (!root.isValid()) {
