@@ -30,7 +30,7 @@
               <option name="updateDate" />
               <option name="taskList">
                 <list>
-                  <Task>
+                  <PyCharmTask>
                     <option name="activeSubtaskIndex" value="0" />
                     <option name="index" value="1" />
                     <option name="lastSubtaskIndex" value="0" />
@@ -90,7 +90,7 @@
                         </entry>
                       </map>
                     </option>
-                  </Task>
+                  </PyCharmTask>
                 </list>
               </option>
             </Lesson>
