@@ -152,10 +152,6 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull
   protected abstract DefaultActionGroup createRepositoriesActions();
 
-  protected boolean highlightCurrentRepo() {
-    return !userWantsSyncControl() || myMultiRootBranchConfig.diverged();
-  }
-
   protected abstract void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup,
                                                                 @Nullable DefaultActionGroup actions);
 
