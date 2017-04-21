@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
            (SystemInfo.isUnix && SystemInfo.hasXdgOpen());
   }
 
-  private static GeneralSettings getGeneralSettingsInstance() {
+  private static GeneralSettings getGeneralSettings() {
     if (ApplicationManager.getApplication() != null) {
       GeneralSettings settings = GeneralSettings.getInstance();
       if (settings != null) {
@@ -101,7 +101,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   public void browse(@NotNull URI uri, @Nullable Project project) {
     LOG.debug("Launch browser: [" + uri + "]");
 
-    GeneralSettings settings = getGeneralSettingsInstance();
+    GeneralSettings settings = getGeneralSettings();
     if (settings.isUseDefaultBrowser()) {
       boolean tryToUseCli = true;
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
