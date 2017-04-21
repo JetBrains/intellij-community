@@ -145,8 +145,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   }
 
   override fun loadState(state: Element) {
-    val data: Element = unwrapState(state, project, schemeManagerIprProvider, schemeManager) ?: return
-
+    val data = unwrapState(state, project, schemeManagerIprProvider, schemeManager) ?: return
     data.getChild(MODULE_TO_COPYRIGHT)?.let {
       for (element in it.getChildren(ELEMENT)) {
         scopeToCopyright.put(element.getAttributeValue(MODULE), element.getAttributeValue(COPYRIGHT))
