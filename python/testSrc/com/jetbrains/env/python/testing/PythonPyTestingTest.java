@@ -77,6 +77,35 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
 
+  @Test
+  public void testParametrized() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parametrized", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_pytest_parametrized.py", 1);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          Assert.assertEquals("Parametrized test produced bad tree",
+                              "Test tree:\n" +
+                              "[root]\n" +
+                              ".test_pytest_parametrized\n" +
+                              "..test_eval\n" +
+                              "...(three plus file-8)(-)\n" +
+                              "...((2)+(4)-6)(+)\n" +
+                              "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+
   // Ensure test survives patched strftime
   @Test
   public void testMonkeyPatch() throws Exception {
