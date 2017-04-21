@@ -14,8 +14,10 @@ from teamcity import teamcity_presence_env_var, messages
 if teamcity_presence_env_var not in os.environ:
     os.environ[teamcity_presence_env_var] = "LOCAL"
 
-# TODO: DOC
-JB_DISABLE_BUFFERING = "_DISABLE_BUFFERING" in os.environ
+# Providing this env variable disables output buffering.
+# anything sent to stdout/stderr goes to Intellij directly, not after test finished (default)
+# out and err are not in sync, so output may go to wrong test
+JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
 
 
 def _parse_parametrized(part):
