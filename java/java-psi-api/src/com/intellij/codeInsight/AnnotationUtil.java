@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,37 +285,41 @@ public class AnnotationUtil {
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull Collection<String> annotations,
-                                    final boolean checkHierarchy) {
+                                    boolean checkHierarchy) {
     return isAnnotated(listOwner, annotations, checkHierarchy, true);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull Collection<String> annotations,
-                                    final boolean checkHierarchy,
+                                    boolean checkHierarchy,
                                     boolean skipExternal) {
-    for (String annotation : annotations) {
-      if (isAnnotated(listOwner, annotation, checkHierarchy, skipExternal)) return true;
-    }
-    return false;
+    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, checkHierarchy, skipExternal));
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls @NotNull String annotationFQN, boolean checkHierarchy) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, null);
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls @NotNull String annotationFQN, boolean checkHierarchy,
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
                                     boolean skipExternal) {
     return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, null);
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                     @NonNls @NotNull String annotationFQN,
-                                     boolean checkHierarchy, final boolean skipExternal, @Nullable Set<PsiMember> processed) {
+                                     @NotNull String annotationFQN,
+                                     boolean checkHierarchy,
+                                     boolean skipExternal,
+                                     @Nullable Set<PsiMember> processed) {
     if (!listOwner.isValid()) return false;
-    final PsiModifierList modifierList = listOwner.getModifierList();
+
+    PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
+
     PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
     if (annotation != null) return true;
+
     if (!skipExternal) {
       final Project project = listOwner.getProject();
       if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null ||
@@ -323,6 +327,7 @@ public class AnnotationUtil {
         return true;
       }
     }
+
     if (checkHierarchy) {
       if (listOwner instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)listOwner;
@@ -332,7 +337,8 @@ public class AnnotationUtil {
         for (PsiMethod superMethod : superMethods) {
           if (isAnnotated(superMethod, annotationFQN, true, skipExternal, processed)) return true;
         }
-      } else if (listOwner instanceof PsiClass) {
+      }
+      else if (listOwner instanceof PsiClass) {
         final PsiClass clazz = (PsiClass)listOwner;
         if (processed == null) processed = new THashSet<>();
         if (!processed.add(clazz)) return false;
@@ -342,6 +348,7 @@ public class AnnotationUtil {
         }
       }
     }
+
     return false;
   }
 
