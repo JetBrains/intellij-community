@@ -258,4 +258,9 @@ public class XValueHint extends AbstractValueHint {
                                                             myDebugSession.getCurrentPosition(), valueMarkers);
     showTreePopup(creator, Pair.create(value, myValueName));
   }
+
+  @Override
+  public String toString() {
+    return myExpression;
+  }
 }
