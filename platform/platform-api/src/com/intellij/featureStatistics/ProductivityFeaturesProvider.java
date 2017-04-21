@@ -16,6 +16,10 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * User: anna
@@ -29,4 +33,12 @@ public abstract class ProductivityFeaturesProvider {
   public abstract GroupDescriptor[] getGroupDescriptors();
 
   public abstract ApplicabilityFilter[] getApplicabilityFilters();
+
+  /**
+   * @return list of xml file urls with features configurations
+   */
+  @NotNull
+  public Collection<String> getXmlFilesUrls() {
+    return Collections.emptyList();
+  }
 }
