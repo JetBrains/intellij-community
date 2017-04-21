@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,22 +96,10 @@ public class JavaChildWrapArranger {
       return Wrap.createWrap(settings.THROWS_KEYWORD_WRAP, true);
     }
 
-    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return suggestedWrap;
-      }
-      else {
-        return null;
-      }
-    }
-
-    else if (nodeType == JavaElementType.THROWS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return suggestedWrap;
-      }
-      else {
-        return null;
-      }
+    else if (nodeType == JavaElementType.EXTENDS_LIST ||
+             nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.THROWS_LIST) {
+      return role == ChildRole.REFERENCE_IN_LIST ? suggestedWrap : null;
     }
 
     else if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
@@ -177,7 +165,7 @@ public class JavaChildWrapArranger {
         if (prev instanceof PsiKeyword) {
           return null;
         }
-        
+
         if (isTypeAnnotationOrFalseIfDumb(child)) {
           if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotationOrFalseIfDumb(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);

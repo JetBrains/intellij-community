@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -737,17 +737,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       return false;
     }
-    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST || role == ChildRole.IMPLEMENTS_KEYWORD) {
-        return true;
-      }
-      return false;
-    }
-    else if (nodeType == JavaElementType.THROWS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return true;
-      }
-      return false;
+    else if (nodeType == JavaElementType.EXTENDS_LIST ||
+             nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.THROWS_LIST) {
+      return role == ChildRole.REFERENCE_IN_LIST;
     }
     else if (nodeType == JavaElementType.CLASS) {
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return true;

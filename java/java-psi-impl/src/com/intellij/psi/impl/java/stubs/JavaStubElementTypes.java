@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.java.*;
@@ -103,21 +105,21 @@ public interface JavaStubElementTypes {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new ExtendsListElement();
+      return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
     }
   };
   JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST") {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new ImplementsListElement();
+      return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, PsiKeyword.IMPLEMENTS);
     }
   };
   JavaClassReferenceListElementType THROWS_LIST = new JavaClassReferenceListElementType("THROWS_LIST") {
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return new PsiThrowsListImpl();
+      return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, PsiKeyword.THROWS);
     }
   };
   JavaClassReferenceListElementType EXTENDS_BOUND_LIST = new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST") {
