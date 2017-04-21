@@ -13,69 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.roots.impl.libraries
 
-package com.intellij.openapi.roots.impl.libraries;
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import org.jdom.Element
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.StateSplitterEx;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Pair;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-
-/**
- * @author dsl
- */
-@State(name = "libraryTable", storages = @Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class))
-public class ProjectLibraryTable extends LibraryTableBase {
-  private static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
-    @Override
-    public String getDisplayName(boolean plural) {
-      return ProjectBundle.message("project.library.display.name", plural ? 2 : 1);
-    }
-
-    @Override
-    public String getDescription() {
-      return ProjectBundle.message("libraries.node.text.project");
-    }
-
-    @Override
-    public String getLibraryTableEditorTitle() {
-      return ProjectBundle.message("library.configure.project.title");
-    }
-  };
-
-  public static LibraryTable getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectLibraryTable.class);
+@State(name = "libraryTable", storages = arrayOf(Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter::class)))
+class ProjectLibraryTable : LibraryTableBase() {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<ProjectLibraryTable>()
   }
 
-  @Override
-  public String getTableLevel() {
-    return LibraryTablesRegistrar.PROJECT_LEVEL;
-  }
+  override fun getTableLevel() = LibraryTablesRegistrar.PROJECT_LEVEL
 
-  @Override
-  public LibraryTablePresentation getPresentation() {
-    return PROJECT_LIBRARY_TABLE_PRESENTATION;
-  }
+  override fun getPresentation() = PROJECT_LIBRARY_TABLE_PRESENTATION
 
-  @Override
-  public boolean isEditable() {
-    return true;
-  }
+  override fun isEditable() = true
 
-  public final static class LibraryStateSplitter extends StateSplitterEx {
-    @Override
-    public List<Pair<Element, String>> splitState(@NotNull Element state) {
-      return splitState(state, LibraryImpl.LIBRARY_NAME_ATTR);
-    }
+  class LibraryStateSplitter : StateSplitterEx() {
+    override fun splitState(state: Element) = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
   }
+}
+
+private val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
+  override fun getDisplayName(plural: Boolean) = ProjectBundle.message("project.library.display.name", if (plural) 2 else 1)
+
+  override fun getDescription() = ProjectBundle.message("libraries.node.text.project")
+
+  override fun getLibraryTableEditorTitle() = ProjectBundle.message("library.configure.project.title")
 }
