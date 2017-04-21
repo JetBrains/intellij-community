@@ -16,7 +16,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -75,15 +77,22 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
       "}");
   }
 
+  public void testMethodReference() {
+    doTest("import java.util.Objects;\n" +
+           "import java.util.function.*;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  Predicate<Integer> p = \"123\"::/*'equals()' between objects of inconvertible types 'Integer' and 'String'*/equals/**/;\n" +
+           "  Predicate<CharSequence> pOk = \"456\"::equals;\n" +
+           "  BiPredicate<String, Integer> bp = Objects::/*'equals()' between objects of inconvertible types 'String' and 'Integer'*/equals/**/;\n" +
+           "  BiPredicate<Long, Double> bp2 = Object::/*'equals()' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +
+           "  BiPredicate<Long, Long> bpOk = Object::equals;\n" +
+           "}\n");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package java.util;" +
-      "public final class Objects {" +
-      "  public static boolean equals(Object a, Object b) {" +
-      "    return (a == b) || (a != null && a.equals(b));" +
-      "  }" +
-      "}",
       "package com.google.common.base;" +
       "public final class Objects {" +
       "  public static boolean equal(Object a, Object b) {" +
@@ -96,5 +105,11 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
   @Override
   protected InspectionProfileEntry getInspection() {
     return new EqualsBetweenInconvertibleTypesInspection();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }
