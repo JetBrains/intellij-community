@@ -20,6 +20,7 @@ import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
+import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
@@ -80,6 +81,7 @@ public class TraceStreamAction extends AnAction {
         public void failed(@NotNull String traceExpression, @NotNull String reason) {
           LOG.warn(reason + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
           ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(reason));
+          throw new TraceCompilationException(reason, traceExpression);
         }
       });
     }

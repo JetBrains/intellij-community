@@ -25,8 +25,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -65,7 +64,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
             }
           }
 
-          callback.failed(streamTraceExpression, "Evaluation result type is unexpected");
+          callback.failed(streamTraceExpression, "Evaluation failed: result type is unexpected");
         }
 
         @Override
