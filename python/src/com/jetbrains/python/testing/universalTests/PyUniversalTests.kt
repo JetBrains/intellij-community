@@ -239,7 +239,7 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
     when (targetType) {
       TestTargetType.CUSTOM -> emptyList()
       TestTargetType.PYTHON -> getArgumentsForPythonTarget(configuration)
-      TestTargetType.PATH -> listOf("--path", target)
+      TestTargetType.PATH -> listOf("--path", target.trim())
     }
 
   private fun getArgumentsForPythonTarget(configuration: PyUniversalTestConfiguration): List<String> {
@@ -258,7 +258,7 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
       folderToStart = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe),
       allowInaccurateResult = true
     )
-    val qualifiedNameParts = QualifiedName.fromDottedString(target).tryResolveAndSplit(qNameResolveContext) ?:
+    val qualifiedNameParts = QualifiedName.fromDottedString(target.trim()).tryResolveAndSplit(qNameResolveContext) ?:
                              throw ExecutionException("Can't find file where $target declared. " +
                                                                              "Make sure it is in project root")
 
