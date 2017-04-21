@@ -66,6 +66,6 @@ public class GradleGroovyFrameworkSupportProvider extends GradleFrameworkSupport
       .addPluginDefinition("apply plugin: 'groovy'")
       .addRepositoriesDefinition("mavenCentral()")
       .addDependencyNotation("compile 'org.codehaus.groovy:groovy-all:2.3.11'")
-      .addDependencyNotation("testCompile group: 'junit', name: 'junit', version: '4.11'");
+      .addDependencyNotation("testCompile group: 'junit', name: 'junit', version: '4.12'");
   }
 }
