@@ -31,13 +31,13 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val problems = SmartList<ProblemDescriptor>()
 
-    val subclassers = ImplicitSubclassProvider.EP_NAME.extensions
+    val subclassProviders = ImplicitSubclassProvider.EP_NAME.extensions
       .asSequence()
       .filter { it.isApplicableTo(aClass) }
 
     val methodsToOverride = aClass.methods.mapNotNull {
       method ->
-      subclassers
+      subclassProviders
         .mapNotNull { it.findOverridingReason(method) }
         .firstOrNull()?.let { description ->
         method to description
@@ -46,7 +46,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val classLevelFix =
       if (classIsFinal) {
-        val classReasonToBeSubclassed = subclassers.mapNotNull { it.findSubclassingReason(aClass) }.firstOrNull()
+        val classReasonToBeSubclassed = subclassProviders.mapNotNull { it.findSubclassingReason(aClass) }.firstOrNull()
 
         if (methodsToOverride.isNotEmpty() || classReasonToBeSubclassed != null) {
           val classLevelFix = FixSubclassing(aClass, aClass.name ?: "class")
@@ -68,10 +68,12 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
       }
       else null
 
+    val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
+
     for ((method, description) in methodsToOverride) {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
 
-        classLevelFix?.siblings?.add(method)
+        classLevelFix?.siblings?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
 
         val methodFixes = if (method.modifierList.isWritable)
           arrayOf<LocalQuickFix>(FixSubclassing(method, method.name))
@@ -107,25 +109,27 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
 
-  private class FixSubclassing(val uDeclaration: UDeclaration, val hintName: String) : LocalQuickFixOnPsiElement(uDeclaration) {
+  private class FixSubclassing(uDeclaration: UDeclaration, hintName: String) : LocalQuickFixOnPsiElement(uDeclaration) {
 
-    val siblings = SmartList<UDeclaration>()
+    val siblings = SmartList<SmartPsiElementPointer<UDeclaration>>()
 
     override fun getFamilyName(): String = QuickFixBundle.message("fix.modifiers.family")
 
-    override fun getText() = if (uDeclaration is UClass)
+    private val text = if (uDeclaration is UClass)
       InspectionsBundle.message("inspection.implicit.subclass.make.class.extendable")
     else
       InspectionsBundle.message("inspection.implicit.subclass.extendable", hintName)
 
+    override fun getText() = text
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
       makeExtendable(startElement as UDeclaration)
       for (sibling in siblings) {
-        makeExtendable(sibling)
+        sibling.element?.let {
+          makeExtendable(it)
+        }
       }
     }
-
 
     private fun makeExtendable(declaration: UDeclaration) {
       val isClassMember = !(declaration is UClass)
