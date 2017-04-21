@@ -427,6 +427,10 @@ public class HtmlUtil {
 
   public static boolean isHtml5Context(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
+    if (doc == null && context != null) {
+      return Html5SchemaProvider.getHtml5SchemaLocation()
+        .equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(context.getProject()));
+    }
     return isHtml5Document(doc);
   }
 
