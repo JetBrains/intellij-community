@@ -1049,7 +1049,7 @@ public class GitUtil {
    */
   @NotNull
   public static Collection<Change> findCorrespondentLocalChanges(@NotNull ChangeListManager changeListManager,
-                                                                 @NotNull Collection<Change> originalChanges) {
+                                                                 @NotNull Collection<? extends Change> originalChanges) {
     OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
     return ContainerUtil.mapNotNull(originalChanges, allChanges::get);
   }

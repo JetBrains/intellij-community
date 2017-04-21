@@ -19,11 +19,13 @@ package git4idea.test
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.testFramework.vcs.ExecutableHelper
+import com.intellij.vcs.log.impl.VcsLogUtil
 import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
 import java.io.File
@@ -154,9 +156,9 @@ private fun printVersionTheFirstTime() {
   }
 }
 
-fun file(fileName: String): TestFile {
+internal fun GitPlatformTest.file(fileName: String): TestFile {
   val f = child(fileName)
-  return TestFile(f)
+  return TestFile(this.project!!, f)
 }
 
 private class GitExecutorHolder {
@@ -166,7 +168,7 @@ private class GitExecutorHolder {
   }
 }
 
-class TestFile internal constructor(val file: File) {
+internal class TestFile internal constructor(val project: Project, val file: File) {
 
   fun append(content: String): TestFile {
     FileUtil.writeToFile(file, content.toByteArray(), true)
@@ -202,7 +204,11 @@ class TestFile internal constructor(val file: File) {
 
   fun hash() = last()
 
+  fun details() = VcsLogUtil.getDetails(findGitLogProvider(project), project.baseDir, listOf(hash())).first()!!
+
   fun exists() = file.exists()
+
+  fun read() = FileUtil.loadFile(file)
 }
 
 class TestCommit internal constructor(shortHash: String, hash: String) {

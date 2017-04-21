@@ -205,4 +205,10 @@ public interface Git {
   @NotNull
   GitCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
+  @NotNull
+  GitCommandResult revert(@NotNull GitRepository repository,
+                          @NotNull String commit,
+                          boolean autoCommit,
+                          @NotNull GitLineHandlerListener... listeners);
+
 }

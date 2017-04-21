@@ -653,6 +653,21 @@ public class GitImpl implements Git {
   }
 
   @NotNull
+  @Override
+  public GitCommandResult revert(@NotNull GitRepository repository,
+                                 @NotNull String commit,
+                                 boolean autoCommit,
+                                 @NotNull GitLineHandlerListener... listeners) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REVERT);
+    handler.addParameters(commit);
+    if (!autoCommit) {
+      handler.addParameters("--no-commit");
+    }
+    addListeners(handler, listeners);
+    return run(handler);
+  }
+
+  @NotNull
   private static GitCommandResult doLsRemote(@NotNull final Project project,
                                              @NotNull final File workingDir,
                                              @NotNull final String remoteId,

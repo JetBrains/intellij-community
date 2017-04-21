@@ -159,6 +159,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, myProjectRoot, hashes)
 
+  protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
+
   protected fun `do nothing on merge`() {
     vcsHelper.onMerge{}
   }

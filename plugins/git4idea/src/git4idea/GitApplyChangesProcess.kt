@@ -61,10 +61,12 @@ class GitApplyChangesProcess(private val project: Project,
                              private val commits: List<VcsFullCommitDetails>,
                              private val autoCommit: Boolean,
                              private val operationName: String,
+                             private val appliedWord: String,
                              private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                              private val defaultCommitMessageGenerator: (VcsFullCommitDetails) -> String,
-                             private val cleanupBeforeCommit: (GitRepository) -> Unit) {
+                             private val findLocalChanges: (Collection<Change>) -> Collection<Change>,
+                             private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
   private val git = Git.getInstance()
   private val repositoryManager = GitRepositoryManager.getInstance(project)
@@ -288,12 +290,11 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   private fun noChangesAfterApply(originalChanges: Collection<Change>): Boolean {
-    val allChanges = changeListManager.allChanges
-    return !originalChanges.any { allChanges.contains(it) }
+    return findLocalChanges(originalChanges).isEmpty()
   }
 
   private fun moveChanges(originalChanges: Collection<Change>, targetChangeList: LocalChangeList): LocalChangeList? {
-    val localChanges = GitUtil.findCorrespondentLocalChanges(changeListManager, originalChanges)
+    val localChanges = findLocalChanges(originalChanges)
 
     // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
     // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
@@ -375,7 +376,7 @@ class GitApplyChangesProcess(private val project: Project,
                           successfulCommits: List<VcsFullCommitDetails>) {
     var description = commitDetails(failedCommit) + "<br/>" + content
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyError("${operationName.capitalize()} failed", description)
+    vcsNotifier.notifyError("${operationName.capitalize()} Failed", description)
   }
 
   private fun getSuccessfulCommitDetailsIfAny(successfulCommits: List<VcsFullCommitDetails>): String {
@@ -392,9 +393,9 @@ class GitApplyChangesProcess(private val project: Project,
     if (but) {
       val wasnt = if (skipped.size == 1) "wasn't" else "weren't"
       val it = if (skipped.size == 1) "it" else "them"
-      return String.format("%s %s ${operationName}ed, because all changes have already been applied.", hashes, wasnt, it)
+      return String.format("%s %s ${operationName}ed, because all changes have already been ${appliedWord}.", hashes, wasnt, it)
     }
-    return String.format("All changes from %s have already been applied", hashes)
+    return String.format("All changes from %s have already been ${appliedWord}", hashes)
   }
 
   private fun getCommitsDetails(successfulCommits: List<VcsFullCommitDetails>): String {
