@@ -46,6 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
   private SoftReference<PsiType> myCachedType;
@@ -224,7 +226,14 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.THROWS_LIST);
+    PsiReferenceList child = getStubOrPsiChild(JavaStubElementTypes.THROWS_LIST);
+    if (child != null) return child;
+
+    PsiMethodStub stub = getStub();
+    Stream<String> children =
+      stub != null ? stub.getChildrenStubs().stream().map(s -> s.getClass().getSimpleName() + " : " + s.getStubType())
+                   : Stream.of(getChildren()).map(e -> e.getClass().getSimpleName() + " : " + e.getNode().getElementType());
+    throw new AssertionError("Missing throws list, file=" + getContainingFile() + " children:\n" + children.collect(Collectors.joining("\n")));
   }
 
   @Override
