@@ -21,17 +21,8 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Lists
 import com.google.common.collect.Multimap
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.ModuleVersionIdentifier
-import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.artifacts.ResolvedArtifact
-import org.gradle.api.artifacts.SelfResolvingDependency
-import org.gradle.api.artifacts.component.ComponentIdentifier
-import org.gradle.api.artifacts.component.ModuleComponentIdentifier
-import org.gradle.api.artifacts.component.ModuleComponentSelector
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.artifacts.component.ProjectComponentSelector
+import org.gradle.api.artifacts.*
+import org.gradle.api.artifacts.component.*
 import org.gradle.api.artifacts.result.*
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.specs.Specs
@@ -57,8 +48,11 @@ import java.util.regex.Pattern
  */
 class DependencyResolverImpl implements DependencyResolver {
 
-  private static isArtifactResolutionQuerySupported = GradleVersion.current() >= GradleVersion.version("2.0")
-  private static isDependencySubstitutionsSupported = GradleVersion.current() > GradleVersion.version("2.5")
+  private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
+  private static isDependencySubstitutionsSupported = is4OrBetter ||
+                                                      (GradleVersion.current() > GradleVersion.version("2.5"))
+  private static isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
+                                                      (GradleVersion.current() >= GradleVersion.version("2.0"))
 
   @NotNull
   private final Project myProject
@@ -151,7 +145,7 @@ class DependencyResolverImpl implements DependencyResolver {
           if(!processedConfigurations.add(conf)) return map
           conf.incoming.dependencies.findAll { it instanceof ProjectDependency }.each { it ->
             map.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
-            projectDeps((it as ProjectDependency).projectConfiguration, map)
+            projectDeps(getTargetConfiguration(it as ProjectDependency), map)
           }
           map
         }
@@ -721,15 +715,17 @@ class DependencyResolverImpl implements DependencyResolver {
       try {
         if (it instanceof ProjectDependency) {
           def project = it.getDependencyProject()
+          Configuration targetConfiguration = getTargetConfiguration(it)
+
           final projectDependency = new DefaultExternalProjectDependency(
             name: project.name,
             group: project.group,
             version: project.version,
             scope: scope,
             projectPath: project.path,
-            configurationName: it.projectConfiguration.name
+            configurationName: targetConfiguration.name
           )
-          projectDependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.files
+          projectDependency.projectDependencyArtifacts = targetConfiguration.allArtifacts.files.files
           result.add(projectDependency)
         }
         else if (it instanceof Dependency) {
@@ -770,6 +766,11 @@ class DependencyResolverImpl implements DependencyResolver {
     }
 
     return result
+  }
+
+  private static Configuration getTargetConfiguration(ProjectDependency projectDependency) {
+    return !is4OrBetter ? projectDependency.projectConfiguration :
+           projectDependency.dependencyProject.configurations.getByName(projectDependency.targetConfiguration ?: 'default')
   }
 
   class DependencyResultsTransformer {
@@ -824,7 +825,7 @@ class DependencyResolverImpl implements DependencyResolver {
                   selectionReason = "composite build substitution"
                 }
               } else {
-                dependencyConfigurations = projectDependencies.collect {it.projectConfiguration}
+                dependencyConfigurations = projectDependencies.collect { getTargetConfiguration(it) }
               }
 
               dependencyConfigurations.each {
