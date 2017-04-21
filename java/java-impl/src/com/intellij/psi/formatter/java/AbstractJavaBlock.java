@@ -1036,34 +1036,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return mySettings.BRACE_STYLE;
   }
 
-  protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent) {
-    return getCodeBlockInternalIndent(baseChildrenIndent, false);
-  }
-
-  protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent, boolean enforceParentIndent) {
+  protected Indent getCodeBlockInternalIndent(int baseChildrenIndent) {
     if (isTopLevelClass() && mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return Indent.getNoneIndent();
     }
 
     final int braceStyle = getBraceStyle();
     final int shift = braceStyle == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? 1 : 0;
-    return createNormalIndent(baseChildrenIndent - shift, enforceParentIndent);
+    return createNormalIndent(baseChildrenIndent - shift);
   }
 
-  protected static Indent createNormalIndent(final int baseChildrenIndent) {
-    return createNormalIndent(baseChildrenIndent, false);
+  protected static Indent createNormalIndent() {
+    return createNormalIndent(1);
   }
 
-  protected static Indent createNormalIndent(final int baseChildrenIndent, boolean enforceIndentToChildren) {
-    if (baseChildrenIndent == 1) {
-      return Indent.getIndent(Indent.Type.NORMAL, false, enforceIndentToChildren);
-    }
-    else if (baseChildrenIndent <= 0) {
+  protected static Indent createNormalIndent(int baseChildrenIndent) {
+    assert baseChildrenIndent <= 1 : baseChildrenIndent;
+    if (baseChildrenIndent <= 0) {
       return Indent.getNoneIndent();
     }
     else {
-      LOG.assertTrue(false);
-      return Indent.getIndent(Indent.Type.NORMAL, false, enforceIndentToChildren);
+      return Indent.getIndent(Indent.Type.NORMAL, false, false);
     }
   }
 
@@ -1254,7 +1247,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Indent.getNormalIndent();
     }
 
-    return isRBrace(child) ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent, false);
+    return isRBrace(child) ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent);
   }
 
   public AbstractJavaBlock getParentBlock() {

@@ -26,7 +26,6 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
-import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -41,7 +40,7 @@ import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
 /**
  * Encapsulates the implementation of
- * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, Wrap, ReservedWrapsProvider)}.
+ * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, JavaCodeStyleSettings, Wrap, AbstractJavaBlock)}.
  * <p/>
  * Thread-safe.
  *
@@ -239,10 +238,7 @@ public class JavaChildWrapArranger {
     }
 
     else if (nodeType == JavaElementType.DO_WHILE_STATEMENT) {
-      if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      }
-      else if (role == ChildRole.WHILE_KEYWORD) {
+      if (role == ChildRole.LOOP_BODY || role == ChildRole.WHILE_KEYWORD) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
     }
