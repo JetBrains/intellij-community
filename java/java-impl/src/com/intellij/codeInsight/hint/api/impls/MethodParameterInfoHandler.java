@@ -21,10 +21,14 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
@@ -124,10 +128,29 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
     if (expressionList == null) return null;
     Object[] candidates = context.getObjectsToView();
-    if (candidates == null || candidates.length == 0 || !(candidates[0] instanceof CandidateInfo)) return null;
-    PsiElement element = ((CandidateInfo)candidates[0]).getElement();
+    if (candidates == null || candidates.length == 0) return null;
+    Object currentMethodInfo = context.getHighlightedParameter();
+    if (currentMethodInfo == null) currentMethodInfo = candidates[0];
+    if (!(currentMethodInfo instanceof CandidateInfo)) return null;
+    PsiElement element = ((CandidateInfo)currentMethodInfo).getElement();
     if (!(element instanceof PsiMethod)) return null;
+    
     PsiMethod method = (PsiMethod)element;
+    int originalNumberOfParameters = method.getParameterList().getParametersCount();
+    int currentNumberOfParameters = expressionList.getExpressions().length;
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
+    Document document = psiDocumentManager.getCachedDocument(context.getFile());
+    if (context.getHighlightedParameter() != null && document != null && psiDocumentManager.isCommitted(document) && 
+        originalNumberOfParameters != currentNumberOfParameters && !(originalNumberOfParameters == 1 && currentNumberOfParameters == 0)) {
+      List<Inlay> hints = expressionList.getUserData(JavaMethodCallElement.COMPLETION_HINTS);
+      if (hints != null) {
+        for (Inlay hint : hints) {
+          if (hint != null) ParameterHintsPresentationManager.getInstance().unpin(hint);
+        }
+        hints.clear();
+      }
+    }
+    
     String originalMethodName = method.getName();
     PsiQualifiedReference currentMethodReference = null;
     PsiElement parent = expressionList.getParent();

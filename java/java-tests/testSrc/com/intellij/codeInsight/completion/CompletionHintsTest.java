@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ui.UIUtil;
@@ -156,6 +157,17 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     myFixture.checkResultWithInlays("class C { void m() { System.getProperty() } }");
+  }
+
+  public void testHintsDisappearWhenNumberOfParametersIsChangedDirectly() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    myFixture.checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
+    ParameterInfoController.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
+    myFixture.doHighlighting();
+    waitTillAnimationCompletes();
+    myFixture.checkResultWithInlays("class C { void m() { System.getProperty( ) } }");
   }
 
   private void showParameterInfo() {

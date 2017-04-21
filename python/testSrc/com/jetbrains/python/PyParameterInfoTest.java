@@ -661,6 +661,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public Object getHighlightedParameter() {
+      return null;
+    }
+
+    @Override
     public void setCurrentParameter(int index) {
       myIndex = index;
     }
