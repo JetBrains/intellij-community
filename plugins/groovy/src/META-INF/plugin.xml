@@ -165,6 +165,8 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureDelegateTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"
                     order="last"/>

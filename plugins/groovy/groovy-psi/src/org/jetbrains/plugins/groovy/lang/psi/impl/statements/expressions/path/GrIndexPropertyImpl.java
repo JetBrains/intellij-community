@@ -22,31 +22,23 @@ import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyPolyVariantReference;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 /**
  * @author ilyas
  */
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
-
-  private static final Function<GrIndexPropertyImpl, PsiType> TYPE_CALCULATOR = index -> index.inferType();
 
   private final NullableLazyValue<GrIndexPropertyReference> myRValueReference = AtomicNullableLazyValue.createValue(
     () -> GroovyLValueUtil.isRValue(this) ? new GrIndexPropertyReference(this, true) : null
@@ -91,30 +83,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return myReferences.getValue();
   }
 
-  // return not null in case of String[], int[], double[][]
-  @Nullable
-  private PsiType inferArrayType() {
-    PsiType arrayTypeBase = getClassReferenceFromExpression(this);
-    if (arrayTypeBase == null) return null;
-    return TypesUtil.createJavaLangClassType(arrayTypeBase, getProject(), getResolveScope());
-  }
-
-  private PsiType inferType() {
-    final PsiType arrayType = inferArrayType();
-    if (arrayType != null) return arrayType;
-
-    final PsiType arrayAccessType = GroovyIndexPropertyUtil.getSimpleArrayAccessType(this);
-    if (arrayAccessType != null) return arrayAccessType;
-
-    final GrIndexPropertyReference reference = myRValueReference.getValue();
-    if (reference == null) return null;
-
-    final GroovyResolveResult[] results = reference.multiResolve(false);
-    final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(results);
-
-    return ResolveUtil.extractReturnTypeFromCandidate(candidate, this, null);
-  }
-
   public GrIndexPropertyImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -142,7 +110,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Override
   public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, GrTypeCalculator::getTypeFromCalculators);
   }
 
   @Nullable

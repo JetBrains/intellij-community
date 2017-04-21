@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrImmediateTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression
 
 fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
   return getSimpleArrayAccessType() != null
@@ -69,6 +70,11 @@ fun GrIndexProperty.isClassLiteral(): Boolean {
       else -> return false
     }
   }
+}
+
+fun GrIndexProperty.getArrayClassType(): PsiType? {
+  val arrayTypeBase = getClassReferenceFromExpression(this) ?: return null
+  return TypesUtil.createJavaLangClassType(arrayTypeBase, project, resolveScope)
 }
 
 /**
