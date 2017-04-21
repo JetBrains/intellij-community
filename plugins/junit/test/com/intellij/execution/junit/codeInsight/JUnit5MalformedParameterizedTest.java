@@ -46,9 +46,8 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
                         "}\n");
   }
 
-  public void testMalformedSources() throws Exception {
-    doTest();
-  }
+  public void testMalformedSources() { doTest(); }
+  public void testMalformedSourcesImplicitConversion() { doTest(); }
 
   @Override
   protected String getBasePath() {

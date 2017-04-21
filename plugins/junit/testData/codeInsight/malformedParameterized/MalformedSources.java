@@ -52,7 +52,7 @@ class ParameterizedTestsDemo {
 
   @ParameterizedTest
   <warning descr="Exactly one type of input must be provided">@ValueSource(ints = {1},
-    strings = <warning descr="No implicit conversion found to convert object of type String to int">"str"</warning>)</warning>
+    strings = "str")</warning>
   void testWithMultipleValues(int i) { }
 
   @ParameterizedTest

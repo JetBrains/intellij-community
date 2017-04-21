@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit.codeInsight
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
@@ -26,6 +27,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.containers.ContainerUtil
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
@@ -68,8 +70,9 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
 
           val csvFileSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE)
           val csvSource     = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE)
+          val argSources = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE)
 
-          val noMultiArgsProvider = methodSource == null && csvFileSource == null && csvSource == null
+          val noMultiArgsProvider = methodSource == null && csvFileSource == null && csvSource == null && argSources == null
 
           if (valuesSource == null && enumSource == null && noMultiArgsProvider) {
             holder.registerProblem(parameterizedAnnotation, "No sources are provided, the suite would be empty")
@@ -163,9 +166,25 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                                                        attributeValue: PsiAnnotationMemberValue,
                                                        componentType: PsiType) {
         val parameters = method.parameterList.parameters
-        if (parameters.size == 1 && !parameters[0].type.isAssignableFrom(componentType) && !isArgumentsInheritor(componentType)) {
-          holder.registerProblem(attributeValue,
-                                 "No implicit conversion found to convert object of type " + componentType.presentableText + " to " + parameters[0].type.presentableText)
+        if (parameters.size == 1) {
+          val paramType = parameters[0].type
+          if (!paramType.isAssignableFrom(componentType) && !isArgumentsInheritor(componentType)) {
+            if (componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+              //implicit conversion to primitive/wrapper
+              if (TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(paramType)) return
+              val psiClass = PsiUtil.resolveClassInClassTypeOnly(paramType)
+              //implicit conversion to enum
+              if (psiClass != null) {
+                if (psiClass.isEnum && psiClass.findFieldByName((attributeValue as PsiLiteral).value as String?, false) != null) return
+                //implicit java time conversion
+                val qualifiedName = psiClass.qualifiedName
+                if (qualifiedName != null && qualifiedName.startsWith("java.time.")) return
+              }
+            }
+            if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, false)) return
+            holder.registerProblem(attributeValue,
+                                   "No implicit conversion found to convert object of type " + componentType.presentableText + " to " + paramType.presentableText)
+          }
         }
       }
 
