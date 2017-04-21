@@ -341,6 +341,14 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-16585
+  public void testComprehensionComment() {
+    doTest("int",
+           "from typing import List\n" +
+           "\n" +
+           "xs = [expr for expr in range(10)] # type: List[int]");
+  }
+
   public void testStringLiteralInjection() {
     doTestInjectedText("class C:\n" +
                        "    def foo(self, expr: '<caret>C'):\n" +

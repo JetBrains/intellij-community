@@ -729,7 +729,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
     if (assignment != null) {
       final PyExpression assignedValue = assignment.getAssignedValue();
-      if (assignedValue != null) {
+      if (assignedValue != null && !PsiTreeUtil.isAncestor(assignedValue, this, false)) {
         comment = as(PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(assignedValue), PsiComment.class);
       }
     }
