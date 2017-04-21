@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
@@ -79,14 +80,18 @@ public class TraceStreamAction extends AnAction {
 
         @Override
         public void evaluationFailed(@NotNull String traceExpression, @NotNull String message) {
-
+          notifyUI(message);
+          throw new TraceEvaluationException(message, traceExpression);
         }
 
         @Override
         public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
-          LOG.warn(message + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
-          ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
+          notifyUI(message);
           throw new TraceCompilationException(message, traceExpression);
+        }
+
+        private void notifyUI(@NotNull String message) {
+          ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
         }
       });
     }
