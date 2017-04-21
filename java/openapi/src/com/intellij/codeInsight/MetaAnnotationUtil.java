@@ -199,12 +199,11 @@ public class MetaAnnotationUtil {
   @NotNull
   public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
                                                           @NotNull final Collection<String> annotations) {
-
     Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
 
     Stream<PsiClass> lazyResolvedAnnotations =
       Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
-        .flatMap(e -> e.stream());
+        .flatMap(it -> it.stream());
 
     Stream<PsiAnnotation> metaAnnotations =
       lazyResolvedAnnotations

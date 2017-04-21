@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 /**
  * Provides information about classes/interfaces that will be implicitly subclassed/implemented at runtime,
@@ -49,8 +50,9 @@ public abstract class ImplicitSubclassProvider {
   /**
    * Checks if this provider will implicitly subclass passed class.
    * <b>Note:<b/> this method could be computationally costly because in some cases it could require deep annotations checks
-   * not only for class but also for all it's methods.
-   * Default implementations don't check methods, so implementors should override this methods if target framework
+   * not only for class but also for all its methods.
+   *
+   * Default implementation doesn't check methods, so implementors should override this methods if target framework
    * makes decision about overriding basing on methods annotations.
    *
    * @param psiClass a class to check for possible subclass.
@@ -67,7 +69,7 @@ public abstract class ImplicitSubclassProvider {
    * @param psiClass a class to check for possible subclass.
    * @return explanation why this class will be implicitly subclassed, or {@code null} if it will not be subclassed.
    */
-  @Nls
+  @Nls(capitalization = Sentence)
   @Nullable
   public abstract String findSubclassingReason(@NotNull PsiClass psiClass);
 
@@ -78,7 +80,7 @@ public abstract class ImplicitSubclassProvider {
    * @param psiMethod a method to check for implicit override.
    * @return explanation why this method will be implicitly overridden, or {@code null} if it will not be overridden.
    */
-  @Nls
+  @Nls(capitalization = Sentence)
   @Nullable
   public String findOverridingReason(@NotNull PsiMethod psiMethod) {
     return null;
