@@ -62,9 +62,23 @@ public class EvaluateExpressionTracer implements StreamTracer {
               callback.evaluated(interpretedResult, context);
               return;
             }
+
+            if (reference instanceof ObjectReference) {
+              final ReferenceType type = ((ObjectReference)reference).referenceType();
+              if (type instanceof ClassType) {
+                ClassType classType = (ClassType)type;
+                while (classType != null && !"java.lang.Throwable".equals(classType.name())) {
+                  classType = classType.superclass();
+                }
+
+                if (classType != null) {
+                  callback.evaluationFailed(streamTraceExpression, "Evaluated failed: " + type.name() + " exception thrown");
+                }
+              }
+            }
           }
 
-          callback.compilationFailed(streamTraceExpression, "Evaluation failed: result type is unexpected");
+          callback.evaluationFailed(streamTraceExpression, "Evaluation failed: unknown type of result value");
         }
 
         @Override
