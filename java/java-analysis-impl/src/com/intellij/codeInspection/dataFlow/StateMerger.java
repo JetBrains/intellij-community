@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,49 +272,54 @@ class StateMerger {
     // For every variable with more than one range, try to union range info and see if some states could be merged after that
     for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
       if (entry.getValue().size() > 1) {
-        class Record {
-          final DfaMemoryStateImpl myState;
-          final LongRangeSet myRange;
-          final boolean myMerged;
-
-          Record(DfaMemoryStateImpl state, LongRangeSet range, boolean merged) {
-            myState = state;
-            myRange = range;
-            myMerged = merged;
-          }
-
-          Record union(Record other) {
-            return new Record(myState, myRange.union(other.myRange), true);
-          }
-        }
-
-        ProgressManager.checkCanceled();
-        Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
-        DfaVariableValue var = entry.getKey();
-        for (DfaMemoryStateImpl state : states) {
-          DfaVariableState variableState = state.getVariableState(var);
-          LongRangeSet range = variableState.getRange();
-          if (range == null) {
-            range = Objects.requireNonNull(LongRangeSet.fromType(var.getVariableType()));
-          }
-          merged.merge(copyWithoutVar(state, var), new Record(state, range, false), Record::union);
-        }
-        if(merged.size() < states.size()) {
-          List<DfaMemoryStateImpl> updated = new ArrayList<>(merged.size());
-          for (Record record : merged.values()) {
-            DfaMemoryStateImpl state = record.myState;
-            if(record.myMerged) {
-              state.flushVariable(var);
-              state.setRange(var, record.myRange);
-            }
-            updated.add(state);
-          }
+        List<DfaMemoryStateImpl> updated = mergeIndependentRanges(states, entry.getKey());
+        if (updated != null) {
           states = updated;
           changed = true;
         }
       }
     }
     return changed ? states : null;
+  }
+
+  @Nullable
+  private List<DfaMemoryStateImpl> mergeIndependentRanges(List<DfaMemoryStateImpl> states, DfaVariableValue var) {
+    class Record {
+      final DfaMemoryStateImpl myState;
+      final LongRangeSet myRange;
+      final boolean myMerged;
+
+      Record(DfaMemoryStateImpl state, LongRangeSet range, boolean merged) {
+        myState = state;
+        myRange = range;
+        myMerged = merged;
+      }
+
+      Record union(Record other) {
+        return new Record(myState, myRange.union(other.myRange), true);
+      }
+
+      DfaMemoryStateImpl getState() {
+        if(myMerged) {
+          myState.flushVariable(var);
+          myState.setRange(var, myRange);
+        }
+        return myState;
+      }
+    }
+
+    ProgressManager.checkCanceled();
+    Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
+    for (DfaMemoryStateImpl state : states) {
+      DfaVariableState variableState = state.getVariableState(var);
+      LongRangeSet range = variableState.getRange();
+      if (range == null) {
+        range = LongRangeSet.fromType(var.getVariableType());
+        if (range == null) return null;
+      }
+      merged.merge(copyWithoutVar(state, var), new Record(state, range, false), Record::union);
+    }
+    return merged.size() == states.size() ? null : StreamEx.ofValues(merged).map(Record::getState).toList();
   }
 
   @Nullable
