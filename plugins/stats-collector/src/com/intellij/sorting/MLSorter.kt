@@ -23,8 +23,8 @@ class MLSorter : CompletionFinalSorter() {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.NONE as Any)) }
         }
         
-        val isUnknownFeaturesPresent = items.find { cachedScore[it] == null } != null
-        if (isUnknownFeaturesPresent) {
+        val hasUnknownFeatures = items.find { cachedScore[it] == null } != null
+        if (hasUnknownFeatures) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
         }
         
@@ -88,7 +88,7 @@ class MLSorter : CompletionFinalSorter() {
     private fun calculateElementRank(lookup: LookupImpl, 
                                      element: LookupElement, 
                                      position: Int, 
-                                     relevance: LookupElementRelevance): Double? 
+                                     relevance: List<Pair<String, Any>>): Double? 
     {
         val cachedWeight = getCachedRankInfo(lookup, element)
         if (cachedWeight != null) {
@@ -98,9 +98,9 @@ class MLSorter : CompletionFinalSorter() {
         val prefixLength = lookup.getPrefixLength(element)
         val elementLength = element.lookupString.length
 
-        val state = CompletionState(position, query_length = prefixLength, cerp_length = 0, result_length = elementLength)
-        val relevanceMap = relevance.groupBy { it.first }
-        val mlRank = ranker.rank(state, relevanceMap) ?: return null
+        val state = CompletionState(position, query_length = prefixLength, result_length = elementLength)
+        
+        val mlRank = ranker.rank(state, relevance) ?: return null
 
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
@@ -113,5 +113,4 @@ class MLSorter : CompletionFinalSorter() {
 
 private class ItemRankInfo(val positionBefore: Int, val mlRank: Double, val prefixLength: Int)
 
-typealias LookupElementRelevance = List<Pair<String, Any>>
 typealias WeightedElement = Pair<LookupElement, Double>

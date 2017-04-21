@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.util.Pair
 import com.intellij.sorting.Ranker
 import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.completion.ranker.features.CompletionState
@@ -81,7 +82,7 @@ class FakeRanker: Ranker {
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
      */
-    override fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double {
+    override fun rank(state: CompletionState, lookupRelevance: List<Pair<String, Any>>): Double? {
         val lookupElementLength = state.result_length!!.toDouble()
         return if (isShortFirst) -lookupElementLength else lookupElementLength
     }
