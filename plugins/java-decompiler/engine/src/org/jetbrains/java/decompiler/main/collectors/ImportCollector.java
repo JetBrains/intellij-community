@@ -15,10 +15,13 @@
  */
 package org.jetbrains.java.decompiler.main.collectors;
 
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.StructField;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,6 +45,43 @@ public class ImportCollector {
     else {
       currentPackageSlash = "";
       currentPackagePoint = "";
+    }
+  }
+
+  // XXX slow, but no lookup table available
+  private static boolean classContainsFieldWithShortName(StructClass sClass, String shortName){
+    if(shortName == null) // the shortName parameter may be null for generated anonymous class
+      return false;
+
+    for(StructField f: sClass.getFields()) {
+      if(shortName.equals(f.getName())) {
+        return true;
+      }
+    }
+    // look into parent class, recursively
+    if(sClass.superClass!=null){
+      ClassesProcessor classesProcessor = DecompilerContext.getClassProcessor();
+      ClassesProcessor.ClassNode classNode = classesProcessor.getMapRootClasses().get(sClass.superClass.getString());
+      if(classNode!=null)
+        return classContainsFieldWithShortName(classNode.classStruct, shortName);
+    }
+
+    return false;
+  }
+
+  /**
+   * Check whether the package-less name ClassName is shaded by variable or method of classNode
+   * or its parent(s).
+   * @param classNode - Class to look context for
+   * @param classToName - pkg.name.ClassName - class to find shortname for
+   * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
+   */
+  public String getShortNameInClassContext(ClassNode classNode, String classToName) {
+    String shortName = getShortName(classToName);
+    if(classNode != null && classContainsFieldWithShortName(classNode.classStruct, shortName)) {
+      return classToName;
+    } else {
+      return shortName;
     }
   }
 
