@@ -50,6 +50,7 @@ import com.intellij.util.attribute
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
+import com.intellij.util.isEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
 import gnu.trove.THashSet
@@ -109,10 +110,21 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
     if (isDirectoryBased) {
       LOG.catchAndLog {
-        for (component in element.getChildren("component")) {
+        val iterator = element.getChildren("component").iterator()
+        for (component in iterator) {
           when (component.getAttributeValue("name")) {
             "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true)
-            "CopyrightManager" -> convertProfiles(component.getChildren("copyright").iterator(), false)
+            "CopyrightManager" -> {
+              iterator.remove()
+              convertProfiles(component.getChildren("copyright").iterator(), false)
+              if (!component.isEmpty()) {
+                component.removeAttribute("name")
+                val wrapper = Element("component").attribute("name", "CopyrightManager")
+                component.name = "settings"
+                wrapper.addContent(component)
+                JDOMUtil.write(wrapper, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), "copyright", "profiles_settings.xml").outputStream(), "\n")
+              }
+            }
           }
         }
       }
