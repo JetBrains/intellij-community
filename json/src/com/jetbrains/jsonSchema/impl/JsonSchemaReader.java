@@ -29,7 +29,10 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Irina.Chernushina on 8/27/2015.
@@ -59,8 +62,6 @@ public class JsonSchemaReader {
     final ReadJsonSchemaFromPsi reader = new ReadJsonSchemaFromPsi();
     final JsonSchemaObject object = reader.read(myRoot);
     processReferences(object, reader.getAllObjects());
-    final ArrayList<JsonSchemaObject> withoutDefinitions = new ArrayList<>(reader.getAllObjects());
-    removeDefinitions(object, withoutDefinitions);
     return object;
   }
 
@@ -82,19 +83,6 @@ public class JsonSchemaReader {
       return message;
     }
     return null;
-  }
-
-  private static void removeDefinitions(JsonSchemaObject root, ArrayList<JsonSchemaObject> objects) {
-    final List<JsonSchemaObject> queue = new ArrayList<>(objects.size() + 1);
-    queue.addAll(objects);
-    queue.add(root);
-
-    for (JsonSchemaObject object : queue) {
-      final Map<String, JsonSchemaObject> definitions = object.getDefinitions();
-      if (definitions != null) {
-        objects.removeAll(definitions.values());
-      }
-    }
   }
 
   private void processReferences(JsonSchemaObject root, Set<JsonSchemaObject> objects) {

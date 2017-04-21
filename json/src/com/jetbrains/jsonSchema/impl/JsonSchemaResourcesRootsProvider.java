@@ -17,12 +17,9 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
@@ -62,36 +59,5 @@ public class JsonSchemaResourcesRootsProvider extends IndexableSetContributor {
   @Override
   public Set<VirtualFile> getAdditionalRootsToIndex() {
     return ourFiles.getValue();
-  }
-
-  @NotNull
-  public static GlobalSearchScope enlarge(@NotNull final Project project, @NotNull final GlobalSearchScope scope) {
-    // we need to create the scope manually since files are outside project root (embedded)
-    return scope.union(new GlobalSearchScope() {
-      @Override
-      public boolean contains(@NotNull final VirtualFile file) {
-        return ourFiles.getValue().contains(file);
-      }
-
-      @Override
-      public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-        return scope.compare(file1, file2);
-      }
-
-      @Override
-      public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-        return scope.isSearchInModuleContent(aModule);
-      }
-
-      @Override
-      public boolean isSearchInLibraries() {
-        return scope.isSearchInLibraries();
-      }
-
-      @Override
-      public boolean isSearchOutsideRootModel() {
-        return true;
-      }
-    });
   }
 }
