@@ -1,6 +1,20 @@
-package com.intellij.stats.completion.validator
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.stats.completion.events
 
-import com.intellij.stats.completion.events.*
 import java.io.*
 
 data class EventLine(val event: LogEvent, val line: String)
@@ -49,7 +63,7 @@ open class SessionsInputSeparator(input: InputStream,
         
         val initial = session.first()
         if (initial.event is CompletionStartedEvent) {
-            val state = CompletionState(initial.event)
+            val state = CompletionValidationState(initial.event)
             session.drop(1).forEach { state.accept(it.event) }
             isValidSession = state.isFinished && state.isValid
         }
@@ -81,7 +95,7 @@ open class SessionsInputSeparator(input: InputStream,
 }
 
 
-class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
+class CompletionValidationState(event: CompletionStartedEvent) : LogEventVisitor() {
     val allCompletionItemIds: MutableList<Int> = event.newCompletionListItems.map { it.id }.toMutableList()
     
     var currentPosition    = event.currentPosition
@@ -173,17 +187,3 @@ class CompletionState(event: CompletionStartedEvent) : LogEventVisitor() {
     }
     
 }
-
-
-//fun main(args: Array<String>) {
-//    val inputStream = FileInputStream("bad_one.txt")
-    
-//    val good = FileOutputStream("good.txt")
-//    val bad = FileOutputStream("bad.txt")
-    
-//    val good = System.out
-//    val bad = System.err
-    
-//    val separator = SessionsInputSeparator(inputStream, good, bad)
-//    separator.processInput()
-//}

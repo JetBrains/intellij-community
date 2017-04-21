@@ -1,6 +1,5 @@
 package com.intellij.stats.completion.validator
 
-import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.stats.completion.events.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -41,11 +40,11 @@ object LogEventFixtures {
 
 class SelectedItemTest {
 
-    lateinit var state: CompletionState
+    lateinit var state: CompletionValidationState
 
     @Before
     fun setUp() {
-        state = CompletionState(LogEventFixtures.completion_started_3_items_shown)
+        state = CompletionValidationState(LogEventFixtures.completion_started_3_items_shown)
     }
 
     @Test
@@ -72,11 +71,11 @@ class SelectedItemTest {
 
 class TypeBackspaceValidatorTest {
 
-    lateinit var state: CompletionState
+    lateinit var state: CompletionValidationState
 
     @Before
     fun setUp() {
-        state = CompletionState(LogEventFixtures.completion_started_3_items_shown)
+        state = CompletionValidationState(LogEventFixtures.completion_started_3_items_shown)
     }
 
     @Test
@@ -121,11 +120,11 @@ class TypeBackspaceValidatorTest {
 
 class UpDownValidationTest {
 
-    lateinit var state: CompletionState
+    lateinit var state: CompletionValidationState
 
     @Before
     fun setUp() {
-        state = CompletionState(LogEventFixtures.completion_started_3_items_shown)
+        state = CompletionValidationState(LogEventFixtures.completion_started_3_items_shown)
     }
 
     @Test

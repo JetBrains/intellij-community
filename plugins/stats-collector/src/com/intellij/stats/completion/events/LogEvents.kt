@@ -1,13 +1,8 @@
 package com.intellij.stats.completion.events
 
-import com.google.gson.Gson
+
 import com.intellij.stats.completion.Action
 
-object JsonSerializer {
-    private val gson = Gson()
-    fun toJson(obj: Any) = gson.toJson(obj)
-    fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
-}
 
 abstract class LogEvent(@Transient var userUid: String, sessionId: String, type: Action) {
     @Transient var recorderId = "completion-stats"
@@ -18,57 +13,6 @@ abstract class LogEvent(@Transient var userUid: String, sessionId: String, type:
     abstract fun accept(visitor: LogEventVisitor)
 }
     
-object LogEventSerializer {
-
-    val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
-            Pair(Action.COMPLETION_STARTED, CompletionStartedEvent::class.java),
-            Pair(Action.TYPE, TypeEvent::class.java),
-            Pair(Action.DOWN, DownPressedEvent::class.java),
-            Pair(Action.UP, UpPressedEvent::class.java),
-            Pair(Action.BACKSPACE, BackspaceEvent::class.java),
-            Pair(Action.COMPLETION_CANCELED, CompletionCancelledEvent::class.java),
-            Pair(Action.EXPLICIT_SELECT, ExplicitSelectEvent::class.java),
-            Pair(Action.TYPED_SELECT, TypedSelectEvent::class.java),
-            Pair(Action.CUSTOM, CustomMessageEvent::class.java)
-    )
-
-    fun toString(event: LogEvent): String {
-        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
-    }
-
-    fun fromString(line: String): LogEvent? {
-        val items = mutableListOf<String>()
-
-        var start = -1
-        for (i in 0..4) {
-            val nextSpace = line.indexOf('\t', start + 1)
-            val newItem = line.substring(start + 1, nextSpace)
-            items.add(newItem)
-            start = nextSpace
-        }
-
-        val timestamp = items[0].toLong()
-        val recorderId = items[1]
-        val userUid = items[2]
-        val sessionUid = items[3]
-        val actionType = Action.valueOf(items[4])
-
-        val clazz = actionClassMap[actionType] ?: return null
-
-        val json = line.substring(start + 1)
-        val obj = JsonSerializer.fromJson(json, clazz)
-
-        obj.userUid = userUid
-        obj.timestamp = timestamp
-        obj.recorderId = recorderId
-        obj.sessionUid = sessionUid
-        obj.actionType = actionType
-
-        return obj
-    }
-
-}
-
 
 abstract class LookupStateLogData(userId: String,
                                   sessionId: String,

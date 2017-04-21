@@ -1,5 +1,7 @@
 package com.intellij.stats.completion.validator
 
+import com.intellij.stats.completion.events.EventLine
+import com.intellij.stats.completion.events.SessionsInputSeparator
 import org.assertj.core.api.Assertions
 import org.junit.Test
 import java.io.*

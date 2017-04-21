@@ -2,6 +2,7 @@ package com.intellij.stats.completion.validator
 
 import com.intellij.stats.completion.events.LogEvent
 import com.intellij.stats.completion.events.LogEventSerializer
+import com.intellij.stats.completion.events.SessionsInputSeparator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.ByteArrayInputStream
