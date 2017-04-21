@@ -53,7 +53,7 @@ import java.util.*
 import java.util.function.Function
 
 private const val DEFAULT = "default"
-private const val MODULE2COPYRIGHT = "module2copyright"
+private const val MODULE_TO_COPYRIGHT = "module2copyright"
 private const val COPYRIGHT = "copyright"
 private const val ELEMENT = "element"
 private const val MODULE = "module"
@@ -121,7 +121,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
       schemeManagerIprProvider?.writeState(result)
 
       if (!scopeToCopyright.isEmpty()) {
-        val map = Element(MODULE2COPYRIGHT)
+        val map = Element(MODULE_TO_COPYRIGHT)
         for ((scopeName, profileName) in scopeToCopyright) {
           map.element(ELEMENT)
               .attribute(MODULE, scopeName)
@@ -147,7 +147,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   override fun loadState(state: Element) {
     val data: Element = unwrapState(state, project, schemeManagerIprProvider, schemeManager) ?: return
 
-    data.getChild(MODULE2COPYRIGHT)?.let {
+    data.getChild(MODULE_TO_COPYRIGHT)?.let {
       for (element in it.getChildren(ELEMENT)) {
         scopeToCopyright.put(element.getAttributeValue(MODULE), element.getAttributeValue(COPYRIGHT))
       }
