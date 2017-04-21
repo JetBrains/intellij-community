@@ -101,17 +101,22 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
           }
 
           @Override
-          public void failed(@NotNull String traceExpression, @NotNull String reason) {
-            complete(chain, null, reason);
+          public void evaluationFailed(@NotNull String traceExpression, @NotNull String message) {
+            complete(chain, null, message);
+          }
+
+          @Override
+          public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+            complete(chain, null, message);
           }
         });
       }
 
       private void complete(@Nullable StreamChain chain,
                             @Nullable TracingResult result,
-                            @Nullable String evaluationError) {
+                            @Nullable String error) {
         try {
-          handleResults(chain, result, evaluationError, isResultNull);
+          handleResults(chain, result, error, isResultNull);
         }
         catch (Throwable t) {
           println("Exception caught: " + t, ProcessOutputTypes.SYSTEM);
@@ -129,10 +134,10 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   protected void handleResults(@Nullable StreamChain chain,
                                @Nullable TracingResult result,
-                               @Nullable String evaluationError,
+                               @Nullable String error,
                                boolean resultMustBeNull) {
     assertNotNull(chain);
-    assertNull(evaluationError);
+    assertNull(error);
     assertNotNull(result);
 
     println(chain.getText(), ProcessOutputTypes.SYSTEM);

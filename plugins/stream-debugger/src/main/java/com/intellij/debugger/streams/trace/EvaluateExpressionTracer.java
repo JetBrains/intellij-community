@@ -64,12 +64,12 @@ public class EvaluateExpressionTracer implements StreamTracer {
             }
           }
 
-          callback.failed(streamTraceExpression, "Evaluation failed: result type is unexpected");
+          callback.compilationFailed(streamTraceExpression, "Evaluation failed: result type is unexpected");
         }
 
         @Override
         public void errorOccurred(@NotNull String errorMessage) {
-          callback.failed(streamTraceExpression, errorMessage);
+          callback.compilationFailed(streamTraceExpression, errorMessage);
         }
       }, stackFrame.getSourcePosition());
     }

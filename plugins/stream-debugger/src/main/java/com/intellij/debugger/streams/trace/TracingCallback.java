@@ -24,5 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public interface TracingCallback {
   void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context);
 
-  void failed(@NotNull String traceExpression, @NotNull String reason);
+  void evaluationFailed(@NotNull String traceExpression, @NotNull String message);
+
+  void compilationFailed(@NotNull String traceExpression, @NotNull String message);
 }

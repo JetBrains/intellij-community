@@ -78,10 +78,15 @@ public class TraceStreamAction extends AnAction {
         }
 
         @Override
-        public void failed(@NotNull String traceExpression, @NotNull String reason) {
-          LOG.warn(reason + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
-          ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(reason));
-          throw new TraceCompilationException(reason, traceExpression);
+        public void evaluationFailed(@NotNull String traceExpression, @NotNull String message) {
+
+        }
+
+        @Override
+        public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+          LOG.warn(message + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
+          ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
+          throw new TraceCompilationException(message, traceExpression);
         }
       });
     }

@@ -34,12 +34,12 @@ public class FailEvaluationTest extends TraceExecutionTestCase {
   @Override
   protected void handleResults(@Nullable StreamChain chain,
                                @Nullable TracingResult result,
-                               @Nullable String evaluationError,
+                               @Nullable String error,
                                boolean resultMustBeNull) {
     assertNotNull(chain);
     assertNull(result);
-    assertNotNull(evaluationError);
+    assertNotNull(error);
 
-    println(evaluationError, ProcessOutputTypes.SYSTEM);
+    println(error, ProcessOutputTypes.SYSTEM);
   }
 }
