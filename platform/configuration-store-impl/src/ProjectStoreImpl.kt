@@ -122,8 +122,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
   fun convertProfiles(profileIterator: MutableIterator<Element>, isInspection: Boolean) {
     for (profile in profileIterator) {
-      val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue(
-          "value") ?: continue
+      val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
 
       profileIterator.remove()
       val wrapper = Element("component").attribute("name", if (isInspection) "InspectionProjectProfileManager" else "CopyrightManager")
