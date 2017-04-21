@@ -342,11 +342,25 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-16585
-  public void testComprehensionComment() {
+  public void testCommentAfterComprehensionInAssignment() {
     doTest("int",
            "from typing import List\n" +
            "\n" +
-           "xs = [expr for expr in range(10)] # type: List[int]");
+           "xs = [expr for expr in range(10)]  # type: List[int]");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInForLoop() {
+    doTest("int",
+           "for _ in [str(expr) for expr in range(10)]:  # type: str\n" +
+           "    pass");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInWithStatement() {
+    doTest("int",
+           "with f([expr for expr in range(10)]) as _: # type: str\n" +
+           "    pass");
   }
 
   public void testStringLiteralInjection() {

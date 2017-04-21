@@ -734,7 +734,16 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
     }
     else {
-      final PyStatementListContainer forOrWith = PsiTreeUtil.getParentOfType(this, PyForPart.class, PyWithStatement.class);
+      PyStatementListContainer forOrWith = null;
+      final PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
+      if (forPart != null && PsiTreeUtil.isAncestor(forPart.getTarget(), this, false)) {
+        forOrWith = forPart;
+      }
+      final PyWithItem withPart = PsiTreeUtil.getParentOfType(this, PyWithItem.class);
+      if (withPart != null && PsiTreeUtil.isAncestor(withPart.getTarget(), this, false)) {
+        forOrWith = as(withPart.getParent(), PyWithStatement.class);
+      }
+      
       if (forOrWith != null) {
         comment = PyUtil.getCommentOnHeaderLine(forOrWith);
       }
