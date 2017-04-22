@@ -149,6 +149,9 @@
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
     <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.stepik.CCGetCourseFromStepic"/>
 
+    <action id="Edu.StartCourse" class="com.jetbrains.edu.learning.newproject.EduStartCourseAction">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
