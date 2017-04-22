@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,17 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Pair
 import org.jdom.Element
 
 @State(name = "libraryTable", storages = arrayOf(Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter::class)))
 class ProjectLibraryTable : LibraryTableBase() {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ProjectLibraryTable>()
+    fun getInstance(project: Project): LibraryTable = project.service<ProjectLibraryTable>()
   }
 
   override fun getTableLevel() = LibraryTablesRegistrar.PROJECT_LEVEL
@@ -39,7 +41,7 @@ class ProjectLibraryTable : LibraryTableBase() {
   override fun isEditable() = true
 
   class LibraryStateSplitter : StateSplitterEx() {
-    override fun splitState(state: Element) = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
+    override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
   }
 }
 
