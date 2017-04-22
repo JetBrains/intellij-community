@@ -185,6 +185,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     }
   }
 
+  @SuppressWarnings("WeakerAccess")
   protected void handleTrace(@NotNull List<TraceInfo> trace) {
     for (final TraceInfo info : trace) {
       final String name = info.getCall().getName();
@@ -200,6 +201,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     }
   }
 
+  @SuppressWarnings("WeakerAccess")
   protected void handleResolvedTrace(@NotNull ResolvedTracingResult result) {
     final List<ResolvedTrace> traces = result.getResolvedTraces();
 
@@ -257,8 +259,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @NotNull
   private static String valuesOrderToString(@NotNull Map<Integer, TraceElement> values) {
-    final String res = replaceIfEmpty(StreamEx.of(values.keySet()).sorted().joining(","));
-    return res;
+    return replaceIfEmpty(StreamEx.of(values.keySet()).sorted().joining(","));
   }
 
   @NotNull
