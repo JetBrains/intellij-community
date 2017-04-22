@@ -74,6 +74,11 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     assertNotNull(session);
 
     final AtomicBoolean completed = new AtomicBoolean(false);
+    final DebuggerPositionResolver positionResolver = getPositionResolver();
+    final StreamChainBuilder chainBuilder = getChainBuilder();
+    final TraceResultInterpreter resultInterpreter = getResultInterpreter();
+    final TraceExpressionBuilder expressionBuilder = getExpressionBuilder();
+
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
@@ -84,8 +89,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
         printContext(getDebugProcess().getDebuggerContext());
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
-          final PsiElement elementAtBreakpoint = myPositionResolver.getNearestElementToBreakpoint(session);
-          return elementAtBreakpoint == null ? null : myChainBuilder.build(elementAtBreakpoint);
+          final PsiElement elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session);
+          return elementAtBreakpoint == null ? null : chainBuilder.build(elementAtBreakpoint);
         });
 
         if (chain == null) {
@@ -93,8 +98,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
           return;
         }
 
-        final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(getProject());
-        new EvaluateExpressionTracer(session, expressionBuilder, myResultInterpreter).trace(chain, new TracingCallback() {
+        new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter).trace(chain, new TracingCallback() {
           @Override
           public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
             complete(chain, result, null);
@@ -130,6 +134,26 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         ApplicationManager.getApplication().invokeLater(session::resume);
       }
     }, getTestRootDisposable());
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  protected DebuggerPositionResolver getPositionResolver() {
+    return myPositionResolver;
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  protected TraceResultInterpreter getResultInterpreter() {
+    return myResultInterpreter;
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  protected StreamChainBuilder getChainBuilder() {
+    return myChainBuilder;
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  protected TraceExpressionBuilder getExpressionBuilder() {
+    return new TraceExpressionBuilderImpl(getProject());
   }
 
   protected void handleResults(@Nullable StreamChain chain,
