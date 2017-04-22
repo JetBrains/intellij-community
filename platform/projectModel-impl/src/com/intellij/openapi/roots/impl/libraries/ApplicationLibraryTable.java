@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -54,11 +54,6 @@ public class ApplicationLibraryTable extends LibraryTableBase {
   @Override
   public LibraryTablePresentation getPresentation() {
     return GLOBAL_LIBRARY_TABLE_PRESENTATION;
-  }
-
-  @Override
-  public boolean isEditable() {
-    return true;
   }
 
   public static String getExternalFileName() {

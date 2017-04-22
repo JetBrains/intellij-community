@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,9 @@ public interface LibraryTable {
 
   LibraryTablePresentation getPresentation();
 
-  boolean isEditable();
+  default boolean isEditable() {
+    return true;
+  }
 
   /**
    * Returns the interface which allows to create or removed libraries from the table.

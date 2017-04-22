@@ -38,8 +38,6 @@ class ProjectLibraryTable : LibraryTableBase() {
 
   override fun getPresentation() = PROJECT_LIBRARY_TABLE_PRESENTATION
 
-  override fun isEditable() = true
-
   class LibraryStateSplitter : StateSplitterEx() {
     override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
   }
