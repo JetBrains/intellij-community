@@ -72,7 +72,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
                 }
 
                 if (classType != null) {
-                  callback.evaluationFailed(streamTraceExpression, "Evaluated failed: " + type.name() + " exception thrown");
+                  callback.evaluationFailed(streamTraceExpression, "Evaluation failed: " + type.name() + " exception thrown");
                 }
               }
             }
