@@ -85,8 +85,7 @@ public class JsonSchemaObject {
     myPeerPointer = SmartPointerManager.getInstance(object.getProject()).createSmartPsiElementPointer(object);
   }
 
-  // only for definitions
-  public JsonSchemaObject(@Nullable SmartPsiElementPointer<JsonObject> peerPointer) {
+  public JsonSchemaObject(@NotNull SmartPsiElementPointer<JsonObject> peerPointer) {
     myProperties = new HashMap<>();
     myPeerPointer = peerPointer;
   }
@@ -602,6 +601,7 @@ public class JsonSchemaObject {
     return null;
   }
 
+  // tod remove?
   public static void iterateAllInnerSchemas(@NotNull final JsonSchemaObject object, @NotNull final SchemaConsumer schemaConsumer) {
     int control = 100000;
     final ArrayDeque<Pair<JsonSchemaObject, Map<String, String>>> queue = new ArrayDeque<>();
@@ -643,6 +643,39 @@ public class JsonSchemaObject {
         queue.addLast(Pair.create(schemaObject, childContextRef.get()));
       }
     }
+  }
+
+  @Nullable
+  public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {//todo rewrite this
+    if ("#".equals(ref) || StringUtil.isEmpty(ref)) {
+      return this;
+    }
+    if (JsonSchemaReader.isAbsoluteReference(ref)) {
+      throw new RuntimeException("Non-relative or erroneous reference: " + ref);
+    }
+    ref = ref.substring(2);
+    final List<String> parts = StringUtil.split(ref, "/");
+    JsonSchemaObject current = this;
+    for (int i = 0; i < parts.size(); i++) {
+      if (current == null) return null;
+      final String part = parts.get(i);
+      if ("definitions".equals(part)) {
+        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
+        //noinspection AssignmentToForLoopParameter
+        current = current.getDefinitions().get(parts.get(++i));
+        continue;
+      }
+      if ("properties".equals(part)) {
+        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect properties reference: " + ref);
+        //noinspection AssignmentToForLoopParameter
+        current = current.getProperties().get(parts.get(++i));
+        continue;
+      }
+
+      current = current.getDefinitions().get(part);
+    }
+    if (current == null) return null;
+    return current;
   }
 
   public interface SchemaConsumer {
@@ -746,5 +779,22 @@ public class JsonSchemaObject {
       pattern = pattern.replace("\\\\", "\\");
       return pattern;
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JsonSchemaObject object = (JsonSchemaObject)o;
+
+    if (!myPeerPointer.equals(object.myPeerPointer)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myPeerPointer.hashCode();
   }
 }

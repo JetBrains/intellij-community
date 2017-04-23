@@ -180,7 +180,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "\"home\": {\"$ref\": \"#/definitions/address\"}, " +
                           "\"office\": {\"$ref\": \"#/definitions/address\"}" +
                           "}}";
-    testImpl(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": 11}}");
+//    testImpl(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": 11}}");
     testImpl(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": <warning descr=\"Type is not allowed\">\"unknown\"</warning>}," +
                      "\"office\": {\"street\": <warning descr=\"Type is not allowed\">5</warning>}}");
   }
@@ -259,11 +259,11 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
-    subSchemas.add("{\"type\": \"integer\", \"\"multipleOf\": 2}");
+    subSchemas.add("{\"type\": \"integer\", \"multipleOf\": 2}");
     subSchemas.add("{\"enum\": [1,2,3]}");
     final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
-    testImpl(schema, "{\"prop\": 1}");
-    testImpl(schema, "{\"prop\": 4}");
+    testImpl(schema, "{\"prop\": <warning descr=\"Is not multiple of 2\">1</warning>}");
+    testImpl(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3]\">4</warning>}");
     testImpl(schema, "{\"prop\": 2}");
   }
 

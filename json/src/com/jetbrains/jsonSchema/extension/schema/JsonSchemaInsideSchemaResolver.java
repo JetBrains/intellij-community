@@ -18,14 +18,11 @@ package com.jetbrains.jsonSchema.extension.schema;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
+import com.jetbrains.jsonSchema.impl.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,44 +44,31 @@ public class JsonSchemaInsideSchemaResolver {
     mySteps = steps;
   }
 
+  // todo can be multiple variants resolve
   public PsiElement resolveInSchemaRecursively() {
-    final Ref<PsiElement> ref = new Ref<>();
-    final JsonSchemaWalker.CompletionSchemesConsumer consumer = new JsonSchemaWalker.CompletionSchemesConsumer() {
-      @Override
-      public void consume(boolean isName,
-                          @NotNull JsonSchemaObject schema,
-                          @NotNull VirtualFile schemaFile,
-                          @NotNull List<JsonSchemaWalker.Step> steps) {
-        if (!ref.isNull()) return;
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(mySchemaFile);
-        if (file == null) return;
+    final JsonSchemaObject rootSchema = JsonSchemaService.Impl.get(myProject).getSchemaObjectForSchemaFile(mySchemaFile);
+    if (rootSchema == null) return null;
+
+    final List<JsonSchemaObject> schemas = new SmartList<>();
+    final MatchResult result;
+    if (mySteps.isEmpty()) {
+      result = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
+    } else {
+      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, mySteps, false);
+      final JsonSchemaTreeNode root = builder.buildTree();
+      result = MatchResult.zipTree(root);
+    }
+    schemas.addAll(result.mySchemas);
+    schemas.addAll(result.myExcludingSchemas);
+
+    return schemas.stream().filter(schema -> schema.getPeerPointer().getElement() != null && schema.getPeerPointer().getElement().isValid())
+      .findFirst()
+      .map(schema -> {
         final JsonObject jsonObject = schema.getPeerPointer().getElement();
-        if (jsonObject != null && jsonObject.isValid()) {
-          if (jsonObject.getParent() instanceof JsonProperty)
-            ref.set(((JsonProperty)jsonObject.getParent()).getNameElement());
-          else ref.set(jsonObject);
-        }
-      }
-
-      @Override
-      public void oneOf(boolean isName,
-                        @NotNull List<JsonSchemaObject> list,
-                        @NotNull VirtualFile schemaFile,
-                        @NotNull List<JsonSchemaWalker.Step> steps) {
-        list.stream().findFirst().ifPresent(object -> consume(isName, object, schemaFile, steps));
-      }
-
-      @Override
-      public void anyOf(boolean isName,
-                        @NotNull List<JsonSchemaObject> list,
-                        @NotNull VirtualFile schemaFile,
-                        @NotNull List<JsonSchemaWalker.Step> steps) {
-        list.stream().findFirst().ifPresent(object -> consume(isName, object, schemaFile, steps));
-      }
-    };
-    final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(myProject).getSchemaObjectForSchemaFile(mySchemaFile);
-    if (schemaObject == null) return null;
-    JsonSchemaWalker.extractSchemaVariants(myProject, consumer, mySchemaFile, schemaObject, true, mySteps, false);
-    return ref.get();
+          if (jsonObject != null && jsonObject.getParent() instanceof JsonProperty)
+            return ((JsonProperty)jsonObject.getParent()).getNameElement();
+          return jsonObject;
+      })
+      .orElse(null);
   }
 }

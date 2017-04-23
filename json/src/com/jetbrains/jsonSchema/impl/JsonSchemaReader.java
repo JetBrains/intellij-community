@@ -21,18 +21,12 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Irina.Chernushina on 8/27/2015.
@@ -58,11 +52,9 @@ public class JsonSchemaReader {
     return new JsonSchemaReader(value);
   }
 
+  // todo code beauty
   public JsonSchemaObject read() {
-    final ReadJsonSchemaFromPsi reader = new ReadJsonSchemaFromPsi();
-    final JsonSchemaObject object = reader.read(myRoot);
-    processReferences(object, reader.getAllObjects());
-    return object;
+    return new ReadJsonSchemaFromPsi().read(myRoot);
   }
 
   @Nullable
@@ -83,47 +75,6 @@ public class JsonSchemaReader {
       return message;
     }
     return null;
-  }
-
-  private void processReferences(JsonSchemaObject root, Set<JsonSchemaObject> objects) {
-    final Set<String> queuedDefinitions = new HashSet<>();
-    final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
-    queue.add(root);
-    queue.addAll(objects);
-    int control = 10000;
-
-    while (!queue.isEmpty()) {
-      if (--control == 0) {
-        throw new RuntimeException("cyclic definitions search");
-      }
-
-      final JsonSchemaObject current = queue.removeFirst();
-      if ("#".equals(current.getRef())) continue;
-      if (current.getRef() != null) {
-        final JsonSchemaObject definition = findDefinition(current.getRef(), root);
-        if (definition == null) {
-          current.setDefinitionAddress(current.getRef());
-          // just skip current item
-          current.setRef(null);
-          continue;
-        }
-        if (definition.getRef() != null && !"#".equals(definition.getRef()) && !queuedDefinitions.contains(definition.getRef())) {
-          queuedDefinitions.add(definition.getRef());
-          queue.addFirst(current);
-          queue.addFirst(definition);
-          continue;
-        }
-
-        final JsonSchemaObject copy = new JsonSchemaObject(myRoot);
-        copy.setDefinitionAddress(current.getRef());
-        copy.mergeValues(definition);
-        copy.mergeValues(current);
-        copy.setPeerPointer(current.getPeerPointer());
-        copy.setDefinitionsPointer(current.getDefinitionsPointer());
-        current.copyValues(copy);
-        current.setRef(null);
-      }
-    }
   }
 
   public static class SchemaUrlSplitter {
@@ -163,50 +114,7 @@ public class JsonSchemaReader {
     }
   }
 
-  @Nullable
-  private static JsonSchemaObject findDefinition(@NotNull String ref,
-                                                @NotNull final JsonSchemaObject root) {
-    if ("#".equals(ref)) {
-      return root;
-    }
-    if (isAbsoluteReference(ref)) {
-      return null;
-    }
-    return findRelativeDefinition(ref, root);
-  }
-
   static boolean isAbsoluteReference(@NotNull String ref) {
     return !ref.startsWith("#/");
-  }
-
-  @Nullable
-  public static JsonSchemaObject findRelativeDefinition(@NotNull String ref, @NotNull JsonSchemaObject root) {
-    if ("#".equals(ref)) {
-      return root;
-    }
-    if (isAbsoluteReference(ref)) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
-    ref = ref.substring(2);
-    final List<String> parts = StringUtil.split(ref, "/");
-    JsonSchemaObject current = root;
-    for (int i = 0; i < parts.size(); i++) {
-      if (current == null) return null;
-      final String part = parts.get(i);
-      if ("definitions".equals(part)) {
-        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
-        //noinspection AssignmentToForLoopParameter
-        current = current.getDefinitions().get(parts.get(++i));
-        continue;
-      }
-      if ("properties".equals(part)) {
-        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect properties reference: " + ref);
-        //noinspection AssignmentToForLoopParameter
-        current = current.getProperties().get(parts.get(++i));
-        continue;
-      }
-
-      current = current.getDefinitions().get(part);
-    }
-    if (current == null) return null;
-    return current;
   }
 }

@@ -15,6 +15,9 @@
  */
 package com.jetbrains.jsonSchema;
 
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.testFramework.ExpectedHighlightingData;
+
 import java.util.Collections;
 
 /**
@@ -47,7 +50,26 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
 
       @Override
       public void doCheck() {
-        doDoTest(true, false);
+        checkHighlighting(new ExpectedHighlightingData(new DocumentImpl("{\n" +
+                                                                        "  \"properties\": {\n" +
+                                                                        "    \"withPattern\": {\n" +
+                                                                        "      \"pattern\": <warning descr=\"Unclosed character class near index 3\n" +
+                                                                        "^[]$\n" +
+                                                                        "   ^\">\"^[]$\"</warning>\n" +
+                                                                        "    },\n" +
+                                                                        "    \"everythingFine\": {\n" +
+                                                                        "      \"pattern\": \"^[a]$\"\n" +
+                                                                        "    }\n" +
+                                                                        "  },\n" +
+                                                                        "  \"patternProperties\": {\n" +
+                                                                        "    <warning descr=\"Unclosed character class near index 8\n" +
+                                                                        ".*p[0-9.*\n" +
+                                                                        "        ^\">\"p[0-9\"</warning>: {},\n" +
+                                                                        "    <warning descr=\"Unclosed character class near index 8\n" +
+                                                                        ".*b[0-7.*\n" +
+                                                                        "        ^\">\"b[0-7\"</warning>: {}\n" +
+                                                                        "  }\n" +
+                                                                        "}"), true, true, false, myFile));
       }
     });
   }

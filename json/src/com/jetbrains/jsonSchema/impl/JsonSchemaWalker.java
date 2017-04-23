@@ -13,7 +13,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,38 +66,6 @@ public class JsonSchemaWalker {
                @NotNull List<JsonSchemaObject> list,
                @NotNull VirtualFile schemaFile,
                @NotNull List<Step> steps);
-  }
-
-  public static void findSchemasForAnnotation(@NotNull final PsiElement element,
-                                              @NotNull JsonLikePsiWalker walker,
-                                              @NotNull final CompletionSchemesConsumer consumer,
-                                              @NotNull final JsonSchemaObject rootSchema,
-                                              @NotNull VirtualFile schemaFile) {
-    final List<Step> position = walker.findPosition(element, false, true);
-    if (position == null || position.isEmpty()) return;
-    // but this does not validate definitions section against general schema --> should be done separately
-    final Step firstStep = position.get(0);
-    if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
-        firstStep != null && firstStep.getTransition() instanceof PropertyTransition &&
-        "definitions".equals(((PropertyTransition)firstStep.getTransition()).getName())) return;
-    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position, true);
-  }
-
-  public static void findSchemasForCompletion(@NotNull final PsiElement element,
-                                              @NotNull JsonLikePsiWalker walker,
-                                              @NotNull final CompletionSchemesConsumer consumer,
-                                              @NotNull final JsonSchemaObject rootSchema,
-                                              @NotNull VirtualFile schemaFile) {
-    final PsiElement checkable = walker.goUpToCheckable(element);
-    if (checkable == null) return;
-    final boolean isName = walker.isName(checkable);
-    final List<Step> position = walker.findPosition(checkable, isName, !isName);
-    if (position == null || position.isEmpty()) {
-      if (isName) consumer.consume(true, rootSchema, schemaFile, Collections.emptyList());
-      return;
-    }
-
-    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, isName, position, false);
   }
 
   public static void findSchemasForDocumentation(@NotNull final PsiElement element,
@@ -177,6 +144,10 @@ public class JsonSchemaWalker {
                                            boolean isName,
                                            List<Step> position,
                                            boolean acceptAdditionalPropertiesSchemas) {
+    JsonSchemaVariantsTreeBuilder builder =
+      new JsonSchemaVariantsTreeBuilder(rootSchema, isName, position, acceptAdditionalPropertiesSchemas);
+    System.out.println(builder.buildTree().toString());
+
     final Set<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> control = new HashSet<>();
     final JsonSchemaService service = JsonSchemaService.Impl.get(project);
     final ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue = new ArrayDeque<>();
@@ -398,6 +369,15 @@ public class JsonSchemaWalker {
     public Transition getTransition() {
       return myTransition;
     }
+
+    @Override
+    public String toString() {
+      String format = "?%s";
+      if (StateType._object.equals(myType)) format = "{%s}";
+      if (StateType._array.equals(myType)) format = "[%s]";
+      if (StateType._value.equals(myType)) format = "#%s";
+      return String.format(format, myTransition);
+    }
   }
 
   public static class PropertyTransition implements Transition {
@@ -414,7 +394,7 @@ public class JsonSchemaWalker {
 
     @Override
     public void step(@NotNull JsonSchemaObject parent,
-                     @NotNull TransitionResultConsumer resultConsumer,
+                     @NotNull TransitionResultConsumerI resultConsumer,
                      boolean acceptAdditionalPropertiesSchemas) {
       if ("definitions".equals(myName)) {
         if (parent.getDefinitions() != null) {
@@ -452,6 +432,11 @@ public class JsonSchemaWalker {
     public String getName() {
       return myName;
     }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
   }
 
   public static class ArrayTransition implements Transition {
@@ -468,7 +453,7 @@ public class JsonSchemaWalker {
 
     @Override
     public void step(@NotNull JsonSchemaObject parent,
-                     @NotNull TransitionResultConsumer resultConsumer,
+                     @NotNull TransitionResultConsumerI resultConsumer,
                      boolean acceptAdditionalPropertiesSchemas) {
       if (parent.getItemsSchema() != null) {
         resultConsumer.setSchema(parent.getItemsSchema());
@@ -485,11 +470,16 @@ public class JsonSchemaWalker {
         }
       }
     }
+
+    @Override
+    public String toString() {
+      return String.valueOf(myIdx);
+    }
   }
 
-  private interface Transition {
+  public interface Transition {
     boolean possibleFromState(@NotNull StateType stateType);
-    void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer, boolean acceptAdditionalPropertiesSchemas);
+    void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumerI resultConsumer, boolean acceptAdditionalPropertiesSchemas);
   }
 
   public enum StateType {
@@ -508,7 +498,7 @@ public class JsonSchemaWalker {
     }
   }
 
-  private static class TransitionResultConsumer {
+  static class TransitionResultConsumer implements TransitionResultConsumerI {
     @Nullable private JsonSchemaObject mySchema;
     private boolean myAny;
     private boolean myNothing;
@@ -523,6 +513,7 @@ public class JsonSchemaWalker {
       return mySchema;
     }
 
+    @Override
     public void setSchema(@Nullable JsonSchemaObject schema) {
       mySchema = schema;
       myNothing = schema == null;
@@ -532,6 +523,7 @@ public class JsonSchemaWalker {
       return myAny;
     }
 
+    @Override
     public void anything() {
       myAny = true;
       myNothing = false;
@@ -541,11 +533,13 @@ public class JsonSchemaWalker {
       return myNothing;
     }
 
+    @Override
     public void nothing() {
       myNothing = true;
       myAny = false;
     }
 
+    @Override
     public void oneOf() {
       myOneOf = true;
     }

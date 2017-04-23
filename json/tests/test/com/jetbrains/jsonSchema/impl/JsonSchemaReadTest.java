@@ -48,28 +48,10 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     Assert.assertEquals("#", read.getProperties().get("additionalItems").getAnyOf().get(1).getRef());
 
     final JsonSchemaObject required = read.getProperties().get("required");
-    Assert.assertEquals(JsonSchemaType._array, required.getType());
-    Assert.assertEquals(1, required.getMinItems().intValue());
-    Assert.assertEquals(JsonSchemaType._string, required.getItemsSchema().getType());
+    Assert.assertEquals("#/definitions/stringArray", required.getRef());
 
     final JsonSchemaObject minLength = read.getProperties().get("minLength");
-    Assert.assertNotNull(minLength.getAllOf());
-    final List<JsonSchemaObject> minLengthAllOf = minLength.getAllOf();
-    boolean haveIntegerType = false;
-    Integer defaultValue = null;
-    Integer minValue = null;
-    for (JsonSchemaObject object : minLengthAllOf) {
-      haveIntegerType |= JsonSchemaType._integer.equals(object.getType());
-      if (object.getDefault() instanceof  Number) {
-        defaultValue = ((Number)object.getDefault()).intValue();
-      }
-      if (object.getMinimum() != null) {
-        minValue = object.getMinimum().intValue();
-      }
-    }
-    Assert.assertTrue(haveIntegerType);
-    Assert.assertEquals(0, defaultValue.intValue());
-    Assert.assertEquals(0, minValue.intValue());
+    Assert.assertEquals("#/definitions/positiveIntegerDefault0", minLength.getRef());
   }
 
   public void testMainSchemaHighlighting() throws Exception {
@@ -117,11 +99,17 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     final JsonSchemaObject object = properties.get("color-hex-case");
     final List<JsonSchemaObject> oneOf = object.getOneOf();
     Assert.assertEquals(2, oneOf.size());
+
     final JsonSchemaObject second = oneOf.get(1);
     final List<JsonSchemaObject> list = second.getItemsSchemaList();
     Assert.assertEquals(2, list.size());
+
     final JsonSchemaObject firstItem = list.get(0);
-    final List<Object> anEnum = firstItem.getEnum();
+    Assert.assertEquals("#/definitions/lowerUpper", firstItem.getRef());
+    final JsonSchemaObject definition = read.findRelativeDefinition(firstItem.getRef());
+    Assert.assertNotNull(definition);
+
+    final List<Object> anEnum = definition.getEnum();
     Assert.assertEquals(2, anEnum.size());
     Assert.assertTrue(anEnum.contains("\"lower\""));
     Assert.assertTrue(anEnum.contains("\"upper\""));

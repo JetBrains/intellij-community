@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
@@ -29,9 +30,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 10/1/2015.
@@ -94,7 +93,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     @NotNull private final Consumer<LookupElement> myResultConsumer;
     private final boolean myWrapInQuotes;
     private final boolean myInsideStringLiteral;
-    private final List<LookupElement> myVariants;
+    private final Set<LookupElement> myVariants;
     private JsonLikePsiWalker myWalker;
 
     public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull final VirtualFile schemaFile, @NotNull PsiElement position,
@@ -104,7 +103,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myPosition = position;
       myOriginalPosition = originalPosition;
       myResultConsumer = resultConsumer;
-      myVariants = new ArrayList<>();
+      myVariants = new HashSet<>();
       myWalker = JsonSchemaWalker.getWalker(myPosition, myRootSchema);
       myWrapInQuotes = myWalker.isNameQuoted() && !(position.getParent() instanceof JsonStringLiteral);
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
@@ -112,52 +111,53 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
     public void work() {
       if (myWalker == null) return;
-      JsonSchemaWalker.findSchemasForCompletion(myPosition, myWalker, new JsonSchemaWalker.CompletionSchemesConsumer() {
-        @Override
-        public void consume(boolean isName,
-                            @NotNull JsonSchemaObject schema,
-                            @NotNull VirtualFile schemaFile,
-                            @NotNull List<JsonSchemaWalker.Step> steps) {
-          if (isName) {
-            final boolean insertComma = myWalker.hasPropertiesBehindAndNoComma(myPosition);
-            final boolean hasValue = myWalker.isPropertyWithValue(myPosition.getParent().getParent());
+      final PsiElement checkable = myWalker.goUpToCheckable(myPosition);
+      if (checkable == null) return;
+      final boolean isName = myWalker.isName(checkable);
+      final List<JsonSchemaWalker.Step> position = myWalker.findPosition(checkable, isName, !isName);
 
-            final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition);
-            final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
+      final List<JsonSchemaObject> schemas = new SmartList<>();
+      final MatchResult result;
+      if (position == null || position.isEmpty()) {
+        if (isName) {
+          result = JsonSchemaVariantsTreeBuilder.simplify(myRootSchema, myRootSchema);
+        }
+        else return;
+      } else {
+        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position, true);
+        final JsonSchemaTreeNode root = builder.buildTree();
+        result = MatchResult.zipTree(root);
+      }
+      schemas.addAll(result.mySchemas);
+      schemas.addAll(result.myExcludingSchemas);
 
-            JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
-              @Override
-              public boolean process(String name, JsonSchemaObject schema) {
-                if (properties.contains(name) && (adapter == null || !name.equals(adapter.getName()))) {
-                  return true;
-                }
+      // too long here, refactor further
+      schemas.forEach(schema -> {
+        if (isName) {
+          final boolean insertComma = myWalker.hasPropertiesBehindAndNoComma(myPosition);
+          final boolean hasValue = myWalker.isPropertyWithValue(myPosition.getParent().getParent());
 
-                addPropertyVariant(name, schema, hasValue, insertComma);
+          final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition);
+          final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
+
+          // todo whether we need this class?
+          JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
+            @Override
+            public boolean process(String name, JsonSchemaObject schema) {
+              if (properties.contains(name) && (adapter == null || !name.equals(adapter.getName()))) {
                 return true;
               }
-            }, schema);
-          }
-          else {
-            suggestValues(schema);
-          }
-        }
 
-        @Override
-        public void oneOf(boolean isName,
-                          @NotNull List<JsonSchemaObject> list,
-                          @NotNull VirtualFile schemaFile,
-                          @NotNull List<JsonSchemaWalker.Step> steps) {
-          list.forEach(s -> consume(isName, s, schemaFile, steps));
+              addPropertyVariant(name, schema, hasValue, insertComma);
+              return true;
+            }
+          }, schema);
         }
+        else {
+          suggestValues(schema);
+        }
+      });
 
-        @Override
-        public void anyOf(boolean isName,
-                          @NotNull List<JsonSchemaObject> list,
-                          @NotNull VirtualFile schemaFile,
-                          @NotNull List<JsonSchemaWalker.Step> steps) {
-          list.forEach(s -> consume(isName, s, schemaFile, steps));
-        }
-      }, myRootSchema, mySchemaFile);
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
       }

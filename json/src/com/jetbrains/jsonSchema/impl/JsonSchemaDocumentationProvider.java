@@ -5,13 +5,13 @@ import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -56,35 +56,24 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
+    final PsiElement checkable = walker.goUpToCheckable(element);
+    if (checkable == null) return null;
+    final List<JsonSchemaWalker.Step> position = walker.findPosition(checkable, true, true);
 
-    final Ref<String> result = Ref.create();
-    JsonSchemaWalker.findSchemasForDocumentation(element, walker, new JsonSchemaWalker.CompletionSchemesConsumer() {
-      @Override
-      public void consume(boolean isName,
-                          @NotNull JsonSchemaObject schema,
-                          @NotNull VirtualFile schemaFile,
-                          @NotNull List<JsonSchemaWalker.Step> steps) {
-        result.set(schema.getDescription());
-      }
+    final List<JsonSchemaObject> schemas = new SmartList<>();
+    final MatchResult result;
+    if (position == null || position.isEmpty()) {
+      result = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
+    } else {
+      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, position, false);
+      final JsonSchemaTreeNode root = builder.buildTree();
+      result = MatchResult.zipTree(root);
+    }
+    schemas.addAll(result.mySchemas);
+    schemas.addAll(result.myExcludingSchemas);
 
-      @Override
-      public void oneOf(boolean isName,
-                        @NotNull List<JsonSchemaObject> list,
-                        @NotNull VirtualFile schemaFile,
-                        @NotNull List<JsonSchemaWalker.Step> steps) {
-        //todo?
-      }
-
-      @Override
-      public void anyOf(boolean isName,
-                        @NotNull List<JsonSchemaObject> list,
-                        @NotNull VirtualFile schemaFile,
-                        @NotNull List<JsonSchemaWalker.Step> steps) {
-        //todo?
-      }
-    }, rootSchema, schemaFile);
-
-    return result.get();
+    return schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDescription()))
+      .findFirst().map(JsonSchemaObject::getDescription).orElse(null);
   }
 
   @Nullable
