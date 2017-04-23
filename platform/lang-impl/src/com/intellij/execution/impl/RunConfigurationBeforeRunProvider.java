@@ -319,6 +319,11 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       myConfigurationType = configurationTypeAttr != null ? configurationTypeAttr.getValue() : null;
     }
 
+    // avoid RunManagerImpl.getInstanceImpl and findConfigurationByTypeAndName calls (can be called during RunManagerImpl initialization)
+    boolean isMySettings(@NotNull RunnerAndConfigurationSettings settings) {
+      return settings.getType().getId().equals(myConfigurationType) && settings.getName().equals(myConfigurationName);
+    }
+
     void init() {
       if (myInitialized) {
         return;

@@ -1118,7 +1118,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           val newList = otherConfiguration.beforeRunTasks.nullize()?.toMutableSmartList() ?: continue
           val beforeRunTaskIterator = newList.iterator()
           for (task in beforeRunTaskIterator) {
-            if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && toRemove.contains(task.settings)) {
+            if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && toRemove.firstOrNull { task.isMySettings(it) } != null) {
               beforeRunTaskIterator.remove()
               isChanged = true
               changedSettings.add(settings)
