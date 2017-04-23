@@ -180,7 +180,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "\"home\": {\"$ref\": \"#/definitions/address\"}, " +
                           "\"office\": {\"$ref\": \"#/definitions/address\"}" +
                           "}}";
-//    testImpl(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": 11}}");
+    testImpl(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": 11}}");
     testImpl(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": <warning descr=\"Type is not allowed\">\"unknown\"</warning>}," +
                      "\"office\": {\"street\": <warning descr=\"Type is not allowed\">5</warning>}}");
   }
