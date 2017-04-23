@@ -211,12 +211,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return env.getExecutionTarget();
     }
 
-    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(new Computable<List<ExecutionTarget>>() {
-      @Override
-      public List<ExecutionTarget> compute() {
-        return ExecutionTargetManager.getTargetsFor(env.getProject(), settings);
-      }
-    });
+    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(
+      (Computable<List<ExecutionTarget>>)() -> ExecutionTargetManager.getTargetsFor(env.getProject(), settings));
 
     return ContainerUtil.getFirstItem(targets);
   }
