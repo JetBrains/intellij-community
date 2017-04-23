@@ -2,9 +2,11 @@ package ru.adelf.idea.dotenv.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,38 +24,31 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitProperty(DotEnvProperty property) {
-        String text = property.getText();
-        String[] splitParts = text.split("=", -1);
-
-        if(splitParts.length < 2) return;
-
-        String key = splitParts[0].trim();
-
-        if("".equals(key) || key.charAt(0) == '#') return;
-
         collectedProperties.add(property);
     }
 
     @NotNull
-    public Set<String> getKeys() {
-        return this.collectedProperties.stream()
-                .map(property -> property.getText().split("=", -1)[0].trim())
-                .collect(Collectors.toSet());
+    public Collection<Pair<String, String>> getKeyValues() {
+        return this.collectedProperties.stream().map(property -> {
+            String text = property.getText();
+            int pos = text.indexOf("=");
+
+            if(pos == -1) {
+                return new Pair<>(text, "");
+            } else {
+                return new Pair<>(text.substring(0, pos), text.substring(pos + 1));
+            }
+        }).collect(Collectors.toList());
     }
 
     @NotNull
-    public Set<String> getKeyValues() {
-        return this.collectedProperties.stream().map(PsiElement::getText).collect(Collectors.toSet());
-    }
-
-    @NotNull
-    public DotEnvProperty[] getElementsByKey(String key) {
+    public PsiElement[] getElementsByKey(String key) {
         Set<DotEnvProperty> targets = this.collectedProperties.stream().filter(property -> {
             String[] splitParts = property.getText().split("=", -1);
 
             return splitParts[0].trim().equals(key);
         }).collect(Collectors.toSet());
 
-        return targets.toArray(new DotEnvProperty[0]);
+        return targets.toArray(new PsiElement[0]);
     }
 }

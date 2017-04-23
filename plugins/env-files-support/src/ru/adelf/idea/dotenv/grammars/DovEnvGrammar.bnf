@@ -13,7 +13,7 @@
   tokenTypeClass="ru.adelf.idea.dotenv.psi.DotEnvTokenType"
 
   tokens = [
-    LINE_COMMENT="regexp://.*"
+    LINE_COMMENT="regexp:(//|#).*"
     VALUE="regexp:.+"
   ]
 }

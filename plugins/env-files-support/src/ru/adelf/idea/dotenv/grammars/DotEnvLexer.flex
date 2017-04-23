@@ -25,7 +25,7 @@ import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 EOL=\R
 WHITE_SPACE=\s+
 
-LINE_COMMENT="//".*
+LINE_COMMENT=("//"|#).*
 VALUE=.+
 
 %%
