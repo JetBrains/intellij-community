@@ -86,6 +86,7 @@
         <sysproperty key="ui.test.groups" value="${ui.test.groups}" />
         <sysproperty key="compile.parallel" value="${compile.parallel}" />
         <sysproperty key="java.awt.headless" value="true"/>
+        <sysproperty key="bundle.kotlin.plugin" value="${bundle.kotlin.plugin}" />
         <sysproperty key="gant.script" value="@{script}"/>
         <sysproperty key="gant.target" value="@{target}" />
         <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>
