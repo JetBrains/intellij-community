@@ -29,7 +29,6 @@ import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
@@ -41,6 +40,7 @@ import org.picocontainer.defaults.InstanceComponentAdapter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 public class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
@@ -106,7 +106,7 @@ public class ServiceManagerImpl implements Disposable {
     return Arrays.asList(extensions);
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull PairProcessor<Class<?>, PluginDescriptor> processor) {
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<Class<?>, PluginDescriptor> processor) {
     Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
       return;
@@ -139,7 +139,7 @@ public class ServiceManagerImpl implements Disposable {
           continue;
         }
 
-        if (!processor.process(aClass, pluginDescriptor)) {
+        if (!processor.test(aClass, pluginDescriptor)) {
           break;
         }
       }
@@ -155,7 +155,7 @@ public class ServiceManagerImpl implements Disposable {
             continue;
           }
 
-          processor.process(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
+          processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
         }
       }
     }

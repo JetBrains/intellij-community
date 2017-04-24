@@ -107,6 +107,34 @@ internal class DefaultProjectStoreTest {
     val element = loadElement("""
     <state>
       <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+      <component name="masterDetails">
+        <states>
+          <state key="Copyright.UI">
+            <settings>
+              <last-edited>Foo</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+          <state key="ProjectJDKs.UI">
+            <settings>
+              <last-edited>1.4</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+        </states>
+      </component>
     </state>""")
     removeWorkspaceComponentConfiguration(ProjectManager.getInstance().defaultProject, element)
     assertThat(element.isEmpty()).isTrue()
