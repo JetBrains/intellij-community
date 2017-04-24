@@ -1060,12 +1060,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ActionManager";
-  }
-
   @NotNull
   @Override
   public Comparator<String> getRegistrationOrderComparator() {

@@ -24,7 +24,10 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
@@ -56,7 +59,7 @@ private val OPTION = "option"
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
-open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, NamedComponent, Disposable {
+open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
     @JvmField
     val CONFIGURATION = "configuration"
@@ -777,8 +780,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     val factoryName = _factoryName ?: type.configurationFactories.get(0).name
     return type.configurationFactories.firstOrNull { it.name == factoryName }
   }
-
-  override fun getComponentName() = "RunManager"
 
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {
     if (tempConfiguration == null) {
