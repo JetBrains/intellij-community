@@ -77,6 +77,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
                   final String description = "Evaluation failed: " + type.name() + " exception thrown";
                   final String descriptionWithReason = exceptionMessage == null ? description : description + ": " + exceptionMessage;
                   callback.evaluationFailed(streamTraceExpression, descriptionWithReason);
+                  return;
                 }
               }
             }
