@@ -220,14 +220,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
 
-    val effectiveRoamingType: RoamingType
-    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
-      effectiveRoamingType = RoamingType.DISABLED
-    }
-    else {
-      effectiveRoamingType = roamingType
-    }
-
+    val effectiveRoamingType = getEffectiveRoamingType(roamingType, collapsedPath)
     if (isUseVfsListener == ThreeState.UNSURE) {
       isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.isApplicable(collapsedPath, effectiveRoamingType))
     }
@@ -452,3 +445,13 @@ fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMa
 @Suppress("DEPRECATION")
 internal val Storage.path: String
   get() = if (value.isNullOrEmpty()) file else value
+
+
+private fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
+  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+    return RoamingType.DISABLED
+  }
+  else {
+    return roamingType
+  }
+}

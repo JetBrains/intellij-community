@@ -24,6 +24,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
+import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.StoreUtil
@@ -460,25 +461,34 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
   @Suppress("DEPRECATION")
   val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
   projectComponents.forEachGuaranteed {
-    val stateAnnotation = StoreUtil.getStateSpec(it.javaClass)
-    if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
-      return@forEachGuaranteed
+    getNameIfWorkspaceStorage(it.javaClass)?.let {
+      workspaceComponentNames.add(it)
     }
+  }
 
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@forEachGuaranteed
-    if (storage.path != StoragePathMacros.WORKSPACE_FILE) {
-      return@forEachGuaranteed
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, pluginDescriptor ->
+    getNameIfWorkspaceStorage(aClass)?.let {
+      workspaceComponentNames.add(it)
     }
-
-    workspaceComponentNames.add(stateAnnotation.name)
+    true
   }
 
   val iterator = componentElements.iterator()
   for (componentElement in iterator) {
-    val name = componentElement.getAttributeValue("name")
-    if (name != null && workspaceComponentNames.contains(name)) {
+    val name = componentElement.getAttributeValue("name") ?: continue
+    if (workspaceComponentNames.contains(name)) {
       iterator.remove()
     }
   }
   return
+}
+
+private fun getNameIfWorkspaceStorage(aClass: Class<*>): String? {
+  val stateAnnotation = StoreUtil.getStateSpec(aClass)
+  if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
+    return null
+  }
+
+  val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return null
+  return if (storage.path == StoragePathMacros.WORKSPACE_FILE) stateAnnotation.name else null
 }
