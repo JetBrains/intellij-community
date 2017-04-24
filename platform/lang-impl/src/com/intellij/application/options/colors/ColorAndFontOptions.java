@@ -79,7 +79,8 @@ import java.util.function.Function;
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
-  
+  public static final String FONT_CONFIGURABLE_NAME = "Font";
+
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
@@ -513,7 +514,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
-      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, "Font", null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, FONT_CONFIGURABLE_NAME, null, null){
         @Override
         public boolean containsFontOptions() {
           return true;

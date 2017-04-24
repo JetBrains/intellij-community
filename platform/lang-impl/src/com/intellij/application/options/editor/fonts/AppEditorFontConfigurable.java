@@ -33,6 +33,7 @@ import javax.swing.*;
 
 public class AppEditorFontConfigurable implements SearchableConfigurable {
 
+  public static final String ID = "editor.preferences.fonts.default";
   private LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
     @Override
     protected Class<AppEditorFontPanel> getInstanceClass() throws ClassNotFoundException {
@@ -43,7 +44,7 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
-    return "editor.preferences.fonts.default";
+    return ID;
   }
 
   @Nullable
