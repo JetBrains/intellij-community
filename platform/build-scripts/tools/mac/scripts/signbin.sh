@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#print each command before executing and immediately exit script with an error if a command fails
-set -euxo pipefail
+#immediately exit script with an error if a command fails
+set -euo pipefail
 
 FILENAME=$1
 USERNAME=$2
