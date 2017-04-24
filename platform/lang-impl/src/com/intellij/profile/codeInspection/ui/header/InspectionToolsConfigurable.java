@@ -240,7 +240,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   private void doReset() {
-    disposeUIResources();
+    disposeProfilePanels();
     myAbstractSchemesPanel.reset();
     final InspectionProfileModifiableModel currentModifiableModel = myAbstractSchemesPanel.getModel().getModifiableModelFor(getCurrentProfile());
     myAbstractSchemesPanel.selectScheme(currentModifiableModel);
@@ -266,6 +266,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void disposeUIResources() {
+    disposeProfilePanels();
+    Disposer.dispose(myAbstractSchemesPanel);
+  }
+
+  private void disposeProfilePanels() {
     if (mySelectionAlarm != null) {
       Disposer.dispose(mySelectionAlarm);
       mySelectionAlarm = null;
