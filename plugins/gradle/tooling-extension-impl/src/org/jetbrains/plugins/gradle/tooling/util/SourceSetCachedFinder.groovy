@@ -35,7 +35,10 @@ class SourceSetCachedFinder {
   SourceSetCachedFinder(@NotNull Project project) {
     def rootProject = project.rootProject
     for (Project p : rootProject.subprojects) {
-      getSourceSetContainer(p)?.each { SourceSet sourceSet ->
+      SourceSetContainer sourceSetContainer = getSourceSetContainer(p)
+      if(sourceSetContainer == null || sourceSetContainer.isEmpty()) continue
+
+      for (SourceSet sourceSet : sourceSetContainer) {
         def task = p.tasks.findByName(sourceSet.getJarTaskName())
         if (task instanceof AbstractArchiveTask) {
           AbstractArchiveTask jarTask = (AbstractArchiveTask)task
