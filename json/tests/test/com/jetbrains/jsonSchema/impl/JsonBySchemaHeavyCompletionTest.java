@@ -122,8 +122,7 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
 
         final UserDefinedJsonSchemaConfiguration base =
           new UserDefinedJsonSchemaConfiguration("base", moduleDir + "/Schema.json", false,
-                                                 Collections
-                                                               .singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false)));
+                                                 Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item(testFile + ".json", true, false)));
         addSchema(base);
       }
 
