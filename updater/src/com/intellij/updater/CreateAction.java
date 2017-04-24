@@ -61,7 +61,7 @@ public class CreateAction extends PatchAction {
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE, true);
     if (result != null) return result;
 
-    if (toFile.exists()) {
+    if (toFile.exists() && toFile.isFile()) {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
