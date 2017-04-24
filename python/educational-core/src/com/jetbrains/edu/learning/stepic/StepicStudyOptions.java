@@ -17,6 +17,8 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.edu.learning.StudySettings;
@@ -25,40 +27,43 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.event.HyperlinkEvent;
 
 public class StepicStudyOptions implements StudyOptionsProvider {
   private JPanel myPane;
   private JBCheckBox myEnableTestingFromSamples;
-  private JButton myLoginButton;
-  private JButton myLogoutButton;
   private JBLabel myUsernameLabel;
+  private HoverHyperlinkLabel myHoverHyperlinkLabel;
   private StepicUser myStepicUser;
 
   public StepicStudyOptions() {
-    StepicUser user = StudySettings.getInstance().getUser();
-    myLogoutButton.setEnabled(user != null);
-    myLoginButton.addActionListener(new ActionListener() {
+  }
+
+  @NotNull
+  private HyperlinkAdapter createLogoutListener() {
+    return new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        removeCredentials();
+        updateLoginLabels(null);
+      }
+    };
+  }
+
+  @NotNull
+  private HyperlinkAdapter createAuthorizeListener() {
+    return new HyperlinkAdapter() {
 
       @Override
-      public void actionPerformed(ActionEvent e) {
+      protected void hyperlinkActivated(HyperlinkEvent e) {
         BrowserUtil.browse(EduStepicNames.IMPLICIT_GRANT_URL);
         OAuthDialog dialog = new OAuthDialog("Authorizing on Stepik");
         if (dialog.showAndGet()) {
           myStepicUser = dialog.getStepicUser();
-          updateUsernameLabel(myStepicUser);
+          updateLoginLabels(myStepicUser);
         }
       }
-    });
-
-    myLogoutButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        removeCredentials();
-        updateUsernameLabel(null);
-      }
-    });
+    };
   }
 
   @NotNull
@@ -74,12 +79,15 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   public void reset() {
     final StudySettings stepikSettings = StudySettings.getInstance();
     myEnableTestingFromSamples.setSelected(stepikSettings.isEnableTestingFromSamples());
-    updateUsernameLabel(stepikSettings.getUser());
+    updateLoginLabels(stepikSettings.getUser());
   }
 
-  private void updateUsernameLabel(@Nullable StepicUser stepicUser) {
+  private void updateLoginLabels(@Nullable StepicUser stepicUser) {
     if (stepicUser == null) {
       myUsernameLabel.setText("You're not logged in");
+      myHoverHyperlinkLabel.setText("Authorize on Stepik");
+      myHoverHyperlinkLabel.addHyperlinkListener(createAuthorizeListener());
+
     }
     else {
       String firstName = stepicUser.getFirstName();
@@ -91,7 +99,14 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       else {
         myUsernameLabel.setText(loggedInText + " as " + firstName + " " + lastName);
       }
+
+      myHoverHyperlinkLabel.setText("Log out");
+      myHoverHyperlinkLabel.addHyperlinkListener(createLogoutListener());
     }
+  }
+
+  public void createUIComponents() {
+    myHoverHyperlinkLabel = new HoverHyperlinkLabel("");
   }
 
   @Override

@@ -29,8 +29,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
@@ -44,6 +46,7 @@ import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
@@ -107,6 +110,9 @@ public class StudyProjectComponent implements ProjectComponent {
       }
     });
 
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    statusBar.addWidget(new StudyStepicUserWidget(), "before Position");
+
     selectStep();
   }
 
@@ -123,6 +129,9 @@ public class StudyProjectComponent implements ProjectComponent {
         }
       }
     });
+
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    statusBar.addWidget(new StudyStepicUserWidget(), "before Position");
   }
 
   private void updateAvailable(Course course) {
