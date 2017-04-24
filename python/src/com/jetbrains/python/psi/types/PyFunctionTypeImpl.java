@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,7 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
- * Type of a particular function that is represented as a {@link com.jetbrains.python.psi.PyCallable} in the PSI tree.
+ * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree.
  *
  * @author vlan
  */
@@ -46,11 +45,6 @@ public class PyFunctionTypeImpl implements PyFunctionType {
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
     myCallable = callable;
-  }
-
-  @Override
-  public boolean isCallable() {
-    return true;
   }
 
   @Nullable
@@ -175,17 +169,5 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull
   public PyCallable getCallable() {
     return myCallable;
-  }
-
-  @Nullable
-  public static String getParameterName(@NotNull PyNamedParameter namedParameter) {
-    String name = namedParameter.getName();
-    if (namedParameter.isPositionalContainer()) {
-      name = "*" + name;
-    }
-    else if (namedParameter.isKeywordContainer()) {
-      name = "**" + name;
-    }
-    return name;
   }
 }
