@@ -32,13 +32,14 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     val problems = SmartList<ProblemDescriptor>()
 
     val subclassProviders = ImplicitSubclassProvider.EP_NAME.extensions
-      .asSequence()
-      .filter { it.isApplicableTo(aClass) }
+      .asSequence().filter { it.isApplicableTo(aClass) }
+
+    val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(aClass) }
 
     val methodsToOverride = aClass.methods.mapNotNull {
       method ->
-      subclassProviders
-        .mapNotNull { it.findOverridingReason(method) }
+      subclassInfos
+        .mapNotNull { it.getOverridingInfo(method)?.description }
         .firstOrNull()?.let { description ->
         method to description
       }
@@ -69,7 +70,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     if (classIsFinal) {
-      val classReasonToBeSubclassed = subclassProviders.mapNotNull { it.findSubclassingReason(aClass) }.firstOrNull()
+      val classReasonToBeSubclassed = subclassInfos.firstOrNull()?.description
       if ((methodsToOverride.isNotEmpty() || classReasonToBeSubclassed != null) && canApplyFix(aClass)) {
         problemTargets(aClass, classHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
