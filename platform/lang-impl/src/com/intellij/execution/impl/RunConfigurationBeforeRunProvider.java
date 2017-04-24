@@ -41,7 +41,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -60,10 +61,9 @@ import java.util.List;
  */
 public class RunConfigurationBeforeRunProvider
 extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> {
-
   public static final Key<RunConfigurableBeforeRunTask> ID = Key.create("RunConfigurationTask");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurationBeforeRunProvider");
+  private static final Logger LOG = Logger.getInstance(RunConfigurationBeforeRunProvider.class);
 
   private final Project myProject;
 
@@ -111,11 +111,14 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   @Override
   @Nullable
   public RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
-    if (runConfiguration.getProject().isInitialized()) {
-      Collection<RunnerAndConfigurationSettings> configurations =
-        RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getAllSettings();
-      if (configurations.isEmpty()
-          || (configurations.size() == 1 && configurations.iterator().next().getConfiguration() == runConfiguration)) {
+    return createTask(runConfiguration, runConfiguration.getProject().isInitialized() ? RunManagerImpl.getInstanceImpl(runConfiguration.getProject()) : null);
+  }
+
+  @Nullable
+  public RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration, @Nullable RunManagerImpl runManager) {
+    if (runManager != null) {
+      List<RunnerAndConfigurationSettings> configurations = runManager.getAllSettings();
+      if (configurations.isEmpty() || (configurations.size() == 1 && configurations.get(0).getConfiguration() == runConfiguration)) {
         return null;
       }
     }
@@ -285,7 +288,6 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   public class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
     private String myConfigurationName;
     private String myConfigurationType;
-    private boolean myInitialized = false;
 
     private RunnerAndConfigurationSettings mySettings;
 
@@ -309,19 +311,22 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     @Override
     public void readExternal(Element element) {
       super.readExternal(element);
-      Attribute configurationNameAttr = element.getAttribute("run_configuration_name");
-      Attribute configurationTypeAttr = element.getAttribute("run_configuration_type");
-      myConfigurationName = configurationNameAttr != null ? configurationNameAttr.getValue() : null;
-      myConfigurationType = configurationTypeAttr != null ? configurationTypeAttr.getValue() : null;
+
+      myConfigurationName = element.getAttributeValue("run_configuration_name");
+      myConfigurationType = element.getAttributeValue("run_configuration_type");
     }
 
     // avoid RunManagerImpl.getInstanceImpl and findConfigurationByTypeAndName calls (can be called during RunManagerImpl initialization)
     boolean isMySettings(@NotNull RunnerAndConfigurationSettings settings) {
+      if (mySettings != null) {
+        // instance equality
+        return mySettings == settings;
+      }
       return settings.getType().getId().equals(myConfigurationType) && settings.getName().equals(myConfigurationName);
     }
 
     void init() {
-      if (myInitialized) {
+      if (mySettings != null) {
         return;
       }
       if (myConfigurationType != null && myConfigurationName != null) {
@@ -331,7 +336,6 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     public void setSettings(RunnerAndConfigurationSettings settings) {
       mySettings = settings;
-      myInitialized = true;
     }
 
     public RunnerAndConfigurationSettings getSettings() {

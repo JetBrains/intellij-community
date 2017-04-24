@@ -54,7 +54,7 @@ private val SELECTED_ATTR = "selected"
 internal val METHOD = "method"
 private val OPTION = "option"
 
-// open for Upsource
+// open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, NamedComponent, Disposable {
   companion object {
