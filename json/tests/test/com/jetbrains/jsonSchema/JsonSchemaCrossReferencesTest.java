@@ -46,6 +46,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     return BASE_PATH;
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaCrossReferenceCompletion() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -114,6 +115,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaCrossReferenceCompletionWithSchemaEditing() throws Exception {
     skeleton(new Callback() {
       private String myModuleDir;
@@ -182,6 +184,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     assertStringItems("\"one1\"", "\"two1\"");
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaRefsCrossResolve() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -290,6 +293,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testFindRefInOtherFile() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -317,6 +321,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testFindRefToOtherFile() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -429,6 +434,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNestedAllOneAnyWithInheritanceNavigation() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
     skeleton(new Callback() {
@@ -459,6 +465,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNestedAllOneAnyWithInheritanceCompletion() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
     skeleton(new Callback() {
@@ -483,6 +490,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNestedAllOneAnyWithInheritanceHighlighting() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
     skeleton(new Callback() {
