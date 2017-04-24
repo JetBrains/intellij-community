@@ -26,7 +26,7 @@ public class Course {
   @Expose @SerializedName("summary") private String description;
   @Expose @SerializedName("title") private String name;
 
-  @Expose @SerializedName("language") private String myLanguage = "Python";
+  @Expose @SerializedName("programming_language") private String myLanguage = "Python";
 
   //this field is used to distinguish ordinary and CheckIO projects,
   //"PyCharm" is used here for historical reasons
