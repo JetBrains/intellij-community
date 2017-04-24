@@ -17,7 +17,6 @@ package com.intellij.debugger.streams.chain.positive;
 
 import com.intellij.debugger.streams.chain.StreamChainBuilderTestCase;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -35,14 +34,12 @@ public abstract class StreamChainBuilderPositiveTestBase extends StreamChainBuil
   }
 
   void doTest() throws Exception {
-    final PsiElement elementAtCaret = configureAndGetElementAtCaret();
-    assertNotNull(elementAtCaret);
-    final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);
-    checkResultChains(chains);
+    checkResultChains(buildChains());
   }
 
   @NotNull
   protected abstract String getDirectoryName();
 
-  protected abstract void checkResultChains(@NotNull List<StreamChain> chains);
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
+  }
 }

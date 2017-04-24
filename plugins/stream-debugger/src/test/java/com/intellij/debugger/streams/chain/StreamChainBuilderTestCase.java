@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.chain;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.JdkManager;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.openapi.module.ModuleType;
@@ -28,6 +29,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
@@ -66,6 +68,12 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
   @NotNull
   protected StreamChainBuilder getChainBuilder() {
     return myChainBuilder;
+  }
+
+  protected List<StreamChain> buildChains() {
+    final PsiElement elementAtCaret = configureAndGetElementAtCaret();
+    assertNotNull(elementAtCaret);
+    return getChainBuilder().build(elementAtCaret);
   }
 
   @NotNull
