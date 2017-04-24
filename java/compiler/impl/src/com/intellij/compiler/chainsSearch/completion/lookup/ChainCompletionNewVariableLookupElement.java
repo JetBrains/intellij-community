@@ -22,49 +22,40 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 /**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
+ * @author Dmitry Batkovich
  */
 public class ChainCompletionNewVariableLookupElement extends LookupElementDecorator<LookupElement> {
-  private final static Logger LOG = Logger.getInstance(ChainCompletionNewVariableLookupElement.class);
+  private static final Logger LOG = Logger.getInstance(ChainCompletionNewVariableLookupElement.class);
 
-  private final PsiClass myPsiClass;
+  @NotNull
+  private final PsiClass myQualifierClass;
+  @NotNull
   private final String myNewVarName;
 
-  public ChainCompletionNewVariableLookupElement(final PsiClass psiClass, final String newVarName, final LookupElement calledMethods) {
+  public ChainCompletionNewVariableLookupElement(@NotNull final PsiClass qualifierClass, final LookupElement calledMethods) {
     super(calledMethods);
-    myNewVarName = newVarName;
-    myPsiClass = psiClass;
-  }
-
-  public static ChainCompletionNewVariableLookupElement create(final PsiClass psiClass, final LookupElement calledMethods) {
-    final Project project = psiClass.getProject();
-    final String newVarName = chooseLongestName(JavaCodeStyleManager.getInstance(project).
-        suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, JavaPsiFacade.getElementFactory(project).createType(psiClass)));
-    return new ChainCompletionNewVariableLookupElement(psiClass, newVarName, calledMethods);
+    myNewVarName = StringUtil.decapitalize(ObjectUtils.notNull(qualifierClass.getName()));
+    myQualifierClass = qualifierClass;
   }
 
   @Override
   public void handleInsert(final InsertionContext context) {
     final RangeMarker rangeMarker = context.getDocument().createRangeMarker(context.getStartOffset(), context.getStartOffset());
     getDelegate().handleInsert(context);
+    context.getDocument().insertString(rangeMarker.getStartOffset(), myNewVarName + ".");
+    context.commitDocument();
     final PsiFile file = context.getFile();
-    ((PsiJavaFile)file).importClass(myPsiClass);
-    final PsiElement caretElement = file.findElementAt(context.getEditor().getCaretModel().getOffset());
-    if (caretElement == null) {
-      LOG.error("element on caret position MUST BE not null");
-      return;
-    }
+    ((PsiJavaFile)file).importClass(myQualifierClass);
+    final PsiElement caretElement = ObjectUtils.notNull(file.findElementAt(context.getEditor().getCaretModel().getOffset()));
 
     PsiElement prevSibling = caretElement.getPrevSibling();
     final PsiStatement statement;
@@ -73,21 +64,15 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
     } else {
       statement = PsiTreeUtil.getParentOfType(prevSibling, PsiStatement.class);
     }
-    final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-    if (codeBlock == null) {
-      LOG.error("code block MUST BE not null");
-      return;
-    }
     final Project project = context.getProject();
-    final Ref<PsiElement> insertedStatementRef = Ref.create();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     context.commitDocument();
-    final PsiStatement statementFromText = elementFactory.createStatementFromText(String.format("%s %s = null;", myPsiClass.getName(), myNewVarName), null);
-    insertedStatementRef.set(codeBlock.addBefore(statementFromText, statement));
-    final PsiLiteralExpression nullKeyword = findNull(insertedStatementRef.get());
-    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
-    context.getDocument().insertString(rangeMarker.getStartOffset(), myNewVarName + ".");
-    context.commitDocument();
+    final PsiStatement newVarDeclarationTemplate = elementFactory.createVariableDeclarationStatement(myNewVarName,
+                                                                                                     elementFactory.createType(myQualifierClass),
+                                                                                                     elementFactory.createExpressionFromText(PsiKeyword.NULL, null));
+
+    PsiStatement newVarDeclaration = (PsiStatement)statement.getParent().addBefore(newVarDeclarationTemplate, statement);
+    final PsiLiteralExpression nullKeyword = findNullElement(newVarDeclaration);
     final int offset = nullKeyword.getTextOffset();
     final int endOffset = offset + nullKeyword.getTextLength();
     context.getEditor().getSelectionModel().setSelection(offset, endOffset);
@@ -106,7 +91,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
     presentation.setItemText(myNewVarName + "." + presentation.getItemText());
   }
 
-  private static PsiLiteralExpression findNull(final PsiElement psiElement) {
+  private static PsiLiteralExpression findNullElement(final PsiElement psiElement) {
     final Collection<PsiLiteralExpression> literalExpressions = PsiTreeUtil.findChildrenOfType(psiElement, PsiLiteralExpression.class);
     for (final PsiLiteralExpression literalExpression : literalExpressions) {
       if (PsiKeyword.NULL.equals(literalExpression.getText())) {
@@ -114,19 +99,5 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
       }
     }
     throw new IllegalArgumentException();
-  }
-
-  private static String chooseLongestName(final SuggestedNameInfo suggestedNameInfo) {
-    final String[] names = suggestedNameInfo.names;
-    String longestWord = names[0];
-    int maxLength = longestWord.length();
-    for (int i = 1; i < names.length; i++) {
-      final int length = names[i].length();
-      if (length > maxLength) {
-        maxLength = length;
-        longestWord = names[i];
-      }
-    }
-    return longestWord;
   }
 }
