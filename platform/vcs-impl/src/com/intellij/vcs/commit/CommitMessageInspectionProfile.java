@@ -16,7 +16,6 @@
 package com.intellij.vcs.commit;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -30,6 +29,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.InspectionProfileEntry.getShortName;
@@ -42,13 +42,13 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
 
   public static final String PROFILE_NAME = "Commit Dialog";
   public static final InspectionProfileImpl DEFAULT =
-    new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolRegistrar(), (InspectionProfileImpl)null);
+    new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
 
   @NotNull private final Project myProject;
   @NotNull private State myState = new State();
 
   public CommitMessageInspectionProfile(@NotNull Project project) {
-    super(PROFILE_NAME, new CommitMessageInspectionToolRegistrar(), DEFAULT);
+    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), DEFAULT);
     myProject = project;
   }
 
@@ -111,10 +111,10 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return result;
   }
 
-  private static class CommitMessageInspectionToolRegistrar extends InspectionToolRegistrar {
+  private static class CommitMessageInspectionToolSupplier implements Supplier<List<InspectionToolWrapper>> {
     @NotNull
     @Override
-    public List<InspectionToolWrapper> createTools() {
+    public List<InspectionToolWrapper> get() {
       return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection(),
                        new CommitMessageSpellCheckingInspection())
         .map(LocalInspectionToolWrapper::new)

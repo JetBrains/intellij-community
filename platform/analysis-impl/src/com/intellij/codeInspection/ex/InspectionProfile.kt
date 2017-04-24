@@ -134,9 +134,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
 }
 
 fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
-  val profile = InspectionProfileImpl(name, object : InspectionToolRegistrar() {
-    override fun createTools() = toolWrappers
-  }, InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
+  val profile = InspectionProfileImpl(name, { toolWrappers }, InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
   for (toolWrapper in toolWrappers) {
     profile.enableTool(toolWrapper.shortName, project)
   }
