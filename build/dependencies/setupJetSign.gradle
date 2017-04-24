@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.jetbrains.intellij.build.DependenciesBuildUtils
+
 repositories {
   maven {
     url 'http://repo.labs.intellij.net/jet-sign'
@@ -28,22 +30,18 @@ dependencies {
 }
 
 task setupJetSign(dependsOn: configurations.jetSign) {
-  if (!inJetBrainsNetwork) {
-    return
-  }
   def ultimateProjectDir = ultimateProjectDir()
-  if (!ultimateProjectDir) {
-    return
-  }
+  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork && ultimateProjectDir }
 
-  doFirst { logger.info("Setting up JetSign") }
+  if (!ultimateProjectDir) return
   def jetSignJar = { configurations.jetSign.singleFile }
-  def outputDir = file("$ultimateProjectDir/build/lib/")
+  def outputDir = "$ultimateProjectDir/build/lib/"
+
   inputs.file(jetSignJar)
   outputs.file("$outputDir/jet-sign.jar")
 
   doLast {
-    logger.info("Copying $jetSignJar to $outputDir")
+    logger.info("Setting up JetSign. Copying $jetSignJar to $outputDir")
     copy {
       from file(jetSignJar)
       into outputDir
