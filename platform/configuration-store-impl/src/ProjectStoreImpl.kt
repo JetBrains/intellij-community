@@ -33,6 +33,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ex.ProjectEx.NAME_PROVIDER_EP
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
@@ -48,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.attribute
+import com.intellij.util.containers.computeOrNull
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
@@ -303,25 +305,24 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   }
 
   override fun getProjectName(): String {
-    if (isDirectoryBased) {
-      val baseDir = projectBasePath
-      val nameFile = nameFile
-      if (nameFile.exists()) {
-        try {
-          nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
-            lastSavedProjectName = it
-            return it
-          }
-        }
-        catch (ignored: IOException) {
-        }
-      }
-
-      return PathUtilRt.getFileName(baseDir).replace(":", "")
-    }
-    else {
+    if (!isDirectoryBased) {
       return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
+
+    val baseDir = projectBasePath
+    val nameFile = nameFile
+    if (nameFile.exists()) {
+      LOG.catchAndLog {
+        nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+          lastSavedProjectName = it
+          return it
+        }
+      }
+    }
+
+    return NAME_PROVIDER_EP.extensions.computeOrNull {
+      LOG.catchAndLog { it.getName(project) }
+    } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
 
   private fun saveProjectName() {
