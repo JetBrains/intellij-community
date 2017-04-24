@@ -80,7 +80,6 @@ public class JsonSchemaVariantsTreeBuilder {
       }
 
       queue.addAll(node.getChildren());
-      queue.addAll(node.getExcludingChildren());
     }
 
     return root;
@@ -191,7 +190,7 @@ public class JsonSchemaVariantsTreeBuilder {
           myState = SchemaResolveState.brokenDefinition;
           return;
         }
-        current = merge(current, definition);
+        current = merge(current, definition, current);
       }
       final Operation expandOperation = createExpandOperation(current);
       if (expandOperation != null) myChildOperations.add(expandOperation);
@@ -248,8 +247,9 @@ public class JsonSchemaVariantsTreeBuilder {
     return g1.stream().map(s -> andGroup(s, g2)).flatMap(List::stream).collect(Collectors.toList());
   }
 
+  // here is important, which pointer gets the result: lets make them all different, otherwise two schemas of branches of oneOf would be equal
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
-    return group.stream().map(s -> merge(object, s)).collect(Collectors.toList());
+    return group.stream().map(s -> merge(object, s, s)).collect(Collectors.toList());
   }
 
   private static class OneOfOperation extends Operation {
@@ -269,7 +269,7 @@ public class JsonSchemaVariantsTreeBuilder {
     public void reduce() {
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
-
+        // here it is not a mistake - all children of this node come to
         myOneOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
         myOneOfGroup.addAll(andGroup(mySourceNode, op.myOneOfGroup));
       });
@@ -294,8 +294,8 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
 
-        myAnyOfGroup.addAll(op.myAnyOfGroup);
-        myOneOfGroup.addAll(op.myOneOfGroup);
+        myAnyOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
+        myOneOfGroup.addAll(andGroup(mySourceNode, op.myOneOfGroup));
       });
     }
   }
@@ -350,11 +350,13 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   // todo do not forget to create caches for calculated merges etc etc
-  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other) {
-    final JsonSchemaObject object = new JsonSchemaObject(base.getPeerPointer());
+  public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
+                                       @NotNull JsonSchemaObject other,
+                                       @NotNull JsonSchemaObject pointTo) {
+    final JsonSchemaObject object = new JsonSchemaObject(pointTo.getPeerPointer());
     object.mergeValues(other);
     object.mergeValues(base);
-    object.setRef(other.getRef());// todo pay attention
+    object.setRef(other.getRef());
     object.setDefinitionsPointer(base.getDefinitionsPointer());
     return object;
   }

@@ -16,35 +16,30 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 4/20/2017.
  */
 public class JsonSchemaTreeNode {
-  @Nullable private final JsonSchemaTreeNode myParent;
-
   private boolean myAny;
   private boolean myNothing;
+  private boolean myIsInExcludingGroup;
   @NotNull private SchemaResolveState myResolveState = SchemaResolveState.normal;
 
   @Nullable private final JsonSchemaObject mySchema;
   @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> mySteps = new SmartList<>();
 
   @NotNull private List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
-  @NotNull private Set<JsonSchemaTreeNode> myExcludingChildren = new HashSet<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {
     assert schema != null || parent != null;
-    myParent = parent;
     mySchema = schema;
     if (parent != null && !parent.getSteps().isEmpty()) {
       mySteps.addAll(parent.getSteps().subList(1, parent.getSteps().size()));
@@ -75,18 +70,13 @@ public class JsonSchemaTreeNode {
     }
     if (!operation.myOneOfGroup.isEmpty()) {
       final List<JsonSchemaTreeNode> children = convertToNodes(operation.myOneOfGroup);
+      children.forEach(c -> c.myIsInExcludingGroup = true);
       myChildren.addAll(children);
-      myExcludingChildren.addAll(children);
     }
   }
 
   private List<JsonSchemaTreeNode> convertToNodes(List<JsonSchemaObject> children) {
     return children.stream().map(s -> new JsonSchemaTreeNode(this, s)).collect(Collectors.toList());
-  }
-
-  @Nullable
-  public JsonSchemaTreeNode getParent() {
-    return myParent;
   }
 
   @NotNull
@@ -122,9 +112,8 @@ public class JsonSchemaTreeNode {
     return myChildren;
   }
 
-  @NotNull
-  public Set<JsonSchemaTreeNode> getExcludingChildren() {
-    return myExcludingChildren;
+  public boolean isInExcludingGroup() {
+    return myIsInExcludingGroup;
   }
 
   public void setSteps(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> steps) {
@@ -163,6 +152,7 @@ public class JsonSchemaTreeNode {
     final StringBuilder sb = new StringBuilder("NODE#" + hashCode() + "\n");
     sb.append(mySteps.stream().map(Object::toString).collect(Collectors.joining("->", "steps: <", ">")));
     sb.append("\n");
+    if (myIsInExcludingGroup) sb.append("in excluding group\n");
     if (myAny) sb.append("any");
     else if (myNothing) sb.append("nothing");
     else if (!SchemaResolveState.normal.equals(myResolveState)) sb.append(myResolveState.name());
@@ -178,11 +168,6 @@ public class JsonSchemaTreeNode {
       if (!myChildren.isEmpty()) {
         sb.append("OR children of NODE#").append(hashCode()).append(":\n----------------\n")
           .append(myChildren.stream().map(Object::toString).collect(Collectors.joining("\n")))
-          .append("\n=================\n");
-      }
-      if (!myExcludingChildren.isEmpty()) {
-        sb.append("EXCLUSIVE OR children of NODE#").append(hashCode()).append(":\n----------------\n")
-          .append(myExcludingChildren.stream().map(Object::toString).collect(Collectors.joining("\n")))
           .append("\n=================\n");
       }
     }

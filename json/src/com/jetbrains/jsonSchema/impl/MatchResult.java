@@ -15,23 +15,23 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Irina.Chernushina on 4/22/2017.
  */
 public class MatchResult {
-  public final List<JsonSchemaObject> mySchemas;
-  public final List<JsonSchemaObject> myExcludingSchemas;
+  public final Set<JsonSchemaObject> mySchemas;
+  public final Set<JsonSchemaObject> myExcludingSchemas;
 
   private MatchResult() {
-    mySchemas = new SmartList<>();
-    myExcludingSchemas = new SmartList<>();
+    mySchemas = new HashSet<>();
+    myExcludingSchemas = new HashSet<>();
   }
 
   public static MatchResult zipTree(@NotNull JsonSchemaTreeNode root) {
@@ -40,7 +40,7 @@ public class MatchResult {
                           node -> {
                             if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
                                 SchemaResolveState.normal.equals(node.getResolveState())) {
-                              if (node.getParent() != null && node.getParent().getExcludingChildren().contains(node)) {
+                              if (node.isInExcludingGroup()) {
                                 result.myExcludingSchemas.add(node.getSchema());
                               } else {
                                 result.mySchemas.add(node.getSchema());

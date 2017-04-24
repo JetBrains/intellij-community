@@ -140,7 +140,7 @@ public class JsonSchemaAnnotator implements Annotator {
     final Set<String> validatedProperties = new HashSet<>();// todo validated properties seem to should not be there
     if (result.myExcludingSchemas.isEmpty() && result.mySchemas.size() == 1) {
       final BySchemaChecker checker = new BySchemaChecker(rootSchema, walker);
-      checker.checkBySchemeBare(elementToCheck, result.mySchemas.get(0), validatedProperties);
+      checker.checkBySchemeBare(elementToCheck, result.mySchemas.iterator().next(), validatedProperties);
       checkers.add(checker);
     } else {
       // todo simplify more
