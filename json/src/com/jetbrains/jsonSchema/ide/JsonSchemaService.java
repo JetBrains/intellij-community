@@ -13,6 +13,12 @@ import java.util.Collection;
 import java.util.Set;
 
 public interface JsonSchemaService {
+  @NotNull
+  static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
+  }
+
   class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
       return ServiceManager.getService(project, JsonSchemaService.class);

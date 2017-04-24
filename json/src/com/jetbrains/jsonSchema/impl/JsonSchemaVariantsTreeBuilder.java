@@ -15,10 +15,12 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +37,12 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull private final JsonSchemaObject myRootSchema;
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
-  @NotNull private final List<JsonSchemaWalker.Step> myPosition;
+  @NotNull private final List<Step> myPosition;
 
   public JsonSchemaVariantsTreeBuilder(@NotNull final JsonSchemaObject rootSchema,
                                        @NotNull final JsonSchemaObject schema,
                                        final boolean isName,
-                                       @Nullable final List<JsonSchemaWalker.Step> position) {
+                                       @Nullable final List<Step> position) {
     myRootSchema = rootSchema;
     mySchema = schema;
     myIsName = isName;
@@ -62,14 +64,14 @@ public class JsonSchemaVariantsTreeBuilder {
     while (!queue.isEmpty()) {
       final JsonSchemaTreeNode node = queue.removeFirst();
       if (node.isFinite()) continue;
-      final List<JsonSchemaWalker.Step> steps = node.getSteps();
+      final List<Step> steps = node.getSteps();
       //noinspection ConstantConditions
-      final JsonSchemaWalker.Step step = steps.get(0);
+      final Step step = steps.get(0);
       if (step.getTransition() == null || !byStateType(step.getType(), node.getSchema())) {
         continue;
       }
       // todo further get rid of consumer?
-      final JsonSchemaWalker.TransitionResultConsumer consumer = new JsonSchemaWalker.TransitionResultConsumer();
+      final TransitionResultConsumer consumer = new TransitionResultConsumer();
       step.getTransition().step(node.getSchema(), consumer, !myIsName);
       if (consumer.isNothing()) node.setChild(JsonSchemaTreeNode.createNothing(node));
       else if (consumer.isAny()) node.setChild(JsonSchemaTreeNode.createAny(node));
@@ -86,8 +88,8 @@ public class JsonSchemaVariantsTreeBuilder {
     return root;
   }
 
-  private static boolean byStateType(@NotNull final JsonSchemaWalker.StateType type, @NotNull final JsonSchemaObject schema) {
-    if (JsonSchemaWalker.StateType._unknown.equals(type)) return true;
+  private static boolean byStateType(@NotNull final StateType type, @NotNull final JsonSchemaObject schema) {
+    if (StateType._unknown.equals(type)) return true;
     final JsonSchemaType requiredType = type.getCorrespondingJsonType();
     if (requiredType == null) return true;
     if (schema.getType() != null) {
@@ -112,7 +114,6 @@ public class JsonSchemaVariantsTreeBuilder {
       operation.doReduce();
       if (StepState.brokenDefinition.equals(operation.myState) || StepState.cyclicDefinition.equals(operation.myState))
         node.setChild(JsonSchemaTreeNode.createNoDefinition(node));
-      else if (StepState.conflict.equals(operation.myState)) node.setChild(JsonSchemaTreeNode.createConflicting(node));
       else {
         node.addChildren(operation.myReduceContext.myAnyGroup.stream()
                            .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
@@ -126,8 +127,39 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  private enum StepState {
-    inProgress, processed, conflict, brokenDefinition, cyclicDefinition;
+  public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
+    final List<String> chain = StringUtil.split(JsonSchemaService.normalizeId(nameInSchema).replace("\\", "/"), "/");
+    final List<Step> steps = chain.stream().filter(s -> !s.isEmpty()).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
+      .collect(Collectors.toList());
+    if (steps.isEmpty()) return Pair.create(Collections.emptyList(), nameInSchema);
+    return Pair.create(steps, chain.get(chain.size() - 1));
+  }
+
+  static enum StepState {
+    normal, conflict, brokenDefinition, cyclicDefinition;
+  }
+
+  public enum StateType {
+    _object(JsonSchemaType._object), _array(JsonSchemaType._array), _value(null), _unknown(null);
+
+    @Nullable
+    private final JsonSchemaType myCorrespondingJsonType;
+
+    StateType(@Nullable JsonSchemaType correspondingJsonType) {
+      myCorrespondingJsonType = correspondingJsonType;
+    }
+
+    @Nullable
+    public JsonSchemaType getCorrespondingJsonType() {
+      return myCorrespondingJsonType;
+    }
+  }
+
+  public interface Transition {
+
+    void step(@NotNull JsonSchemaObject parent,
+              @NotNull TransitionResultConsumerI resultConsumer,
+              boolean acceptAdditionalPropertiesSchemas);
   }
 
   private static abstract class Operation {
@@ -135,7 +167,7 @@ public class JsonSchemaVariantsTreeBuilder {
     @NotNull protected final ReduceContext myReduceContext;
     @NotNull protected final List<Operation> myChildOperations;
     @NotNull protected final JsonSchemaObject mySourceNode;
-    protected StepState myState = StepState.inProgress;
+    protected StepState myState = StepState.normal;
     @NotNull protected final Map<VirtualFile, JsonSchemaObject> myRootSchemasMap;
 
     protected Operation(@NotNull JsonSchemaObject sourceNode,
@@ -155,7 +187,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     public void doReduce() {
-      if (!StepState.inProgress.equals(myState)) {
+      if (!StepState.normal.equals(myState)) {
         myChildOperations.clear();
         myReduceContext.clear();
         return;
@@ -252,7 +284,7 @@ public class JsonSchemaVariantsTreeBuilder {
       myReduceContext.myAnyGroup.add(mySourceNode);
 
       myChildOperations.forEach(op -> {
-        if (!op.myState.equals(StepState.inProgress)) return;
+        if (!op.myState.equals(StepState.normal)) return;
 
         final List<JsonSchemaObject> mergedAny = andGroups(op.myReduceContext.myAnyGroup, myReduceContext.myAnyGroup);
 
@@ -293,7 +325,7 @@ public class JsonSchemaVariantsTreeBuilder {
     @Override
     public void reduce() {
       myChildOperations.forEach(op -> {
-        if (!op.myState.equals(StepState.inProgress)) return;
+        if (!op.myState.equals(StepState.normal)) return;
 
         myReduceContext.myExclusiveOrGroup.addAll(andGroup(mySourceNode, op.myReduceContext.myAnyGroup));
         myReduceContext.myExclusiveOrGroup.addAll(andGroup(mySourceNode, op.myReduceContext.myExclusiveOrGroup));
@@ -317,7 +349,7 @@ public class JsonSchemaVariantsTreeBuilder {
     @Override
     public void reduce() {
       myChildOperations.forEach(op -> {
-        if (!op.myState.equals(StepState.inProgress)) return;
+        if (!op.myState.equals(StepState.normal)) return;
 
         myReduceContext.myAnyGroup.addAll(op.myReduceContext.myAnyGroup);
         myReduceContext.myExclusiveOrGroup.addAll(op.myReduceContext.myExclusiveOrGroup);
@@ -394,5 +426,162 @@ public class JsonSchemaVariantsTreeBuilder {
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {
     return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null;
+  }
+
+  static class TransitionResultConsumer implements TransitionResultConsumerI {
+    @Nullable private JsonSchemaObject mySchema;
+    private boolean myAny;
+    private boolean myNothing;
+
+    public TransitionResultConsumer() {
+      myNothing = true;
+    }
+
+    @Nullable
+    public JsonSchemaObject getSchema() {
+      return mySchema;
+    }
+
+    @Override
+    public void setSchema(@Nullable JsonSchemaObject schema) {
+      mySchema = schema;
+      myNothing = schema == null;
+    }
+
+    public boolean isAny() {
+      return myAny;
+    }
+
+    @Override
+    public void anything() {
+      myAny = true;
+      myNothing = false;
+    }
+
+    public boolean isNothing() {
+      return myNothing;
+    }
+
+    @Override
+    public void nothing() {
+      myNothing = true;
+      myAny = false;
+    }
+  }
+
+  public static class Step {
+    private final StateType myType;
+    @Nullable
+    private final Transition myTransition;
+
+    public Step(StateType type, @Nullable Transition transition) {
+      myType = type;
+      myTransition = transition;
+    }
+
+    public StateType getType() {
+      return myType;
+    }
+
+    @Nullable
+    public Transition getTransition() {
+      return myTransition;
+    }
+
+    @Override
+    public String toString() {
+      String format = "?%s";
+      if (StateType._object.equals(myType)) format = "{%s}";
+      if (StateType._array.equals(myType)) format = "[%s]";
+      if (StateType._value.equals(myType)) format = "#%s";
+      return String.format(format, myTransition);
+    }
+  }
+
+  public static class PropertyTransition implements Transition {
+    @NotNull private final String myName;
+
+    public PropertyTransition(@NotNull String name) {
+      myName = name;
+    }
+
+    @Override
+    public void step(@NotNull JsonSchemaObject parent,
+                     @NotNull TransitionResultConsumerI resultConsumer,
+                     boolean acceptAdditionalPropertiesSchemas) {
+      if (JsonSchemaObject.DEFINITIONS.equals(myName)) {
+        if (parent.getDefinitions() != null) {
+          final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
+          final JsonSchemaObject object = new JsonSchemaObject(pointer);
+          object.setProperties(parent.getDefinitions());
+          resultConsumer.setSchema(object);
+          return;
+        }
+      }
+      final JsonSchemaObject child = parent.getProperties().get(myName);
+      if (child != null) {
+        resultConsumer.setSchema(child);
+      } else {
+        final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
+        if (schema != null) {
+          resultConsumer.setSchema(schema);
+          return;
+        }
+        if (parent.getAdditionalPropertiesSchema() != null) {
+          if (acceptAdditionalPropertiesSchemas) {
+            resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
+          }
+        } else {
+          if (!Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
+            resultConsumer.anything();
+          } else {
+            resultConsumer.nothing();
+          }
+        }
+      }
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+  }
+
+  public static class ArrayTransition implements Transition {
+    private final int myIdx;
+
+    public ArrayTransition(int idx) {
+      myIdx = idx;
+    }
+
+    @Override
+    public void step(@NotNull JsonSchemaObject parent,
+                     @NotNull TransitionResultConsumerI resultConsumer,
+                     boolean acceptAdditionalPropertiesSchemas) {
+      if (parent.getItemsSchema() != null) {
+        resultConsumer.setSchema(parent.getItemsSchema());
+      } else if (parent.getItemsSchemaList() != null) {
+        final List<JsonSchemaObject> list = parent.getItemsSchemaList();
+        if (myIdx >= 0 && myIdx < list.size()) {
+          resultConsumer.setSchema(list.get(myIdx));
+        } else if (parent.getAdditionalItemsSchema() != null) {
+          resultConsumer.setSchema(parent.getAdditionalItemsSchema());
+        } else if (!Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {
+          resultConsumer.anything();
+        } else {
+          resultConsumer.nothing();
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(myIdx);
+    }
   }
 }

@@ -153,7 +153,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Nullable
   private static VirtualFile getSchemaFileByRefAsLocalFile(@NotNull String id, @Nullable VirtualFile referent) {
-    final String normalizedId = JsonSchemaWalker.normalizeId(id);
+    final String normalizedId = JsonSchemaService.normalizeId(id);
     if (FileUtil.isAbsolute(normalizedId) || referent == null) return VfsUtil.findFileByIoFile(new File(normalizedId), false);
     VirtualFile dir = referent.isDirectory() ? referent : referent.getParent();
     if (dir != null && dir.isValid()) {

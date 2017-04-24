@@ -103,7 +103,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myOriginalPosition = originalPosition;
       myResultConsumer = resultConsumer;
       myVariants = new HashSet<>();
-      myWalker = JsonSchemaWalker.getWalker(myPosition, myRootSchema);
+      myWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
       myWrapInQuotes = myWalker.isNameQuoted() && !(position.getParent() instanceof JsonStringLiteral);
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
     }
@@ -113,7 +113,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final PsiElement checkable = myWalker.goUpToCheckable(myPosition);
       if (checkable == null) return;
       final boolean isName = myWalker.isName(checkable);
-      final List<JsonSchemaWalker.Step> position = myWalker.findPosition(checkable, isName, !isName);
+      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, isName, !isName);
       if (position.isEmpty() && !isName) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();

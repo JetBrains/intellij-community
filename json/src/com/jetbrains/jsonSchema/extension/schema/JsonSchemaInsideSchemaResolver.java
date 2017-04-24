@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
-import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -37,11 +37,11 @@ public class JsonSchemaInsideSchemaResolver {
   public static final String PROPERTIES = "/properties/";
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile mySchemaFile;
-  @NotNull private final List<JsonSchemaWalker.Step> mySteps;
+  @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> mySteps;
 
   public JsonSchemaInsideSchemaResolver(@NotNull Project project,
                                         @NotNull VirtualFile schemaFile,
-                                        @NotNull List<JsonSchemaWalker.Step> steps) {
+                                        @NotNull List<JsonSchemaVariantsTreeBuilder.Step> steps) {
     myProject = project;
     mySchemaFile = schemaFile;
     mySteps = steps;

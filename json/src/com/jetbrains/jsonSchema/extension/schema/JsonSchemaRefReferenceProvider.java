@@ -26,7 +26,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
-import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         if (schemaFile == null) return null;
       }
 
-      final String normalized = JsonSchemaWalker.normalizeId(splitter.getRelativePath());
+      final String normalized = JsonSchemaService.normalizeId(splitter.getRelativePath());
       if (StringUtil.isEmptyOrSpaces(normalized) || StringUtil.split(normalized.replace("\\", "/"), "/").size() == 0) {
         return myElement.getManager().findFile(schemaFile);
       }
@@ -83,7 +83,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         } else canSkip = true;
       }
 
-      final List<JsonSchemaWalker.Step> steps = JsonSchemaWalker.buildSteps(StringUtil.join(chain, "/")).getFirst();
+      final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(StringUtil.join(chain, "/")).getFirst();
       return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, steps).resolveInSchemaRecursively(getElement());
     }
   }

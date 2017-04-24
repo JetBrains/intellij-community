@@ -43,7 +43,7 @@ public class JsonSchemaTreeNode {
   private final JsonSchemaObject mySchema;
 
   @Nullable
-  private List<JsonSchemaWalker.Step> mySteps;
+  private List<JsonSchemaVariantsTreeBuilder.Step> mySteps;
 
   private List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
   private Set<JsonSchemaTreeNode> myExcludingChildren = new HashSet<>();
@@ -124,7 +124,7 @@ public class JsonSchemaTreeNode {
   }
 
   @Nullable
-  public List<JsonSchemaWalker.Step> getSteps() {
+  public List<JsonSchemaVariantsTreeBuilder.Step> getSteps() {
     return mySteps;
   }
 
@@ -169,7 +169,7 @@ public class JsonSchemaTreeNode {
     return myExcludingChildren;
   }
 
-  public void setSteps(@Nullable List<JsonSchemaWalker.Step> steps) {
+  public void setSteps(@Nullable List<JsonSchemaVariantsTreeBuilder.Step> steps) {
     mySteps = steps;
   }
 

@@ -53,12 +53,12 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   public static String generateDoc(@NotNull final PsiElement element,
                                    @NotNull final JsonSchemaObject rootSchema,
                                    @NotNull final VirtualFile schemaFile) {
-    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, rootSchema);
+    final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
     final PsiElement checkable = walker.goUpToCheckable(element);
     if (checkable == null) return null;
-    final List<JsonSchemaWalker.Step> position = walker.findPosition(checkable, true, true);
+    final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true, true);
 
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 

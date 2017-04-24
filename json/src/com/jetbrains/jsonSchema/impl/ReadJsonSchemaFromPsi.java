@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class ReadJsonSchemaFromPsi {
   private static String readId(@NotNull final JsonObject object) {
     final JsonProperty property = object.findProperty("id");
     if (property != null && property.getValue() instanceof JsonStringLiteral) {
-      return JsonSchemaWalker.normalizeId(StringUtil.unquoteString(property.getValue().getText()));
+      return JsonSchemaService.normalizeId(StringUtil.unquoteString(property.getValue().getText()));
     }
     return null;
   }

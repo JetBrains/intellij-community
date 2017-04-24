@@ -26,6 +26,4 @@ public interface TransitionResultConsumerI {
   void anything();
 
   void nothing();
-
-  void oneOf();
 }

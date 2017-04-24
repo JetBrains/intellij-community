@@ -26,11 +26,11 @@ public class JsonSchemaResolver {
   @NotNull private final JsonSchemaObject myRootSchema;
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
-  @NotNull private final List<JsonSchemaWalker.Step> myPosition;
+  @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> myPosition;
 
   public JsonSchemaResolver(@NotNull JsonSchemaObject schema,
                             boolean isName,
-                            @NotNull List<JsonSchemaWalker.Step> position) {
+                            @NotNull List<JsonSchemaVariantsTreeBuilder.Step> position) {
     myRootSchema = schema;
     mySchema = schema;
     myIsName = isName;

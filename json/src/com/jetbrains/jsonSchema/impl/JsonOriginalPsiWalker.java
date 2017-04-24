@@ -71,10 +71,10 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public List<JsonSchemaWalker.Step> findPosition(@NotNull PsiElement element, boolean isName, boolean forceLastTransition) {
-    final List<JsonSchemaWalker.Step> steps = new ArrayList<>();
+  public List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull PsiElement element, boolean isName, boolean forceLastTransition) {
+    final List<JsonSchemaVariantsTreeBuilder.Step> steps = new ArrayList<>();
     if (!isName) {
-      steps.add(new JsonSchemaWalker.Step(JsonSchemaWalker.StateType._value, null));
+      steps.add(new JsonSchemaVariantsTreeBuilder.Step(JsonSchemaVariantsTreeBuilder.StateType._value, null));
     }
     PsiElement current = element;
     while (! (current instanceof PsiFile)) {
@@ -91,20 +91,20 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
             break;
           }
         }
-        steps.add(new JsonSchemaWalker.Step(JsonSchemaWalker.StateType._array, new JsonSchemaWalker.ArrayTransition(idx)));
+        steps.add(new JsonSchemaVariantsTreeBuilder.Step(JsonSchemaVariantsTreeBuilder.StateType._array, new JsonSchemaVariantsTreeBuilder.ArrayTransition(idx)));
       } else if (current instanceof JsonProperty) {
         final String propertyName = ((JsonProperty)current).getName();
         current = current.getParent();
         if (!(current instanceof JsonObject)) return null;//incorrect syntax?
         // if either value or not first in the chain - needed for completion variant
         if (position != element || forceLastTransition) {
-          steps.add(new JsonSchemaWalker.Step(JsonSchemaWalker.StateType._object, new JsonSchemaWalker.PropertyTransition(propertyName)));
+          steps.add(new JsonSchemaVariantsTreeBuilder.Step(JsonSchemaVariantsTreeBuilder.StateType._object, new JsonSchemaVariantsTreeBuilder.PropertyTransition(propertyName)));
         }
       } else if (current instanceof JsonObject && position instanceof JsonProperty) {
         // if either value or not first in the chain - needed for completion variant
         if (position != element || forceLastTransition) {
           final String propertyName = ((JsonProperty)position).getName();
-          steps.add(new JsonSchemaWalker.Step(JsonSchemaWalker.StateType._object, new JsonSchemaWalker.PropertyTransition(propertyName)));
+          steps.add(new JsonSchemaVariantsTreeBuilder.Step(JsonSchemaVariantsTreeBuilder.StateType._object, new JsonSchemaVariantsTreeBuilder.PropertyTransition(propertyName)));
         }
       } else if (current instanceof PsiFile) {
         break;
