@@ -199,12 +199,12 @@ public class TreeState implements JDOMExternalizable {
     if (value instanceof NavigationItem) {
       try {
         String name = ((NavigationItem)value).getName();
-        return name != null ? name : value.toString();
+        return name != null ? name : StringUtil.notNullize(value.toString());
       }
       catch (Exception ignored) {
       }
     }
-    return userObject.toString();
+    return StringUtil.notNullize(userObject.toString());
   }
 
   @NotNull
