@@ -52,9 +52,6 @@
   </extensionPoints>
 
   <actions>
-    <action id="Edu.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
-      <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="before"/>
-    </action>
     <action id="Edu.Check" class="com.jetbrains.edu.learning.actions.StudyCheckAction"/>
     <action id="PrevWindowAction" class="com.jetbrains.edu.learning.actions.StudyPrevWindowAction" text="Previous Answer Placeholder"
             description="Navigate to the previous answer placeholder">
