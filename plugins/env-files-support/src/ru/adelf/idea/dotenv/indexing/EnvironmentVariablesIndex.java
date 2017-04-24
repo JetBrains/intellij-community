@@ -7,7 +7,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 
 import java.util.HashMap;
@@ -22,7 +22,7 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
         return fileContent -> {
             final Map<String, Void> map = new HashMap<>();
 
-            for(EnvVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 for(Pair<String, String> keyValue : provider.getKeyValues(fileContent)) {
                     map.put(getIndexKey(keyValue), null);
                 }
@@ -51,7 +51,7 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
         return file -> {
-            for(EnvVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 if(provider.acceptFile(file)) return true;
             }
 

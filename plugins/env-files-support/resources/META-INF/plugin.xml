@@ -31,7 +31,7 @@
   <depends>Docker</depends>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvVariablesProvider"/>
+    <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

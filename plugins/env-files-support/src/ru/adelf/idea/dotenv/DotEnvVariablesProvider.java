@@ -6,14 +6,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.indexing.FileContent;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.util.DotEnvPsiElementsVisitor;
 
 import java.util.Collection;
 import java.util.Set;
 
-public class DotEnvVariablesProvider implements EnvVariablesProvider {
+public class DotEnvVariablesProvider implements EnvironmentVariablesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(DotEnvFileType.INSTANCE);

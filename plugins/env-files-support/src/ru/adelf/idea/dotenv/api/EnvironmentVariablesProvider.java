@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Set;
 
-public interface EnvVariablesProvider {
+public interface EnvironmentVariablesProvider {
     boolean acceptFile(VirtualFile file);
 
     @NotNull

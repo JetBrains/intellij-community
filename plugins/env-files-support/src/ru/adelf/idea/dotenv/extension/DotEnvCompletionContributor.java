@@ -17,8 +17,7 @@ import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.adelf.idea.dotenv.DotEnvFileType;
-import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
@@ -95,7 +94,7 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
                 return true;
             }
 
-            for(EnvVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 if(provider.acceptFile(virtualFile)) {
                     targets.addAll(provider.getTargetsByKey(key, psiFileTarget));
                 }

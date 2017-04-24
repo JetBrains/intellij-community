@@ -8,12 +8,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.indexing.FileContent;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 
 import java.util.Collection;
 import java.util.Set;
 
-public class DockerfileVariablesProvider implements EnvVariablesProvider {
+public class DockerfileVariablesProvider implements EnvironmentVariablesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(DockerFileType.DOCKER_FILE_TYPE);
