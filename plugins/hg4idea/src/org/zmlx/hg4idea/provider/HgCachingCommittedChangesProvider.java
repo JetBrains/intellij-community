@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -52,6 +53,7 @@ import java.util.*;
 
 public class HgCachingCommittedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
+  private static final Logger LOG = Logger.getInstance(HgCachingCommittedChangesProvider.class);
   private final Project project;
   private final HgVcs myVcs;
   public final static int VERSION_WITH_REPOSITORY_BRANCHES = 2;
@@ -409,6 +411,9 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       }
       else if (afterFilter != null) {
         args.append("tip:").append(afterFilter);
+        if (afterFilter == 0) {
+          LOG.debug("Get repository commits not from Log", new Throwable());
+        }
       }
       else if (beforeFilter != null) {
         args.append("reverse(:").append(beforeFilter).append(")");
