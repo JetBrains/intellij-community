@@ -21,12 +21,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ParameterHintsUpdater {
@@ -89,7 +93,12 @@ public class ParameterHintsUpdater {
 
   public void update() {
     boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
+    boolean isBulkModeNeeded = myUpdateList.size() > 1000 && myEditor.getSoftWrapModel().isSoftWrappingEnabled();
+    DocumentUtil.executeInBulk(myEditor.getDocument(), isBulkModeNeeded, () -> performHintsUpdate(firstTime));
+    myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
+  }
 
+  private void performHintsUpdate(boolean firstTime) {
     for (int infoIndex = 0; infoIndex < myUpdateList.size(); infoIndex++) {
       InlayUpdateInfo info = myUpdateList.get(infoIndex);
       String oldText = info.oldText;
@@ -107,10 +116,7 @@ public class ParameterHintsUpdater {
         myHintsManager.replaceHint(myEditor, info.inlay, newText);
       }
     }
-
-    myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
   }
-
 
   private boolean isSameHintRemovedNear(@NotNull String text, int index) {
     return getInfosNear(index).anyMatch((info) -> text.equals(info.oldText));
