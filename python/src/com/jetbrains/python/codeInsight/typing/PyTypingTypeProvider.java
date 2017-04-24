@@ -67,6 +67,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String GENERIC = "typing.Generic";
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
+  private static final String CALLABLE = "typing.Callable";
 
   public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
 
@@ -99,7 +100,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.TypeVar")
     .add(GENERIC)
     .add("typing.Tuple")
-    .add("typing.Callable")
+    .add(CALLABLE)
     .add("typing.Type")
     .add("typing.no_type_check")
     .add("typing.Union")
@@ -629,7 +630,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
       final PyExpression operand = subscriptionExpr.getOperand();
       final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (operandNames.contains("typing.Callable")) {
+      if (operandNames.contains(CALLABLE)) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr instanceof PyTupleExpression) {
           final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;
@@ -651,6 +652,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             }
           }
         }
+      }
+    }
+    else if (resolved instanceof PyTargetExpression) {
+      if (resolveToQualifiedNames((PyTargetExpression)resolved, context.getTypeContext()).contains(CALLABLE)) {
+        return new PyCallableTypeImpl(null, null);
       }
     }
     return null;
