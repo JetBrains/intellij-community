@@ -26,8 +26,6 @@ import java.util.List;
  * @author Irina.Chernushina on 4/22/2017.
  */
 public class MatchResult {
-  boolean myAny;
-  boolean myNothing;
   public final List<JsonSchemaObject> mySchemas;
   public final List<JsonSchemaObject> myExcludingSchemas;
 
@@ -40,8 +38,6 @@ public class MatchResult {
     final MatchResult result = new MatchResult();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
                           node -> {
-                            result.myAny |= node.isAny();
-                            result.myNothing |= node.isNothing();
                             if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() && !node.isConflicting()
                                 && !node.isDefinitionNotFound()) {
                               if (node.getParent() != null && node.getParent().getExcludingChildren().contains(node)) {
