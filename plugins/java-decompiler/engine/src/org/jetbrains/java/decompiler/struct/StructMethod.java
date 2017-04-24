@@ -141,26 +141,26 @@ public class StructMethod extends StructMember {
       List<Integer> operands = new ArrayList<>();
 
       if (opcode >= opc_iconst_m1 && opcode <= opc_iconst_5) {
-        operands.add(new Integer(opr_iconst[opcode - opc_iconst_m1]));
+        operands.add(opr_iconst[opcode - opc_iconst_m1]);
         opcode = opc_bipush;
       }
       else if (opcode >= opc_iload_0 && opcode <= opc_aload_3) {
-        operands.add(new Integer(opr_loadstore[opcode - opc_iload_0]));
+        operands.add(opr_loadstore[opcode - opc_iload_0]);
         opcode = opcs_load[(opcode - opc_iload_0) / 4];
       }
       else if (opcode >= opc_istore_0 && opcode <= opc_astore_3) {
-        operands.add(new Integer(opr_loadstore[opcode - opc_istore_0]));
+        operands.add(opr_loadstore[opcode - opc_istore_0]);
         opcode = opcs_store[(opcode - opc_istore_0) / 4];
       }
       else {
         switch (opcode) {
           case opc_bipush:
-            operands.add(new Integer(in.readByte()));
+            operands.add(Integer.valueOf(in.readByte()));
             i++;
             break;
           case opc_ldc:
           case opc_newarray:
-            operands.add(new Integer(in.readUnsignedByte()));
+            operands.add(Integer.valueOf(in.readUnsignedByte()));
             i++;
             break;
           case opc_sipush:
@@ -185,7 +185,7 @@ public class StructMethod extends StructMember {
             if (opcode != opc_sipush) {
               group = GROUP_JUMP;
             }
-            operands.add(new Integer(in.readShort()));
+            operands.add(Integer.valueOf(in.readShort()));
             i += 2;
             break;
           case opc_ldc_w:
@@ -201,7 +201,7 @@ public class StructMethod extends StructMember {
           case opc_anewarray:
           case opc_checkcast:
           case opc_instanceof:
-            operands.add(new Integer(in.readUnsignedShort()));
+            operands.add(in.readUnsignedShort());
             i += 2;
             if (opcode >= opc_getstatic && opcode <= opc_putfield) {
               group = GROUP_FIELDACCESS;
@@ -212,7 +212,7 @@ public class StructMethod extends StructMember {
             break;
           case opc_invokedynamic:
             if (classStruct.isVersionGE_1_7()) { // instruction unused in Java 6 and before
-              operands.add(new Integer(in.readUnsignedShort()));
+              operands.add(in.readUnsignedShort());
               in.discard(2);
               group = GROUP_INVOCATION;
               i += 4;
@@ -230,11 +230,11 @@ public class StructMethod extends StructMember {
           case opc_astore:
           case opc_ret:
             if (wide) {
-              operands.add(new Integer(in.readUnsignedShort()));
+              operands.add(in.readUnsignedShort());
               i += 2;
             }
             else {
-              operands.add(new Integer(in.readUnsignedByte()));
+              operands.add(in.readUnsignedByte());
               i++;
             }
             if (opcode == opc_ret) {
@@ -243,49 +243,49 @@ public class StructMethod extends StructMember {
             break;
           case opc_iinc:
             if (wide) {
-              operands.add(new Integer(in.readUnsignedShort()));
-              operands.add(new Integer(in.readShort()));
+              operands.add(in.readUnsignedShort());
+              operands.add(Integer.valueOf(in.readShort()));
               i += 4;
             }
             else {
-              operands.add(new Integer(in.readUnsignedByte()));
-              operands.add(new Integer(in.readByte()));
+              operands.add(in.readUnsignedByte());
+              operands.add(Integer.valueOf(in.readByte()));
               i += 2;
             }
             break;
           case opc_goto_w:
           case opc_jsr_w:
             opcode = opcode == opc_jsr_w ? opc_jsr : opc_goto;
-            operands.add(new Integer(in.readInt()));
+            operands.add(in.readInt());
             group = GROUP_JUMP;
             i += 4;
             break;
           case opc_invokeinterface:
-            operands.add(new Integer(in.readUnsignedShort()));
-            operands.add(new Integer(in.readUnsignedByte()));
+            operands.add(in.readUnsignedShort());
+            operands.add(in.readUnsignedByte());
             in.discard(1);
             group = GROUP_INVOCATION;
             i += 4;
             break;
           case opc_multianewarray:
-            operands.add(new Integer(in.readUnsignedShort()));
-            operands.add(new Integer(in.readUnsignedByte()));
+            operands.add(in.readUnsignedShort());
+            operands.add(in.readUnsignedByte());
             i += 3;
             break;
           case opc_tableswitch:
             in.discard((4 - (i + 1) % 4) % 4);
             i += ((4 - (i + 1) % 4) % 4); // padding
-            operands.add(new Integer(in.readInt()));
+            operands.add(in.readInt());
             i += 4;
             int low = in.readInt();
-            operands.add(new Integer(low));
+            operands.add(low);
             i += 4;
             int high = in.readInt();
-            operands.add(new Integer(high));
+            operands.add(high);
             i += 4;
 
             for (int j = 0; j < high - low + 1; j++) {
-              operands.add(new Integer(in.readInt()));
+              operands.add(in.readInt());
               i += 4;
             }
             group = GROUP_SWITCH;
@@ -294,16 +294,16 @@ public class StructMethod extends StructMember {
           case opc_lookupswitch:
             in.discard((4 - (i + 1) % 4) % 4);
             i += ((4 - (i + 1) % 4) % 4); // padding
-            operands.add(new Integer(in.readInt()));
+            operands.add(in.readInt());
             i += 4;
             int npairs = in.readInt();
-            operands.add(new Integer(npairs));
+            operands.add(npairs);
             i += 4;
 
             for (int j = 0; j < npairs; j++) {
-              operands.add(new Integer(in.readInt()));
+              operands.add(in.readInt());
               i += 4;
-              operands.add(new Integer(in.readInt()));
+              operands.add(in.readInt());
               i += 4;
             }
             group = GROUP_SWITCH;
@@ -319,14 +319,17 @@ public class StructMethod extends StructMember {
         }
       }
 
-      int[] ops = new int[operands.size()];
-      for (int j = 0; j < operands.size(); j++) {
-        ops[j] = operands.get(j).intValue();
+      int[] ops = null;
+      if (!operands.isEmpty()) {
+        ops = new int[operands.size()];
+        for (int j = 0; j < operands.size(); j++) {
+          ops[j] = operands.get(j).intValue();
+        }
       }
 
       Instruction instr = ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, ops);
 
-      instructions.addWithKey(instr, new Integer(offset));
+      instructions.addWithKey(instr, offset);
 
       i++;
     }
