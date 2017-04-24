@@ -26,6 +26,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
@@ -537,10 +538,7 @@ public class FindManagerImpl extends FindManager {
                                                       @NotNull final VirtualFile file) {
     synchronized (model) {
       FileType ftype = file.getFileType();
-      Language lang = null;
-      if (ftype instanceof LanguageFileType) {
-        lang = ((LanguageFileType)ftype).getLanguage();
-      }
+      Language lang = LanguageUtil.getLanguageForPsi(myProject, file);
 
       CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
       if (data == null || !Comparing.equal(data.lastFile, file) || !data.model.equals(model)) {
