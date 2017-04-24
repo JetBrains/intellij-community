@@ -1234,7 +1234,9 @@ public class BuildManager implements Disposable {
     final List<String> launcherCp = new ArrayList<>();
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
-    launcherCp.add(compilerPath);
+    if (compilerPath != null) {   // can be null in case of jdk9
+      launcherCp.add(compilerPath);
+    }
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, shouldIncludeEclipseCompiler(projectConfig));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
