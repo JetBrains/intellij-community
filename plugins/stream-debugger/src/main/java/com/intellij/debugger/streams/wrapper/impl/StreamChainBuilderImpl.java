@@ -55,9 +55,6 @@ public class StreamChainBuilderImpl implements StreamChainBuilder {
     @Override
     public void visitLambdaExpression(PsiLambdaExpression expression) {
       // ignore lambda calls if stream call was found
-      if (SEARCH_RESULT.get() == null) {
-        super.visitLambdaExpression(expression);
-      }
     }
 
     @Override
