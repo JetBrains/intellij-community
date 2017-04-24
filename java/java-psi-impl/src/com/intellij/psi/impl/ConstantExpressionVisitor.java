@@ -15,15 +15,16 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,6 +33,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   private final StringInterner myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
+  private Map<PsiElement, Object> myCachedValues = new HashMap<>();
   private final boolean myThrowExceptionOnOverflow;
 
   private Object myResult;
@@ -50,20 +52,13 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     store(element, myResult);
     return myResult;
   }
-  private static final Key<Object> VALUE = Key.create("VALUE");
-  private static Object getStoredValue(PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    try {
-      return element.getUserData(VALUE);
-    }
-    finally {
-      element.putUserData(VALUE, null);
-    }
+
+  private Object getStoredValue(PsiElement element) {
+    return myCachedValues.remove(element);
   }
-  static void store(PsiElement element, Object value) {
-    element.putUserData(VALUE, value);
+
+  void store(PsiElement element, Object value) {
+    myCachedValues.put(element, value);
   }
 
   @Override
@@ -543,6 +538,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       String name = ClassUtil.getJVMClassName((PsiClass)element);
       try {
         Class aClass = Class.forName(name);
+        //noinspection unchecked
         myResult = Enum.valueOf(aClass, constant);
       }
       catch (Throwable ignore) { }
