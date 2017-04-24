@@ -114,7 +114,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
         if (myDescriptionTextField.isShowing()) {
           GraphicsUtil.setupAntialiasing(g);
           g.setColor(JBColor.GRAY);
-          g.drawString("Enter to save, Esc to cancel", 0, -JBUI.scale(5));
+          g.drawString(EditableSchemesCombo.EDITING_HINT, 0, -JBUI.scale(5));
         }
       }
     };

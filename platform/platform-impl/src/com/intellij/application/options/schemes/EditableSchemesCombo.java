@@ -37,7 +37,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   // region Message constants
   public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
   public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
-  private static final String EDITING_HINT = "Enter to save, Esc to cancel";
+  public static final String EDITING_HINT = "Enter to save, Esc to cancel";
   public static final int COMBO_WIDTH = 200;
   // endregion
   
