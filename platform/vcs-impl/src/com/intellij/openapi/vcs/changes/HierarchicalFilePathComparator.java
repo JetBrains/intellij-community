@@ -30,7 +30,7 @@ import java.util.Comparator;
 public class HierarchicalFilePathComparator implements Comparator<FilePath> {
 
   public static final HierarchicalFilePathComparator IGNORE_CASE = new HierarchicalFilePathComparator(true);
-  public static final HierarchicalFilePathComparator SYSTEM_CASE_SENSITIVE = new HierarchicalFilePathComparator(SystemInfo.isFileSystemCaseSensitive);
+  public static final HierarchicalFilePathComparator SYSTEM_CASE_SENSITIVE = new HierarchicalFilePathComparator(!SystemInfo.isFileSystemCaseSensitive);
 
   private final boolean myIgnoreCase;
 
