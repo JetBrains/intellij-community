@@ -38,8 +38,8 @@ public class MatchResult {
     final MatchResult result = new MatchResult();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
                           node -> {
-                            if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() && !node.isConflicting()
-                                && !node.isDefinitionNotFound()) {
+                            if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
+                                SchemaResolveState.normal.equals(node.getResolveState())) {
                               if (node.getParent() != null && node.getParent().getExcludingChildren().contains(node)) {
                                 result.myExcludingSchemas.add(node.getSchema());
                               } else {

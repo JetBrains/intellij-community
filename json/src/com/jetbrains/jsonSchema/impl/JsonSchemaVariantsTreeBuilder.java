@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -64,16 +65,14 @@ public class JsonSchemaVariantsTreeBuilder {
 
     while (!queue.isEmpty()) {
       final JsonSchemaTreeNode node = queue.removeFirst();
-      if (node.isFinite()) continue;
-      final List<Step> steps = node.getSteps();
-      //noinspection ConstantConditions
-      final Step step = steps.get(0);
-      if (!byStateType(step.isFromObject(), node.getSchema())) {
+      if (node.isAny() || node.isNothing() || node.getSteps().isEmpty() || node.getSchema() == null) continue;
+      final Step step = node.getSteps().get(0);
+      if (!typeMatches(step.isFromObject(), node.getSchema())) {
         continue;
       }
       final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), !myIsName);
-      if (ThreeState.NO.equals(pair.getFirst())) node.setChild(JsonSchemaTreeNode.createNothing(node));
-      else if (ThreeState.YES.equals(pair.getFirst())) node.setChild(JsonSchemaTreeNode.createAny(node));
+      if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
+      else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
         // process step results
         assert pair.getSecond() != null;
@@ -87,7 +86,7 @@ public class JsonSchemaVariantsTreeBuilder {
     return root;
   }
 
-  private static boolean byStateType(final boolean isObject, @NotNull final JsonSchemaObject schema) {
+  private static boolean typeMatches(final boolean isObject, @NotNull final JsonSchemaObject schema) {
     final JsonSchemaType requiredType = isObject ? JsonSchemaType._object : JsonSchemaType._array;
     if (schema.getType() != null) {
       return requiredType.equals(schema.getType());
@@ -108,18 +107,9 @@ public class JsonSchemaVariantsTreeBuilder {
       final ProcessDefinitionsOperation operation = new ProcessDefinitionsOperation(childSchema, rootSchemasMap);
       operation.doMap();
       operation.doReduce();
-      if (SchemaResolveState.brokenDefinition.equals(operation.myState) || SchemaResolveState.cyclicDefinition.equals(operation.myState))
-        node.setChild(JsonSchemaTreeNode.createNoDefinition(node));
-      else {
-        node.addChildren(operation.myReduceContext.myAnyGroup.stream()
-                           .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
-        node.addExcludingChildren(operation.myReduceContext.myExclusiveOrGroup.stream()
-                           .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
-      }
+      node.createChildrenFromOperation(operation);
     } else {
-      if (conflictingSchema(childSchema)) {
-        node.setChild(JsonSchemaTreeNode.createConflicting(node));
-      } else node.setChild(new JsonSchemaTreeNode(node, childSchema));
+      node.setChild(childSchema);
     }
   }
 
@@ -130,13 +120,9 @@ public class JsonSchemaVariantsTreeBuilder {
       .collect(Collectors.toList());
   }
 
-  enum SchemaResolveState {
-    normal, conflict, brokenDefinition, cyclicDefinition
-  }
-
-  private static abstract class Operation {
-    // todo theoretically, we could use just pairs here
-    @NotNull protected final ReduceContext myReduceContext;
+  static abstract class Operation {
+    @NotNull final List<JsonSchemaObject> myAnyOfGroup = new SmartList<>();
+    @NotNull final List<JsonSchemaObject> myOneOfGroup = new SmartList<>();
     @NotNull protected final List<Operation> myChildOperations;
     @NotNull protected final JsonSchemaObject mySourceNode;
     protected SchemaResolveState myState = SchemaResolveState.normal;
@@ -146,7 +132,6 @@ public class JsonSchemaVariantsTreeBuilder {
                         @NotNull Map<VirtualFile, JsonSchemaObject> map) {
       mySourceNode = sourceNode;
       myRootSchemasMap = map;
-      myReduceContext = new ReduceContext();
       myChildOperations = new ArrayList<>();
     }
 
@@ -161,7 +146,8 @@ public class JsonSchemaVariantsTreeBuilder {
     public void doReduce() {
       if (!SchemaResolveState.normal.equals(myState)) {
         myChildOperations.clear();
-        myReduceContext.clear();
+        myAnyOfGroup.clear();
+        myOneOfGroup.clear();
         return;
       }
       myChildOperations.forEach(Operation::doReduce);
@@ -182,24 +168,8 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  // todo maybe this will be removed
-  private static class ReduceContext {
-    @NotNull final List<JsonSchemaObject> myAnyGroup = new ArrayList<>();
-    @NotNull final List<JsonSchemaObject> myExclusiveOrGroup = new ArrayList<>();
-
-    public void clear() {
-      myExclusiveOrGroup.clear();
-      myAnyGroup.clear();
-    }
-
-    public ReduceContext copy() {
-      final ReduceContext context = new ReduceContext();
-      context.myAnyGroup.addAll(myAnyGroup);
-      context.myExclusiveOrGroup.addAll(myExclusiveOrGroup);
-      return context;
-    }
-  }
-
+  // even if there are no definitions to expand, this object may work as an intermediate node in a tree,
+  // connecting oneOf and allOf expansion, for example
   private static class ProcessDefinitionsOperation extends Operation {
     protected ProcessDefinitionsOperation(@NotNull JsonSchemaObject sourceNode,
                                           @NotNull Map<VirtualFile, JsonSchemaObject> map) {
@@ -225,15 +195,16 @@ public class JsonSchemaVariantsTreeBuilder {
       }
       final Operation expandOperation = createExpandOperation(current);
       if (expandOperation != null) myChildOperations.add(expandOperation);
-      else myReduceContext.myAnyGroup.add(current);
+      else myAnyOfGroup.add(current);
     }
 
     @Override
     public void reduce() {
       if (!myChildOperations.isEmpty()) {
         assert myChildOperations.size() == 1;
-        myReduceContext.myAnyGroup.addAll(myChildOperations.get(0).myReduceContext.myAnyGroup);
-        myReduceContext.myExclusiveOrGroup.addAll(myChildOperations.get(0).myReduceContext.myExclusiveOrGroup);
+        final Operation operation = myChildOperations.get(0);
+        myAnyOfGroup.addAll(operation.myAnyOfGroup);
+        myOneOfGroup.addAll(operation.myOneOfGroup);
       }
     }
   }
@@ -253,20 +224,21 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void reduce() {
-      myReduceContext.myAnyGroup.add(mySourceNode);
+      myAnyOfGroup.add(mySourceNode);
 
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
 
-        final List<JsonSchemaObject> mergedAny = andGroups(op.myReduceContext.myAnyGroup, myReduceContext.myAnyGroup);
+        final List<JsonSchemaObject> mergedAny = andGroups(op.myAnyOfGroup, myAnyOfGroup);
 
-        final List<JsonSchemaObject> mergedExclusive = andGroups(op.myReduceContext.myAnyGroup, myReduceContext.myExclusiveOrGroup);
-        mergedExclusive.addAll(andGroups(op.myReduceContext.myExclusiveOrGroup, myReduceContext.myAnyGroup));
-        mergedExclusive.addAll(andGroups(op.myReduceContext.myExclusiveOrGroup, myReduceContext.myExclusiveOrGroup));
+        final List<JsonSchemaObject> mergedExclusive = andGroups(op.myAnyOfGroup, myOneOfGroup);
+        mergedExclusive.addAll(andGroups(op.myOneOfGroup, myAnyOfGroup));
+        mergedExclusive.addAll(andGroups(op.myOneOfGroup, myOneOfGroup));
 
-        myReduceContext.clear();
-        myReduceContext.myAnyGroup.addAll(mergedAny);
-        myReduceContext.myExclusiveOrGroup.addAll(mergedExclusive);
+        myAnyOfGroup.clear();
+        myOneOfGroup.clear();
+        myAnyOfGroup.addAll(mergedAny);
+        myOneOfGroup.addAll(mergedExclusive);
       });
     }
   }
@@ -288,7 +260,6 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map() {
-      // todo creation of process definition operation should be done only if needed -> we need checks
       assert mySourceNode.getOneOf() != null;
       myChildOperations.addAll(mySourceNode.getOneOf().stream()
                                  .map(s -> new ProcessDefinitionsOperation(s, myRootSchemasMap)).collect(Collectors.toList()));
@@ -299,8 +270,8 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
 
-        myReduceContext.myExclusiveOrGroup.addAll(andGroup(mySourceNode, op.myReduceContext.myAnyGroup));
-        myReduceContext.myExclusiveOrGroup.addAll(andGroup(mySourceNode, op.myReduceContext.myExclusiveOrGroup));
+        myOneOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
+        myOneOfGroup.addAll(andGroup(mySourceNode, op.myOneOfGroup));
       });
     }
   }
@@ -323,8 +294,8 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
 
-        myReduceContext.myAnyGroup.addAll(op.myReduceContext.myAnyGroup);
-        myReduceContext.myExclusiveOrGroup.addAll(op.myReduceContext.myExclusiveOrGroup);
+        myAnyOfGroup.addAll(op.myAnyOfGroup);
+        myOneOfGroup.addAll(op.myOneOfGroup);
       });
     }
   }
