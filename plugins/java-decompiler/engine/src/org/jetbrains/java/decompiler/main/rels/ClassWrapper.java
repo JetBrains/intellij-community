@@ -217,4 +217,9 @@ public class ClassWrapper {
   public VBStyleCollection<Exprent, String> getDynamicFieldInitializers() {
     return dynamicFieldInitializers;
   }
+
+  @Override
+  public String toString() {
+    return classStruct.qualifiedName;
+  }
 }
