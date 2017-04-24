@@ -39,8 +39,8 @@ abstract class MacDistributionCustomizer {
   String minOSXVersion = "10.8"
 
   /**
-   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format
-   * If there's no help bundled, leave empty
+   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
+   * If there's no help bundled, leave empty.
    */
   String helpId = ""
 
@@ -128,6 +128,14 @@ abstract class MacDistributionCustomizer {
    * @return map propertyName-&gt;propertyValue
    */
   Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
+
+  /**
+   * Override this method if you need to bundle help with Mac OS distribution of the product.
+   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside or {@code null} if help files shouldn't be bundled.
+   */
+  String getPathToHelpZip(BuildContext context) {
+    null
+  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
