@@ -15,7 +15,6 @@
  */
 package org.jetbrains.java.decompiler.main.collectors;
 
-import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -49,20 +48,16 @@ public class ImportCollector {
       currentPackagePoint = "";
     }
 
-    Map<String, ClassNode> mapRootCases =  DecompilerContext.getClassProcessor().getMapRootClasses();
-    for(StructClass sClass = root.classStruct;
-        sClass!=null;
-        ){
-      // all field names for current class ..
-      for(StructField f: sClass.getFields()) {
+    Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
+    StructClass currentClass = root.classStruct;
+    while (currentClass != null) {
+      // all field names for the current class ..
+      for (StructField f : currentClass.getFields()) {
         setFieldNames.add(f.getName());
       }
 
       // .. and traverse through parent.
-      ClassNode classNode;
-      if(sClass.superClass==null || (classNode = (mapRootCases.get(sClass.superClass.getString())))==null)
-            break;
-      sClass = classNode.classStruct;
+      currentClass = currentClass.superClass != null ? classes.get(currentClass.superClass.getString()) : null;
     }
   }
 
@@ -74,9 +69,10 @@ public class ImportCollector {
    */
   public String getShortNameInClassContext(String classToName) {
     String shortName = getShortName(classToName);
-    if(setFieldNames.contains(shortName)) {
+    if (setFieldNames.contains(shortName)) {
       return classToName;
-    } else {
+    }
+    else {
       return shortName;
     }
   }
