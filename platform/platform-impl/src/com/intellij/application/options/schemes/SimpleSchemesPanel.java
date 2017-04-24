@@ -36,12 +36,12 @@ public abstract class SimpleSchemesPanel<T extends Scheme> extends AbstractSchem
   }
 
   @Override
-  public final void showMessage(@Nullable String message, @NotNull MessageType messageType) {
+  public void showMessage(@Nullable String message, @NotNull MessageType messageType) {
     showMessage(message, messageType, myInfoComponent);
   }
 
   @Override
-  public final void clearMessage() {
+  public void clearMessage() {
     myInfoComponent.setText(null);
   }
 }
