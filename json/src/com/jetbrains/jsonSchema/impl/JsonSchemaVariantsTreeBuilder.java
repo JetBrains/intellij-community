@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -70,15 +71,13 @@ public class JsonSchemaVariantsTreeBuilder {
       if (!byStateType(step.isFromObject(), node.getSchema())) {
         continue;
       }
-      // todo further get rid of consumer?
-      final TransitionResultConsumer consumer = new TransitionResultConsumer();
-      step.step(node.getSchema(), consumer, !myIsName);
-      if (consumer.isNothing()) node.setChild(JsonSchemaTreeNode.createNothing(node));
-      else if (consumer.isAny()) node.setChild(JsonSchemaTreeNode.createAny(node));
+      final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), !myIsName);
+      if (ThreeState.NO.equals(pair.getFirst())) node.setChild(JsonSchemaTreeNode.createNothing(node));
+      else if (ThreeState.YES.equals(pair.getFirst())) node.setChild(JsonSchemaTreeNode.createAny(node));
       else {
         // process step results
-        assert consumer.getSchema() != null;
-        applyChildSchema(rootSchemasMap, node, consumer.getSchema());
+        assert pair.getSecond() != null;
+        applyChildSchema(rootSchemasMap, node, pair.getSecond());
       }
 
       queue.addAll(node.getChildren());
@@ -124,17 +123,15 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  // todo look at return value
-  public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
+  public static List<Step> buildSteps(@NotNull String nameInSchema) {
     final List<String> chain = StringUtil.split(JsonSchemaService.normalizeId(nameInSchema).replace("\\", "/"), "/");
-    final List<Step> steps = chain.stream().filter(s -> !s.isEmpty()).map(item -> Step.createPropertyStep(item))
+    return chain.stream().filter(s -> !s.isEmpty())
+      .map(item -> Step.createPropertyStep(item))
       .collect(Collectors.toList());
-    if (steps.isEmpty()) return Pair.create(Collections.emptyList(), nameInSchema);
-    return Pair.create(steps, chain.get(chain.size() - 1));
   }
 
   enum SchemaResolveState {
-    normal, conflict, brokenDefinition, cyclicDefinition;
+    normal, conflict, brokenDefinition, cyclicDefinition
   }
 
   private static abstract class Operation {
@@ -403,47 +400,6 @@ public class JsonSchemaVariantsTreeBuilder {
     return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null;
   }
 
-  static class TransitionResultConsumer implements TransitionResultConsumerI {
-    @Nullable private JsonSchemaObject mySchema;
-    private boolean myAny;
-    private boolean myNothing;
-
-    public TransitionResultConsumer() {
-      myNothing = true;
-    }
-
-    @Nullable
-    public JsonSchemaObject getSchema() {
-      return mySchema;
-    }
-
-    @Override
-    public void setSchema(@Nullable JsonSchemaObject schema) {
-      mySchema = schema;
-      myNothing = schema == null;
-    }
-
-    public boolean isAny() {
-      return myAny;
-    }
-
-    @Override
-    public void anything() {
-      myAny = true;
-      myNothing = false;
-    }
-
-    public boolean isNothing() {
-      return myNothing;
-    }
-
-    @Override
-    public void nothing() {
-      myNothing = true;
-      myAny = false;
-    }
-  }
-
   public static class Step {
     @Nullable private final String myName;
     private final int myIdx;
@@ -475,14 +431,13 @@ public class JsonSchemaVariantsTreeBuilder {
       return myName;
     }
 
-    public void step(@NotNull JsonSchemaObject parent,
-                     @NotNull TransitionResultConsumerI resultConsumer,
-                     boolean acceptAdditionalPropertiesSchemas) {
+    @NotNull
+    public Pair<ThreeState, JsonSchemaObject> step(@NotNull JsonSchemaObject parent, boolean acceptAdditionalPropertiesSchemas) {
       if (myName != null) {
-        propertyStep(parent, resultConsumer, acceptAdditionalPropertiesSchemas);
+        return propertyStep(parent, acceptAdditionalPropertiesSchemas);
       } else {
         assert myIdx >= 0;
-        arrayElementStep(parent, resultConsumer);
+        return arrayElementStep(parent, acceptAdditionalPropertiesSchemas);
       }
     }
 
@@ -494,58 +449,53 @@ public class JsonSchemaVariantsTreeBuilder {
       return String.format(format, myName != null ? myName : (myIdx >= 0 ? String.valueOf(myIdx) : "null"));
     }
 
-    private void propertyStep(@NotNull JsonSchemaObject parent,
-                     @NotNull TransitionResultConsumerI resultConsumer,
+    @NotNull
+    private Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull JsonSchemaObject parent,
                      boolean acceptAdditionalPropertiesSchemas) {
       assert myName != null;
-      if (JsonSchemaObject.DEFINITIONS.equals(myName)) {
-        if (parent.getDefinitions() != null) {
-          final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
-          final JsonSchemaObject object = new JsonSchemaObject(pointer);
-          object.setProperties(parent.getDefinitions());
-          resultConsumer.setSchema(object);
-          return;
-        }
+      if (JsonSchemaObject.DEFINITIONS.equals(myName) && parent.getDefinitions() != null) {
+        final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
+        final JsonSchemaObject object = new JsonSchemaObject(pointer);
+        object.setProperties(parent.getDefinitions());
+        return Pair.create(ThreeState.UNSURE, object);
       }
       final JsonSchemaObject child = parent.getProperties().get(myName);
       if (child != null) {
-        resultConsumer.setSchema(child);
-      } else {
-        final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
-        if (schema != null) {
-          resultConsumer.setSchema(schema);
-          return;
-        }
-        if (parent.getAdditionalPropertiesSchema() != null) {
-          if (acceptAdditionalPropertiesSchemas) {
-            resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
-          }
-        } else {
-          if (!Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
-            resultConsumer.anything();
-          } else {
-            resultConsumer.nothing();
-          }
-        }
+        return Pair.create(ThreeState.UNSURE, child);
       }
+      final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
+      if (schema != null) {
+        return Pair.create(ThreeState.UNSURE, schema);
+      }
+      if (parent.getAdditionalPropertiesSchema() != null && acceptAdditionalPropertiesSchemas) {
+        return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
+      }
+      if (Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
+        return Pair.create(ThreeState.NO, null);
+      }
+      // by default, additional properties are allowed
+      return Pair.create(ThreeState.YES, null);
     }
 
-    private void arrayElementStep(@NotNull JsonSchemaObject parent,
-                                  @NotNull TransitionResultConsumerI resultConsumer) {
+    @NotNull
+    private Pair<ThreeState, JsonSchemaObject> arrayElementStep(@NotNull JsonSchemaObject parent,
+                                                                boolean acceptAdditionalPropertiesSchemas) {
       if (parent.getItemsSchema() != null) {
-        resultConsumer.setSchema(parent.getItemsSchema());
-      } else if (parent.getItemsSchemaList() != null) {
+        return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
+      }
+      if (parent.getItemsSchemaList() != null) {
         final List<JsonSchemaObject> list = parent.getItemsSchemaList();
         if (myIdx >= 0 && myIdx < list.size()) {
-          resultConsumer.setSchema(list.get(myIdx));
-        } else if (parent.getAdditionalItemsSchema() != null) {
-          resultConsumer.setSchema(parent.getAdditionalItemsSchema());
-        } else if (!Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {
-          resultConsumer.anything();
-        } else {
-          resultConsumer.nothing();
+          return Pair.create(ThreeState.UNSURE, list.get(myIdx));
         }
       }
+      if (parent.getAdditionalItemsSchema() != null && acceptAdditionalPropertiesSchemas) {
+        return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
+      }
+      if (Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {
+        return Pair.create(ThreeState.NO, null);
+      }
+      return Pair.create(ThreeState.YES, null);
     }
   }
 }

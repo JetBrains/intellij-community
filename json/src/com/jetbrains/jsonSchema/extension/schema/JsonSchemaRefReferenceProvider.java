@@ -83,7 +83,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         } else canSkip = true;
       }
 
-      final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(StringUtil.join(chain, "/")).getFirst();
+      final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(StringUtil.join(chain, "/"));
       return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, steps).resolveInSchemaRecursively(getElement());
     }
   }
