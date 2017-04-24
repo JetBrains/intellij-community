@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -31,7 +32,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
   @NotNull private final ColorAndFontOptions myOptions;
 
   private @Nullable JCheckBox myInheritFontCheckbox;
-  
+
   public FontOptions(@NotNull ColorAndFontOptions options) {
     myOptions = options;
   }
@@ -43,18 +44,30 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @Override
   protected void initControls() {
-    myInheritFontCheckbox = getInheritFontTitle() != null ? new JCheckBox(getInheritFontTitle()) : null;
-    if (myInheritFontCheckbox != null) {
-      add(myInheritFontCheckbox, "newline, sx 2");
+    createInheritCheckBox();
+    super.initControls();
+  }
+
+  private void createInheritCheckBox() {
+    if (getInheritFontTitle() != null) {
+      JPanel inheritPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
+      inheritPanel.setBorder(BorderFactory.createEmptyBorder());
+      myInheritFontCheckbox = new JCheckBox();
+      myInheritFontCheckbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
       myInheritFontCheckbox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           setDelegatingPreferences(myInheritFontCheckbox.isSelected());
         }
       });
+      inheritPanel.add(myInheritFontCheckbox);
+
+      JLabel inheritLabel = new JLabel(getInheritFontTitle());
+      inheritPanel.add(inheritLabel);
+
+      add(inheritPanel, "newline, span");
       add(new JSeparator(), "newline, growx, span");
     }
-    super.initControls();
   }
 
   protected void setDelegatingPreferences(boolean isDelegating) {
