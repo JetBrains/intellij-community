@@ -94,33 +94,42 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         });
 
         if (chain == null) {
-          complete(null, null, null);
+          complete(null, null, null, FailureReason.CHAIN_CONTRUCTION);
           return;
         }
 
         new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter).trace(chain, new TracingCallback() {
           @Override
           public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-            complete(chain, result, null);
+            complete(chain, result, null, null);
           }
 
           @Override
           public void evaluationFailed(@NotNull String traceExpression, @NotNull String message) {
-            complete(chain, null, message);
+            complete(chain, null, message, FailureReason.EVALUATION);
           }
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
-            complete(chain, null, message);
+            complete(chain, null, message, FailureReason.COMPILATION);
           }
         });
       }
 
       private void complete(@Nullable StreamChain chain,
                             @Nullable TracingResult result,
-                            @Nullable String error) {
+                            @Nullable String error,
+                            @Nullable FailureReason errorReason) {
         try {
-          handleResults(chain, result, error, isResultNull);
+          if (error != null) {
+            assertNotNull(errorReason);
+            assertNotNull(chain);
+            handleError(chain, error, errorReason);
+          }
+          else {
+            assertNull(errorReason);
+            handleSuccess(chain, result, isResultNull);
+          }
         }
         catch (Throwable t) {
           println("Exception caught: " + t, ProcessOutputTypes.SYSTEM);
@@ -156,12 +165,14 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     return new TraceExpressionBuilderImpl(getProject());
   }
 
-  protected void handleResults(@Nullable StreamChain chain,
+  protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull FailureReason reason) {
+    fail();
+  }
+
+  protected void handleSuccess(@Nullable StreamChain chain,
                                @Nullable TracingResult result,
-                               @Nullable String error,
                                boolean resultMustBeNull) {
     assertNotNull(chain);
-    assertNull(error);
     assertNotNull(result);
 
     println(chain.getText(), ProcessOutputTypes.SYSTEM);
@@ -265,5 +276,9 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   @NotNull
   private static String replaceIfEmpty(@NotNull String str) {
     return str.isEmpty() ? "nothing" : str;
+  }
+
+  protected enum FailureReason {
+    COMPILATION, EVALUATION, CHAIN_CONTRUCTION
   }
 }

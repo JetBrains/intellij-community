@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,14 +33,12 @@ public class FailEvaluationTest extends TraceExecutionTestCase {
   }
 
   @Override
-  protected void handleResults(@Nullable StreamChain chain,
-                               @Nullable TracingResult result,
-                               @Nullable String error,
-                               boolean resultMustBeNull) {
-    assertNotNull(chain);
-    assertNull(result);
-    assertNotNull(error);
-
+  protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull TraceExecutionTestCase.FailureReason reason) {
     println(error, ProcessOutputTypes.SYSTEM);
+  }
+
+  @Override
+  protected void handleSuccess(@Nullable StreamChain chain, @Nullable TracingResult result, boolean resultMustBeNull) {
+    fail();
   }
 }
