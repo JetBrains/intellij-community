@@ -32,7 +32,7 @@ task setupAndroidSdk {
     }
   }
   doLast {
-    logger.info("Unpacking android sdk")
+    logger.info("Unpacking android sdk into " + archivePath)
     copy {
       from zipTree(file(archivePath))
       into outputDir
