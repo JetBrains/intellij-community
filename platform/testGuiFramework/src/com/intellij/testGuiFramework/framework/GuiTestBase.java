@@ -89,7 +89,7 @@ public abstract class GuiTestBase {
         File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), fileName);
         //noinspection ResultOfMethodCallIgnored
         file.delete();
-        LOG.error(getHierarchy());
+        LOG.error(getHierarchy() + "\n" + "caused by:", e);
         myScreenshotTaker.saveDesktopAsPng(file.getPath());
         LOG.info("Screenshot: " + file);
       }

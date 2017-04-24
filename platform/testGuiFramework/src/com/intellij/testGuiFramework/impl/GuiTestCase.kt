@@ -392,7 +392,6 @@ open class GuiTestCase : GuiTestBase() {
     return true
   }
 
-
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 
   //necessary only for Windows

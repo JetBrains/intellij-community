@@ -212,7 +212,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   override fun accept(cmp: Component) = cmp is ActionMenuItem
 
   override fun generate(cmp: ActionMenuItem, me: MouseEvent, cp: Point) =
-    "popup(${buildPath(activatedActionMenuItem = cmp).joinToString(separator = ", ") {str -> "\"$str\""} })"
+    "popup(${buildPath(activatedActionMenuItem = cmp).joinToString(separator = ", ") { str -> "\"$str\"" }})"
 
 
   //for buildnig a path of actionMenus and actionMenuItem we need to scan all JBPopup and find a consequence of actions from a tail. Each discovered JBPopupMenu added to hashSet to avoid double sacnning and multiple component finding results
@@ -243,10 +243,12 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
 
   private fun JWindow.findJBPopupMenu(jbPopupHashSet: MutableSet<Int>): JBPopupMenu {
     val robot = BasicRobot.robotWithCurrentAwtHierarchy()
-    val resultJBPopupMenu = robot.finder().find(this, ComponentMatcher { component -> (component is JBPopupMenu)
-            && component.isShowing
-            && component.isVisible
-            && !jbPopupHashSet.contains(component.hashCode()) }) as JBPopupMenu
+    val resultJBPopupMenu = robot.finder().find(this, ComponentMatcher { component ->
+      (component is JBPopupMenu)
+      && component.isShowing
+      && component.isVisible
+      && !jbPopupHashSet.contains(component.hashCode())
+    }) as JBPopupMenu
     jbPopupHashSet.add(resultJBPopupMenu.hashCode())
     robot.cleanUpWithoutDisposingWindows()
     return resultJBPopupMenu
@@ -259,8 +261,10 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
                                    .find { actionMenu ->
                                      (actionMenu.subElements != null
                                       && actionMenu.subElements.isNotEmpty()
-                                     && actionMenu.subElements
-                                       .any { menuElement -> (menuElement is JBPopupMenu && jbPopupHashSet.contains(menuElement.hashCode()))} )
+                                      && actionMenu.subElements
+                                        .any { menuElement ->
+                                          (menuElement is JBPopupMenu && jbPopupHashSet.contains(menuElement.hashCode()))
+                                        })
                                    } ?: throw Exception("Unable to find a proper ActionMenu")
     return actionMenu.text
   }
@@ -290,13 +294,13 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
   override fun generate(cmp: JFrame, me: MouseEvent, cp: Point) = "ideFrame {"
 }
 
-class MacMessageGenerator: ComponentCodeGenerator<JDialog> {
+class MacMessageGenerator : ComponentCodeGenerator<JDialog> {
 
   override fun priority() = 1
 
   override fun accept(cmp: Component): Boolean {
     if (!(Messages.canShowMacSheetPanel() && (cmp as JComponent).rootPane.parent is JDialog)) return false
-    val panel =  cmp.rootPane.contentPane as JPanel
+    val panel = cmp.rootPane.contentPane as JPanel
 
     if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing()) {
       val controller = MessagesFixture.findSheetController(panel)
@@ -309,7 +313,7 @@ class MacMessageGenerator: ComponentCodeGenerator<JDialog> {
   }
 
   override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
-    val panel =  cmp.rootPane.contentPane as JPanel
+    val panel = cmp.rootPane.contentPane as JPanel
     val myRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
     val title = MessagesFixture.getTitle(panel, myRobot)
     myRobot.cleanUpWithoutDisposingWindows()
@@ -317,12 +321,12 @@ class MacMessageGenerator: ComponentCodeGenerator<JDialog> {
   }
 }
 
-class MessageGenerator: ComponentCodeGenerator<JDialog> {
+class MessageGenerator : ComponentCodeGenerator<JDialog> {
 
   override fun priority() = 1
 
-  override fun accept(cmp: Component): Boolean  =
-          cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
+  override fun accept(cmp: Component): Boolean =
+    cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
 
   override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
     return "message(\"${cmp.title}\") {"
@@ -347,36 +351,38 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
     return rectangle.contains(locationOnScreen)
   }
 
-  private fun Component.centerOnScreen() : Point {
+  private fun Component.centerOnScreen(): Point {
     val rectangle = this.bounds
     rectangle.location = this.locationOnScreen
     return Point(rectangle.centerX.toInt(), rectangle.centerY.toInt())
   }
 
-  private fun getToolWindow(pointOnScreen: Point) : ToolWindowImpl?  {
+  private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
     if (WindowManagerImpl.getInstance().findVisibleFrame() !is IdeFrameImpl) return null
     val ideFrame = WindowManagerImpl.getInstance().findVisibleFrame() as IdeFrameImpl
     ideFrame.project ?: return null
     val toolWindowManager = ToolWindowManagerImpl.getInstance(ideFrame.project!!)
     val visibleToolWindows = toolWindowManager.toolWindowIds
-      .map { toolWindowId ->  toolWindowManager.getToolWindow(toolWindowId)}
-      .filter {toolwindow -> toolwindow.isVisible}
-    val toolwindow : ToolWindowImpl = visibleToolWindows
-                                        .filterIsInstance<ToolWindowImpl>()
-                                        .find{ it.component.containsLocationOnScreen(pointOnScreen)} ?: return null
+      .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
+      .filter { toolwindow -> toolwindow.isVisible }
+    val toolwindow: ToolWindowImpl = visibleToolWindows
+                                       .filterIsInstance<ToolWindowImpl>()
+                                       .find { it.component.containsLocationOnScreen(pointOnScreen) } ?: return null
     return toolwindow
   }
 
-  override fun acceptor(): (Component) -> Boolean = { component -> val tw = getToolWindow(component.centerOnScreen()); tw != null && component == tw.component}
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    val tw = getToolWindow(component.centerOnScreen()); tw != null && component == tw.component
+  }
 
   override fun generate(cmp: Component, me: MouseEvent, cp: Point): String {
-    val toolWindow: ToolWindowImpl = getToolWindow (cmp.centerOnScreen())!!
+    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
     return "toolwindow(id = \"${toolWindow.id}\") {"
   }
 
 }
 
-class ToolWindowContextGenerator: LocalContextCodeGenerator<Component>() {
+class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
 
   override fun priority() = 1
 
@@ -386,38 +392,40 @@ class ToolWindowContextGenerator: LocalContextCodeGenerator<Component>() {
     return rectangle.contains(locationOnScreen)
   }
 
-  private fun Component.centerOnScreen() : Point {
+  private fun Component.centerOnScreen(): Point {
     val rectangle = this.bounds
     rectangle.location = this.locationOnScreen
     return Point(rectangle.centerX.toInt(), rectangle.centerY.toInt())
   }
 
-  private fun Component.contains(component: Component) : Boolean {
+  private fun Component.contains(component: Component): Boolean {
     return this.contains(Point(component.bounds.x, component.bounds.y)) &&
            this.contains(Point(component.bounds.x + component.width, component.bounds.y + component.height))
   }
 
-  private fun getToolWindow(pointOnScreen: Point) : ToolWindowImpl?  {
+  private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
     if (WindowManagerImpl.getInstance().findVisibleFrame() !is IdeFrameImpl) return null
     val ideFrame = WindowManagerImpl.getInstance().findVisibleFrame() as IdeFrameImpl
     ideFrame.project ?: return null
     val toolWindowManager = ToolWindowManagerImpl.getInstance(ideFrame.project!!)
     val visibleToolWindows = toolWindowManager.toolWindowIds
-      .map { toolWindowId ->  toolWindowManager.getToolWindow(toolWindowId)}
-      .filter {toolwindow -> toolwindow.isVisible}
-    val toolwindow : ToolWindowImpl = visibleToolWindows
-                                        .filterIsInstance<ToolWindowImpl>()
-                                        .find{ it.component.containsLocationOnScreen(pointOnScreen)} ?: return null
+      .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
+      .filter { toolwindow -> toolwindow.isVisible }
+    val toolwindow: ToolWindowImpl = visibleToolWindows
+                                       .filterIsInstance<ToolWindowImpl>()
+                                       .find { it.component.containsLocationOnScreen(pointOnScreen) } ?: return null
     return toolwindow
   }
 
-  override fun acceptor(): (Component) -> Boolean = { component -> val tw = getToolWindow(component.centerOnScreen()); tw != null && tw.contentManager.selectedContent!!.component == component }
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    val tw = getToolWindow(component.centerOnScreen()); tw != null && tw.contentManager.selectedContent!!.component == component
+  }
 
   override fun generate(cmp: Component, me: MouseEvent, cp: Point): String {
-    val toolWindow: ToolWindowImpl = getToolWindow (cmp.centerOnScreen())!!
+    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
     val tabName = toolWindow.contentManager.selectedContent?.tabName
-    return if(tabName != null) "content(tabName = \"${tabName}\") {"
-      else  "content {"
+    return if (tabName != null) "content(tabName = \"${tabName}\") {"
+    else "content {"
   }
 
 }
