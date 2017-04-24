@@ -93,56 +93,6 @@ public class JsonSchemaObject {
     myPeerPointer = peerPointer;
   }
 
-  // full copy. allows to first apply properties for ref, then from definition itself, "in place"
-  public void copyValues(JsonSchemaObject other) {
-    myId = other.myId;
-    mySchema = other.mySchema;
-    myDescription = other.myDescription;
-    myTitle = other.myTitle;
-
-    myProperties = other.myProperties;
-    myDefinitions = other.myDefinitions;
-    myPatternProperties = other.myPatternProperties;
-    myPatternCalculator.clear();
-    myValuesPatternCalculator.clear();
-
-    myType = other.myType;
-    myDefault = other.myDefault;
-    myRef = other.myRef;
-    myFormat = other.myFormat;
-    myTypeVariants = other.myTypeVariants;
-    myMultipleOf = other.myMultipleOf;
-    myMaximum = other.myMaximum;
-    myExclusiveMaximum = other.myExclusiveMaximum;
-    myMinimum = other.myMinimum;
-    myExclusiveMinimum = other.myExclusiveMinimum;
-    myMaxLength = other.myMaxLength;
-    myMinLength = other.myMinLength;
-    myPattern = other.myPattern;
-    myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
-    myAdditionalPropertiesSchema = other.myAdditionalPropertiesSchema;
-    myAdditionalItemsAllowed = other.myAdditionalItemsAllowed;
-    myAdditionalItemsSchema = other.myAdditionalItemsSchema;
-    myItemsSchema = other.myItemsSchema;
-    myItemsSchemaList = other.myItemsSchemaList;
-    myMaxItems = other.myMaxItems;
-    myMinItems = other.myMinItems;
-    myUniqueItems = other.myUniqueItems;
-    myMaxProperties = other.myMaxProperties;
-    myMinProperties = other.myMinProperties;
-    myRequired = other.myRequired;
-    myPropertyDependencies = other.myPropertyDependencies;
-    mySchemaDependencies = other.mySchemaDependencies;
-    myEnum = other.myEnum;
-    myAllOf = other.myAllOf;
-    myAnyOf = other.myAnyOf;
-    myOneOf = other.myOneOf;
-    myNot = other.myNot;
-    myDefinitionAddress = other.myDefinitionAddress;
-    myPeerPointer = other.myPeerPointer;
-    myShouldValidateAgainstJSType = other.myShouldValidateAgainstJSType;
-  }
-
   // peer pointer is not merged!
   public void mergeValues(JsonSchemaObject other) {
     // we do not copy id, schema, title and description
