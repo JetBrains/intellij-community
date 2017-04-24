@@ -52,6 +52,46 @@ import static org.junit.Assert.assertEquals;
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
 
+
+  /**
+   * tests failfast as example of argument
+   */
+  @Test
+  public void testFailFast() throws Exception {
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1){
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalUnitTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setAdditionalArguments("-f"); //FailFast
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
+        runner.getFormattedTestTree();
+        Assert.assertEquals("Bad tree produced for failfast", "Test tree:\n" +
+                                "[root]\n" +
+                                ".test_test\n" +
+                                "..SomeTestCase\n" +
+                                "...test_1_test(-)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+
+
+
   /**
    * tests with docstrings are reported as "test.name (text)" by unittest.
    */
