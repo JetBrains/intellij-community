@@ -63,4 +63,9 @@ class ParameterizedTestsDemo {
   <warning descr="Multiple parameters are not supported by this source">@ValueSource(ints = 1)</warning>
   void testWithValuesMultipleParams(int i, int j) { }
 
+  @ParameterizedTest
+  @ValueSource(ints = {1})
+  <warning descr="Suspicious combination @Test and @ParameterizedTest">@org.junit.jupiter.api.Test</warning>
+  void testWithTestAnnotation(int i) { }
+
 }

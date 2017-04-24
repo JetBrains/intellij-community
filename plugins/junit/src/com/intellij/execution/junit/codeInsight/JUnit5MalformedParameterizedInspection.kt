@@ -17,6 +17,7 @@ package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
@@ -53,6 +54,12 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
         val modifierList = method.modifierList
         val parameterizedAnnotation = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
         if (parameterizedAnnotation != null) {
+          val testAnnotation = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST)
+          if (testAnnotation != null && method.parameterList.parametersCount > 0) {
+            holder.registerProblem(testAnnotation,
+                                   "Suspicious combination @Test and @ParameterizedTest",
+                                   DeleteElementFix(testAnnotation))
+          }
           val methodSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)
           if (methodSource != null) {
             checkMethodSource(method, methodSource)
