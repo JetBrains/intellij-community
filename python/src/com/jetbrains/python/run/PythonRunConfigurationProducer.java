@@ -17,12 +17,12 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -57,7 +57,7 @@ public class PythonRunConfigurationProducer extends RunConfigurationProducer<Pyt
     if (vFile == null) return false;
     configuration.setScriptName(vFile.getPath());
     final VirtualFile parent = vFile.getParent();
-    if (parent != null) {
+    if (parent != null && StringUtil.isEmpty(configuration.getWorkingDirectory())) {
       configuration.setWorkingDirectory(parent.getPath());
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(script);
