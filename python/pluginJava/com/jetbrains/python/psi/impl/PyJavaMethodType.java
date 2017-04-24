@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -45,11 +44,6 @@ public class PyJavaMethodType implements PyCallableType {
     myMethod = method;
   }
 
-  @Override
-  public boolean isCallable() {
-    return true;
-  }
-
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context) {
@@ -60,12 +54,6 @@ public class PyJavaMethodType implements PyCallableType {
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     return getReturnType(context);
-  }
-
-  @Nullable
-  @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return null;
   }
 
   @Nullable
@@ -86,7 +74,7 @@ public class PyJavaMethodType implements PyCallableType {
   @Override
   public String getName() {
     final PsiClass cls = myMethod.getContainingClass();
-    return "Java method(" + (cls != null ? cls.getQualifiedName() : cls) + "." + myMethod.getName() + ")";
+    return "Java method(" + (cls != null ? cls.getQualifiedName() : null) + "." + myMethod.getName() + ")";
   }
 
   @Override
