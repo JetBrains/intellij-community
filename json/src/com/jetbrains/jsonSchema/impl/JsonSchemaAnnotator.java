@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 8/31/2015.
@@ -102,9 +103,7 @@ public class JsonSchemaAnnotator implements Annotator {
 
       if (isInsideSchemaDefinitions(element, position)) return;
 
-      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position);
-      final JsonSchemaTreeNode root = builder.buildTree();
-      final MatchResult result = MatchResult.zipTree(root);
+      final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
       final BySchemaChecker checker = checkByMatchResult(firstPropValue, result, myWalker, myRootSchema);
       if (checker != null) processCheckerResults(checker);
     }
@@ -121,7 +120,7 @@ public class JsonSchemaAnnotator implements Annotator {
 
     private void checkRootObject(@NotNull JsonValueAdapter adapter, @NotNull JsonSchemaObject rootSchema) {
       if (!adapter.isObject() && !adapter.isArray()) return;
-      final MatchResult matchResult = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
+      final MatchResult matchResult = new JsonSchemaResolver(rootSchema, rootSchema).detailedResolve();
       final BySchemaChecker checker = checkByMatchResult(adapter, matchResult, myWalker, rootSchema);
       if (checker != null) processCheckerResults(checker);
     }
@@ -146,14 +145,19 @@ public class JsonSchemaAnnotator implements Annotator {
       checker.checkBySchemeBare(elementToCheck, result.mySchemas.get(0), validatedProperties);
       checkers.add(checker);
     } else {
+      // todo simplify more
       if (!result.mySchemas.isEmpty()) {
         final BySchemaChecker checker = new BySchemaChecker(rootSchema, walker);
-        checker.processAnyOf(elementToCheck, result.mySchemas, validatedProperties);
+        final List<JsonSchemaObject> filtered = filterSchemaListByType(result.mySchemas, elementToCheck);
+        if (filtered.isEmpty()) checker.typeError(elementToCheck.getDelegate());
+        else checker.processAnyOf(elementToCheck, filtered, validatedProperties);
         checkers.add(checker);
       }
       if (!result.myExcludingSchemas.isEmpty()) {
         final BySchemaChecker checker = new BySchemaChecker(rootSchema, walker);
-        checker.processOneOf(elementToCheck, result.myExcludingSchemas, validatedProperties);
+        final List<JsonSchemaObject> filtered = filterSchemaListByType(result.myExcludingSchemas, elementToCheck);
+        if (filtered.isEmpty()) checker.typeError(elementToCheck.getDelegate());
+        else checker.processOneOf(elementToCheck, filtered, validatedProperties);
         checkers.add(checker);
       }
     }
@@ -163,6 +167,48 @@ public class JsonSchemaAnnotator implements Annotator {
       .filter(checker -> !checker.isHadTypeError())
       .findFirst()
       .orElse(checkers.get(0));
+  }
+
+  @NotNull
+  private static List<JsonSchemaObject> filterSchemaListByType(@NotNull final Collection<JsonSchemaObject> collection,
+                                                               @NotNull final JsonValueAdapter value) {
+    final JsonSchemaType type = JsonSchemaType.getType(value);
+    if (type == null) return Collections.emptyList();
+    return collection.stream()
+      .filter(schema -> typeMakesSense(schema, type))
+      .collect(Collectors.toList());
+  }
+
+  private static boolean typeMakesSense(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
+    if (matchSchemaType(schema, type) != null) return true;
+    if (schema.getEnum() != null && (JsonSchemaType._integer.equals(type) ||
+                                     JsonSchemaType._number.equals(type) || JsonSchemaType._boolean.equals(type) ||
+                                     JsonSchemaType._string.equals(type))) return true;
+    return false;
+  }
+
+  @Nullable
+  private static JsonSchemaType matchSchemaType(@NotNull JsonSchemaObject schema, @NotNull JsonSchemaType input) {
+    if (schema.getType() != null) {
+      JsonSchemaType matchType = schema.getType();
+      if (matchType == input) {
+        return matchType;
+      }
+      if (input == JsonSchemaType._integer && matchType == JsonSchemaType._number) {
+        return JsonSchemaType._number;
+      }
+    }
+    if (schema.getTypeVariants() != null) {
+      List<JsonSchemaType> matchTypes = schema.getTypeVariants();
+      if (matchTypes.contains(input)) {
+        return input;
+      }
+      if (input == JsonSchemaType._integer && matchTypes.contains(JsonSchemaType._number)) {
+        return JsonSchemaType._number;
+      }
+    }
+    if (!schema.getProperties().isEmpty() && JsonSchemaType._object.equals(input)) return JsonSchemaType._object;
+    return null;
   }
 
   private static JsonValueAdapter findTopLevelElement(@NotNull JsonLikePsiWalker walker, @NotNull PsiElement element) {
@@ -212,13 +258,13 @@ public class JsonSchemaAnnotator implements Annotator {
       myErrors.put(holder, error);
     }
 
-    private void typeError(final @NotNull PsiElement value) {
+    void typeError(final @NotNull PsiElement value) {
       error("Type is not allowed", value);
       myHadTypeError = true;
     }
 
     private void checkBySchemeBare(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema, Set<String> validatedProperties) {
-      final JsonSchemaType type = getType(value);
+      final JsonSchemaType type = JsonSchemaType.getType(value);
       if (type == null) {
         //typeError(value.getDelegate());
       } else {
@@ -255,7 +301,7 @@ public class JsonSchemaAnnotator implements Annotator {
 
     @Nullable
     private BySchemaChecker checkByInnerSchema(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object) {
-      final MatchResult matchResult = JsonSchemaVariantsTreeBuilder.simplify(myRootSchema, schema);
+      final MatchResult matchResult = new JsonSchemaResolver(myRootSchema, schema).detailedResolve();
       return checkByMatchResult(object, matchResult, myWalker, myRootSchema);
     }
 
@@ -351,9 +397,7 @@ public class JsonSchemaAnnotator implements Annotator {
 
         final List<JsonSchemaWalker.Step> steps = skipProperties(JsonOriginalPsiWalker.INSTANCE.findPosition(object, false, true));
         // !! not root schema, because we validate the schema written in the file itself
-        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(schemaObject, false, steps);
-        final JsonSchemaTreeNode root = builder.buildTree();
-        final MatchResult result = MatchResult.zipTree(root);
+        final MatchResult result = new JsonSchemaResolver(schemaObject, false, steps).detailedResolve();
         final List<JsonSchemaObject> schemas = new ArrayList<>(result.mySchemas);
         schemas.addAll(result.myExcludingSchemas);
         schemas.forEach(schema -> {
@@ -633,7 +677,7 @@ public class JsonSchemaAnnotator implements Annotator {
       }
       if (cntCorrect == 1) return;
       if (cntCorrect > 0) {
-        final JsonSchemaType type = getType(value);
+        final JsonSchemaType type = JsonSchemaType.getType(value);
         if (type != null) error("Validates to more than one variant", value.getDelegate());
       } else {
         if (!errors.isEmpty()) {
@@ -675,88 +719,4 @@ public class JsonSchemaAnnotator implements Annotator {
       return myErrors.isEmpty();
     }
   }
-
-  @Nullable
-  private static JsonSchemaType matchSchemaType(@NotNull JsonSchemaObject schema, @NotNull JsonSchemaType input) {
-    if (schema.getType() != null) {
-      JsonSchemaType matchType = schema.getType();
-      if (matchType == input) {
-        return matchType;
-      }
-      if (input == JsonSchemaType._integer && matchType == JsonSchemaType._number) {
-        return JsonSchemaType._number;
-      }
-    }
-    if (schema.getTypeVariants() != null) {
-      List<JsonSchemaType> matchTypes = schema.getTypeVariants();
-      if (matchTypes.contains(input)) {
-        return input;
-      }
-      if (input == JsonSchemaType._integer && matchTypes.contains(JsonSchemaType._number)) {
-        return JsonSchemaType._number;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static JsonSchemaType getType(JsonValueAdapter value) {
-    if (value.isNull()) return JsonSchemaType._null;
-    if (value.isBooleanLiteral()) return JsonSchemaType._boolean;
-    if (value.isStringLiteral()) return JsonSchemaType._string;
-    if (value.isArray()) return JsonSchemaType._array;
-    if (value.isObject()) return JsonSchemaType._object;
-    if (value.isNumberLiteral()) {
-      return isInteger(value.getDelegate().getText()) ? JsonSchemaType._integer : JsonSchemaType._number;
-    }
-    return null;
-  }
-
-  private static boolean isInteger(@NotNull String text) {
-    try {
-      //noinspection ResultOfMethodCallIgnored
-      Integer.parseInt(text);
-      return true;
-    }
-    catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  // todo no pattern properties at the moment
-  /*@Nullable
-  private static JsonSchemaObject getChild(JsonSchemaObject current, String name) {
-    JsonSchemaObject schema = current.getProperties().get(name);
-    if (schema != null) return schema;
-
-    schema = getChildFromList(name, current.getAnyOf());
-    if (schema != null) return schema;
-
-    schema = getChildFromList(name, current.getOneOf());
-    if (schema != null) return schema;
-
-    final JsonSchemaObject not = current.getNot();
-    if (not != null) {
-      final JsonSchemaObject notChild = getChild(not, name);
-      if (notChild != null) return null;
-    }
-
-    if (Boolean.TRUE.equals(current.getAdditionalPropertiesAllowed())) {
-      schema = current.getAdditionalPropertiesSchema();
-      if (schema == null) return ANY_SCHEMA;
-      return schema;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static JsonSchemaObject getChildFromList(String name, List<JsonSchemaObject> of) {
-    if (of == null) return null;
-    JsonSchemaObject schema;
-    for (JsonSchemaObject object : of) {
-      schema = getChild(object, name);
-      if (schema != null) return schema;
-    }
-    return null;
-  }*/
 }

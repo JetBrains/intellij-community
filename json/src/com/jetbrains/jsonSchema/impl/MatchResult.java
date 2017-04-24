@@ -36,11 +36,6 @@ public class MatchResult {
     myExcludingSchemas = new SmartList<>();
   }
 
-  public MatchResult(@NotNull List<JsonSchemaObject> schemas, @NotNull List<JsonSchemaObject> excludingSchemas) {
-    mySchemas = schemas;
-    myExcludingSchemas = excludingSchemas;
-  }
-
   public static MatchResult zipTree(@NotNull JsonSchemaTreeNode root) {
     final MatchResult result = new MatchResult();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),

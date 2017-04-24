@@ -88,6 +88,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     assertStringItems(strings);
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testRefreshSchemaCompletionSimpleVariant() throws Exception {
     skeleton(new Callback() {
       private String myModuleDir;
@@ -219,6 +220,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaGlobalRefsCrossResolve() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -253,6 +255,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testJson2SchemaPropertyResolve() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -349,6 +352,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNavigateToPropertyDefinitionInPackageJsonSchema() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -379,6 +383,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNavigateToPropertyDefinitionNestedDefinitions() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -407,6 +412,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNavigateToAllOfOneOfDefinitions() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -516,6 +522,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNavigateToDefinitionByRef() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -548,6 +555,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNavigateToDefinitionByRefInFileWithIncorrectReference() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -586,6 +594,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     Assert.assertEquals(JsonSchemaObject.DEFINITIONS, ((JsonProperty) parent.getParent().getParent()).getName());
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testInsideCycledSchemaNavigation() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -616,6 +625,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @CanChangeDocumentDuringHighlighting
   public void testNavigationIntoCycledSchema() throws Exception {
     skeleton(new Callback() {
       @Override

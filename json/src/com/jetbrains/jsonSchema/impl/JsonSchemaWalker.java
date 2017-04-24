@@ -172,11 +172,24 @@ public class JsonSchemaWalker {
   }
 
   public interface Transition {
+
     void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumerI resultConsumer, boolean acceptAdditionalPropertiesSchemas);
   }
 
   public enum StateType {
-    _object, _array, _value, _unknown
+    _object(JsonSchemaType._object), _array(JsonSchemaType._array), _value(null), _unknown(null);
+
+    @Nullable
+    private final JsonSchemaType myCorrespondingJsonType;
+
+    StateType(@Nullable JsonSchemaType correspondingJsonType) {
+      myCorrespondingJsonType = correspondingJsonType;
+    }
+
+    @Nullable
+    public JsonSchemaType getCorrespondingJsonType() {
+      return myCorrespondingJsonType;
+    }
   }
 
   static class TransitionResultConsumer implements TransitionResultConsumerI {

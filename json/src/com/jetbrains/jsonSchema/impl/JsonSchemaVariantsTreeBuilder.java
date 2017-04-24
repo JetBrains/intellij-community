@@ -32,21 +32,24 @@ import java.util.stream.Collectors;
  */
 public class JsonSchemaVariantsTreeBuilder {
   private static final Logger LOG = Logger.getInstance(JsonSchemaVariantsTreeBuilder.class);
+  @NotNull private final JsonSchemaObject myRootSchema;
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
   @NotNull private final List<JsonSchemaWalker.Step> myPosition;
 
   public JsonSchemaVariantsTreeBuilder(@NotNull final JsonSchemaObject rootSchema,
+                                       @NotNull final JsonSchemaObject schema,
                                        final boolean isName,
                                        @Nullable final List<JsonSchemaWalker.Step> position) {
-    mySchema = rootSchema;
+    myRootSchema = rootSchema;
+    mySchema = schema;
     myIsName = isName;
     myPosition = ContainerUtil.notNullize(position);
   }
 
   public JsonSchemaTreeNode buildTree() {
     final Map<VirtualFile, JsonSchemaObject> rootSchemasMap = new HashMap<>();
-    rootSchemasMap.put(mySchema.getSchemaFile(), mySchema);
+    rootSchemasMap.put(myRootSchema.getSchemaFile(), myRootSchema);
 
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
     applyChildSchema(rootSchemasMap, root, mySchema);
@@ -62,7 +65,7 @@ public class JsonSchemaVariantsTreeBuilder {
       final List<JsonSchemaWalker.Step> steps = node.getSteps();
       //noinspection ConstantConditions
       final JsonSchemaWalker.Step step = steps.get(0);
-      if (step.getTransition() == null) {
+      if (step.getTransition() == null || !byStateType(step.getType(), node.getSchema())) {
         continue;
       }
       // todo further get rid of consumer?
@@ -81,6 +84,22 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     return root;
+  }
+
+  private static boolean byStateType(@NotNull final JsonSchemaWalker.StateType type, @NotNull final JsonSchemaObject schema) {
+    if (JsonSchemaWalker.StateType._unknown.equals(type)) return true;
+    final JsonSchemaType requiredType = type.getCorrespondingJsonType();
+    if (requiredType == null) return true;
+    if (schema.getType() != null) {
+      return requiredType.equals(schema.getType());
+    }
+    if (schema.getTypeVariants() != null) {
+      for (JsonSchemaType schemaType : schema.getTypeVariants()) {
+        if (requiredType.equals(schemaType)) return true;
+      }
+      return false;
+    }
+    return true;
   }
 
   private static void applyChildSchema(@NotNull Map<VirtualFile, JsonSchemaObject> rootSchemasMap,
@@ -105,16 +124,6 @@ public class JsonSchemaVariantsTreeBuilder {
         node.setChild(JsonSchemaTreeNode.createConflicting(node));
       } else node.setChild(new JsonSchemaTreeNode(node, childSchema));
     }
-  }
-
-  public static MatchResult simplify(@NotNull JsonSchemaObject rootSchema, @NotNull JsonSchemaObject schema) {
-    if (!interestingSchema(schema)) return new MatchResult(Collections.singletonList(schema), Collections.emptyList());
-    final Map<VirtualFile, JsonSchemaObject> rootSchemasMap = new HashMap<>();
-    rootSchemasMap.put(rootSchema.getSchemaFile(), rootSchema);
-    final ProcessDefinitionsOperation operation = new ProcessDefinitionsOperation(schema, rootSchemasMap);
-    operation.doMap();
-    operation.doReduce();
-    return new MatchResult(operation.myReduceContext.myAnyGroup, operation.myReduceContext.myExclusiveOrGroup);
   }
 
   private enum StepState {
@@ -380,37 +389,10 @@ public class JsonSchemaVariantsTreeBuilder {
     if (schema.getAllOf() != null) ++cnt;
     if (schema.getAnyOf() != null) ++cnt;
     if (schema.getOneOf() != null) ++cnt;
-    //if (schema.getRef() != null) ++cnt;
     return cnt > 1;
   }
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {
     return schema.getAnyOf() != null || schema.getOneOf() != null || schema.getAllOf() != null || schema.getRef() != null;
   }
-
-  // todo this is currently not so pretty
-  /*@Nullable
-  private JsonSchemaObject mergeDefinition(@NotNull final JsonSchemaObject rootSchema,
-                                           @NotNull final JsonSchemaObject schema) {
-    assert !StringUtil.isEmptyOrSpaces(schema.getRef());
-
-    final Set<Pair<VirtualFile, String>> control = new HashSet<>();
-    Pair<JsonSchemaObject, JsonSchemaObject> current = Pair.create(rootSchema, schema);
-    while (true) {
-      final JsonSchemaObject currentSchema = current.getSecond();
-      final JsonSchemaObject currentRoot = current.getFirst();
-      if (StringUtil.isEmptyOrSpaces(current.getSecond().getRef())) break;
-
-      if (!control.add(Pair.create(currentRoot.getSchemaFile(), currentSchema.getRef()))) {
-        LOG.debug(String.format("Cyclic definition: '%s' in file %s", currentSchema.getRef(), currentRoot.getSchemaFile()));
-      }
-
-      final Pair<JsonSchemaObject, JsonSchemaObject> pair = getSchemaFromDefinition(currentRoot, currentSchema);
-      if (pair == null || pair.getSecond() == null) return null;
-      final JsonSchemaObject definition = pair.getSecond();
-      final JsonSchemaObject merged = merge(currentSchema, definition);
-      current = Pair.create(pair.getFirst(), merged);
-    }
-    return current.getSecond();
-  }*/
 }

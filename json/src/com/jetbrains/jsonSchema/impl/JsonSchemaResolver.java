@@ -15,8 +15,44 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
 /**
  * @author Irina.Chernushina on 4/24/2017.
  */
 public class JsonSchemaResolver {
+  @NotNull private final JsonSchemaObject myRootSchema;
+  @NotNull private final JsonSchemaObject mySchema;
+  private final boolean myIsName;
+  @NotNull private final List<JsonSchemaWalker.Step> myPosition;
+
+  public JsonSchemaResolver(@NotNull JsonSchemaObject schema,
+                            boolean isName,
+                            @NotNull List<JsonSchemaWalker.Step> position) {
+    myRootSchema = schema;
+    mySchema = schema;
+    myIsName = isName;
+    myPosition = position;
+  }
+
+  public JsonSchemaResolver(@NotNull JsonSchemaObject rootSchema, @NotNull JsonSchemaObject schema) {
+    myRootSchema = rootSchema;
+    mySchema = schema;
+    myIsName = true;
+    myPosition = Collections.emptyList();
+  }
+
+  public MatchResult detailedResolve() {
+    final JsonSchemaTreeNode node = new JsonSchemaVariantsTreeBuilder(myRootSchema, mySchema, myIsName, myPosition).buildTree();
+    return MatchResult.zipTree(node);
+  }
+
+  public Collection<JsonSchemaObject> resolve() {
+    final MatchResult result = detailedResolve();
+    final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
+    set.addAll(result.myExcludingSchemas);
+    return set;
+  }
 }

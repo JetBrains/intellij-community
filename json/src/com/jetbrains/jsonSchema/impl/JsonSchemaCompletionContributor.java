@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
@@ -115,22 +114,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (checkable == null) return;
       final boolean isName = myWalker.isName(checkable);
       final List<JsonSchemaWalker.Step> position = myWalker.findPosition(checkable, isName, !isName);
+      if (position.isEmpty() && !isName) return;
 
-      final List<JsonSchemaObject> schemas = new SmartList<>();
-      final MatchResult result;
-      if (position == null || position.isEmpty()) {
-        if (isName) {
-          result = JsonSchemaVariantsTreeBuilder.simplify(myRootSchema, myRootSchema);
-        }
-        else return;
-      } else {
-        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position);
-        final JsonSchemaTreeNode root = builder.buildTree();
-        result = MatchResult.zipTree(root);
-      }
-      schemas.addAll(result.mySchemas);
-      schemas.addAll(result.myExcludingSchemas);
-
+      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName) {

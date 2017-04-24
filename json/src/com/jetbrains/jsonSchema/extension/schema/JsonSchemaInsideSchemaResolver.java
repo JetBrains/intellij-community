@@ -20,11 +20,13 @@ import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
+import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -46,21 +48,11 @@ public class JsonSchemaInsideSchemaResolver {
   }
 
   // todo can be multiple variants resolve
-  public PsiElement resolveInSchemaRecursively() {
+  public PsiElement resolveInSchemaRecursively(@NotNull PsiElement element) {
     final JsonSchemaObject rootSchema = JsonSchemaService.Impl.get(myProject).getSchemaObjectForSchemaFile(mySchemaFile);
     if (rootSchema == null) return null;
 
-    final List<JsonSchemaObject> schemas = new SmartList<>();
-    final MatchResult result;
-    if (mySteps.isEmpty()) {
-      result = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
-    } else {
-      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, mySteps);
-      final JsonSchemaTreeNode root = builder.buildTree();
-      result = MatchResult.zipTree(root);
-    }
-    schemas.addAll(result.mySchemas);
-    schemas.addAll(result.myExcludingSchemas);
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, mySteps).resolve();
 
     return schemas.stream().filter(schema -> schema.getPeerPointer().getElement() != null && schema.getPeerPointer().getElement().isValid())
       .findFirst()

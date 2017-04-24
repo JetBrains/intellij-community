@@ -11,12 +11,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 
@@ -60,17 +60,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (checkable == null) return null;
     final List<JsonSchemaWalker.Step> position = walker.findPosition(checkable, true, true);
 
-    final List<JsonSchemaObject> schemas = new SmartList<>();
-    final MatchResult result;
-    if (position == null || position.isEmpty()) {
-      result = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
-    } else {
-      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, position);
-      final JsonSchemaTreeNode root = builder.buildTree();
-      result = MatchResult.zipTree(root);
-    }
-    schemas.addAll(result.mySchemas);
-    schemas.addAll(result.myExcludingSchemas);
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 
     return schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDescription()))
       .findFirst().map(JsonSchemaObject::getDescription).orElse(null);
