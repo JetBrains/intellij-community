@@ -1136,6 +1136,13 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(suggested, "_T", "_KT");
   }
 
+  // PY-21519
+  public void testTypeComment() {
+    myFixture.copyFileToProject("../typing/typing.py");
+    final List<String> variants = doTestByFile();
+    assertContainsElements(variants, "List", "Union", "Optional");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.typing;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -80,7 +79,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
       if (annotationText != null) {
         final int start = m.start(1);
         final int end = m.end(1);
-        if (start < end && allowInjectionInComment(host)) {
+        if (start < end) {
           final Language language;
           if ("ignore".equals(annotationText)) {
             language = null;
@@ -110,11 +109,5 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
 
   private static boolean isTypingAnnotation(@NotNull String s) {
     return RE_TYPING_ANNOTATION.matcher(s).matches();
-  }
-
-  private static boolean allowInjectionInComment(@NotNull PsiLanguageInjectionHost host) {
-    // XXX: Don't inject PyDocstringLanguage during completion inside comments due to an exception related to finding ShredImpl's
-    // hostElementPointer
-    return CompletionUtil.getOriginalOrSelf(host) == host;
   }
 }
