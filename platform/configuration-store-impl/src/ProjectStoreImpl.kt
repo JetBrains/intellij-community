@@ -33,7 +33,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
-import com.intellij.openapi.project.ex.ProjectEx.NAME_PROVIDER_EP
+import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
@@ -320,7 +320,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       }
     }
 
-    return NAME_PROVIDER_EP.extensions.computeOrNull {
+    return ProjectNameProvider.EP_NAME.extensions.computeOrNull {
       LOG.catchAndLog { it.getName(project) }
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }

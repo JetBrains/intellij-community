@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.ex;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +25,6 @@ public interface ProjectEx extends Project {
 
     void saved(@NotNull final Project project);
   }
-
-  ExtensionPointName<ProjectNameProvider> NAME_PROVIDER_EP = ExtensionPointName.create("com.intellij.projectNameProvider");
 
   void init();
 
