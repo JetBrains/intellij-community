@@ -72,7 +72,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
     @Override
     public boolean equals(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-      return o1.getAction().getClass() == o2.getAction().getClass() && o1.getText().equals(o2.getText());
+      return getActionClass(o1) == getActionClass(o2) && o1.getText().equals(o2.getText());
+    }
+
+    private Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
+      IntentionAction action = o1.getAction();
+      if (action instanceof IntentionActionDelegate) {
+        return ((IntentionActionDelegate)action).getDelegate().getClass();
+      }
+      return action.getClass();
     }
   };
   private Runnable myFinalRunnable;
