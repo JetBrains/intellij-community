@@ -34,9 +34,9 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
             int pos = text.indexOf("=");
 
             if(pos == -1) {
-                return new Pair<>(text, "");
+                return new Pair<>(text.trim(), "");
             } else {
-                return new Pair<>(text.substring(0, pos), text.substring(pos + 1));
+                return new Pair<>(text.substring(0, pos).trim(), text.substring(pos + 1).trim());
             }
         }).collect(Collectors.toList());
     }

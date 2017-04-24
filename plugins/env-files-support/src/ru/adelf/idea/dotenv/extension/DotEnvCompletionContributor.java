@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFileType;
@@ -23,7 +24,9 @@ import ru.adelf.idea.dotenv.util.DotEnvPsiElementsVisitor;
 import ru.adelf.idea.dotenv.util.PsiUtil;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 public class DotEnvCompletionContributor extends CompletionContributor implements GotoDeclarationHandler {
     public DotEnvCompletionContributor() {
@@ -41,17 +44,31 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
                 Project project = psiElement.getProject();
                 FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
 
+                Map<String, String> keys = new HashMap<>();
+
                 fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, s -> {
                     if(fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, s, GlobalSearchScope.allScope(project)).size() > 0) {
 
                         String[] splitParts = s.split("=");
 
-                        completionResultSet.addElement(
-                                LookupElementBuilder.create(splitParts[0].trim())
-                                        .withTailText(" = " + s.substring(splitParts[0].length() + 1).trim(), true));
+                        String key = splitParts[0].trim();
+
+                        if(keys.containsKey(key)) return true;
+
+                        keys.put(key, s.substring(splitParts[0].length() + 1).trim());
                     }
                     return true;
                 }, project);
+
+                for(Map.Entry<String, String> entry: keys.entrySet()) {
+                    LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
+
+                    if(StringUtils.isNotEmpty(entry.getValue())) {
+                        completionResultSet.addElement(lockup.withTailText(" = " + entry.getValue(), true));
+                    } else {
+                        completionResultSet.addElement(lockup);
+                    }
+                }
             }
         });
     }
